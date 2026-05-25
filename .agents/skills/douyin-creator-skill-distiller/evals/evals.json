@@ -1,0 +1,29 @@
+{
+  "skill_name": "douyin-creator-skill-distiller",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "提取这个抖音用户最近300条公开视频分享链接，并生成 Excel 表：https://www.douyin.com/user/MS4wLjABAAAAxxxx?from_tab_name=main",
+      "expected_output": "Runs or instructs the bundled extractor with --max-items 300, produces JSON/CSV, converts to a readable XLSX, and reports row count plus whether extraction reached has_more=0 or stopped at the recent-video limit.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "帮我把抖音博主「某某室内设计」蒸馏成一个 skill",
+      "expected_output": "Resolves or asks for the correct profile URL, defaults to the most recent 300 videos, creates a table with D=分享链接 and E=视频文案, fills E by extracting each video's copy, waits until every D row has E filled, then generates or updates a creator-specific skill with a local video index, search script, topic digest, evals, and answers that cite D-column video links.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "这个抖音号要验证码，能不能继续把所有视频链接扒出来再生成skill？",
+      "expected_output": "Does not bypass verification; asks the user to complete manual verification or provide an accessible public profile, clearly labels any output as partial, and does not generate the final distilled skill until the user accepts partial coverage or access is restored.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "我想把这个博主全部视频都蒸馏进去，不要只取300条",
+      "expected_output": "Explains that recent 300 is the default for timeliness, asks for confirmation before using all videos, and if confirmed adjusts extraction limits while preserving the same D/E backfill and final skill generation workflow.",
+      "files": []
+    }
+  ]
+}
