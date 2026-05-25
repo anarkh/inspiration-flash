@@ -1,0 +1,29 @@
+{
+  "skill_name": "jiawei-interior-advisor",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "我家准备买燃气热水器，导购说零冷水很好，怎么选才不踩坑？",
+      "expected_output": "Searches the video index, gives a direct recommendation, questions to ask the seller, installation prerequisites, and pitfalls around loop pipes, gas type, water pressure, anti-freeze, and extra installation costs; includes corresponding Douyin video links from column D.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "装修公司报价里写了很多同等品牌、按现场实际，这是不是坑？我该怎么问？",
+      "expected_output": "Searches the video index, flags vague quote terms, asks for brand/model/quantity/unit/process/exclusions, recommends contract wording and acceptance-linked payment milestones; includes corresponding or closest related Douyin video links from column D.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "卫生间装修我最怕返味和漏水，施工阶段应该盯哪些点？",
+      "expected_output": "Searches the video index, prioritizes waterproofing, drainage slope, floor drains, pipe traps, closed-water test, ventilation, and acceptance checks; includes concise worker-facing questions and corresponding Douyin video links from column D.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "厨房要做全屋定制橱柜，哪些钱该花，哪些别被加项坑？",
+      "expected_output": "Searches the video index for kitchen/custom cabinet terms, recommends by usage scenario, lists reasons, gives salesperson/contract questions, warns about add-ons such as hardware, sealing, panels, countertop openings, and cites 2-5 corresponding Douyin video links from column D.",
+      "files": []
+    }
+  ]
+}

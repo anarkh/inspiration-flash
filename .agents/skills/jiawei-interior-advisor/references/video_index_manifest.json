@@ -1,0 +1,26 @@
+{
+  "source_url": "https://bytedance.larkoffice.com/sheets/JBQEsQTdMhhpi1tMZvUcAPmKn7e",
+  "sheet_id": "0yZLsi",
+  "source_range": "0yZLsi!C2:E500",
+  "revision": 122,
+  "generated_from_columns": {
+    "C": "title/description",
+    "D": "Douyin video URL",
+    "E": "extracted video copy"
+  },
+  "usable_rows": 421,
+  "first_row": 2,
+  "last_row": 422,
+  "category_counts": {
+    "家电": 235,
+    "预算合同": 235,
+    "卫生间": 148,
+    "施工": 137,
+    "门窗": 121,
+    "材料": 115,
+    "全屋定制": 94,
+    "厨房": 73,
+    "装修避坑": 22
+  },
+  "note": "Local retrieval index for jiawei-interior-advisor. Do not reproduce full source_text in user answers; use it to summarize, recommend, and cite the D-column video link."
+}
