@@ -6,6 +6,7 @@ import { setTimeout as delay } from "node:timers/promises";
 import type { Agent } from "../core/types.ts";
 import { BYPASS_ENV } from "../core/constants.ts";
 import { detectKnownAgentError, firstKnownAgentErrorLine, type KnownAgentErrorKind } from "../core/agent-errors.ts";
+import { hasBridgeResultJson } from "../bridge/result-parser.ts";
 import type { SpawnInputOptions, SpawnInputResult, SpawnProcessInfo } from "../agents/shared/process.ts";
 import {
   appendTerminalLog,
@@ -298,7 +299,7 @@ async function waitForCommandDone(donePath: string, logPath: string, timeout: nu
     }
     const output = await readFile(logPath, "utf8").catch(() => "");
     const knownError = detectKnownAgentError(output);
-    if (knownError) {
+    if (knownError && !hasBridgeResultJson(output)) {
       const line = firstKnownAgentErrorLine(output, knownError) ?? knownError.title("Agent");
       throw new KnownFatalOutputError(knownError.kind, line);
     }

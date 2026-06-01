@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
 import { detectKnownAgentError, firstKnownAgentErrorLine } from "../../core/agent-errors.ts";
+import { hasBridgeResultJson } from "../../bridge/result-parser.ts";
 
 export interface SpawnInputOptions {
   cwd: string;
@@ -84,6 +85,12 @@ export async function spawnWithInput(
       const output = [stderrText, stdoutText].filter(Boolean).join("\n");
       const knownError = detectKnownAgentError(output);
       if (!knownError) {
+        return;
+      }
+      // The agent may legitimately quote a phrase like "invalid api key" inside its
+      // JSON review. Only treat known-error output as a fatal CLI failure when the
+      // agent has not yet produced a parseable verdict.
+      if (hasBridgeResultJson(output)) {
         return;
       }
       const line = firstKnownAgentErrorLine(output, knownError) ?? knownError.title("Agent");

@@ -7,7 +7,7 @@ import { commandErrorResult } from "../agents/shared/errors.ts";
 import { collectGitContext } from "../integrations/git-context.ts";
 import { createTerminalSession, formatCommandLine } from "../terminal/logs.ts";
 import { attachTmuxRunner } from "../terminal/tmux.ts";
-import { isDuplicateBridge, rememberBridge } from "./recent.ts";
+import { claimBridge } from "./recent.ts";
 import { buildBridgePrompt } from "./prompt.ts";
 import { recordBridgeRunCompleted, recordBridgeRunError, recordBridgeRunLateCompleted, recordBridgeRunStarted, recordBridgeRunTimedOut, recordConsumerCompleted, recordConsumerError, recordConsumerProcessStarted, recordConsumerStarted } from "./run-state.ts";
 
@@ -28,13 +28,12 @@ export async function runBridge(envelope: RawHookEnvelope): Promise<BridgeRespon
   }
 
   const hash = bridgeHash(payload);
-  if (await isDuplicateBridge(hash)) {
+  if ((await claimBridge(hash)).duplicate) {
     return {
       ...passResponse("Duplicate bridge skipped."),
       duplicate: true
     };
   }
-  await rememberBridge(hash);
 
   const config = await loadConfig();
   const agents = selectRouteAgents(config, payload.producer);

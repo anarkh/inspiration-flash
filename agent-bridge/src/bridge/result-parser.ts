@@ -117,6 +117,11 @@ function normalizeSeverity(value: unknown): BridgeFinding["severity"] {
   return undefined;
 }
 
+export function hasBridgeResultJson(output: string): boolean {
+  const text = extractTextFromCliOutput(output).trim();
+  return tryParseJsonObject(text) !== null;
+}
+
 function tryParseJsonObject(text: string): Record<string, unknown> | null {
   const candidates = [
     text,

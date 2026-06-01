@@ -35,6 +35,8 @@ async function runClaudeAgent(agent: Agent, cwd: string, prompt: string, context
       "-p",
       "--output-format",
       "json",
+      "--permission-mode",
+      "plan",
       "--max-turns",
       "3"
     ], prompt, {

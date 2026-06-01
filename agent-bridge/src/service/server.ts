@@ -181,10 +181,6 @@ async function readPid(): Promise<number | null> {
   return Number.isInteger(pid) ? pid : null;
 }
 
-async function checkHealth(port: number): Promise<boolean> {
-  return (await readHealth(port)).ok;
-}
-
 async function readHealth(port: number): Promise<{ ok: boolean; pid: number | null }> {
   return new Promise((resolve) => {
     const request = http.request({

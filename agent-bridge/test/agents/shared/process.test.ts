@@ -30,3 +30,21 @@ test("spawnWithInput aborts early on known fatal output", async () => {
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test("spawnWithInput keeps a verdict that quotes a known-error phrase", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "agent-bridge-process-"));
+  try {
+    const result = await spawnWithInput(process.execPath, [
+      "-e",
+      "console.log(JSON.stringify({ verdict: 'fail', summary: 'auth bug', findings: [{ title: 'Missing api key', detail: 'returns invalid api key to the client' }], suggestedPrompt: 'fix it' }))"
+    ], "", {
+      cwd: dir,
+      timeout: 10_000,
+      env: process.env
+    });
+    assert.match(result.stdout, /invalid api key/);
+    assert.match(result.stdout, /"verdict":"fail"/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});

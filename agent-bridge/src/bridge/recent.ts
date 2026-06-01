@@ -3,15 +3,21 @@ import { readJson, writeJson } from "../utils/fs.ts";
 
 type RecentMap = Record<string, number>;
 
-export async function isDuplicateBridge(hash: string, now = Date.now()): Promise<boolean> {
-  const recent = await readRecent(now);
-  return typeof recent[hash] === "number" && now - recent[hash] < RECENT_TTL_MS;
-}
+let updateQueue: Promise<unknown> = Promise.resolve();
 
-export async function rememberBridge(hash: string, now = Date.now()): Promise<void> {
-  const recent = await readRecent(now);
-  recent[hash] = now;
-  await writeJson(RECENT_FILE, recent);
+/**
+ * Atomically records `hash` and reports whether it was already seen within the TTL.
+ * The read-modify-write runs inside a serialized critical section so two concurrent
+ * bridge runs with the same payload cannot both observe the hash as new.
+ */
+export async function claimBridge(hash: string, now = Date.now()): Promise<{ duplicate: boolean }> {
+  return enqueue(async () => {
+    const recent = await readRecent(now);
+    const duplicate = typeof recent[hash] === "number" && now - recent[hash] < RECENT_TTL_MS;
+    recent[hash] = now;
+    await writeJson(RECENT_FILE, recent);
+    return { duplicate };
+  });
 }
 
 async function readRecent(now: number): Promise<RecentMap> {
@@ -22,5 +28,11 @@ async function readRecent(now: number): Promise<RecentMap> {
       next[hash] = timestamp;
     }
   }
+  return next;
+}
+
+function enqueue<T>(work: () => Promise<T>): Promise<T> {
+  const next = updateQueue.then(work, work);
+  updateQueue = next.then(() => undefined, () => undefined);
   return next;
 }
