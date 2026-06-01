@@ -1,0 +1,405 @@
+#!/usr/bin/env node
+import { readFile } from "node:fs/promises";
+import { stdin, stdout, stderr } from "node:process";
+import { loadConfig, removeAllBridgeConfig, removeRoute, upsertAgent, upsertRoute } from "../config/store.js";
+import { bridgeGateTimeoutMs, BYPASS_ENV, PRODUCER_LABELS } from "../core/constants.js";
+import { clearHooks, configureHooks } from "../hooks/configure.js";
+import { mapBridgeToProducerResponse } from "../hooks/producer-response.js";
+import { detectAllAgentClis } from "../agents/registry.js";
+import { runBridge, selectRouteAgents } from "../bridge/runner.js";
+import { printDashboardUrl, printServiceStatus, runServiceForeground, startService, stopService, submitBridge } from "../service/server.js";
+import { chooseMany, chooseOne } from "./interactive.js";
+import { resolveHookConfigCwd } from "./project-root.js";
+async function main(argv) {
+    const [command, subcommand] = argv;
+    if (!command || command === "help" || command === "--help" || command === "-h") {
+        printHelp();
+        return;
+    }
+    if (command === "setup") {
+        await setupCommand();
+        return;
+    }
+    if (command === "list") {
+        await listRoutesCommand();
+        return;
+    }
+    if (command === "agent") {
+        throw new Error("Unknown command: agent. Use `agent-bridge list`.");
+    }
+    if (command === "hooks") {
+        await hooksCommand(subcommand);
+        return;
+    }
+    if (command === "remove") {
+        await removeCommand(argv.slice(1));
+        return;
+    }
+    if (command === "start") {
+        await startService();
+        return;
+    }
+    if (command === "stop") {
+        await stopService();
+        return;
+    }
+    if (command === "status") {
+        await printServiceStatus();
+        return;
+    }
+    if (command === "dashboard") {
+        await printDashboardUrl();
+        return;
+    }
+    if (command === "serve") {
+        await runServiceForeground();
+        return;
+    }
+    if (command === "hook") {
+        await hookCommand(argv.slice(1));
+        return;
+    }
+    if (command === "run") {
+        await runCommand(argv.slice(1));
+        return;
+    }
+    throw new Error(`Unknown command: ${command}`);
+}
+async function setupCommand() {
+    const producers = await chooseProducerSet("Configure producer hooks", "Install hooks for every supported producer");
+    const scope = await chooseConfigScope();
+    const hookCwd = await resolveHookConfigCwd(scope, process.cwd());
+    const configured = await configureConsumerRoutes(producers);
+    const changed = await configureHooks({
+        producers,
+        scope,
+        events: ["stop"],
+        cwd: hookCwd
+    });
+    if (scope === "project" && hookCwd !== process.cwd()) {
+        stdout.write(`Resolved project hook root:\n- ${hookCwd}\n`);
+    }
+    stdout.write(`Configured consumer routes:\n${configured.routes.map((route) => `- ${formatRoute(route)}`).join("\n")}\n`);
+    stdout.write(`Configured consumer agents:\n${configured.agents.map((agent) => `- ${agent.label} -> ${agent.command}`).join("\n")}\n`);
+    stdout.write(`Configured hooks:\n${changed.map((path) => `- ${path}`).join("\n")}\n`);
+}
+async function chooseProducerSet(title, allDescription) {
+    const producerChoice = await chooseOne(title, [
+        { label: "Codex", value: "codex", description: "Codex producer hooks" },
+        { label: "Claude Code", value: "claude", description: "Claude Code producer hooks" },
+        { label: "Aiden", value: "aiden", description: "Aiden producer hooks" },
+        { label: "All", value: "all", description: allDescription }
+    ]);
+    return producerChoice === "all" ? ["codex", "claude", "aiden"] : [producerChoice];
+}
+async function chooseConfigScope() {
+    return chooseOne("Choose config scope", [
+        { label: "Current project", value: "project", description: "Writes .codex/.claude/.aiden under the real project root" },
+        { label: "User global", value: "global", description: "Writes ~/.codex, ~/.claude, or ~/.aiden" }
+    ]);
+}
+async function configureConsumerRoutes(producers) {
+    const detected = await detectAllAgentClis();
+    const agentByKind = new Map();
+    const routes = [];
+    const choices = detected.map((item) => ({
+        label: `${item.label}${item.found ? ` (${item.command})` : " (not found; store default command)"}`,
+        value: item.kind,
+        description: item.found ? "Detected locally" : "Can be configured now and installed later"
+    }));
+    for (const producer of producers) {
+        const selected = await chooseMany(`Choose consumer agent(s) for ${PRODUCER_LABELS[producer]} producer`, choices);
+        for (const kind of selected) {
+            const cli = detected.find((item) => item.kind === kind);
+            if (!cli) {
+                throw new Error(`Unable to resolve agent ${kind}`);
+            }
+            agentByKind.set(kind, await upsertAgent(kind, cli.command));
+        }
+        routes.push(await upsertRoute(producer, selected));
+    }
+    return {
+        agents: [...agentByKind.values()].sort((a, b) => a.label.localeCompare(b.label)),
+        routes
+    };
+}
+async function listRoutesCommand() {
+    const config = await loadConfig();
+    if (config.routes.length === 0) {
+        stdout.write("No routes configured. Run `agent-bridge setup` to create one.\n");
+        return;
+    }
+    stdout.write("Configured routes:\n");
+    for (const route of config.routes) {
+        stdout.write(`- ${route.enabled ? "enabled" : "disabled"} ${formatRouteWithAgents(route, config.agents)}\n`);
+    }
+}
+async function hooksCommand(subcommand) {
+    if (subcommand === "clear") {
+        const producers = await chooseProducerSet("Clear producer hooks", "Remove Agent Bridge hooks for every supported producer");
+        const scope = await chooseConfigScope();
+        const hookCwd = await resolveHookConfigCwd(scope, process.cwd());
+        const changed = await clearHooks({
+            producers,
+            scope,
+            cwd: hookCwd
+        });
+        if (scope === "project" && hookCwd !== process.cwd()) {
+            stdout.write(`Resolved project hook root:\n- ${hookCwd}\n`);
+        }
+        if (changed.length === 0) {
+            stdout.write("No Agent Bridge hooks found for the selected scope.\n");
+            return;
+        }
+        stdout.write(`Cleared hooks:\n${changed.map((path) => `- ${path}`).join("\n")}\n`);
+        return;
+    }
+    throw new Error("Usage: agent-bridge hooks clear");
+}
+async function removeCommand(args) {
+    const config = await loadConfig();
+    const target = await resolveRemoveTarget(args, config.routes);
+    const scopes = await resolveHookCleanupScopes(args);
+    const projectHookCwd = await resolveHookConfigCwd("project", process.cwd());
+    const producers = target.all ? ["codex", "claude", "aiden"] : [target.producer];
+    const route = target.all ? null : config.routes.find((item) => item.producer === target.producer) ?? null;
+    const removedConfig = target.all
+        ? await removeAllBridgeConfig()
+        : await removeRoute(target.producer);
+    const clearedHooks = (await Promise.all(scopes.map((scope) => clearHooks({
+        producers,
+        scope,
+        cwd: scope === "project" ? projectHookCwd : process.cwd()
+    })))).flat();
+    if (target.all) {
+        stdout.write(removedConfig ? "Removed all Agent Bridge routes and consumer agents.\n" : "No Agent Bridge routes or consumer agents were configured.\n");
+    }
+    else if (route) {
+        stdout.write(`Removed route: ${formatRoute(route)}\n`);
+    }
+    else {
+        stdout.write(`No route configured for ${PRODUCER_LABELS[target.producer]}.\n`);
+    }
+    if (clearedHooks.length > 0) {
+        stdout.write(`Cleared hooks:\n${clearedHooks.map((path) => `- ${path}`).join("\n")}\n`);
+    }
+    else {
+        stdout.write("No matching Agent Bridge hooks found for the selected cleanup scope.\n");
+    }
+}
+function formatRoute(route) {
+    const consumers = route.consumers.map((consumer) => PRODUCER_LABELS[consumer]).join(", ");
+    return `${PRODUCER_LABELS[route.producer]} -> ${consumers}`;
+}
+function formatRouteWithAgents(route, agents) {
+    const agentsByKind = new Map(agents.map((agent) => [agent.kind, agent]));
+    const consumers = route.consumers.map((consumer) => {
+        const agent = agentsByKind.get(consumer);
+        return agent ? `${PRODUCER_LABELS[consumer]} (${agent.command})` : `${PRODUCER_LABELS[consumer]} (not configured)`;
+    }).join(", ");
+    return `${PRODUCER_LABELS[route.producer]} -> ${consumers}`;
+}
+async function hookCommand(args) {
+    const producer = parseEndpointFlag(args, "--producer");
+    const event = parseEventFlag(args, "--event");
+    const raw = await readStdinJson();
+    const envelope = { producer, event, raw };
+    const skipService = shouldSkipService(raw);
+    if (!skipService) {
+        stderr.write(`${await buildProgressHint(producer, event)}\n`);
+    }
+    const response = skipService
+        ? await runBridge(envelope)
+        : await submitBridge(envelope) ?? failOpenResponse();
+    if (response.timedOut) {
+        stderr.write(`Agent Bridge: consumer agents are still running after ${formatDuration(bridgeGateTimeoutMs())}. Producer released; check \`agent-bridge status\`.\n`);
+    }
+    if (response.skipped) {
+        stderr.write("Agent Bridge: service unavailable; producer released without consumer check. Run `agent-bridge status` or `agent-bridge start` to inspect/fix.\n");
+    }
+    const mapped = mapBridgeToProducerResponse(producer, event, response);
+    if (mapped.stdout) {
+        stdout.write(mapped.stdout);
+    }
+    if (mapped.stderr) {
+        stderr.write(mapped.stderr);
+    }
+    process.exitCode = mapped.exitCode;
+}
+async function buildProgressHint(producer, event) {
+    const config = await loadConfig().catch(() => null);
+    const consumers = config ? selectRouteAgents(config, producer).map((agent) => agent.label) : [];
+    const target = consumers.length > 0 ? consumers.join(", ") : "configured consumer agents";
+    return `Agent Bridge: sending ${event} context to ${target}. Waiting up to ${formatDuration(bridgeGateTimeoutMs())}. Run \`agent-bridge status\` for details.`;
+}
+function failOpenResponse() {
+    return {
+        shouldContinue: false,
+        skipped: true,
+        result: {
+            verdict: "uncertain",
+            summary: "Agent Bridge service unavailable; producer released without consumer check.",
+            findings: [],
+            suggestedPrompt: ""
+        }
+    };
+}
+function shouldSkipService(raw) {
+    if (process.env[BYPASS_ENV] === "1") {
+        return true;
+    }
+    if (typeof raw === "object" && raw !== null && !Array.isArray(raw)) {
+        const record = raw;
+        return Boolean(record.stop_hook_active ?? record.stopHookActive);
+    }
+    return false;
+}
+async function runCommand(args) {
+    const file = valueAfter(args, "--file");
+    if (!file) {
+        throw new Error("Usage: agent-bridge run --file <payload.json>");
+    }
+    const parsed = JSON.parse(await readFile(file, "utf8"));
+    const result = await runBridge(parsed);
+    stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+}
+async function readStdinJson() {
+    const chunks = [];
+    for await (const chunk of stdin) {
+        chunks.push(Buffer.from(chunk));
+    }
+    const text = Buffer.concat(chunks).toString("utf8").trim();
+    if (!text) {
+        return {};
+    }
+    return JSON.parse(text);
+}
+function parseEndpointFlag(args, flag) {
+    const value = valueAfter(args, flag);
+    const endpoint = parseEndpointValue(value);
+    if (endpoint) {
+        return endpoint;
+    }
+    throw new Error(`${flag} must be codex, claude, or aiden`);
+}
+function parseEventFlag(args, flag) {
+    const value = valueAfter(args, flag);
+    if (value === "stop" || value === "post-tool-use") {
+        return value;
+    }
+    throw new Error(`${flag} must be stop or post-tool-use`);
+}
+function valueAfter(args, flag) {
+    const index = args.indexOf(flag);
+    if (index === -1 || index + 1 >= args.length) {
+        return null;
+    }
+    return args[index + 1];
+}
+function parseEndpointValue(value) {
+    if (value === "codex" || value === "claude" || value === "aiden") {
+        return value;
+    }
+    return null;
+}
+async function resolveRemoveTarget(args, routes) {
+    const positionals = positionalArgs(args);
+    const flagProducer = parseEndpointValue(valueAfter(args, "--producer"));
+    const positionalProducer = parseEndpointValue(positionals.find((item) => parseEndpointValue(item)) ?? null);
+    const wantsAll = args.includes("--all") || positionals.includes("all");
+    const producer = flagProducer ?? positionalProducer;
+    if (wantsAll && producer) {
+        throw new Error("Use either --all or --producer, not both.");
+    }
+    if (wantsAll) {
+        return { all: true };
+    }
+    if (producer) {
+        return { all: false, producer };
+    }
+    if (!process.stdin.isTTY) {
+        throw new Error("Usage: agent-bridge remove [--producer codex|claude|aiden|--all] [--scope project|global|both]");
+    }
+    const routeChoices = routes.map((route) => ({
+        label: formatRoute(route),
+        value: route.producer,
+        description: "Remove this producer-to-consumer route and its producer hooks"
+    }));
+    const selected = await chooseOne("Choose Agent Bridge config to remove", [
+        ...routeChoices,
+        { label: "All", value: "all", description: "Remove all routes, consumer agents, and Agent Bridge hooks" }
+    ]);
+    return selected === "all" ? { all: true } : { all: false, producer: selected };
+}
+async function resolveHookCleanupScopes(args) {
+    const scope = parseHookCleanupScope(valueAfter(args, "--scope"));
+    if (scope) {
+        return expandHookCleanupScope(scope);
+    }
+    if (!process.stdin.isTTY) {
+        return ["project"];
+    }
+    const selected = await chooseOne("Choose hook cleanup scope", [
+        { label: "Current project", value: "project", description: "Clean hooks under the current directory" },
+        { label: "User global", value: "global", description: "Clean hooks under your home directory" },
+        { label: "Both", value: "both", description: "Clean project and global hooks" }
+    ]);
+    return expandHookCleanupScope(selected);
+}
+function parseHookCleanupScope(value) {
+    if (value === "project" || value === "global" || value === "both") {
+        return value;
+    }
+    if (value !== null) {
+        throw new Error("--scope must be project, global, or both");
+    }
+    return null;
+}
+function expandHookCleanupScope(scope) {
+    return scope === "both" ? ["project", "global"] : [scope];
+}
+function positionalArgs(args) {
+    const positionals = [];
+    for (let index = 0; index < args.length; index += 1) {
+        const arg = args[index];
+        if (arg === "--producer" || arg === "--scope") {
+            index += 1;
+            continue;
+        }
+        if (arg.startsWith("--")) {
+            continue;
+        }
+        positionals.push(arg);
+    }
+    return positionals;
+}
+function printHelp() {
+    stdout.write(`agent-bridge
+
+Commands:
+  setup
+  list
+  remove [--producer codex|claude|aiden|--all] [--scope project|global|both]
+  hooks clear
+  start
+  stop
+  status
+  dashboard
+  hook --producer codex|claude|aiden --event stop
+  run --file <payload.json>
+`);
+}
+function formatDuration(ms) {
+    const seconds = Math.ceil(ms / 1000);
+    if (seconds < 60) {
+        return `${seconds}s`;
+    }
+    const minutes = Math.floor(seconds / 60);
+    const rest = seconds % 60;
+    return rest === 0 ? `${minutes}m` : `${minutes}m${rest}s`;
+}
+main(process.argv.slice(2)).catch((error) => {
+    stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
+    process.exitCode = 1;
+});
+//# sourceMappingURL=index.js.map

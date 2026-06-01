@@ -1,0 +1,48 @@
+export function buildBridgePrompt(payload, git) {
+    return [
+        "You are a consumer agent connected through Agent Bridge.",
+        "Analyze the producer agent's completed code or technical plan. Do not modify files.",
+        "Return strict JSON only, with this shape:",
+        "{",
+        "  \"verdict\": \"pass\" | \"fail\" | \"uncertain\",",
+        "  \"summary\": \"short summary\",",
+        "  \"findings\": [{\"severity\":\"critical|high|medium|low|info\",\"title\":\"...\",\"detail\":\"...\",\"file\":\"optional\",\"line\":1}],",
+        "  \"suggestedPrompt\": \"prompt the producer should run next if verdict is fail or uncertain\"",
+        "}",
+        "",
+        "Verdict rules:",
+        "- pass: no blocking issue found.",
+        "- fail: there is a concrete bug, broken requirement, unsafe behavior, or missing validation/test that should be fixed.",
+        "- uncertain: the context is insufficient or your output cannot confidently pass.",
+        "",
+        "Producer context:",
+        JSON.stringify({
+            producer: payload.producer,
+            event: payload.event,
+            cwd: payload.cwd,
+            sessionId: payload.sessionId,
+            turnId: payload.turnId,
+            hookEventName: payload.hookEventName,
+            lastAssistantMessage: payload.lastAssistantMessage,
+            toolName: payload.toolName,
+            toolInput: payload.toolInput,
+            toolResponse: payload.toolResponse
+        }, null, 2),
+        "",
+        "Git status:",
+        git.isGitRepo ? git.status || "(clean)" : "(not a git repository)",
+        "",
+        "Changed files:",
+        git.changedFiles.length > 0 ? git.changedFiles.join("\n") : "(none)",
+        "",
+        "Unstaged diff:",
+        git.diff || "(none)",
+        "",
+        "Untracked files diff:",
+        git.untrackedDiff || "(none)",
+        "",
+        "Staged diff:",
+        git.stagedDiff || "(none)"
+    ].join("\n");
+}
+//# sourceMappingURL=prompt.js.map

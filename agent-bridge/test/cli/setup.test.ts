@@ -1,0 +1,354 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import { spawn } from "node:child_process";
+
+const repoRoot = dirname(dirname(dirname(fileURLToPath(import.meta.url))));
+const cliEntry = join(repoRoot, "src", "cli", "index.ts");
+
+test("setup configures producer hooks and consumer agent in one flow", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "agent-bridge-setup-"));
+  const projectDir = join(dir, "project");
+  try {
+    await mkdir(projectDir);
+    const result = await runCli(["setup"], projectDir, join(dir, "config"), join(dir, "state"));
+
+    assert.equal(result.code, 0, result.stderr);
+    assert.match(result.stdout, /Configured consumer routes:/);
+    assert.match(result.stdout, /Codex -> Codex/);
+    assert.match(result.stdout, /Configured consumer agents:/);
+    assert.match(result.stdout, /Codex -> .*codex/);
+    assert.match(result.stdout, /Configured hooks:/);
+
+    const hooks = JSON.parse(await readFile(join(projectDir, ".codex", "hooks.json"), "utf8"));
+    assert.match(hooks.hooks.Stop[0].hooks[0].command, /hook --producer codex --event stop/);
+    assert.equal(hooks.hooks.PostToolUse, undefined);
+
+    const config = JSON.parse(await readFile(join(dir, "config", "config.json"), "utf8"));
+    assert.equal(config.agents[0].kind, "codex");
+    assert.match(config.agents[0].command, /codex$/);
+    assert.deepEqual(config.routes[0].producer, "codex");
+    assert.deepEqual(config.routes[0].consumers, ["codex"]);
+
+    const list = await runCli(["list"], projectDir, join(dir, "config"), join(dir, "state"));
+    assert.equal(list.code, 0, list.stderr);
+    assert.match(list.stdout, /Configured routes:/);
+    assert.match(list.stdout, /enabled Codex -> Codex \(.*codex\)/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("hooks clear removes configured project hooks", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "agent-bridge-clear-"));
+  const projectDir = join(dir, "project");
+  try {
+    await mkdir(projectDir);
+    const configDir = join(dir, "config");
+    const stateDir = join(dir, "state");
+    const setup = await runCli(["setup"], projectDir, configDir, stateDir);
+    assert.equal(setup.code, 0, setup.stderr);
+
+    const result = await runCli(["hooks", "clear"], projectDir, configDir, stateDir);
+    assert.equal(result.code, 0, result.stderr);
+    assert.match(result.stdout, /Cleared hooks:/);
+
+    const hooks = JSON.parse(await readFile(join(projectDir, ".codex", "hooks.json"), "utf8"));
+    assert.equal(hooks.hooks.Stop, undefined);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("remove producer deletes route, prunes consumers, and clears hooks", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "agent-bridge-remove-"));
+  const projectDir = join(dir, "project");
+  try {
+    await mkdir(projectDir);
+    const configDir = join(dir, "config");
+    const stateDir = join(dir, "state");
+    const setup = await runCli(["setup"], projectDir, configDir, stateDir);
+    assert.equal(setup.code, 0, setup.stderr);
+
+    const result = await runCli(["remove", "--producer", "codex", "--scope", "project"], projectDir, configDir, stateDir);
+    assert.equal(result.code, 0, result.stderr);
+    assert.match(result.stdout, /Removed route: Codex -> Codex/);
+    assert.match(result.stdout, /Cleared hooks:/);
+
+    const config = JSON.parse(await readFile(join(configDir, "config.json"), "utf8"));
+    assert.deepEqual(config.routes, []);
+    assert.deepEqual(config.agents, []);
+
+    const hooks = JSON.parse(await readFile(join(projectDir, ".codex", "hooks.json"), "utf8"));
+    assert.equal(hooks.hooks.Stop, undefined);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("help exposes top-level lifecycle commands without service namespace", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "agent-bridge-help-"));
+  try {
+    const result = await runCli(["--help"], dir, join(dir, "config"), join(dir, "state"));
+    assert.equal(result.code, 0, result.stderr);
+    assert.match(result.stdout, /\n  list\n/);
+    assert.match(result.stdout, /\n  remove \[--producer codex\|claude\|aiden\|--all\] \[--scope project\|global\|both\]\n/);
+    assert.match(result.stdout, /\n  start\n/);
+    assert.match(result.stdout, /\n  status\n/);
+    assert.match(result.stdout, /\n  dashboard\n/);
+    assert.match(result.stdout, /\n  stop\n/);
+    assert.doesNotMatch(result.stdout, /service start|service run/);
+    assert.doesNotMatch(result.stdout, /agent list|agent add|agent remove/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("status shows active consumer agent progress", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "agent-bridge-status-"));
+  const projectDir = join(dir, "project");
+  const stateDir = join(dir, "state");
+  try {
+    await mkdir(projectDir);
+    await mkdir(stateDir);
+    const now = new Date(Date.now() - 2_000).toISOString();
+    await writeFile(join(stateDir, "bridge-runs.json"), `${JSON.stringify([{
+      id: "run-1",
+      hash: "abc",
+      producer: "codex",
+      event: "stop",
+      cwd: projectDir,
+      sessionId: null,
+      turnId: null,
+      status: "running",
+      startedAt: now,
+      updatedAt: now,
+      completedAt: null,
+      durationMs: null,
+      consumers: [{
+        kind: "claude",
+        label: "Claude Code",
+        command: "claude",
+        status: "running",
+        startedAt: now,
+        completedAt: null
+      }]
+    }], null, 2)}\n`, "utf8");
+
+    const result = await runCli(["status"], projectDir, join(dir, "config"), stateDir);
+    assert.equal(result.code, 0, result.stderr);
+    assert.match(result.stdout, /Service: not running/);
+    assert.match(result.stdout, /Active bridge runs:/);
+    assert.match(result.stdout, /run-1 Codex stop running/);
+    assert.match(result.stdout, /Claude Code: running .*claude/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("status treats timed out runs with interrupted consumers as recent", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "agent-bridge-timeout-status-"));
+  const projectDir = join(dir, "project");
+  const stateDir = join(dir, "state");
+  try {
+    await mkdir(projectDir);
+    await mkdir(stateDir);
+    const now = new Date(Date.now() - 2_000).toISOString();
+    await writeFile(join(stateDir, "bridge-runs.json"), `${JSON.stringify([{
+      id: "run-1",
+      hash: "abc",
+      producer: "codex",
+      event: "stop",
+      cwd: projectDir,
+      sessionId: null,
+      turnId: null,
+      status: "timed_out",
+      startedAt: now,
+      updatedAt: now,
+      completedAt: now,
+      durationMs: 1,
+      consumers: [{
+        kind: "aiden",
+        label: "Aiden",
+        command: "aiden",
+        status: "interrupted",
+        startedAt: now,
+        completedAt: now
+      }]
+    }], null, 2)}\n`, "utf8");
+
+    const result = await runCli(["status"], projectDir, join(dir, "config"), stateDir);
+    assert.equal(result.code, 0, result.stderr);
+    assert.match(result.stdout, /Active bridge runs: none/);
+    assert.match(result.stdout, /Recent bridge runs:/);
+    assert.match(result.stdout, /run-1 Codex stop timed_out \(producer released\)/);
+    assert.match(result.stdout, /Aiden: interrupted .*aiden/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("bridge releases producer after bounded gate and records late result", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "agent-bridge-gate-"));
+  const projectDir = join(dir, "project");
+  const configDir = join(dir, "config");
+  const stateDir = join(dir, "state");
+  try {
+    await mkdir(projectDir);
+    await mkdir(configDir);
+    await mkdir(stateDir);
+    const fakeClaude = join(dir, "fake-claude.js");
+    await writeFile(fakeClaude, `#!${process.execPath}
+process.stdin.resume();
+process.stdin.on("end", () => {
+  setTimeout(() => {
+    console.log(JSON.stringify({ verdict: "pass", summary: "late pass", findings: [], suggestedPrompt: "" }));
+  }, 250);
+});
+`, "utf8");
+    await chmod(fakeClaude, 0o755);
+    const now = new Date().toISOString();
+    await writeFile(join(configDir, "config.json"), `${JSON.stringify({
+      port: 47743,
+      uncertainBehavior: "continue",
+      agents: [{
+        id: "claude",
+        kind: "claude",
+        label: "Claude Code",
+        command: fakeClaude,
+        enabled: true,
+        createdAt: now,
+        updatedAt: now
+      }],
+      routes: [{
+        producer: "codex",
+        consumers: ["claude"],
+        enabled: true,
+        createdAt: now,
+        updatedAt: now
+      }]
+    }, null, 2)}\n`, "utf8");
+
+    const script = join(dir, "run-bridge.mjs");
+    await writeFile(script, `
+import assert from "node:assert/strict";
+const { runBridge } = await import(${JSON.stringify(pathToFileURL(join(repoRoot, "src", "bridge", "runner.ts")).href)});
+const started = Date.now();
+const response = await runBridge({
+  producer: "codex",
+  event: "stop",
+  raw: { cwd: ${JSON.stringify(projectDir)}, last_assistant_message: "done" }
+});
+const elapsed = Date.now() - started;
+assert.equal(response.shouldContinue, false);
+assert.equal(response.timedOut, true);
+assert.ok(elapsed < 1000, "runBridge took " + elapsed + "ms");
+await new Promise((resolve) => setTimeout(resolve, 700));
+console.log(JSON.stringify({ elapsed, response }));
+`, "utf8");
+
+    const result = await runNodeScript(script, projectDir, configDir, stateDir, {
+      extraEnv: { AGENT_BRIDGE_GATE_TIMEOUT_MS: "50" }
+    });
+    assert.equal(result.code, 0, result.stderr);
+
+    const runs = JSON.parse(await readFile(join(stateDir, "bridge-runs.json"), "utf8"));
+    assert.equal(runs[0].status, "late_pass");
+    assert.equal(runs[0].consumers[0].late, true);
+    assert.equal(runs[0].consumers[0].status, "pass");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("agent namespace is no longer a public command", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "agent-bridge-agent-add-"));
+  try {
+    const add = await runCli(["agent", "add"], dir, join(dir, "config"), join(dir, "state"));
+    assert.equal(add.code, 1);
+    assert.match(add.stderr, /Unknown command: agent\. Use `agent-bridge list`\./);
+
+    const list = await runCli(["agent", "list"], dir, join(dir, "config"), join(dir, "state"));
+    assert.equal(list.code, 1);
+    assert.match(list.stderr, /Unknown command: agent\. Use `agent-bridge list`\./);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("service namespace is no longer a public command", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "agent-bridge-service-"));
+  try {
+    const result = await runCli(["service", "status"], dir, join(dir, "config"), join(dir, "state"));
+    assert.equal(result.code, 1);
+    assert.match(result.stderr, /Unknown command: service/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+interface RunCliOptions {
+  input?: string;
+  extraEnv?: NodeJS.ProcessEnv;
+}
+
+function runCli(args: string[], cwd: string, configDir: string, stateDir: string, options: RunCliOptions = {}): Promise<{ code: number | null; stdout: string; stderr: string }> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, [cliEntry, ...args], {
+      cwd,
+      env: {
+        ...process.env,
+        AGENT_BRIDGE_BYPASS: undefined,
+        AGENT_BRIDGE_CONFIG_DIR: configDir,
+        AGENT_BRIDGE_STATE_DIR: stateDir,
+        ...options.extraEnv,
+        PATH: ""
+      },
+      stdio: ["pipe", "pipe", "pipe"]
+    });
+    const stdout: Buffer[] = [];
+    const stderr: Buffer[] = [];
+    child.stdout.on("data", (chunk) => stdout.push(Buffer.from(chunk)));
+    child.stderr.on("data", (chunk) => stderr.push(Buffer.from(chunk)));
+    child.on("error", reject);
+    child.stdin.end(options.input ?? "");
+    child.on("close", (code) => resolve({
+      code,
+      stdout: Buffer.concat(stdout).toString("utf8"),
+      stderr: Buffer.concat(stderr).toString("utf8")
+    }));
+  });
+}
+
+function runNodeScript(script: string, cwd: string, configDir: string, stateDir: string, options: RunCliOptions = {}): Promise<{ code: number | null; stdout: string; stderr: string }> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, [script], {
+      cwd,
+      env: {
+        ...process.env,
+        AGENT_BRIDGE_BYPASS: undefined,
+        AGENT_BRIDGE_CONFIG_DIR: configDir,
+        AGENT_BRIDGE_STATE_DIR: stateDir,
+        ...options.extraEnv,
+        PATH: ""
+      },
+      stdio: ["pipe", "pipe", "pipe"]
+    });
+    const stdout: Buffer[] = [];
+    const stderr: Buffer[] = [];
+    child.stdout.on("data", (chunk) => stdout.push(Buffer.from(chunk)));
+    child.stderr.on("data", (chunk) => stderr.push(Buffer.from(chunk)));
+    child.on("error", reject);
+    child.stdin.end(options.input ?? "");
+    child.on("close", (code) => {
+      resolve({
+        code,
+        stdout: Buffer.concat(stdout).toString("utf8"),
+        stderr: Buffer.concat(stderr).toString("utf8")
+      });
+    });
+  });
+}
