@@ -1,0 +1,27 @@
+{
+  "roomTitle": "Nana的深夜闲聊",
+  "mood": "气氛：冷场",
+  "clip": "Clip: 未触发",
+  "supporters": {
+    "rank1": "1. MoonlitBoss 9999",
+    "rank2": "2. StarTea 4200",
+    "player": "你：未上榜"
+  },
+  "nana": {
+    "name": "Nana",
+    "line": "所以昨天有人问我会不会做惩罚直播，绝对不会。我也是有尊严的，大概。"
+  },
+  "player": {
+    "badge": "身份：路人",
+    "influence": "房间影响力 0"
+  },
+  "chat": [
+    "oldfan_77：MoonlitBoss今天还没来？",
+    "hater_404：主播今天又在装正经",
+    "tea_fan_12：Nana刚刚那句可以剪",
+    "Qing[房管]：新观众先看置顶规则",
+    "sleepy_cat：今晚好安静"
+  ],
+  "powers": ["改话题 锁定", "点名 锁定", "挑战卡 锁定"],
+  "choices": ["新来的，看看", "这个直播间是干嘛的？", "Nana，看这里"]
+}

@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "'/opt/homebrew/Cellar/node/26.0.0/bin/node' '/Users/bytedance/.nvm/versions/node/v22.22.2/bin/agent-bridge' hook --producer codex --event stop",
+            "statusMessage": "Running Agent Bridge"
+          }
+        ]
+      }
+    ]
+  }
+}

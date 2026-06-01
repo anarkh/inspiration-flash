@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>赛博直播间</title>
+    <link rel="stylesheet" href="./src/styles.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand-lockup">
+          <p class="eyebrow">多模型直播间</p>
+          <h1>赛博直播间</h1>
+        </div>
+        <div class="status-strip" aria-live="polite">
+          <span id="liveStatus">离线模拟</span>
+          <span id="modelCount">0 个模型</span>
+          <span id="memoryCount">0 条记忆</span>
+        </div>
+      </header>
+
+      <nav class="tabbar" aria-label="主视图">
+        <button class="tab-button active" data-view="room" type="button">直播间</button>
+        <button class="tab-button" data-view="config" type="button">配置</button>
+        <button class="tab-button" data-view="memory" type="button">记忆</button>
+      </nav>
+
+      <main>
+        <section id="roomView" class="view active-view">
+          <div class="live-layout">
+            <div class="live-main">
+              <section class="stage-panel">
+                <div class="stage-visual">
+                  <div class="stage-ring ring-one"></div>
+                  <div class="stage-ring ring-two"></div>
+                  <div class="host-avatar">主持</div>
+                  <div id="audienceOrbits" class="audience-orbits"></div>
+                </div>
+
+                <div class="host-console">
+                  <label for="hostInput">主持人发言</label>
+                  <textarea
+                    id="hostInput"
+                    rows="5"
+                    placeholder="让观众席模型讨论一个计划、产品想法、技术方案或决策。"
+                  ></textarea>
+                  <div class="action-row">
+                    <button id="sendMessage" class="primary-button" type="button">开始讨论</button>
+                    <button id="demoMessage" type="button">填入示例</button>
+                    <button id="compactNow" type="button">压缩上下文</button>
+                  </div>
+                </div>
+              </section>
+
+              <aside class="room-metrics">
+                <span id="enabledCount">0 个启用</span>
+                <span>上下文 <strong id="tokenEstimate">0 Token</strong></span>
+                <span>预算 <strong id="tokenBudgetLabel">900 Token</strong></span>
+                <span>摘要 <strong id="summaryCount">0</strong></span>
+                <label class="round-control">
+                  轮数
+                  <input id="discussionRounds" type="number" min="1" max="8" step="1" value="5">
+                </label>
+                <div id="modelRail" class="model-rail compact-rail" aria-label="观众席详情"></div>
+              </aside>
+            </div>
+
+            <section class="transcript-panel">
+              <div class="panel-header">
+                <h2>直播记录</h2>
+                <button id="clearTranscript" class="danger-button" type="button">清空</button>
+              </div>
+              <div id="transcript" class="transcript" aria-live="polite"></div>
+            </section>
+          </div>
+        </section>
+
+        <section id="configView" class="view">
+          <div class="config-grid">
+            <form id="modelForm" class="form-panel">
+              <input id="editingModelId" type="hidden">
+              <div class="panel-header">
+                <h2 id="modelFormTitle">添加模型</h2>
+                <button id="resetModelForm" type="button">新建</button>
+              </div>
+
+              <label>
+                显示名称
+                <input id="modelName" required maxlength="40" placeholder="架构师">
+              </label>
+              <label>
+                服务商
+                <select id="modelProvider">
+                  <option>OpenAI</option>
+                  <option>Anthropic</option>
+                  <option>Google</option>
+                  <option>本地</option>
+                  <option>自定义</option>
+                </select>
+              </label>
+              <label>
+                模型 ID
+                <input id="modelId" maxlength="80" placeholder="例如 gpt-4o-mini">
+              </label>
+              <label>
+                接口地址
+                <input id="modelEndpoint" maxlength="160" placeholder="https://api.example.com/chat">
+              </label>
+              <label>
+                API Key
+                <input id="modelApiKey" type="password" maxlength="240" autocomplete="off" placeholder="仅保存在本地 Node 服务">
+              </label>
+              <p class="hint compact-hint">API Key 会保存在本地 Node 服务中，模型请求也会通过本应用代理转发。</p>
+              <label>
+                角色设定
+                <textarea id="modelPersona" rows="4" required placeholder="描述这个模型在观众席里应该如何发言。"></textarea>
+              </label>
+              <div class="split-row">
+                <label>
+                  温度
+                  <input id="modelTemperature" type="number" min="0" max="2" step="0.05" value="0.7">
+                </label>
+                <label>
+                  颜色
+                  <input id="modelColor" type="color" value="#39a0ff">
+                </label>
+              </div>
+              <label class="switch-row">
+                <input id="modelEnabled" type="checkbox" checked>
+                在直播间启用
+              </label>
+              <button class="primary-button" type="submit">保存模型</button>
+            </form>
+
+            <section class="list-panel">
+              <div class="panel-header">
+                <h2>已配置模型</h2>
+                <button id="restoreModels" type="button">恢复默认</button>
+              </div>
+              <div id="configuredModels" class="configured-models"></div>
+            </section>
+          </div>
+        </section>
+
+        <section id="memoryView" class="view">
+          <div class="memory-grid">
+            <section class="form-panel">
+              <div class="panel-header">
+                <h2>添加记忆</h2>
+              </div>
+              <label>
+                记忆
+                <textarea id="memoryInput" rows="4" placeholder="长期偏好、项目事实或约束条件。"></textarea>
+              </label>
+              <div class="action-row">
+                <button id="addMemory" class="primary-button" type="button">添加</button>
+                <button id="exportState" type="button">导出 JSON</button>
+              </div>
+              <label>
+                上下文预算
+                <input id="tokenBudget" type="range" min="300" max="2200" step="100" value="900">
+              </label>
+              <p class="hint">
+                当当前上下文超过预算时，较早的直播记录会被压缩成摘要。
+              </p>
+            </section>
+
+            <section class="list-panel">
+              <div class="panel-header">
+                <h2>直播间记忆</h2>
+                <button id="clearMemory" class="danger-button" type="button">清空</button>
+              </div>
+              <div id="memoryList" class="memory-list"></div>
+            </section>
+
+            <section class="list-panel summaries-panel">
+              <div class="panel-header">
+                <h2>压缩上下文</h2>
+                <button id="clearSummaries" class="danger-button" type="button">清空</button>
+              </div>
+              <div id="summaryList" class="summary-list"></div>
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="./src/data/defaults.js"></script>
+    <script src="./src/utils.js"></script>
+    <script src="./src/data/storage.js"></script>
+    <script src="./src/domain/providerAdapters.js"></script>
+    <script src="./src/domain/roomEngine.js"></script>
+    <script src="./src/ui/render.js"></script>
+    <script src="./src/app.js"></script>
+  </body>
+</html>

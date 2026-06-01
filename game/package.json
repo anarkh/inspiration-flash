@@ -1,0 +1,16 @@
+{
+  "name": "bangyi-dage-minigame",
+  "uuid": "7fd03b7d-52fd-4b42-9f63-f41d8e3a2a64",
+  "version": "0.1.0",
+  "description": "Day 1 WeChat Mini Game prototype for Bangyi Dage Simulator.",
+  "private": true,
+  "creator": {
+    "version": "3.8.8"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
+}

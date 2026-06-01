@@ -1,0 +1,21 @@
+# Web
+node_modules/
+log
+
+# Android
+.gradle/
+build/
+android/.gradle/
+android/**/build/
+android/local.properties
+
+# iOS
+ios/DerivedData/
+ios/build/
+ios/*.xcworkspace/xcuserdata/
+ios/*.xcodeproj/xcuserdata/
+ios/*.xcodeproj/project.xcworkspace/xcuserdata/
+
+# System
+.DS_Store
+

@@ -1,0 +1,26 @@
+{
+  "name": "cyber-live-room",
+  "version": "0.1.0",
+  "description": "Local multi-model discussion room with Node-hosted provider proxy and local state storage.",
+  "type": "module",
+  "main": "server/index.mjs",
+  "bin": {
+    "cyber-live-room": "./server/index.mjs"
+  },
+  "scripts": {
+    "start": "node server/index.mjs",
+    "check": "find src server -name '*.js' -o -name '*.mjs' | xargs -n 1 node --check",
+    "pack:local": "npm pack"
+  },
+  "files": [
+    "index.html",
+    "src",
+    "server",
+    "package.json",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "UNLICENSED"
+}
