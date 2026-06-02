@@ -97,7 +97,13 @@ test/
 
 ## Aiden Notes
 
-Aiden is detected as the `aiden` executable. The consumer adapter calls it in non-interactive print mode with a read-only permission mode:
+Aiden is detected as the `aiden` executable. With the tmux terminal backend, the consumer adapter starts Aiden in an interactive terminal and pastes the bridge request into that session:
+
+```bash
+aiden --permission-mode readOnly --model-reasoning-effort low --workspace <cwd> --add-dir <tmp>
+```
+
+When tmux is unavailable or `AGENT_BRIDGE_TERMINAL_BACKEND=capture` is set, it falls back to non-interactive print mode:
 
 ```bash
 aiden --print --no-streaming --permission-mode readOnly --model-reasoning-effort low --workspace <cwd> --add-dir <tmp> --max-turns 2 <prompt>

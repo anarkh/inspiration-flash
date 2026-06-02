@@ -9,6 +9,11 @@ export interface SpawnInputOptions {
   capture?: SpawnCapture;
 }
 
+export interface TtyRunOptions extends SpawnInputOptions {
+  terminalInput: string;
+  inputDelayMs?: number;
+}
+
 export interface SpawnInputResult {
   stdout: string;
   stderr: string;
@@ -16,6 +21,7 @@ export interface SpawnInputResult {
 
 export interface AgentCommandRunner {
   run(command: string, args: string[], input: string, options: SpawnInputOptions): Promise<SpawnInputResult>;
+  runTty?(command: string, args: string[], options: TtyRunOptions): Promise<SpawnInputResult>;
 }
 
 export interface SpawnProcessInfo {

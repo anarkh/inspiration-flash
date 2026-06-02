@@ -1,13 +1,13 @@
 import { spawn, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { chmod, mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, stat } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import type { Agent } from "../core/types.ts";
 import { BYPASS_ENV } from "../core/constants.ts";
 import { detectKnownAgentError, firstKnownAgentErrorLine, type KnownAgentErrorKind } from "../core/agent-errors.ts";
 import { hasBridgeResultJson } from "../bridge/result-parser.ts";
-import type { SpawnInputOptions, SpawnInputResult, SpawnProcessInfo } from "../agents/shared/process.ts";
+import type { SpawnInputOptions, SpawnInputResult, SpawnProcessInfo, TtyRunOptions } from "../agents/shared/process.ts";
 import {
   appendTerminalLog,
   ensureTerminalLogTail,
@@ -50,7 +50,8 @@ export function attachTmuxRunner(session: TerminalSession, options: AttachTmuxOp
   session.backend = "tmux";
   session.tmuxSession = tmuxSessionName(session.terminalId);
   session.runner = {
-    run: (command, args, input, runOptions) => runInTmux(tmux, session, options, command, args, input, runOptions)
+    run: (command, args, input, runOptions) => runInTmux(tmux, session, options, command, args, input, runOptions),
+    runTty: (command, args, runOptions) => runInteractiveInTmux(tmux, session, options, command, args, runOptions)
   };
 }
 
@@ -135,48 +136,23 @@ async function runInTmux(
   const workDir = dirname(session.logPath);
   await mkdir(workDir, { recursive: true });
 
-  const inputPath = join(workDir, "stdin.txt");
   const exitPath = join(workDir, "exit-code.txt");
   const donePath = join(workDir, "done");
-  const scriptPath = join(workDir, "command.sh");
   await Promise.all([
-    writeFile(inputPath, input, "utf8"),
     rm(exitPath, { force: true }),
     rm(donePath, { force: true })
   ]);
 
-  if (await hasSession(tmux, sessionName)) {
-    await execTmux(tmux, ["kill-session", "-t", sessionName]).catch(() => undefined);
-  }
-  await execTmux(tmux, [
-    "new-session",
-    "-d",
-    "-s",
-    sessionName,
-    "-c",
-    runOptions.cwd,
-    "-x",
-    String(DEFAULT_COLS),
-    "-y",
-    String(DEFAULT_ROWS)
-  ]);
-
-  const panePid = await paneProcessId(tmux, sessionName);
   const commandLine = formatCommandLine(command, args);
-  const header = [
-    `\x1b[90m# Agent Bridge tmux terminal\x1b[0m`,
-    `\x1b[90m# run: ${attachOptions.runId}\x1b[0m`,
-    `\x1b[90m# agent: ${attachOptions.agent.label}\x1b[0m`,
-    `\x1b[90m# cwd: ${attachOptions.cwd}\x1b[0m`,
-    `\x1b[90m# tmux: ${sessionName}\x1b[0m`,
-    `\x1b[90m# pane pid: ${panePid}\x1b[0m`,
-    `\x1b[90m$ ${commandLine}\x1b[0m`,
-    ""
-  ].join("\r\n");
-  await writeTerminalLog(session.logPath, header);
-  await execTmux(tmux, ["pipe-pane", "-o", "-t", sessionName, `cat >> ${shellQuote([session.logPath])}`]);
-  ensureTerminalLogTail(session.terminalId, session.logPath, true);
-  publishTerminalEvent(session.terminalId, { type: "start", data: header, pid: panePid });
+  const panePid = await startTmuxCommand(
+    tmux,
+    session,
+    sessionName,
+    attachOptions,
+    runOptions.cwd,
+    commandLine,
+    shellCommandWithExitMarker(command, args, runOptions.env, exitPath, donePath)
+  );
   attachOptions.onStart?.({
     pid: panePid,
     command,
@@ -184,16 +160,15 @@ async function runInTmux(
     cwd: runOptions.cwd
   }, session);
 
-  await writeCommandScript(scriptPath, {
-    command,
-    args,
-    inputPath,
-    exitPath,
-    donePath,
-    env: runOptions.env
-  });
-  await execTmux(tmux, ["send-keys", "-t", sessionName, "-l", `sh ${shellQuote([scriptPath])}`]);
-  await execTmux(tmux, ["send-keys", "-t", sessionName, "C-m"]);
+  if (input.length > 0) {
+    await delay(250);
+    await pasteIntoTmux(tmux, sessionName, input);
+    if (!input.endsWith("\n") && !input.endsWith("\r")) {
+      await execTmux(tmux, ["send-keys", "-t", sessionName, "C-m"]);
+    }
+    await delay(50);
+    await execTmux(tmux, ["send-keys", "-t", sessionName, "C-d"]);
+  }
 
   try {
     await waitForCommandDone(donePath, session.logPath, runOptions.timeout);
@@ -242,33 +217,137 @@ async function runInTmux(
   throw error;
 }
 
-async function writeCommandScript(
-  scriptPath: string,
-  options: {
-    command: string;
-    args: string[];
-    inputPath: string;
-    exitPath: string;
-    donePath: string;
-    env: NodeJS.ProcessEnv;
+async function runInteractiveInTmux(
+  tmux: string,
+  session: TerminalSession,
+  attachOptions: AttachTmuxOptions,
+  command: string,
+  args: string[],
+  runOptions: TtyRunOptions
+): Promise<SpawnInputResult> {
+  const sessionName = session.tmuxSession ?? tmuxSessionName(session.terminalId);
+  const workDir = dirname(session.logPath);
+  await mkdir(workDir, { recursive: true });
+
+  const commandLine = formatCommandLine(command, args);
+  const panePid = await startTmuxCommand(
+    tmux,
+    session,
+    sessionName,
+    attachOptions,
+    runOptions.cwd,
+    commandLine,
+    shellQuote([
+      ...envCommandPrefix(runOptions.env),
+      command,
+      ...args
+    ])
+  );
+  attachOptions.onStart?.({
+    pid: panePid,
+    command,
+    args,
+    cwd: runOptions.cwd
+  }, session);
+
+  await delay(runOptions.inputDelayMs ?? 1500);
+  const outputOffset = await stat(session.logPath).then((item) => item.size, () => 0);
+  await pasteIntoTmux(tmux, sessionName, runOptions.terminalInput);
+  await execTmux(tmux, ["send-keys", "-t", sessionName, "C-m"]);
+
+  try {
+    const stdout = await waitForInteractiveResult(session.logPath, outputOffset, runOptions.timeout);
+    const footer = "\r\n\x1b[90m# bridge result detected; terminal left open\x1b[0m\r\n";
+    await appendTerminalLog(session.logPath, footer);
+    publishTerminalEvent(session.terminalId, { type: "stdout", data: footer });
+    return {
+      stdout,
+      stderr: ""
+    };
+  } catch (error) {
+    const output = await readFile(session.logPath, "utf8").catch(() => "");
+    const footer = error instanceof KnownFatalOutputError
+      ? `\r\n\x1b[90m# interactive terminal observed ${error.kind} output\x1b[0m\r\n`
+      : `\r\n\x1b[90m# interactive terminal timed out after ${runOptions.timeout} ms\x1b[0m\r\n`;
+    await appendTerminalLog(session.logPath, footer);
+    publishTerminalEvent(session.terminalId, { type: "stdout", data: footer });
+    const message = error instanceof Error ? error.message : String(error);
+    const terminalError = new Error(`${message}\n\nTerminal tail:\n${output.slice(-2000)}`) as Error & {
+      stdout?: string;
+      stderr?: string;
+      code?: number | null;
+    };
+    terminalError.stdout = output;
+    terminalError.stderr = "";
+    terminalError.code = null;
+    throw terminalError;
   }
-): Promise<void> {
-  const command = shellQuote([
-    ...envCommandPrefix(options.env),
-    options.command,
-    ...options.args
+}
+
+async function startTmuxCommand(
+  tmux: string,
+  session: TerminalSession,
+  sessionName: string,
+  attachOptions: AttachTmuxOptions,
+  cwd: string,
+  commandLine: string,
+  shellCommand: string
+): Promise<number> {
+  if (await hasSession(tmux, sessionName)) {
+    await execTmux(tmux, ["kill-session", "-t", sessionName]).catch(() => undefined);
+  }
+  await execTmux(tmux, [
+    "new-session",
+    "-d",
+    "-s",
+    sessionName,
+    "-c",
+    cwd,
+    "-x",
+    String(DEFAULT_COLS),
+    "-y",
+    String(DEFAULT_ROWS),
+    shellCommand
   ]);
-  const script = [
-    "#!/bin/sh",
-    "set +e",
-    `${command} < ${shellQuote([options.inputPath])}`,
+
+  const panePid = await paneProcessId(tmux, sessionName);
+  const header = [
+    `\x1b[90m# Agent Bridge tmux terminal\x1b[0m`,
+    `\x1b[90m# run: ${attachOptions.runId}\x1b[0m`,
+    `\x1b[90m# agent: ${attachOptions.agent.label}\x1b[0m`,
+    `\x1b[90m# cwd: ${attachOptions.cwd}\x1b[0m`,
+    `\x1b[90m# tmux: ${sessionName}\x1b[0m`,
+    `\x1b[90m# pane pid: ${panePid}\x1b[0m`,
+    `\x1b[90m$ ${commandLine}\x1b[0m`,
+    ""
+  ].join("\r\n");
+  await writeTerminalLog(session.logPath, header);
+  await execTmux(tmux, ["pipe-pane", "-o", "-t", sessionName, `cat >> ${shellQuote([session.logPath])}`]);
+  ensureTerminalLogTail(session.terminalId, session.logPath, true);
+  publishTerminalEvent(session.terminalId, { type: "start", data: header, pid: panePid });
+  return panePid;
+}
+
+function shellCommandWithExitMarker(
+  command: string,
+  args: string[],
+  env: NodeJS.ProcessEnv,
+  exitPath: string,
+  donePath: string
+): string {
+  const executable = shellQuote([
+    ...envCommandPrefix(env),
+    command,
+    ...args
+  ]);
+  return [
+    executable,
     "agent_bridge_code=$?",
     "printf '\\r\\n\\033[90m# agent-bridge command exit code %s\\033[0m\\r\\n' \"$agent_bridge_code\"",
-    `printf '%s\\n' "$agent_bridge_code" > ${shellQuote([options.exitPath])}`,
-    `touch ${shellQuote([options.donePath])}`
-  ].join("\n");
-  await writeFile(scriptPath, script, "utf8");
-  await chmod(scriptPath, 0o700);
+    `printf '%s\\n' "$agent_bridge_code" > ${shellQuote([exitPath])}`,
+    `touch ${shellQuote([donePath])}`,
+    `exec ${shellQuote([env.SHELL ?? process.env.SHELL ?? "/bin/sh"])}`
+  ].join("; ");
 }
 
 function envCommandPrefix(env: NodeJS.ProcessEnv): string[] {
@@ -306,6 +385,30 @@ async function waitForCommandDone(donePath: string, logPath: string, timeout: nu
     await delay(200);
   }
   throw new Error(`Agent command timed out after ${timeout} ms`);
+}
+
+async function waitForInteractiveResult(logPath: string, outputOffset: number, timeout: number): Promise<string> {
+  const started = Date.now();
+  while (Date.now() - started < timeout) {
+    const output = await readFile(logPath, "utf8").catch(() => "");
+    const relevantOutput = output.slice(outputOffset);
+    if (hasBridgeResultJson(relevantOutput)) {
+      return relevantOutput;
+    }
+    const knownError = detectKnownAgentError(relevantOutput);
+    if (knownError) {
+      const line = firstKnownAgentErrorLine(relevantOutput, knownError) ?? knownError.title("Agent");
+      throw new KnownFatalOutputError(knownError.kind, line);
+    }
+    await delay(300);
+  }
+  throw new Error(`Interactive agent command timed out after ${timeout} ms`);
+}
+
+async function pasteIntoTmux(tmux: string, sessionName: string, text: string): Promise<void> {
+  const bufferName = `agent-bridge-${createHash("sha1").update(`${sessionName}:${Date.now()}:${Math.random()}`).digest("hex").slice(0, 12)}`;
+  await execTmux(tmux, ["load-buffer", "-b", bufferName, "-"], text);
+  await execTmux(tmux, ["paste-buffer", "-d", "-b", bufferName, "-t", sessionName]);
 }
 
 async function paneProcessId(tmux: string, sessionName: string): Promise<number> {

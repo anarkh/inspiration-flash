@@ -1,10 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { chmod, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { chmod, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { aidenAdapter } from "../../../src/agents/aiden/adapter.ts";
 import type { Agent } from "../../../src/core/types.ts";
+import type { AgentCommandRunner } from "../../../src/agents/shared/process.ts";
 
 test("runs fake Aiden agent with full context file", async () => {
   const dir = await mkdtemp(join(tmpdir(), "agent-bridge-aiden-agent-"));
@@ -41,6 +42,54 @@ console.log(JSON.stringify({ verdict: "pass", summary: "ok", findings: [], sugge
     };
     const result = await aidenAdapter.run(agent, dir, "bridge me");
     assert.equal(result.verdict, "pass", JSON.stringify(result));
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("runs Aiden through the interactive terminal runner when available", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "agent-bridge-aiden-tty-"));
+  try {
+    const agent: Agent = {
+      id: "aiden",
+      kind: "aiden",
+      label: "Aiden",
+      command: "aiden",
+      enabled: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    const runner: AgentCommandRunner = {
+      async run() {
+        throw new Error("print mode should not be used when runTty is available");
+      },
+      async runTty(command, args, options) {
+        assert.equal(command, "aiden");
+        assert.deepEqual(args, [
+          "--permission-mode",
+          "readOnly",
+          "--model-reasoning-effort",
+          "low",
+          "--workspace",
+          dir,
+          "--add-dir",
+          args[args.indexOf("--add-dir") + 1]
+        ]);
+        assert.equal(args.includes("--print"), false);
+        const promptPath = options.terminalInput.split(": ").at(-1);
+        assert.ok(promptPath);
+        const prompt = await readFile(promptPath, "utf8");
+        assert.match(prompt, /bridge me/);
+        return {
+          stdout: JSON.stringify({ verdict: "pass", summary: "interactive ok", findings: [], suggestedPrompt: "" }),
+          stderr: ""
+        };
+      }
+    };
+
+    const result = await aidenAdapter.run(agent, dir, "bridge me", { runner });
+    assert.equal(result.verdict, "pass", JSON.stringify(result));
+    assert.equal(result.summary, "interactive ok");
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

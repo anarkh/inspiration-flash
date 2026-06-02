@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdir, mkdtemp, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -39,10 +39,14 @@ test("tmux runner executes a consumer command in an interactive terminal session
     assert.equal(session.backend, "tmux");
     assert.ok(session.runner);
 
-    const result = await session.runner.run(process.execPath, [
-      "-e",
-      "let input='';process.stdin.on('data',c=>input+=c);process.stdin.on('end',()=>console.log(JSON.stringify({verdict:'pass',summary:input.trim(),findings:[],suggestedPrompt:''})));"
-    ], "bridge me", {
+    const fakeConsumer = join(dir, "fake-consumer.mjs");
+    await writeFile(fakeConsumer, [
+      "let input = '';",
+      "process.stdin.on('data', (chunk) => input += chunk);",
+      "process.stdin.on('end', () => console.log(JSON.stringify({ verdict: 'pass', summary: input.trim(), findings: [], suggestedPrompt: '' })));"
+    ].join("\n"), "utf8");
+
+    const result = await session.runner.run(process.execPath, [fakeConsumer], "bridge me", {
       cwd: dir,
       timeout: 15_000,
       env: {
@@ -52,11 +56,33 @@ test("tmux runner executes a consumer command in an interactive terminal session
     });
     assert.match(result.stdout, /Agent Bridge tmux terminal/);
     assert.match(result.stdout, /"verdict":"pass"/);
+    await assert.rejects(stat(join(stateDir, "terminals", "tmux-run-1", "command.sh")));
 
     assert.equal(await sendTerminalInput(session.terminalId, "echo after-run\r"), true);
     await delay(300);
     const log = await readTerminalLog("tmux-run-1", "codex");
     assert.match(log, /after-run/);
+
+    const fakeInteractiveConsumer = join(dir, "fake-interactive-consumer.mjs");
+    await writeFile(fakeInteractiveConsumer, [
+      "process.stdin.setEncoding('utf8');",
+      "process.stdin.on('data', (input) => console.log(JSON.stringify({ verdict: 'pass', summary: input.trim(), findings: [], suggestedPrompt: '' })));",
+      "setInterval(() => undefined, 1000);"
+    ].join("\n"), "utf8");
+
+    const interactiveResult = await session.runner.runTty?.(process.execPath, [fakeInteractiveConsumer], {
+      cwd: dir,
+      timeout: 15_000,
+      inputDelayMs: 100,
+      terminalInput: "bridge interactive",
+      env: {
+        ...process.env,
+        AGENT_BRIDGE_BYPASS: "1"
+      }
+    });
+    assert.ok(interactiveResult);
+    assert.match(interactiveResult.stdout, /bridge interactive/);
+    assert.equal(await sendTerminalInput(session.terminalId, "one more\r"), true);
   } finally {
     delete process.env.AGENT_BRIDGE_STATE_DIR;
     if (tmuxSession) {

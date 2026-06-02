@@ -39,6 +39,30 @@ async function runAidenAgent(agent: Agent, cwd: string, prompt: string, context?
   const promptPath = join(tempDir, "review-context.md");
   try {
     await writeFile(promptPath, prompt, "utf8");
+    if (context?.runner?.runTty) {
+      const result = await context.runner.runTty(agent.command, [
+        "--permission-mode",
+        "readOnly",
+        "--model-reasoning-effort",
+        "low",
+        "--workspace",
+        cwd,
+        "--add-dir",
+        tempDir
+      ], {
+        cwd,
+        timeout: AGENT_TIMEOUT_MS,
+        env: {
+          ...process.env,
+          [BYPASS_ENV]: "1"
+        },
+        capture: context?.capture,
+        inputDelayMs: 1500,
+        terminalInput: `Read the bridge context file and return only the requested JSON: ${promptPath}`
+      });
+      return parseBridgeOutput(result.stdout, agent.label);
+    }
+
     const runCommand = context?.runner?.run.bind(context.runner) ?? spawnWithInput;
     const result = await runCommand(agent.command, [
       "--print",
