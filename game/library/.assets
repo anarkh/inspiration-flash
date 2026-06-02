@@ -1,0 +1,13 @@
+{
+    "version": "1.0.1",
+    "data": {
+        "paths": [
+            "data",
+            "scripts",
+            "scripts/Day1LivestreamRoom.ts",
+            "scripts/cc.d.ts",
+            "data/day1-copy.json",
+            "LivestreamRoom.scene.scene"
+        ]
+    }
+}

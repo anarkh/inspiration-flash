@@ -1,0 +1,157 @@
+4-29-2026 17:19:49 - log: Load engine in /Applications/Cocos/Creator/3.8.8/CocosCreator.app/Contents/Resources/resources/3d/engine
+4-29-2026 17:19:50 - log: Register native engine in /Applications/Cocos/Creator/3.8.8/CocosCreator.app/Contents/Resources/resources/3d/engine/native
+4-29-2026 17:19:50 - log: Request namespace: device-list
+4-29-2026 17:20:28 - log: [Scene] meshopt wasm decoder initialized
+4-29-2026 17:20:28 - log: [Scene] [bullet]:bullet wasm lib loaded.
+4-29-2026 17:20:28 - log: [Scene] [box2d]:box2d wasm lib loaded.
+4-29-2026 17:20:28 - log: [Scene] [PHYSICS]: using builtin.
+4-29-2026 17:20:29 - log: [Scene] Cocos Creator v3.8.8
+4-29-2026 17:20:29 - log: [Scene] Using custom pipeline: Builtin
+4-29-2026 17:20:29 - log: [Scene] [PHYSICS]: switch from builtin to bullet.
+4-29-2026 17:20:29 - log: [Scene] [PHYSICS2D]: switch from builtin to box2d.
+4-29-2026 18:04:10 - info: [PreviewInEditor] preview process is ready
+4-29-2026 18:04:10 - log: [PreviewInEditor] meshopt wasm decoder initialized
+4-29-2026 18:04:10 - log: [PreviewInEditor] [bullet]:bullet wasm lib loaded.
+4-29-2026 18:04:10 - log: [PreviewInEditor] [box2d]:box2d wasm lib loaded.
+4-29-2026 18:04:10 - log: [PreviewInEditor] [PHYSICS]: using builtin.
+4-29-2026 18:04:10 - log: [PreviewInEditor] Cocos Creator v3.8.8
+4-29-2026 18:04:10 - log: [PreviewInEditor] Using custom pipeline: Builtin
+4-29-2026 18:04:10 - log: [PreviewInEditor] [PHYSICS]: switch from builtin to bullet.
+4-29-2026 18:04:10 - log: [PreviewInEditor] [PHYSICS2D]: switch from builtin to box2d.
+4-29-2026 18:04:12 - log: [PreviewInEditor] [Day1] Day1LivestreamRoom started
+4-29-2026 18:13:32 - info: [PreviewInEditor] 预览环境初始化完毕
+4-29-2026 18:13:33 - log: [PreviewInEditor] [box2d]:box2d wasm lib loaded.
+4-29-2026 18:13:33 - log: [PreviewInEditor] meshopt wasm decoder initialized
+4-29-2026 18:13:33 - log: [PreviewInEditor] [bullet]:bullet wasm lib loaded.
+4-29-2026 18:13:34 - log: [PreviewInEditor] [PHYSICS]: using builtin.
+4-29-2026 18:13:34 - log: [PreviewInEditor] Cocos Creator v3.8.8
+4-29-2026 18:13:34 - log: [PreviewInEditor] Using custom pipeline: Builtin
+4-29-2026 18:13:34 - log: [PreviewInEditor] [PHYSICS]: switch from builtin to bullet.
+4-29-2026 18:13:34 - log: [PreviewInEditor] [PHYSICS2D]: switch from builtin to box2d.
+4-29-2026 18:13:34 - log: [PreviewInEditor] [Day1] Day1LivestreamRoom started
+4-29-2026 18:13:41 - warn: [PreviewInEditor] IPC message has been lost.Error: [PreviewInEditor] IPC message has been lost.
+    at console.warn (/Applications/Cocos/Creator/3.8.8/CocosCreator.app/Contents/Resources/app.asar/node_modules/@sentry/core/src/utils-hoist/instrument/console.ts:40:14)
+    at IpcRenderer.<anonymous> (/Applications/Cocos/Creator/3.8.8/CocosCreator.app/Contents/Resources/app.asar/builtin/scene/dist/script/3d/manager/ipc/web/webview.ccc:1:1464)
+    at IpcRenderer.emit (node:events:519:28)
+    at Object.onMessage (node:electron/js2c/renderer_init:2:8837)
+4-29-2026 18:13:41 - info: [PreviewInEditor] 预览环境初始化完毕
+4-29-2026 18:14:27 - info: [PreviewInEditor] 预览环境初始化完毕
+4-29-2026 18:15:11 - warn: [Scene] You are trying to destroy a object twice or more.Error: [Scene] You are trying to destroy a object twice or more.
+    at console.warn (/Applications/Cocos/Creator/3.8.8/CocosCreator.app/Contents/Resources/app.asar/node_modules/@sentry/core/src/utils-hoist/instrument/console.ts:40:14)
+    at warn (/Applications/Cocos/Creator/3.8.8/CocosCreator.app/Contents/Resources/resources/3d/engine/bin/.cache/dev/editor/bundled/index.js:153758:12)
+    at warnID (/Applications/Cocos/Creator/3.8.8/CocosCreator.app/Contents/Resources/resources/3d/engine/bin/.cache/dev/editor/bundled/index.js:153946:5)
+    at Node.destroy (/Applications/Cocos/Creator/3.8.8/CocosCreator.app/Contents/Resources/resources/3d/engine/bin/.cache/dev/editor/bundled/index.js:146796:13)
+    at Node.destroy (/Applications/Cocos/Creator/3.8.8/CocosCreator.app/Contents/Resources/resources/3d/engine/bin/.cache/dev/editor/bundled/index.js:53956:21)
+    at MiniPreview.clearByComponent (/Applications/Cocos/Creator/3.8.8/CocosCreator.app/Contents/Resources/app.asar/builtin/scene/dist/script/3d/manager/mini-preview/index.ccc:1:3685)
+    at MiniPreview.removePreviewNode (/Applications/Cocos/Creator/3.8.8/CocosCreator.app/Contents/Resources/app.asar/builtin/scene/dist/script/3d/manager/mini-preview/index.ccc:1:3990)
+    at MiniPreview.handleUnselect (/Applications/Cocos/Creator/3.8.8/CocosCreator.app/Contents/Resources/app.asar/builtin/scene/dist/script/3d/manager/mini-preview/index.ccc:1:3382)
+    at PreviewManager.callPreviewFunction (/Applications/Cocos/Creator/3.8.8/CocosCreator.app/Contents/Resources/app.asar/builtin/scene/dist/script/3d/manager/preview/index.ccc:1:3351)
+    at SceneFacadeManager.callPreviewFunction (/Applications/Cocos/Creator/3.8.8/CocosCreator.app/Contents/Resources/app.asar/builtin/scene/dist/script/3d/facade/scene-facade-manager.ccc:1:29271)
+    at step (/Applications/Cocos/Creator/3.8.8/CocosCreator.app/Contents/Resources/app.asar/builtin/scene/dist/script/3d/manager/ipc/web/ipc.ccc:1:733)
+    at /Applications/Cocos/Creator/3.8.8/CocosCreator.app/Contents/Resources/app.asar/builtin/scene/dist/script/3d/manager/ipc/web/ipc.ccc:2:377
+    at new Promise (<anonymous>)
+    at /Applications/Cocos/Creator/3.8.8/CocosCreator.app/Contents/Resources/app.asar/builtin/scene/dist/script/3d/manager/ipc/web/ipc.ccc:2:314
+    at IpcRenderer.<anonymous> (/Applications/Cocos/Creator/3.8.8/CocosCreator.app/Contents/Resources/app.asar/builtin/scene/dist/script/3d/manager/ipc/web/webview.ccc:1:973)
+    at IpcRenderer.emit (node:events:519:28)
+    at Object.onMessage (node:electron/js2c/renderer_init:2:8837)
+4-29-2026 18:15:35 - log: [PreviewInEditor] meshopt wasm decoder initialized
+4-29-2026 18:15:35 - log: [PreviewInEditor] [box2d]:box2d wasm lib loaded.
+4-29-2026 18:15:35 - log: [PreviewInEditor] [bullet]:bullet wasm lib loaded.
+4-29-2026 18:15:35 - log: [PreviewInEditor] [PHYSICS]: using builtin.
+4-29-2026 18:15:35 - log: [PreviewInEditor] Cocos Creator v3.8.8
+4-29-2026 18:15:35 - log: [PreviewInEditor] Using custom pipeline: Builtin
+4-29-2026 18:15:36 - log: [PreviewInEditor] [PHYSICS]: switch from builtin to bullet.
+4-29-2026 18:15:36 - log: [PreviewInEditor] [PHYSICS2D]: switch from builtin to box2d.
+4-29-2026 18:15:36 - log: [PreviewInEditor] [Day1] Day1LivestreamRoom started
+4-29-2026 18:15:36 - log: [PreviewInEditor] [Day1] Day1LivestreamRoom started
+4-30-2026 11:09:30 - info: [PreviewInEditor] 预览环境初始化完毕
+4-30-2026 11:09:30 - log: [PreviewInEditor] meshopt wasm decoder initialized
+4-30-2026 11:09:30 - log: [PreviewInEditor] [bullet]:bullet wasm lib loaded.
+4-30-2026 11:09:30 - log: [PreviewInEditor] [box2d]:box2d wasm lib loaded.
+4-30-2026 11:09:30 - log: [PreviewInEditor] [PHYSICS]: using builtin.
+4-30-2026 11:09:30 - log: [PreviewInEditor] Cocos Creator v3.8.8
+4-30-2026 11:09:30 - log: [PreviewInEditor] Using custom pipeline: Builtin
+4-30-2026 11:09:30 - log: [PreviewInEditor] [PHYSICS]: switch from builtin to bullet.
+4-30-2026 11:09:30 - log: [PreviewInEditor] [PHYSICS2D]: switch from builtin to box2d.
+4-30-2026 11:09:31 - log: [PreviewInEditor] [Day2] Day1LivestreamRoom started
+4-30-2026 11:09:31 - log: [PreviewInEditor] [Day2] Day1LivestreamRoom started
+4-30-2026 11:16:13 - info: [PreviewInEditor] 预览环境初始化完毕
+4-30-2026 11:16:14 - log: [PreviewInEditor] meshopt wasm decoder initialized
+4-30-2026 11:16:14 - log: [PreviewInEditor] [bullet]:bullet wasm lib loaded.
+4-30-2026 11:16:14 - log: [PreviewInEditor] [box2d]:box2d wasm lib loaded.
+4-30-2026 11:16:14 - log: [PreviewInEditor] [PHYSICS]: using builtin.
+4-30-2026 11:16:14 - log: [PreviewInEditor] Cocos Creator v3.8.8
+4-30-2026 11:16:14 - log: [PreviewInEditor] Using custom pipeline: Builtin
+4-30-2026 11:16:14 - log: [PreviewInEditor] [PHYSICS]: switch from builtin to bullet.
+4-30-2026 11:16:14 - log: [PreviewInEditor] [PHYSICS2D]: switch from builtin to box2d.
+4-30-2026 11:16:15 - log: [PreviewInEditor] [Day2] Day1LivestreamRoom started
+4-30-2026 11:16:15 - log: [PreviewInEditor] [Day2] Day1LivestreamRoom started
+4-30-2026 11:16:19 - log: [PreviewInEditor] [Day2] E00 -> E01: enter
+4-30-2026 11:16:21 - log: [PreviewInEditor] [Day2] E01 -> E02: new_here
+4-30-2026 11:16:23 - log: [PreviewInEditor] [Day2] E02 -> E03: highlight
+4-30-2026 11:16:24 - log: [PreviewInEditor] [Day2] E03 -> E04: tea
+4-30-2026 11:16:25 - log: [PreviewInEditor] [Day2] E04 -> E05: rank_chaos
+4-30-2026 11:16:26 - log: [PreviewInEditor] [Day2] E05 -> E00: restart
+4-30-2026 11:16:27 - log: [PreviewInEditor] [Day2] E00 -> E01: enter
+4-30-2026 11:16:28 - log: [PreviewInEditor] [Day2] E01 -> E02: what_room
+4-30-2026 11:16:28 - log: [PreviewInEditor] [Day2] E02 -> E03: trivia
+4-30-2026 11:16:29 - log: [PreviewInEditor] [Day2] E03 -> E04: tea
+4-30-2026 11:16:48 - log: [PreviewInEditor] [Day2] E04 -> E05: rank_chaos
+4-30-2026 11:16:49 - log: [PreviewInEditor] [Day2] E05 -> E00: restart
+4-30-2026 11:16:51 - log: [PreviewInEditor] [Day2] E00 -> E01: enter
+4-30-2026 11:16:55 - log: [PreviewInEditor] [Day2] E01 -> E02: new_here
+4-30-2026 11:17:12 - log: [PreviewInEditor] [Day2] E02 -> E03: highlight
+4-30-2026 11:17:20 - log: [PreviewInEditor] [Day2] E03 -> E04: topic_coupon
+4-30-2026 11:17:22 - log: [PreviewInEditor] [Day2] power button clicked: Change Topic
+4-30-2026 11:17:23 - log: [PreviewInEditor] [Day2] power button clicked: Change Topic
+4-30-2026 11:17:24 - log: [PreviewInEditor] [Day2] power button clicked: Change Topic
+4-30-2026 11:17:32 - log: [PreviewInEditor] [Day2] E04 -> E05: voice_line
+4-30-2026 11:17:35 - log: [PreviewInEditor] [Day2] E05 -> E00: restart
+4-30-2026 11:36:12 - log: [PreviewInEditor] [Day2] E00 -> E01: enter
+4-30-2026 11:36:14 - log: [PreviewInEditor] [Day2] E01 -> E02: new_here
+4-30-2026 11:36:15 - log: [PreviewInEditor] [Day2] E02 -> E03: highlight
+4-30-2026 11:36:16 - log: [PreviewInEditor] [Day2] E03 -> E04: tea
+4-30-2026 11:36:17 - log: [PreviewInEditor] [Day2] E04 -> E05: rank_chaos
+4-30-2026 11:36:18 - log: [PreviewInEditor] [Day2] E05 -> E00: restart
+4-30-2026 11:44:27 - log: [PreviewInEditor] [Day2] E00 -> E01: enter
+4-30-2026 11:44:34 - log: [PreviewInEditor] [Day2] E01 -> E02: new_here
+4-30-2026 11:44:39 - log: [PreviewInEditor] [Day2] E02 -> E03: highlight
+4-30-2026 11:44:44 - log: [PreviewInEditor] [Day2] E03 -> E04: compliment
+4-30-2026 11:44:52 - log: [PreviewInEditor] [Day2] E04 -> E05: first_stream
+4-30-2026 11:45:06 - log: [PreviewInEditor] [Day2] E05 -> E00: restart
+4-30-2026 11:45:07 - log: [PreviewInEditor] [Day2] E00 -> E01: enter
+4-30-2026 11:45:13 - log: [PreviewInEditor] [Day2] E01 -> E02: new_here
+4-30-2026 11:45:14 - log: [PreviewInEditor] [Day2] E02 -> E03: trivia
+4-30-2026 11:45:16 - log: [PreviewInEditor] [Day2] E03 -> E04: topic_coupon
+4-30-2026 11:45:19 - log: [PreviewInEditor] [Day2] E04 -> E05: rank_chaos
+4-30-2026 11:45:33 - log: [PreviewInEditor] [Day2] power button clicked: Change Topic
+4-30-2026 11:45:34 - log: [PreviewInEditor] [Day2] power button clicked: Change Topic
+4-30-2026 11:45:34 - log: [PreviewInEditor] [Day2] power button clicked: Change Topic
+4-30-2026 11:45:35 - log: [PreviewInEditor] [Day2] power button clicked: Change Topic
+4-30-2026 11:45:35 - log: [PreviewInEditor] [Day2] power button clicked: Change Topic
+4-30-2026 11:45:35 - log: [PreviewInEditor] [Day2] power button clicked: Change Topic
+4-30-2026 11:45:35 - log: [PreviewInEditor] [Day2] power button clicked: Change Topic
+4-30-2026 11:45:35 - log: [PreviewInEditor] [Day2] power button clicked: Change Topic
+4-30-2026 11:45:39 - info: [PreviewInEditor] 预览环境初始化完毕
+4-30-2026 11:45:39 - log: [PreviewInEditor] meshopt wasm decoder initialized
+4-30-2026 11:45:39 - log: [PreviewInEditor] [bullet]:bullet wasm lib loaded.
+4-30-2026 11:45:39 - log: [PreviewInEditor] [box2d]:box2d wasm lib loaded.
+4-30-2026 11:45:39 - log: [PreviewInEditor] [PHYSICS]: using builtin.
+4-30-2026 11:45:39 - log: [PreviewInEditor] Cocos Creator v3.8.8
+4-30-2026 11:45:39 - log: [PreviewInEditor] Using custom pipeline: Builtin
+4-30-2026 11:45:39 - log: [PreviewInEditor] [PHYSICS]: switch from builtin to bullet.
+4-30-2026 11:45:39 - log: [PreviewInEditor] [PHYSICS2D]: switch from builtin to box2d.
+4-30-2026 11:45:40 - log: [PreviewInEditor] [Slice] Day1LivestreamRoom started
+4-30-2026 11:45:40 - log: [PreviewInEditor] [Slice] Day1LivestreamRoom started
+4-30-2026 11:45:45 - log: [PreviewInEditor] [Slice] E00 -> E01: enter
+4-30-2026 11:45:49 - log: [PreviewInEditor] [Slice] E01 -> E02: new_here
+4-30-2026 11:45:50 - log: [PreviewInEditor] [Slice] E02 -> E03: trivia
+4-30-2026 11:45:52 - log: [PreviewInEditor] [Slice] E03 -> E04: topic_coupon
+4-30-2026 11:45:54 - log: [PreviewInEditor] [Slice] power button clicked: Change Topic
+4-30-2026 11:45:57 - log: [PreviewInEditor] [Slice] E04 -> E05: rank_chaos
+4-30-2026 11:46:03 - log: [PreviewInEditor] [Slice] E05 -> E06: generous
+4-30-2026 11:46:08 - log: [PreviewInEditor] [Slice] E06 -> E07: competitive
+4-30-2026 11:46:10 - log: [PreviewInEditor] [Slice] E07 -> E08: improv
+4-30-2026 11:46:12 - log: [PreviewInEditor] [Slice] E08 -> E09: accept_words
+4-30-2026 11:46:16 - log: [PreviewInEditor] [Slice] E09 -> E10: shared_reward
+4-30-2026 11:46:18 - log: [PreviewInEditor] [Slice] E10 -> E00: restart

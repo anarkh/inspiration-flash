@@ -1,0 +1,11 @@
+{
+    "systemInfo": {
+        "arch": "arm64",
+        "cpu": "Apple M1 Pro",
+        "version": "Darwin Kernel Version 23.6.0: Mon Aug 11 21:19:48 PDT 2025; root:xnu-10063.141.1.706.13~1/RELEASE_ARM64_T6000"
+    },
+    "sceneListMap": {
+        "b2d16519-69ff-47f4-b68d-6bef069768a6": "/Users/bytedance/git/inspiration-flash/game/assets/LivestreamRoom.scene.scene"
+    },
+    "deviceMd5": "37aebb016eac62db438a72b83a48ceff"
+}

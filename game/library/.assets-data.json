@@ -1,0 +1,42 @@
+{
+  "0f19a6c2-3913-4850-a43f-0f65db0bf945": {
+    "url": "db://assets/scripts/Day1LivestreamRoom.ts",
+    "value": {},
+    "versionCode": 1
+  },
+  "852583ce-e886-4578-939f-e5eeca43b76a": {
+    "url": "db://assets/scripts/cc.d.ts",
+    "value": {},
+    "versionCode": 1
+  },
+  "eaecbe0b-625b-4731-99a4-e88bd2208e39": {
+    "url": "db://assets/data",
+    "value": {},
+    "versionCode": 1
+  },
+  "23570fc5-a2b9-432e-9bff-ee03d0640edd": {
+    "url": "db://assets/scripts",
+    "value": {},
+    "versionCode": 1
+  },
+  "cc393ba0-ff8a-48c0-97fa-92e24ebdc6c4": {
+    "url": "db://assets/data/day1-copy.json",
+    "value": {
+      "depends": []
+    },
+    "versionCode": 1
+  },
+  "b2d16519-69ff-47f4-b68d-6bef069768a6": {
+    "url": "db://assets/LivestreamRoom.scene.scene",
+    "value": {
+      "depends": [
+        "d032ac98-05e1-4090-88bb-eb640dcb5fc1@b47c0",
+        "6f01cf7f-81bf-4a7e-bd5d-0afc19696480@b47c0"
+      ],
+      "dependScripts": [
+        "0f19a6c2-3913-4850-a43f-0f65db0bf945"
+      ]
+    },
+    "versionCode": 2
+  }
+}
