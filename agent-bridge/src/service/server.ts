@@ -6,12 +6,12 @@ import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 import { loadConfig } from "../config/store.ts";
 import { PID_FILE, PORT_FILE, STATE_DIR, PRODUCER_LABELS, bridgeGateTimeoutMs } from "../core/constants.ts";
-import type { AppConfig, BridgeRunRecord, ConsumerRunRecord, RawHookEnvelope, BridgeResponse } from "../core/types.ts";
+import type { AppConfig, BridgeRunRecord, ConsumerRunRecord, RawDirectEnvelope, RawHookEnvelope, BridgeResponse } from "../core/types.ts";
 import { dashboardHtml } from "../dashboard/page.ts";
-import { runBridge } from "../bridge/runner.ts";
+import { runBridge, runDirectBridge } from "../bridge/runner.ts";
 import { loadBridgeRuns, markInterruptedBridgeRuns } from "../bridge/run-state.ts";
-import { ensureTerminalLogTail, readTerminalLog, subscribeTerminalLog, terminalLogPath } from "../terminal/logs.ts";
-import { handleTerminalWebSocket } from "../terminal/websocket.ts";
+import { ensureTerminalLogTail, subscribeTerminalLog, terminalLogPath } from "../terminal/logs.ts";
+import { handleTerminalWebSocket, type TerminalSocketTarget } from "../terminal/websocket.ts";
 import { ensureDir, pathExists, readJson, readText, writeJson, writeText } from "../utils/fs.ts";
 
 export async function runServiceForeground(): Promise<void> {
@@ -47,16 +47,29 @@ export async function runServiceForeground(): Promise<void> {
       }
       const terminalRoute = parseTerminalRoute(request.url);
       if (request.method === "GET" && terminalRoute?.mode === "log") {
-        sendText(response, 200, await readTerminalLog(terminalRoute.runId, terminalRoute.kind), "text/plain; charset=utf-8");
+        const target = await terminalTarget(terminalRoute.runId, terminalRoute.kind, terminalRoute.mode);
+        const text = target ? ((await readText(target.logPath)) ?? "") : "";
+        sendText(response, 200, text, "text/plain; charset=utf-8");
         return;
       }
       if (request.method === "GET" && terminalRoute?.mode === "stream") {
-        await streamTerminalLog(response, terminalRoute.runId, terminalRoute.kind);
+        const target = await terminalTarget(terminalRoute.runId, terminalRoute.kind, terminalRoute.mode);
+        if (!target) {
+          sendJson(response, 404, { error: "terminal not found" });
+          return;
+        }
+        await streamTerminalLog(response, target);
         return;
       }
       if (request.method === "POST" && request.url === "/bridge") {
         const envelope = await readRequestJson<RawHookEnvelope>(request);
         const result = await runBridge(envelope);
+        sendJson(response, 200, result);
+        return;
+      }
+      if (request.method === "POST" && request.url === "/send") {
+        const envelope = await readRequestJson<RawDirectEnvelope>(request);
+        const result = await runDirectBridge(envelope);
         sendJson(response, 200, result);
         return;
       }
@@ -68,7 +81,14 @@ export async function runServiceForeground(): Promise<void> {
   server.on("upgrade", (request, socket, head) => {
     const terminalRoute = parseTerminalRoute(request.url);
     if (request.method === "GET" && terminalRoute?.mode === "ws") {
-      void handleTerminalWebSocket(request, socket, head, terminalRoute.runId, terminalRoute.kind)
+      void terminalTarget(terminalRoute.runId, terminalRoute.kind, terminalRoute.mode)
+        .then((target) => {
+          if (!target) {
+            socket.destroy();
+            return undefined;
+          }
+          return handleTerminalWebSocket(request, socket, head, target);
+        })
         .catch(() => socket.destroy());
       return;
     }
@@ -83,10 +103,12 @@ export async function runServiceForeground(): Promise<void> {
   console.log(`Agent Bridge listening on 127.0.0.1:${config.port}`);
 }
 
-export async function startService(): Promise<void> {
+export async function startService(options: { silent?: boolean } = {}): Promise<void> {
   const status = await serviceStatus();
   if (status.running) {
-    console.log(`Service is already running on port ${status.port}.`);
+    if (!options.silent) {
+      console.log(`Service is already running on port ${status.port}.`);
+    }
     return;
   }
   const child = spawn(process.execPath, [entrypoint(), "serve"], {
@@ -102,7 +124,9 @@ export async function startService(): Promise<void> {
   for (let attempt = 0; attempt < 30; attempt += 1) {
     const health = await readHealth(config.port);
     if (health.ok && health.pid === child.pid) {
-      console.log(`Service started on port ${config.port}.`);
+      if (!options.silent) {
+        console.log(`Service started on port ${config.port}.`);
+      }
       return;
     }
     await delay(200);
@@ -150,9 +174,23 @@ export async function submitBridge(envelope: RawHookEnvelope): Promise<BridgeRes
       return response;
     }
   }
-  await startService().catch(() => undefined);
+  await startService({ silent: true }).catch(() => undefined);
   status = await serviceStatus();
   return postBridge(status.running ? status.port : config.port, envelope).catch(() => null);
+}
+
+export async function submitDirectBridge(envelope: RawDirectEnvelope): Promise<BridgeResponse | null> {
+  const config = await loadConfig();
+  let status = await serviceStatus();
+  if (status.running) {
+    const response = await postDirectBridge(status.port, envelope).catch(() => null);
+    if (response) {
+      return response;
+    }
+  }
+  await startService({ silent: true }).catch(() => undefined);
+  status = await serviceStatus();
+  return postDirectBridge(status.running ? status.port : config.port, envelope).catch(() => null);
 }
 
 async function serviceStatus(): Promise<{ running: boolean; port: number; pid: number | null }> {
@@ -222,12 +260,20 @@ function parseJsonObject(text: string): Record<string, unknown> | null {
 }
 
 async function postBridge(port: number, envelope: RawHookEnvelope): Promise<BridgeResponse> {
+  return postJson(port, "/bridge", envelope);
+}
+
+async function postDirectBridge(port: number, envelope: RawDirectEnvelope): Promise<BridgeResponse> {
+  return postJson(port, "/send", envelope);
+}
+
+async function postJson(port: number, path: string, envelope: unknown): Promise<BridgeResponse> {
   const body = JSON.stringify(envelope);
   return new Promise((resolve, reject) => {
     const request = http.request({
       host: "127.0.0.1",
       port,
-      path: "/bridge",
+      path,
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -283,7 +329,7 @@ function sendText(response: http.ServerResponse, statusCode: number, body: strin
   response.end(body);
 }
 
-async function streamTerminalLog(response: http.ServerResponse, runId: string, kind: string): Promise<void> {
+async function streamTerminalLog(response: http.ServerResponse, target: TerminalSocketTarget): Promise<void> {
   response.writeHead(200, {
     "content-type": "text/event-stream; charset=utf-8",
     "cache-control": "no-cache, no-transform",
@@ -292,10 +338,9 @@ async function streamTerminalLog(response: http.ServerResponse, runId: string, k
   const send = (event: unknown) => {
     response.write(`data: ${JSON.stringify(event)}\n\n`);
   };
-  send({ type: "snapshot", data: await readTerminalLog(runId, kind) });
-  const terminalId = `${runId}:${kind}`;
-  ensureTerminalLogTail(terminalId, terminalLogPath(runId, kind), true);
-  const unsubscribe = subscribeTerminalLog(terminalId, (event) => send(event));
+  send({ type: "snapshot", data: (await readText(target.logPath)) ?? "" });
+  ensureTerminalLogTail(target.terminalId, target.logPath, true);
+  const unsubscribe = subscribeTerminalLog(target.terminalId, (event) => send(event));
   response.on("close", unsubscribe);
 }
 
@@ -325,6 +370,23 @@ function parseTerminalRoute(url: string | undefined): { runId: string; kind: str
   };
 }
 
+export async function terminalTarget(runId: string, kind: string, mode: "log" | "stream" | "ws"): Promise<TerminalSocketTarget | null> {
+  const runs = await loadBridgeRuns();
+  const run = runs.find((item) => item.id === runId);
+  if (!run) {
+    return null;
+  }
+  const consumer = run.consumers.find((item) => item.kind === kind);
+  if (!consumer) {
+    return null;
+  }
+  const runTerminalId = `${runId}:${kind}`;
+  const workerTarget = mode !== "log" && consumer.workerLogPath;
+  return {
+    terminalId: workerTarget ? consumer.terminalId ?? runTerminalId : runTerminalId,
+    logPath: workerTarget ? consumer.workerLogPath! : consumer.logPath ?? terminalLogPath(runId, kind)
+  };
+}
 
 function entrypoint(): string {
   if (process.argv[1]) {
@@ -370,10 +432,19 @@ function printRuns(runs: BridgeRunRecord[]): void {
 function printRun(run: BridgeRunRecord): void {
   const elapsed = formatDuration((run.completedAt ? Date.parse(run.completedAt) : Date.now()) - Date.parse(run.startedAt));
   const summary = run.summary ? ` - ${singleLine(run.summary, 100)}` : run.error ? ` - ${singleLine(run.error, 100)}` : "";
-  console.log(`- ${run.id} ${PRODUCER_LABELS[run.producer]} ${run.event} ${formatRunStatus(run.status)} ${elapsed} ${run.cwd}${summary}`);
+  const preview = run.source === "direct" && run.directMessagePreview ? ` "${singleLine(run.directMessagePreview, 80)}"` : "";
+  console.log(`- ${run.id} ${formatRunSubject(run)} ${formatRunStatus(run.status)} ${elapsed} ${run.cwd}${preview}${summary}`);
   for (const consumer of run.consumers) {
     console.log(`  ${formatConsumer(consumer)}`);
   }
+}
+
+function formatRunSubject(run: BridgeRunRecord): string {
+  if (run.source === "direct") {
+    const consumer = run.consumers[0];
+    return `direct -> ${consumer?.label ?? consumer?.kind ?? "consumer"}`;
+  }
+  return `${PRODUCER_LABELS[run.producer]} ${run.event}`;
 }
 
 function formatConsumer(consumer: ConsumerRunRecord): string {
@@ -382,7 +453,8 @@ function formatConsumer(consumer: ConsumerRunRecord): string {
     : "";
   const summary = consumer.summary ? ` - ${singleLine(consumer.summary, 100)}` : consumer.error ? ` - ${singleLine(consumer.error, 100)}` : "";
   const late = consumer.late ? " late" : "";
-  return `${consumer.label}: ${formatConsumerStatus(consumer.status)}${late}${elapsed} (${consumer.command})${summary}`;
+  const worker = consumer.workerId ? ` worker=${consumer.workerId}` : "";
+  return `${consumer.label}: ${formatConsumerStatus(consumer.status)}${late}${elapsed}${worker} (${consumer.command})${summary}`;
 }
 
 function formatDuration(ms: number): string {

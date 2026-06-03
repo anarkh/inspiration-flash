@@ -1,7 +1,8 @@
 import { createHash } from "node:crypto";
+import { readFile } from "node:fs/promises";
 import type http from "node:http";
 import type { Duplex } from "node:stream";
-import { ensureTerminalLogTail, readTerminalLog, subscribeTerminalLog, terminalLogPath } from "./logs.ts";
+import { ensureTerminalLogTail, subscribeTerminalLog } from "./logs.ts";
 import { resizeTerminal, sendTerminalInput } from "./tmux.ts";
 
 const WS_GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
@@ -10,15 +11,13 @@ export async function handleTerminalWebSocket(
   request: http.IncomingMessage,
   socket: Duplex,
   head: Buffer,
-  runId: string,
-  kind: string
+  target: TerminalSocketTarget
 ): Promise<void> {
   const key = request.headers["sec-websocket-key"];
   if (typeof key !== "string") {
     socket.destroy();
     return;
   }
-  const terminalId = `${runId}:${kind}`;
   const accept = createHash("sha1").update(`${key}${WS_GUID}`).digest("base64");
   socket.write([
     "HTTP/1.1 101 Switching Protocols",
@@ -29,9 +28,9 @@ export async function handleTerminalWebSocket(
     ""
   ].join("\r\n"));
 
-  writeFrame(socket, await readTerminalLog(runId, kind));
-  ensureTerminalLogTail(terminalId, terminalLogPath(runId, kind), true);
-  const unsubscribe = subscribeTerminalLog(terminalId, (event) => {
+  writeFrame(socket, await readFile(target.logPath, "utf8").catch(() => ""));
+  ensureTerminalLogTail(target.terminalId, target.logPath, true);
+  const unsubscribe = subscribeTerminalLog(target.terminalId, (event) => {
     if (event.data) {
       writeFrame(socket, event.data);
     }
@@ -39,10 +38,10 @@ export async function handleTerminalWebSocket(
   const parser = createFrameParser(async (message) => {
     const resize = parseResizeMessage(message);
     if (resize) {
-      await resizeTerminal(terminalId, resize.cols, resize.rows).catch(() => false);
+      await resizeTerminal(target.terminalId, resize.cols, resize.rows).catch(() => false);
       return;
     }
-    await sendTerminalInput(terminalId, message).catch(() => false);
+    await sendTerminalInput(target.terminalId, message).catch(() => false);
   }, () => {
     unsubscribe();
     socket.end();
@@ -53,6 +52,11 @@ export async function handleTerminalWebSocket(
   if (head.length > 0) {
     parser(head);
   }
+}
+
+export interface TerminalSocketTarget {
+  terminalId: string;
+  logPath: string;
 }
 
 function writeFrame(socket: Duplex, text: string): void {

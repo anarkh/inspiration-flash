@@ -1,5 +1,5 @@
 import { BRIDGE_RUNS_FILE } from "../core/constants.ts";
-import type { Agent, BridgeResponse, BridgeResult, BridgeRunRecord, BridgeRunStatus, ConsumerRunRecord, NormalizedHookPayload } from "../core/types.ts";
+import type { Agent, BridgeResponse, BridgeResult, BridgeRunRecord, BridgeRunSource, BridgeRunStatus, ConsumerRunRecord, NormalizedHookPayload } from "../core/types.ts";
 import { readJson, writeJson } from "../utils/fs.ts";
 
 const MAX_RUN_RECORDS = 50;
@@ -13,18 +13,21 @@ export async function loadBridgeRuns(): Promise<BridgeRunRecord[]> {
 export async function recordBridgeRunStarted(
   payload: NormalizedHookPayload,
   hash: string,
-  agents: Agent[]
+  agents: Agent[],
+  options: { source?: BridgeRunSource; directMessagePreview?: string } = {}
 ): Promise<string> {
   const now = new Date().toISOString();
   const id = `${Date.now().toString(36)}-${hash.slice(0, 8)}`;
   const run: BridgeRunRecord = {
     id,
     hash,
+    source: options.source ?? "hook",
     producer: payload.producer,
     event: payload.event,
     cwd: payload.cwd,
     sessionId: payload.sessionId,
     turnId: payload.turnId,
+    directMessagePreview: options.directMessagePreview,
     status: "running",
     startedAt: now,
     updatedAt: now,
@@ -45,9 +48,13 @@ export async function recordBridgeRunStarted(
 
 export interface ConsumerTerminalInfo {
   logPath: string;
+  workerLogPath?: string;
   terminalId: string;
   terminalBackend?: "capture" | "tmux";
   tmuxSession?: string;
+  workerId?: string;
+  workerKey?: string;
+  workerContextDir?: string;
 }
 
 export interface ConsumerProcessInfo {
@@ -64,9 +71,13 @@ export async function recordConsumerStarted(runId: string, agent: Agent, termina
     consumer.completedAt = null;
     if (terminal) {
       consumer.logPath = terminal.logPath;
+      consumer.workerLogPath = terminal.workerLogPath;
       consumer.terminalId = terminal.terminalId;
       consumer.terminalBackend = terminal.terminalBackend;
       consumer.tmuxSession = terminal.tmuxSession;
+      consumer.workerId = terminal.workerId;
+      consumer.workerKey = terminal.workerKey;
+      consumer.workerContextDir = terminal.workerContextDir;
     }
     delete consumer.error;
   });

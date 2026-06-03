@@ -1,14 +1,16 @@
 import { loadConfig } from "../config/store.ts";
 import { bridgeGateTimeoutMs, BYPASS_ENV } from "../core/constants.ts";
-import type { Agent, AppConfig, EndpointKind, RawHookEnvelope, BridgeResponse, BridgeResult } from "../core/types.ts";
+import type { Agent, AppConfig, BridgeRunSource, BridgeMessageSender, BridgeMention, EndpointKind, RawDirectEnvelope, RawHookEnvelope, BridgeResponse, BridgeResult, NormalizedHookPayload } from "../core/types.ts";
 import { normalizeHookPayload, bridgeHash } from "../hooks/payload.ts";
-import { runAgent } from "../agents/registry.ts";
+import { getAgentAdapter, runAgent } from "../agents/registry.ts";
 import { commandErrorResult } from "../agents/shared/errors.ts";
 import { collectGitContext } from "../integrations/git-context.ts";
 import { createTerminalSession, formatCommandLine } from "../terminal/logs.ts";
 import { attachTmuxRunner } from "../terminal/tmux.ts";
 import { claimBridge } from "./recent.ts";
-import { buildBridgePrompt } from "./prompt.ts";
+import { buildBridgePrompt, buildDirectBridgePrompt, shouldIncludeGitContextForTurn } from "./prompt.ts";
+import { bridgeWorkerSession } from "./worker-session.ts";
+import { gitFingerprint, loadSessionGitBaseline, recordSessionGitBaseline } from "./session-git-baseline.ts";
 import { recordBridgeRunCompleted, recordBridgeRunError, recordBridgeRunLateCompleted, recordBridgeRunStarted, recordBridgeRunTimedOut, recordConsumerCompleted, recordConsumerError, recordConsumerProcessStarted, recordConsumerStarted } from "./run-state.ts";
 
 interface ConsumerTask {
@@ -20,6 +22,13 @@ interface GateOutcome {
   response: BridgeResponse;
   completedAll: boolean;
 }
+
+interface RunRecordOptions {
+  source: BridgeRunSource;
+  directMessagePreview?: string;
+}
+
+type AfterGateCallback = (response: BridgeResponse) => Promise<void>;
 
 export async function runBridge(envelope: RawHookEnvelope): Promise<BridgeResponse> {
   const payload = normalizeHookPayload(envelope.producer, envelope.event, envelope.raw);
@@ -41,11 +50,55 @@ export async function runBridge(envelope: RawHookEnvelope): Promise<BridgeRespon
     return passResponse(`No enabled consumer route configured for ${payload.producer}. Run \`agent-bridge setup\` to map this producer to consumer agents.`);
   }
 
-  const runId = await recordBridgeRunStarted(payload, hash, agents).catch(() => null);
-  try {
+  let baselineGit: Awaited<ReturnType<typeof collectGitContext>> | null = null;
+  let shouldRecordBaseline = false;
+  return runRecordedConsumers(payload, hash, agents, config, { source: "hook" }, async () => {
     const git = await collectGitContext(payload.cwd);
-    const prompt = buildBridgePrompt(payload, git);
-    const tasks = agents.map((agent) => startConsumerTask(runId, agent, payload.cwd, prompt));
+    baselineGit = git;
+    const baseline = await loadSessionGitBaseline(payload).catch(() => null);
+    const reviewableTurn = shouldIncludeGitContextForTurn(payload);
+    shouldRecordBaseline = reviewableTurn;
+    const unchangedSinceBaseline = Boolean(baseline && baseline.fingerprint === gitFingerprint(git));
+    const includeGitContext = reviewableTurn && !unchangedSinceBaseline;
+    return buildBridgePrompt(payload, git, {
+      includeGitContext,
+      gitContextReason: includeGitContext
+        ? undefined
+        : !reviewableTurn
+          ? "Omitted because this producer turn does not look like completed code work or a technical plan. This avoids reviewing unrelated changes from another conversation in the same workspace."
+          : "Omitted because this exact git fingerprint was already successfully reviewed for this producer session."
+    });
+  }, async (response) => {
+    if (shouldRecordBaseline && baselineGit && !response.timedOut && response.result.verdict === "pass") {
+      await recordSessionGitBaseline(payload, baselineGit).catch(() => undefined);
+    }
+  });
+}
+
+export async function runDirectBridge(envelope: RawDirectEnvelope): Promise<BridgeResponse> {
+  const direct = normalizeDirectEnvelope(envelope);
+  const config = await loadConfig();
+  const agent = await resolveDirectAgent(config, direct.consumer);
+  const hash = bridgeHash(direct.payload);
+  return runRecordedConsumers(direct.payload, hash, [agent], config, {
+    source: "direct",
+    directMessagePreview: previewDirectMessage(direct.message)
+  }, async () => buildDirectBridgePrompt(direct.payload, direct.consumer, direct.message));
+}
+
+async function runRecordedConsumers(
+  payload: NormalizedHookPayload,
+  hash: string,
+  agents: Agent[],
+  config: AppConfig,
+  options: RunRecordOptions,
+  promptFactory: () => Promise<string>,
+  afterGate?: AfterGateCallback
+): Promise<BridgeResponse> {
+  const runId = await recordBridgeRunStarted(payload, hash, agents, options).catch(() => null);
+  try {
+    const prompt = await promptFactory();
+    const tasks = agents.map((agent) => startConsumerTask(runId, agent, payload, prompt));
     const outcome = await waitForGate(tasks, config);
     const response = outcome.response;
     if (runId) {
@@ -58,6 +111,9 @@ export async function runBridge(envelope: RawHookEnvelope): Promise<BridgeRespon
         void recordLateCompletion(runId, tasks).catch(() => undefined);
       }
     }
+    if (afterGate) {
+      await afterGate(response).catch(() => undefined);
+    }
     return response;
   } catch (error) {
     if (runId) {
@@ -67,7 +123,7 @@ export async function runBridge(envelope: RawHookEnvelope): Promise<BridgeRespon
   }
 }
 
-function startConsumerTask(runId: string | null, agent: Agent, cwd: string, prompt: string): ConsumerTask {
+function startConsumerTask(runId: string | null, agent: Agent, payload: NormalizedHookPayload, prompt: string): ConsumerTask {
   return {
     agent,
     promise: (async () => {
@@ -80,14 +136,22 @@ function startConsumerTask(runId: string | null, agent: Agent, cwd: string, prom
           commandLine: formatCommandLine(info.command, info.args)
         }).catch(() => undefined);
       };
+      const worker = getAgentAdapter(agent.kind).terminalMode === "worker"
+        ? bridgeWorkerSession(payload, agent)
+        : null;
       const terminal = runId
-        ? createTerminalSession(runId, agent, cwd, onProcessStart)
+        ? createTerminalSession(runId, agent, payload.cwd, onProcessStart, worker
+          ? {
+            workerId: worker.id,
+            workerKey: worker.key
+          }
+          : undefined)
         : null;
       if (terminal && runId) {
         attachTmuxRunner(terminal, {
           runId,
           agent,
-          cwd,
+          cwd: payload.cwd,
           onStart: onProcessStart
         });
       }
@@ -95,16 +159,24 @@ function startConsumerTask(runId: string | null, agent: Agent, cwd: string, prom
         await recordConsumerStarted(runId, agent, terminal
           ? {
             logPath: terminal.logPath,
+            workerLogPath: terminal.workerLogPath,
             terminalId: terminal.terminalId,
             terminalBackend: terminal.backend,
-            tmuxSession: terminal.tmuxSession
+            tmuxSession: terminal.tmuxSession,
+            workerId: terminal.workerId,
+            workerKey: terminal.workerKey,
+            workerContextDir: terminal.workerContextDir
           }
           : undefined).catch(() => undefined);
       }
       try {
-        const result = await runAgent(agent, cwd, prompt, {
+        const result = await runAgent(agent, payload.cwd, prompt, {
           capture: terminal?.capture,
-          runner: terminal?.runner
+          runner: terminal?.runner,
+          workerContextDir: terminal?.workerContextDir,
+          producerSessionId: payload.sessionId,
+          producerSender: payload.sender,
+          producerMentions: payload.mentions
         });
         if (runId) {
           await recordConsumerCompleted(runId, agent, result).catch(() => undefined);
@@ -175,6 +247,117 @@ export function selectRouteAgents(config: AppConfig, producer: EndpointKind): Ag
   }
   const consumers = new Set(route.consumers);
   return config.agents.filter((agent) => agent.enabled && consumers.has(agent.kind));
+}
+
+async function resolveDirectAgent(config: AppConfig, consumer: EndpointKind): Promise<Agent> {
+  const configured = config.agents.find((agent) => agent.kind === consumer);
+  if (configured) {
+    return configured;
+  }
+  const adapter = getAgentAdapter(consumer);
+  const detected = await adapter.detect();
+  const now = new Date().toISOString();
+  return {
+    id: consumer,
+    kind: consumer,
+    label: detected.label,
+    command: detected.command,
+    enabled: true,
+    createdAt: now,
+    updatedAt: now
+  };
+}
+
+function normalizeDirectEnvelope(envelope: RawDirectEnvelope): { consumer: EndpointKind; message: string; payload: NormalizedHookPayload } {
+  const object: Record<string, unknown> = isRecord(envelope) ? envelope : {};
+  const consumer = endpointValue(object.consumer);
+  if (!consumer) {
+    throw new Error("direct send consumer must be codex, claude, or aiden");
+  }
+  const message = typeof object.message === "string" ? object.message : "";
+  if (!message.trim()) {
+    throw new Error("direct send message must not be empty");
+  }
+  const producer = endpointValue(object.producer) ?? "codex";
+  const cwd = stringValue(object.cwd) ?? process.cwd();
+  const sessionId = stringValue(object.sessionId);
+  const turnId = stringValue(object.turnId);
+  const sender = senderValue(object.sender);
+  const mentions = mentionsValue(object.mentions);
+  return {
+    consumer,
+    message,
+    payload: {
+      producer,
+      event: "stop",
+      raw: envelope,
+      cwd,
+      sessionId,
+      turnId,
+      hookEventName: "DirectSend",
+      stopHookActive: false,
+      lastAssistantMessage: message,
+      toolName: null,
+      toolInput: null,
+      toolResponse: null,
+      sender,
+      mentions
+    }
+  };
+}
+
+function endpointValue(value: unknown): EndpointKind | null {
+  return value === "codex" || value === "claude" || value === "aiden" ? value : null;
+}
+
+function stringValue(value: unknown): string | null {
+  return typeof value === "string" && value.length > 0 ? value : null;
+}
+
+function senderValue(value: unknown): BridgeMessageSender | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+  const type = stringValue(value.type);
+  const openId = stringValue(value.openId) ?? stringValue(value.open_id);
+  const name = stringValue(value.name);
+  if (!type && !openId && !name) {
+    return null;
+  }
+  return {
+    type: type ?? "user",
+    ...(openId ? { openId } : {}),
+    ...(name ? { name } : {})
+  };
+}
+
+function mentionsValue(value: unknown): BridgeMention[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value.flatMap((item): BridgeMention[] => {
+    if (!isRecord(item)) {
+      return [];
+    }
+    const name = stringValue(item.name);
+    if (!name) {
+      return [];
+    }
+    const openId = stringValue(item.openId) ?? stringValue(item.open_id);
+    return [{
+      name,
+      ...(openId ? { openId } : {})
+    }];
+  });
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function previewDirectMessage(message: string): string {
+  const text = message.replace(/\s+/g, " ").trim();
+  return text.length <= 120 ? text : `${text.slice(0, 119)}...`;
 }
 
 function combineResults(results: BridgeResult[]): BridgeResult {

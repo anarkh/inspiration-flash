@@ -8,11 +8,20 @@ import type { AgentCommandRunner, SpawnCapture, SpawnProcessInfo } from "../agen
 export interface TerminalSession {
   terminalId: string;
   logPath: string;
+  workerLogPath?: string;
   backend: "capture" | "tmux";
   tmuxSession?: string;
+  workerId?: string;
+  workerKey?: string;
+  workerContextDir?: string;
   capture: SpawnCapture;
   runner?: AgentCommandRunner;
   flush(): Promise<void>;
+}
+
+export interface TerminalSessionOptions {
+  workerId?: string;
+  workerKey?: string;
 }
 
 export interface TerminalLogEvent {
@@ -29,15 +38,28 @@ export function createTerminalSession(
   runId: string,
   agent: Agent,
   cwd: string,
-  onStart?: (info: SpawnProcessInfo, terminal: TerminalSession) => void
+  onStart?: (info: SpawnProcessInfo, terminal: TerminalSession) => void,
+  options: TerminalSessionOptions = {}
 ): TerminalSession {
-  const terminalId = terminalKey(runId, agent.kind);
+  const terminalId = options.workerId
+    ? terminalWorkerKey(options.workerId, agent.kind)
+    : terminalKey(runId, agent.kind);
   const logPath = terminalLogPath(runId, agent.kind);
+  const workerLogPath = options.workerId
+    ? workerTerminalLogPath(options.workerId, agent.kind)
+    : undefined;
+  const workerContextDir = options.workerId
+    ? terminalWorkerContextDir(options.workerId)
+    : undefined;
   let queue = Promise.resolve();
   const session: TerminalSession = {
     terminalId,
     logPath,
+    workerLogPath,
     backend: "capture",
+    workerId: options.workerId,
+    workerKey: options.workerKey,
+    workerContextDir,
     flush: () => queue,
     capture: {
       onStart(info) {
@@ -45,6 +67,7 @@ export function createTerminalSession(
         const header = [
           `\x1b[90m# Agent Bridge terminal\x1b[0m`,
           `\x1b[90m# run: ${runId}\x1b[0m`,
+          ...(options.workerId ? [`\x1b[90m# worker: ${options.workerId}\x1b[0m`] : []),
           `\x1b[90m# agent: ${agent.label}\x1b[0m`,
           `\x1b[90m# cwd: ${cwd}\x1b[0m`,
           `\x1b[90m# pid: ${info.pid}\x1b[0m`,
@@ -70,7 +93,13 @@ export function createTerminalSession(
       }
     }
   };
-  void mkdir(join(TERMINAL_LOG_DIR, runId), { recursive: true });
+  void mkdir(dirname(logPath), { recursive: true });
+  if (workerLogPath) {
+    void mkdir(dirname(workerLogPath), { recursive: true });
+  }
+  if (workerContextDir) {
+    void mkdir(workerContextDir, { recursive: true });
+  }
   return session;
 }
 
@@ -115,8 +144,20 @@ export function terminalKey(runId: string, kind: string): string {
   return `${runId}:${kind}`;
 }
 
+export function terminalWorkerKey(workerId: string, kind: string): string {
+  return `worker:${workerId}:${kind}`;
+}
+
 export function terminalLogPath(runId: string, kind: string): string {
   return join(TERMINAL_LOG_DIR, runId, `${safeSegment(kind)}.ansi.log`);
+}
+
+export function workerTerminalLogPath(workerId: string, kind: string): string {
+  return join(TERMINAL_LOG_DIR, "workers", safeSegment(workerId), `${safeSegment(kind)}.ansi.log`);
+}
+
+export function terminalWorkerContextDir(workerId: string): string {
+  return join(TERMINAL_LOG_DIR, "workers", safeSegment(workerId), "context");
 }
 
 function streamFor(terminalId: string): EventEmitter {

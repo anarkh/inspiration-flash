@@ -505,7 +505,7 @@ export function dashboardHtml(): string {
       status.className = badge(session.consumer.status);
       status.textContent = session.consumer.status;
       row.querySelector(".path").textContent = session.run.cwd;
-      row.querySelector(".meta").textContent = session.run.producer + " " + session.run.event + " | " + elapsed(session.consumer.startedAt || session.run.startedAt, session.consumer.completedAt);
+      row.querySelector(".meta").textContent = runSubject(session.run, session.consumer) + directPreview(session.run) + workerSuffix(session.consumer) + " | " + elapsed(session.consumer.startedAt || session.run.startedAt, session.consumer.completedAt);
       row.onclick = () => openTerminal(session.run, session.consumer, true);
       return row;
     }
@@ -571,8 +571,20 @@ export function dashboardHtml(): string {
     function renderTerminalHeader(run, consumer) {
       els.terminalTitle.innerHTML = '<span class="traffic"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></span>' + escapeHtml(consumer.label) + " / " + escapeHtml(run.id);
       const backend = consumer.terminalBackend === "tmux" ? "tmux" : "capture";
-      els.terminalMeta.textContent = backend + (consumer.tmuxSession ? " " + consumer.tmuxSession : "") + (consumer.pid ? " | pid " + consumer.pid : "") + " | " + run.cwd;
+      els.terminalMeta.textContent = backend + (consumer.tmuxSession ? " " + consumer.tmuxSession : "") + (consumer.workerId ? " | worker " + consumer.workerId : "") + (consumer.pid ? " | pid " + consumer.pid : "") + " | " + run.cwd;
       els.copy.disabled = state.logText.length === 0;
+    }
+
+    function runSubject(run, consumer) {
+      return run.source === "direct" ? "direct -> " + consumer.label : run.producer + " " + run.event;
+    }
+
+    function directPreview(run) {
+      return run.source === "direct" && run.directMessagePreview ? " | " + run.directMessagePreview : "";
+    }
+
+    function workerSuffix(consumer) {
+      return consumer.workerId ? " | worker " + consumer.workerId : "";
     }
 
     function openTerminal(run, consumer, rerender) {

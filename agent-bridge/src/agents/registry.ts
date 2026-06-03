@@ -1,7 +1,7 @@
 import type { Agent, BridgeResult, EndpointKind } from "../core/types.ts";
-import { aidenAdapter } from "./aiden/adapter.ts";
-import { claudeAdapter } from "./claude/adapter.ts";
-import { codexAdapter } from "./codex/adapter.ts";
+import { aidenAdapter } from "./clis/aiden/adapter.ts";
+import { claudeAdapter } from "./clis/claude-code/adapter.ts";
+import { codexAdapter } from "./clis/codex/adapter.ts";
 import type { AgentAdapter, DetectedCli } from "./types.ts";
 import type { AgentRunContext } from "./types.ts";
 

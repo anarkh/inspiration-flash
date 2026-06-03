@@ -47,6 +47,8 @@ function payload(cwd: string): NormalizedHookPayload {
     lastAssistantMessage: "done",
     toolName: null,
     toolInput: null,
-    toolResponse: null
+    toolResponse: null,
+    sender: null,
+    mentions: []
   };
 }

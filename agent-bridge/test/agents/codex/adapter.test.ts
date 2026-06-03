@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { chmod, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { codexAdapter } from "../../../src/agents/codex/adapter.ts";
+import { codexAdapter } from "../../../src/agents/clis/codex/adapter.ts";
 import type { Agent } from "../../../src/core/types.ts";
 
 test("runs fake Codex agent with stdin and output-last-message", async () => {

@@ -3,12 +3,12 @@ import { readFile } from "node:fs/promises";
 import { stdin, stdout, stderr } from "node:process";
 import { loadConfig, removeAllBridgeConfig, removeRoute, upsertAgent, upsertRoute } from "../config/store.ts";
 import { bridgeGateTimeoutMs, BYPASS_ENV, PRODUCER_LABELS } from "../core/constants.ts";
-import type { Agent, BridgeResponse, BridgeRoute, ConfigScope, EndpointKind, HookEvent, RawHookEnvelope } from "../core/types.ts";
+import type { Agent, BridgeMention, BridgeMessageSender, BridgeResponse, BridgeRoute, ConfigScope, EndpointKind, HookEvent, RawDirectEnvelope, RawHookEnvelope } from "../core/types.ts";
 import { clearHooks, configureHooks } from "../hooks/configure.ts";
 import { mapBridgeToProducerResponse } from "../hooks/producer-response.ts";
 import { detectAllAgentClis } from "../agents/registry.ts";
 import { runBridge, selectRouteAgents } from "../bridge/runner.ts";
-import { printDashboardUrl, printServiceStatus, runServiceForeground, startService, stopService, submitBridge } from "../service/server.ts";
+import { printDashboardUrl, printServiceStatus, runServiceForeground, startService, stopService, submitBridge, submitDirectBridge } from "../service/server.ts";
 import { chooseMany, chooseOne } from "./interactive.ts";
 import { resolveHookConfigCwd } from "./project-root.ts";
 
@@ -78,6 +78,11 @@ async function main(argv: string[]): Promise<void> {
 
   if (command === "run") {
     await runCommand(argv.slice(1));
+    return;
+  }
+
+  if (command === "send") {
+    await sendCommand(argv.slice(1));
     return;
   }
 
@@ -300,20 +305,101 @@ async function runCommand(args: string[]): Promise<void> {
   stdout.write(`${JSON.stringify(result, null, 2)}\n`);
 }
 
-async function readStdinJson(): Promise<unknown> {
-  const chunks: Buffer[] = [];
-  for await (const chunk of stdin) {
-    chunks.push(Buffer.from(chunk));
+async function sendCommand(args: string[]): Promise<void> {
+  const consumer = parseEndpointFlag(args, "--to");
+  const producer = parseOptionalEndpointFlag(args, "--producer") ?? "codex";
+  const message = await readDirectMessage(args);
+  const includeRawOutput = args.includes("--raw-output") || args.includes("--full");
+  const envelope: RawDirectEnvelope = {
+    consumer,
+    message,
+    cwd: workspaceValue(args),
+    sessionId: valueAfter(args, "--session-id"),
+    producer,
+    turnId: valueAfter(args, "--turn-id"),
+    sender: senderFromArgs(args),
+    mentions: mentionsFromArgs(args)
+  };
+  const response = await submitDirectBridge(envelope);
+  if (!response) {
+    throw new Error("Agent Bridge service unavailable; direct send could not be delivered.");
   }
-  const text = Buffer.concat(chunks).toString("utf8").trim();
+  stdout.write(`${JSON.stringify(sendResponseForStdout(response, includeRawOutput), null, 2)}\n`);
+}
+
+function sendResponseForStdout(response: BridgeResponse, includeRawOutput: boolean): BridgeResponse {
+  if (includeRawOutput) {
+    return response;
+  }
+  const result = { ...response.result };
+  delete result.rawOutput;
+  return {
+    ...response,
+    result
+  };
+}
+
+async function readStdinJson(): Promise<unknown> {
+  const text = (await readStdinText()).trim();
   if (!text) {
     return {};
   }
   return JSON.parse(text);
 }
 
+async function readStdinText(): Promise<string> {
+  const chunks: Buffer[] = [];
+  for await (const chunk of stdin) {
+    chunks.push(Buffer.from(chunk));
+  }
+  return Buffer.concat(chunks).toString("utf8");
+}
+
+async function readDirectMessage(args: string[]): Promise<string> {
+  const message = valueAfter(args, "--message");
+  const file = valueAfter(args, "--file");
+  const sourceCount = [message, file].filter((value) => value !== null).length;
+  if (sourceCount > 1) {
+    throw new Error("Use exactly one direct message source: --message, --file, or stdin.");
+  }
+  if (message !== null) {
+    await rejectPipedDirectMessage();
+    return requireNonEmptyMessage(message);
+  }
+  if (file !== null) {
+    await rejectPipedDirectMessage();
+    return requireNonEmptyMessage(await readFile(file, "utf8"));
+  }
+  if (stdin.isTTY) {
+    throw new Error("Usage: agent-bridge send --to codex|claude|aiden --message <text> [--workspace <path>] [--session-id <id>]");
+  }
+  return requireNonEmptyMessage((await readStdinText()).trimEnd());
+}
+
+async function rejectPipedDirectMessage(): Promise<void> {
+  if (stdin.isTTY) {
+    return;
+  }
+  const piped = await readStdinText();
+  if (piped.trim()) {
+    throw new Error("Use exactly one direct message source: --message, --file, or stdin.");
+  }
+}
+
 function parseEndpointFlag(args: string[], flag: string): EndpointKind {
   const value = valueAfter(args, flag);
+  const endpoint = parseEndpointValue(value);
+  if (endpoint) {
+    return endpoint;
+  }
+  throw new Error(`${flag} must be codex, claude, or aiden`);
+}
+
+function parseOptionalEndpointFlag(args: string[], flag: string): EndpointKind | null {
+  const value = valueAfter(args, flag);
+  if (value === null) {
+    return null;
+  }
   const endpoint = parseEndpointValue(value);
   if (endpoint) {
     return endpoint;
@@ -327,6 +413,62 @@ function parseEventFlag(args: string[], flag: string): HookEvent {
     return value;
   }
   throw new Error(`${flag} must be stop or post-tool-use`);
+}
+
+function workspaceValue(args: string[]): string {
+  const workspace = valueAfter(args, "--workspace");
+  const cwd = valueAfter(args, "--cwd");
+  if (workspace && cwd && workspace !== cwd) {
+    throw new Error("Use either --workspace or --cwd, not both.");
+  }
+  return workspace ?? cwd ?? process.cwd();
+}
+
+function requireNonEmptyMessage(message: string): string {
+  if (!message.trim()) {
+    throw new Error("Direct send message must not be empty.");
+  }
+  return message;
+}
+
+function senderFromArgs(args: string[]): BridgeMessageSender | null {
+  const type = valueAfter(args, "--sender-type");
+  const openId = valueAfter(args, "--sender-open-id");
+  const name = valueAfter(args, "--sender-name");
+  if (!type && !openId && !name) {
+    return null;
+  }
+  return {
+    type: type ?? "user",
+    ...(openId ? { openId } : {}),
+    ...(name ? { name } : {})
+  };
+}
+
+function mentionsFromArgs(args: string[]): BridgeMention[] {
+  return valuesAfter(args, "--mention").map((value) => {
+    const separator = value.includes("=") ? "=" : value.includes(":") ? ":" : "";
+    if (!separator) {
+      return { name: value };
+    }
+    const [name, ...rest] = value.split(separator);
+    const openId = rest.join(separator);
+    return {
+      name,
+      ...(openId ? { openId } : {})
+    };
+  }).filter((mention) => mention.name.length > 0);
+}
+
+function valuesAfter(args: string[], flag: string): string[] {
+  const values: string[] = [];
+  for (let index = 0; index < args.length; index += 1) {
+    if (args[index] === flag && index + 1 < args.length) {
+      values.push(args[index + 1]);
+      index += 1;
+    }
+  }
+  return values;
 }
 
 function valueAfter(args: string[], flag: string): string | null {
@@ -435,6 +577,7 @@ Commands:
   dashboard
   hook --producer codex|claude|aiden --event stop
   run --file <payload.json>
+  send --to codex|claude|aiden --message <text> [--workspace <path>] [--session-id <id>] [--raw-output]
 `);
 }
 

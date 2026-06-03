@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { parseBridgeOutput, extractTextFromCliOutput } from "../../src/bridge/result-parser.ts";
+import { parseBridgeOutput, extractTextFromCliOutput, hasBridgeResultJson } from "../../src/bridge/result-parser.ts";
 
 test("parses strict bridge JSON", () => {
   const result = parseBridgeOutput(JSON.stringify({
@@ -51,6 +51,40 @@ test("parses final verdict JSON after a truncated earlier object", () => {
   const result = parseBridgeOutput(output, "Aiden");
   assert.equal(result.verdict, "fail");
   assert.equal(result.summary, "late json");
+});
+
+test("detects final result JSON in large terminal history", () => {
+  const noisyHistory = Array.from({ length: 5000 }, (_, index) => [
+    `diff line ${index}: +{`,
+    `screen refresh ${index}: {"producer":"codex","event":"stop"}`,
+    "Reasoning... esc to interrupt"
+  ].join("\n")).join("\n");
+  const output = [
+    noisyHistory,
+    "✦ {\"verdict\":\"pass\",\"summary\":\"tail json\",\"findings\":[],\"suggestedPrompt\":\"\"}",
+    "agent full mode (shift + tab to toggle)"
+  ].join("\n");
+
+  assert.equal(hasBridgeResultJson(output), true);
+  const result = parseBridgeOutput(output, "Aiden");
+  assert.equal(result.verdict, "pass");
+  assert.equal(result.summary, "tail json");
+});
+
+test("parses Aiden terminal-wrapped JSON strings", () => {
+  const output = [
+    "✦ {\"verdict\":\"pass\",\"summary\":\"No code or plan changes were produced; the producer's prompt is readable and there are",
+    "  no diffs to audit.\",\"findings\":[{\"severity\":\"info\",\"title\":\"No changes to review\",\"detail\":\"The workspace is not a",
+    "  git repository and the provided diffs are empty.\"}],\"suggestedPrompt\":\"\"}",
+    "",
+    "· Computing…"
+  ].join("\n");
+
+  assert.equal(hasBridgeResultJson(output), true);
+  const result = parseBridgeOutput(output, "Aiden");
+  assert.equal(result.verdict, "pass");
+  assert.match(result.summary, /no diffs to audit/);
+  assert.equal(result.findings[0].title, "No changes to review");
 });
 
 test("marks unstructured output uncertain", () => {

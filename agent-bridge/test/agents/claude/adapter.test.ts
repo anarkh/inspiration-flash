@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { chmod, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { claudeAdapter } from "../../../src/agents/claude/adapter.ts";
+import { claudeAdapter } from "../../../src/agents/clis/claude-code/adapter.ts";
 import type { Agent } from "../../../src/core/types.ts";
 
 test("runs fake Claude agent with stdin", async () => {

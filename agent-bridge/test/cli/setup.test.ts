@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { spawn } from "node:child_process";
+import { createServer } from "node:net";
 
 const repoRoot = dirname(dirname(dirname(fileURLToPath(import.meta.url))));
 const cliEntry = join(repoRoot, "src", "cli", "index.ts");
@@ -264,6 +265,182 @@ console.log(JSON.stringify({ elapsed, response }));
   }
 });
 
+test("send posts a direct Aiden message through the service and prints JSON", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "agent-bridge-send-aiden-"));
+  const projectDir = join(dir, "project");
+  const configDir = join(dir, "config");
+  const stateDir = join(dir, "state");
+  const contextPath = join(dir, "seen-context.txt");
+  try {
+    await mkdir(projectDir);
+    await mkdir(configDir);
+    await mkdir(stateDir);
+    const fakeAiden = join(dir, "fake-aiden.mjs");
+    await writeFile(fakeAiden, `#!${process.execPath}
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+const promptArg = process.argv.at(-1) ?? "";
+const match = promptArg.match(/Read the bridge context file and return only the requested JSON:\\n([^<\\n]+)/);
+const contextPath = match?.[1]?.trim() ?? "";
+const context = contextPath && existsSync(contextPath) ? readFileSync(contextPath, "utf8") : "";
+writeFileSync(process.env.AGENT_BRIDGE_TEST_CONTEXT ?? "", context);
+console.log(JSON.stringify({
+  verdict: "pass",
+  summary: context.includes("hello direct") && context.includes('"sessionId": "s1"') ? "saw direct aiden" : "missing direct context",
+  findings: [],
+  suggestedPrompt: ""
+}));
+`, "utf8");
+    await chmod(fakeAiden, 0o755);
+    await writeConfig(configDir, await freePort(), [{
+      id: "aiden",
+      kind: "aiden",
+      label: "Aiden",
+      command: fakeAiden,
+      enabled: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }]);
+
+    const result = await runCli([
+      "send",
+      "--to",
+      "aiden",
+      "--message",
+      "hello direct",
+      "--workspace",
+      projectDir,
+      "--session-id",
+      "s1"
+    ], projectDir, configDir, stateDir, {
+      extraEnv: {
+        AGENT_BRIDGE_TERMINAL_BACKEND: "capture",
+        AGENT_BRIDGE_TEST_CONTEXT: contextPath
+      }
+    });
+    assert.equal(result.code, 0, result.stderr);
+    const response = JSON.parse(result.stdout);
+    assert.equal(response.result.summary, "saw direct aiden");
+    assert.equal("rawOutput" in response.result, false);
+    const context = await readFile(contextPath, "utf8");
+    assert.match(context, /Direct message:/);
+    assert.match(context, /hello direct/);
+    assert.match(context, /"consumer": "aiden"/);
+
+    const rawResult = await runCli([
+      "send",
+      "--to",
+      "aiden",
+      "--message",
+      "hello direct",
+      "--workspace",
+      projectDir,
+      "--session-id",
+      "s1",
+      "--raw-output"
+    ], projectDir, configDir, stateDir, {
+      extraEnv: {
+        AGENT_BRIDGE_TERMINAL_BACKEND: "capture",
+        AGENT_BRIDGE_TEST_CONTEXT: contextPath
+      }
+    });
+    assert.equal(rawResult.code, 0, rawResult.stderr);
+    const rawResponse = JSON.parse(rawResult.stdout);
+    assert.match(rawResponse.result.rawOutput, /saw direct aiden/);
+
+    const runs = JSON.parse(await readFile(join(stateDir, "bridge-runs.json"), "utf8"));
+    assert.equal(runs[0].source, "direct");
+    assert.equal(runs[0].directMessagePreview, "hello direct");
+    assert.equal(runs[0].consumers[0].kind, "aiden");
+  } finally {
+    await runCli(["stop"], projectDir, configDir, stateDir).catch(() => undefined);
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("send reads stdin and file messages and does not de-duplicate direct repeats", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "agent-bridge-send-message-"));
+  const projectDir = join(dir, "project");
+  const configDir = join(dir, "config");
+  const stateDir = join(dir, "state");
+  const countPath = join(dir, "count.txt");
+  try {
+    await mkdir(projectDir);
+    await mkdir(configDir);
+    await mkdir(stateDir);
+    const fakeClaude = join(dir, "fake-claude.mjs");
+    await writeFile(fakeClaude, `#!${process.execPath}
+import { appendFileSync, readFileSync } from "node:fs";
+let input = "";
+process.stdin.on("data", (chunk) => input += chunk);
+process.stdin.on("end", () => {
+  appendFileSync(process.env.AGENT_BRIDGE_TEST_COUNT ?? "", "x");
+  const count = readFileSync(process.env.AGENT_BRIDGE_TEST_COUNT ?? "", "utf8").length;
+  const summary = input.includes("file direct") ? "file direct" : input.includes("repeat direct") ? "repeat direct " + count : "missing direct";
+  console.log(JSON.stringify({ verdict: "pass", summary, findings: [], suggestedPrompt: "" }));
+});
+`, "utf8");
+    await chmod(fakeClaude, 0o755);
+    await writeConfig(configDir, await freePort(), [{
+      id: "claude",
+      kind: "claude",
+      label: "Claude Code",
+      command: fakeClaude,
+      enabled: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }]);
+
+    const first = await runCli(["send", "--to", "claude", "--workspace", projectDir, "--session-id", "stdin-session"], projectDir, configDir, stateDir, {
+      input: "repeat direct",
+      extraEnv: { AGENT_BRIDGE_TEST_COUNT: countPath }
+    });
+    assert.equal(first.code, 0, first.stderr);
+    assert.equal(JSON.parse(first.stdout).result.summary, "repeat direct 1");
+
+    const second = await runCli(["send", "--to", "claude", "--workspace", projectDir, "--session-id", "stdin-session"], projectDir, configDir, stateDir, {
+      input: "repeat direct",
+      extraEnv: { AGENT_BRIDGE_TEST_COUNT: countPath }
+    });
+    assert.equal(second.code, 0, second.stderr);
+    assert.equal(JSON.parse(second.stdout).result.summary, "repeat direct 2");
+
+    const messageFile = join(dir, "message.txt");
+    await writeFile(messageFile, "file direct", "utf8");
+    const fileResult = await runCli(["send", "--to", "claude", "--file", messageFile, "--workspace", projectDir], projectDir, configDir, stateDir, {
+      extraEnv: { AGENT_BRIDGE_TEST_COUNT: countPath }
+    });
+    assert.equal(fileResult.code, 0, fileResult.stderr);
+    assert.equal(JSON.parse(fileResult.stdout).result.summary, "file direct");
+
+    const config = JSON.parse(await readFile(join(configDir, "config.json"), "utf8"));
+    assert.deepEqual(config.routes, []);
+  } finally {
+    await runCli(["stop"], projectDir, configDir, stateDir).catch(() => undefined);
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("send validates the target and message source", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "agent-bridge-send-validation-"));
+  try {
+    const missingTarget = await runCli(["send", "--message", "hello"], dir, join(dir, "config"), join(dir, "state"));
+    assert.equal(missingTarget.code, 1);
+    assert.match(missingTarget.stderr, /--to must be codex, claude, or aiden/);
+
+    const conflictingSources = await runCli(["send", "--to", "aiden", "--message", "hello", "--file", "message.txt"], dir, join(dir, "config"), join(dir, "state"));
+    assert.equal(conflictingSources.code, 1);
+    assert.match(conflictingSources.stderr, /exactly one direct message source/);
+
+    const pipedConflict = await runCli(["send", "--to", "aiden", "--message", "hello"], dir, join(dir, "config"), join(dir, "state"), {
+      input: "stdin hello"
+    });
+    assert.equal(pipedConflict.code, 1);
+    assert.match(pipedConflict.stderr, /exactly one direct message source/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
 test("agent namespace is no longer a public command", async () => {
   const dir = await mkdtemp(join(tmpdir(), "agent-bridge-agent-add-"));
   try {
@@ -348,6 +525,32 @@ function runNodeScript(script: string, cwd: string, configDir: string, stateDir:
         code,
         stdout: Buffer.concat(stdout).toString("utf8"),
         stderr: Buffer.concat(stderr).toString("utf8")
+      });
+    });
+  });
+}
+
+async function writeConfig(configDir: string, port: number, agents: unknown[]): Promise<void> {
+  await writeFile(join(configDir, "config.json"), `${JSON.stringify({
+    port,
+    uncertainBehavior: "continue",
+    agents,
+    routes: []
+  }, null, 2)}\n`, "utf8");
+}
+
+async function freePort(): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const server = createServer();
+    server.on("error", reject);
+    server.listen(0, "127.0.0.1", () => {
+      const address = server.address();
+      server.close(() => {
+        if (address && typeof address === "object") {
+          resolve(address.port);
+          return;
+        }
+        reject(new Error("Unable to allocate a free port"));
       });
     });
   });

@@ -3,6 +3,7 @@ export type HookEvent = "stop" | "post-tool-use";
 export type ConfigScope = "project" | "global";
 export type BridgeVerdict = "pass" | "fail" | "uncertain";
 export type UncertainBehavior = "continue" | "pass";
+export type BridgeRunSource = "hook" | "direct";
 export type BridgeRunStatus = "running" | "pass" | "fail" | "uncertain" | "timed_out" | "late_pass" | "late_fail" | "late_uncertain" | "skipped" | "error" | "interrupted";
 export type ConsumerRunStatus = "pending" | "running" | "pass" | "fail" | "uncertain" | "error" | "interrupted";
 
@@ -37,6 +38,17 @@ export interface RawHookEnvelope {
   raw: unknown;
 }
 
+export interface RawDirectEnvelope {
+  consumer: EndpointKind;
+  message: string;
+  cwd: string;
+  sessionId: string | null;
+  producer: EndpointKind;
+  turnId: string | null;
+  sender: BridgeMessageSender | null;
+  mentions: BridgeMention[];
+}
+
 export interface NormalizedHookPayload {
   producer: EndpointKind;
   event: HookEvent;
@@ -50,6 +62,19 @@ export interface NormalizedHookPayload {
   toolName: string | null;
   toolInput: unknown;
   toolResponse: unknown;
+  sender: BridgeMessageSender | null;
+  mentions: BridgeMention[];
+}
+
+export interface BridgeMessageSender {
+  type: string;
+  openId?: string;
+  name?: string;
+}
+
+export interface BridgeMention {
+  openId?: string;
+  name: string;
 }
 
 export interface GitContext {
@@ -96,9 +121,13 @@ export interface ConsumerRunRecord {
   pid?: number;
   commandLine?: string;
   logPath?: string;
+  workerLogPath?: string;
   terminalId?: string;
   terminalBackend?: "capture" | "tmux";
   tmuxSession?: string;
+  workerId?: string;
+  workerKey?: string;
+  workerContextDir?: string;
   verdict?: BridgeVerdict;
   summary?: string;
   error?: string;
@@ -108,11 +137,13 @@ export interface ConsumerRunRecord {
 export interface BridgeRunRecord {
   id: string;
   hash: string;
+  source?: BridgeRunSource;
   producer: EndpointKind;
   event: HookEvent;
   cwd: string;
   sessionId: string | null;
   turnId: string | null;
+  directMessagePreview?: string;
   status: BridgeRunStatus;
   startedAt: string;
   updatedAt: string;

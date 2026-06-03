@@ -29,7 +29,9 @@ const TMUX_BACKEND_ENV = "AGENT_BRIDGE_TERMINAL_BACKEND";
 const TMUX_BIN_ENV = "AGENT_BRIDGE_TMUX";
 const DEFAULT_COLS = 120;
 const DEFAULT_ROWS = 36;
+const INTERACTIVE_RESULT_SCAN_WINDOW = 2 * 1024 * 1024;
 let cachedTmux: string | null | undefined;
+const terminalQueues = new Map<string, Promise<unknown>>();
 
 class KnownFatalOutputError extends Error {
   readonly kind: KnownAgentErrorKind;
@@ -50,8 +52,8 @@ export function attachTmuxRunner(session: TerminalSession, options: AttachTmuxOp
   session.backend = "tmux";
   session.tmuxSession = tmuxSessionName(session.terminalId);
   session.runner = {
-    run: (command, args, input, runOptions) => runInTmux(tmux, session, options, command, args, input, runOptions),
-    runTty: (command, args, runOptions) => runInteractiveInTmux(tmux, session, options, command, args, runOptions)
+    run: (command, args, input, runOptions) => enqueueTerminalRun(session.terminalId, () => runInTmux(tmux, session, options, command, args, input, runOptions)),
+    runTty: (command, args, runOptions) => enqueueTerminalRun(session.terminalId, () => runInteractiveInTmux(tmux, session, options, command, args, runOptions))
   };
 }
 
@@ -72,9 +74,7 @@ export async function sendTerminalInput(terminalId: string, data: string): Promi
     await execTmux(tmux, ["send-keys", "-t", sessionName, "C-d"]);
     return true;
   }
-  const bufferName = `agent-bridge-${createHash("sha1").update(`${terminalId}:${Date.now()}:${Math.random()}`).digest("hex").slice(0, 12)}`;
-  await execTmux(tmux, ["load-buffer", "-b", bufferName, "-"], data);
-  await execTmux(tmux, ["paste-buffer", "-d", "-b", bufferName, "-t", sessionName]);
+  await pasteIntoTmux(tmux, sessionName, data);
   return true;
 }
 
@@ -226,49 +226,88 @@ async function runInteractiveInTmux(
   runOptions: TtyRunOptions
 ): Promise<SpawnInputResult> {
   const sessionName = session.tmuxSession ?? tmuxSessionName(session.terminalId);
-  const workDir = dirname(session.logPath);
+  const liveLogPath = terminalLiveLogPath(session);
+  const workDir = dirname(liveLogPath);
   await mkdir(workDir, { recursive: true });
 
   const commandLine = formatCommandLine(command, args);
-  const panePid = await startTmuxCommand(
-    tmux,
-    session,
-    sessionName,
-    attachOptions,
-    runOptions.cwd,
-    commandLine,
-    shellQuote([
-      ...envCommandPrefix(runOptions.env),
-      command,
-      ...args
-    ])
-  );
+  const start = session.workerId
+    ? await startOrReuseTmuxWorker(
+      tmux,
+      session,
+      sessionName,
+      attachOptions,
+      runOptions.cwd,
+      commandLine,
+      shellQuote([
+        ...envCommandPrefix(runOptions.env),
+        command,
+        ...args
+      ])
+    )
+    : {
+      panePid: await startTmuxCommand(
+        tmux,
+        session,
+        sessionName,
+        attachOptions,
+        runOptions.cwd,
+        commandLine,
+        shellQuote([
+          ...envCommandPrefix(runOptions.env),
+          command,
+          ...args
+        ])
+      ),
+      reused: false
+    };
   attachOptions.onStart?.({
-    pid: panePid,
+    pid: start.panePid,
     command,
     args,
     cwd: runOptions.cwd
   }, session);
 
-  await delay(runOptions.inputDelayMs ?? 1500);
-  const outputOffset = await stat(session.logPath).then((item) => item.size, () => 0);
-  await pasteIntoTmux(tmux, sessionName, runOptions.terminalInput);
-  await execTmux(tmux, ["send-keys", "-t", sessionName, "C-m"]);
+  const readyOffset = await stat(liveLogPath).then((item) => item.size, () => 0);
+  if (runOptions.readyPattern) {
+    await waitForInteractiveReady(tmux, sessionName, liveLogPath, readyOffset, runOptions);
+  } else {
+    await delay(start.reused ? 100 : runOptions.inputDelayMs ?? 1500);
+  }
+  const outputOffset = await stat(liveLogPath).then((item) => item.size, () => 0);
+  if (session.workerLogPath) {
+    await appendTerminalLog(session.logPath, formatTerminalInputEcho(runOptions.terminalInput));
+  }
+  await submitTerminalInput(tmux, sessionName, runOptions.terminalInput, runOptions.terminalInputMode ?? "paste");
+  await delay(runOptions.submitDelayMs ?? 200);
+  await execTmux(tmux, ["send-keys", "-t", sessionName, "Enter"]);
 
   try {
-    const stdout = await waitForInteractiveResult(session.logPath, outputOffset, runOptions.timeout);
+    const stdout = await waitForInteractiveResult(liveLogPath, outputOffset, runOptions.timeout);
     const footer = "\r\n\x1b[90m# bridge result detected; terminal left open\x1b[0m\r\n";
+    if (session.workerLogPath) {
+      await appendTerminalLog(session.logPath, stdout);
+    }
     await appendTerminalLog(session.logPath, footer);
+    if (session.workerLogPath) {
+      await appendTerminalLog(session.workerLogPath, footer);
+    }
     publishTerminalEvent(session.terminalId, { type: "stdout", data: footer });
     return {
       stdout,
       stderr: ""
     };
   } catch (error) {
-    const output = await readFile(session.logPath, "utf8").catch(() => "");
+    const outputBuffer = await readFile(liveLogPath).catch(() => Buffer.alloc(0));
+    const output = outputBuffer.toString("utf8");
+    const relevantOutput = logTextFromByteOffset(outputBuffer, outputOffset);
     const footer = error instanceof KnownFatalOutputError
       ? `\r\n\x1b[90m# interactive terminal observed ${error.kind} output\x1b[0m\r\n`
       : `\r\n\x1b[90m# interactive terminal timed out after ${runOptions.timeout} ms\x1b[0m\r\n`;
+    if (session.workerLogPath) {
+      await appendTerminalLog(session.logPath, relevantOutput);
+      await appendTerminalLog(session.workerLogPath, footer);
+    }
     await appendTerminalLog(session.logPath, footer);
     publishTerminalEvent(session.terminalId, { type: "stdout", data: footer });
     const message = error instanceof Error ? error.message : String(error);
@@ -326,6 +365,76 @@ async function startTmuxCommand(
   ensureTerminalLogTail(session.terminalId, session.logPath, true);
   publishTerminalEvent(session.terminalId, { type: "start", data: header, pid: panePid });
   return panePid;
+}
+
+async function startOrReuseTmuxWorker(
+  tmux: string,
+  session: TerminalSession,
+  sessionName: string,
+  attachOptions: AttachTmuxOptions,
+  cwd: string,
+  commandLine: string,
+  shellCommand: string
+): Promise<{ panePid: number; reused: boolean }> {
+  const liveLogPath = terminalLiveLogPath(session);
+  if (await hasSession(tmux, sessionName)) {
+    const panePid = await paneProcessId(tmux, sessionName);
+    const header = [
+      "",
+      `\x1b[90m# Agent Bridge tmux worker\x1b[0m`,
+      `\x1b[90m# run: ${attachOptions.runId}\x1b[0m`,
+      `\x1b[90m# worker: ${session.workerId ?? session.terminalId}\x1b[0m`,
+      `\x1b[90m# agent: ${attachOptions.agent.label}\x1b[0m`,
+      `\x1b[90m# cwd: ${attachOptions.cwd}\x1b[0m`,
+      `\x1b[90m# tmux: ${sessionName}\x1b[0m`,
+      `\x1b[90m# pane pid: ${panePid}\x1b[0m`,
+      `\x1b[90m# reusing existing CLI worker; sending bridge input\x1b[0m`,
+      ""
+    ].join("\r\n");
+    await Promise.all([
+      appendTerminalLog(liveLogPath, header),
+      writeTerminalLog(session.logPath, header)
+    ]);
+    await execTmux(tmux, ["pipe-pane", "-t", sessionName, `cat >> ${shellQuote([liveLogPath])}`]).catch(() => undefined);
+    ensureTerminalLogTail(session.terminalId, liveLogPath, true);
+    publishTerminalEvent(session.terminalId, { type: "start", data: header, pid: panePid });
+    return { panePid, reused: true };
+  }
+
+  await execTmux(tmux, [
+    "new-session",
+    "-d",
+    "-s",
+    sessionName,
+    "-c",
+    cwd,
+    "-x",
+    String(DEFAULT_COLS),
+    "-y",
+    String(DEFAULT_ROWS),
+    shellCommand
+  ]);
+
+  const panePid = await paneProcessId(tmux, sessionName);
+  const header = [
+    `\x1b[90m# Agent Bridge tmux worker\x1b[0m`,
+    `\x1b[90m# run: ${attachOptions.runId}\x1b[0m`,
+    `\x1b[90m# worker: ${session.workerId ?? session.terminalId}\x1b[0m`,
+    `\x1b[90m# agent: ${attachOptions.agent.label}\x1b[0m`,
+    `\x1b[90m# cwd: ${attachOptions.cwd}\x1b[0m`,
+    `\x1b[90m# tmux: ${sessionName}\x1b[0m`,
+    `\x1b[90m# pane pid: ${panePid}\x1b[0m`,
+    `\x1b[90m$ ${commandLine}\x1b[0m`,
+    ""
+  ].join("\r\n");
+  await Promise.all([
+    appendTerminalLog(liveLogPath, `${header}\r\n`),
+    writeTerminalLog(session.logPath, `${header}\r\n`)
+  ]);
+  await execTmux(tmux, ["pipe-pane", "-t", sessionName, `cat >> ${shellQuote([liveLogPath])}`]);
+  ensureTerminalLogTail(session.terminalId, liveLogPath, true);
+  publishTerminalEvent(session.terminalId, { type: "start", data: header, pid: panePid });
+  return { panePid, reused: false };
 }
 
 function shellCommandWithExitMarker(
@@ -390,8 +499,8 @@ async function waitForCommandDone(donePath: string, logPath: string, timeout: nu
 async function waitForInteractiveResult(logPath: string, outputOffset: number, timeout: number): Promise<string> {
   const started = Date.now();
   while (Date.now() - started < timeout) {
-    const output = await readFile(logPath, "utf8").catch(() => "");
-    const relevantOutput = output.slice(outputOffset);
+    const output = await readFile(logPath).catch(() => Buffer.alloc(0));
+    const relevantOutput = interactiveResultWindow(output, outputOffset);
     if (hasBridgeResultJson(relevantOutput)) {
       return relevantOutput;
     }
@@ -405,10 +514,119 @@ async function waitForInteractiveResult(logPath: string, outputOffset: number, t
   throw new Error(`Interactive agent command timed out after ${timeout} ms`);
 }
 
+function interactiveResultWindow(output: Buffer, outputOffset: number): string {
+  const scopedStart = output.length < outputOffset ? 0 : outputOffset;
+  const windowStart = Math.max(scopedStart, output.length - INTERACTIVE_RESULT_SCAN_WINDOW);
+  return output.subarray(windowStart).toString("utf8");
+}
+
+function logTextFromByteOffset(output: Buffer, outputOffset: number): string {
+  const start = output.length < outputOffset ? 0 : outputOffset;
+  return output.subarray(start).toString("utf8");
+}
+
+async function waitForInteractiveReady(tmux: string, sessionName: string, logPath: string, readyOffset: number, options: TtyRunOptions): Promise<void> {
+  const pattern = options.readyPattern;
+  if (!pattern) {
+    return;
+  }
+  const timeout = options.readyTimeoutMs ?? options.inputDelayMs ?? 30_000;
+  const quietMs = options.readyQuietMs ?? 800;
+  const started = Date.now();
+  let lastSize = -1;
+  let lastChangedAt = Date.now();
+  let lastScreen = "";
+  let lastRecent = "";
+
+  while (Date.now() - started < timeout) {
+    const output = await readFile(logPath).catch(() => Buffer.alloc(0));
+    const recentOutput = logTextFromByteOffset(output, readyOffset);
+    if (output.length !== lastSize) {
+      lastSize = output.length;
+      lastChangedAt = Date.now();
+    }
+    const screen = stripTerminalControl(await capturePaneText(tmux, sessionName).catch(() => ""));
+    const recent = stripTerminalControl(recentOutput);
+    lastScreen = screen;
+    lastRecent = recent;
+    const screenReady = readyAfterLastBusy(pattern, options.busyPattern, screen);
+    const recentReady = readyAfterLastBusy(pattern, options.busyPattern, recent);
+    if ((screenReady || recentReady) && Date.now() - lastChangedAt >= quietMs) {
+      return;
+    }
+    const knownError = detectKnownAgentError(recentOutput);
+    if (knownError && !hasBridgeResultJson(recentOutput)) {
+      const line = firstKnownAgentErrorLine(recentOutput, knownError) ?? knownError.title("Agent");
+      throw new KnownFatalOutputError(knownError.kind, line);
+    }
+    await delay(250);
+  }
+
+  throw new Error(`Interactive agent terminal did not become ready after ${timeout} ms\n\nScreen tail:\n${lastScreen.slice(-1000)}\n\nRecent output tail:\n${lastRecent.slice(-1000)}`);
+}
+
+async function capturePaneText(tmux: string, sessionName: string): Promise<string> {
+  return execTmux(tmux, ["capture-pane", "-p", "-t", sessionName]);
+}
+
+function readyAfterLastBusy(readyPattern: RegExp, busyPattern: RegExp | undefined, text: string): boolean {
+  if (!busyPattern) {
+    return readyPattern.test(text);
+  }
+  const busyAt = lastPatternIndex(busyPattern, text);
+  return readyPattern.test(busyAt === -1 ? text : text.slice(busyAt));
+}
+
+function lastPatternIndex(pattern: RegExp, text: string): number {
+  const flags = pattern.flags.includes("g") ? pattern.flags : `${pattern.flags}g`;
+  const globalPattern = new RegExp(pattern.source, flags);
+  let match: RegExpExecArray | null;
+  let index = -1;
+  while ((match = globalPattern.exec(text)) !== null) {
+    index = match.index;
+    if (match[0].length === 0) {
+      globalPattern.lastIndex += 1;
+    }
+  }
+  return index;
+}
+
 async function pasteIntoTmux(tmux: string, sessionName: string, text: string): Promise<void> {
   const bufferName = `agent-bridge-${createHash("sha1").update(`${sessionName}:${Date.now()}:${Math.random()}`).digest("hex").slice(0, 12)}`;
   await execTmux(tmux, ["load-buffer", "-b", bufferName, "-"], text);
-  await execTmux(tmux, ["paste-buffer", "-d", "-b", bufferName, "-t", sessionName]);
+  await execTmux(tmux, ["paste-buffer", "-t", sessionName, "-d", "-p", "-b", bufferName]);
+}
+
+async function submitTerminalInput(tmux: string, sessionName: string, text: string, mode: "paste" | "literal"): Promise<void> {
+  if (mode === "paste" && /[\r\n]/.test(text)) {
+    await pasteIntoTmux(tmux, sessionName, text);
+    return;
+  }
+  await sendLiteralIntoTmux(tmux, sessionName, text);
+}
+
+async function sendLiteralIntoTmux(tmux: string, sessionName: string, text: string): Promise<void> {
+  const chunkSize = 1000;
+  for (let offset = 0; offset < text.length; offset += chunkSize) {
+    await execTmux(tmux, ["send-keys", "-t", sessionName, "-l", "--", text.slice(offset, offset + chunkSize)]);
+    await delay(5);
+  }
+}
+
+function terminalLiveLogPath(session: TerminalSession): string {
+  return session.workerLogPath ?? session.logPath;
+}
+
+function formatTerminalInputEcho(input: string): string {
+  const normalized = input.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  return `\r\n> ${normalized.replace(/\n/g, "\r\n")}\r\n`;
+}
+
+function stripTerminalControl(text: string): string {
+  return text
+    .replace(/\x1b\][^\x07]*(?:\x07|\x1b\\)/g, "")
+    .replace(/\x1b\[[0-9;?]*[ -/]*[@-~]/g, "")
+    .replace(/\r/g, "");
 }
 
 async function paneProcessId(tmux: string, sessionName: string): Promise<number> {
@@ -452,4 +670,15 @@ function spawnCollect(command: string, args: string[], input?: string): Promise<
     }));
     child.stdin.end(input ?? "");
   });
+}
+
+async function enqueueTerminalRun<T>(terminalId: string, run: () => Promise<T>): Promise<T> {
+  const previous = terminalQueues.get(terminalId) ?? Promise.resolve();
+  const current = previous.catch(() => undefined).then(run);
+  terminalQueues.set(terminalId, current.finally(() => {
+    if (terminalQueues.get(terminalId) === current) {
+      terminalQueues.delete(terminalId);
+    }
+  }));
+  return current;
 }

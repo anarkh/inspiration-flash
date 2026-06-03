@@ -11,13 +11,21 @@ export interface SpawnInputOptions {
 
 export interface TtyRunOptions extends SpawnInputOptions {
   terminalInput: string;
+  terminalInputMode?: TerminalInputMode;
+  submitDelayMs?: number;
   inputDelayMs?: number;
+  readyPattern?: RegExp;
+  busyPattern?: RegExp;
+  readyTimeoutMs?: number;
+  readyQuietMs?: number;
 }
 
 export interface SpawnInputResult {
   stdout: string;
   stderr: string;
 }
+
+export type TerminalInputMode = "paste" | "literal";
 
 export interface AgentCommandRunner {
   run(command: string, args: string[], input: string, options: SpawnInputOptions): Promise<SpawnInputResult>;

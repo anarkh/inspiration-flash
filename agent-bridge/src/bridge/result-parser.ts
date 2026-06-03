@@ -125,11 +125,16 @@ export function hasBridgeResultJson(output: string): boolean {
 function tryParseJsonObject(text: string): Record<string, unknown> | null {
   const candidates = [
     text,
-    fencedJson(text),
-    ...jsonObjectCandidates(text).reverse()
+    fencedJson(text)
   ].filter((item): item is string => Boolean(item));
   for (const candidate of candidates) {
-    const parsed = tryJson(candidate);
+    const parsed = tryJson(candidate) ?? tryJson(repairTerminalWrappedJson(candidate));
+    if (isBridgeResultObject(parsed)) {
+      return parsed as Record<string, unknown>;
+    }
+  }
+  for (const candidate of jsonObjectCandidatesFromEnd(text)) {
+    const parsed = tryJson(candidate) ?? tryJson(repairTerminalWrappedJson(candidate));
     if (isBridgeResultObject(parsed)) {
       return parsed as Record<string, unknown>;
     }
@@ -145,6 +150,42 @@ function tryJson(text: string): unknown | null {
   }
 }
 
+function repairTerminalWrappedJson(text: string): string {
+  let repaired = "";
+  let inString = false;
+  let escaped = false;
+
+  for (let index = 0; index < text.length; index += 1) {
+    const char = text[index];
+    if (inString && char === "\n") {
+      repaired += " ";
+      while (text[index + 1] === " " || text[index + 1] === "\t") {
+        index += 1;
+      }
+      continue;
+    }
+
+    repaired += char;
+
+    if (!inString) {
+      if (char === "\"") {
+        inString = true;
+      }
+      continue;
+    }
+
+    if (escaped) {
+      escaped = false;
+    } else if (char === "\\") {
+      escaped = true;
+    } else if (char === "\"") {
+      inString = false;
+    }
+  }
+
+  return repaired;
+}
+
 function fencedJson(text: string): string | null {
   const match = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
   return match?.[1]?.trim() ?? null;
@@ -157,18 +198,15 @@ function isBridgeResultObject(value: unknown): value is Record<string, unknown> 
     && ("verdict" in value || "summary" in value || "findings" in value || "suggestedPrompt" in value);
 }
 
-function jsonObjectCandidates(text: string): string[] {
-  const candidates: string[] = [];
-  for (let index = 0; index < text.length; index += 1) {
-    if (text[index] !== "{") {
-      continue;
-    }
+function* jsonObjectCandidatesFromEnd(text: string): Generator<string> {
+  let index = text.lastIndexOf("{");
+  while (index !== -1) {
     const candidate = balancedJsonObjectFrom(text, index);
     if (candidate) {
-      candidates.push(candidate);
+      yield candidate;
     }
+    index = text.lastIndexOf("{", index - 1);
   }
-  return candidates;
 }
 
 function balancedJsonObjectFrom(text: string, start: number): string | null {
