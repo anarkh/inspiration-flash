@@ -4,6 +4,11 @@
   "description": "Local bridge for connecting Codex and Claude Code agents.",
   "type": "module",
   "author": "anarkhli",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anarkh/inspiration-flash.git",
+    "directory": "agent-bridge"
+  },
   "bin": {
     "agent-bridge": "dist/cli/index.js"
   },
