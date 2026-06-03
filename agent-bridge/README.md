@@ -127,9 +127,22 @@ npm run build
 
 ## Publishing
 
+Agent Bridge is published from GitHub Actions with npm trusted publishing (OIDC). The publish workflow runs on pushes to `main` that touch `agent-bridge/**`, then publishes the package from the `agent-bridge` directory when the current package version is not already on npm.
+
+Before merging a release version, configure the package on npmjs.com:
+
+- Provider: GitHub Actions
+- Organization or user: `anarkh`
+- Repository: `inspiration-flash`
+- Workflow filename: `agent-bridge-publish.yml`
+- Environment name: leave blank
+- Allowed actions: `npm publish`
+
+The workflow does not use `NPM_TOKEN`. It requires GitHub Actions OIDC permission (`id-token: write`) and npm CLI trusted publishing support. Version bumps still happen in `agent-bridge/package.json`; if the same version is already published, the workflow skips `npm publish`.
+
+Manual fallback is still possible from a maintainer account:
+
 ```bash
-npm login
+npm login --registry https://registry.npmjs.org
 npm publish --access public
 ```
-
-The package is scoped as `@ranarkh/agent-bridge`, so the npm account must have publish access to the `ranarkh` organization.
