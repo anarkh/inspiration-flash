@@ -92,7 +92,8 @@ async function main(argv: string[]): Promise<void> {
 async function setupCommand(): Promise<void> {
   const producers = await chooseProducerSet("Configure producer hooks", "Install hooks for every supported producer");
   const scope = await chooseConfigScope();
-  const hookCwd = await resolveHookConfigCwd(scope, process.cwd());
+  const cwd = safeCwd();
+  const hookCwd = await resolveHookConfigCwd(scope, cwd);
   const configured = await configureConsumerRoutes(producers);
   const changed = await configureHooks({
     producers,
@@ -100,7 +101,7 @@ async function setupCommand(): Promise<void> {
     events: ["stop"],
     cwd: hookCwd
   });
-  if (scope === "project" && hookCwd !== process.cwd()) {
+  if (scope === "project" && hookCwd !== cwd) {
     stdout.write(`Resolved project hook root:\n- ${hookCwd}\n`);
   }
   stdout.write(`Configured consumer routes:\n${configured.routes.map((route) => `- ${formatRoute(route)}`).join("\n")}\n`);
@@ -171,13 +172,14 @@ async function hooksCommand(subcommand: string | undefined): Promise<void> {
   if (subcommand === "clear") {
     const producers = await chooseProducerSet("Clear producer hooks", "Remove Agent Bridge hooks for every supported producer");
     const scope = await chooseConfigScope();
-    const hookCwd = await resolveHookConfigCwd(scope, process.cwd());
+    const cwd = safeCwd();
+    const hookCwd = await resolveHookConfigCwd(scope, cwd);
     const changed = await clearHooks({
       producers,
       scope,
       cwd: hookCwd
     });
-    if (scope === "project" && hookCwd !== process.cwd()) {
+    if (scope === "project" && hookCwd !== cwd) {
       stdout.write(`Resolved project hook root:\n- ${hookCwd}\n`);
     }
     if (changed.length === 0) {
@@ -195,7 +197,8 @@ async function removeCommand(args: string[]): Promise<void> {
   const config = await loadConfig();
   const target = await resolveRemoveTarget(args, config.routes);
   const scopes = await resolveHookCleanupScopes(args);
-  const projectHookCwd = await resolveHookConfigCwd("project", process.cwd());
+  const cwd = safeCwd();
+  const projectHookCwd = await resolveHookConfigCwd("project", cwd);
   const producers: EndpointKind[] = target.all ? ["codex", "claude", "aiden"] : [target.producer];
   const route = target.all ? null : config.routes.find((item) => item.producer === target.producer) ?? null;
   const removedConfig = target.all
@@ -204,7 +207,7 @@ async function removeCommand(args: string[]): Promise<void> {
   const clearedHooks = (await Promise.all(scopes.map((scope) => clearHooks({
     producers,
     scope,
-    cwd: scope === "project" ? projectHookCwd : process.cwd()
+    cwd: scope === "project" ? projectHookCwd : cwd
   })))).flat();
 
   if (target.all) {
@@ -421,7 +424,19 @@ function workspaceValue(args: string[]): string {
   if (workspace && cwd && workspace !== cwd) {
     throw new Error("Use either --workspace or --cwd, not both.");
   }
-  return workspace ?? cwd ?? process.cwd();
+  return workspace ?? cwd ?? safeCwd();
+}
+
+function safeCwd(): string {
+  try {
+    return process.cwd();
+  } catch {
+    const pwd = process.env.PWD;
+    if (pwd) {
+      return pwd;
+    }
+    throw new Error("Current working directory no longer exists. Change to an existing directory and rerun agent-bridge.");
+  }
 }
 
 function requireNonEmptyMessage(message: string): string {
