@@ -1,0 +1,56 @@
+name: Publish Agent Bridge
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - agent-bridge/**
+      - .github/workflows/agent-bridge-publish.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: agent-bridge-publish-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: agent-bridge
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+
+      - run: npm ci
+
+      - run: npm test
+
+      - run: npm run build
+
+      - name: Check published version
+        id: published
+        run: |
+          set -euo pipefail
+          package_name=$(node -p "require('./package.json').name")
+          package_version=$(node -p "require('./package.json').version")
+          if npm view "${package_name}@${package_version}" version --registry https://registry.npmjs.org >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "${package_name}@${package_version} is already published; skipping npm publish."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish to npm
+        if: steps.published.outputs.exists == 'false'
+        run: npm publish --access public

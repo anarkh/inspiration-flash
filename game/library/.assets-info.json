@@ -1,0 +1,48 @@
+{
+  "version": "1.0.1",
+  "map": {
+    "data": {
+      "time": 1777454428113.7576,
+      "uuid": "eaecbe0b-625b-4731-99a4-e88bd2208e39"
+    },
+    "scripts": {
+      "time": 1777454423906.4568,
+      "uuid": "23570fc5-a2b9-432e-9bff-ee03d0640edd"
+    },
+    "scripts/Day1LivestreamRoom.ts": {
+      "time": 1777520999365.6045,
+      "uuid": "0f19a6c2-3913-4850-a43f-0f65db0bf945"
+    },
+    "scripts/cc.d.ts": {
+      "time": 1777457677636.8643,
+      "uuid": "852583ce-e886-4578-939f-e5eeca43b76a"
+    },
+    "scripts/cc.d.ts.meta": {
+      "time": 1777454423910.663
+    },
+    "data.meta": {
+      "time": 1777454423913.3464
+    },
+    "scripts.meta": {
+      "time": 1777454423918.445
+    },
+    "scripts/Day1LivestreamRoom.ts.meta": {
+      "time": 1777454423922.5195
+    },
+    "data/day1-copy.json": {
+      "time": 1777449187055.4043,
+      "uuid": "cc393ba0-ff8a-48c0-97fa-92e24ebdc6c4"
+    },
+    "data/day1-copy.json.meta": {
+      "time": 1777454428128.1506
+    },
+    "LivestreamRoom.scene.scene.meta": {
+      "time": 1777454612080.7134
+    },
+    "LivestreamRoom.scene.scene": {
+      "time": 1777456725811.682,
+      "uuid": "b2d16519-69ff-47f4-b68d-6bef069768a6"
+    }
+  },
+  "missing": {}
+}
