@@ -6,7 +6,7 @@
   "author": "anarkhli",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/anarkh/inspiration-flash.git",
+    "url": "https://github.com/anarkh/inspiration-flash",
     "directory": "agent-bridge"
   },
   "bin": {
