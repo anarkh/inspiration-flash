@@ -1,6 +1,5 @@
-import { dirname, isAbsolute, join, resolve } from "node:path";
+import { join } from "node:path";
 import { homedir } from "node:os";
-import { fileURLToPath } from "node:url";
 import { HOOK_STATUS_MESSAGE } from "../core/constants.ts";
 import type { ConfigScope, EndpointKind, HookEvent } from "../core/types.ts";
 import { pathExists, readJson, readText, writeJson, writeText } from "../utils/fs.ts";
@@ -77,7 +76,7 @@ export async function configureCodexHooks(
     const group: HookGroup = {
       hooks: [{
         type: "command",
-        command: buildHookCommand("codex", event),
+        command: buildHookCommand("codex", event, cwd),
         statusMessage: HOOK_STATUS_MESSAGE
       }]
     };
@@ -113,7 +112,7 @@ export async function configureClaudeHooks(
     const group: HookGroup = {
       hooks: [{
         type: "command",
-        command: buildHookCommand("claude", event),
+        command: buildHookCommand("claude", event, cwd),
         timeout: 600
       }]
     };
@@ -146,7 +145,7 @@ export async function configureAidenHooks(
     const group: HookGroup = {
       hooks: [{
         type: "command",
-        command: buildHookCommand("aiden", event),
+        command: buildHookCommand("aiden", event, cwd),
         timeout: 600
       }]
     };
@@ -164,10 +163,8 @@ export async function clearAidenHooks(scope: ConfigScope, cwd: string): Promise<
   return clearManagedHooksFile(aidenSettingsPath(scope, cwd), "aiden");
 }
 
-export function buildHookCommand(producer: EndpointKind, event: HookEvent): string {
-  const nodePath = process.execPath;
-  const entrypoint = currentEntrypoint();
-  return `${shellQuote(nodePath)} ${shellQuote(entrypoint)} hook --producer ${producer} --event ${event}`;
+export function buildHookCommand(producer: EndpointKind, event: HookEvent, cwd: string = process.cwd()): string {
+  return `cd ${shellQuote(cwd)} && agent-bridge hook --producer ${producer} --event ${event}`;
 }
 
 export function ensureTomlFeatureHooks(content: string): string {
@@ -286,17 +283,6 @@ function aidenSettingsPath(scope: ConfigScope, cwd: string): string {
     : join(cwd, ".aiden", "settings.json");
 }
 
-function currentEntrypoint(): string {
-  if (process.argv[1]) {
-    return isAbsolute(process.argv[1]) ? process.argv[1] : resolve(process.cwd(), process.argv[1]);
-  }
-  return fileURLToPath(new URL("../cli/index.ts", import.meta.url));
-}
-
 function shellQuote(value: string): string {
   return `'${value.replaceAll("'", "'\\''")}'`;
-}
-
-export function packageRoot(): string {
-  return dirname(dirname(dirname(fileURLToPath(import.meta.url))));
 }

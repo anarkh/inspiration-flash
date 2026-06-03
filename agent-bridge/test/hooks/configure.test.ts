@@ -28,6 +28,23 @@ test("writes Codex hook config", async () => {
   }
 });
 
+test("writes hook command anchored to configured project directory", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "agent-bridge-test-"));
+  const projectDir = join(dir, "project with spaces");
+  try {
+    await mkdir(projectDir);
+    await configureCodexHooks("project", ["stop"], projectDir);
+    const hooks = JSON.parse(await readFile(join(projectDir, ".codex", "hooks.json"), "utf8"));
+    const command = hooks.hooks.Stop[0].hooks[0].command;
+
+    assert.match(command, new RegExp(`cd ${shellQuotedPattern(projectDir)}`));
+    assert.match(command, /(^| )agent-bridge hook --producer codex --event stop/);
+    assert.doesNotMatch(command, /node .*agent-bridge/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
 test("writes Claude hook config", async () => {
   const dir = await mkdtemp(join(tmpdir(), "agent-bridge-test-"));
   try {
@@ -94,14 +111,12 @@ test("clears only managed hooks for the selected producer", async () => {
   }
 });
 
-test("builds hook command with absolute entrypoint", () => {
-  const original = process.argv[1];
-  process.argv[1] = "./src/cli/index.ts";
-  try {
-    const command = buildHookCommand("codex", "stop");
-    assert.match(command, new RegExp(process.cwd().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
-    assert.match(command, /hook --producer codex --event stop/);
-  } finally {
-    process.argv[1] = original;
-  }
+test("builds hook command anchored to cwd", () => {
+  const command = buildHookCommand("codex", "stop", "/tmp/agent bridge project");
+  assert.match(command, new RegExp(`cd ${shellQuotedPattern("/tmp/agent bridge project")}`));
+  assert.match(command, /(^| )agent-bridge hook --producer codex --event stop/);
 });
+
+function shellQuotedPattern(value: string): string {
+  return `'${value.replaceAll("'", "'\\''")}'`.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
