@@ -140,6 +140,8 @@ Before merging a release version, configure the package on npmjs.com:
 
 The workflow does not use `NPM_TOKEN`. It requires GitHub Actions OIDC permission (`id-token: write`) and npm CLI trusted publishing support. Version bumps still happen in `agent-bridge/package.json`; if the same version is already published, the workflow skips `npm publish`.
 
+For first-time setup, npm may require the workflow file to already exist on the repository's default branch before the trusted publisher can be saved. If the first merge that adds this workflow runs before npm is configured, configure the trusted publisher afterward and rerun the failed `Publish Agent Bridge` workflow.
+
 Manual fallback is still possible from a maintainer account:
 
 ```bash
