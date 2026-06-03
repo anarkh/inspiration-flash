@@ -13,6 +13,15 @@ npm install -g @ranarkh/agent-bridge
 agent-bridge setup
 ```
 
+The published CLI runs on Node 22+. If npm fails with `ENOENT: process.cwd failed`
+or `uv_cwd`, your shell is currently inside a directory that has been removed.
+Change to an existing directory, then install again:
+
+```bash
+cd ~
+npm install -g @ranarkh/agent-bridge@latest
+```
+
 From this repository:
 
 ```bash
@@ -118,7 +127,9 @@ Interactive worker runs write the full bridge context directly into the Aiden te
 
 ## Development
 
-This project intentionally uses only Node built-ins. On Node 24+, tests can run directly from TypeScript:
+This project intentionally uses only Node built-ins. The published CLI supports
+Node 22+, while local development and tests are run on Node 24+ so TypeScript
+test files can execute directly:
 
 ```bash
 node --run test
