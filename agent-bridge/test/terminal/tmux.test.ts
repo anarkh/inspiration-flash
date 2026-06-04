@@ -440,6 +440,35 @@ process.exit(0);
   }
 });
 
+test("tmux command collection tolerates fast stdin close", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "agent-bridge-fast-tmux-"));
+  const fakeTmux = join(dir, "fake-fast-tmux.mjs");
+  const previousTmux = process.env.AGENT_BRIDGE_TMUX;
+  try {
+    await writeFile(fakeTmux, `#!/usr/bin/env node
+const command = process.argv[2];
+if (command === "has-session" || command === "load-buffer" || command === "paste-buffer") {
+  process.exit(0);
+}
+process.exit(0);
+`, "utf8");
+    await chmod(fakeTmux, 0o755);
+    process.env.AGENT_BRIDGE_TMUX = fakeTmux;
+
+    const tmuxUrl = `${pathToFileURL(join(repoRoot, "src", "terminal", "tmux.ts")).href}?state=${Date.now()}-fast-close`;
+    const { sendTerminalInput } = await import(tmuxUrl);
+
+    await assert.doesNotReject(sendTerminalInput("fast-close", "x".repeat(5 * 1024 * 1024)));
+  } finally {
+    if (previousTmux === undefined) {
+      delete process.env.AGENT_BRIDGE_TMUX;
+    } else {
+      process.env.AGENT_BRIDGE_TMUX = previousTmux;
+    }
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
 function tmuxUnavailableReason(): string | null {
   if (spawnSync("tmux", ["-V"], { stdio: "ignore" }).status !== 0) {
     return "tmux is not installed";
