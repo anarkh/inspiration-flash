@@ -655,20 +655,46 @@ async function execTmuxStatus(tmux: string, args: string[]): Promise<number> {
 
 function spawnCollect(command: string, args: string[], input?: string): Promise<{ code: number | null; stdout: string; stderr: string }> {
   return new Promise((resolve, reject) => {
+    const hasInput = input !== undefined;
+    let settled = false;
+    const rejectOnce = (error: unknown) => {
+      if (!settled) {
+        settled = true;
+        reject(error);
+      }
+    };
+    const resolveOnce = (result: { code: number | null; stdout: string; stderr: string }) => {
+      if (!settled) {
+        settled = true;
+        resolve(result);
+      }
+    };
     const child = spawn(command, args, {
-      stdio: ["pipe", "pipe", "pipe"]
+      stdio: [hasInput ? "pipe" : "ignore", "pipe", "pipe"]
     });
+    if (!child.stdout || !child.stderr) {
+      rejectOnce(new Error("Failed to open tmux command output streams."));
+      return;
+    }
     const stdout: Buffer[] = [];
     const stderr: Buffer[] = [];
     child.stdout.on("data", (chunk) => stdout.push(Buffer.from(chunk)));
     child.stderr.on("data", (chunk) => stderr.push(Buffer.from(chunk)));
-    child.on("error", reject);
-    child.on("close", (code) => resolve({
+    child.on("error", rejectOnce);
+    child.on("close", (code) => resolveOnce({
       code,
       stdout: Buffer.concat(stdout).toString("utf8"),
       stderr: Buffer.concat(stderr).toString("utf8")
     }));
-    child.stdin.end(input ?? "");
+    if (hasInput && child.stdin) {
+      child.stdin.on("error", (error: NodeJS.ErrnoException) => {
+        if (error.code === "EPIPE" || error.code === "ERR_STREAM_DESTROYED") {
+          return;
+        }
+        rejectOnce(error);
+      });
+      child.stdin.end(input);
+    }
   });
 }
 
