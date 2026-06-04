@@ -90,6 +90,43 @@ test("remove producer deletes route, prunes consumers, and clears hooks", async 
   }
 });
 
+test("remove tolerates a deleted current working directory when PWD is available", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "agent-bridge-remove-deleted-cwd-"));
+  const projectDir = join(dir, "project");
+  const configDir = join(dir, "config");
+  const stateDir = join(dir, "state");
+  try {
+    await mkdir(projectDir);
+    const setup = await runCli(["setup"], projectDir, configDir, stateDir);
+    assert.equal(setup.code, 0, setup.stderr);
+
+    const script = join(dir, "remove-deleted-cwd.mjs");
+    await writeFile(script, `
+import { rmSync } from "node:fs";
+import { chdir } from "node:process";
+chdir(${JSON.stringify(projectDir)});
+rmSync(${JSON.stringify(projectDir)}, { recursive: true, force: true });
+process.argv = [process.execPath, ${JSON.stringify(cliEntry)}, "remove", "--producer", "codex", "--scope", "project"];
+await import(${JSON.stringify(pathToFileURL(cliEntry).href)});
+await new Promise((resolve) => setTimeout(resolve, 250));
+`, "utf8");
+
+    const result = await runNodeScript(script, dir, configDir, stateDir, {
+      extraEnv: { PWD: projectDir }
+    });
+    assert.equal(result.code, 0, result.stderr);
+    assert.match(result.stdout, /Removed route: Codex -> Codex/);
+    assert.match(result.stdout, /No matching Agent Bridge hooks found/);
+    assert.doesNotMatch(result.stderr, /uv_cwd|process\.cwd/);
+
+    const config = JSON.parse(await readFile(join(configDir, "config.json"), "utf8"));
+    assert.deepEqual(config.routes, []);
+    assert.deepEqual(config.agents, []);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
 test("help exposes top-level lifecycle commands without service namespace", async () => {
   const dir = await mkdtemp(join(tmpdir(), "agent-bridge-help-"));
   try {
