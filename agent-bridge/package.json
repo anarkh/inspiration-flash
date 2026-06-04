@@ -1,6 +1,6 @@
 {
   "name": "@ranarkh/agent-bridge",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Local bridge for connecting Codex and Claude Code agents.",
   "type": "module",
   "author": "anarkhli",
