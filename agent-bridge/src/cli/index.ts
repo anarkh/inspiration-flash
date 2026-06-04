@@ -22,6 +22,11 @@ async function main(argv: string[]): Promise<void> {
     return;
   }
 
+  if (command === "version" || command === "--version" || command === "-v") {
+    await versionCommand();
+    return;
+  }
+
   if (command === "setup") {
     await setupCommand();
     return;
@@ -107,6 +112,14 @@ async function setupCommand(): Promise<void> {
   stdout.write(`Configured consumer routes:\n${configured.routes.map((route) => `- ${formatRoute(route)}`).join("\n")}\n`);
   stdout.write(`Configured consumer agents:\n${configured.agents.map((agent) => `- ${agent.label} -> ${agent.command}`).join("\n")}\n`);
   stdout.write(`Configured hooks:\n${changed.map((path) => `- ${path}`).join("\n")}\n`);
+}
+
+async function versionCommand(): Promise<void> {
+  const packageJson = JSON.parse(await readFile(new URL("../../package.json", import.meta.url), "utf8")) as { version?: string };
+  if (!packageJson.version) {
+    throw new Error("Unable to read agent-bridge package version.");
+  }
+  stdout.write(`${packageJson.version}\n`);
 }
 
 async function chooseProducerSet(title: string, allDescription: string): Promise<EndpointKind[]> {
@@ -582,6 +595,7 @@ function printHelp(): void {
   stdout.write(`agent-bridge
 
 Commands:
+  version
   setup
   list
   remove [--producer codex|claude|aiden|--all] [--scope project|global|both]
