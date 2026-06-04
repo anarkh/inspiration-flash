@@ -65,7 +65,7 @@ export async function runBridge(envelope: RawHookEnvelope): Promise<BridgeRespon
       gitContextReason: includeGitContext
         ? undefined
         : !reviewableTurn
-          ? "Omitted because this producer turn does not look like completed code work or a technical plan. This avoids reviewing unrelated changes from another conversation in the same workspace."
+          ? "Omitted because this producer turn does not need workspace diff context. Review the Message itself and do not fail solely because git context is absent. This avoids reviewing unrelated changes from another conversation in the same workspace."
           : "Omitted because this exact git fingerprint was already successfully reviewed for this producer session."
     });
   }, async (response) => {

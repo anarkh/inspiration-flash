@@ -13,6 +13,11 @@ test("omits shared workspace diff for non-reviewable chat turns", () => {
   });
 
   assert.match(prompt, /not reviewable/);
+  assert.match(prompt, /Review the producer agent's latest message/);
+  assert.match(prompt, /Focus on validating completed code or a technical plan when present/);
+  assert.match(prompt, /still review the message itself for correctness, safety, and completeness/);
+  assert.match(prompt, /Do not mark the result uncertain solely because the message is not code or a technical plan/);
+  assert.match(prompt, /material factual error/);
   assert.match(prompt, /Message:\n你好，有什么可以帮你？/);
   assert.doesNotMatch(prompt, /Producer context:/);
   assert.doesNotMatch(prompt, /sessionId/);
