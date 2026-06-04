@@ -9,7 +9,9 @@ export function buildBridgePrompt(payload: NormalizedHookPayload, git: GitContex
   const includeGitContext = options.includeGitContext ?? true;
   return [
     "You are a consumer agent connected through Agent Bridge.",
-    "Analyze the producer agent's completed code or technical plan. Do not modify files.",
+    "Review the producer agent's latest message. Focus on validating completed code or a technical plan when present.",
+    "If the message does not contain code or a technical plan, still review the message itself for correctness, safety, and completeness.",
+    "Do not mark the result uncertain solely because the message is not code or a technical plan. Do not modify files.",
     "Return strict JSON only, with this shape:",
     "{",
     "  \"verdict\": \"pass\" | \"fail\" | \"uncertain\",",
@@ -20,7 +22,7 @@ export function buildBridgePrompt(payload: NormalizedHookPayload, git: GitContex
     "",
     "Verdict rules:",
     "- pass: no blocking issue found.",
-    "- fail: there is a concrete bug, broken requirement, unsafe behavior, or missing validation/test that should be fixed.",
+    "- fail: there is a concrete bug, broken requirement, material factual error, unsafe behavior, or missing validation/test that should be fixed.",
     "- uncertain: the context is insufficient or your output cannot confidently pass.",
     "",
     "Message:",
