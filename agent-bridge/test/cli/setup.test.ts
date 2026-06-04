@@ -132,6 +132,7 @@ test("help exposes top-level lifecycle commands without service namespace", asyn
   try {
     const result = await runCli(["--help"], dir, join(dir, "config"), join(dir, "state"));
     assert.equal(result.code, 0, result.stderr);
+    assert.match(result.stdout, /\n  version\n/);
     assert.match(result.stdout, /\n  list\n/);
     assert.match(result.stdout, /\n  remove \[--producer codex\|claude\|aiden\|--all\] \[--scope project\|global\|both\]\n/);
     assert.match(result.stdout, /\n  start\n/);
@@ -140,6 +141,31 @@ test("help exposes top-level lifecycle commands without service namespace", asyn
     assert.match(result.stdout, /\n  stop\n/);
     assert.doesNotMatch(result.stdout, /service start|service run/);
     assert.doesNotMatch(result.stdout, /agent list|agent add|agent remove/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("version command prints the package version", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "agent-bridge-version-"));
+  try {
+    const packageJson = JSON.parse(await readFile(join(repoRoot, "package.json"), "utf8")) as { version: string };
+    const expected = `${packageJson.version}\n`;
+
+    const command = await runCli(["version"], dir, join(dir, "config"), join(dir, "state"));
+    assert.equal(command.code, 0, command.stderr);
+    assert.equal(command.stdout, expected);
+    assert.equal(command.stderr, "");
+
+    const longFlag = await runCli(["--version"], dir, join(dir, "config"), join(dir, "state"));
+    assert.equal(longFlag.code, 0, longFlag.stderr);
+    assert.equal(longFlag.stdout, expected);
+    assert.equal(longFlag.stderr, "");
+
+    const shortFlag = await runCli(["-v"], dir, join(dir, "config"), join(dir, "state"));
+    assert.equal(shortFlag.code, 0, shortFlag.stderr);
+    assert.equal(shortFlag.stdout, expected);
+    assert.equal(shortFlag.stderr, "");
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
