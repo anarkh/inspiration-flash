@@ -1,0 +1,8 @@
+interface:
+  display_name: "云星铁日常自动化"
+  short_description: "自动执行云星铁日常领奖和可选刷本"
+  brand_color: "#5B7CFA"
+  default_prompt: "Use $cloud-star-rail-daily to run my Cloud Star Rail daily routine."
+
+policy:
+  allow_implicit_invocation: true
