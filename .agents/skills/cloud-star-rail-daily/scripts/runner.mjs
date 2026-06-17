@@ -45,14 +45,14 @@ Usage:
   node scripts/runner.mjs --mode resource-spending --dry-run
 
 This is a conservative runner skeleton. Real browser clicks require calibrated
-Visual Checkpoints and Codex in-app browser control from the skill workflow.`);
+Visual Checkpoints and Chrome browser control from the skill workflow.`);
 }
 
 function buildPlan(mode, config) {
   const fallback = config.fallback_farming_target;
 
   const shared = [
-    "Open Cloud Honkai: Star Rail in the in-app browser",
+    "Open Cloud Honkai: Star Rail in Chrome",
     "Enter Login Handoff if no login session exists",
     "Wait for Manual Resume after user login",
     "Close only Known Dismissible Popups",
@@ -72,14 +72,14 @@ function buildPlan(mode, config) {
     return [
       ...shared,
       "Open Survival Index",
-      "Open Training Target",
+      "Open Training Target and select the summary card before reading recommendations",
       "Use Recommended Relic Cavern when present",
       fallback
         ? `Fallback target if needed: ${fallback.name}, Run Count ${fallback.run_count}`
         : "Safe Pause if no Training Target exists and no fallback is configured",
       "Compute Affordable Run Count from visible Trailblaze Power",
       "Run only Affordable Run Count",
-      "Claim battle and daily rewards",
+      "Claim battle rewards and click one activity chest to claim all available chest rewards",
       "Emit Run Report",
       "Perform Browser Close Exit",
     ];
@@ -104,7 +104,7 @@ function main() {
       mode: args.mode,
       config_path: fs.existsSync(CONFIG_PATH) ? CONFIG_PATH : EXAMPLE_CONFIG_PATH,
       plan,
-      next_step: "Calibrate Visual Checkpoints in the Codex in-app browser before enabling real clicks.",
+      next_step: "Calibrate Visual Checkpoints in Chrome before enabling real clicks.",
     },
     null,
     2

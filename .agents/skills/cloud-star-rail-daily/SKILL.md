@@ -18,11 +18,13 @@ Use this skill to run a controlled Cloud Honkai: Star Rail daily routine in Chro
 - If no login session is available, enter Login Handoff and wait for the user to log in manually.
 - Resume only after the user explicitly confirms Manual Resume.
 - Use Fixed Routine behavior guarded by Visual Checkpoints.
+- Use bounded recovery steps documented in the SOP before declaring a Visual Checkpoint failed.
 - If a Visual Checkpoint fails or an unknown state appears, enter Safe Pause and stop clicking.
 - Close only Known Dismissible Popups. Unknown, login, payment, resource top-up, or risk prompts must Safe Pause.
 - Do not spend premium currency, fuel, shop currency, or upgrade materials.
 - For Resource-Spending Routine, only Trailblaze Power is an Approved Resource.
 - End successful runs with Browser Close Exit and a Run Report.
+- When activity chests are claimable, one chest click claims all currently available activity chest rewards; verify checkmarks afterward instead of clicking all five.
 
 ## Workflow
 
