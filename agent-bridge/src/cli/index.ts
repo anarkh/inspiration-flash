@@ -17,8 +17,13 @@ type RemoveTarget = { all: true } | { all: false; producer: EndpointKind };
 
 async function main(argv: string[]): Promise<void> {
   const [command, subcommand] = argv;
-  if (!command || command === "help" || command === "--help" || command === "-h") {
+  if (!command || command === "--help" || command === "-h") {
     printHelp();
+    return;
+  }
+
+  if (command === "help") {
+    printHelp(subcommand);
     return;
   }
 
@@ -591,10 +596,23 @@ function positionalArgs(args: string[]): string[] {
   return positionals;
 }
 
-function printHelp(): void {
+function printHelp(topic?: string): void {
+  if (topic && topic !== "--help" && topic !== "-h") {
+    const helpText = COMMAND_HELP[topic];
+    if (!helpText) {
+      throw new Error(`Unknown help topic: ${topic}`);
+    }
+    stdout.write(helpText);
+    return;
+  }
+
   stdout.write(`agent-bridge
 
+Usage:
+  agent-bridge <command> [options]
+
 Commands:
+  help [command]
   version
   setup
   list
@@ -609,6 +627,78 @@ Commands:
   send --to codex|claude|aiden --message <text> [--workspace <path>] [--session-id <id>] [--raw-output]
 `);
 }
+
+const COMMAND_HELP: Record<string, string> = {
+  help: `Usage:
+  agent-bridge help [command]
+
+Show top-level help or detailed help for one command.
+`,
+  version: `Usage:
+  agent-bridge version
+  agent-bridge --version
+  agent-bridge -v
+
+Print the installed Agent Bridge version.
+`,
+  setup: `Usage:
+  agent-bridge setup
+
+Interactively configure producer hooks and producer-to-consumer routes.
+`,
+  list: `Usage:
+  agent-bridge list
+
+Print configured producer-to-consumer routes and consumer CLI commands.
+`,
+  remove: `Usage:
+  agent-bridge remove [--producer codex|claude|aiden|--all] [--scope project|global|both]
+
+Remove one route or all Agent Bridge config, then clear matching hooks.
+`,
+  hooks: `Usage:
+  agent-bridge hooks clear
+
+Remove only Agent Bridge managed hook commands for the selected producer and scope.
+`,
+  start: `Usage:
+  agent-bridge start
+
+Start the local Agent Bridge service.
+`,
+  stop: `Usage:
+  agent-bridge stop
+
+Stop the local Agent Bridge service.
+`,
+  status: `Usage:
+  agent-bridge status
+
+Show service health, configured routes, active runs, and recent runs.
+`,
+  dashboard: `Usage:
+  agent-bridge dashboard
+
+Start the local service if needed and print the dashboard URL.
+`,
+  hook: `Usage:
+  agent-bridge hook --producer codex|claude|aiden --event stop
+
+Internal producer hook entrypoint. Reads hook JSON from stdin.
+`,
+  run: `Usage:
+  agent-bridge run --file <payload.json>
+
+Run one raw hook payload file through Agent Bridge and print JSON.
+`,
+  send: `Usage:
+  agent-bridge send --to codex|claude|aiden --message <text> [--workspace <path>] [--session-id <id>] [--raw-output]
+  agent-bridge send --to codex|claude|aiden --file <message.txt> [--workspace <path>]
+  printf '%s' <message> | agent-bridge send --to codex|claude|aiden [--workspace <path>]
+
+Send a direct validation message to one consumer CLI without installing hooks.
+`
+};
 
 function formatDuration(ms: number): string {
   const seconds = Math.ceil(ms / 1000);

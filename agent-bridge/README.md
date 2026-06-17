@@ -36,6 +36,8 @@ node ./dist/cli/index.js setup
 ## Commands
 
 ```bash
+agent-bridge help
+agent-bridge help send
 agent-bridge setup
 agent-bridge list
 agent-bridge remove --producer codex --scope project

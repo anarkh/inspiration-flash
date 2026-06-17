@@ -129,14 +129,16 @@ function tryParseJsonObject(text: string): Record<string, unknown> | null {
   ].filter((item): item is string => Boolean(item));
   for (const candidate of candidates) {
     const parsed = tryJson(candidate) ?? tryJson(repairTerminalWrappedJson(candidate));
-    if (isBridgeResultObject(parsed)) {
-      return parsed as Record<string, unknown>;
+    const result = bridgeResultObject(parsed);
+    if (result) {
+      return result;
     }
   }
   for (const candidate of jsonObjectCandidatesFromEnd(text)) {
     const parsed = tryJson(candidate) ?? tryJson(repairTerminalWrappedJson(candidate));
-    if (isBridgeResultObject(parsed)) {
-      return parsed as Record<string, unknown>;
+    const result = bridgeResultObject(parsed);
+    if (result) {
+      return result;
     }
   }
   return null;
@@ -196,6 +198,33 @@ function isBridgeResultObject(value: unknown): value is Record<string, unknown> 
     && value !== null
     && !Array.isArray(value)
     && ("verdict" in value || "summary" in value || "findings" in value || "suggestedPrompt" in value);
+}
+
+function bridgeResultObject(value: unknown): Record<string, unknown> | null {
+  if (isBridgeResultObject(value)) {
+    return value;
+  }
+  const embedded = embeddedText(value);
+  return embedded ? tryParseJsonObject(embedded) : null;
+}
+
+function embeddedText(value: unknown): string | null {
+  if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+    const record = value as Record<string, unknown>;
+    if (typeof record.result === "string") {
+      return record.result;
+    }
+    if (typeof record.text === "string") {
+      return record.text;
+    }
+    if (typeof record.content === "string") {
+      return record.content;
+    }
+    if (record.message) {
+      return extractText(record.message);
+    }
+  }
+  return null;
 }
 
 function* jsonObjectCandidatesFromEnd(text: string): Generator<string> {
