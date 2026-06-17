@@ -17,6 +17,7 @@ test("tmux runner executes a consumer command in an interactive terminal session
   const dir = await mkdtemp(join(tmpdir(), "agent-bridge-tmux-"));
   const stateDir = join(dir, "state");
   let tmuxSession: string | undefined;
+  const previousShell = process.env.SHELL;
   try {
     await mkdir(stateDir);
     process.env.AGENT_BRIDGE_STATE_DIR = stateDir;
@@ -57,6 +58,76 @@ test("tmux runner executes a consumer command in an interactive terminal session
     assert.match(result.stdout, /Agent Bridge tmux terminal/);
     assert.match(result.stdout, /"verdict":"pass"/);
     await assert.rejects(stat(join(stateDir, "terminals", "tmux-run-1", "command.sh")));
+
+    const fakeTtySensitiveConsumer = join(dir, "fake-tty-sensitive-consumer.mjs");
+    await writeFile(fakeTtySensitiveConsumer, [
+      "if (process.stdin.isTTY) {",
+      "  console.error('stdin was a tty');",
+      "  process.exit(9);",
+      "}",
+      "let input = '';",
+      "process.stdin.on('data', (chunk) => input += chunk);",
+      "process.stdin.on('end', () => console.log(JSON.stringify({ verdict: 'pass', summary: input.trim(), findings: [], suggestedPrompt: '' })));"
+    ].join("\n"), "utf8");
+    const ttySensitiveResult = await session.runner.run(process.execPath, [fakeTtySensitiveConsumer], "file-backed stdin", {
+      cwd: dir,
+      timeout: 15_000,
+      env: {
+        ...process.env,
+        AGENT_BRIDGE_BYPASS: "1"
+      }
+    });
+    assert.match(ttySensitiveResult.stdout, /file-backed stdin/);
+
+    const fakeShell = join(dir, "fake-user-shell");
+    await writeFile(fakeShell, [
+      "#!/bin/sh",
+      "if [ \"$1\" = \"-ilc\" ]; then",
+      "  export AGENT_BRIDGE_TEST_SHELL_ENV=from-user-shell",
+      "  exec /bin/sh -c \"$2\"",
+      "fi",
+      "exec /bin/sh \"$@\""
+    ].join("\n"), "utf8");
+    await chmod(fakeShell, 0o755);
+    const fakeShellEnvConsumer = join(dir, "fake-shell-env-consumer.mjs");
+    await writeFile(fakeShellEnvConsumer, [
+      "const summary = process.env.AGENT_BRIDGE_TEST_SHELL_ENV ?? 'missing';",
+      "console.log(JSON.stringify({ verdict: 'pass', summary, findings: [], suggestedPrompt: '' }));"
+    ].join("\n"), "utf8");
+    process.env.SHELL = fakeShell;
+    const shellEnvResult = await session.runner.run(process.execPath, [fakeShellEnvConsumer], "", {
+      cwd: dir,
+      timeout: 15_000,
+      env: {
+        ...process.env,
+        AGENT_BRIDGE_BYPASS: "1"
+      }
+    });
+    assert.match(shellEnvResult.stdout, /from-user-shell/);
+    if (previousShell === undefined) {
+      delete process.env.SHELL;
+    } else {
+      process.env.SHELL = previousShell;
+    }
+
+    await assert.rejects(session.runner.run(process.execPath, ["-e", "process.exit(7)"], "", {
+      cwd: dir,
+      timeout: 15_000,
+      env: {
+        ...process.env,
+        AGENT_BRIDGE_BYPASS: "1"
+      }
+    }), /Agent command exited with code 7/);
+
+    const afterFailureResult = await session.runner.run(process.execPath, [fakeConsumer], "after failure", {
+      cwd: dir,
+      timeout: 15_000,
+      env: {
+        ...process.env,
+        AGENT_BRIDGE_BYPASS: "1"
+      }
+    });
+    assert.match(afterFailureResult.stdout, /after failure/);
 
     assert.equal(await sendTerminalInput(session.terminalId, "echo after-run\r"), true);
     await delay(300);
@@ -164,6 +235,11 @@ test("tmux runner executes a consumer command in an interactive terminal session
     const finalLog = await readTerminalLog("tmux-run-1", "codex");
     assert.match(finalLog, /idle after busy/);
   } finally {
+    if (previousShell === undefined) {
+      delete process.env.SHELL;
+    } else {
+      process.env.SHELL = previousShell;
+    }
     delete process.env.AGENT_BRIDGE_STATE_DIR;
     if (tmuxSession) {
       spawnSync("tmux", ["kill-session", "-t", tmuxSession], { stdio: "ignore" });

@@ -1,6 +1,6 @@
 import { spawn, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdir, readFile, rm, stat } from "node:fs/promises";
+import { mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import type { Agent } from "../core/types.ts";
@@ -138,9 +138,12 @@ async function runInTmux(
 
   const exitPath = join(workDir, "exit-code.txt");
   const donePath = join(workDir, "done");
+  const stdinPath = join(workDir, "stdin.txt");
   await Promise.all([
     rm(exitPath, { force: true }),
-    rm(donePath, { force: true })
+    rm(donePath, { force: true }),
+    // Some print-mode CLIs only consume stdin when it is non-TTY.
+    writeFile(stdinPath, input, "utf8")
   ]);
 
   const commandLine = formatCommandLine(command, args);
@@ -151,7 +154,7 @@ async function runInTmux(
     attachOptions,
     runOptions.cwd,
     commandLine,
-    shellCommandWithExitMarker(command, args, runOptions.env, exitPath, donePath)
+    shellCommandWithExitMarker(command, args, runOptions.env, stdinPath, exitPath, donePath)
   );
   attachOptions.onStart?.({
     pid: panePid,
@@ -159,16 +162,6 @@ async function runInTmux(
     args,
     cwd: runOptions.cwd
   }, session);
-
-  if (input.length > 0) {
-    await delay(250);
-    await pasteIntoTmux(tmux, sessionName, input);
-    if (!input.endsWith("\n") && !input.endsWith("\r")) {
-      await execTmux(tmux, ["send-keys", "-t", sessionName, "C-m"]);
-    }
-    await delay(50);
-    await execTmux(tmux, ["send-keys", "-t", sessionName, "C-d"]);
-  }
 
   try {
     await waitForCommandDone(donePath, session.logPath, runOptions.timeout);
@@ -441,22 +434,30 @@ function shellCommandWithExitMarker(
   command: string,
   args: string[],
   env: NodeJS.ProcessEnv,
+  stdinPath: string,
   exitPath: string,
   donePath: string
 ): string {
   const executable = shellQuote([
-    ...envCommandPrefix(env),
     command,
     ...args
   ]);
-  return [
-    executable,
+  const shell = env.SHELL ?? process.env.SHELL ?? "/bin/sh";
+  const bypass = `${BYPASS_ENV}=${shellQuote([env[BYPASS_ENV] ?? "1"])}`;
+  const inner = [
+    `${executable} < ${shellQuote([stdinPath])}`,
     "agent_bridge_code=$?",
+    `rm -f ${shellQuote([stdinPath])}`,
     "printf '\\r\\n\\033[90m# agent-bridge command exit code %s\\033[0m\\r\\n' \"$agent_bridge_code\"",
     `printf '%s\\n' "$agent_bridge_code" > ${shellQuote([exitPath])}`,
     `touch ${shellQuote([donePath])}`,
-    `exec ${shellQuote([env.SHELL ?? process.env.SHELL ?? "/bin/sh"])}`
+    `exec ${shellQuote([shell])}`
   ].join("; ");
+  return shellQuote([
+    shell,
+    "-ilc",
+    `${bypass} ${inner}`
+  ]);
 }
 
 function envCommandPrefix(env: NodeJS.ProcessEnv): string[] {
@@ -701,10 +702,12 @@ function spawnCollect(command: string, args: string[], input?: string): Promise<
 async function enqueueTerminalRun<T>(terminalId: string, run: () => Promise<T>): Promise<T> {
   const previous = terminalQueues.get(terminalId) ?? Promise.resolve();
   const current = previous.catch(() => undefined).then(run);
-  terminalQueues.set(terminalId, current.finally(() => {
-    if (terminalQueues.get(terminalId) === current) {
+  // Keep the queue drain promise resolved so command failures reach only callers.
+  const queued = current.then(() => undefined, () => undefined).finally(() => {
+    if (terminalQueues.get(terminalId) === queued) {
       terminalQueues.delete(terminalId);
     }
-  }));
+  });
+  terminalQueues.set(terminalId, queued);
   return current;
 }

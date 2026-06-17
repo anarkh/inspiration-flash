@@ -132,6 +132,8 @@ test("help exposes top-level lifecycle commands without service namespace", asyn
   try {
     const result = await runCli(["--help"], dir, join(dir, "config"), join(dir, "state"));
     assert.equal(result.code, 0, result.stderr);
+    assert.match(result.stdout, /\nUsage:\n  agent-bridge <command> \[options\]\n/);
+    assert.match(result.stdout, /\n  help \[command\]\n/);
     assert.match(result.stdout, /\n  version\n/);
     assert.match(result.stdout, /\n  list\n/);
     assert.match(result.stdout, /\n  remove \[--producer codex\|claude\|aiden\|--all\] \[--scope project\|global\|both\]\n/);
@@ -141,6 +143,15 @@ test("help exposes top-level lifecycle commands without service namespace", asyn
     assert.match(result.stdout, /\n  stop\n/);
     assert.doesNotMatch(result.stdout, /service start|service run/);
     assert.doesNotMatch(result.stdout, /agent list|agent add|agent remove/);
+
+    const command = await runCli(["help"], dir, join(dir, "config"), join(dir, "state"));
+    assert.equal(command.code, 0, command.stderr);
+    assert.equal(command.stdout, result.stdout);
+
+    const send = await runCli(["help", "send"], dir, join(dir, "config"), join(dir, "state"));
+    assert.equal(send.code, 0, send.stderr);
+    assert.match(send.stdout, /Usage:\n  agent-bridge send --to codex\|claude\|aiden --message <text>/);
+    assert.match(send.stdout, /direct validation message/);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
