@@ -1,0 +1,156 @@
+import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { join } from "node:path";
+
+import { isNotFound } from "./shared.ts";
+import { ensureWorkspaceState } from "./workspace.ts";
+
+export type TaskMode = "advisory" | "execution";
+
+export interface CreateTaskRunInput {
+  goal: string;
+  mode: TaskMode;
+  successCheck: string;
+}
+
+export interface TaskRunHandle {
+  id: string;
+  runDir: string;
+}
+
+export type TaskRunStatus = "active" | "completed";
+
+export interface TaskRunMetadata {
+  id: string;
+  goal: string;
+  mode: TaskMode;
+  successCheck: string;
+  status: TaskRunStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TaskRunRecord extends TaskRunMetadata {
+  runDir: string;
+}
+
+/** Creates a new Task Run directory with metadata, event log, and latest pointer. */
+export async function createTaskRun(
+  workspace: string,
+  input: CreateTaskRunInput
+): Promise<TaskRunHandle> {
+  const state = await ensureWorkspaceState(workspace);
+  const id = createRunId();
+  const runDir = join(state.runsDir, id);
+  const checkpointsDir = join(runDir, "checkpoints");
+  const now = new Date().toISOString();
+
+  await mkdir(checkpointsDir, { recursive: true });
+  await writeFile(
+    join(runDir, "run.json"),
+    `${JSON.stringify(
+      {
+        id,
+        goal: input.goal,
+        mode: input.mode,
+        successCheck: input.successCheck,
+        status: "active",
+        createdAt: now,
+        updatedAt: now
+      },
+      null,
+      2
+    )}\n`
+  );
+  await writeFile(join(runDir, "events.jsonl"), "");
+  // `latest` is a tiny pointer file used by resume/history commands without
+  // requiring a database in the MVP.
+  await writeFile(join(state.runsDir, "latest"), `${id}\n`);
+
+  return { id, runDir };
+}
+
+/** Reads the latest Task Run id pointer for a workspace, if one exists. */
+export async function readLatestRunId(workspace: string): Promise<string | null> {
+  const state = await ensureWorkspaceState(workspace);
+  try {
+    const value = await readFile(join(state.runsDir, "latest"), "utf8");
+    return value.trim() || null;
+  } catch (error) {
+    if (isNotFound(error)) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+/** Reads one Task Run metadata record and attaches its run directory path. */
+export async function readTaskRun(workspace: string, id: string): Promise<TaskRunRecord | null> {
+  const state = await ensureWorkspaceState(workspace);
+  const runDir = join(state.runsDir, id);
+  const metadata = await readTaskRunMetadata(runDir);
+  if (!metadata) {
+    return null;
+  }
+  return { ...metadata, runDir };
+}
+
+/** Reads the latest Task Run metadata record for a workspace, if one exists. */
+export async function readLatestTaskRun(workspace: string): Promise<TaskRunRecord | null> {
+  const id = await readLatestRunId(workspace);
+  if (!id) {
+    return null;
+  }
+  return readTaskRun(workspace, id);
+}
+
+/** Lists recent Task Runs sorted by most recently updated first. */
+export async function listTaskRuns(workspace: string, limit = 20): Promise<TaskRunMetadata[]> {
+  const state = await ensureWorkspaceState(workspace);
+  const entries = await readdir(state.runsDir, { withFileTypes: true });
+  const runs: TaskRunMetadata[] = [];
+
+  for (const entry of entries) {
+    if (!entry.isDirectory()) {
+      continue;
+    }
+    const metadata = await readTaskRunMetadata(join(state.runsDir, entry.name));
+    if (metadata) {
+      runs.push(metadata);
+    }
+  }
+
+  // `updatedAt` reflects completion or later status changes, so history shows
+  // the runs the Owner most recently touched first.
+  return runs
+    .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
+    .slice(0, Math.max(0, limit));
+}
+
+/** Updates a Task Run status and refreshes its updatedAt timestamp. */
+export async function updateTaskRunStatus(runDir: string, status: TaskRunStatus): Promise<void> {
+  const path = join(runDir, "run.json");
+  const metadata = JSON.parse(await readFile(path, "utf8")) as Record<string, unknown>;
+  metadata.status = status;
+  metadata.updatedAt = new Date().toISOString();
+  await writeFile(path, `${JSON.stringify(metadata, null, 2)}\n`);
+}
+
+/** Reads raw Task Run metadata from run.json, returning null when missing. */
+async function readTaskRunMetadata(runDir: string): Promise<TaskRunMetadata | null> {
+  try {
+    const metadata = JSON.parse(await readFile(join(runDir, "run.json"), "utf8")) as TaskRunMetadata;
+    return metadata;
+  } catch (error) {
+    if (isNotFound(error)) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+/** Creates a filesystem-friendly Task Run id with time ordering and collision resistance. */
+function createRunId(): string {
+  // Include time for human sorting and a short random suffix to avoid collisions
+  // when tests or quick CLI calls create multiple runs in the same millisecond.
+  return `run-${new Date().toISOString().replace(/[:.]/g, "-")}-${Math.random().toString(36).slice(2, 8)}`;
+}
