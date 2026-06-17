@@ -9,7 +9,7 @@ Run these checkpoints in Chrome by default so the routine can reuse the user's C
 - For game-stream mouse input in Chrome, hold `Option` (`Alt` in browser automation APIs) while clicking inside the game viewport.
 - Prefer keyboard shortcuts over fragile icon clicks when a shortcut is known.
 - Use short waits after ordinary clicks: 0.8-1.5 seconds for reward popups, 2-3 seconds for panel transitions, and screenshot-based polling for long transitions.
-- Avoid screenshots after every low-risk click. Batch repeated known actions such as claiming multiple chest rewards, then take one screenshot checkpoint.
+- Avoid screenshots after every low-risk click. Batch repeated known actions and take one screenshot checkpoint after the batch.
 - Before critical clicks, confirm the current screen with screenshot or OCR.
 - Prefer checkpoint labels from visible UI text where possible.
 - If a checkpoint is missing, enter Safe Pause.
@@ -33,7 +33,7 @@ Expected visible text or action:
 
 Primary actions:
 
-- Open the URL in the in-app browser.
+- Open the URL in Chrome.
 - Wait for the landing page to finish loading.
 - Click `进入游戏` when visible.
 
@@ -115,7 +115,7 @@ Primary actions:
 - Click the `前往` button under the `派遣委托或收取一次委托奖励` task card when visible.
 - Click the `前往` button under the `累计消耗120点开拓力` task card when entering Resource-Spending Routine.
 - After Resource-Spending Routine combat completes, return to this screen and click every visible task-card `领取` button.
-- Click or inspect all five Activity Reward Chest icons and claim every available chest reward.
+- Click one claimable Activity Reward Chest icon to claim all currently available chest rewards together.
 - Treat the daily routine as complete only after all five Activity Reward Chests are claimed.
 
 Visual checkpoint:
@@ -126,6 +126,7 @@ Visual checkpoint:
 - The `领取` button for `登录游戏` appears at the bottom of that card when available.
 - Claimed Activity Reward Chests should visually differ from unclaimed or claimable chest icons.
 - Claimable task-card rewards appear as `领取` buttons near the bottom of task cards.
+- After the chest claim succeeds, all claimed Activity Reward Chests show checkmarks; do not click each chest one by one.
 
 Safe Pause condition:
 
@@ -180,14 +181,21 @@ Expected visible text:
 Primary actions:
 
 - Select the left-side `培养目标` panel.
+- If a specific subtarget such as `饰品提取`, `拟造花萼（金）`, or `拟造花萼（赤）` remains selected, click the top-left `培养目标` summary card. This is a known recovery step, not a failure.
 - Locate Recommended Relic Cavern section.
 - Click `进入` for Recommended Relic Cavern.
 
 Reference screenshot characteristics:
 
 - Training Target card appears on the left.
-- Recommended Relic Cavern appears on the right under relic rating.
+- Recommended Relic Cavern appears on the right under relic rating after the `培养目标` summary card is selected.
 - The Recommended Relic Cavern entry button appears on the right side of the first recommendation row.
+
+Safe Pause condition:
+
+- The `培养目标` summary card is missing or cannot be selected.
+- The right panel still does not show a Recommended Relic Cavern after selecting the summary card.
+- The only visible `进入` targets are for non-cavern resources such as Calyxes or Planar Ornaments.
 
 ### Missing Training Target
 
@@ -209,6 +217,7 @@ Expected visible text:
 Primary actions:
 
 - Confirm the selected challenge count starts at a visible value.
+- Turn off `快捷补充开拓力` if the toggle is enabled. This prevents accidental fuel, premium currency, or purchase flows if the run count is wrong.
 - Click the plus button until the count reaches the Affordable Run Count, capped at `4`.
 - Click `挑战`.
 - Wait for combat to complete.

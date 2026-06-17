@@ -11,7 +11,7 @@ Use this file as the primary execution path for the Chrome routine. It is based 
 - Panel transition: wait 2-3 seconds.
 - Assignment reward popup: wait 1-2 seconds, then close by clicking blank area.
 - Combat: after starting challenge, wait 15 seconds, enable auto if needed, then poll every 30-45 seconds until `挑战成功` or a reward screen appears.
-- Final reward chest loop: click chest, wait 1.5 seconds, click blank area, wait 0.8 seconds.
+- Final activity chest claim: click any claimable activity chest once, wait 1.5 seconds, click blank area, wait 0.8 seconds.
 
 Do not add long waits after every click. Long waits are only for game boot and combat.
 
@@ -41,20 +41,22 @@ Do not add long waits after every click. Long waits are only for game boot and c
 14. Back on Daily Training, claim the assignment task `领取`.
 15. Click the `累计消耗120点开拓力` task `前往`.
 16. On Survival Index, select left-side `培养目标`.
-17. Click `进入` for `隧洞遗器推荐`.
-18. On Cavern Challenge, confirm Trailblaze Power is enough for 4 runs.
-19. Click plus 3 times to set `挑战次数 4`.
-20. Click `挑战`.
-21. On team screen, click `开始挑战`.
-22. In combat, enable auto battle if the fight is not progressing automatically.
-23. Wait until `挑战成功`.
-24. Click `退出关卡`, not `再来一次`.
-25. After returning to game world, press `F4`.
-26. If `F4` opens the phone menu, click `指南`.
-27. Claim available completed task rewards.
-28. Claim all five top activity chests from left to right, closing each reward popup.
-29. Verify all five activity chests show checkmarks.
-30. Close the Chrome game tab.
+17. If a subtarget such as `饰品提取` or `拟造花萼` remains selected, click the top-left `培养目标` summary card first.
+18. Confirm the right panel shows `隧洞遗器推荐`, then click its `进入`.
+19. On Cavern Challenge, confirm Trailblaze Power is enough for the planned runs.
+20. Turn off `快捷补充开拓力` if it is enabled.
+21. Click plus until the count reaches Affordable Run Count, capped at `4`.
+22. Click `挑战`.
+23. On team screen, click `开始挑战`.
+24. In combat, enable auto battle if the fight is not progressing automatically.
+25. Wait until `挑战成功`.
+26. Click `退出关卡`, not `再来一次`.
+27. After returning to game world, press `F4`.
+28. If `F4` opens the phone menu, click `指南`.
+29. Claim available completed task rewards.
+30. Click any one claimable top activity chest; the game claims all currently available activity chest rewards together.
+31. Verify all five activity chests show checkmarks.
+32. Close the Chrome game tab.
 
 ## Coordinate Hints
 
@@ -66,19 +68,22 @@ Coordinates are percentages of the game viewport. Use them only after the matchi
 - Reward popup blank close: `50%, 74%`
 - Upper-right close: `89%, 6%`
 - Survival Index `培养目标`: `27%, 32%`
+- Survival Index top-left `培养目标` summary card: `27%, 32%`
 - Recommended Relic Cavern `进入`: `76%, 54%`
+- Cavern quick Trailblaze Power replenish toggle: `85%, 69%`
 - Cavern plus button: `89%, 83%`
 - Cavern `挑战`: `80%, 91%`
 - Team screen `开始挑战`: `81%, 92%`
 - Combat auto toggle: `85%, 5%`
 - Battle result `退出关卡`: `40%, 91%`
-- Activity chests: `36%, 29%`, `47%, 29%`, `57%, 29%`, `68%, 29%`, `79%, 29%`
+- Activity chests: click any claimable chest, for example `79%, 29%` after activity reaches 500.
 
 ## Fast Claim Rules
 
 - If a completed Daily Training task has `领取`, claim it.
 - If a task button says `前往` and the task is not part of the approved SOP, do not click it.
 - After activity reaches 500, ignore unfinished optional cards that say `本日活跃度已满`.
+- Activity chests do not need to be claimed one by one; one claimable chest click claims all currently available activity chest rewards.
 - Activity chest completion is the final success signal.
 
 ## Expected Steady-State Duration

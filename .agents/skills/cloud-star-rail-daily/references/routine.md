@@ -42,7 +42,7 @@ Timing rule:
 9. If the Assignment screen has no `领取奖励` button, skip the Assignment Reward step.
 10. Return to Daily Training.
 11. Click the `领取` button for the assignment task in Daily Training when visible.
-12. Claim any available daily activity rewards.
+12. Claim available activity rewards by clicking one claimable Activity Reward Chest; the game claims all currently available chest rewards together.
 13. Do not start battles or spend resources.
 14. Produce a Run Report.
 15. Perform Browser Close Exit.
@@ -63,23 +63,25 @@ Timing rule:
 12. Click the `前往` button under the `累计消耗120点开拓力` task card in Daily Training.
 13. Wait for Survival Index.
 14. Click the left-side `培养目标`.
-15. If a Training Target exists, click the `进入` button for the Recommended Relic Cavern on the right side.
-16. If no Training Target exists, request a Fallback Farming Target and Run Count.
-17. Wait for the Cavern Challenge screen.
-18. Use default Run Count `4` for the Recommended Relic Cavern.
-19. Calculate Affordable Run Count from visible Trailblaze Power and per-run cost when possible.
-20. If Affordable Run Count is `0`, skip farming and continue claiming rewards.
-21. Click the plus button until the challenge count reaches Affordable Run Count, capped at `4`.
-22. Click the `挑战` button.
-23. Wait for combat to complete.
-24. Claim battle rewards.
-25. Return to the game world when combat is complete.
-26. Re-open Daily Training from the fourth top-right guide icon.
-27. Claim every visible `领取` button on available Daily Training task cards.
-28. Click or inspect the five Activity Reward Chest icons and claim every available chest reward.
-29. If all five Activity Reward Chests are claimed, mark the daily routine complete.
-30. Produce a Run Report.
-31. Perform Browser Close Exit.
+15. If the left list is still focused on a subtarget such as `饰品提取` or `拟造花萼`, click the top-left `培养目标` summary card to reveal the recommendation panel.
+16. If a Training Target exists, click the `进入` button for the Recommended Relic Cavern on the right side.
+17. If no Training Target exists after this bounded check, request a Fallback Farming Target and Run Count.
+18. Wait for the Cavern Challenge screen.
+19. Use default Run Count `4` for the Recommended Relic Cavern.
+20. Calculate Affordable Run Count from visible Trailblaze Power and per-run cost when possible.
+21. If Affordable Run Count is `0`, skip farming and continue claiming rewards.
+22. Turn off `快捷补充开拓力` if it is enabled before changing the run count.
+23. Click the plus button until the challenge count reaches Affordable Run Count, capped at `4`.
+24. Click the `挑战` button.
+25. Wait for combat to complete.
+26. Claim battle rewards.
+27. Return to the game world when combat is complete.
+28. Re-open Daily Training from the fourth top-right guide icon.
+29. Claim every visible `领取` button on available Daily Training task cards.
+30. Click one claimable Activity Reward Chest to claim all currently available chest rewards together.
+31. If all five Activity Reward Chests are claimed, mark the daily routine complete.
+32. Produce a Run Report.
+33. Perform Browser Close Exit.
 
 ## Forbidden Actions
 
