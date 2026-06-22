@@ -135,6 +135,7 @@ test("help exposes top-level lifecycle commands without service namespace", asyn
     assert.match(result.stdout, /\nUsage:\n  agent-bridge <command> \[options\]\n/);
     assert.match(result.stdout, /\n  help \[command\]\n/);
     assert.match(result.stdout, /\n  version\n/);
+    assert.match(result.stdout, /\n  upgrade\n/);
     assert.match(result.stdout, /\n  list\n/);
     assert.match(result.stdout, /\n  remove \[--producer codex\|claude\|aiden\|--all\] \[--scope project\|global\|both\]\n/);
     assert.match(result.stdout, /\n  start\n/);
@@ -152,6 +153,11 @@ test("help exposes top-level lifecycle commands without service namespace", asyn
     assert.equal(send.code, 0, send.stderr);
     assert.match(send.stdout, /Usage:\n  agent-bridge send --to codex\|claude\|aiden --message <text>/);
     assert.match(send.stdout, /direct validation message/);
+
+    const upgrade = await runCli(["help", "upgrade"], dir, join(dir, "config"), join(dir, "state"));
+    assert.equal(upgrade.code, 0, upgrade.stderr);
+    assert.match(upgrade.stdout, /Usage:\n  agent-bridge upgrade/);
+    assert.match(upgrade.stdout, /npm package to the latest version/);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
@@ -177,6 +183,35 @@ test("version command prints the package version", async () => {
     assert.equal(shortFlag.code, 0, shortFlag.stderr);
     assert.equal(shortFlag.stdout, expected);
     assert.equal(shortFlag.stderr, "");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("upgrade command updates the global npm package and prompts restart", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "agent-bridge-upgrade-"));
+  try {
+    const fakeNpm = join(dir, "fake-npm.mjs");
+    const argsPath = join(dir, "npm-args.json");
+    await writeFile(fakeNpm, `#!${process.execPath}
+import { writeFileSync } from "node:fs";
+writeFileSync(process.env.AGENT_BRIDGE_TEST_NPM_ARGS ?? "", JSON.stringify(process.argv.slice(2)));
+`, "utf8");
+    await chmod(fakeNpm, 0o755);
+
+    const result = await runCli(["upgrade"], dir, join(dir, "config"), join(dir, "state"), {
+      extraEnv: {
+        AGENT_BRIDGE_NPM_COMMAND: fakeNpm,
+        AGENT_BRIDGE_TEST_NPM_ARGS: argsPath
+      }
+    });
+
+    assert.equal(result.code, 0, result.stderr);
+    assert.deepEqual(JSON.parse(await readFile(argsPath, "utf8")), ["install", "-g", "@ranarkh/agent-bridge@latest"]);
+    assert.match(result.stdout, /Upgrading @ranarkh\/agent-bridge@latest/);
+    assert.match(result.stdout, /Upgrade complete/);
+    assert.match(result.stdout, /agent-bridge stop/);
+    assert.match(result.stdout, /agent-bridge start/);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

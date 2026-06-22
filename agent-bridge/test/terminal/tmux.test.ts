@@ -16,7 +16,7 @@ test("tmux runner executes a consumer command in an interactive terminal session
 }, async () => {
   const dir = await mkdtemp(join(tmpdir(), "agent-bridge-tmux-"));
   const stateDir = join(dir, "state");
-  let tmuxSession: string | undefined;
+  const tmuxSessions: string[] = [];
   const previousShell = process.env.SHELL;
   try {
     await mkdir(stateDir);
@@ -36,7 +36,9 @@ test("tmux runner executes a consumer command in an interactive terminal session
     };
     const session = createTerminalSession("tmux-run-1", agent, dir);
     attachTmuxRunner(session, { runId: "tmux-run-1", agent, cwd: dir });
-    tmuxSession = session.tmuxSession;
+    if (session.tmuxSession) {
+      tmuxSessions.push(session.tmuxSession);
+    }
     assert.equal(session.backend, "tmux");
     assert.ok(session.runner);
 
@@ -61,13 +63,13 @@ test("tmux runner executes a consumer command in an interactive terminal session
 
     const fakeTtySensitiveConsumer = join(dir, "fake-tty-sensitive-consumer.mjs");
     await writeFile(fakeTtySensitiveConsumer, [
+      "import { readFileSync } from 'node:fs';",
       "if (process.stdin.isTTY) {",
       "  console.error('stdin was a tty');",
       "  process.exit(9);",
       "}",
-      "let input = '';",
-      "process.stdin.on('data', (chunk) => input += chunk);",
-      "process.stdin.on('end', () => console.log(JSON.stringify({ verdict: 'pass', summary: input.trim(), findings: [], suggestedPrompt: '' })));"
+      "const input = readFileSync(0, 'utf8');",
+      "console.log(JSON.stringify({ verdict: 'pass', summary: input.trim(), findings: [], suggestedPrompt: '' }));"
     ].join("\n"), "utf8");
     const ttySensitiveResult = await session.runner.run(process.execPath, [fakeTtySensitiveConsumer], "file-backed stdin", {
       cwd: dir,
@@ -89,13 +91,29 @@ test("tmux runner executes a consumer command in an interactive terminal session
       "exec /bin/sh \"$@\""
     ].join("\n"), "utf8");
     await chmod(fakeShell, 0o755);
-    const fakeShellEnvConsumer = join(dir, "fake-shell-env-consumer.mjs");
-    await writeFile(fakeShellEnvConsumer, [
-      "const summary = process.env.AGENT_BRIDGE_TEST_SHELL_ENV ?? 'missing';",
-      "console.log(JSON.stringify({ verdict: 'pass', summary, findings: [], suggestedPrompt: '' }));"
+    const fakeClaude = join(dir, "claude");
+    await writeFile(fakeClaude, [
+      "#!/bin/sh",
+      "summary=${AGENT_BRIDGE_TEST_SHELL_ENV:-missing}",
+      "printf '{\"verdict\":\"pass\",\"summary\":\"%s\",\"findings\":[],\"suggestedPrompt\":\"\"}\\n' \"$summary\""
     ].join("\n"), "utf8");
+    await chmod(fakeClaude, 0o755);
+    const shellAgent: Agent = {
+      id: "claude",
+      kind: "claude",
+      label: "Claude Code",
+      command: fakeClaude,
+      enabled: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    const shellSession = createTerminalSession("tmux-shell-env-run", shellAgent, dir);
+    attachTmuxRunner(shellSession, { runId: "tmux-shell-env-run", agent: shellAgent, cwd: dir });
+    if (shellSession.tmuxSession) {
+      tmuxSessions.push(shellSession.tmuxSession);
+    }
     process.env.SHELL = fakeShell;
-    const shellEnvResult = await session.runner.run(process.execPath, [fakeShellEnvConsumer], "", {
+    const shellEnvResult = await shellSession.runner?.run(fakeClaude, [], "", {
       cwd: dir,
       timeout: 15_000,
       env: {
@@ -103,7 +121,7 @@ test("tmux runner executes a consumer command in an interactive terminal session
         AGENT_BRIDGE_BYPASS: "1"
       }
     });
-    assert.match(shellEnvResult.stdout, /from-user-shell/);
+    assert.match(shellEnvResult?.stdout ?? "", /from-user-shell/);
     if (previousShell === undefined) {
       delete process.env.SHELL;
     } else {
@@ -241,8 +259,8 @@ test("tmux runner executes a consumer command in an interactive terminal session
       process.env.SHELL = previousShell;
     }
     delete process.env.AGENT_BRIDGE_STATE_DIR;
-    if (tmuxSession) {
-      spawnSync("tmux", ["kill-session", "-t", tmuxSession], { stdio: "ignore" });
+    for (const sessionName of tmuxSessions) {
+      spawnSync("tmux", ["kill-session", "-t", sessionName], { stdio: "ignore" });
     }
     await rm(dir, { recursive: true, force: true });
   }

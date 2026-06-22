@@ -1,7 +1,7 @@
 import { spawn, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import type { Agent } from "../core/types.ts";
 import { BYPASS_ENV } from "../core/constants.ts";
@@ -154,7 +154,7 @@ async function runInTmux(
     attachOptions,
     runOptions.cwd,
     commandLine,
-    shellCommandWithExitMarker(command, args, runOptions.env, stdinPath, exitPath, donePath)
+    shellCommandWithExitMarker(command, args, runOptions.env, stdinPath, exitPath, donePath, shouldUseUserShellEnvironment(attachOptions.agent, command))
   );
   attachOptions.onStart?.({
     pid: panePid,
@@ -436,14 +436,15 @@ function shellCommandWithExitMarker(
   env: NodeJS.ProcessEnv,
   stdinPath: string,
   exitPath: string,
-  donePath: string
+  donePath: string,
+  useUserShellEnvironment: boolean
 ): string {
+  const shell = env.SHELL ?? process.env.SHELL ?? "/bin/sh";
   const executable = shellQuote([
+    ...(useUserShellEnvironment ? [] : envCommandPrefix(env)),
     command,
     ...args
   ]);
-  const shell = env.SHELL ?? process.env.SHELL ?? "/bin/sh";
-  const bypass = `${BYPASS_ENV}=${shellQuote([env[BYPASS_ENV] ?? "1"])}`;
   const inner = [
     `${executable} < ${shellQuote([stdinPath])}`,
     "agent_bridge_code=$?",
@@ -453,11 +454,21 @@ function shellCommandWithExitMarker(
     `touch ${shellQuote([donePath])}`,
     `exec ${shellQuote([shell])}`
   ].join("; ");
+  if (!useUserShellEnvironment) {
+    return inner;
+  }
+  const bypass = `${BYPASS_ENV}=${shellQuote([env[BYPASS_ENV] ?? "1"])}`;
   return shellQuote([
     shell,
     "-ilc",
     `${bypass} ${inner}`
   ]);
+}
+
+function shouldUseUserShellEnvironment(agent: Agent, command: string): boolean {
+  const executable = basename(command).replace(/\.exe$/i, "");
+  const expected = agent.kind === "claude" ? "claude" : agent.kind;
+  return executable === expected;
 }
 
 function envCommandPrefix(env: NodeJS.ProcessEnv): string[] {
