@@ -44,9 +44,9 @@ test("tmux runner executes a consumer command in an interactive terminal session
 
     const fakeConsumer = join(dir, "fake-consumer.mjs");
     await writeFile(fakeConsumer, [
-      "let input = '';",
-      "process.stdin.on('data', (chunk) => input += chunk);",
-      "process.stdin.on('end', () => console.log(JSON.stringify({ verdict: 'pass', summary: input.trim(), findings: [], suggestedPrompt: '' })));"
+      "import { readFileSync } from 'node:fs';",
+      "const input = readFileSync(0, 'utf8');",
+      "console.log(JSON.stringify({ verdict: 'pass', summary: input.trim(), findings: [], suggestedPrompt: '' }));"
     ].join("\n"), "utf8");
 
     const result = await session.runner.run(process.execPath, [fakeConsumer], "bridge me", {

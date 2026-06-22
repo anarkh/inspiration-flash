@@ -140,8 +140,17 @@ export async function stopService(): Promise<void> {
     console.log("Service is not running.");
     return;
   }
-  process.kill(status.pid, "SIGTERM");
-  console.log(`Stopped service pid ${status.pid}.`);
+  await stopRunningService(status.port, status.pid);
+}
+
+export async function restartService(): Promise<void> {
+  const status = await serviceStatus();
+  if (status.running && status.pid) {
+    await stopRunningService(status.port, status.pid);
+  } else {
+    console.log("Service is not running.");
+  }
+  await startService();
 }
 
 export async function printServiceStatus(): Promise<void> {
@@ -246,6 +255,19 @@ async function readHealth(port: number): Promise<{ ok: boolean; pid: number | nu
     request.on("error", () => resolve({ ok: false, pid: null }));
     request.end();
   });
+}
+
+async function stopRunningService(port: number, pid: number): Promise<void> {
+  process.kill(pid, "SIGTERM");
+  console.log(`Stopped service pid ${pid}.`);
+  for (let attempt = 0; attempt < 30; attempt += 1) {
+    const health = await readHealth(port);
+    if (!health.ok || health.pid !== pid) {
+      return;
+    }
+    await delay(200);
+  }
+  throw new Error("Service did not stop in time.");
 }
 
 function parseJsonObject(text: string): Record<string, unknown> | null {

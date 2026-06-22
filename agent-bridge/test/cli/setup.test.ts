@@ -142,6 +142,7 @@ test("help exposes top-level lifecycle commands without service namespace", asyn
     assert.match(result.stdout, /\n  status\n/);
     assert.match(result.stdout, /\n  dashboard\n/);
     assert.match(result.stdout, /\n  stop\n/);
+    assert.match(result.stdout, /\n  restart\n/);
     assert.doesNotMatch(result.stdout, /service start|service run/);
     assert.doesNotMatch(result.stdout, /agent list|agent add|agent remove/);
 
@@ -158,6 +159,11 @@ test("help exposes top-level lifecycle commands without service namespace", asyn
     assert.equal(upgrade.code, 0, upgrade.stderr);
     assert.match(upgrade.stdout, /Usage:\n  agent-bridge upgrade/);
     assert.match(upgrade.stdout, /npm package to the latest version/);
+
+    const restart = await runCli(["help", "restart"], dir, join(dir, "config"), join(dir, "state"));
+    assert.equal(restart.code, 0, restart.stderr);
+    assert.match(restart.stdout, /Usage:\n  agent-bridge restart/);
+    assert.match(restart.stdout, /Restart the local Agent Bridge service/);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
@@ -213,6 +219,38 @@ writeFileSync(process.env.AGENT_BRIDGE_TEST_NPM_ARGS ?? "", JSON.stringify(proce
     assert.match(result.stdout, /agent-bridge stop/);
     assert.match(result.stdout, /agent-bridge start/);
   } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("restart command replaces a running service process", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "agent-bridge-restart-"));
+  const configDir = join(dir, "config");
+  const stateDir = join(dir, "state");
+  try {
+    await mkdir(configDir);
+    await mkdir(stateDir);
+    await writeConfig(configDir, await freePort(), []);
+
+    const start = await runCli(["start"], dir, configDir, stateDir);
+    assert.equal(start.code, 0, start.stderr);
+    assert.match(start.stdout, /Service started on port/);
+
+    const before = await runCli(["status"], dir, configDir, stateDir);
+    assert.equal(before.code, 0, before.stderr);
+    const beforePid = servicePid(before.stdout);
+
+    const restart = await runCli(["restart"], dir, configDir, stateDir);
+    assert.equal(restart.code, 0, restart.stderr);
+    assert.match(restart.stdout, /Stopped service pid/);
+    assert.match(restart.stdout, /Service started on port/);
+
+    const after = await runCli(["status"], dir, configDir, stateDir);
+    assert.equal(after.code, 0, after.stderr);
+    const afterPid = servicePid(after.stdout);
+    assert.notEqual(afterPid, beforePid);
+  } finally {
+    await runCli(["stop"], dir, configDir, stateDir).catch(() => undefined);
     await rm(dir, { recursive: true, force: true });
   }
 });
@@ -646,6 +684,12 @@ async function writeConfig(configDir: string, port: number, agents: unknown[]): 
     agents,
     routes: []
   }, null, 2)}\n`, "utf8");
+}
+
+function servicePid(output: string): number {
+  const match = output.match(/pid (\d+)/);
+  assert.ok(match, output);
+  return Number.parseInt(match[1], 10);
 }
 
 async function freePort(): Promise<number> {

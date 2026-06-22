@@ -9,7 +9,7 @@ import { clearHooks, configureHooks } from "../hooks/configure.ts";
 import { mapBridgeToProducerResponse } from "../hooks/producer-response.ts";
 import { detectAllAgentClis } from "../agents/registry.ts";
 import { runBridge, selectRouteAgents } from "../bridge/runner.ts";
-import { printDashboardUrl, printServiceStatus, runServiceForeground, startService, stopService, submitBridge, submitDirectBridge } from "../service/server.ts";
+import { printDashboardUrl, printServiceStatus, restartService, runServiceForeground, startService, stopService, submitBridge, submitDirectBridge } from "../service/server.ts";
 import { chooseMany, chooseOne } from "./interactive.ts";
 import { resolveHookConfigCwd } from "./project-root.ts";
 
@@ -70,6 +70,11 @@ async function main(argv: string[]): Promise<void> {
 
   if (command === "stop") {
     await stopService();
+    return;
+  }
+
+  if (command === "restart") {
+    await restartService();
     return;
   }
 
@@ -665,6 +670,7 @@ Commands:
   hooks clear
   start
   stop
+  restart
   status
   dashboard
   hook --producer codex|claude|aiden --event stop
@@ -720,6 +726,11 @@ Start the local Agent Bridge service.
   agent-bridge stop
 
 Stop the local Agent Bridge service.
+`,
+  restart: `Usage:
+  agent-bridge restart
+
+Restart the local Agent Bridge service.
 `,
   status: `Usage:
   agent-bridge status
