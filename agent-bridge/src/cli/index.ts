@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { spawn } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { stdin, stdout, stderr } from "node:process";
 import { loadConfig, removeAllBridgeConfig, removeRoute, upsertAgent, upsertRoute } from "../config/store.ts";
@@ -8,12 +9,13 @@ import { clearHooks, configureHooks } from "../hooks/configure.ts";
 import { mapBridgeToProducerResponse } from "../hooks/producer-response.ts";
 import { detectAllAgentClis } from "../agents/registry.ts";
 import { runBridge, selectRouteAgents } from "../bridge/runner.ts";
-import { printDashboardUrl, printServiceStatus, runServiceForeground, startService, stopService, submitBridge, submitDirectBridge } from "../service/server.ts";
+import { printDashboardUrl, printServiceStatus, restartService, runServiceForeground, startService, stopService, submitBridge, submitDirectBridge } from "../service/server.ts";
 import { chooseMany, chooseOne } from "./interactive.ts";
 import { resolveHookConfigCwd } from "./project-root.ts";
 
 type HookCleanupScope = ConfigScope | "both";
 type RemoveTarget = { all: true } | { all: false; producer: EndpointKind };
+type PackageJson = { name?: string; version?: string };
 
 async function main(argv: string[]): Promise<void> {
   const [command, subcommand] = argv;
@@ -29,6 +31,11 @@ async function main(argv: string[]): Promise<void> {
 
   if (command === "version" || command === "--version" || command === "-v") {
     await versionCommand();
+    return;
+  }
+
+  if (command === "upgrade") {
+    await upgradeCommand();
     return;
   }
 
@@ -63,6 +70,11 @@ async function main(argv: string[]): Promise<void> {
 
   if (command === "stop") {
     await stopService();
+    return;
+  }
+
+  if (command === "restart") {
+    await restartService();
     return;
   }
 
@@ -120,11 +132,48 @@ async function setupCommand(): Promise<void> {
 }
 
 async function versionCommand(): Promise<void> {
-  const packageJson = JSON.parse(await readFile(new URL("../../package.json", import.meta.url), "utf8")) as { version?: string };
+  const packageJson = await readPackageJson();
   if (!packageJson.version) {
     throw new Error("Unable to read agent-bridge package version.");
   }
   stdout.write(`${packageJson.version}\n`);
+}
+
+async function upgradeCommand(): Promise<void> {
+  const packageJson = await readPackageJson();
+  if (!packageJson.name) {
+    throw new Error("Unable to read agent-bridge package name.");
+  }
+  const target = `${packageJson.name}@latest`;
+  stdout.write(`Upgrading ${target}...\n`);
+  await runUpgradeCommand(process.env.AGENT_BRIDGE_NPM_COMMAND ?? "npm", ["install", "-g", target]);
+  stdout.write([
+    "Upgrade complete. Restart Agent Bridge to use the new version:",
+    "  agent-bridge stop",
+    "  agent-bridge start",
+    ""
+  ].join("\n"));
+}
+
+async function readPackageJson(): Promise<PackageJson> {
+  return JSON.parse(await readFile(new URL("../../package.json", import.meta.url), "utf8")) as PackageJson;
+}
+
+function runUpgradeCommand(command: string, args: string[]): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, {
+      env: process.env,
+      stdio: ["ignore", "inherit", "inherit"]
+    });
+    child.on("error", reject);
+    child.on("close", (code) => {
+      if (code === 0) {
+        resolve();
+        return;
+      }
+      reject(new Error(`Upgrade command failed with exit code ${code ?? "unknown"}.`));
+    });
+  });
 }
 
 async function chooseProducerSet(title: string, allDescription: string): Promise<EndpointKind[]> {
@@ -614,12 +663,14 @@ Usage:
 Commands:
   help [command]
   version
+  upgrade
   setup
   list
   remove [--producer codex|claude|aiden|--all] [--scope project|global|both]
   hooks clear
   start
   stop
+  restart
   status
   dashboard
   hook --producer codex|claude|aiden --event stop
@@ -640,6 +691,11 @@ Show top-level help or detailed help for one command.
   agent-bridge -v
 
 Print the installed Agent Bridge version.
+`,
+  upgrade: `Usage:
+  agent-bridge upgrade
+
+Update the global Agent Bridge npm package to the latest version, then restart the service.
 `,
   setup: `Usage:
   agent-bridge setup
@@ -670,6 +726,11 @@ Start the local Agent Bridge service.
   agent-bridge stop
 
 Stop the local Agent Bridge service.
+`,
+  restart: `Usage:
+  agent-bridge restart
+
+Restart the local Agent Bridge service.
 `,
   status: `Usage:
   agent-bridge status
