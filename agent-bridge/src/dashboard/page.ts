@@ -9,24 +9,29 @@ export function dashboardHtml(): string {
   <style>
     :root {
       color-scheme: dark;
-      --bg: #0d1117;
-      --panel: #151b23;
-      --panel-2: #1b232d;
-      --panel-3: #202a35;
-      --border: #303a46;
-      --text: #e7edf4;
-      --muted: #91a0b1;
-      --accent: #56c8b6;
-      --accent-2: #7aa7ff;
-      --bad: #ff6b6b;
-      --warn: #f4c95d;
-      --ok: #66dda0;
+      --bg: #0a0e13;
+      --panel: #111821;
+      --panel-2: #151f2a;
+      --panel-3: #1a2531;
+      --terminal: #05080c;
+      --border: #283443;
+      --border-strong: #3a495a;
+      --text: #edf3f8;
+      --muted: #8c9aaa;
+      --muted-2: #647385;
+      --accent: #62c7b8;
+      --bad: #ff7676;
+      --warn: #f0c766;
+      --ok: #70d99a;
+      --shadow: 0 16px 40px rgba(0,0,0,.28);
     }
     * { box-sizing: border-box; }
     html, body { height: 100%; }
     body {
       margin: 0;
-      background: var(--bg);
+      background:
+        linear-gradient(180deg, rgba(98,199,184,.06), transparent 260px),
+        var(--bg);
       color: var(--text);
       font: 13px/1.45 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       letter-spacing: 0;
@@ -36,16 +41,31 @@ export function dashboardHtml(): string {
       color: var(--text);
       background: var(--panel-2);
       border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 6px 9px;
+      border-radius: 8px;
+      padding: 7px 10px;
       cursor: pointer;
+      transition: background .16s ease, border-color .16s ease, transform .16s ease;
     }
-    button:hover:not(:disabled) { border-color: var(--accent); }
+    button:hover:not(:disabled) { background: var(--panel-3); border-color: var(--border-strong); }
+    button:active:not(:disabled) { transform: translateY(1px); }
+    button:focus-visible, input:focus-visible { outline: 2px solid color-mix(in srgb, var(--accent), transparent 35%); outline-offset: 2px; }
     button:disabled { cursor: not-allowed; opacity: .45; }
+    input {
+      width: 100%;
+      min-width: 0;
+      color: var(--text);
+      background: #0c1219;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font: inherit;
+    }
+    input::placeholder { color: var(--muted-2); }
     .app {
       display: grid;
-      grid-template-columns: 380px minmax(0, 1fr);
-      min-height: 100vh;
+      grid-template-columns: minmax(360px, 420px) minmax(0, 1fr);
+      height: 100dvh;
+      min-height: 560px;
     }
     .runs, .terminal {
       min-width: 0;
@@ -55,16 +75,17 @@ export function dashboardHtml(): string {
     }
     .runs { background: var(--panel); border-right: 1px solid var(--border); }
     .bar {
-      min-height: 56px;
-      padding: 10px 12px;
+      min-height: 72px;
+      padding: 12px;
       border-bottom: 1px solid var(--border);
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: space-between;
       gap: 10px;
     }
     .bar-main { min-width: 0; }
-    .title { font-weight: 750; font-size: 14px; }
+    .title-row { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .title { font-weight: 760; font-size: 15px; letter-spacing: .01em; }
     .meta {
       color: var(--muted);
       font-size: 12px;
@@ -73,9 +94,57 @@ export function dashboardHtml(): string {
       text-overflow: ellipsis;
       margin-top: 2px;
     }
+    .service-pill, .stream-state {
+      flex: none;
+      color: var(--muted);
+      background: #0c1219;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 3px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+    .service-pill.running, .stream-state.streaming { color: var(--ok); border-color: color-mix(in srgb, var(--ok), transparent 50%); }
+    .service-pill.stopped, .stream-state.error { color: var(--bad); border-color: color-mix(in srgb, var(--bad), transparent 50%); }
+    .stream-state.connecting, .stream-state.closed { color: var(--warn); border-color: color-mix(in srgb, var(--warn), transparent 50%); }
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 1px;
+      border-bottom: 1px solid var(--border);
+      background: var(--border);
+    }
+    .metric {
+      min-width: 0;
+      padding: 10px 12px;
+      background: #0f151d;
+    }
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .metric strong {
+      display: block;
+      margin-top: 2px;
+      color: var(--text);
+      font: 700 18px/1.1 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .metric.attention strong { color: var(--warn); }
+    .filters {
+      display: grid;
+      gap: 8px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel);
+    }
     .list {
       overflow: auto;
-      padding: 8px;
+      padding: 8px 8px 12px;
       display: grid;
       align-content: start;
       gap: 6px;
@@ -83,8 +152,8 @@ export function dashboardHtml(): string {
     .tabs {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 6px;
-      padding: 8px;
+      gap: 4px;
+      padding: 8px 12px 10px;
       border-bottom: 1px solid var(--border);
       background: var(--panel);
     }
@@ -93,30 +162,49 @@ export function dashboardHtml(): string {
       border-color: transparent;
       color: var(--muted);
       font-weight: 700;
+      padding: 7px 8px;
     }
     .tab.active {
-      background: var(--panel-3);
-      border-color: var(--accent);
+      background: #0c1219;
+      border-color: var(--border-strong);
       color: var(--text);
     }
     .run-row {
+      position: relative;
       width: 100%;
       text-align: left;
       display: grid;
       gap: 6px;
-      background: transparent;
+      background: rgba(255,255,255,.015);
       border: 1px solid transparent;
-      border-radius: 7px;
-      padding: 9px;
+      border-radius: 8px;
+      padding: 10px 10px 10px 12px;
+      box-shadow: none;
     }
+    .run-row::before {
+      content: "";
+      position: absolute;
+      inset: 10px auto 10px 0;
+      width: 3px;
+      border-radius: 0 3px 3px 0;
+      background: var(--muted-2);
+    }
+    .run-row.status-running::before, .run-row.status-pending::before { background: var(--accent); }
+    .run-row.status-pass::before, .run-row.status-late_pass::before { background: var(--ok); }
+    .run-row.status-fail::before, .run-row.status-late_fail::before, .run-row.status-error::before { background: var(--bad); }
+    .run-row.status-uncertain::before, .run-row.status-late_uncertain::before, .run-row.status-timed_out::before, .run-row.status-interrupted::before { background: var(--warn); }
     .run-row:hover { background: var(--panel-2); border-color: var(--border); }
-    .run-row.selected { background: var(--panel-3); border-color: var(--accent); }
+    .run-row.selected {
+      background: var(--panel-3);
+      border-color: color-mix(in srgb, var(--accent), transparent 45%);
+      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent), transparent 70%);
+    }
     .route-row {
       display: grid;
       gap: 6px;
       border: 1px solid var(--border);
-      border-radius: 7px;
-      padding: 9px;
+      border-radius: 8px;
+      padding: 10px;
       background: rgba(255,255,255,.02);
     }
     .section-label {
@@ -141,14 +229,35 @@ export function dashboardHtml(): string {
       text-overflow: ellipsis;
       font-weight: 700;
     }
-    .run-id { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--accent-2); }
-    .path, .command {
+    .run-id { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--text); }
+    .path, .command, .preview {
       color: var(--muted);
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       font-size: 12px;
+    }
+    .preview { color: #aab5c2; font-family: inherit; }
+    .row-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+      overflow: hidden;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .row-meta span {
+      min-width: 0;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    .row-meta span:not(:last-child) {
+      flex: none;
+      color: var(--muted-2);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     }
     .badge {
       flex: none;
@@ -171,19 +280,31 @@ export function dashboardHtml(): string {
       color: var(--muted);
       padding: 14px;
       border: 1px dashed var(--border);
-      border-radius: 7px;
+      border-radius: 8px;
       background: rgba(255,255,255,.02);
     }
-    .terminal { background: #05070a; }
+    .skeleton {
+      height: 74px;
+      border-radius: 8px;
+      background: linear-gradient(90deg, rgba(255,255,255,.03), rgba(255,255,255,.07), rgba(255,255,255,.03));
+      background-size: 200% 100%;
+    }
+    .terminal { background: var(--terminal); }
     .terminal-bar {
-      min-height: 56px;
+      min-height: 64px;
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;
       gap: 12px;
-      padding: 9px 12px;
+      padding: 10px 12px;
       align-items: center;
       border-bottom: 1px solid var(--border);
       background: var(--panel);
+    }
+    .terminal-title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
     }
     .terminal-title {
       min-width: 0;
@@ -194,19 +315,20 @@ export function dashboardHtml(): string {
       font-weight: 650;
     }
     .terminal-actions { display: flex; gap: 8px; align-items: center; }
-    .traffic { display: inline-flex; gap: 6px; margin-right: 8px; vertical-align: -1px; }
-    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
-    .red { background: #ff5f57; } .yellow { background: #febc2e; } .green { background: #28c840; }
     #terminal-wrap {
       min-height: 0;
       flex: 1;
-      padding: 8px;
-      background: #05070a;
+      padding: 10px;
+      background: var(--terminal);
     }
     #terminal-pane {
       width: 100%;
       height: 100%;
       min-height: 360px;
+      border: 1px solid #111923;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
     }
     #fallback {
       display: none;
@@ -218,18 +340,27 @@ export function dashboardHtml(): string {
       margin: 0;
       padding: 10px;
       color: #d7dde5;
-      background: #05070a;
+      background: var(--terminal);
+      border: 1px solid #111923;
+      border-radius: 8px;
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     }
     .xterm { height: 100%; }
     .xterm-viewport { overflow-y: auto !important; }
+    @media (prefers-reduced-motion: no-preference) {
+      .skeleton { animation: sweep 1.2s ease-in-out infinite; }
+      @keyframes sweep { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+    }
     @media (max-width: 1100px) {
-      .app { grid-template-columns: 340px minmax(0, 1fr); }
+      .app { grid-template-columns: minmax(320px, 370px) minmax(0, 1fr); }
+      .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
     @media (max-width: 820px) {
-      .app { grid-template-columns: 1fr; }
+      .app { grid-template-columns: 1fr; height: auto; min-height: 100dvh; }
       .runs { max-height: 38vh; border-right: 0; border-bottom: 1px solid var(--border); }
-      .terminal { min-height: 58vh; }
+      .terminal { min-height: 62vh; }
+      .terminal-bar { grid-template-columns: 1fr; align-items: stretch; }
+      .terminal-actions { justify-content: flex-start; }
     }
   </style>
 </head>
@@ -238,23 +369,42 @@ export function dashboardHtml(): string {
     <section class="runs">
       <div class="bar">
         <div class="bar-main">
-          <div class="title">Agent Bridge</div>
-          <div class="meta" id="service-state">loading</div>
+          <div class="title-row">
+            <div class="title">Agent Bridge</div>
+            <span class="service-pill" id="service-pill">Loading</span>
+          </div>
+          <div class="meta" id="service-state">Loading service state</div>
           <div class="meta" id="route-summary"></div>
         </div>
         <button id="refresh">Refresh</button>
+      </div>
+      <div class="summary" id="run-summary">
+        <div class="metric"><span>Running</span><strong id="metric-running">0</strong></div>
+        <div class="metric attention"><span>Attention</span><strong id="metric-attention">0</strong></div>
+        <div class="metric"><span>Routes</span><strong id="metric-routes">0</strong></div>
+        <div class="metric"><span>History</span><strong id="metric-history">0</strong></div>
+      </div>
+      <div class="filters">
+        <input id="run-filter" type="search" autocomplete="off" spellcheck="false" placeholder="Filter runs, cwd, command">
       </div>
       <div class="tabs">
         <button class="tab active" id="tab-current">Now Running</button>
         <button class="tab" id="tab-history">Run History</button>
       </div>
-      <div class="list" id="run-list"></div>
+      <div class="list" id="run-list">
+        <div class="skeleton"></div>
+        <div class="skeleton"></div>
+        <div class="skeleton"></div>
+      </div>
     </section>
 
     <section class="terminal">
       <div class="terminal-bar">
         <div class="bar-main">
-          <div class="terminal-title" id="terminal-title"><span class="traffic"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></span>No terminal selected</div>
+          <div class="terminal-title-row">
+            <div class="terminal-title" id="terminal-title">No terminal selected</div>
+            <span class="stream-state" id="stream-state">Idle</span>
+          </div>
           <div class="meta" id="terminal-meta"></div>
         </div>
         <div class="terminal-actions">
@@ -279,17 +429,27 @@ export function dashboardHtml(): string {
       socket: null,
       term: null,
       fallback: "",
-      logText: ""
+      logText: "",
+      filter: "",
+      loading: false
     };
 
     const els = {
       service: document.getElementById("service-state"),
+      servicePill: document.getElementById("service-pill"),
       list: document.getElementById("run-list"),
       tabCurrent: document.getElementById("tab-current"),
       tabHistory: document.getElementById("tab-history"),
       routeSummary: document.getElementById("route-summary"),
+      filter: document.getElementById("run-filter"),
+      refresh: document.getElementById("refresh"),
+      metricRunning: document.getElementById("metric-running"),
+      metricAttention: document.getElementById("metric-attention"),
+      metricRoutes: document.getElementById("metric-routes"),
+      metricHistory: document.getElementById("metric-history"),
       terminalTitle: document.getElementById("terminal-title"),
       terminalMeta: document.getElementById("terminal-meta"),
+      streamState: document.getElementById("stream-state"),
       terminalPane: document.getElementById("terminal-pane"),
       fallback: document.getElementById("fallback"),
       copy: document.getElementById("copy-log")
@@ -407,18 +567,26 @@ export function dashboardHtml(): string {
     }
 
     async function refresh() {
-      const response = await fetch("/api/runs");
-      const data = await response.json();
-      state.data = data;
-      const sessions = buildSessions(data);
-      state.activeSessions = sessions.active;
-      state.historySessions = sessions.history;
-      els.service.textContent = data.service.running ? "service :" + data.service.port + " pid " + data.service.pid : "service stopped";
-      els.routeSummary.textContent = routeSummary(data);
-      preserveOrSelectSession();
-      renderTabs();
-      renderRunList();
-      preserveSelectedTerminal();
+      setLoading(true);
+      try {
+        const response = await fetch("/api/runs");
+        if (!response.ok) {
+          throw new Error("Unable to load dashboard data.");
+        }
+        const data = await response.json();
+        state.data = data;
+        const sessions = buildSessions(data);
+        state.activeSessions = sessions.active;
+        state.historySessions = sessions.history;
+        renderService(data);
+        renderSummary(data);
+        preserveOrSelectSession();
+        renderTabs();
+        renderRunList();
+        preserveSelectedTerminal();
+      } finally {
+        setLoading(false);
+      }
     }
 
     function renderTabs() {
@@ -428,15 +596,38 @@ export function dashboardHtml(): string {
       els.tabHistory.textContent = "Run History (" + state.historySessions.length + ")";
     }
 
+    function setLoading(loading) {
+      state.loading = loading;
+      els.refresh.disabled = loading;
+      els.refresh.textContent = loading ? "Refreshing" : "Refresh";
+    }
+
+    function renderService(data) {
+      const running = Boolean(data.service.running);
+      els.servicePill.className = "service-pill " + (running ? "running" : "stopped");
+      els.servicePill.textContent = running ? "Running" : "Stopped";
+      els.service.textContent = running ? "127.0.0.1:" + data.service.port + " pid " + data.service.pid : "service stopped";
+      els.routeSummary.textContent = routeSummary(data);
+    }
+
+    function renderSummary(data) {
+      const routes = data.routes || [];
+      const enabledRoutes = routes.filter((route) => route.enabled !== false).length;
+      els.metricRunning.textContent = String(state.activeSessions.length);
+      els.metricAttention.textContent = String(attentionCount(state.historySessions));
+      els.metricRoutes.textContent = String(enabledRoutes) + "/" + String(routes.length);
+      els.metricHistory.textContent = String(state.historySessions.length);
+    }
+
     function renderRunList() {
-      const sessions = visibleSessions();
+      const sessions = filteredSessions();
       els.list.innerHTML = "";
       if (state.activeTab === "current") {
         renderCurrentList(sessions);
         return;
       }
       if (sessions.length === 0) {
-        els.list.innerHTML = '<div class="empty">No completed runs yet.</div>';
+        els.list.innerHTML = '<div class="empty">' + (state.filter ? "No matching runs." : "No completed runs yet.") + '</div>';
         return;
       }
       for (const session of sessions) {
@@ -457,6 +648,13 @@ export function dashboardHtml(): string {
         for (const session of sessions) {
           els.list.appendChild(renderSessionRow(session));
         }
+        return;
+      }
+      if (state.filter) {
+        const empty = document.createElement("div");
+        empty.className = "empty";
+        empty.textContent = "No matching live runs.";
+        els.list.appendChild(empty);
         return;
       }
       if (routes.length === 0) {
@@ -497,21 +695,26 @@ export function dashboardHtml(): string {
     function renderSessionRow(session) {
       const row = document.createElement("button");
       const selected = selectedMatches(session);
-      row.className = "run-row" + (selected ? " selected" : "");
+      const statusClass = String(session.consumer.status || "idle").replace(/[^a-z_]/g, "");
+      row.className = "run-row status-" + statusClass + (selected ? " selected" : "");
       row.disabled = !session.consumer.terminalId && !session.consumer.logPath;
-      row.innerHTML = '<div class="line"><span class="run-id"></span><span class=""></span></div><div class="path"></div><div class="meta"></div>';
+      row.innerHTML = '<div class="line"><span class="run-id"></span><span class=""></span></div><div class="path"></div><div class="preview"></div><div class="row-meta"><span></span><span></span><span></span></div>';
       row.querySelector(".run-id").textContent = session.consumer.label + " / " + session.run.id;
       const status = row.querySelector(".line span:last-child");
       status.className = badge(session.consumer.status);
       status.textContent = session.consumer.status;
       row.querySelector(".path").textContent = session.run.cwd;
-      row.querySelector(".meta").textContent = runSubject(session.run, session.consumer) + directPreview(session.run) + workerSuffix(session.consumer) + " | " + elapsed(session.consumer.startedAt || session.run.startedAt, session.consumer.completedAt);
+      row.querySelector(".preview").textContent = directPreview(session.run) || runSubject(session.run, session.consumer);
+      const meta = row.querySelectorAll(".row-meta span");
+      meta[0].textContent = elapsed(session.consumer.startedAt || session.run.startedAt, session.consumer.completedAt);
+      meta[1].textContent = session.consumer.terminalBackend === "tmux" ? "tmux" : "capture";
+      meta[2].textContent = (session.consumer.commandLine || session.consumer.command || workerSuffix(session.consumer) || runSubject(session.run, session.consumer));
       row.onclick = () => openTerminal(session.run, session.consumer, true);
       return row;
     }
 
     function preserveOrSelectSession() {
-      if (state.selectedSession && visibleSessions().some(selectedMatches)) {
+      if (state.selectedSession && filteredSessions().some(selectedMatches)) {
         return;
       }
       const selectedAnywhere = state.selectedSession ? allSessions().find(selectedMatches) : null;
@@ -520,7 +723,7 @@ export function dashboardHtml(): string {
         preserveOrSelectSession();
         return;
       }
-      const firstOpenable = visibleSessions().find((session) => session.consumer.terminalId || session.consumer.logPath);
+      const firstOpenable = filteredSessions().find((session) => session.consumer.terminalId || session.consumer.logPath);
       if (!firstOpenable) {
         state.selectedSession = null;
         closeTerminal();
@@ -534,8 +737,38 @@ export function dashboardHtml(): string {
       return state.activeTab === "current" ? state.activeSessions : state.historySessions;
     }
 
+    function filteredSessions() {
+      const sessions = visibleSessions();
+      const query = state.filter.trim().toLowerCase();
+      if (!query) return sessions;
+      return sessions.filter((session) => sessionSearchText(session).includes(query));
+    }
+
     function allSessions() {
       return [...state.activeSessions, ...state.historySessions];
+    }
+
+    function attentionCount(sessions) {
+      return sessions.filter((session) => {
+        const status = session.consumer.status || session.run.status;
+        return ["fail", "late_fail", "error", "uncertain", "late_uncertain", "timed_out", "interrupted"].includes(status);
+      }).length;
+    }
+
+    function sessionSearchText(session) {
+      return [
+        session.run.id,
+        session.run.status,
+        session.run.cwd,
+        session.run.directMessagePreview,
+        session.consumer.kind,
+        session.consumer.label,
+        session.consumer.status,
+        session.consumer.command,
+        session.consumer.commandLine,
+        session.consumer.tmuxSession,
+        session.consumer.workerId
+      ].filter(Boolean).join(" ").toLowerCase();
     }
 
     function agentForKind(kind) {
@@ -569,10 +802,15 @@ export function dashboardHtml(): string {
     }
 
     function renderTerminalHeader(run, consumer) {
-      els.terminalTitle.innerHTML = '<span class="traffic"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></span>' + escapeHtml(consumer.label) + " / " + escapeHtml(run.id);
+      els.terminalTitle.textContent = consumer.label + " / " + run.id;
       const backend = consumer.terminalBackend === "tmux" ? "tmux" : "capture";
       els.terminalMeta.textContent = backend + (consumer.tmuxSession ? " " + consumer.tmuxSession : "") + (consumer.workerId ? " | worker " + consumer.workerId : "") + (consumer.pid ? " | pid " + consumer.pid : "") + " | " + run.cwd;
       els.copy.disabled = state.logText.length === 0;
+    }
+
+    function setStreamState(kind, label) {
+      els.streamState.className = "stream-state " + kind;
+      els.streamState.textContent = label;
     }
 
     function runSubject(run, consumer) {
@@ -580,11 +818,11 @@ export function dashboardHtml(): string {
     }
 
     function directPreview(run) {
-      return run.source === "direct" && run.directMessagePreview ? " | " + run.directMessagePreview : "";
+      return run.source === "direct" && run.directMessagePreview ? run.directMessagePreview : "";
     }
 
     function workerSuffix(consumer) {
-      return consumer.workerId ? " | worker " + consumer.workerId : "";
+      return consumer.workerId ? "worker " + consumer.workerId : "";
     }
 
     function openTerminal(run, consumer, rerender) {
@@ -596,6 +834,7 @@ export function dashboardHtml(): string {
       state.selectedSession = { runId: run.id, kind: consumer.kind };
       renderTerminalHeader(run, consumer);
       resetTerminal();
+      setStreamState("connecting", "Connecting");
       if (rerender) {
         renderRunList();
       }
@@ -603,7 +842,10 @@ export function dashboardHtml(): string {
       const url = protocol + "//" + location.host + "/api/runs/" + encodeURIComponent(run.id) + "/consumers/" + encodeURIComponent(consumer.kind) + "/ws";
       const socket = new WebSocket(url);
       state.socket = socket;
-      socket.onopen = () => fitTerminal();
+      socket.onopen = () => {
+        setStreamState("streaming", "Streaming");
+        fitTerminal();
+      };
       socket.onmessage = async (message) => {
         const text = typeof message.data === "string" ? message.data : await message.data.text();
         if (text) writeTerminal(text);
@@ -611,10 +853,12 @@ export function dashboardHtml(): string {
       };
       socket.onclose = () => {
         if (state.socket !== socket) return;
+        setStreamState("closed", "Closed");
         writeTerminal("\\r\\n\\x1b[31m# terminal stream disconnected\\x1b[0m\\r\\n");
       };
       socket.onerror = () => {
         if (state.socket !== socket) return;
+        setStreamState("error", "Error");
         writeTerminal("\\r\\n\\x1b[31m# terminal websocket error\\x1b[0m\\r\\n");
       };
     }
@@ -624,8 +868,9 @@ export function dashboardHtml(): string {
         state.socket.close();
         state.socket = null;
       }
-      els.terminalTitle.innerHTML = '<span class="traffic"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></span>No terminal selected';
+      els.terminalTitle.textContent = "No terminal selected";
       els.terminalMeta.textContent = "";
+      setStreamState("", "Idle");
       resetTerminal();
     }
 
@@ -652,14 +897,28 @@ export function dashboardHtml(): string {
     document.getElementById("refresh").onclick = () => refresh().catch(showError);
     els.tabCurrent.onclick = () => selectTab("current");
     els.tabHistory.onclick = () => selectTab("history");
+    els.filter.oninput = () => {
+      state.filter = els.filter.value;
+      preserveOrSelectSession();
+      renderRunList();
+      preserveSelectedTerminal();
+    };
     document.getElementById("clear-terminal").onclick = resetTerminal;
     els.copy.onclick = async () => {
       await navigator.clipboard.writeText(stripAnsi(state.logText));
+      els.copy.textContent = "Copied";
+      setTimeout(() => {
+        els.copy.textContent = "Copy";
+      }, 1200);
     };
     setInterval(() => refresh().catch(() => undefined), 5000);
     refresh().catch(showError);
 
     function showError(error) {
+      setLoading(false);
+      els.servicePill.className = "service-pill stopped";
+      els.servicePill.textContent = "Error";
+      els.service.textContent = "dashboard data unavailable";
       els.list.innerHTML = '<div class="empty">' + escapeHtml(error.message) + '</div>';
     }
   </script>
