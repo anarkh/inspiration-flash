@@ -1,0 +1,128 @@
+:root {
+  color: #f6f3ea;
+  background: #101015;
+  font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(205, 181, 122, 0.22), transparent 34rem),
+    linear-gradient(180deg, #17151d 0%, #0c0d12 100%);
+}
+
+button {
+  font: inherit;
+}
+
+.app {
+  width: min(100vw, 480px);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.panel {
+  border: 1px solid rgba(236, 216, 162, 0.25);
+  background: rgba(20, 20, 28, 0.88);
+  border-radius: 8px;
+  padding: 14px;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+}
+
+.topline,
+.meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.label {
+  color: #b7ad95;
+  font-size: 12px;
+  letter-spacing: 0;
+}
+
+.value {
+  color: #fff2bd;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.title {
+  margin: 0 0 8px;
+  color: #ffe7a1;
+  font-size: 24px;
+  line-height: 1.2;
+}
+
+.body {
+  margin: 0;
+  color: #ded8c6;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.actions {
+  display: grid;
+  gap: 8px;
+}
+
+.action {
+  width: 100%;
+  min-height: 52px;
+  border: 1px solid rgba(255, 231, 161, 0.35);
+  border-radius: 8px;
+  color: #f7f0d8;
+  background: rgba(70, 58, 33, 0.62);
+  text-align: left;
+  padding: 10px 12px;
+}
+
+.action:disabled {
+  color: #8d8794;
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.action strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.log {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.log li {
+  color: #c8c1af;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.tone-success {
+  border-color: rgba(100, 220, 166, 0.45);
+}
+
+.tone-failure {
+  border-color: rgba(244, 107, 107, 0.45);
+}
+
+.tone-discovery {
+  border-color: rgba(117, 179, 255, 0.45);
+}
