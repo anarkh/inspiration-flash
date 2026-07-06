@@ -2,6 +2,7 @@ export type EndpointKind = "codex" | "claude" | "aiden";
 export type HookEvent = "stop" | "post-tool-use";
 export type ConfigScope = "project" | "global";
 export type BridgeVerdict = "pass" | "fail" | "uncertain";
+export type BridgeOutputMode = "review" | "chat";
 export type UncertainBehavior = "continue" | "pass";
 export type BridgeRunSource = "hook" | "direct";
 export type BridgeRunStatus = "running" | "pass" | "fail" | "uncertain" | "timed_out" | "late_pass" | "late_fail" | "late_uncertain" | "skipped" | "error" | "interrupted";
@@ -45,6 +46,7 @@ export interface RawDirectEnvelope {
   sessionId: string | null;
   producer: EndpointKind;
   turnId: string | null;
+  mode: BridgeOutputMode;
   sender: BridgeMessageSender | null;
   mentions: BridgeMention[];
 }

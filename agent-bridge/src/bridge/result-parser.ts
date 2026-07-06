@@ -1,7 +1,11 @@
-import type { BridgeFinding, BridgeResult, BridgeVerdict } from "../core/types.ts";
+import type { BridgeFinding, BridgeOutputMode, BridgeResult, BridgeVerdict } from "../core/types.ts";
 import { detectKnownAgentError, firstKnownAgentErrorLine } from "../core/agent-errors.ts";
 
-export function parseBridgeOutput(output: string, agent: string): BridgeResult {
+export interface BridgeOutputParseOptions {
+  mode?: BridgeOutputMode;
+}
+
+export function parseBridgeOutput(output: string, agent: string, options: BridgeOutputParseOptions = {}): BridgeResult {
   const text = extractTextFromCliOutput(output).trim();
   const parsed = tryParseJsonObject(text);
   if (parsed) {
@@ -10,6 +14,9 @@ export function parseBridgeOutput(output: string, agent: string): BridgeResult {
   const knownError = knownErrorResult(text, agent);
   if (knownError) {
     return knownError;
+  }
+  if (options.mode === "chat") {
+    return chatOutputResult(text, agent);
   }
   return {
     verdict: "uncertain",
@@ -23,6 +30,34 @@ export function parseBridgeOutput(output: string, agent: string): BridgeResult {
     agent,
     rawOutput: text
   };
+}
+
+function chatOutputResult(text: string, agent: string): BridgeResult {
+  if (!text) {
+    return {
+      verdict: "uncertain",
+      summary: "Agent returned empty output.",
+      findings: [{
+        severity: "info",
+        title: "Empty agent output"
+      }],
+      suggestedPrompt: "Retry the direct chat message or inspect the consumer CLI logs.",
+      agent,
+      rawOutput: text
+    };
+  }
+  return {
+    verdict: "pass",
+    summary: truncateSummary(text),
+    findings: [],
+    suggestedPrompt: "",
+    agent,
+    rawOutput: text
+  };
+}
+
+function truncateSummary(text: string): string {
+  return text.length <= 4000 ? text : `${text.slice(0, 3997)}...`;
 }
 
 function knownErrorResult(text: string, agent: string): BridgeResult | null {

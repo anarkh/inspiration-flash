@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { selectRouteAgents } from "../../src/bridge/runner.ts";
+import { runDirectBridge, selectRouteAgents } from "../../src/bridge/runner.ts";
 import type { Agent, AppConfig, BridgeRoute, EndpointKind } from "../../src/core/types.ts";
 
 test("selects only consumers mapped to the triggering producer", () => {
@@ -18,6 +18,20 @@ test("ignores disabled routes and disabled consumer agents", () => {
   config.routes[0].enabled = true;
   config.agents.find((agent) => agent.kind === "claude")!.enabled = false;
   assert.deepEqual(selectRouteAgents(config, "codex").map((agent) => agent.kind), ["aiden"]);
+});
+
+test("rejects invalid direct send mode instead of defaulting to review", async () => {
+  await assert.rejects(() => runDirectBridge({
+    consumer: "claude",
+    message: "hello",
+    cwd: "/tmp",
+    sessionId: null,
+    producer: "codex",
+    turnId: null,
+    mode: "bogus" as never,
+    sender: null,
+    mentions: []
+  }), /direct send mode must be review or chat/);
 });
 
 function configWithRoute(producer: EndpointKind, consumers: EndpointKind[]): AppConfig {

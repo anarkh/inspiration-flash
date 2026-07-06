@@ -504,6 +504,68 @@ console.log(JSON.stringify({
   }
 });
 
+test("send chat mode posts a non-review message and returns plain output", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "agent-bridge-send-chat-"));
+  const projectDir = join(dir, "project");
+  const configDir = join(dir, "config");
+  const stateDir = join(dir, "state");
+  const promptPath = join(dir, "seen-prompt.txt");
+  try {
+    await mkdir(projectDir);
+    await mkdir(configDir);
+    await mkdir(stateDir);
+    const fakeClaude = join(dir, "fake-claude.mjs");
+    await writeFile(fakeClaude, `#!${process.execPath}
+import { writeFileSync } from "node:fs";
+let input = "";
+process.stdin.on("data", (chunk) => input += chunk);
+process.stdin.on("end", () => {
+  writeFileSync(process.env.AGENT_BRIDGE_TEST_PROMPT ?? "", input);
+  console.log(JSON.stringify({ type: "result", result: "plain chat answer" }));
+});
+`, "utf8");
+    await chmod(fakeClaude, 0o755);
+    await writeConfig(configDir, await freePort(), [{
+      id: "claude",
+      kind: "claude",
+      label: "Claude Code",
+      command: fakeClaude,
+      enabled: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }]);
+
+    const result = await runCli([
+      "send",
+      "--to",
+      "claude",
+      "--mode",
+      "chat",
+      "--message",
+      "hello without review",
+      "--workspace",
+      projectDir,
+      "--session-id",
+      "chat-session"
+    ], projectDir, configDir, stateDir, {
+      extraEnv: { AGENT_BRIDGE_TEST_PROMPT: promptPath }
+    });
+    assert.equal(result.code, 0, result.stderr);
+    const response = JSON.parse(result.stdout);
+    assert.equal(response.result.verdict, "pass");
+    assert.equal(response.result.summary, "plain chat answer");
+    assert.equal("rawOutput" in response.result, false);
+
+    const prompt = await readFile(promptPath, "utf8");
+    assert.match(prompt, /Answer the direct message normally/);
+    assert.match(prompt, /hello without review/);
+    assert.doesNotMatch(prompt, /Return strict JSON only/);
+  } finally {
+    await runCli(["stop"], projectDir, configDir, stateDir).catch(() => undefined);
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
 test("send reads stdin and file messages and does not de-duplicate direct repeats", async () => {
   const dir = await mkdtemp(join(tmpdir(), "agent-bridge-send-message-"));
   const projectDir = join(dir, "project");
@@ -583,6 +645,14 @@ test("send validates the target and message source", async () => {
     });
     assert.equal(pipedConflict.code, 1);
     assert.match(pipedConflict.stderr, /exactly one direct message source/);
+
+    const invalidMode = await runCli(["send", "--to", "aiden", "--mode", "nope", "--message", "hello"], dir, join(dir, "config"), join(dir, "state"));
+    assert.equal(invalidMode.code, 1);
+    assert.match(invalidMode.stderr, /--mode must be review or chat/);
+
+    const missingModeValue = await runCli(["send", "--to", "aiden", "--message", "hello", "--mode"], dir, join(dir, "config"), join(dir, "state"));
+    assert.equal(missingModeValue.code, 1);
+    assert.match(missingModeValue.stderr, /--mode must be review or chat/);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

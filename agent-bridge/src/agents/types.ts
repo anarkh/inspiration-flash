@@ -1,4 +1,4 @@
-import type { Agent, BridgeMention, BridgeMessageSender, BridgeResult, EndpointKind } from "../core/types.ts";
+import type { Agent, BridgeMention, BridgeMessageSender, BridgeOutputMode, BridgeResult, EndpointKind } from "../core/types.ts";
 import type { AgentCommandRunner, SpawnCapture, TerminalInputMode } from "./shared/process.ts";
 
 export interface DetectedCli {
@@ -38,6 +38,7 @@ export interface AgentRunContext {
   capture?: SpawnCapture;
   runner?: AgentCommandRunner;
   workerContextDir?: string;
+  outputMode?: BridgeOutputMode;
   producerSessionId?: string | null;
   producerSender?: BridgeMessageSender | null;
   producerMentions?: BridgeMention[];

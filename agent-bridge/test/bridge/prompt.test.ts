@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildBridgePrompt, shouldIncludeGitContextForTurn } from "../../src/bridge/prompt.ts";
+import { buildBridgePrompt, buildDirectBridgePrompt, shouldIncludeGitContextForTurn } from "../../src/bridge/prompt.ts";
 import type { GitContext, NormalizedHookPayload } from "../../src/core/types.ts";
 
 test("omits shared workspace diff for non-reviewable chat turns", () => {
@@ -38,6 +38,18 @@ test("omits empty git diff sections from review prompts", () => {
   assert.doesNotMatch(prompt, /Staged diff:/);
   assert.doesNotMatch(prompt, /Untracked files diff:/);
   assert.doesNotMatch(prompt, /Producer context:/);
+});
+
+test("builds direct chat prompts without review JSON instructions", () => {
+  const prompt = buildDirectBridgePrompt(payload({
+    sessionId: "chat-session"
+  }), "claude", "Explain the current route setup.", { mode: "chat" });
+
+  assert.match(prompt, /Answer the direct message normally/);
+  assert.match(prompt, /plain text/);
+  assert.match(prompt, /Direct message:\nExplain the current route setup\./);
+  assert.doesNotMatch(prompt, /Return strict JSON only/);
+  assert.doesNotMatch(prompt, /"verdict"/);
 });
 
 test("classifies code and non-code turns before attaching git context", () => {
