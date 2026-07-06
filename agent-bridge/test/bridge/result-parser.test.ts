@@ -118,6 +118,23 @@ test("treats unstructured chat-mode output as a successful answer", () => {
   assert.equal(result.rawOutput, "Plain answer\nwith detail.");
 });
 
+test("extracts Claude plain result from terminal output in chat mode", () => {
+  const output = [
+    "# Agent Bridge tmux terminal",
+    "$ claude -p --output-format json",
+    JSON.stringify({
+      type: "result",
+      result: "persistent claude chat worker ok"
+    }),
+    "# agent-bridge command exit code 0"
+  ].join("\n");
+
+  const result = parseBridgeOutput(output, "Claude Code", { mode: "chat" });
+  assert.equal(result.verdict, "pass");
+  assert.equal(result.summary, "persistent claude chat worker ok");
+  assert.match(result.rawOutput ?? "", /Agent Bridge tmux terminal/);
+});
+
 test("summarizes provider rate limits", () => {
   const result = parseBridgeOutput("429 Gateway retry policy failed: code: rate_limit_reached; Requests have exceeded the throughput limit", "Aiden");
   assert.equal(result.verdict, "uncertain");

@@ -7,11 +7,11 @@ const EXTRA_CANDIDATES = [
   "/usr/local/bin/claude",
   "/usr/bin/claude"
 ];
-
 export const claudeAdapter = createCliAdapter({
   kind: "claude",
   label: "Claude Code",
   defaultExecutable: "claude",
+  terminalMode: "worker",
   extraCandidates: EXTRA_CANDIDATES,
   run: runClaudeAgent
 });

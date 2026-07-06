@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { claudeAdapter } from "../../../src/agents/clis/claude-code/adapter.ts";
 import type { Agent } from "../../../src/core/types.ts";
+import type { AgentCommandRunner } from "../../../src/agents/shared/process.ts";
 
 test("runs fake Claude agent with stdin", async () => {
   const dir = await mkdtemp(join(tmpdir(), "agent-bridge-claude-agent-"));
@@ -32,4 +33,51 @@ console.log(JSON.stringify({ result: JSON.stringify({ verdict: "fail", summary: 
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
+});
+
+test("runs Claude through the persistent worker command runner when available", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "agent-bridge-claude-tty-"));
+  try {
+    const agent: Agent = {
+      id: "claude",
+      kind: "claude",
+      label: "Claude Code",
+      command: "claude",
+      enabled: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    const runner: AgentCommandRunner = {
+      async run(command, args, input) {
+        assert.equal(command, "claude");
+        assert.deepEqual(args, [
+          "-p",
+          "--output-format",
+          "json",
+          "--permission-mode",
+          "plan",
+          "--max-turns",
+          "3"
+        ]);
+        assert.match(input, /bridge me/);
+        return {
+          stdout: JSON.stringify({ type: "result", result: JSON.stringify({ verdict: "pass", summary: "persistent command ok", findings: [], suggestedPrompt: "" }) }),
+          stderr: ""
+        };
+      },
+      async runTty() {
+        throw new Error("interactive Claude TUI should not be used for default worker history");
+      }
+    };
+
+    const result = await claudeAdapter.run(agent, dir, "bridge me", { runner, producerSessionId: "s1" });
+    assert.equal(result.verdict, "pass", JSON.stringify(result));
+    assert.equal(result.summary, "persistent command ok");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("exposes Agent Bridge Claude adapter hooks", () => {
+  assert.equal(claudeAdapter.terminalMode, "worker");
 });

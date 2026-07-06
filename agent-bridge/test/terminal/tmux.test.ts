@@ -354,6 +354,86 @@ test("tmux worker reuses the same interactive CLI session for the same worker id
   }
 });
 
+test("tmux command worker keeps a cumulative worker history log", {
+  skip: tmuxSkipReason ?? undefined
+}, async () => {
+  const dir = await mkdtemp(join(tmpdir(), "agent-bridge-tmux-command-worker-"));
+  const stateDir = join(dir, "state");
+  let tmuxSession: string | undefined;
+  try {
+    await mkdir(stateDir);
+    process.env.AGENT_BRIDGE_STATE_DIR = stateDir;
+    const logsUrl = `${pathToFileURL(join(repoRoot, "src", "terminal", "logs.ts")).href}?state=${Date.now()}`;
+    const tmuxUrl = `${pathToFileURL(join(repoRoot, "src", "terminal", "tmux.ts")).href}?state=${Date.now()}`;
+    const { createTerminalSession, readTerminalLog, workerTerminalLogPath } = await import(logsUrl);
+    const { attachTmuxRunner } = await import(tmuxUrl);
+    const agent: Agent = {
+      id: "claude",
+      kind: "claude",
+      label: "Claude Code",
+      command: process.execPath,
+      enabled: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    const fakeCommandConsumer = join(dir, "fake-command-worker.mjs");
+    await writeFile(fakeCommandConsumer, [
+      "import { readFileSync } from 'node:fs';",
+      "const input = readFileSync(0, 'utf8').trim();",
+      "console.log(JSON.stringify({ verdict: 'pass', summary: input, findings: [], suggestedPrompt: '' }));"
+    ].join("\n"), "utf8");
+
+    const first = createTerminalSession("cmd-run-1", agent, dir, undefined, {
+      workerId: "command-worker-1",
+      workerKey: "key"
+    });
+    attachTmuxRunner(first, { runId: "cmd-run-1", agent, cwd: dir });
+    tmuxSession = first.tmuxSession;
+    const firstResult = await first.runner?.run(process.execPath, [fakeCommandConsumer], "first command", {
+      cwd: dir,
+      timeout: 15_000,
+      env: {
+        ...process.env,
+        AGENT_BRIDGE_BYPASS: "1"
+      }
+    });
+    assert.match(firstResult?.stdout ?? "", /first command/);
+
+    const second = createTerminalSession("cmd-run-2", agent, dir, undefined, {
+      workerId: "command-worker-1",
+      workerKey: "key"
+    });
+    attachTmuxRunner(second, { runId: "cmd-run-2", agent, cwd: dir });
+    assert.equal(second.tmuxSession, tmuxSession);
+    const secondResult = await second.runner?.run(process.execPath, [fakeCommandConsumer], "second command", {
+      cwd: dir,
+      timeout: 15_000,
+      env: {
+        ...process.env,
+        AGENT_BRIDGE_BYPASS: "1"
+      }
+    });
+    assert.match(secondResult?.stdout ?? "", /second command/);
+
+    const firstRunLog = await readTerminalLog("cmd-run-1", "claude");
+    const secondRunLog = await readTerminalLog("cmd-run-2", "claude");
+    const workerLog = await readFile(workerTerminalLogPath("command-worker-1", "claude"), "utf8");
+    assert.match(firstRunLog, /first command/);
+    assert.doesNotMatch(firstRunLog, /second command/);
+    assert.match(secondRunLog, /second command/);
+    assert.match(workerLog, /cmd-run-1/);
+    assert.match(workerLog, /cmd-run-2/);
+    assert.match(workerLog, /first command/);
+    assert.match(workerLog, /second command/);
+  } finally {
+    delete process.env.AGENT_BRIDGE_STATE_DIR;
+    if (tmuxSession) {
+      spawnSync("tmux", ["kill-session", "-t", tmuxSession], { stdio: "ignore" });
+    }
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
 test("tmux runner pastes multiline interactive input through tmux buffer", async () => {
   const dir = await mkdtemp(join(tmpdir(), "agent-bridge-fake-tmux-"));
   const stateDir = join(dir, "state");

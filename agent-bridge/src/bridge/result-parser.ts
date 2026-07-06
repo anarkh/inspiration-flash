@@ -16,7 +16,7 @@ export function parseBridgeOutput(output: string, agent: string, options: Bridge
     return knownError;
   }
   if (options.mode === "chat") {
-    return chatOutputResult(text, agent);
+    return chatOutputResult(extractEmbeddedChatText(text) ?? text, agent, text);
   }
   return {
     verdict: "uncertain",
@@ -32,7 +32,7 @@ export function parseBridgeOutput(output: string, agent: string, options: Bridge
   };
 }
 
-function chatOutputResult(text: string, agent: string): BridgeResult {
+function chatOutputResult(text: string, agent: string, rawOutput = text): BridgeResult {
   if (!text) {
     return {
       verdict: "uncertain",
@@ -43,7 +43,7 @@ function chatOutputResult(text: string, agent: string): BridgeResult {
       }],
       suggestedPrompt: "Retry the direct chat message or inspect the consumer CLI logs.",
       agent,
-      rawOutput: text
+      rawOutput
     };
   }
   return {
@@ -52,7 +52,7 @@ function chatOutputResult(text: string, agent: string): BridgeResult {
     findings: [],
     suggestedPrompt: "",
     agent,
-    rawOutput: text
+    rawOutput
   };
 }
 
@@ -241,6 +241,26 @@ function bridgeResultObject(value: unknown): Record<string, unknown> | null {
   }
   const embedded = embeddedText(value);
   return embedded ? tryParseJsonObject(embedded) : null;
+}
+
+function extractEmbeddedChatText(text: string): string | null {
+  const candidates = [
+    text,
+    fencedJson(text)
+  ].filter((item): item is string => Boolean(item));
+  for (const candidate of candidates) {
+    const embedded = embeddedText(tryJson(candidate) ?? tryJson(repairTerminalWrappedJson(candidate)));
+    if (embedded?.trim()) {
+      return embedded.trim();
+    }
+  }
+  for (const candidate of jsonObjectCandidatesFromEnd(text)) {
+    const embedded = embeddedText(tryJson(candidate) ?? tryJson(repairTerminalWrappedJson(candidate)));
+    if (embedded?.trim()) {
+      return embedded.trim();
+    }
+  }
+  return null;
 }
 
 function embeddedText(value: unknown): string | null {

@@ -156,7 +156,8 @@ async function runInTmux(
     attachOptions,
     runOptions.cwd,
     commandLine,
-    shellCommandWithExitMarker(command, args, runOptions.env, stdinPath, outputPath, exitPath, donePath, shouldUseUserShellEnvironment(attachOptions.agent, command))
+    shellCommandWithExitMarker(command, args, runOptions.env, stdinPath, outputPath, exitPath, donePath, shouldUseUserShellEnvironment(attachOptions.agent, command)),
+    session.workerLogPath
   );
   attachOptions.onStart?.({
     pid: panePid,
@@ -174,6 +175,9 @@ async function runInTmux(
       ? `\r\n\x1b[90m# process interrupted after ${error.kind} output\x1b[0m\r\n`
       : `\r\n\x1b[90m# process timed out after ${runOptions.timeout} ms\x1b[0m\r\n`;
     await appendTerminalLog(session.logPath, footer);
+    if (session.workerLogPath) {
+      await appendTerminalLog(session.workerLogPath, footer);
+    }
     publishTerminalEvent(session.terminalId, { type: "close", data: footer, code: null });
     const message = error instanceof Error ? error.message : String(error);
     const timeout = new Error(`${message}\n\nTerminal tail:\n${output.slice(-2000)}`) as Error & {
@@ -192,6 +196,9 @@ async function runInTmux(
   const exitCode = Number.isInteger(code) ? code : 1;
   const footer = `\r\n\x1b[90m# process exited with code ${exitCode}\x1b[0m\r\n`;
   await appendTerminalLog(session.logPath, footer);
+  if (session.workerLogPath) {
+    await appendTerminalLog(session.workerLogPath, footer);
+  }
   publishTerminalEvent(session.terminalId, { type: "close", data: footer, code: exitCode });
   const result = {
     stdout: output,
@@ -324,7 +331,8 @@ async function startTmuxCommand(
   attachOptions: AttachTmuxOptions,
   cwd: string,
   commandLine: string,
-  shellCommand: string
+  shellCommand: string,
+  mirrorLogPath?: string
 ): Promise<number> {
   if (await hasSession(tmux, sessionName)) {
     await execTmux(tmux, ["kill-session", "-t", sessionName]).catch(() => undefined);
@@ -355,7 +363,13 @@ async function startTmuxCommand(
     ""
   ].join("\r\n");
   await writeTerminalLog(session.logPath, header);
-  await execTmux(tmux, ["pipe-pane", "-o", "-t", sessionName, `cat >> ${shellQuote([session.logPath])}`]);
+  if (mirrorLogPath) {
+    await appendTerminalLog(mirrorLogPath, `${header}\r\n`);
+  }
+  const pipeCommand = mirrorLogPath
+    ? `tee -a ${shellQuote([mirrorLogPath])} >> ${shellQuote([session.logPath])}`
+    : `cat >> ${shellQuote([session.logPath])}`;
+  await execTmux(tmux, ["pipe-pane", "-o", "-t", sessionName, pipeCommand]);
   ensureTerminalLogTail(session.terminalId, session.logPath, true);
   publishTerminalEvent(session.terminalId, { type: "start", data: header, pid: panePid });
   return panePid;
