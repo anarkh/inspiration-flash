@@ -109,6 +109,15 @@ test("marks unstructured output uncertain", () => {
   assert.equal(result.findings[0].title, "Unstructured agent output");
 });
 
+test("treats unstructured chat-mode output as a successful answer", () => {
+  const result = parseBridgeOutput("Plain answer\nwith detail.", "Claude Code", { mode: "chat" });
+  assert.equal(result.verdict, "pass");
+  assert.equal(result.summary, "Plain answer\nwith detail.");
+  assert.deepEqual(result.findings, []);
+  assert.equal(result.suggestedPrompt, "");
+  assert.equal(result.rawOutput, "Plain answer\nwith detail.");
+});
+
 test("summarizes provider rate limits", () => {
   const result = parseBridgeOutput("429 Gateway retry policy failed: code: rate_limit_reached; Requests have exceeded the throughput limit", "Aiden");
   assert.equal(result.verdict, "uncertain");

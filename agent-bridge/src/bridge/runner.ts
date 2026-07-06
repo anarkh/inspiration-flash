@@ -1,6 +1,6 @@
 import { loadConfig } from "../config/store.ts";
 import { bridgeGateTimeoutMs, BYPASS_ENV } from "../core/constants.ts";
-import type { Agent, AppConfig, BridgeRunSource, BridgeMessageSender, BridgeMention, EndpointKind, RawDirectEnvelope, RawHookEnvelope, BridgeResponse, BridgeResult, NormalizedHookPayload } from "../core/types.ts";
+import type { Agent, AppConfig, BridgeOutputMode, BridgeRunSource, BridgeMessageSender, BridgeMention, EndpointKind, RawDirectEnvelope, RawHookEnvelope, BridgeResponse, BridgeResult, NormalizedHookPayload } from "../core/types.ts";
 import { normalizeHookPayload, bridgeHash } from "../hooks/payload.ts";
 import { getAgentAdapter, runAgent } from "../agents/registry.ts";
 import { commandErrorResult } from "../agents/shared/errors.ts";
@@ -26,6 +26,7 @@ interface GateOutcome {
 interface RunRecordOptions {
   source: BridgeRunSource;
   directMessagePreview?: string;
+  outputMode?: BridgeOutputMode;
 }
 
 type AfterGateCallback = (response: BridgeResponse) => Promise<void>;
@@ -82,8 +83,11 @@ export async function runDirectBridge(envelope: RawDirectEnvelope): Promise<Brid
   const hash = bridgeHash(direct.payload);
   return runRecordedConsumers(direct.payload, hash, [agent], config, {
     source: "direct",
-    directMessagePreview: previewDirectMessage(direct.message)
-  }, async () => buildDirectBridgePrompt(direct.payload, direct.consumer, direct.message));
+    directMessagePreview: previewDirectMessage(direct.message),
+    outputMode: direct.mode
+  }, async () => buildDirectBridgePrompt(direct.payload, direct.consumer, direct.message, {
+    mode: direct.mode
+  }));
 }
 
 async function runRecordedConsumers(
@@ -98,7 +102,7 @@ async function runRecordedConsumers(
   const runId = await recordBridgeRunStarted(payload, hash, agents, options).catch(() => null);
   try {
     const prompt = await promptFactory();
-    const tasks = agents.map((agent) => startConsumerTask(runId, agent, payload, prompt));
+    const tasks = agents.map((agent) => startConsumerTask(runId, agent, payload, prompt, options.outputMode));
     const outcome = await waitForGate(tasks, config);
     const response = outcome.response;
     if (runId) {
@@ -123,7 +127,7 @@ async function runRecordedConsumers(
   }
 }
 
-function startConsumerTask(runId: string | null, agent: Agent, payload: NormalizedHookPayload, prompt: string): ConsumerTask {
+function startConsumerTask(runId: string | null, agent: Agent, payload: NormalizedHookPayload, prompt: string, outputMode?: BridgeOutputMode): ConsumerTask {
   return {
     agent,
     promise: (async () => {
@@ -174,6 +178,7 @@ function startConsumerTask(runId: string | null, agent: Agent, payload: Normaliz
           capture: terminal?.capture,
           runner: terminal?.runner,
           workerContextDir: terminal?.workerContextDir,
+          outputMode,
           producerSessionId: payload.sessionId,
           producerSender: payload.sender,
           producerMentions: payload.mentions
@@ -268,7 +273,7 @@ async function resolveDirectAgent(config: AppConfig, consumer: EndpointKind): Pr
   };
 }
 
-function normalizeDirectEnvelope(envelope: RawDirectEnvelope): { consumer: EndpointKind; message: string; payload: NormalizedHookPayload } {
+function normalizeDirectEnvelope(envelope: RawDirectEnvelope): { consumer: EndpointKind; message: string; mode: BridgeOutputMode; payload: NormalizedHookPayload } {
   const object: Record<string, unknown> = isRecord(envelope) ? envelope : {};
   const consumer = endpointValue(object.consumer);
   if (!consumer) {
@@ -277,6 +282,10 @@ function normalizeDirectEnvelope(envelope: RawDirectEnvelope): { consumer: Endpo
   const message = typeof object.message === "string" ? object.message : "";
   if (!message.trim()) {
     throw new Error("direct send message must not be empty");
+  }
+  const mode = object.mode === undefined ? "review" : outputModeValue(object.mode);
+  if (!mode) {
+    throw new Error("direct send mode must be review or chat");
   }
   const producer = endpointValue(object.producer) ?? "codex";
   const cwd = stringValue(object.cwd) ?? process.cwd();
@@ -287,6 +296,7 @@ function normalizeDirectEnvelope(envelope: RawDirectEnvelope): { consumer: Endpo
   return {
     consumer,
     message,
+    mode,
     payload: {
       producer,
       event: "stop",
@@ -304,6 +314,10 @@ function normalizeDirectEnvelope(envelope: RawDirectEnvelope): { consumer: Endpo
       mentions
     }
   };
+}
+
+function outputModeValue(value: unknown): BridgeOutputMode | null {
+  return value === "review" || value === "chat" ? value : null;
 }
 
 function endpointValue(value: unknown): EndpointKind | null {

@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 import { stdin, stdout, stderr } from "node:process";
 import { loadConfig, removeAllBridgeConfig, removeRoute, upsertAgent, upsertRoute } from "../config/store.ts";
 import { bridgeGateTimeoutMs, BYPASS_ENV, PRODUCER_LABELS } from "../core/constants.ts";
-import type { Agent, BridgeMention, BridgeMessageSender, BridgeResponse, BridgeRoute, ConfigScope, EndpointKind, HookEvent, RawDirectEnvelope, RawHookEnvelope } from "../core/types.ts";
+import type { Agent, BridgeMention, BridgeMessageSender, BridgeOutputMode, BridgeResponse, BridgeRoute, ConfigScope, EndpointKind, HookEvent, RawDirectEnvelope, RawHookEnvelope } from "../core/types.ts";
 import { clearHooks, configureHooks } from "../hooks/configure.ts";
 import { mapBridgeToProducerResponse } from "../hooks/producer-response.ts";
 import { detectAllAgentClis } from "../agents/registry.ts";
@@ -378,6 +378,7 @@ async function runCommand(args: string[]): Promise<void> {
 async function sendCommand(args: string[]): Promise<void> {
   const consumer = parseEndpointFlag(args, "--to");
   const producer = parseOptionalEndpointFlag(args, "--producer") ?? "codex";
+  const mode = parseDirectMode(args);
   const message = await readDirectMessage(args);
   const includeRawOutput = args.includes("--raw-output") || args.includes("--full");
   const envelope: RawDirectEnvelope = {
@@ -387,6 +388,7 @@ async function sendCommand(args: string[]): Promise<void> {
     sessionId: valueAfter(args, "--session-id"),
     producer,
     turnId: valueAfter(args, "--turn-id"),
+    mode,
     sender: senderFromArgs(args),
     mentions: mentionsFromArgs(args)
   };
@@ -483,6 +485,18 @@ function parseEventFlag(args: string[], flag: string): HookEvent {
     return value;
   }
   throw new Error(`${flag} must be stop or post-tool-use`);
+}
+
+function parseDirectMode(args: string[]): BridgeOutputMode {
+  const index = args.indexOf("--mode");
+  if (index === -1) {
+    return "review";
+  }
+  const value = args[index + 1];
+  if (value === "review" || value === "chat") {
+    return value;
+  }
+  throw new Error("--mode must be review or chat");
 }
 
 function workspaceValue(args: string[]): string {
@@ -676,6 +690,7 @@ Commands:
   hook --producer codex|claude|aiden --event stop
   run --file <payload.json>
   send --to codex|claude|aiden --message <text> [--workspace <path>] [--session-id <id>] [--raw-output]
+  send --to codex|claude|aiden --message <text> --mode chat [--workspace <path>]
 `);
 }
 
@@ -753,11 +768,11 @@ Internal producer hook entrypoint. Reads hook JSON from stdin.
 Run one raw hook payload file through Agent Bridge and print JSON.
 `,
   send: `Usage:
-  agent-bridge send --to codex|claude|aiden --message <text> [--workspace <path>] [--session-id <id>] [--raw-output]
-  agent-bridge send --to codex|claude|aiden --file <message.txt> [--workspace <path>]
-  printf '%s' <message> | agent-bridge send --to codex|claude|aiden [--workspace <path>]
+  agent-bridge send --to codex|claude|aiden --message <text> [--mode review|chat] [--workspace <path>] [--session-id <id>] [--raw-output]
+  agent-bridge send --to codex|claude|aiden --file <message.txt> [--mode review|chat] [--workspace <path>]
+  printf '%s' <message> | agent-bridge send --to codex|claude|aiden [--mode review|chat] [--workspace <path>]
 
-Send a direct validation message to one consumer CLI without installing hooks.
+Send a direct validation message or chat message to one consumer CLI without installing hooks.
 `
 };
 

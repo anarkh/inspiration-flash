@@ -1,6 +1,6 @@
 import { parseBridgeOutput } from "../../bridge/result-parser.ts";
 import { AGENT_TIMEOUT_MS, BYPASS_ENV } from "../../core/constants.ts";
-import type { Agent, BridgeResult, EndpointKind } from "../../core/types.ts";
+import type { Agent, BridgeOutputMode, BridgeResult, EndpointKind } from "../../core/types.ts";
 import type { AgentAdapter, AgentBuildArgsOptions, AgentResumeCommandOptions, AgentRunContext, DetectedCli } from "../types.ts";
 import { findExecutable } from "./detect.ts";
 import { commandErrorResult } from "./errors.ts";
@@ -72,7 +72,7 @@ export async function runCliCommand(
       capture: context?.capture
     });
     const output = options.selectOutput ? await options.selectOutput(result) : result.stdout;
-    return parseCliOutput(agent, output);
+    return parseCliOutput(agent, output, context?.outputMode);
   } catch (error) {
     return commandErrorResult(agent, error);
   }
@@ -95,14 +95,14 @@ export async function runTtyCliCommand(
       env: options.env ?? bridgeBypassEnv(),
       capture: context.capture
     });
-    return parseCliOutput(agent, result.stdout);
+    return parseCliOutput(agent, result.stdout, context.outputMode);
   } catch (error) {
     return commandErrorResult(agent, error);
   }
 }
 
-export function parseCliOutput(agent: Agent, output: string): BridgeResult {
-  return parseBridgeOutput(output, agent.label);
+export function parseCliOutput(agent: Agent, output: string, mode?: BridgeOutputMode): BridgeResult {
+  return parseBridgeOutput(output, agent.label, { mode });
 }
 
 export function bridgeBypassEnv(env: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
