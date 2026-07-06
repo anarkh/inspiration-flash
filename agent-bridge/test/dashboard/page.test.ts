@@ -23,6 +23,10 @@ test("dashboard page includes runs API and xterm shell", () => {
   assert.match(html, /fetch\("\/api\/runs"\)/);
   assert.match(html, /buildSessions/);
   assert.match(html, /filteredSessions/);
+  assert.match(html, /directModeLabel/);
+  assert.match(html, /outputMode/);
+  assert.match(html, /unknown mode/);
+  assert.match(html, /filter\(Boolean\)\.join\(" "\)\.toLowerCase\(\)/);
   assert.match(html, /attentionCount/);
   assert.match(html, /WebSocket/);
   assert.match(html, /\/ws/);

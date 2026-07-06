@@ -706,8 +706,9 @@ export function dashboardHtml(): string {
       row.querySelector(".path").textContent = session.run.cwd;
       row.querySelector(".preview").textContent = directPreview(session.run) || runSubject(session.run, session.consumer);
       const meta = row.querySelectorAll(".row-meta span");
+      const backend = session.consumer.terminalBackend === "tmux" ? "tmux" : "capture";
       meta[0].textContent = elapsed(session.consumer.startedAt || session.run.startedAt, session.consumer.completedAt);
-      meta[1].textContent = session.consumer.terminalBackend === "tmux" ? "tmux" : "capture";
+      meta[1].textContent = [directModeLabel(session.run), backend].filter(Boolean).join(" / ");
       meta[2].textContent = (session.consumer.commandLine || session.consumer.command || workerSuffix(session.consumer) || runSubject(session.run, session.consumer));
       row.onclick = () => openTerminal(session.run, session.consumer, true);
       return row;
@@ -761,6 +762,8 @@ export function dashboardHtml(): string {
         session.run.status,
         session.run.cwd,
         session.run.directMessagePreview,
+        session.run.outputMode,
+        directModeLabel(session.run),
         session.consumer.kind,
         session.consumer.label,
         session.consumer.status,
@@ -819,6 +822,11 @@ export function dashboardHtml(): string {
 
     function directPreview(run) {
       return run.source === "direct" && run.directMessagePreview ? run.directMessagePreview : "";
+    }
+
+    function directModeLabel(run) {
+      if (run.source !== "direct") return "";
+      return run.outputMode || "unknown mode";
     }
 
     function workerSuffix(consumer) {
