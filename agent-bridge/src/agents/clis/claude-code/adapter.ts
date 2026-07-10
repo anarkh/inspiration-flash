@@ -1,4 +1,5 @@
 import type { Agent, BridgeResult } from "../../../core/types.ts";
+import { claudeMaxTurns } from "../../../core/constants.ts";
 import type { AgentRunContext } from "../../types.ts";
 import { createCliAdapter, runCliCommand } from "../../shared/adapter.ts";
 
@@ -24,6 +25,6 @@ async function runClaudeAgent(agent: Agent, cwd: string, prompt: string, context
     "--permission-mode",
     "plan",
     "--max-turns",
-    "3"
+    String(claudeMaxTurns())
   ], prompt, context);
 }

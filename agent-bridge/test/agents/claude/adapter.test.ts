@@ -81,3 +81,37 @@ test("runs Claude through the persistent worker command runner when available", 
 test("exposes Agent Bridge Claude adapter hooks", () => {
   assert.equal(claudeAdapter.terminalMode, "worker");
 });
+
+test("uses the configured Claude maximum turn count", async () => {
+  const previous = process.env.AGENT_BRIDGE_CLAUDE_MAX_TURNS;
+  process.env.AGENT_BRIDGE_CLAUDE_MAX_TURNS = "7";
+  try {
+    const agent: Agent = {
+      id: "claude",
+      kind: "claude",
+      label: "Claude Code",
+      command: "claude",
+      enabled: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    const runner: AgentCommandRunner = {
+      async run(_command, args) {
+        assert.equal(args.at(-1), "7");
+        return {
+          stdout: JSON.stringify({ type: "result", result: JSON.stringify({ verdict: "pass", summary: "configured", findings: [], suggestedPrompt: "" }) }),
+          stderr: ""
+        };
+      }
+    };
+
+    const result = await claudeAdapter.run(agent, process.cwd(), "configured turns", { runner });
+    assert.equal(result.summary, "configured");
+  } finally {
+    if (previous === undefined) {
+      delete process.env.AGENT_BRIDGE_CLAUDE_MAX_TURNS;
+    } else {
+      process.env.AGENT_BRIDGE_CLAUDE_MAX_TURNS = previous;
+    }
+  }
+});

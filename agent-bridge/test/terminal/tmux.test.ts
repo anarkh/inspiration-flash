@@ -7,6 +7,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { setTimeout as delay } from "node:timers/promises";
 import type { Agent } from "../../src/core/types.ts";
+import { tailTerminalLog } from "../../src/terminal/logs.ts";
 
 const repoRoot = dirname(dirname(dirname(fileURLToPath(import.meta.url))));
 const tmuxSkipReason = tmuxUnavailableReason();
@@ -80,6 +81,20 @@ test("tmux runner executes a consumer command in an interactive terminal session
       }
     });
     assert.match(ttySensitiveResult.stdout, /file-backed stdin/);
+
+    const chatPhraseResult = await session.runner.run(process.execPath, [
+      "-e",
+      "console.log('Unauthorized request is only an example')"
+    ], "", {
+      cwd: dir,
+      timeout: 15_000,
+      env: {
+        ...process.env,
+        AGENT_BRIDGE_BYPASS: "1"
+      },
+      allowKnownErrorText: true
+    });
+    assert.match(chatPhraseResult.stdout, /Unauthorized request is only an example/);
 
     const fakeShell = join(dir, "fake-user-shell");
     await writeFile(fakeShell, [
@@ -360,6 +375,7 @@ test("tmux command worker keeps a cumulative worker history log", {
   const dir = await mkdtemp(join(tmpdir(), "agent-bridge-tmux-command-worker-"));
   const stateDir = join(dir, "state");
   let tmuxSession: string | undefined;
+  let releaseTail: (() => void) | undefined;
   try {
     await mkdir(stateDir);
     process.env.AGENT_BRIDGE_STATE_DIR = stateDir;
@@ -389,6 +405,14 @@ test("tmux command worker keeps a cumulative worker history log", {
     });
     attachTmuxRunner(first, { runId: "cmd-run-1", agent, cwd: dir });
     tmuxSession = first.tmuxSession;
+    const streamedOutput: string[] = [];
+    releaseTail = tailTerminalLog(
+      workerTerminalLogPath("command-worker-1", "claude"),
+      0,
+      (data) => {
+        streamedOutput.push(data);
+      }
+    );
     const firstResult = await first.runner?.run(process.execPath, [fakeCommandConsumer], "first command", {
       cwd: dir,
       timeout: 15_000,
@@ -415,6 +439,26 @@ test("tmux command worker keeps a cumulative worker history log", {
     });
     assert.match(secondResult?.stdout ?? "", /second command/);
 
+    const fastOutputs = Array.from({ length: 10 }, (_, index) => `fast command ${index}`);
+    for (const [index, input] of fastOutputs.entries()) {
+      const runId = `cmd-fast-${index}`;
+      const fast = createTerminalSession(runId, agent, dir, undefined, {
+        workerId: "command-worker-1",
+        workerKey: "key"
+      });
+      attachTmuxRunner(fast, { runId, agent, cwd: dir });
+      const result = await fast.runner?.run("/bin/cat", [], input, {
+        cwd: dir,
+        timeout: 15_000,
+        env: {
+          ...process.env,
+          AGENT_BRIDGE_BYPASS: "1"
+        }
+      });
+      assert.match(result?.stdout ?? "", new RegExp(input));
+    }
+    await delay(350);
+
     const firstRunLog = await readTerminalLog("cmd-run-1", "claude");
     const secondRunLog = await readTerminalLog("cmd-run-2", "claude");
     const workerLog = await readFile(workerTerminalLogPath("command-worker-1", "claude"), "utf8");
@@ -425,7 +469,13 @@ test("tmux command worker keeps a cumulative worker history log", {
     assert.match(workerLog, /cmd-run-2/);
     assert.match(workerLog, /first command/);
     assert.match(workerLog, /second command/);
+    for (const output of fastOutputs) {
+      assert.match(workerLog, new RegExp(output));
+    }
+    assert.match(streamedOutput.join(""), /first command/);
+    assert.match(streamedOutput.join(""), /second command/);
   } finally {
+    releaseTail?.();
     delete process.env.AGENT_BRIDGE_STATE_DIR;
     if (tmuxSession) {
       spawnSync("tmux", ["kill-session", "-t", tmuxSession], { stdio: "ignore" });
