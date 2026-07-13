@@ -1,0 +1,4 @@
+interface:
+  display_name: "创建飞书文档"
+  short_description: "使用 DeepSeek 起草、核对并创建真实可分享的飞书文档"
+  default_prompt: "使用 $create-feishu-doc 根据这些背景和方案创建一份飞书文档。"
