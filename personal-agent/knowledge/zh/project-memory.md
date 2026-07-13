@@ -5,10 +5,10 @@
 CLI 现在支持：
 
 ```text
-personal-agent memory
-personal-agent memory append "<note>"
-personal-agent memory append --section <section> "<note>"
-personal-agent memory apply-suggestions [--yes] [run-id]
+a-agent memory
+a-agent memory append "<note>"
+a-agent memory append --section <section> "<note>"
+a-agent memory apply-suggestions [--yes] [run-id]
 ```
 
 `memory` 会打印当前 workspace 的 `.personal-agent/memory.md`。`memory append` 会把 Owner 提供的短 note 追加到这个文件。`--section` 会把 note 插入到指定 memory 分区下。`apply-suggestions` 会把某次 Task Run 的候选 notes 应用到 Project Memory。
@@ -71,7 +71,8 @@ open-threads
 - Memory Suggestions 真正进入长期 memory 前会经过质量门。
 - Memory Suggestions 真正进入长期 memory 前会跳过精确重复和简单近似重复 notes。
 - Memory Suggestions 真正进入长期 memory 前会跳过简单同主题冲突 notes。
-- Memory Suggestions 真正进入长期 memory 前会跳过“直接实现 vs 只给方案”的冲突 notes。
+- Memory Suggestions 真正进入长期 memory 前会跳过中英文“直接实现 vs 只给方案/先确认”的冲突 notes。
+- Memory Suggestions 真正进入长期 memory 前会跳过简单避免型 project convention 冲突 notes。
 - Memory Suggestions 真正进入长期 memory 前会跳过泛泛不可执行的 notes。
 
 ## 劣势
@@ -80,25 +81,25 @@ open-threads
 - 手工 append 还没有去重或冲突解决。
 - 相关 memory 筛选是基于字面词重合的，可能漏掉用词不同但语义相关的 notes。
 - 近似重复检测是确定性的别名规则，不是完整语义搜索。
-- 冲突检测是确定性的词组和简单否定/禁止规则，不是广义推理。
+- 冲突检测是确定性的词组和简单否定/禁止/避免规则，不是广义推理。
 - 如果当前任务没有命中任何 memory note，runner 仍然会 fallback 注入完整 memory 文件。
 
 ## 评测
 
 当前测试验证：
 
-- `personal-agent memory` 会初始化并打印 Project Memory。
-- `personal-agent memory append "<note>"` 会持久化 note。
-- `personal-agent memory append --section <section> "<note>"` 会把 note 插入指定分区。
-- `personal-agent memory apply-suggestions --yes [run-id]` 会把候选 notes 应用到对应分区。
+- `a-agent memory` 会初始化并打印 Project Memory。
+- `a-agent memory append "<note>"` 会持久化 note。
+- `a-agent memory append --section <section> "<note>"` 会把 note 插入指定分区。
+- `a-agent memory apply-suggestions --yes [run-id]` 会把候选 notes 应用到对应分区。
 - state helpers 可以直接读取和追加 memory。
 - state helpers 可以把 memory note 插入命名分区。
 - Task Run 会在至少有一条 memory note 命中当前任务时，过滤掉不相关的 Project Memory notes。
 - 应用 Memory Suggestions 时会跳过 Project Memory 中已存在的精确重复和简单近似重复 notes。
 - 应用 Memory Suggestions 时会跳过简单同主题冲突 notes。
-- 应用 Memory Suggestions 时会跳过“直接实现 vs 只给方案”的偏好冲突。
+- 应用 Memory Suggestions 时会跳过中英文“直接实现 vs 只给方案/先确认”的偏好冲突。
 - 应用 Memory Suggestions 时会跳过简单同主题否定 stable facts。
-- 应用 Memory Suggestions 时会跳过简单同主题禁止 project conventions。
+- 应用 Memory Suggestions 时会跳过简单同主题禁止或避免型 project conventions。
 - 应用 Memory Suggestions 时会跳过简单中文冲突 preferences。
 - 应用 Memory Suggestions 时会跳过低质量、泛泛不可执行、临时性和疑似 secret 的 notes。
 

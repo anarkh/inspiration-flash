@@ -1,12 +1,13 @@
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
-import { resumeLatestTask, runTask } from "../../src/agent/runner.ts";
+import { resumeLatestTask, runChatTask, runTask } from "../../src/agent/runner.ts";
 import type { ModelProvider } from "../../src/model/provider.ts";
-import { appendProjectMemory, appendRunEvent, createTaskRun, writeCheckpoint } from "../../src/state/store.ts";
+import { appendProjectMemory, appendRunEvent, createTaskRun, exportTaskRun, writeCheckpoint } from "../../src/state/store.ts";
+import type { ConfirmationRequired } from "../../src/tools/local-tools.ts";
 
 test("runTask executes provider steps and writes report and evaluation", async () => {
   const workspace = await mkdtemp(join(tmpdir(), "personal-agent-runner-"));
@@ -41,6 +42,11 @@ test("runTask executes provider steps and writes report and evaluation", async (
     assert.match(report, /Task accepted and planned/);
     assert.equal(evaluation.verdict, "pass");
     assert.equal(evaluation.successCheck, "pass");
+    assert.equal(evaluation.gateSafety, "pass");
+    assert.equal(evaluation.traceQuality, "pass");
+    assert.equal(evaluation.reportQuality, "pass");
+    assert.deepEqual(evaluation.learningSignals, []);
+    assert.deepEqual(evaluation.followUps, []);
     assert.match(events, /"type":"plan"/);
     assert.match(events, /"type":"finish"/);
     assert.equal(metadata.status, "completed");
@@ -82,6 +88,238 @@ test("runTask emits a console-friendly log for each model step", async () => {
       "[agent] turn 2 message - I found the workspace files.",
       "[agent] turn 3 finish - Workspace summarized. More details are in the report."
     ]);
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test("runTask can attach an optional model-assisted review without overriding deterministic verdict", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-runner-model-review-"));
+  let callCount = 0;
+  const provider: ModelProvider = {
+    name: "fake-review",
+    async nextStep(input) {
+      callCount += 1;
+      if (callCount === 1) {
+        return { type: "plan", summary: "Plan the task", steps: ["Finish with a report"] };
+      }
+      if (callCount === 2) {
+        return { type: "finish", report: "Task completed with deterministic evidence." };
+      }
+
+      assert.match(input.goal, /Review completed Task Run/);
+      assert.match(input.successCheck, /Return model review JSON/);
+      assert.match(JSON.stringify(input.events), /Task completed with deterministic evidence/);
+      return {
+        type: "finish",
+        report: JSON.stringify({
+          verdict: "fail",
+          reason: "The report is too brief for a semantic reviewer."
+        })
+      };
+    }
+  };
+
+  try {
+    const result = await runTask({
+      workspace,
+      goal: "summarize docs",
+      mode: "advisory",
+      successCheck: "Task produces a report",
+      provider,
+      modelReview: true
+    });
+
+    const evaluation = JSON.parse(await readFile(join(result.runDir, "evaluation.json"), "utf8"));
+
+    assert.equal(callCount, 3);
+    assert.equal(evaluation.verdict, "pass");
+    assert.deepEqual(evaluation.modelReview, {
+      verdict: "fail",
+      reason: "The report is too brief for a semantic reviewer."
+    });
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test("runTask records a recovery attempt and retries when the provider returns an invalid step", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-runner-recovery-"));
+  let callCount = 0;
+  let sawRecoveryEvent = false;
+  const provider: ModelProvider = {
+    name: "fake",
+    async nextStep(input) {
+      callCount += 1;
+      if (callCount === 1) {
+        return { type: "plan", summary: "Missing required plan steps." };
+      }
+      if (callCount === 2) {
+        assert.equal(input.turn, 1);
+        sawRecoveryEvent = input.events.some(
+          (event) => event.type === "recovery" && event.reason.includes("plan.steps")
+        );
+        return { type: "plan", summary: "Recovered plan", steps: ["Continue after schema repair"] };
+      }
+      return { type: "finish", report: "Recovered and finished." };
+    }
+  };
+
+  try {
+    const result = await runTask({
+      workspace,
+      goal: "recover from invalid step",
+      mode: "advisory",
+      successCheck: "Task recovers from invalid provider output",
+      provider
+    });
+
+    const events = await readFile(join(result.runDir, "events.jsonl"), "utf8");
+
+    assert.equal(result.status, "completed");
+    assert.equal(callCount, 3);
+    assert.equal(sawRecoveryEvent, true);
+    assert.match(events, /"type":"recovery"/);
+    assert.match(events, /plan\.steps/);
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test("runTask stops after bounded recovery attempts when invalid steps keep repeating", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-runner-recovery-limit-"));
+  let callCount = 0;
+  const provider: ModelProvider = {
+    name: "fake",
+    async nextStep() {
+      callCount += 1;
+      return { type: "plan", summary: "Still missing plan steps." };
+    }
+  };
+
+  try {
+    await assert.rejects(
+      runTask({
+        workspace,
+        goal: "recover from repeated invalid steps",
+        mode: "advisory",
+        successCheck: "Task stops after bounded recovery attempts",
+        provider
+      }),
+      /failed to produce a valid Agent Step after 2 recovery attempts/
+    );
+
+    const latestRunPath = join(workspace, ".personal-agent", "runs", "latest");
+    const latestRunId = await readFile(latestRunPath, "utf8");
+    const events = await readFile(join(workspace, ".personal-agent", "runs", latestRunId.trim(), "events.jsonl"), "utf8");
+
+    assert.equal(callCount, 3);
+    assert.equal((events.match(/"type":"recovery"/g) ?? []).length, 2);
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test("runChatTask keeps multiple Owner messages inside one Task Run", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-runner-chat-"));
+  const agentMessages: string[] = [];
+  const provider: ModelProvider = {
+    name: "fake-chat",
+    async nextStep(input) {
+      const ownerMessages = input.events.filter((event) => event.type === "owner_message");
+      if (ownerMessages.length === 1) {
+        assert.equal(ownerMessages[0]?.content, "你好");
+        return { type: "message", content: "你好，我还在同一个对话里。" };
+      }
+
+      assert.equal(ownerMessages.length, 2);
+      assert.equal(ownerMessages[1]?.content, "结束");
+      assert.ok(input.events.some((event) => event.type === "message" && event.content.includes("同一个对话")));
+      return { type: "message", content: "好的，对话会由输入结束来完成。" };
+    }
+  };
+
+  try {
+    const result = await runChatTask({
+      workspace,
+      provider,
+      messages: ["你好", "结束"],
+      onAgentMessage(message) {
+        agentMessages.push(message);
+      }
+    });
+
+    const events = await readFile(join(result.runDir, "events.jsonl"), "utf8");
+    const report = await readFile(join(result.runDir, "report.md"), "utf8");
+    const evaluation = JSON.parse(await readFile(join(result.runDir, "evaluation.json"), "utf8"));
+    const metadata = JSON.parse(await readFile(join(result.runDir, "run.json"), "utf8"));
+
+    assert.equal(result.status, "completed");
+    assert.deepEqual(agentMessages, ["你好，我还在同一个对话里。", "好的，对话会由输入结束来完成。"]);
+    assert.equal((events.match(/"type":"owner_message"/g) ?? []).length, 2);
+    assert.match(report, /Owner Messages: 2/);
+    assert.equal(evaluation.traceQuality, "pass");
+    assert.equal(metadata.status, "completed");
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test("runChatTask finalizes the chat when input ends", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-runner-chat-active-"));
+  const provider: ModelProvider = {
+    name: "fake-chat-active",
+    async nextStep() {
+      return { type: "message", content: "我会等待下一条消息。" };
+    }
+  };
+
+  try {
+    const result = await runChatTask({
+      workspace,
+      provider,
+      messages: ["你好"]
+    });
+
+    const events = await readFile(join(result.runDir, "events.jsonl"), "utf8");
+    const metadata = JSON.parse(await readFile(join(result.runDir, "run.json"), "utf8"));
+    const evaluation = JSON.parse(await readFile(join(result.runDir, "evaluation.json"), "utf8"));
+
+    assert.equal(result.status, "completed");
+    assert.equal(metadata.status, "completed");
+    assert.equal(evaluation.verdict, "pass");
+    assert.equal((events.match(/"type":"owner_message"/g) ?? []).length, 1);
+    assert.match(events, /"content":"你好"/);
+    assert.match(events, /"content":"我会等待下一条消息。"/);
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test("runChatTask recovers when a provider tries to finish an active chat turn", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-runner-chat-finish-recovery-"));
+  let callCount = 0;
+  const provider: ModelProvider = {
+    name: "fake-chat-finish-recovery",
+    async nextStep(input) {
+      callCount += 1;
+      assert.equal(input.interaction, "chat");
+      if (callCount === 1) {
+        return { type: "finish", report: "This must not end the conversation." };
+      }
+      assert.ok(input.events.some((event) => event.type === "recovery"));
+      return { type: "message", content: "我仍然会回答当前消息。" };
+    }
+  };
+
+  try {
+    const result = await runChatTask({ workspace, provider, messages: ["你是什么模型"] });
+    const events = await readFile(join(result.runDir, "events.jsonl"), "utf8");
+
+    assert.equal(callCount, 2);
+    assert.match(events, /Chat interaction cannot return finish/);
+    assert.match(events, /我仍然会回答当前消息/);
+    assert.equal((events.match(/"type":"finish"/g) ?? []).length, 1);
   } finally {
     await rm(workspace, { recursive: true, force: true });
   }
@@ -138,6 +376,231 @@ test("runTask filters Project Memory to notes relevant to the current task", asy
       mode: "advisory",
       successCheck: "report references README docs",
       provider
+    });
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test("runTask passes relevant Skill Pack summaries to the Model Provider", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-runner-skill-packs-"));
+  const provider: ModelProvider = {
+    name: "fake",
+    async nextStep(input) {
+      const skillPacks = (input as typeof input & { skillPacks?: string }).skillPacks ?? "";
+      assert.match(skillPacks, /docs-helper/);
+      assert.match(skillPacks, /Helps summarize workspace documentation/);
+      assert.match(skillPacks, /\.agents\/skills\/docs-helper\/SKILL\.md/);
+      assert.match(skillPacks, /\.agents\/skills\/docs-helper\/references\/guide\.md/);
+      assert.doesNotMatch(skillPacks, /deploy-helper/);
+      return { type: "finish", report: "Finished with relevant Skill Pack context." };
+    }
+  };
+
+  try {
+    await mkdir(join(workspace, ".agents/skills/docs-helper"), { recursive: true });
+    await mkdir(join(workspace, ".agents/skills/docs-helper/references"), { recursive: true });
+    await mkdir(join(workspace, ".agents/skills/deploy-helper"), { recursive: true });
+    await writeFile(
+      join(workspace, ".agents/skills/docs-helper/SKILL.md"),
+      [
+        "---",
+        "name: docs-helper",
+        "description: Helps summarize workspace documentation and README files.",
+        "---",
+        "",
+        "# Docs Helper",
+        "",
+        "Use this skill when summarizing docs."
+      ].join("\n"),
+      "utf8"
+    );
+    await writeFile(join(workspace, ".agents/skills/docs-helper/references/guide.md"), "# Docs guide\n", "utf8");
+    await writeFile(
+      join(workspace, ".agents/skills/deploy-helper/SKILL.md"),
+      [
+        "---",
+        "name: deploy-helper",
+        "description: Helps deploy services.",
+        "---",
+        "",
+        "# Deploy Helper"
+      ].join("\n"),
+      "utf8"
+    );
+
+    await runTask({
+      workspace,
+      goal: "summarize docs",
+      mode: "advisory",
+      successCheck: "report references documentation",
+      provider
+    });
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test("runTask records selected Skill Packs for Task Export", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-runner-skill-pack-export-"));
+  const provider: ModelProvider = {
+    name: "fake",
+    async nextStep() {
+      return { type: "finish", report: "Finished with Skill Pack export context." };
+    }
+  };
+
+  try {
+    await mkdir(join(workspace, ".agents/skills/docs-helper"), { recursive: true });
+    await writeFile(
+      join(workspace, ".agents/skills/docs-helper/SKILL.md"),
+      [
+        "---",
+        "name: docs-helper",
+        "description: Helps summarize workspace documentation and README files.",
+        "---",
+        "",
+        "# Docs Helper"
+      ].join("\n"),
+      "utf8"
+    );
+
+    const run = await runTask({
+      workspace,
+      goal: "summarize docs",
+      mode: "advisory",
+      successCheck: "report references documentation",
+      provider
+    });
+    const exported = await exportTaskRun(workspace, run.id);
+    assert.ok(exported);
+    const markdown = await readFile(exported.path, "utf8");
+
+    assert.match(markdown, /## Skill Packs Used/);
+    assert.match(markdown, /docs-helper/);
+    assert.match(markdown, /\.agents\/skills\/docs-helper\/SKILL\.md/);
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test("runTask asks before injecting multiple automatically matched Skill Packs", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-runner-skill-pack-confirm-"));
+  const requests: ConfirmationRequired[] = [];
+  const provider: ModelProvider = {
+    name: "fake",
+    async nextStep(input) {
+      assert.equal(input.skillPacks, undefined);
+      return { type: "finish", report: "Finished without ambiguous Skill Pack context." };
+    }
+  };
+
+  try {
+    await mkdir(join(workspace, ".agents/skills/docs-helper"), { recursive: true });
+    await mkdir(join(workspace, ".agents/skills/readme-helper"), { recursive: true });
+    await writeFile(
+      join(workspace, ".agents/skills/docs-helper/SKILL.md"),
+      [
+        "---",
+        "name: docs-helper",
+        "description: Helps summarize docs.",
+        "---",
+        "",
+        "# Docs Helper"
+      ].join("\n"),
+      "utf8"
+    );
+    await writeFile(
+      join(workspace, ".agents/skills/readme-helper/SKILL.md"),
+      [
+        "---",
+        "name: readme-helper",
+        "description: Helps summarize README docs.",
+        "---",
+        "",
+        "# Readme Helper"
+      ].join("\n"),
+      "utf8"
+    );
+
+    await runTask({
+      workspace,
+      goal: "summarize docs",
+      mode: "advisory",
+      successCheck: "report references docs",
+      provider,
+      confirmAction(confirmation) {
+        requests.push(confirmation);
+        return false;
+      }
+    });
+
+    const request = requests[0];
+    assert.ok(request);
+    assert.equal(request.tool, "skill_packs");
+    assert.match(request.reason, /multiple Skill Packs/i);
+    const skillPacks = request.action.skillPacks;
+    assert.ok(Array.isArray(skillPacks));
+    assert.deepEqual([...skillPacks].sort(), [
+      ".agents/skills/docs-helper/SKILL.md",
+      ".agents/skills/readme-helper/SKILL.md"
+    ]);
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test("runTask injects only the Skill Packs selected during confirmation", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-runner-skill-pack-subset-"));
+  const provider: ModelProvider = {
+    name: "fake",
+    async nextStep(input) {
+      assert.match(input.skillPacks ?? "", /readme-helper/);
+      assert.doesNotMatch(input.skillPacks ?? "", /docs-helper/);
+      return { type: "finish", report: "Finished with selected Skill Pack context." };
+    }
+  };
+
+  try {
+    await mkdir(join(workspace, ".agents/skills/docs-helper"), { recursive: true });
+    await mkdir(join(workspace, ".agents/skills/readme-helper"), { recursive: true });
+    await writeFile(
+      join(workspace, ".agents/skills/docs-helper/SKILL.md"),
+      [
+        "---",
+        "name: docs-helper",
+        "description: Helps summarize docs.",
+        "---",
+        "",
+        "# Docs Helper"
+      ].join("\n"),
+      "utf8"
+    );
+    await writeFile(
+      join(workspace, ".agents/skills/readme-helper/SKILL.md"),
+      [
+        "---",
+        "name: readme-helper",
+        "description: Helps summarize README docs.",
+        "---",
+        "",
+        "# Readme Helper"
+      ].join("\n"),
+      "utf8"
+    );
+
+    await runTask({
+      workspace,
+      goal: "summarize docs",
+      mode: "advisory",
+      successCheck: "report references docs",
+      provider,
+      confirmAction() {
+        return {
+          approved: true,
+          selected: [".agents/skills/readme-helper/SKILL.md"]
+        };
+      }
     });
   } finally {
     await rm(workspace, { recursive: true, force: true });
@@ -215,6 +678,7 @@ test("runTask writes model reflection notes as Memory Suggestions", async () => 
     });
 
     const suggestions = JSON.parse(await readFile(join(result.runDir, "memory-suggestions.json"), "utf8"));
+    const evaluation = JSON.parse(await readFile(join(result.runDir, "evaluation.json"), "utf8"));
 
     assert.deepEqual(suggestions, [
       {
@@ -224,6 +688,8 @@ test("runTask writes model reflection notes as Memory Suggestions", async () => 
         source: "model_reflect"
       }
     ]);
+    assert.deepEqual(evaluation.learningSignals, ["Project Memory suggestion"]);
+    assert.deepEqual(evaluation.followUps, ["Review Memory Suggestions"]);
   } finally {
     await rm(workspace, { recursive: true, force: true });
   }

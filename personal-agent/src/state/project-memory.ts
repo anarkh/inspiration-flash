@@ -102,6 +102,7 @@ const memoryConflictTermGroups = [
       "only",
       "先问",
       "只",
+      "确认",
       "询问",
       "方案"
     ])
@@ -120,7 +121,20 @@ const memoryConflictGenericTerms = new Set([
   "using"
 ]);
 
-const memoryNegationTerms = new Set(["forbid", "forbidden", "forbids", "never", "no", "not", "without", "不", "没"]);
+const memoryNegationTerms = new Set([
+  "avoid",
+  "avoiding",
+  "avoids",
+  "forbid",
+  "forbidden",
+  "forbids",
+  "never",
+  "no",
+  "not",
+  "without",
+  "不",
+  "没"
+]);
 
 const temporaryMemoryPatterns = [
   /\b(today|tomorrow|yesterday|currently|right now|this task|this run|temporary|for now)\b/i,

@@ -1,5 +1,7 @@
 # Personal Agent MVP Plan
 
+Status: completed MVP baseline. Ordered post-MVP work now lives in [ROADMAP.md](./ROADMAP.md); [TODO.md](./TODO.md) remains the unprioritized capability backlog.
+
 ## Goal
 
 Build a CLI-first Personal Agent for one Owner to handle Workspace Tasks while learning agent concepts through visible planning, tool use, memory, checkpoints, reports, and evaluations.
@@ -16,6 +18,7 @@ Build a CLI-first Personal Agent for one Owner to handle Workspace Tasks while l
 ## Success Criteria
 
 - The Owner can start a Task Conversation from the CLI.
+- The Owner can start a persistent chat-style Task Run from the CLI.
 - A non-simple Workspace Task creates or revises a Task Plan before execution.
 - The Personal Agent can use the MVP Local Tools with permission checks.
 - High-impact actions pass through Confirmation Gates.
@@ -27,11 +30,12 @@ Build a CLI-first Personal Agent for one Owner to handle Workspace Tasks while l
 
 ## CLI Surface
 
-- `personal-agent start`: enter an interactive Task Conversation.
-- `personal-agent run "<task>"`: run one Workspace Task.
-- `personal-agent resume`: continue from the latest Checkpoint.
-- `personal-agent memory`: view or edit Project Memory.
-- `personal-agent history`: list recent Task Runs.
+- `a-agent start [--learn] [--review]`: enter an interactive Task Conversation.
+- `a-agent chat [--learn] [--review]`: enter one persistent chat Task Run with repeated Owner messages.
+- `a-agent run [--learn] [--review] "<task>"`: run one Workspace Task.
+- `a-agent resume [--learn] [--review]`: continue from the latest Checkpoint.
+- `a-agent memory`: view or edit Project Memory.
+- `a-agent history`: list recent Task Runs.
 
 ## Workspace State
 
@@ -75,6 +79,8 @@ The model is adapted into provider-neutral Agent Steps:
 
 Invalid or incomplete Agent Steps trigger bounded Recovery Attempts.
 
+Chat mode also records `owner_message` events. These are not model-authored Agent Steps; they are visible Owner turns that the provider can read alongside plans, messages, tool observations, and recovery events. In chat interaction, model-authored `finish` is invalid because the CLI owns conversation lifetime.
+
 ## Local Tools
 
 MVP tools:
@@ -115,7 +121,7 @@ Execution:
 
 ## Task Run Loop
 
-1. Receive Owner task.
+1. Receive Owner task or chat message.
 2. Create or resume a Task Run.
 3. Load Project Memory, relevant Skill Pack summaries, and current workspace context.
 4. Determine Advisory Mode or Execution Mode.
@@ -133,6 +139,8 @@ Execution:
 10. Record events and Checkpoints throughout the Task Run.
 11. Run Task Evaluation after finish.
 12. Offer Reflection Notes for Project Memory or Knowledge Base updates.
+
+In `chat`, repeated Owner messages append to the same Task Run as `owner_message` events. A model `message` replies and waits for more Owner input. `exit`, `quit`, or closed stdin ends input, then the runner appends the final report step and evaluates the completed run. If a provider returns `finish` during an active chat turn, bounded recovery asks it to answer with `message` instead.
 
 ## Learning Lens
 
@@ -166,7 +174,7 @@ Minimum fields:
 }
 ```
 
-First implementation can combine deterministic checks and model-assisted self-review. The Owner may override the verdict.
+The first implementation combines deterministic checks with optional model-assisted self-review through `--review`. The deterministic verdict remains authoritative. The Owner may override the verdict in a later workflow.
 
 ## Run Export
 
@@ -194,7 +202,7 @@ Run Export can be used for reflection or External Review through Agent Bridge.
 - Add TypeScript config.
 - Add CLI entrypoint.
 - Add test runner.
-- Add a minimal `personal-agent --help` check.
+- Add a minimal `a-agent --help` check.
 
 Verification:
 
@@ -302,6 +310,21 @@ Verification:
 
 - Integration test that completes a Task Run and verifies report, evaluation, and export files.
 
+### Milestone 11: Persistent Chat
+
+- Implement `a-agent chat`.
+- Store repeated Owner turns as `owner_message` events inside one Task Run.
+- Replay Owner turns to the Model Provider as visible context.
+- Print selected provider and model before the first chat reply.
+- Reserve chat completion for `exit`, `quit`, or closed stdin instead of model-authored `finish`.
+- Generate the Task Report and Task Evaluation after chat input ends.
+
+Verification:
+
+- Runner test with two Owner messages in one run.
+- CLI test with piped chat input and durable `owner_message` events.
+- Recovery test for a provider-authored `finish` during chat.
+
 ## Non-Goals For MVP
 
 - Multi-user accounts.
@@ -309,5 +332,6 @@ Verification:
 - General browser or network tool.
 - Complex Embedding Retrieval.
 - Parallel Task Runs.
+- Rich chat UI and active-chat resume.
 - Strong Skill Pack plugin runtime.
 - External services that require authentication, except the configured Model Provider.

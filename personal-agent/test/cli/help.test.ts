@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -10,11 +10,19 @@ import {
   appendProjectMemory,
   appendRunEvent,
   createTaskRun,
+  readCheckpoint,
+  updateTaskRunStatus,
   writeCheckpoint,
-  writeMemorySuggestions
+  writeMemorySuggestions,
+  writeTaskReport
 } from "../../src/state/store.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "../..");
+
+/** Gives filesystem-backed history tests distinct updatedAt timestamps. */
+async function waitForDistinctTimestamp(): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, 5));
+}
 
 test("cli prints help", () => {
   const result = spawnSync(process.execPath, ["./src/cli/index.ts", "--help"], {
@@ -23,11 +31,101 @@ test("cli prints help", () => {
   });
 
   assert.equal(result.status, 0);
-  assert.match(result.stdout, /personal-agent/);
-  assert.match(result.stdout, /run <task>/);
+  assert.match(result.stdout, /a-agent/);
+  assert.match(result.stdout, /run \[--learn\] \[--review\] <task>/);
+  assert.match(result.stdout, /start \[--learn\] \[--review\]/);
+  assert.match(result.stdout, /chat \[--learn\] \[--review\]/);
+  assert.match(result.stdout, /resume \[--learn\] \[--review\]/);
   assert.match(result.stdout, /memory append \[--section <section>\] <note>/);
   assert.match(result.stdout, /memory apply-suggestions \[--yes\] \[run-id\]/);
+  assert.match(result.stdout, /eval skill-pack <name-or-path>/);
   assert.match(result.stdout, /export \[run-id\]/);
+  assert.match(result.stdout, /history \[--status <active\|completed>\] \[--limit <count>\] \[--offset <count>\]/);
+});
+
+test("package exposes the renamed npm package and a-agent binary", async () => {
+  const manifest = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
+
+  assert.equal(manifest.name, "@ranarkh/agent");
+  assert.deepEqual(manifest.bin, { "a-agent": "dist/cli/index.js" });
+});
+
+test("cli runs when invoked through an installed binary symlink", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-cli-symlink-"));
+  try {
+    const binary = join(workspace, "a-agent");
+    await symlink(join(root, "src/cli/index.ts"), binary);
+
+    const result = spawnSync(process.execPath, [binary, "--help"], {
+      cwd: workspace,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        PERSONAL_AGENT_SKIP_DOTENV: "1"
+      }
+    });
+
+    assert.equal(result.status, 0);
+    assert.match(result.stdout, /a-agent/);
+    assert.match(result.stdout, /run \[--learn\] \[--review\] <task>/);
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test("cli eval skill-pack runs a local Skill Pack eval manifest", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-cli-eval-skill-pack-"));
+  try {
+    await mkdir(join(workspace, ".agents/skills/docs-helper/evals"), { recursive: true });
+    await writeFile(
+      join(workspace, ".agents/skills/docs-helper/SKILL.md"),
+      [
+        "---",
+        "name: docs-helper",
+        "description: Helps answer documentation questions.",
+        "---",
+        "",
+        "# Docs Helper"
+      ].join("\n"),
+      "utf8"
+    );
+    await writeFile(
+      join(workspace, ".agents/skills/docs-helper/evals/evals.json"),
+      JSON.stringify(
+        {
+          skill_name: "docs-helper",
+          evals: [
+            {
+              id: "bootstrap",
+              prompt: "Run the bootstrap eval.",
+              expected_output: "Outcome: The task was accepted into the Personal Agent loop"
+            }
+          ]
+        },
+        null,
+        2
+      ),
+      "utf8"
+    );
+
+    const result = spawnSync(process.execPath, [join(root, "src/cli/index.ts"), "eval", "skill-pack", "docs-helper"], {
+      cwd: workspace,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        DEEPSEEK_API_KEY: "",
+        OPENAI_API_KEY: "",
+        PERSONAL_AGENT_SKIP_DOTENV: "1"
+      }
+    });
+
+    assert.equal(result.status, 0);
+    assert.match(result.stdout, /Evaluated Skill Pack docs-helper: 1 passed, 0 failed/);
+    assert.match(result.stdout, /Report:/);
+    assert.match(result.stderr, /\[agent\] turn 1 plan/);
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
 });
 
 test("cli run completes a bootstrap Task Run in the current workspace", async () => {
@@ -62,6 +160,306 @@ test("cli run completes a bootstrap Task Run in the current workspace", async ()
     assert.equal(metadata.status, "completed");
     assert.match(report, /summarize docs/);
     assert.equal(evaluation.verdict, "pass");
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test("cli chat keeps multiple inputs in one persistent Task Run", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-cli-chat-"));
+  try {
+    const result = spawnSync(process.execPath, [join(root, "src/cli/index.ts"), "chat"], {
+      cwd: workspace,
+      encoding: "utf8",
+      input: ["你好", "结束"].join("\n"),
+      env: {
+        ...process.env,
+        DEEPSEEK_API_KEY: "",
+        OPENAI_API_KEY: "",
+        PERSONAL_AGENT_SKIP_DOTENV: "1"
+      }
+    });
+
+    assert.equal(result.status, 0);
+    assert.match(result.stdout, /Bootstrap provider cannot answer with a real model/);
+    assert.match(result.stdout, /Completed Chat Task Run/);
+    assert.match(result.stderr, /Chat> /);
+    assert.match(result.stderr, /\[agent\] provider bootstrap \(deterministic-bootstrap\)/);
+    assert.match(result.stderr, /\[agent\] turn 1 message - Bootstrap provider cannot answer/);
+    assert.match(result.stderr, /\[agent\] turn 3 finish - # Chat Report/);
+
+    const latest = (await readFile(join(workspace, ".personal-agent/runs/latest"), "utf8")).trim();
+    const metadata = JSON.parse(
+      await readFile(join(workspace, ".personal-agent/runs", latest, "run.json"), "utf8")
+    );
+    const events = await readFile(join(workspace, ".personal-agent/runs", latest, "events.jsonl"), "utf8");
+
+    assert.equal(metadata.status, "completed");
+    assert.match(metadata.goal, /Chat conversation: 你好/);
+    assert.equal((events.match(/"type":"owner_message"/g) ?? []).length, 2);
+    assert.match(events, /"content":"你好"/);
+    assert.match(events, /"content":"结束"/);
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test("cli chat completes and evaluates a Task Run when input ends", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-cli-chat-active-"));
+  try {
+    const result = spawnSync(process.execPath, [join(root, "src/cli/index.ts"), "chat"], {
+      cwd: workspace,
+      encoding: "utf8",
+      input: "你好\n",
+      env: {
+        ...process.env,
+        DEEPSEEK_API_KEY: "",
+        OPENAI_API_KEY: "",
+        PERSONAL_AGENT_SKIP_DOTENV: "1"
+      }
+    });
+
+    assert.equal(result.status, 0);
+    assert.match(result.stdout, /Bootstrap provider cannot answer with a real model/);
+    assert.match(result.stdout, /Completed Chat Task Run/);
+
+    const latest = (await readFile(join(workspace, ".personal-agent/runs/latest"), "utf8")).trim();
+    const metadata = JSON.parse(
+      await readFile(join(workspace, ".personal-agent/runs", latest, "run.json"), "utf8")
+    );
+    const events = await readFile(join(workspace, ".personal-agent/runs", latest, "events.jsonl"), "utf8");
+
+    assert.equal(metadata.status, "completed");
+    assert.equal((events.match(/"type":"owner_message"/g) ?? []).length, 1);
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test("cli run prints Learning Lens notes when --learn is enabled", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-cli-learning-lens-"));
+  try {
+    const result = spawnSync(process.execPath, [join(root, "src/cli/index.ts"), "run", "--learn", "summarize docs"], {
+      cwd: workspace,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        DEEPSEEK_API_KEY: "",
+        OPENAI_API_KEY: "",
+        PERSONAL_AGENT_SKIP_DOTENV: "1"
+      }
+    });
+
+    assert.equal(result.status, 0);
+    assert.match(result.stderr, /\[learn\] planning - /);
+    assert.match(result.stderr, /\[learn\] checkpoint - /);
+    assert.match(result.stderr, /\[learn\] evaluation - /);
+    assert.match(result.stdout, /Completed Task Run/);
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test("cli run records unavailable model review when --review uses bootstrap", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-cli-model-review-"));
+  try {
+    const result = spawnSync(process.execPath, [join(root, "src/cli/index.ts"), "run", "--review", "summarize docs"], {
+      cwd: workspace,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        DEEPSEEK_API_KEY: "",
+        OPENAI_API_KEY: "",
+        PERSONAL_AGENT_SKIP_DOTENV: "1"
+      }
+    });
+
+    assert.equal(result.status, 0);
+    assert.match(result.stdout, /Completed Task Run/);
+
+    const latest = (await readFile(join(workspace, ".personal-agent/runs/latest"), "utf8")).trim();
+    const evaluation = JSON.parse(
+      await readFile(join(workspace, ".personal-agent/runs", latest, "evaluation.json"), "utf8")
+    );
+
+    assert.equal(evaluation.verdict, "pass");
+    assert.deepEqual(evaluation.modelReview, {
+      verdict: "unavailable",
+      reason: "Model-assisted review requires a real Model Provider."
+    });
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test("cli run can display the recovery path with an explicit debug switch", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-cli-debug-recovery-"));
+  try {
+    const result = spawnSync(process.execPath, [join(root, "src/cli/index.ts"), "run", "summarize docs"], {
+      cwd: workspace,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        DEEPSEEK_API_KEY: "",
+        OPENAI_API_KEY: "",
+        PERSONAL_AGENT_DEBUG_RECOVERY: "1",
+        PERSONAL_AGENT_SKIP_DOTENV: "1"
+      }
+    });
+
+    assert.equal(result.status, 0);
+    assert.match(result.stderr, /\[agent\] turn 1 recovery - Agent Step plan\.steps must be a string array/);
+    assert.match(result.stderr, /\[agent\] turn 1 plan - Create a minimal Task Plan/);
+    assert.match(result.stdout, /Completed Task Run/);
+
+    const latest = (await readFile(join(workspace, ".personal-agent/runs/latest"), "utf8")).trim();
+    const events = await readFile(join(workspace, ".personal-agent/runs", latest, "events.jsonl"), "utf8");
+
+    assert.match(events, /"type":"recovery"/);
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test("cli run refuses an ambiguous task before creating a Task Run", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-cli-clarification-"));
+  try {
+    const result = spawnSync(process.execPath, [join(root, "src/cli/index.ts"), "run", "处理一下"], {
+      cwd: workspace,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        DEEPSEEK_API_KEY: "",
+        OPENAI_API_KEY: "",
+        PERSONAL_AGENT_SKIP_DOTENV: "1"
+      }
+    });
+
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /\[agent\] clarification required/);
+    assert.match(result.stderr, /task boundary is ambiguous/);
+    assert.doesNotMatch(result.stdout, /Completed Task Run/);
+    await assert.rejects(readFile(join(workspace, ".personal-agent/runs/latest"), "utf8"));
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test("cli start reads one interactive task and completes a bootstrap Task Run", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-cli-start-"));
+  try {
+    const result = spawnSync(process.execPath, [join(root, "src/cli/index.ts"), "start"], {
+      cwd: workspace,
+      encoding: "utf8",
+      input: "summarize interactive docs\n",
+      env: {
+        ...process.env,
+        DEEPSEEK_API_KEY: "",
+        OPENAI_API_KEY: "",
+        PERSONAL_AGENT_SKIP_DOTENV: "1"
+      }
+    });
+
+    assert.equal(result.status, 0);
+    assert.match(result.stderr, /Task> /);
+    assert.match(result.stderr, /\[agent\] turn 1 plan - Create a minimal Task Plan/);
+    assert.match(result.stdout, /Completed Task Run/);
+
+    const latest = (await readFile(join(workspace, ".personal-agent/runs/latest"), "utf8")).trim();
+    const metadata = JSON.parse(
+      await readFile(join(workspace, ".personal-agent/runs", latest, "run.json"), "utf8")
+    );
+    const report = await readFile(join(workspace, ".personal-agent/runs", latest, "report.md"), "utf8");
+
+    assert.equal(metadata.goal, "summarize interactive docs");
+    assert.equal(metadata.status, "completed");
+    assert.match(report, /summarize interactive docs/);
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test("cli start runs multiple interactive tasks until exit", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-cli-start-repl-"));
+  try {
+    const env = {
+      ...process.env,
+      DEEPSEEK_API_KEY: "",
+      OPENAI_API_KEY: "",
+      PERSONAL_AGENT_SKIP_DOTENV: "1"
+    };
+    const result = spawnSync(process.execPath, [join(root, "src/cli/index.ts"), "start"], {
+      cwd: workspace,
+      encoding: "utf8",
+      input: ["summarize first docs", "summarize second docs", "exit"].join("\n"),
+      env
+    });
+    const history = spawnSync(process.execPath, [join(root, "src/cli/index.ts"), "history"], {
+      cwd: workspace,
+      encoding: "utf8",
+      env
+    });
+
+    assert.equal(result.status, 0);
+    assert.equal((result.stdout.match(/Completed Task Run/g) ?? []).length, 2);
+    assert.equal(history.status, 0);
+    assert.match(history.stdout, /summarize first docs/);
+    assert.match(history.stdout, /summarize second docs/);
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test("cli start prompts again after an empty interactive line", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-cli-start-empty-line-"));
+  try {
+    const result = spawnSync(process.execPath, [join(root, "src/cli/index.ts"), "start"], {
+      cwd: workspace,
+      encoding: "utf8",
+      input: "\nexit\n",
+      env: {
+        ...process.env,
+        DEEPSEEK_API_KEY: "",
+        OPENAI_API_KEY: "",
+        PERSONAL_AGENT_SKIP_DOTENV: "1"
+      }
+    });
+
+    assert.equal(result.status, 0);
+    assert.equal((result.stderr.match(/Task> /g) ?? []).length, 2);
+    assert.doesNotMatch(result.stdout, /Completed Task Run/);
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test("cli start clarifies an ambiguous interactive task before running it", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-cli-start-clarification-"));
+  try {
+    const result = spawnSync(process.execPath, [join(root, "src/cli/index.ts"), "start"], {
+      cwd: workspace,
+      encoding: "utf8",
+      input: ["处理一下", "帮我总结当前目录", "exit"].join("\n"),
+      env: {
+        ...process.env,
+        DEEPSEEK_API_KEY: "",
+        OPENAI_API_KEY: "",
+        PERSONAL_AGENT_SKIP_DOTENV: "1"
+      }
+    });
+
+    assert.equal(result.status, 0);
+    assert.match(result.stderr, /\[agent\] clarification required/);
+    assert.match(result.stderr, /Clarification> /);
+    assert.equal((result.stdout.match(/Completed Task Run/g) ?? []).length, 1);
+
+    const latest = (await readFile(join(workspace, ".personal-agent/runs/latest"), "utf8")).trim();
+    const metadata = JSON.parse(
+      await readFile(join(workspace, ".personal-agent/runs", latest, "run.json"), "utf8")
+    );
+
+    assert.match(metadata.goal, /处理一下/);
+    assert.match(metadata.goal, /Clarification: 帮我总结当前目录/);
   } finally {
     await rm(workspace, { recursive: true, force: true });
   }
@@ -110,7 +508,205 @@ test("cli history lists recent Task Runs", async () => {
     assert.equal(history.status, 0);
     assert.match(history.stdout, /Recent Task Runs/);
     assert.match(history.stdout, /completed/);
+    assert.match(history.stdout, /evaluation: pass/);
+    assert.match(history.stdout, /report: .*\.personal-agent\/runs\/.*\/report\.md/);
     assert.match(history.stdout, /summarize docs/);
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test("cli history filters Task Runs by status", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-history-status-"));
+  try {
+    const env = {
+      ...process.env,
+      DEEPSEEK_API_KEY: "",
+      OPENAI_API_KEY: "",
+      PERSONAL_AGENT_SKIP_DOTENV: "1"
+    };
+    await createTaskRun(workspace, {
+      goal: "keep active draft",
+      mode: "advisory",
+      successCheck: "active task remains resumable"
+    });
+    const completed = spawnSync(process.execPath, [join(root, "src/cli/index.ts"), "run", "summarize docs"], {
+      cwd: workspace,
+      encoding: "utf8",
+      env
+    });
+    const completedHistory = spawnSync(
+      process.execPath,
+      [join(root, "src/cli/index.ts"), "history", "--status", "completed"],
+      {
+        cwd: workspace,
+        encoding: "utf8",
+        env
+      }
+    );
+    const activeHistory = spawnSync(
+      process.execPath,
+      [join(root, "src/cli/index.ts"), "history", "--status", "active"],
+      {
+        cwd: workspace,
+        encoding: "utf8",
+        env
+      }
+    );
+
+    assert.equal(completed.status, 0);
+    assert.equal(completedHistory.status, 0);
+    assert.match(completedHistory.stdout, /summarize docs/);
+    assert.doesNotMatch(completedHistory.stdout, /keep active draft/);
+    assert.equal(activeHistory.status, 0);
+    assert.match(activeHistory.stdout, /keep active draft/);
+    assert.doesNotMatch(activeHistory.stdout, /summarize docs/);
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test("cli history shows the latest checkpoint id when present", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-history-checkpoint-"));
+  try {
+    const run = await createTaskRun(workspace, {
+      goal: "resume-ready draft",
+      mode: "advisory",
+      successCheck: "draft can resume from checkpoint"
+    });
+    const checkpoint = await writeCheckpoint(run.runDir, {
+      goal: "resume-ready draft",
+      turn: 1,
+      eventCount: 0
+    });
+    const storedCheckpoint = await readCheckpoint(run.runDir, checkpoint.id);
+
+    const history = spawnSync(
+      process.execPath,
+      [join(root, "src/cli/index.ts"), "history", "--status", "active"],
+      {
+        cwd: workspace,
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          PERSONAL_AGENT_SKIP_DOTENV: "1"
+        }
+      }
+    );
+
+    assert.equal(history.status, 0);
+    assert.match(history.stdout, /resume-ready draft/);
+    assert.match(history.stdout, new RegExp(`checkpoint: ${checkpoint.id} \\(turn 1, created `));
+    assert.ok(history.stdout.includes(`created ${storedCheckpoint.createdAt}`));
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test("cli history limits Task Runs after status filtering", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-history-limit-"));
+  try {
+    const env = {
+      ...process.env,
+      DEEPSEEK_API_KEY: "",
+      OPENAI_API_KEY: "",
+      PERSONAL_AGENT_SKIP_DOTENV: "1"
+    };
+    const olderCompleted = await createTaskRun(workspace, {
+      goal: "older completed task",
+      mode: "advisory",
+      successCheck: "older task completed"
+    });
+    await updateTaskRunStatus(olderCompleted.runDir, "completed");
+    await waitForDistinctTimestamp();
+    await createTaskRun(workspace, {
+      goal: "active draft task",
+      mode: "advisory",
+      successCheck: "active task remains resumable"
+    });
+    await waitForDistinctTimestamp();
+    const newerCompleted = await createTaskRun(workspace, {
+      goal: "newer completed task",
+      mode: "advisory",
+      successCheck: "newer task completed"
+    });
+    await writeTaskReport(newerCompleted.runDir, "Newer completed report.");
+    await updateTaskRunStatus(newerCompleted.runDir, "completed");
+
+    const history = spawnSync(
+      process.execPath,
+      [join(root, "src/cli/index.ts"), "history", "--status", "completed", "--limit", "1"],
+      {
+        cwd: workspace,
+        encoding: "utf8",
+        env
+      }
+    );
+
+    assert.equal(history.status, 0);
+    assert.match(history.stdout, /newer completed task/);
+    assert.match(history.stdout, /report: .*\.personal-agent\/runs\/.*\/report\.md/);
+    assert.doesNotMatch(history.stdout, /older completed task/);
+    assert.doesNotMatch(history.stdout, /active draft task/);
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test("cli history offsets Task Runs after status filtering", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-history-offset-"));
+  try {
+    const env = {
+      ...process.env,
+      DEEPSEEK_API_KEY: "",
+      OPENAI_API_KEY: "",
+      PERSONAL_AGENT_SKIP_DOTENV: "1"
+    };
+    const oldestCompleted = await createTaskRun(workspace, {
+      goal: "oldest completed page task",
+      mode: "advisory",
+      successCheck: "oldest task completed"
+    });
+    await updateTaskRunStatus(oldestCompleted.runDir, "completed");
+    await waitForDistinctTimestamp();
+    await createTaskRun(workspace, {
+      goal: "active page task",
+      mode: "advisory",
+      successCheck: "active task remains resumable"
+    });
+    await waitForDistinctTimestamp();
+    const middleCompleted = await createTaskRun(workspace, {
+      goal: "middle completed page task",
+      mode: "advisory",
+      successCheck: "middle task completed"
+    });
+    await updateTaskRunStatus(middleCompleted.runDir, "completed");
+    await waitForDistinctTimestamp();
+    const newestCompleted = await createTaskRun(workspace, {
+      goal: "newest completed page task",
+      mode: "advisory",
+      successCheck: "newest task completed"
+    });
+    await updateTaskRunStatus(newestCompleted.runDir, "completed");
+
+    const history = spawnSync(
+      process.execPath,
+      [join(root, "src/cli/index.ts"), "history", "--status", "completed", "--limit", "1", "--offset", "1"],
+      {
+        cwd: workspace,
+        encoding: "utf8",
+        env
+      }
+    );
+
+    assert.equal(history.status, 0);
+    assert.match(history.stdout, /Showing 2-2 of 3 Task Runs \(offset 1, limit 1\)/);
+    assert.match(history.stdout, /Previous page: a-agent history --status completed --limit 1 --offset 0/);
+    assert.match(history.stdout, /Next page: a-agent history --status completed --limit 1 --offset 2/);
+    assert.match(history.stdout, /middle completed page task/);
+    assert.doesNotMatch(history.stdout, /newest completed page task/);
+    assert.doesNotMatch(history.stdout, /oldest completed page task/);
+    assert.doesNotMatch(history.stdout, /active page task/);
   } finally {
     await rm(workspace, { recursive: true, force: true });
   }
@@ -497,6 +1093,55 @@ test("cli memory skips autonomy preference conflicts", async () => {
   }
 });
 
+test("cli memory skips Chinese autonomy preference conflicts", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-memory-apply-zh-autonomy-conflict-"));
+  try {
+    await appendProjectMemory(workspace, "用户偏好 agent 直接修改代码。", "preferences");
+    const run = await createTaskRun(workspace, {
+      goal: "apply Chinese autonomy preference conflicts",
+      mode: "advisory",
+      successCheck: "memory does not receive opposite Chinese autonomy preferences"
+    });
+    await writeMemorySuggestions(run.runDir, [
+      {
+        section: "preferences",
+        note: "用户偏好 agent 先确认再执行。",
+        reason: "Model reflection during the Task Run",
+        source: "model_reflect"
+      }
+    ]);
+
+    const env = {
+      ...process.env,
+      PERSONAL_AGENT_SKIP_DOTENV: "1"
+    };
+    const apply = spawnSync(
+      process.execPath,
+      [join(root, "src/cli/index.ts"), "memory", "apply-suggestions", "--yes", run.id],
+      {
+        cwd: workspace,
+        encoding: "utf8",
+        env
+      }
+    );
+    const viewAfter = spawnSync(process.execPath, [join(root, "src/cli/index.ts"), "memory"], {
+      cwd: workspace,
+      encoding: "utf8",
+      env
+    });
+
+    assert.equal(apply.status, 0);
+    assert.match(apply.stdout, /Skipped conflicting Memory Suggestion/);
+    assert.match(apply.stdout, /用户偏好 agent 直接修改代码。/);
+    assert.match(apply.stdout, /Applied 0 Memory Suggestions/);
+    assert.equal(viewAfter.status, 0);
+    assert.match(viewAfter.stdout, /用户偏好 agent 直接修改代码。/);
+    assert.doesNotMatch(viewAfter.stdout, /用户偏好 agent 先确认再执行。/);
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
 test("cli memory skips negated conflicting Memory Suggestions", async () => {
   const workspace = await mkdtemp(join(tmpdir(), "personal-agent-memory-apply-negated-conflict-"));
   try {
@@ -590,6 +1235,55 @@ test("cli memory skips forbidden conflicting Memory Suggestions", async () => {
     assert.equal(viewAfter.status, 0);
     assert.match(viewAfter.stdout, /Generated code requires comments\./);
     assert.doesNotMatch(viewAfter.stdout, /Generated code forbids comments\./);
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test("cli memory skips avoid-word project convention conflicts", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-memory-apply-avoid-convention-conflict-"));
+  try {
+    await appendProjectMemory(workspace, "Generated code must include necessary comments.", "project-conventions");
+    const run = await createTaskRun(workspace, {
+      goal: "apply avoid-word project convention conflicts",
+      mode: "advisory",
+      successCheck: "memory does not receive opposite comment conventions"
+    });
+    await writeMemorySuggestions(run.runDir, [
+      {
+        section: "project-conventions",
+        note: "Generated code should avoid comments.",
+        reason: "Model reflection during the Task Run",
+        source: "model_reflect"
+      }
+    ]);
+
+    const env = {
+      ...process.env,
+      PERSONAL_AGENT_SKIP_DOTENV: "1"
+    };
+    const apply = spawnSync(
+      process.execPath,
+      [join(root, "src/cli/index.ts"), "memory", "apply-suggestions", "--yes", run.id],
+      {
+        cwd: workspace,
+        encoding: "utf8",
+        env
+      }
+    );
+    const viewAfter = spawnSync(process.execPath, [join(root, "src/cli/index.ts"), "memory"], {
+      cwd: workspace,
+      encoding: "utf8",
+      env
+    });
+
+    assert.equal(apply.status, 0);
+    assert.match(apply.stdout, /Skipped conflicting Memory Suggestion/);
+    assert.match(apply.stdout, /Generated code must include necessary comments\./);
+    assert.match(apply.stdout, /Applied 0 Memory Suggestions/);
+    assert.equal(viewAfter.status, 0);
+    assert.match(viewAfter.stdout, /Generated code must include necessary comments\./);
+    assert.doesNotMatch(viewAfter.stdout, /Generated code should avoid comments\./);
   } finally {
     await rm(workspace, { recursive: true, force: true });
   }

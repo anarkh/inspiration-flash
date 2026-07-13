@@ -1,6 +1,6 @@
 # 未来能力
 
-Capability Backlog 位于 [../TODO.md](../TODO.md)。本文解释哪些延后能力在进入 MVP 前应该如何学习和评测。
+Capability Backlog 位于 [../../TODO.md](../../TODO.md)。本文解释哪些延后能力在进入 MVP 前应该如何学习和评测。
 
 ## Complex Embedding Retrieval
 
@@ -34,7 +34,9 @@ Capability Backlog 位于 [../TODO.md](../TODO.md)。本文解释哪些延后能
 
 ## Strong Skill Pack Runtime
 
-在 Guided Skill Use 明显不够用前，不要把 Skill Pack 变成插件运行时。
+MVP 现在已有轻量 Guided Skill Use 层：它会发现相关 `SKILL.md` 文件，并把摘要注入 provider context。
+
+在这层 Guided Skill Use 明显不够用前，不要把 Skill Pack 变成插件运行时。
 
 实现前应准备：
 

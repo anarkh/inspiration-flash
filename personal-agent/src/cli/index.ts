@@ -1,10 +1,15 @@
 #!/usr/bin/env node
 
+import { realpathSync } from "node:fs";
+import { resolve } from "node:path";
 import { createInterface } from "node:readline/promises";
-import { resumeLatestTask, runTask } from "../agent/runner.ts";
+import { fileURLToPath } from "node:url";
+import { resumeLatestTask, runChatTask, runTask } from "../agent/runner.ts";
 import { confirmInTerminal } from "./confirmation.ts";
 import { loadCliEnv } from "../config/env.ts";
 import { createConfiguredProvider } from "../model/configured-provider.ts";
+import type { ModelProvider } from "../model/provider.ts";
+import { runSkillPackEvals } from "../skills/evals.ts";
 import {
   appendProjectMemory,
   evaluateMemorySuggestionQuality,
@@ -21,21 +26,51 @@ import {
   type TaskRunMetadata
 } from "../state/store.ts";
 
-const help = `personal-agent
+// Keep default history output compact while letting callers opt into a smaller
+// page size with `--limit` and page position with `--offset`.
+const defaultHistoryLimit = 20;
+const defaultHistoryOffset = 0;
+
+// Keep the user-facing command name in one place so help text, page hints, and
+// diagnostics stay aligned with package.json's binary name.
+const cliCommandName = "a-agent";
+
+// Keep the first Clarification Gate conservative. These patterns catch common
+// commands that lack an object or success condition without blocking short but
+// concrete tasks such as `ls`, `build`, or `run tests`.
+const vagueTaskPatterns = [
+  /^(?:do it|handle it|fix it|take care of it)[.!?]?$/,
+  /^(?:处理|搞|弄)(?:一下|下)?[。.!！?？]?$/u,
+  /^帮我(?:处理|搞|弄)(?:一下|下)?[。.!！?？]?$/u
+];
+
+const help = `${cliCommandName}
 
 Usage:
-  personal-agent start
-  personal-agent run <task>
-  personal-agent resume
-  personal-agent memory
-  personal-agent memory append [--section <section>] <note>
-  personal-agent memory apply-suggestions [--yes] [run-id]
-  personal-agent export [run-id]
-  personal-agent history
+  ${cliCommandName} start [--learn] [--review]
+  ${cliCommandName} chat [--learn] [--review]
+  ${cliCommandName} run [--learn] [--review] <task>
+  ${cliCommandName} resume [--learn] [--review]
+  ${cliCommandName} memory
+  ${cliCommandName} memory append [--section <section>] <note>
+  ${cliCommandName} memory apply-suggestions [--yes] [run-id]
+  ${cliCommandName} eval skill-pack <name-or-path>
+  ${cliCommandName} export [run-id]
+  ${cliCommandName} history [--status <active|completed>] [--limit <count>] [--offset <count>]
 
 Options:
   --help, -h    Show this help.
 `;
+
+interface LearningFlagOptions {
+  learningLens: boolean;
+  modelReview: boolean;
+}
+
+interface RunCommandArgs extends LearningFlagOptions {
+  task: string;
+  error?: string;
+}
 
 /** Routes CLI arguments to the matching Personal Agent command and returns an exit code. */
 export async function main(argv: string[] = process.argv.slice(2)): Promise<number> {
@@ -47,40 +82,107 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
   }
 
   const [command] = argv;
+  if (command === "start") {
+    const { learningLens, modelReview, error } = parseRunOptionFlags(argv.slice(1), "start");
+    if (error) {
+      process.stderr.write(`${cliCommandName}: ${error}\n`);
+      return 1;
+    }
+    return runInteractiveTaskConversation({ learningLens, modelReview });
+  }
+
+  if (command === "chat") {
+    const { learningLens, modelReview, error } = parseRunOptionFlags(argv.slice(1), "chat");
+    if (error) {
+      process.stderr.write(`${cliCommandName}: ${error}\n`);
+      return 1;
+    }
+    return runInteractiveChatConversation({ learningLens, modelReview });
+  }
+
   if (command === "run") {
-    const task = argv.slice(1).join(" ").trim();
+    const parsedRun = parseRunArgs(argv.slice(1));
+    if (parsedRun.error) {
+      process.stderr.write(`${cliCommandName}: ${parsedRun.error}\n`);
+      return 1;
+    }
+    const { task, learningLens, modelReview } = parsedRun;
     if (task.length === 0) {
-      process.stderr.write("personal-agent: run requires a task.\n");
+      process.stderr.write(`${cliCommandName}: run requires a task.\n`);
       return 1;
     }
 
-    const result = await runTask({
+    const clarifiedTask = await clarifyRunTaskIfNeeded(task);
+    if (!clarifiedTask) {
+      return 1;
+    }
+
+    await runCliTask(clarifiedTask, { learningLens, modelReview });
+    return 0;
+  }
+
+  if (command === "history") {
+    const { status, limit, offset, error } = parseHistoryArgs(argv.slice(1));
+    if (error) {
+      process.stderr.write(`${cliCommandName}: ${error}\n`);
+      return 1;
+    }
+
+    // Fetch before filtering/pagination so `--status completed --limit 1 --offset 1`
+    // means the second newest completed run, not a page of the unfiltered list.
+    const filteredRuns = (await listTaskRuns(process.cwd(), Number.MAX_SAFE_INTEGER)).filter(
+      (run) => !status || run.status === status
+    );
+    const runs = filteredRuns.slice(offset, offset + limit);
+    if (runs.length === 0) {
+      process.stdout.write("No Task Runs found.\n");
+      return 0;
+    }
+
+    process.stdout.write(
+      [
+        "Recent Task Runs",
+        formatHistoryPageSummary(runs.length, filteredRuns.length, offset, limit),
+        ...runs.map(formatHistoryRun),
+        ...formatHistoryPageHints(status, limit, offset, filteredRuns.length)
+      ].join("\n")
+    );
+    process.stdout.write("\n");
+    return 0;
+  }
+
+  if (command === "eval") {
+    if (argv[1] !== "skill-pack") {
+      process.stderr.write(`${cliCommandName}: eval requires subcommand: skill-pack.\n`);
+      return 1;
+    }
+
+    const target = argv[2];
+    if (!target) {
+      process.stderr.write(`${cliCommandName}: eval skill-pack requires a name or path.\n`);
+      return 1;
+    }
+
+    const result = await runSkillPackEvals({
       workspace: process.cwd(),
-      goal: task,
-      mode: "advisory",
-      successCheck: "Task produces a local Task Report",
+      skillPack: target,
       provider: createConfiguredProvider(),
-      /** Prints each visible model step while the run is still active. */
+      /** Prints the underlying Task Run steps for each eval case. */
       logStep(message) {
         process.stderr.write(`${message}\n`);
       },
       confirmAction: confirmInTerminal
     });
 
-    process.stdout.write(`Completed Task Run ${result.id}\n`);
-    return 0;
-  }
-
-  if (command === "history") {
-    const runs = await listTaskRuns(process.cwd(), 20);
-    if (runs.length === 0) {
-      process.stdout.write("No Task Runs found.\n");
-      return 0;
-    }
-
-    process.stdout.write(["Recent Task Runs", ...runs.map(formatHistoryRun)].join("\n"));
+    process.stdout.write(
+      [
+        `Evaluated Skill Pack ${result.skillPack.name}: ${result.passedCount} passed, ${result.failedCount} failed`,
+        `Report: ${result.reportPath}`,
+        `Results: ${result.resultsPath}`
+      ].join("\n")
+    );
     process.stdout.write("\n");
-    return 0;
+    return result.failedCount === 0 ? 0 : 1;
   }
 
   if (command === "export") {
@@ -104,11 +206,11 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
     if (subcommand === "append") {
       const { note, section, error } = parseMemoryAppendArgs(argv.slice(2));
       if (error) {
-        process.stderr.write(`personal-agent: ${error}\n`);
+        process.stderr.write(`${cliCommandName}: ${error}\n`);
         return 1;
       }
       if (note.length === 0) {
-        process.stderr.write("personal-agent: memory append requires a note.\n");
+        process.stderr.write(`${cliCommandName}: memory append requires a note.\n`);
         return 1;
       }
 
@@ -120,7 +222,7 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
     if (subcommand === "apply-suggestions") {
       const { id, approvedAll, error } = parseMemoryApplySuggestionsArgs(argv.slice(2));
       if (error) {
-        process.stderr.write(`personal-agent: ${error}\n`);
+        process.stderr.write(`${cliCommandName}: ${error}\n`);
         return 1;
       }
 
@@ -141,9 +243,17 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
   }
 
   if (command === "resume") {
+    const { learningLens, modelReview, error } = parseRunOptionFlags(argv.slice(1), "resume");
+    if (error) {
+      process.stderr.write(`${cliCommandName}: ${error}\n`);
+      return 1;
+    }
+
     const result = await resumeLatestTask({
       workspace: process.cwd(),
       provider: createConfiguredProvider(),
+      learningLens,
+      modelReview,
       /** Prints each visible resumed model step while the run is still active. */
       logStep(message) {
         process.stderr.write(`${message}\n`);
@@ -164,17 +274,368 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
     return 0;
   }
 
-  process.stderr.write(`personal-agent: command not implemented yet: ${command}\n`);
+  process.stderr.write(`${cliCommandName}: command not implemented yet: ${command}\n`);
   return 1;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (isCliEntrypoint(import.meta.url, process.argv[1])) {
   process.exitCode = await main();
+}
+
+/** Checks whether this module is the active CLI entrypoint, including npm bin symlinks. */
+function isCliEntrypoint(moduleUrl: string, argvPath: string | undefined): boolean {
+  if (!argvPath) {
+    return false;
+  }
+
+  const modulePath = fileURLToPath(moduleUrl);
+  // npm installs bin entries as symlinks. Comparing real paths keeps the CLI
+  // executable when invoked through `/opt/homebrew/bin/a-agent`.
+  return resolveRealPath(modulePath) === resolveRealPath(argvPath);
+}
+
+/** Resolves symlinks when possible and falls back to an absolute path for missing paths. */
+function resolveRealPath(path: string): string {
+  try {
+    return realpathSync(path);
+  } catch {
+    return resolve(path);
+  }
+}
+
+/** Runs a minimal line-based Task Conversation until the Owner exits or stdin closes. */
+async function runInteractiveTaskConversation(
+  options: LearningFlagOptions = { learningLens: false, modelReview: false }
+): Promise<number> {
+  const terminal = createInterface({ input: process.stdin, output: process.stderr });
+  let ranTask = false;
+  let pendingClarificationTask: string | null = null;
+  try {
+    process.stderr.write("Task> ");
+    for await (const answer of terminal) {
+      const task = answer.trim();
+      if (pendingClarificationTask) {
+        if (task.length === 0) {
+          process.stderr.write(`${cliCommandName}: clarification answer is required.\n`);
+          process.stderr.write("Clarification> ");
+          continue;
+        }
+
+        await runCliTask(formatClarifiedTask(pendingClarificationTask, task), options);
+        pendingClarificationTask = null;
+        ranTask = true;
+        process.stderr.write("Task> ");
+        continue;
+      }
+
+      if (isStartExitCommand(task)) {
+        return 0;
+      }
+      if (task.length === 0) {
+        process.stderr.write("Task> ");
+        continue;
+      }
+      if (isAmbiguousTaskBoundary(task)) {
+        writeClarificationRequest();
+        pendingClarificationTask = task;
+        process.stderr.write("Clarification> ");
+        continue;
+      }
+
+      await runCliTask(task, options);
+      ranTask = true;
+      process.stderr.write("Task> ");
+    }
+
+    if (pendingClarificationTask) {
+      process.stderr.write(`${cliCommandName}: clarification answer is required.\n`);
+      return 1;
+    }
+    if (!ranTask) {
+      process.stderr.write(`${cliCommandName}: start requires a task.\n`);
+      return 1;
+    }
+    return 0;
+  } finally {
+    terminal.close();
+  }
+}
+
+/** Runs one persistent chat conversation until the provider finishes or stdin closes. */
+async function runInteractiveChatConversation(
+  options: LearningFlagOptions = { learningLens: false, modelReview: false }
+): Promise<number> {
+  try {
+    const provider = createConfiguredProvider();
+    // Provider identity is printed before the first prompt response so an
+    // accidental Bootstrap fallback is immediately visible to the Owner.
+    process.stderr.write(`${formatProviderSelection(provider)}\n`);
+    const result = await runChatTask({
+      workspace: process.cwd(),
+      provider,
+      messages: readInteractiveChatMessages(),
+      learningLens: options.learningLens,
+      modelReview: options.modelReview,
+      /** Prints each visible model step while the chat run is still active. */
+      logStep(message) {
+        process.stderr.write(`${message}\n`);
+      },
+      /** Prints conversational replies separately from progress logs. */
+      onAgentMessage(message) {
+        process.stdout.write(`${message}\n`);
+      },
+      confirmAction: confirmInTerminal
+    });
+
+    process.stdout.write(`Completed Chat Task Run ${result.id}\n`);
+    return 0;
+  } catch (error) {
+    if (isEmptyChatError(error)) {
+      process.stderr.write(`${cliCommandName}: chat requires a message.\n`);
+      return 1;
+    }
+    process.stderr.write(`${cliCommandName}: chat failed: ${readUnknownErrorMessage(error)}\n`);
+    return 1;
+  }
+}
+
+/** Formats the selected provider and model for visible chat startup diagnostics. */
+function formatProviderSelection(provider: ModelProvider): string {
+  const model = provider.model ? ` (${provider.model})` : "";
+  return `[agent] provider ${provider.name}${model}`;
+}
+
+/** Reads terminal chat messages, treating exit and quit as conversation stop commands. */
+async function* readInteractiveChatMessages(): AsyncIterable<string> {
+  const terminal = createInterface({ input: process.stdin, output: process.stderr });
+  try {
+    process.stderr.write("Chat> ");
+    for await (const answer of terminal) {
+      const message = answer.trim();
+      if (isStartExitCommand(message)) {
+        return;
+      }
+      if (message.length === 0) {
+        process.stderr.write("Chat> ");
+        continue;
+      }
+      yield message;
+      process.stderr.write("Chat> ");
+    }
+  } finally {
+    terminal.close();
+  }
+}
+
+/** Checks whether an interactive input line should leave the Task Conversation. */
+function isStartExitCommand(task: string): boolean {
+  const normalized = task.toLowerCase();
+  return normalized === "exit" || normalized === "quit";
+}
+
+/** Detects the runner's explicit empty-chat error without masking provider failures. */
+function isEmptyChatError(error: unknown): boolean {
+  return error instanceof Error && error.message === "Chat Task requires at least one Owner message";
+}
+
+/** Converts unknown thrown values into stable CLI diagnostics. */
+function readUnknownErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return String(error);
+}
+
+/** Applies a minimal Clarification Gate before `run` creates durable Task Run state. */
+async function clarifyRunTaskIfNeeded(task: string): Promise<string | null> {
+  if (!isAmbiguousTaskBoundary(task)) {
+    return task;
+  }
+
+  writeClarificationRequest();
+
+  if (!process.stdin.isTTY) {
+    // Non-interactive invocations cannot answer a clarification prompt. Refuse
+    // the run before creating state rather than guessing what the Owner meant.
+    process.stderr.write(`${cliCommandName}: refusing ambiguous task without interactive clarification.\n`);
+    return null;
+  }
+
+  const terminal = createInterface({ input: process.stdin, output: process.stderr });
+  try {
+    const answer = (await terminal.question("Clarification> ")).trim();
+    if (answer.length === 0) {
+      process.stderr.write(`${cliCommandName}: clarification answer is required.\n`);
+      return null;
+    }
+    return formatClarifiedTask(task, answer);
+  } finally {
+    terminal.close();
+  }
+}
+
+/** Prints the standard Clarification Gate prompt before a task creates state. */
+function writeClarificationRequest(): void {
+  process.stderr.write(
+    [
+      "[agent] clarification required",
+      "reason: task boundary is ambiguous",
+      "question: What concrete outcome should this task produce?",
+      ""
+    ].join("\n")
+  );
+}
+
+/** Combines the original ambiguous task with the Owner's clarified outcome. */
+function formatClarifiedTask(task: string, clarification: string): string {
+  return `${task}\n\nClarification: ${clarification}`;
+}
+
+/** Detects task requests that are too vague to run without Owner clarification. */
+function isAmbiguousTaskBoundary(task: string): boolean {
+  const normalized = task.normalize("NFKC").trim().toLowerCase();
+  return vagueTaskPatterns.some((pattern) => pattern.test(normalized));
+}
+
+/** Runs one CLI task with the default provider, progress logging, and confirmation gates. */
+async function runCliTask(
+  task: string,
+  options: LearningFlagOptions = { learningLens: false, modelReview: false }
+): Promise<void> {
+  const result = await runTask({
+    workspace: process.cwd(),
+    goal: task,
+    mode: "advisory",
+    successCheck: "Task produces a local Task Report",
+    provider: createConfiguredProvider(),
+    learningLens: options.learningLens,
+    modelReview: options.modelReview,
+    /** Prints each visible model step while the run is still active. */
+    logStep(message) {
+      process.stderr.write(`${message}\n`);
+    },
+    confirmAction: confirmInTerminal
+  });
+
+  process.stdout.write(`Completed Task Run ${result.id}\n`);
+}
+
+/** Parses `run` arguments while reserving `--learn` as an opt-in Learning Lens switch. */
+function parseRunArgs(args: string[]): RunCommandArgs {
+  const flags = parseRunOptionFlags(args, "run");
+  const task = args.filter((arg) => arg !== "--learn" && arg !== "--review").join(" ").trim();
+  return { task, learningLens: flags.learningLens, modelReview: flags.modelReview, error: flags.error };
+}
+
+/** Parses commands whose only optional flags are execution-learning and model-review switches. */
+function parseRunOptionFlags(args: string[], command: string): LearningFlagOptions & { error?: string } {
+  const unknownArgs = args.filter((arg) => {
+    if (arg === "--learn" || arg === "--review") {
+      return false;
+    }
+    return command !== "run" || arg.startsWith("--");
+  });
+  if (unknownArgs.length > 0) {
+    return {
+      learningLens: args.includes("--learn"),
+      modelReview: args.includes("--review"),
+      error: `${command} accepts only --learn and --review.`
+    };
+  }
+  return { learningLens: args.includes("--learn"), modelReview: args.includes("--review") };
 }
 
 /** Formats one Task Run metadata record for the history command. */
 function formatHistoryRun(run: TaskRunMetadata): string {
-  return `${run.id} | ${run.status} | ${run.mode} | ${run.updatedAt} | ${run.goal}`;
+  const evaluation = run.evaluationVerdict ? ` | evaluation: ${run.evaluationVerdict}` : "";
+  const report = run.reportPath ? ` | report: ${run.reportPath}` : "";
+  const checkpointDetails = [
+    typeof run.latestCheckpointTurn === "number" ? `turn ${run.latestCheckpointTurn}` : undefined,
+    run.latestCheckpointCreatedAt ? `created ${run.latestCheckpointCreatedAt}` : undefined
+  ].filter((detail) => detail !== undefined);
+  const checkpointSuffix = checkpointDetails.length > 0 ? ` (${checkpointDetails.join(", ")})` : "";
+  const checkpoint = run.latestCheckpointId ? ` | checkpoint: ${run.latestCheckpointId}${checkpointSuffix}` : "";
+  return `${run.id} | ${run.status} | ${run.mode}${evaluation}${report}${checkpoint} | ${run.updatedAt} | ${run.goal}`;
+}
+
+/** Formats a compact page summary for filtered Task Run history output. */
+function formatHistoryPageSummary(currentCount: number, totalCount: number, offset: number, limit: number): string {
+  const firstPosition = offset + 1;
+  const lastPosition = offset + currentCount;
+  return `Showing ${firstPosition}-${lastPosition} of ${totalCount} Task Runs (offset ${offset}, limit ${limit})`;
+}
+
+/** Returns copy-pasteable previous/next page commands for filtered history output. */
+function formatHistoryPageHints(
+  status: TaskRunMetadata["status"] | undefined,
+  limit: number,
+  offset: number,
+  totalCount: number
+): string[] {
+  const hints: string[] = [];
+  const statusArgs = status ? ` --status ${status}` : "";
+  if (offset > 0) {
+    hints.push(`Previous page: ${cliCommandName} history${statusArgs} --limit ${limit} --offset ${Math.max(0, offset - limit)}`);
+  }
+
+  const nextOffset = offset + limit;
+  if (nextOffset < totalCount) {
+    hints.push(`Next page: ${cliCommandName} history${statusArgs} --limit ${limit} --offset ${nextOffset}`);
+  }
+
+  return hints;
+}
+
+/** Parses compact history filters without introducing a broader CLI option framework yet. */
+function parseHistoryArgs(args: string[]): {
+  status?: TaskRunMetadata["status"];
+  limit: number;
+  offset: number;
+  error?: string;
+} {
+  let status: TaskRunMetadata["status"] | undefined;
+  let limit = defaultHistoryLimit;
+  let offset = defaultHistoryOffset;
+
+  for (let index = 0; index < args.length; index += 2) {
+    const flag = args[index];
+    const value = args[index + 1];
+    if (!value) {
+      return { limit, offset, error: "history expects option values after flags." };
+    }
+
+    if (flag === "--status") {
+      if (value !== "active" && value !== "completed") {
+        return { limit, offset, error: "history --status must be active or completed." };
+      }
+      status = value;
+      continue;
+    }
+
+    if (flag === "--limit") {
+      if (!/^[1-9]\d*$/.test(value)) {
+        return { limit, offset, error: "history --limit must be a positive integer." };
+      }
+      limit = Number(value);
+      continue;
+    }
+
+    if (flag === "--offset") {
+      if (!/^(0|[1-9]\d*)$/.test(value)) {
+        return { limit, offset, error: "history --offset must be a non-negative integer." };
+      }
+      offset = Number(value);
+      continue;
+    }
+
+    return {
+      limit,
+      offset,
+      error: "history accepts only --status <active|completed>, --limit <count>, and --offset <count>."
+    };
+  }
+
+  return { status, limit, offset };
 }
 
 /** Parses `memory append` arguments into an optional target section and note. */
@@ -266,7 +727,7 @@ async function confirmMemorySuggestion(): Promise<boolean> {
   if (!process.stdin.isTTY) {
     // Non-interactive invocations must opt in explicitly with --yes; otherwise
     // suggestions remain reviewable and are not written to durable memory.
-    process.stderr.write("personal-agent: refusing to apply Memory Suggestion without --yes in non-interactive mode.\n");
+    process.stderr.write(`${cliCommandName}: refusing to apply Memory Suggestion without --yes in non-interactive mode.\n`);
     return false;
   }
 

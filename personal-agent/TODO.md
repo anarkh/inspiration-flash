@@ -2,6 +2,29 @@
 
 This backlog keeps valuable future capabilities visible without expanding the first Personal Agent MVP.
 
+This file is intentionally unordered. [ROADMAP.md](./ROADMAP.md) defines implementation order, dependencies, and completion gates; ideas stay here until they are promoted into a roadmap phase.
+
+## Memory Suggestions Robustness
+
+Memory Suggestions v1 is complete enough for the agent loop, but robustness remains a long-running fixture and evaluation track.
+
+Why it matters:
+- Durable memory affects future Task Runs, so bad memory can compound over time.
+- Natural-language memory quality has no fixed endpoint.
+- New real-world tasks will reveal conflict, duplication, and quality patterns that the current deterministic checks do not cover.
+
+Why it does not block the Skill Pack stage:
+- The v1 flow is implemented, reviewable, gated, tested, and documented.
+- Existing checks already skip obvious low-quality, duplicate, conflicting, temporary, and secret-looking candidates.
+- Additional fixtures are incremental hardening, not missing core plumbing.
+
+Future learning tasks:
+- Add broader English and Chinese conflict phrasings.
+- Add more project convention variants.
+- Add false, unsupported, overconfident, and unstable fact fixtures.
+- Define a benchmark-style accept/skip fixture set.
+- Revisit semantic duplicate detection after Complex Embedding Retrieval exists.
+
 ## Complex Embedding Retrieval
 
 Deferred from MVP.
@@ -47,8 +70,23 @@ Future learning tasks:
 Deferred from MVP.
 
 Future direction:
-- Guided Skill Use reads Skill Packs as instructions and may run declared scripts.
+- Guided Skill Use already reads Skill Packs as instructions and resource inventory.
+- Guided Skill Use now summarizes static eval manifests and can execute declared eval cases through the normal Task Run loop.
+- Skill Pack eval is complete enough for MVP use: deterministic graders, tool trace checks, compact schema checks, semantic `model_judge`, repeated judging, and judge-output diagnostics are implemented.
+- Future eval work should calibrate `model_judge` with golden examples once real Skill Pack evals expose noisy semantic judgments.
+- Future `tool_trace` work can replace the compact input/output schema matcher with a full JSON Schema validator such as Ajv if real Skill Packs need broader schema features.
+- A future step may run declared scripts behind typed permissions and Confirmation Gates.
 - A later runtime could expose Skill Packs as typed capabilities with manifests, permissions, tests, and versioning.
+
+## Persistent Chat Hardening
+
+Chat mode is implemented for one local process and one persistent Task Run, but richer conversation management remains future work.
+
+Future learning tasks:
+- Add a command that reopens a prior completed chat and appends new `owner_message` events in a linked run.
+- Add long-chat summarization or retrieval before provider context grows too large.
+- Add transcript export formatting that separates Owner messages from model messages.
+- Decide whether chat needs cancellation, slash commands, or multi-line input.
 
 ## Framework Revisit
 

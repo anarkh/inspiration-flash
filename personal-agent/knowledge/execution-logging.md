@@ -18,6 +18,8 @@ Example shape:
 
 The CLI passes a callback that writes each line to `stderr`. This keeps progress logs visible in the terminal while leaving `stdout` available for command results such as `Completed Task Run ...`.
 
+Learning Lens reuses this same callback when `--learn` is enabled, but it emits separate `[learn]` lines. Default execution logging stays focused on `[agent]` progress lines.
+
 ## Other Common Approaches
 
 **Silent agent loop**:
@@ -52,6 +54,7 @@ Current tests verify:
 
 - `runTask` emits one log line for each model step when a logger is supplied.
 - CLI `run` writes bootstrap plan and finish steps to `stderr`.
+- CLI `run --learn` adds opt-in `[learn]` notes without changing default output.
 
 Future evaluation should add:
 

@@ -1,4 +1,5 @@
 .codex/
+.personal-agent/
 node_modules/
 dist/
 .env

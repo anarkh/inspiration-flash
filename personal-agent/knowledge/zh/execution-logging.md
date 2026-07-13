@@ -18,6 +18,8 @@ CLI 现在会在模型 provider 每次返回 Agent Step 时打印一条简短的
 
 CLI 传入的回调会把每一行写到 `stderr`。这样进度日志仍会出现在终端里，同时 `stdout` 可以继续保留给 `Completed Task Run ...` 这类命令结果。
 
+Learning Lens 在开启 `--learn` 时也会复用这个回调，但它输出的是独立的 `[learn]` 行。默认执行日志仍然只聚焦 `[agent]` 进度行。
+
 ## 其他常见方案
 
 **静默 agent loop**：
@@ -52,6 +54,7 @@ CLI 传入的回调会把每一行写到 `stderr`。这样进度日志仍会出�
 
 - 当传入 logger 时，`runTask` 会为每个模型 step 输出一条日志。
 - CLI `run` 会把 bootstrap 的 plan 和 finish 步骤写到 `stderr`。
+- CLI `run --learn` 会增加显式 opt-in 的 `[learn]` 说明，同时不改变默认输出。
 
 后续评测应增加：
 

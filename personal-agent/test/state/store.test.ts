@@ -35,6 +35,7 @@ test("ensureWorkspaceState creates config and memory files", async () => {
 
     assert.equal(config.modelProvider, "deepseek");
     assert.equal(config.model, "deepseek-v4-flash");
+    assert.equal(config.learningLens, false);
     assert.match(memory, /# Project Memory/);
   } finally {
     await rm(workspace, { recursive: true, force: true });
@@ -132,6 +133,13 @@ test("listTaskRuns returns recent run metadata", async () => {
       mode: "execution",
       successCheck: "second check"
     });
+    const checkpoint = await writeCheckpoint(second.runDir, {
+      goal: "second task",
+      turn: 1
+    });
+    const storedCheckpoint = await readCheckpoint(second.runDir, checkpoint.id);
+    await writeTaskReport(first.runDir, "First report.");
+    await writeTaskEvaluation(first.runDir, { verdict: "pass" });
     await updateTaskRunStatus(first.runDir, "completed");
 
     const runs = await listTaskRuns(workspace, 10);
@@ -143,6 +151,15 @@ test("listTaskRuns returns recent run metadata", async () => {
     );
     assert.equal(runs.find((run) => run.id === first.id)?.status, "completed");
     assert.equal(runs.find((run) => run.id === first.id)?.goal, "first task");
+    assert.equal(runs.find((run) => run.id === first.id)?.evaluationVerdict, "pass");
+    assert.equal(runs.find((run) => run.id === first.id)?.reportPath, join(first.runDir, "report.md"));
+    assert.equal(runs.find((run) => run.id === first.id)?.latestCheckpointId, undefined);
+    assert.equal(runs.find((run) => run.id === first.id)?.latestCheckpointTurn, undefined);
+    assert.equal(runs.find((run) => run.id === second.id)?.evaluationVerdict, undefined);
+    assert.equal(runs.find((run) => run.id === second.id)?.reportPath, undefined);
+    assert.equal(runs.find((run) => run.id === second.id)?.latestCheckpointId, checkpoint.id);
+    assert.equal(runs.find((run) => run.id === second.id)?.latestCheckpointTurn, 1);
+    assert.equal(runs.find((run) => run.id === second.id)?.latestCheckpointCreatedAt, storedCheckpoint.createdAt);
     assert.equal(runs.find((run) => run.id === second.id)?.mode, "execution");
   } finally {
     await rm(workspace, { recursive: true, force: true });
@@ -225,6 +242,32 @@ test("exportTaskRun includes a decision trace, tool summary, and changed resourc
       tool: "write_file",
       output: { type: "file_written", path: "draft.md", bytes: 6 }
     });
+    await appendRunEvent(run.runDir, {
+      type: "skill_packs_confirmation",
+      approved: false,
+      reason: "multiple Skill Packs matched automatically",
+      skillPacks: [{ name: "docs-helper", path: ".agents/skills/docs-helper/SKILL.md" }]
+    });
+    await appendRunEvent(run.runDir, {
+      type: "skill_packs",
+      skillPacks: [
+        {
+          name: "docs-helper",
+          description: "Helps summarize docs.",
+          path: ".agents/skills/docs-helper/SKILL.md",
+          resources: {
+            references: [".agents/skills/docs-helper/references/guide.md"],
+            scripts: [".agents/skills/docs-helper/scripts/search_index.py"],
+            evals: [".agents/skills/docs-helper/evals/evals.json"],
+            evalManifest: {
+              path: ".agents/skills/docs-helper/evals/evals.json",
+              valid: true,
+              evalCount: 1
+            }
+          }
+        }
+      ]
+    });
     await appendRunEvent(run.runDir, { type: "finish", report: "Draft written." });
     await writeTaskReport(run.runDir, "Draft written.");
     await writeTaskEvaluation(run.runDir, { verdict: "pass" });
@@ -237,8 +280,19 @@ test("exportTaskRun includes a decision trace, tool summary, and changed resourc
     assert.match(markdown, /- plan: Create a draft/);
     assert.match(markdown, /- tool: write_file/);
     assert.match(markdown, /- tool_result: write_file -> file_written/);
+    assert.match(markdown, /- skill_packs_confirmation: denied/);
     assert.match(markdown, /## Local Tools Used/);
     assert.match(markdown, /- write_file/);
+    const skillPackSection = markdown.slice(
+      markdown.indexOf("## Skill Packs Used"),
+      markdown.indexOf("## Changed Resources")
+    );
+    assert.match(skillPackSection, /docs-helper \(\.agents\/skills\/docs-helper\/SKILL\.md\)/);
+    assert.match(skillPackSection, /\.agents\/skills\/docs-helper\/references\/guide\.md/);
+    assert.match(skillPackSection, /scripts are inventory only and are not auto-executed/);
+    assert.match(skillPackSection, /\.agents\/skills\/docs-helper\/scripts\/search_index\.py/);
+    assert.match(skillPackSection, /\.agents\/skills\/docs-helper\/evals\/evals\.json/);
+    assert.match(skillPackSection, /eval manifest: valid \(1 eval\)/);
     assert.match(markdown, /## Changed Resources/);
     assert.match(markdown, /- draft\.md/);
   } finally {

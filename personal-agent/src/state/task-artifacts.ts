@@ -52,6 +52,10 @@ export async function exportTaskRun(workspace: string, id?: string): Promise<Tas
     "",
     ...formatMarkdownList(collectLocalToolsUsed(events), "_No local tools used._"),
     "",
+    "## Skill Packs Used",
+    "",
+    ...formatMarkdownList(collectSkillPacksUsed(events), "_No Skill Packs used._"),
+    "",
     "## Changed Resources",
     "",
     ...formatMarkdownList(collectChangedResources(events), "_No changed resources recorded._"),
@@ -166,6 +170,12 @@ function formatDecisionTraceEvent(event: unknown): string {
     const outputType = isRecord(event.output) && typeof event.output.type === "string" ? event.output.type : "observed";
     return `tool_result: ${event.tool} -> ${outputType}`;
   }
+  if (event.type === "skill_packs" && Array.isArray(event.skillPacks)) {
+    return `skill_packs: ${event.skillPacks.length} selected`;
+  }
+  if (event.type === "skill_packs_confirmation" && typeof event.approved === "boolean") {
+    return `skill_packs_confirmation: ${event.approved ? "approved" : "denied"}`;
+  }
   if (event.type === "confirm" && typeof event.prompt === "string") {
     return `confirm: ${event.prompt}`;
   }
@@ -190,6 +200,76 @@ function collectLocalToolsUsed(events: unknown[]): string[] {
     }
   }
   return [...tools];
+}
+
+/** Collects selected Skill Pack names and paths recorded by the runner. */
+function collectSkillPacksUsed(events: unknown[]): string[] {
+  const skillPacks = new Map<string, Record<string, unknown>>();
+  for (const event of events) {
+    if (!isRecord(event) || event.type !== "skill_packs" || !Array.isArray(event.skillPacks)) {
+      continue;
+    }
+    for (const skillPack of event.skillPacks) {
+      if (!isRecord(skillPack) || typeof skillPack.name !== "string" || typeof skillPack.path !== "string") {
+        continue;
+      }
+      skillPacks.set(skillPack.path, skillPack);
+    }
+  }
+  return [...skillPacks.values()].flatMap(formatSkillPackUsed);
+}
+
+/** Formats a selected Skill Pack plus optional resource inventory for Markdown export. */
+function formatSkillPackUsed(skillPack: Record<string, unknown>): string[] {
+  const name = typeof skillPack.name === "string" ? skillPack.name : "unknown";
+  const path = typeof skillPack.path === "string" ? skillPack.path : "unknown";
+  return [[`${name} (${path})`, ...formatSkillPackResources(skillPack.resources)].join("\n")];
+}
+
+/** Formats agent-ability resource inventory paths under a selected Skill Pack. */
+function formatSkillPackResources(resources: unknown): string[] {
+  if (!isRecord(resources)) {
+    return [];
+  }
+
+  const lines: string[] = [];
+  if (Array.isArray(resources.scripts) && resources.scripts.some((path) => typeof path === "string")) {
+    // Script paths are audit metadata only; exports should not imply that Skill Pack scripts ran automatically.
+    lines.push("  - scripts are inventory only and are not auto-executed by the Skill Pack layer");
+  }
+  for (const [label, paths] of [
+    ["references", resources.references],
+    ["scripts", resources.scripts],
+    ["evals", resources.evals]
+  ] as const) {
+    if (!Array.isArray(paths)) {
+      continue;
+    }
+    for (const path of paths) {
+      if (typeof path === "string") {
+        lines.push(`  - ${label}: ${path}`);
+      }
+    }
+  }
+  const evalManifest = formatSkillPackEvalManifest(resources.evalManifest);
+  if (evalManifest) {
+    lines.push(`  - eval manifest: ${evalManifest}`);
+  }
+  return lines;
+}
+
+/** Formats optional Skill Pack eval manifest metadata recorded in run events. */
+function formatSkillPackEvalManifest(value: unknown): string | null {
+  if (!isRecord(value) || typeof value.valid !== "boolean" || typeof value.evalCount !== "number") {
+    return null;
+  }
+
+  const countLabel = value.evalCount === 1 ? "eval" : "evals";
+  if (value.valid) {
+    return `valid (${value.evalCount} ${countLabel})`;
+  }
+  const reason = typeof value.reason === "string" ? value.reason : "unknown reason";
+  return `invalid (${reason})`;
 }
 
 /** Collects resources that tool observations report as changed by the Task Run. */

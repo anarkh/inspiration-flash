@@ -1,0 +1,219 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://personal-agent.local/schemas/skill-evals.schema.json",
+  "title": "Personal Agent Skill Eval Manifest",
+  "description": "An optional Personal Agent quality layer for a Skill Pack. This file is not required by Anthropic Skills, but lets this project run local skill regression evals.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["skill_name", "evals"],
+  "properties": {
+    "skill_name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Name of the Skill Pack this manifest evaluates. It should match SKILL.md frontmatter name."
+    },
+    "evals": {
+      "type": "array",
+      "description": "Eval cases that are each run as a normal Personal Agent Task Run.",
+      "items": {
+        "$ref": "#/$defs/evalCase"
+      }
+    }
+  },
+  "$defs": {
+    "evalCase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "prompt", "expected_output"],
+      "properties": {
+        "id": {
+          "oneOf": [{ "type": "string", "minLength": 1 }, { "type": "number" }],
+          "description": "Stable eval case identifier."
+        },
+        "prompt": {
+          "type": "string",
+          "minLength": 1,
+          "description": "User-like prompt used to exercise the Skill Pack."
+        },
+        "expected_output": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Expected evidence for the default contains grader, or human-readable rubric for other graders."
+        },
+        "files": {
+          "type": "array",
+          "description": "Optional workspace-relative fixture files needed by this eval case.",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "grader": {
+          "description": "Optional grader. Missing grader defaults to contains(expected_output).",
+          "oneOf": [
+            { "$ref": "#/$defs/containsGrader" },
+            { "$ref": "#/$defs/regexGrader" },
+            { "$ref": "#/$defs/modelJudgeGrader" },
+            { "$ref": "#/$defs/toolTraceGrader" }
+          ]
+        }
+      }
+    },
+    "containsGrader": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "const": "contains"
+        }
+      }
+    },
+    "regexGrader": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "pattern"],
+      "properties": {
+        "type": {
+          "const": "regex"
+        },
+        "pattern": {
+          "type": "string",
+          "minLength": 1,
+          "description": "JavaScript regular expression pattern matched against the final Task Report with i and u flags."
+        }
+      }
+    },
+    "modelJudgeGrader": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "rubric"],
+      "properties": {
+        "type": {
+          "const": "model_judge"
+        },
+        "rubric": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Rubric used by the configured Model Provider to judge the final Task Report semantically."
+        },
+        "judge_runs": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5,
+          "description": "Optional number of repeated judge calls. Defaults to 1."
+        },
+        "pass_threshold": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5,
+          "description": "Optional number of pass verdicts required across judge_runs. Defaults to judge_runs."
+        }
+      }
+    },
+    "toolTraceGrader": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "tool"],
+      "properties": {
+        "type": {
+          "const": "tool_trace"
+        },
+        "tool": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Local Tool name that must appear in the Task Run event trace."
+        },
+        "input_contains": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Optional substring that must appear in the serialized input of a matching Local Tool call."
+        },
+        "input_matches": {
+          "type": "object",
+          "minProperties": 1,
+          "description": "Optional partial JSON object that must match the input of a matching Local Tool call."
+        },
+        "input_schema": {
+          "$ref": "#/$defs/jsonValueSchema",
+          "description": "Optional compact JSON Schema-style matcher for the input of a matching Local Tool call."
+        },
+        "output_contains": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Optional substring that must appear in the serialized output of a matching Local Tool result."
+        },
+        "output_matches": {
+          "type": "object",
+          "minProperties": 1,
+          "description": "Optional partial JSON object that must match the output of a matching Local Tool result."
+        },
+        "output_type": {
+          "type": "string",
+          "enum": ["string", "number", "boolean", "object", "array", "null"],
+          "description": "Optional JSON-style top-level type required for the output of a matching Local Tool result."
+        },
+        "output_schema": {
+          "$ref": "#/$defs/jsonValueSchema",
+          "description": "Optional compact JSON Schema-style matcher for the output of a matching Local Tool result."
+        }
+      }
+    },
+    "jsonValueSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "type": {
+          "oneOf": [
+            {
+              "type": "string",
+              "enum": ["string", "number", "boolean", "object", "array", "null"]
+            },
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "enum": ["string", "number", "boolean", "object", "array", "null"]
+              }
+            }
+          ],
+          "description": "Supported JSON-style value type, or a non-empty list of accepted value types."
+        },
+        "required": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Object properties that must be present when validating an object value."
+        },
+        "properties": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/jsonValueSchema"
+          },
+          "description": "Nested schemas for object properties."
+        },
+        "items": {
+          "$ref": "#/$defs/jsonValueSchema",
+          "description": "Nested schema used for every array item."
+        },
+        "const": {
+          "description": "Literal JSON value that must match exactly."
+        },
+        "enum": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Literal JSON values where at least one must match."
+        },
+        "additionalProperties": {
+          "type": "boolean",
+          "description": "Use false to reject object keys not declared in properties."
+        }
+      }
+    }
+  }
+}

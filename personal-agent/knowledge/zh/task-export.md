@@ -5,7 +5,7 @@
 CLI 现在支持：
 
 ```text
-personal-agent export [run-id]
+a-agent export [run-id]
 ```
 
 它会把某次 Task Run 导出成 Markdown，并写入：
@@ -33,15 +33,18 @@ Markdown 分区包括：
 - Metadata
 - Decision Trace
 - Local Tools Used
+- Skill Packs Used
 - Changed Resources
 - Report
 - Evaluation
 - Memory Suggestions，存在时展示
 - Events
 
-`Decision Trace` 是从 `events.jsonl` 生成的紧凑可读摘要。它会把 provider steps 和 observations 转成类似 `plan: ...`、`tool: write_file`、`tool_result: write_file -> file_written` 的行。
+`Decision Trace` 是从 `events.jsonl` 生成的紧凑可读摘要。它会把 provider steps 和 observations 转成类似 `plan: ...`、`tool: write_file`、`tool_result: write_file -> file_written`、`skill_packs_confirmation: denied` 的行。
 
 `Local Tools Used` 是从 `tool` 和 `tool_result` events 中提取出来的去重工具列表。
+
+`Skill Packs Used` 是从 runner 记录的 `skill_packs` events 中提取出来的去重 Skill Pack name 和 path 列表。如果已选 Skill Pack 包含 agent-ability 风格 resource inventory，这个分区也会展示它的 `references`、`scripts`、`evals` paths，以及静态 eval manifest 摘要。如果存在 scripts，导出会写入和 provider context 一致的 inventory-only 提醒，避免读者把“发现了脚本路径”误解成“脚本已经执行”。这些 events 只作为审计 metadata，不会回传进 provider event stream。
 
 `Changed Resources` 目前记录工具 observation 明确报告的文件变更，例如 `file_written`。它是保守的：只被提议但没有确认执行的写入，不算 changed resources。
 
@@ -78,6 +81,8 @@ Owner 正在学习 agent run 的工作方式。Markdown export 可以用普通�
 - 把 report、evaluation 和 events 放到一个文件里。
 - 在原始 event JSON 前提供可读摘要。
 - 展示使用过哪些 Local Tools，以及哪些文件发生了变更。
+- 展示本次 Task Run 命中了哪些 Skill Packs、暴露了哪些 resource inventory paths，以及是否识别到 eval manifest。
+- 把 Skill Pack scripts 标记为 inventory-only，让导出保留和模型上下文一致的执行边界。
 - 当 run 产生候选 Project Memory notes 时，也会一起展示。
 - 生成 Markdown 时会脱敏常见环境变量、JSON、URL query、bearer、GitHub 和 `sk-...` secret 模式。
 - 同时支持指定 `run-id` 导出和 latest-run 导出。
@@ -97,10 +102,11 @@ Owner 正在学习 agent run 的工作方式。Markdown export 可以用普通�
 
 - state export 会写入 `export.md`。
 - export output 包含 metadata、report、evaluation 和 events。
-- export output 包含 Decision Trace、Local Tools Used 和 Changed Resources。
+- export output 包含 Decision Trace、Local Tools Used、Skill Packs Used、Skill Pack resource inventory、eval manifest summary 和 Changed Resources。
+- export output 会在 Decision Trace 中总结 Skill Pack confirmation 决策。
 - export output 会脱敏常见 API key、bearer token、环境变量、JSON、URL query 和 GitHub token 模式。
 - 存在 Memory Suggestions 时，export output 会包含它们。
-- CLI `personal-agent export` 会导出 latest run。
+- CLI `a-agent export` 会导出 latest run。
 - CLI help 会展示该命令。
 
 后续评测应增加：

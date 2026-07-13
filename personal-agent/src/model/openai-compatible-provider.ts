@@ -39,6 +39,7 @@ export function createOpenAICompatibleProvider(options: OpenAICompatibleProvider
 
   return {
     name: options.name ?? "openai-compatible",
+    model,
     /** Sends the current agent loop state to the model and returns one Agent Step. */
     async nextStep(input) {
       const response = await fetchImpl(`${baseUrl}/chat/completions`, {
@@ -52,16 +53,7 @@ export function createOpenAICompatibleProvider(options: OpenAICompatibleProvider
           messages: [
             {
               role: "system",
-              content: [
-                "You are the model inside a Personal Agent.",
-                "Return exactly one JSON object representing the next provider-neutral Agent Step.",
-                "Allowed types: message, plan, tool, confirm, reflect, finish.",
-                "Schemas: message {type,content}; plan {type,summary,steps}; tool {type,tool,input}; confirm {type,prompt,action}; reflect {type,note,section?}; finish {type,report}.",
-                "Use reflect with section stable-facts, preferences, project-conventions, or open-threads when you have a candidate Project Memory note; reflect does not save memory by itself.",
-                "Available local tools: list_files {}; read_file {path}; search_text {query}; write_file {path,content}; run_command {command}.",
-                "write_file and workspace-writing commands may return confirmation_required instead of changing files immediately.",
-                "Do not wrap the JSON in markdown."
-              ].join(" ")
+              content: createSystemPrompt(input)
             },
             {
               role: "user",
@@ -84,15 +76,46 @@ export function createOpenAICompatibleProvider(options: OpenAICompatibleProvider
   };
 }
 
+/** Builds interaction-specific instructions while preserving one provider-neutral step schema. */
+function createSystemPrompt(input: ModelProviderInput): string {
+  const interactionInstructions =
+    input.interaction === "chat"
+      ? [
+          "This is an ongoing interactive chat.",
+          "Answer the latest owner_message and use earlier owner_message and message events as conversation history.",
+          "For a direct conversational answer, return message {type,content}.",
+          "You may use plan, tool, confirm, or reflect before replying when work is required.",
+          "Never return finish in chat interaction; the runtime finalizes the chat after the Owner exits or input closes."
+        ]
+      : [
+          "This is a task interaction that must eventually return finish {type,report}.",
+          "Allowed types: message, plan, tool, confirm, reflect, finish."
+        ];
+
+  return [
+    "You are the model inside a Personal Agent.",
+    "Return exactly one JSON object representing the next provider-neutral Agent Step.",
+    ...interactionInstructions,
+    "Schemas: message {type,content}; plan {type,summary,steps}; tool {type,tool,input}; confirm {type,prompt,action}; reflect {type,note,section?}; finish {type,report}.",
+    "Events may include owner_message entries for visible user turns in chat mode.",
+    "Use reflect with section stable-facts, preferences, project-conventions, or open-threads when you have a candidate Project Memory note; reflect does not save memory by itself.",
+    "Available local tools: list_files {}; read_file {path}; search_text {query}; write_file {path,content}; run_command {command}.",
+    "write_file and workspace-writing commands may return confirmation_required instead of changing files immediately.",
+    "Do not wrap the JSON in markdown."
+  ].join(" ");
+}
+
 /** Builds the JSON payload that teaches the model about the current Task Run state. */
 function toPromptPayload(input: ModelProviderInput): Record<string, unknown> {
   return {
     goal: input.goal,
     mode: input.mode,
+    interaction: input.interaction,
     successCheck: input.successCheck,
     turn: input.turn,
     events: input.events,
-    projectMemory: input.projectMemory ?? ""
+    projectMemory: input.projectMemory ?? "",
+    skillPacks: input.skillPacks ?? ""
   };
 }
 

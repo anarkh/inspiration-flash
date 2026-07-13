@@ -1,6 +1,7 @@
-import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { access, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
+import { readLatestCheckpoint } from "./checkpoints.ts";
 import { isNotFound } from "./shared.ts";
 import { ensureWorkspaceState } from "./workspace.ts";
 
@@ -27,6 +28,11 @@ export interface TaskRunMetadata {
   status: TaskRunStatus;
   createdAt: string;
   updatedAt: string;
+  evaluationVerdict?: string;
+  reportPath?: string;
+  latestCheckpointId?: string;
+  latestCheckpointTurn?: number;
+  latestCheckpointCreatedAt?: string;
 }
 
 export interface TaskRunRecord extends TaskRunMetadata {
@@ -113,9 +119,15 @@ export async function listTaskRuns(workspace: string, limit = 20): Promise<TaskR
     if (!entry.isDirectory()) {
       continue;
     }
-    const metadata = await readTaskRunMetadata(join(state.runsDir, entry.name));
+    const runDir = join(state.runsDir, entry.name);
+    const metadata = await readTaskRunMetadata(runDir);
     if (metadata) {
-      runs.push(metadata);
+      runs.push({
+        ...metadata,
+        evaluationVerdict: await readTaskRunEvaluationVerdict(runDir),
+        reportPath: await readTaskRunReportPath(runDir),
+        ...(await readTaskRunLatestCheckpointSummary(runDir))
+      });
     }
   }
 
@@ -146,6 +158,59 @@ async function readTaskRunMetadata(runDir: string): Promise<TaskRunMetadata | nu
     }
     throw error;
   }
+}
+
+/** Reads the optional Task Evaluation verdict used by compact history output. */
+async function readTaskRunEvaluationVerdict(runDir: string): Promise<string | undefined> {
+  try {
+    const evaluation = JSON.parse(await readFile(join(runDir, "evaluation.json"), "utf8")) as Record<string, unknown>;
+    return typeof evaluation.verdict === "string" ? evaluation.verdict : undefined;
+  } catch (error) {
+    if (isNotFound(error)) {
+      return undefined;
+    }
+    throw error;
+  }
+}
+
+/** Returns the Task Report path only when report.md has already been written. */
+async function readTaskRunReportPath(runDir: string): Promise<string | undefined> {
+  const reportPath = join(runDir, "report.md");
+  try {
+    await access(reportPath);
+    return reportPath;
+  } catch (error) {
+    if (isNotFound(error)) {
+      return undefined;
+    }
+    throw error;
+  }
+}
+
+/** Reads compact latest-checkpoint metadata for history without exposing full checkpoint state. */
+async function readTaskRunLatestCheckpointSummary(
+  runDir: string
+): Promise<Pick<TaskRunMetadata, "latestCheckpointId" | "latestCheckpointTurn" | "latestCheckpointCreatedAt">> {
+  const checkpoint = await readLatestCheckpoint(runDir);
+  if (!checkpoint) {
+    return {};
+  }
+
+  return {
+    latestCheckpointId: checkpoint.id,
+    latestCheckpointTurn: readCheckpointTurn(checkpoint.state),
+    latestCheckpointCreatedAt: checkpoint.createdAt
+  };
+}
+
+/** Extracts the saved provider turn from a checkpoint state object when present. */
+function readCheckpointTurn(state: unknown): number | undefined {
+  if (typeof state !== "object" || state === null || !("turn" in state)) {
+    return undefined;
+  }
+
+  const turn = (state as Record<string, unknown>).turn;
+  return typeof turn === "number" ? turn : undefined;
 }
 
 /** Creates a filesystem-friendly Task Run id with time ordering and collision resistance. */

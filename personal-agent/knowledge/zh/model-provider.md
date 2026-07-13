@@ -10,13 +10,19 @@ Personal Agent 现在有了 Model Provider 边界，并包含三个实现：
 
 CLI 会先用 `dotenv` 加载 `personal-agent/.env`，然后再选择 provider。`.env` 已被 git 忽略，用来保存 `DEEPSEEK_API_KEY` 这类本地密钥。
 
+被 Git 忽略的文件不会随 worktree 复制，因此每个 worktree 都有自己的 package-local `.env`。如果全局 `a-agent` link 改指向另一个 worktree，需要重新创建该 worktree 的 `personal-agent/.env`，或者在 shell 中提供环境变量。chat 会在启动时打印选中的 provider 和 model，因此配置缺失会立即可见。
+
 随后 provider selection 会读取环境变量。如果存在 `DEEPSEEK_API_KEY`，就默认使用 `deepseek` 和 `deepseek-v4-flash`。如果只有 `OPENAI_API_KEY`，就使用 `openai-compatible`。如果没有任何模型 key，就回退到 `bootstrap`。
+
+为了本地演示 recovery，`PERSONAL_AGENT_DEBUG_RECOVERY=1` 会包裹已经选中的 provider，并在真正委托给 provider 前注入一次格式错误的 Agent Step。这是开发验证开关，不是正常运行时行为。
 
 ## 在本项目中如何工作
 
 runner 会向 `ModelProvider` 请求下一个 Agent Step。provider 返回普通数据，核心 loop 再用 `parseAgentStep` 校验。
 
 runner 也会通过 `ModelProviderInput.projectMemory` 传入当前 Project Memory。这样长期偏好和项目约定会对每一轮模型调用可见，同时不会把 runner 绑定到某个 provider-native memory 功能。
+
+`ModelProviderInput.interaction` 会区分 `task` 与 `chat`。Task prompt 可以用 report 完成任务；chat prompt 必须使用 `message` 回答最新的 `owner_message`。如果 chat provider 返回 `finish`，runner 会拒绝它，并通过正常 Recovery Attempt 路径重试。
 
 `deepseek` 会向以下地址发送 chat completion 请求：
 
@@ -35,6 +41,10 @@ OpenAI-compatible fallback 配置项：
 - `OPENAI_API_KEY`
 - `OPENAI_BASE_URL`
 - `OPENAI_MODEL`
+
+开发验证配置项：
+
+- `PERSONAL_AGENT_DEBUG_RECOVERY=1`：注入一次格式错误的 Agent Step，让 CLI 展示 recovery 重试路径。
 
 provider 会要求模型只返回一个 JSON Agent Step，并在 API 支持时请求 JSON object 输出。
 
@@ -65,6 +75,8 @@ OpenAI-compatible adapter 也会在把返回对象交给 runner 之前做校验�
 - OpenAI-compatible endpoint 可以通过环境变量切换。
 - 常见模型输出漂移会在 provider 边界被修复，不会泄漏进 runner。
 - Project Memory 会通过 provider-neutral input contract 对模型可见。
+- chat 启动时会显示 provider 和 model 身份。
+- chat 生命周期规则同时由 prompt 指令和 runner 校验保证。
 
 ## 劣势
 
@@ -86,7 +98,11 @@ OpenAI-compatible adapter 也会在把返回对象交给 runner 之前做校验�
 - DeepSeek 默认使用 `https://api.deepseek.com` 和 `deepseek-v4-flash`。
 - provider selection 在存在 `DEEPSEEK_API_KEY` 时优先选择 DeepSeek。
 - 没有 key 时 provider selection 会回退到 `bootstrap`。
+- chat 启动时会报告选中的 provider 和 model。
+- chat prompt 会禁止模型生成 `finish` step。
+- 如果 chat provider 仍返回 `finish`，runner 校验会触发 recovery。
 - CLI 在没有网络凭据时仍能完成 bootstrap Task Run。
+- 设置 `PERSONAL_AGENT_DEBUG_RECOVERY=1` 时，CLI 可以展示 recovery 重试路径。
 - 当 `.env` 中存在有效 key 时，真实 DeepSeek smoke test 可以完成一个本地 Task Run。
 
 后续评测应增加：

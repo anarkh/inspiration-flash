@@ -6,8 +6,20 @@ import type { ModelProvider } from "./provider.ts";
 export function createBootstrapProvider(): ModelProvider {
   return {
     name: "bootstrap",
-    /** Produces a minimal plan on the first turn and a finish step afterward. */
+    model: "deterministic-bootstrap",
+    /** Produces deterministic steps that exercise task and chat loops without model credentials. */
     async nextStep(input) {
+      const ownerMessages = input.events.filter((event) => event.type === "owner_message");
+      if (input.interaction === "chat" && ownerMessages.length > 0) {
+        const latestOwnerMessage = ownerMessages[ownerMessages.length - 1];
+        return {
+          type: "message",
+          content:
+            "Bootstrap provider cannot answer with a real model. " +
+            `Configure DEEPSEEK_API_KEY and retry. Received: ${latestOwnerMessage.content}`
+        };
+      }
+
       if (input.turn === 1) {
         return {
           type: "plan",

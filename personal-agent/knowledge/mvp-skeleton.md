@@ -5,14 +5,20 @@
 The first implementation slice creates the TypeScript CLI project and a tested foundation for:
 
 - CLI help output.
-- `personal-agent run "<task>"` creating a Task Run.
-- `personal-agent history` listing recent Task Runs.
-- `personal-agent resume` continuing the latest active Task Run.
-- `personal-agent memory` viewing Project Memory.
-- `personal-agent memory append "<note>"` appending simple memory notes.
-- `personal-agent memory append --section <section> "<note>"` inserting notes into named memory sections.
-- `personal-agent memory apply-suggestions [--yes] [run-id]` applying reviewed Memory Suggestions.
-- `personal-agent export [run-id]` writing a Markdown Task Run export.
+- package name `@ranarkh/agent` and CLI command `a-agent`.
+- `a-agent start` running a minimal line-based Task Conversation.
+- `a-agent chat [--learn] [--review]` running one persistent chat Task Run with repeated Owner messages.
+- `a-agent run --learn`, `a-agent start --learn`, and `a-agent resume --learn` showing opt-in Learning Lens notes.
+- `a-agent run --review`, `a-agent start --review`, and `a-agent resume --review` writing optional model-assisted review into Task Evaluation.
+- `a-agent run "<task>"` creating a Task Run.
+- `a-agent run "<task>"` refusing clearly ambiguous tasks before creating a Task Run.
+- `a-agent history` listing recent Task Runs.
+- `a-agent resume` continuing the latest active Task Run.
+- `a-agent memory` viewing Project Memory.
+- `a-agent memory append "<note>"` appending simple memory notes.
+- `a-agent memory append --section <section> "<note>"` inserting notes into named memory sections.
+- `a-agent memory apply-suggestions [--yes] [run-id]` applying reviewed Memory Suggestions.
+- `a-agent export [run-id]` writing a Markdown Task Run export.
 - a bootstrap Model Provider that drives a minimal Task Run loop.
 - Task Report and Task Evaluation files.
 - Task Run Markdown exports.
@@ -28,6 +34,7 @@ The first implementation slice creates the TypeScript CLI project and a tested f
 - append-only event logging.
 - Checkpoint write and read.
 - provider-neutral Agent Step validation.
+- bounded recovery attempts when provider output fails Agent Step validation.
 - provider-neutral Agent Step execution for `plan`, `message`, `tool`, `reflect`, and `finish`.
 - Local Tool primitives for reading, listing, and text search.
 - Local Tool observations returned to the Model Provider as `tool_result` events.
@@ -35,7 +42,7 @@ The first implementation slice creates the TypeScript CLI project and a tested f
 
 ## How It Works Here
 
-The CLI is intentionally thin. `run "<task>"` currently accepts the Owner's task, invokes a bootstrap Model Provider, creates Workspace State under `.personal-agent/`, records visible Agent Steps and observations as events, writes Checkpoints, and finishes with a local Task Report and Task Evaluation.
+The CLI is intentionally thin. `start` reads repeated line-based tasks until `exit`, `quit`, or EOF, applies the same small Clarification Gate for clearly ambiguous requests, then reuses the same execution path as `run "<task>"` for each task. `chat` creates one persistent Task Run, appends each user line as an `owner_message` event, and waits for a model `message` after every input. A model cannot finish chat; `exit`, `quit`, or EOF lets the runner write the final report and evaluation. `run "<task>"` first applies that Clarification Gate, then invokes a bootstrap Model Provider, creates Workspace State under `.personal-agent/`, records visible Agent Steps and observations as events, writes Checkpoints, and finishes with a local Task Report and Task Evaluation.
 
 The implementation is split into small modules:
 
@@ -81,7 +88,7 @@ The first version favors a small first-party loop because the Owner wants to lea
 ## Disadvantages
 
 - Real model behavior depends on valid provider credentials; otherwise the CLI falls back to bootstrap.
-- Task Evaluation is still simple and deterministic.
+- Task Evaluation keeps deterministic verdicts authoritative; model-assisted review is optional and advisory.
 - JSON files are transparent but weaker than a database for queries.
 - Command policy is conservative and pattern-based.
 
@@ -96,7 +103,20 @@ Current verification:
 The current tests cover:
 
 - CLI help and Task Run creation.
+- CLI interactive `start` task creation and repeated task execution.
+- CLI Clarification Gate for clearly ambiguous `run` and `start` tasks.
+- CLI Learning Lens notes for planning, checkpointing, and evaluation.
+- CLI model review flag records `unavailable` when only bootstrap is configured.
+- CLI debug recovery switch for visibly exercising recovery attempts.
+- CLI Skill Pack eval execution.
 - CLI Task Run history.
+- CLI Task Run history displays the Task Evaluation verdict when available.
+- CLI Task Run history can filter active versus completed runs.
+- CLI Task Run history can cap output with `--limit`.
+- CLI Task Run history can page output with `--offset`.
+- CLI Task Run history displays filtered totals plus previous/next page hints.
+- CLI Task Run history displays the Task Report path when available.
+- CLI Task Run history displays the latest Checkpoint id, saved turn, and created time when available.
 - CLI Task Run resume.
 - CLI Project Memory view, append, and section insertion.
 - CLI Memory Suggestions apply flow.
@@ -105,19 +125,42 @@ The current tests cover:
 - Workspace State defaults.
 - event and Checkpoint durability.
 - Agent Step validation.
+- runner recovery attempts for malformed provider output.
+- runner recovery limit for repeated malformed provider output.
 - runner execution of provider steps.
 - runner execution of Local Tool observations.
+- runner deterministic Task Evaluation for trace quality, report quality, gate safety, and Memory Suggestion learning signals.
+- runner optional model-assisted review without overriding deterministic Task Evaluation verdicts.
 - runner collection and CLI application of Memory Suggestions from `reflect` steps.
+- runner persistent chat with multiple Owner messages in one Task Run.
+- CLI persistent chat with two piped inputs recorded as two `owner_message` events.
+- chat recovery when a provider tries to return `finish` instead of answering.
+- runner-authored chat completion and evaluation after input closes.
 - runner injection of Project Memory into fresh and resumed Task Runs.
 - runner filtering of irrelevant Project Memory notes when relevant notes match the task.
+- runner discovery and injection of relevant Skill Pack summaries.
+- explicit Owner-named Skill Pack priority over higher-scoring keyword matches.
+- runner confirmation before injecting multiple automatically matched Skill Packs.
+- runner subset selection for confirmed Skill Pack candidates.
+- terminal parsing of numbered Skill Pack subset choices.
+- Skill Pack provider context for agent-ability style references, scripts, and eval resources.
+- Skill Pack provider context and Task Export mark scripts as inventory-only rather than auto-executable.
+- Skill Pack eval manifest validity and eval count summaries.
+- Skill Pack eval runner execution with local Markdown and JSON reports.
+- Skill Pack eval runner `contains`, `regex`, `model_judge`, `model_judge.judge_runs`, `model_judge.pass_threshold`, `tool_trace`, `tool_trace.input_contains`, `tool_trace.input_matches`, `tool_trace.input_schema`, `tool_trace.output_contains`, `tool_trace.output_matches`, `tool_trace.output_type`, and `tool_trace.output_schema` graders.
+- Skill Pack eval manifest JSON Schema plus missing `skill_name`, unknown-field, bad `files`, empty required string, multi-error, and regex pattern validation.
+- OpenAI-compatible provider inclusion of Skill Pack context in prompt payload.
+- Task Run export listing of selected Skill Packs.
+- Task Run export listing of selected Skill Pack resource inventory.
+- Task Run export Decision Trace summaries for Skill Pack confirmation decisions.
 - Task Run export summaries for Decision Trace, Local Tools Used, and Changed Resources.
 - Task Run export redaction for common environment, JSON, URL query, bearer, GitHub, and `sk-...` secret patterns.
 - Memory Suggestion quality gates before applying notes to Project Memory.
 - Memory Suggestion exact and simple near-duplicate checks before applying notes to Project Memory.
 - Memory Suggestion simple same-topic conflict checks before applying notes to Project Memory.
-- Memory Suggestion direct-implementation versus proposal-only preference conflict checks before applying notes to Project Memory.
+- Memory Suggestion English and Chinese direct-implementation versus proposal-only preference conflict checks before applying notes to Project Memory.
 - Memory Suggestion simple same-topic negation checks before applying notes to Project Memory.
-- Memory Suggestion simple same-topic prohibition checks before applying notes to Project Memory.
+- Memory Suggestion simple same-topic prohibition and avoidance checks before applying notes to Project Memory.
 - Memory Suggestion simple Chinese preference conflict checks before applying notes to Project Memory.
 - Memory Suggestion generic unactionable note checks before applying notes to Project Memory.
 - command risk classification.
@@ -125,4 +168,4 @@ The current tests cover:
 
 Next evaluation target:
 
-Add broader conflict-aware memory fixtures while keeping fake-provider tests as regression coverage for the agent loop.
+Skill Pack evals now have a local runner, deterministic `contains`, `regex`, `tool_trace`, `tool_trace.input_contains`, `tool_trace.input_matches`, `tool_trace.input_schema`, `tool_trace.output_contains`, `tool_trace.output_matches`, `tool_trace.output_type`, `tool_trace.output_schema` graders, and the first semantic `model_judge` grader with repeated-run thresholds and per-run judge diagnostics. The optional quality-layer schema documents unknown-field, invalid `files`, empty required string, multi-error, regex pattern, compact schema, and model judge validation. Future evaluation should use real Skill Pack runs to build golden examples for model judge calibration.

@@ -20,7 +20,7 @@ export async function ensureWorkspaceState(workspace: string): Promise<Workspace
   // never overwritten by another command invocation.
   await writeDefaultFile(
     join(stateDir, "config.json"),
-    `${JSON.stringify({ modelProvider: "deepseek", model: "deepseek-v4-flash", learningLens: true }, null, 2)}\n`
+    `${JSON.stringify({ modelProvider: "deepseek", model: "deepseek-v4-flash", learningLens: false }, null, 2)}\n`
   );
   await writeDefaultFile(
     join(stateDir, "memory.md"),

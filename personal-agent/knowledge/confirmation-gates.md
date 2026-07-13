@@ -10,7 +10,7 @@ The CLI implementation prints the tool, reason, preview, and action to the termi
 Approve this action? (y/N)
 ```
 
-Only `y` and `yes` approve the action. Non-interactive stdin denies by default so scripts and CI cannot hang.
+Only `y` and `yes` approve ordinary actions. For Skill Pack confirmations, the CLI can also accept numbered subset answers such as `1,3`. Non-interactive stdin denies by default so scripts and CI cannot hang.
 
 ## How It Works Here
 
@@ -22,6 +22,14 @@ If the Owner approves:
 - `run_command` rechecks the command policy, rejects dangerous commands, and executes approved non-dangerous commands without a shell.
 
 If the Owner denies or no confirmation callback exists, the runner records a `confirmation_denied` tool result and continues the model loop.
+
+Skill Pack confirmation uses the same callback shape but can return a richer decision:
+
+```ts
+{ approved: true, selected: [".agents/skills/readme-helper/SKILL.md"] }
+```
+
+The runner then injects only those selected guidance blocks.
 
 ## Other Common Approaches
 
@@ -36,7 +44,7 @@ A formal policy layer can express richer rules, roles, and scopes. It is useful 
 
 ## Why This Approach
 
-The project is CLI-first and learning-oriented. The Owner should see the proposed action before it changes the workspace. A simple y/N gate teaches the agent safety pattern without introducing a full policy runtime too early.
+The project is CLI-first and learning-oriented. The Owner should see the proposed action before it changes the workspace. A simple confirmation gate teaches the agent safety pattern without introducing a full policy runtime too early, and selected ids handle the first non-binary approval case without changing the Local Tool contract.
 
 ## Advantages
 
@@ -44,10 +52,11 @@ The project is CLI-first and learning-oriented. The Owner should see the propose
 - Denied actions are visible to the model as observations.
 - Non-interactive runs fail closed instead of hanging.
 - Confirmed commands are still run with `shell: false`.
+- Skill Pack confirmations can choose a subset instead of forcing all-or-nothing guidance injection.
 
 ## Disadvantages
 
-- The prompt is coarse-grained: approve or deny only.
+- Most tool prompts are still coarse-grained: approve or deny only.
 - There is no edit-before-approve flow yet.
 - There is no persistent trust policy for repeated commands.
 - Long action payloads can be noisy in the terminal.
@@ -61,6 +70,7 @@ Current tests verify:
 - confirmed workspace-write commands execute,
 - terminal prompt formatting includes reason, preview, and action,
 - approval parsing accepts only `y` and `yes`.
+- Skill Pack confirmation parsing accepts numbered subset choices.
 
 Future evaluation should add:
 

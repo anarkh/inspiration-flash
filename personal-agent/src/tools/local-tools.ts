@@ -17,6 +17,13 @@ export interface ConfirmationRequired {
   preview?: Record<string, unknown>;
 }
 
+export interface ConfirmationDecision {
+  approved: boolean;
+  selected?: string[];
+}
+
+export type ConfirmationResponse = boolean | ConfirmationDecision;
+
 export interface RejectedToolAction {
   type: "rejected";
   tool: string;

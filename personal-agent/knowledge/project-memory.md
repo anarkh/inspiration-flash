@@ -5,10 +5,10 @@
 The CLI now supports:
 
 ```text
-personal-agent memory
-personal-agent memory append "<note>"
-personal-agent memory append --section <section> "<note>"
-personal-agent memory apply-suggestions [--yes] [run-id]
+a-agent memory
+a-agent memory append "<note>"
+a-agent memory append --section <section> "<note>"
+a-agent memory apply-suggestions [--yes] [run-id]
 ```
 
 `memory` prints the current workspace's `.personal-agent/memory.md`. `memory append` adds a short Owner-provided note to that file. `--section` inserts the note under a named memory section. `apply-suggestions` applies reviewed candidate notes from a Task Run.
@@ -71,7 +71,8 @@ The Owner needs an inspectable checkpoint for durable preferences before adding 
 - Applies quality gates to Memory Suggestions before they become durable memory.
 - Skips exact and simple near-duplicate Memory Suggestions before they become durable memory.
 - Skips simple same-topic conflicting Memory Suggestions before they become durable memory.
-- Skips direct-implementation versus proposal-only Memory Suggestion conflicts before they become durable memory.
+- Skips English and Chinese direct-implementation versus proposal-only Memory Suggestion conflicts before they become durable memory.
+- Skips simple avoidance-worded project convention conflicts before they become durable memory.
 - Skips generic unactionable Memory Suggestions before they become durable memory.
 
 ## Disadvantages
@@ -80,25 +81,25 @@ The Owner needs an inspectable checkpoint for durable preferences before adding 
 - Manual append has no deduplication or conflict resolution.
 - Relevant-memory filtering is lexical, so it can miss related notes that use different wording.
 - Near-duplicate detection is deterministic and alias-based, not full semantic search.
-- Conflict detection is deterministic and based on term groups plus simple negation/prohibition, not broad reasoning.
+- Conflict detection is deterministic and based on term groups plus simple negation/prohibition/avoidance, not broad reasoning.
 - If no memory notes match the current task, the runner still falls back to the full memory file.
 
 ## Evaluation
 
 Current tests verify:
 
-- `personal-agent memory` initializes and prints Project Memory.
-- `personal-agent memory append "<note>"` persists a note.
-- `personal-agent memory append --section <section> "<note>"` inserts a note under the chosen section.
-- `personal-agent memory apply-suggestions --yes [run-id]` applies candidate notes into the correct sections.
+- `a-agent memory` initializes and prints Project Memory.
+- `a-agent memory append "<note>"` persists a note.
+- `a-agent memory append --section <section> "<note>"` inserts a note under the chosen section.
+- `a-agent memory apply-suggestions --yes [run-id]` applies candidate notes into the correct sections.
 - state helpers can read and append memory directly.
 - state helpers can insert memory notes inside named sections.
 - Task Runs filter out irrelevant Project Memory notes when at least one note matches the current task.
 - Memory Suggestions application skips exact and simple near-duplicate notes that already exist in Project Memory.
 - Memory Suggestions application skips simple same-topic conflicting notes.
-- Memory Suggestions application skips direct-implementation versus proposal-only preference conflicts.
+- Memory Suggestions application skips English and Chinese direct-implementation versus proposal-only preference conflicts.
 - Memory Suggestions application skips simple same-topic negated stable facts.
-- Memory Suggestions application skips simple same-topic prohibited project conventions.
+- Memory Suggestions application skips simple same-topic prohibited or avoided project conventions.
 - Memory Suggestions application skips simple Chinese conflicting preferences.
 - Memory Suggestions application skips low-quality, generic, temporary, and secret-looking notes.
 

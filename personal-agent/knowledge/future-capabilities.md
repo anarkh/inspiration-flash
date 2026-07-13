@@ -32,7 +32,9 @@ Network access can leak private workspace content or import hostile instructions
 
 ## Strong Skill Pack Runtime
 
-Do not turn Skill Packs into a plugin runtime until Guided Skill Use feels limiting.
+The MVP now has a lightweight Guided Skill Use layer that discovers relevant `SKILL.md` files and injects summaries into provider context.
+
+Do not turn Skill Packs into a plugin runtime until that Guided Skill Use layer feels limiting.
 
 Before implementation, prepare:
 - a manifest format

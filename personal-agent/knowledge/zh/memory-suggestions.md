@@ -20,13 +20,13 @@ runner 会把候选项写入：
 .personal-agent/runs/<run-id>/memory-suggestions.json
 ```
 
-该建议也会出现在 `personal-agent export [run-id]` 的 `Memory Suggestions` 分区中。
+该建议也会出现在 `a-agent export [run-id]` 的 `Memory Suggestions` 分区中。
 
 review 后的建议可以通过以下命令应用：
 
 ```text
-personal-agent memory apply-suggestions [run-id]
-personal-agent memory apply-suggestions --yes [run-id]
+a-agent memory apply-suggestions [run-id]
+a-agent memory apply-suggestions --yes [run-id]
 ```
 
 ## 在本项目中如何工作
@@ -61,7 +61,7 @@ Task Run 完成时，runner 会收集 `reflect` events，规范化 section，并
 
 这可以挡住 `Owner likes brief command line output.` 这类对 `Owner prefers concise CLI output.` 的简单改写。它不是 embedding 检索，也不理解任意语义。
 
-冲突检测也刻意保持窄范围。当前它能识别 `Owner prefers concise CLI output.` 与 `Owner prefers verbose CLI output.` 这类同主题相反偏好，也能识别 `Owner prefers the agent to implement changes directly.` 与 `Owner prefers the agent to only propose changes.` 这类“直接实现 vs 只给方案”的 agent 自主性偏好冲突，还能识别 `用户偏好精简输出。` 与 `用户偏好详细输出。` 这类中文偏好冲突、`Project uses LangChain.` 与 `Project does not use LangChain.` 这类同主题否定冲突，以及 `Generated code requires comments.` 与 `Generated code forbids comments.` 这类简单禁止冲突。CLI 会报告已有 note，并跳过候选项，即使传了 `--yes` 也不会直接写入。
+冲突检测也刻意保持窄范围。当前它能识别 `Owner prefers concise CLI output.` 与 `Owner prefers verbose CLI output.` 这类同主题相反偏好，也能识别 `Owner prefers the agent to implement changes directly.` 与 `Owner prefers the agent to only propose changes.` 这类英文“直接实现 vs 只给方案”的 agent 自主性偏好冲突，以及 `用户偏好 agent 直接修改代码。` 与 `用户偏好 agent 先确认再执行。` 这类中文自主性偏好冲突；还能识别 `用户偏好精简输出。` 与 `用户偏好详细输出。` 这类中文偏好冲突、`Project uses LangChain.` 与 `Project does not use LangChain.` 这类同主题否定冲突，以及 `Generated code must include necessary comments.` 与 `Generated code should avoid comments.` 这类简单禁止或避免型 project convention 冲突。CLI 会报告已有 note，并跳过候选项，即使传了 `--yes` 也不会直接写入。
 
 当前质量门会拒绝：
 
@@ -71,6 +71,43 @@ Task Run 完成时，runner 会收集 `reflect` events，规范化 section，并
 - 不能指导后续决策的泛泛 notes，例如 `The project is important.` 或 `Owner wants good results.`。
 
 这个质量门刻意保持保守和确定性。它能在写入 `.personal-agent/memory.md` 前挡住明显不合适的候选，但不会判断事实真假或更细微的有用性。
+
+## 完成定义
+
+Memory Suggestions 分成两条独立轨道：
+
+- **v1 能力**：已经足够进入 agent loop 使用。
+- **鲁棒性 backlog**：持续扩展 fixture 和边界检查。
+
+v1 能力可以视为已完成，因为项目现在已经可以：
+
+- 从 provider-neutral `reflect` step 收集候选 memory notes。
+- 把候选项保存为 Task Run 内的 `memory-suggestions.json`。
+- 在 Task Export 中展示候选项。
+- 通过 `a-agent memory apply-suggestions` 应用 review 后的候选项。
+- 在写入长期 Project Memory 前要求显式批准或 `--yes`。
+- 在批准前运行质量门。
+- 跳过精确重复和简单近似重复 notes。
+- 跳过已知的简单冲突。
+- 保留从 model reflection 到 candidate note 再到 durable memory 的审计路径。
+- 用自动化测试和中英文 Knowledge Base 文档验证这条链路。
+
+鲁棒性 backlog 不是后续阶段的阻塞条件。它是一条长期评测轨道，因为自然语言 memory 质量没有固定终点。每当出现真实或合理的坏 memory 模式，都应该继续增加 fixture。
+
+## 鲁棒性 Backlog
+
+后续继续增强：
+
+- 更多英文和中文冲突表达。
+- 更多 project convention 变体。
+- 错误、缺少依据或过度自信的事实过滤。
+- 超出简单临时词的 unstable fact 过滤。
+- 更好的 section selection 检查。
+- 更宽泛的近似重复检测。
+- 未来基于 embedding 的语义重复检测。
+- 带 expected accept/skip 结果的 benchmark-style fixture 集。
+
+进入 Skill Pack 阶段并不表示这条 backlog 已经完成。它表示 Memory Suggestions v1 已经具备可用、可测试的安全基线，所以更大的 agent 能力可以继续推进，同时 memory 鲁棒性并行增强。
 
 ## 其他常见方案
 
@@ -99,14 +136,15 @@ Owner 手工写入每条 memory note。最安全，但长任务或重复任务�
 - 支持交互式逐条批准，也支持显式批量批准。
 - 写入 Project Memory 前会跳过精确重复和简单近似重复 notes。
 - 写入 Project Memory 前会跳过简单同主题冲突 notes。
-- 写入 Project Memory 前会跳过“直接实现 vs 只给方案”的 agent 自主性偏好冲突。
+- 写入 Project Memory 前会跳过中英文“直接实现 vs 只给方案/先确认”的 agent 自主性偏好冲突。
+- 写入 Project Memory 前会跳过使用 avoidance 表达的简单 project convention 冲突。
 - 批准前会拒绝明显低质量、过度泛化、临时性或疑似 secret 的建议。
 
 ## 劣势
 
 - 当前 runner 只收集显式 `reflect` step。
 - 近似重复检测是字面 term 加小型同义词表，不是完整语义级别，所以仍可能漏掉更宽泛的改写。
-- 冲突检测是词法级别，并且只覆盖已知的相反词组和简单否定/禁止词。
+- 冲突检测是词法级别，并且只覆盖已知的相反词组和简单否定/禁止/避免词。
 - 质量检查是启发式的，可能漏掉隐蔽的坏 memory，也可能漏掉当前 pattern 未覆盖的过度泛化表达。
 - 中文友好的长度规则仍然只是简单字符数启发式。
 - 手工 `memory append` 仍然可以写入重复内容，因为当前去重只应用于 Memory Suggestions。
@@ -124,14 +162,14 @@ Owner 手工写入每条 memory note。最安全，但长任务或重复任务�
 - CLI `memory apply-suggestions --yes [run-id]` 会跳过 Project Memory 中已存在的建议。
 - CLI `memory apply-suggestions --yes [run-id]` 会跳过简单同义改写形成的近似重复建议。
 - CLI `memory apply-suggestions --yes [run-id]` 会跳过简单同主题冲突偏好。
-- CLI `memory apply-suggestions --yes [run-id]` 会跳过“直接实现 vs 只给方案”的 agent 自主性偏好冲突。
+- CLI `memory apply-suggestions --yes [run-id]` 会跳过中英文“直接实现 vs 只给方案/先确认”的 agent 自主性偏好冲突。
 - CLI `memory apply-suggestions --yes [run-id]` 会跳过简单中文冲突偏好。
 - CLI `memory apply-suggestions --yes [run-id]` 会跳过简单同主题否定 stable facts。
-- CLI `memory apply-suggestions --yes [run-id]` 会跳过简单同主题禁止 project conventions。
+- CLI `memory apply-suggestions --yes [run-id]` 会跳过简单同主题禁止或避免型 project conventions。
 - CLI `memory apply-suggestions --yes [run-id]` 会跳过过短、临时性、疑似 secret 和泛泛不可执行的建议。
 
 后续评测应增加：
 
 - 对更宽泛同义改写 notes 的 embedding 支持。
-- 为更多 project convention 形态、多语言自主性 preferences 和更多 stable fact 形态增加更宽的冲突 fixture。
+- 为更多 project convention 形态和更多 stable fact 形态增加更宽的冲突 fixture。
 - 对错误、缺少依据或不稳定 memory notes 的更丰富质量检查。

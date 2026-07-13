@@ -1,10 +1,10 @@
 {
-  "name": "@ranarkh/personal-agent",
+  "name": "@ranarkh/agent",
   "version": "0.1.0",
   "description": "Local CLI-first Personal Agent for workspace tasks.",
   "type": "module",
   "bin": {
-    "personal-agent": "dist/cli/index.js"
+    "a-agent": "dist/cli/index.js"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",

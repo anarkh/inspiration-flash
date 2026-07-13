@@ -31,15 +31,22 @@ Each article should cover:
 | Topic | English | 中文 |
 | --- | --- | --- |
 | Agent Framework Decision | [English](./agent-frameworks.md) | [中文](./zh/agent-frameworks.md) |
+| Clarification Gates | [English](./clarification-gates.md) | [中文](./zh/clarification-gates.md) |
+| CLI Packaging | [English](./cli-packaging.md) | [中文](./zh/cli-packaging.md) |
 | Confirmation Gates | [English](./confirmation-gates.md) | [中文](./zh/confirmation-gates.md) |
+| Development Roadmap | [English](./development-roadmap.md) | [中文](./zh/development-roadmap.md) |
 | Execution Logging | [English](./execution-logging.md) | [中文](./zh/execution-logging.md) |
+| Learning Lens | [English](./learning-lens.md) | [中文](./zh/learning-lens.md) |
 | Local Tools | [English](./local-tools.md) | [中文](./zh/local-tools.md) |
 | Memory Prompt Injection | [English](./memory-prompt-injection.md) | [中文](./zh/memory-prompt-injection.md) |
 | Memory Suggestions | [English](./memory-suggestions.md) | [中文](./zh/memory-suggestions.md) |
 | Model Provider | [English](./model-provider.md) | [中文](./zh/model-provider.md) |
 | MVP Skeleton | [English](./mvp-skeleton.md) | [中文](./zh/mvp-skeleton.md) |
 | Project Memory | [English](./project-memory.md) | [中文](./zh/project-memory.md) |
+| Recovery Attempts | [English](./recovery-attempts.md) | [中文](./zh/recovery-attempts.md) |
+| Skill Packs | [English](./skill-packs.md) | [中文](./zh/skill-packs.md) |
 | State Architecture | [English](./state-architecture.md) | [中文](./zh/state-architecture.md) |
+| Task Conversation | [English](./task-conversation.md) | [中文](./zh/task-conversation.md) |
 | Task Export | [English](./task-export.md) | [中文](./zh/task-export.md) |
 | Task History | [English](./task-history.md) | [中文](./zh/task-history.md) |
 | Task Resume | [English](./task-resume.md) | [中文](./zh/task-resume.md) |

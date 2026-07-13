@@ -5,7 +5,7 @@
 The CLI now supports:
 
 ```text
-personal-agent resume
+a-agent resume
 ```
 
 It continues the latest active Task Run instead of creating a new run. If there is no run, it prints a friendly message. If the latest run is already completed, it reports that state without re-running it.
@@ -21,6 +21,8 @@ Task Runs already persist three pieces of resume state:
 `resumeLatestTask` reads the latest run pointer, skips completed runs, restores the latest checkpoint, rebuilds provider-visible events from `events.jsonl`, and continues the runner loop from `checkpoint.turn + 1`.
 
 The resumed loop appends new events, writes new checkpoints, and finishes by writing the report, evaluation, and completed status into the same run directory.
+
+`a-agent history --status active` now shows `checkpoint: <id> (turn <n>, created <iso>)` when an active run has a durable resume point, which makes the resume state, saved turn, and checkpoint timestamp visible before running `resume`.
 
 ## Other Common Approaches
 
@@ -58,6 +60,7 @@ Current tests verify:
 - state helpers restore latest run metadata, events, and checkpoint,
 - runner resumes an active run from checkpoint events,
 - runner reports `not_found` when no run exists,
+- history shows the latest checkpoint id, saved turn, and created time for runs that can be resumed from a checkpoint,
 - CLI `resume` handles empty and active workspaces.
 
 Future evaluation should add:

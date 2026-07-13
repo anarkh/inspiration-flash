@@ -10,13 +10,19 @@ The Personal Agent now has a Model Provider boundary with three implementations:
 
 The CLI loads `personal-agent/.env` with `dotenv` before selecting a provider. The `.env` file is ignored by git and is the local place to keep secrets such as `DEEPSEEK_API_KEY`.
 
+Because ignored files are not copied by Git, each worktree has its own package-local `.env`. If the global `a-agent` link is moved to another worktree, recreate that worktree's `personal-agent/.env` or provide the variables in the shell. Chat prints the selected provider and model at startup so missing configuration is visible immediately.
+
 Provider selection then uses environment variables. If `DEEPSEEK_API_KEY` is present, it uses `deepseek` with `deepseek-v4-flash` by default. If only `OPENAI_API_KEY` is present, it uses `openai-compatible`. If no model key is available, it falls back to `bootstrap`.
+
+For local recovery demonstrations, `PERSONAL_AGENT_DEBUG_RECOVERY=1` wraps whichever provider was selected and injects one malformed Agent Step before delegating back to the real provider. This is a development verification switch, not normal runtime behavior.
 
 ## How It Works Here
 
 The runner asks a `ModelProvider` for the next Agent Step. The provider returns plain data, and the core loop validates it with `parseAgentStep`.
 
 The runner also passes the current Project Memory through `ModelProviderInput.projectMemory`. This makes durable preferences and project conventions visible to every model turn without coupling the runner to one provider's native memory feature.
+
+`ModelProviderInput.interaction` separates `task` from `chat`. Task prompts may finish with a report. Chat prompts must answer the latest `owner_message` with `message`; a chat `finish` is rejected by the runner and retried through the normal Recovery Attempt path.
 
 `deepseek` sends a chat completion request to:
 
@@ -35,6 +41,10 @@ OpenAI-compatible fallback configuration:
 - `OPENAI_API_KEY`
 - `OPENAI_BASE_URL`
 - `OPENAI_MODEL`
+
+Development verification configuration:
+
+- `PERSONAL_AGENT_DEBUG_RECOVERY=1`: inject one malformed Agent Step so the CLI shows the recovery retry path.
 
 The provider asks the model to return exactly one JSON Agent Step and requests JSON object output when the API supports it.
 
@@ -65,6 +75,8 @@ The current design keeps provider details behind a small interface. The Personal
 - OpenAI-compatible endpoints can be swapped through environment variables.
 - Common model output drift is repaired at the provider boundary instead of leaking into the runner.
 - Project Memory is visible through the provider-neutral input contract.
+- Provider and model identity are visible when chat starts.
+- Chat lifecycle rules are enforced by both prompt instructions and runner validation.
 
 ## Disadvantages
 
@@ -86,7 +98,11 @@ Current tests verify:
 - DeepSeek defaults to `https://api.deepseek.com` and `deepseek-v4-flash`.
 - Provider selection prefers `DEEPSEEK_API_KEY` when it is present.
 - Provider selection falls back to `bootstrap` when no key exists.
+- Chat startup reports the selected provider and model.
+- Chat prompts forbid model-authored `finish` steps.
+- Runner validation recovers if a chat provider still returns `finish`.
 - The CLI still completes a bootstrap Task Run without network credentials.
+- The CLI can display the recovery retry path when `PERSONAL_AGENT_DEBUG_RECOVERY=1` is set.
 - A real DeepSeek smoke test can complete a local Task Run when `.env` contains a valid key.
 
 Future evaluation should add:
