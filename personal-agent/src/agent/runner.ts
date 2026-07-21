@@ -1,5 +1,6 @@
 import { parseAgentStep, type AgentStep } from "../core/agent-step.ts";
-import { createModelAssistedReview, createTaskEvaluation } from "./evaluation.ts";
+import { createModelAssistedReview, createTaskEvaluation, type TaskEvaluation } from "./evaluation.ts";
+import type { StructuredSuccessCheck } from "../core/success-check.ts";
 import type { ModelProvider, ModelProviderEvent } from "../model/provider.ts";
 import {
   appendRunEvent,
@@ -38,6 +39,7 @@ export interface RunTaskInput {
   goal: string;
   mode: TaskMode;
   successCheck: string;
+  successChecks?: StructuredSuccessCheck[];
   provider: ModelProvider;
   logStep?: (message: string) => void;
   learningLens?: boolean;
@@ -49,6 +51,7 @@ export interface RunTaskResult {
   id: string;
   runDir: string;
   status: "completed";
+  evaluationVerdict: TaskEvaluation["verdict"];
 }
 
 export interface RunChatTaskInput {
@@ -92,7 +95,8 @@ export async function runTask(input: RunTaskInput): Promise<RunTaskResult> {
   const run = await createTaskRun(input.workspace, {
     goal: input.goal,
     mode: input.mode,
-    successCheck: input.successCheck
+    successCheck: input.successCheck,
+    successChecks: input.successChecks
   });
   const events: ModelProviderEvent[] = [];
 
@@ -108,6 +112,7 @@ export async function runTask(input: RunTaskInput): Promise<RunTaskResult> {
       goal: input.goal,
       mode: input.mode,
       successCheck: input.successCheck,
+      successChecks: input.successChecks,
       status: "active",
       createdAt: "",
       updatedAt: ""
@@ -384,8 +389,10 @@ async function completeTaskRun(input: ContinueTaskRunInput, report: string): Pro
     await writeMemorySuggestions(input.run.runDir, memorySuggestions);
   }
   await writeTaskReport(input.run.runDir, report);
-  const evaluation = createTaskEvaluation({
+  const evaluation = await createTaskEvaluation({
+    workspace: input.workspace,
     successCheck: input.run.successCheck,
+    successChecks: input.run.successChecks,
     report,
     events: input.events,
     memorySuggestions
@@ -404,7 +411,12 @@ async function completeTaskRun(input: ContinueTaskRunInput, report: string): Pro
   await writeTaskEvaluation(input.run.runDir, evaluation);
   emitLearningLens(input, "evaluation", "Task Evaluation scores the report and trace from visible artifacts.");
   await updateTaskRunStatus(input.run.runDir, "completed");
-  return { id: input.run.id, runDir: input.run.runDir, status: "completed" };
+  return {
+    id: input.run.id,
+    runDir: input.run.runDir,
+    status: "completed",
+    evaluationVerdict: evaluation.verdict
+  };
 }
 
 /** Appends a user-visible Owner message to both in-memory context and the durable event log. */

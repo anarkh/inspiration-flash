@@ -1,6 +1,6 @@
 {
   "name": "@ranarkh/agent",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Local CLI-first Personal Agent for workspace tasks.",
   "type": "module",
   "bin": {

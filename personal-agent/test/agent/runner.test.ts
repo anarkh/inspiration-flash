@@ -30,6 +30,7 @@ test("runTask executes provider steps and writes report and evaluation", async (
       goal: "summarize docs",
       mode: "advisory",
       successCheck: "Task produces a report",
+      successChecks: [{ id: "report", type: "report_contains", value: "Task accepted" }],
       provider
     });
 
@@ -41,6 +42,9 @@ test("runTask executes provider steps and writes report and evaluation", async (
     assert.equal(result.status, "completed");
     assert.match(report, /Task accepted and planned/);
     assert.equal(evaluation.verdict, "pass");
+    assert.equal(evaluation.schemaVersion, 2);
+    assert.equal(evaluation.executionIntegrity.verdict, "pass");
+    assert.equal(evaluation.taskCorrectness.verdict, "pass");
     assert.equal(evaluation.successCheck, "pass");
     assert.equal(evaluation.gateSafety, "pass");
     assert.equal(evaluation.traceQuality, "pass");
@@ -50,6 +54,9 @@ test("runTask executes provider steps and writes report and evaluation", async (
     assert.match(events, /"type":"plan"/);
     assert.match(events, /"type":"finish"/);
     assert.equal(metadata.status, "completed");
+    assert.deepEqual(metadata.successChecks, [
+      { id: "report", type: "report_contains", value: "Task accepted" }
+    ]);
   } finally {
     await rm(workspace, { recursive: true, force: true });
   }
@@ -126,6 +133,7 @@ test("runTask can attach an optional model-assisted review without overriding de
       goal: "summarize docs",
       mode: "advisory",
       successCheck: "Task produces a report",
+      successChecks: [{ id: "report", type: "report_contains", value: "deterministic evidence" }],
       provider,
       modelReview: true
     });
@@ -287,7 +295,8 @@ test("runChatTask finalizes the chat when input ends", async () => {
 
     assert.equal(result.status, "completed");
     assert.equal(metadata.status, "completed");
-    assert.equal(evaluation.verdict, "pass");
+    assert.equal(evaluation.verdict, "partial");
+    assert.equal(evaluation.taskCorrectness.verdict, "unavailable");
     assert.equal((events.match(/"type":"owner_message"/g) ?? []).length, 1);
     assert.match(events, /"content":"你好"/);
     assert.match(events, /"content":"我会等待下一条消息。"/);

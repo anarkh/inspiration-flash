@@ -7,6 +7,11 @@ import { fileURLToPath } from "node:url";
 import { resumeLatestTask, runChatTask, runTask } from "../agent/runner.ts";
 import { confirmInTerminal } from "./confirmation.ts";
 import { loadCliEnv } from "../config/env.ts";
+import {
+  formatStructuredSuccessChecks,
+  parseStructuredSuccessCheck,
+  type StructuredSuccessCheck
+} from "../core/success-check.ts";
 import { createConfiguredProvider } from "../model/configured-provider.ts";
 import type { ModelProvider } from "../model/provider.ts";
 import { runSkillPackEvals } from "../skills/evals.ts";
@@ -49,7 +54,7 @@ const help = `${cliCommandName}
 Usage:
   ${cliCommandName} start [--learn] [--review]
   ${cliCommandName} chat [--learn] [--review]
-  ${cliCommandName} run [--learn] [--review] <task>
+  ${cliCommandName} run [--learn] [--review] [--check <json>]... <task>
   ${cliCommandName} resume [--learn] [--review]
   ${cliCommandName} memory
   ${cliCommandName} memory append [--section <section>] <note>
@@ -59,7 +64,8 @@ Usage:
   ${cliCommandName} history [--status <active|completed>] [--limit <count>] [--offset <count>]
 
 Options:
-  --help, -h    Show this help.
+  --check <json>  Add an objective Success Check to a run.
+  --help, -h      Show this help.
 `;
 
 interface LearningFlagOptions {
@@ -69,7 +75,12 @@ interface LearningFlagOptions {
 
 interface RunCommandArgs extends LearningFlagOptions {
   task: string;
+  successChecks: StructuredSuccessCheck[];
   error?: string;
+}
+
+interface RunTaskOptions extends LearningFlagOptions {
+  successChecks?: StructuredSuccessCheck[];
 }
 
 /** Routes CLI arguments to the matching Personal Agent command and returns an exit code. */
@@ -106,7 +117,7 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
       process.stderr.write(`${cliCommandName}: ${parsedRun.error}\n`);
       return 1;
     }
-    const { task, learningLens, modelReview } = parsedRun;
+    const { task, learningLens, modelReview, successChecks } = parsedRun;
     if (task.length === 0) {
       process.stderr.write(`${cliCommandName}: run requires a task.\n`);
       return 1;
@@ -117,8 +128,8 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
       return 1;
     }
 
-    await runCliTask(clarifiedTask, { learningLens, modelReview });
-    return 0;
+    const verdict = await runCliTask(clarifiedTask, { learningLens, modelReview, successChecks });
+    return verdict === "fail" || verdict === "blocked" ? 1 : 0;
   }
 
   if (command === "history") {
@@ -270,8 +281,8 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
       return 0;
     }
 
-    process.stdout.write(`Resumed Task Run ${result.id}\n`);
-    return 0;
+    process.stdout.write(`Resumed Task Run ${result.id} | evaluation: ${result.evaluationVerdict}\n`);
+    return result.evaluationVerdict === "fail" || result.evaluationVerdict === "blocked" ? 1 : 0;
   }
 
   process.stderr.write(`${cliCommandName}: command not implemented yet: ${command}\n`);
@@ -500,13 +511,19 @@ function isAmbiguousTaskBoundary(task: string): boolean {
 /** Runs one CLI task with the default provider, progress logging, and confirmation gates. */
 async function runCliTask(
   task: string,
-  options: LearningFlagOptions = { learningLens: false, modelReview: false }
-): Promise<void> {
+  options: RunTaskOptions = { learningLens: false, modelReview: false }
+): Promise<"pass" | "partial" | "fail" | "blocked"> {
+  const successChecks = options.successChecks ?? [];
+  const successCheck =
+    successChecks.length > 0
+      ? `Task produces a local Task Report and satisfies: ${formatStructuredSuccessChecks(successChecks)}`
+      : "Task produces a local Task Report";
   const result = await runTask({
     workspace: process.cwd(),
     goal: task,
     mode: "advisory",
-    successCheck: "Task produces a local Task Report",
+    successCheck,
+    successChecks,
     provider: createConfiguredProvider(),
     learningLens: options.learningLens,
     modelReview: options.modelReview,
@@ -517,14 +534,79 @@ async function runCliTask(
     confirmAction: confirmInTerminal
   });
 
-  process.stdout.write(`Completed Task Run ${result.id}\n`);
+  process.stdout.write(`Completed Task Run ${result.id} | evaluation: ${result.evaluationVerdict}\n`);
+  return result.evaluationVerdict;
 }
 
-/** Parses `run` arguments while reserving `--learn` as an opt-in Learning Lens switch. */
+/** Parses run flags, repeatable JSON Success Checks, and the remaining task text. */
 function parseRunArgs(args: string[]): RunCommandArgs {
-  const flags = parseRunOptionFlags(args, "run");
-  const task = args.filter((arg) => arg !== "--learn" && arg !== "--review").join(" ").trim();
-  return { task, learningLens: flags.learningLens, modelReview: flags.modelReview, error: flags.error };
+  let learningLens = false;
+  let modelReview = false;
+  const successChecks: StructuredSuccessCheck[] = [];
+  const taskParts: string[] = [];
+
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (arg === "--learn") {
+      learningLens = true;
+      continue;
+    }
+    if (arg === "--review") {
+      modelReview = true;
+      continue;
+    }
+    if (arg === "--check") {
+      const rawCheck = args[index + 1];
+      if (!rawCheck) {
+        return { task: "", learningLens, modelReview, successChecks, error: "run --check requires JSON." };
+      }
+      try {
+        successChecks.push(
+          parseStructuredSuccessCheck(JSON.parse(rawCheck), `check-${successChecks.length + 1}`)
+        );
+      } catch (error) {
+        return {
+          task: "",
+          learningLens,
+          modelReview,
+          successChecks,
+          error: `invalid run --check: ${readErrorMessage(error)}`
+        };
+      }
+      index += 1;
+      continue;
+    }
+    if (arg.startsWith("--")) {
+      return {
+        task: "",
+        learningLens,
+        modelReview,
+        successChecks,
+        error: "run accepts only --learn, --review, and repeated --check <json> options."
+      };
+    }
+    taskParts.push(arg);
+  }
+
+  const duplicateId = successChecks.find(
+    (check, index) => successChecks.findIndex((candidate) => candidate.id === check.id) !== index
+  );
+  if (duplicateId) {
+    return {
+      task: "",
+      learningLens,
+      modelReview,
+      successChecks,
+      error: `duplicate Success Check id: ${duplicateId.id}`
+    };
+  }
+
+  return { task: taskParts.join(" ").trim(), learningLens, modelReview, successChecks };
+}
+
+/** Converts JSON and Success Check parser failures into concise CLI diagnostics. */
+function readErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }
 
 /** Parses commands whose only optional flags are execution-learning and model-review switches. */

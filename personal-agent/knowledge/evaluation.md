@@ -10,7 +10,18 @@ Store a post-run evaluation with the Task Run:
 
 ```json
 {
+  "schemaVersion": 2,
   "verdict": "pass | partial | fail | blocked",
+  "executionIntegrity": {
+    "verdict": "pass | partial | fail",
+    "evidence": [{ "source": "event", "reference": "events.jsonl", "detail": "..." }],
+    "checks": []
+  },
+  "taskCorrectness": {
+    "verdict": "pass | fail | unavailable",
+    "evidence": [{ "source": "report", "reference": "report.md", "detail": "..." }],
+    "checks": []
+  },
   "successCheck": "pass | fail | unavailable",
   "gateSafety": "pass | fail",
   "traceQuality": "pass | partial | fail",
@@ -43,16 +54,47 @@ Did the Task Run reveal a Project Memory update, Knowledge Base update, Skill Pa
 
 ## Deterministic Evaluator
 
-`src/agent/evaluation.ts` implements the first post-run evaluator used by `runTask` and `resumeLatestTask`. It only reads visible artifacts: the declared Success Check, final Task Report, provider-neutral events, and generated Memory Suggestions.
+`src/agent/evaluation.ts` implements Evaluation V2 for `runTask` and `resumeLatestTask`. It reads visible artifacts: structured Success Checks, the final Task Report, provider-neutral events, workspace files, and generated Memory Suggestions.
 
 Current behavior:
-- `successCheck` is `pass` when a non-empty Success Check has a non-empty report, `fail` when the report is empty, and `unavailable` when no Success Check was declared.
+- `executionIntegrity` combines confirmation resolution, trace completeness, and report presence. Every check records the event or report artifact used by its verdict.
+- `taskCorrectness` runs declared structured Success Checks. It is `unavailable` when the run has only a human-readable Success Check, because a non-empty report is not proof of correctness.
+- `report_contains` checks normalized, case-folded Task Report text.
+- `file_exists` verifies that a relative workspace path exists as a file.
+- `file_contains` verifies normalized file content and rejects traversal or symlink escapes.
+- `tool_succeeded` requires a successful matching `tool_result` event; rejected, denied, unresolved, non-zero command results, and unknown output shapes fail closed.
 - `gateSafety` fails only if a confirmation-required tool result remains unresolved in the durable event trace.
 - `traceQuality` is `pass` when the run contains both a plan and a finish step, `partial` when it finishes without a plan, and `fail` when no finish step is present.
 - `reportQuality` passes when the final report has usable text.
 - Memory Suggestions create a `Project Memory suggestion` learning signal and a `Review Memory Suggestions` follow-up.
 
-The top-level `verdict` is deterministic: failed safety, failed Success Check, or failed report quality produces `fail`; unavailable Success Check or partial trace quality produces `partial`; otherwise the run is `pass`.
+The top-level `verdict` is deterministic: failed execution integrity or task correctness produces `fail`; unavailable task correctness or partial execution integrity produces `partial`; otherwise the run is `pass`. The old scalar fields remain as compatibility summaries for history and existing integrations.
+
+## Structured Success Checks
+
+The `run` command accepts repeatable JSON checks:
+
+```bash
+a-agent run --check '{"id":"report","type":"report_contains","value":"package.json"}' "summarize this workspace"
+a-agent run --check '{"id":"file","type":"file_exists","path":"summary.md"}' "create summary.md"
+a-agent run --check '{"type":"file_contains","path":"summary.md","value":"Verification"}' "write the verified summary"
+a-agent run --check '{"type":"tool_succeeded","tool":"write_file"}' "write summary.md"
+```
+
+`id` is optional; the CLI assigns `check-1`, `check-2`, and so on. Unknown fields, unsupported types, empty values, and duplicate ids are rejected before a Task Run starts. Checks are stored in `run.json`, and their results and evidence are stored in `evaluation.json`. Direct `run` and completed `resume` commands return a non-zero exit code when the objective verdict is `fail` or `blocked`.
+
+`report_contains` is intentionally a weak content grader: a model can repeat expected text without solving the task. Prefer file and tool evidence for side-effecting tasks, and later combine deterministic checks with calibrated model judges for semantic quality.
+
+## Alternatives And Tradeoffs
+
+Common agent systems use several evaluation approaches:
+
+- Natural-language self-evaluation is easy to add but can reward confident, polished reports. Evaluation V2 never lets self-review replace deterministic evidence.
+- Model judges, as used by many hosted eval platforms, handle semantic quality but add cost, latency, and nondeterminism. This project keeps them optional and auditable.
+- Full evaluation frameworks provide datasets, dashboards, and experiment tracking. They are valuable at scale, but would hide too much machinery for this local learning stage.
+- Deterministic artifact checks are cheap, repeatable, and explainable, but cover only outcomes that can be expressed as text, files, or tool events.
+
+The local structured approach therefore favors inspectability and stable regression checks. Its disadvantages are a small check vocabulary, possible grader gaming for text checks, and no statistical comparison across models yet.
 
 ## Model-Assisted Review
 

@@ -32,7 +32,7 @@ test("cli prints help", () => {
 
   assert.equal(result.status, 0);
   assert.match(result.stdout, /a-agent/);
-  assert.match(result.stdout, /run \[--learn\] \[--review\] <task>/);
+  assert.match(result.stdout, /run \[--learn\] \[--review\] \[--check <json>\]\.\.\. <task>/);
   assert.match(result.stdout, /start \[--learn\] \[--review\]/);
   assert.match(result.stdout, /chat \[--learn\] \[--review\]/);
   assert.match(result.stdout, /resume \[--learn\] \[--review\]/);
@@ -67,7 +67,7 @@ test("cli runs when invoked through an installed binary symlink", async () => {
 
     assert.equal(result.status, 0);
     assert.match(result.stdout, /a-agent/);
-    assert.match(result.stdout, /run \[--learn\] \[--review\] <task>/);
+    assert.match(result.stdout, /run \[--learn\] \[--review\] \[--check <json>\]\.\.\. <task>/);
   } finally {
     await rm(workspace, { recursive: true, force: true });
   }
@@ -159,7 +159,85 @@ test("cli run completes a bootstrap Task Run in the current workspace", async ()
     assert.equal(metadata.goal, "summarize docs");
     assert.equal(metadata.status, "completed");
     assert.match(report, /summarize docs/);
-    assert.equal(evaluation.verdict, "pass");
+    assert.equal(evaluation.verdict, "partial");
+    assert.equal(evaluation.taskCorrectness.verdict, "unavailable");
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test("cli run accepts a structured Success Check and records its evidence", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-cli-success-check-"));
+  try {
+    const check = JSON.stringify({ id: "goal", type: "report_contains", value: "summarize docs" });
+    const result = spawnSync(
+      process.execPath,
+      [join(root, "src/cli/index.ts"), "run", "--check", check, "summarize docs"],
+      {
+        cwd: workspace,
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          DEEPSEEK_API_KEY: "",
+          OPENAI_API_KEY: "",
+          PERSONAL_AGENT_SKIP_DOTENV: "1"
+        }
+      }
+    );
+
+    assert.equal(result.status, 0);
+    assert.match(result.stdout, /evaluation: pass/);
+
+    const latest = (await readFile(join(workspace, ".personal-agent/runs/latest"), "utf8")).trim();
+    const metadata = JSON.parse(
+      await readFile(join(workspace, ".personal-agent/runs", latest, "run.json"), "utf8")
+    );
+    const evaluation = JSON.parse(
+      await readFile(join(workspace, ".personal-agent/runs", latest, "evaluation.json"), "utf8")
+    );
+
+    assert.deepEqual(metadata.successChecks, [
+      { id: "goal", type: "report_contains", value: "summarize docs" }
+    ]);
+    assert.equal(evaluation.taskCorrectness.verdict, "pass");
+    assert.equal(evaluation.taskCorrectness.checks[0].evidence[0].reference, "report.md");
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test("cli run returns a failure exit code when an objective Success Check fails", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-cli-success-check-fail-"));
+  try {
+    const check = JSON.stringify({ type: "file_exists", path: "missing-result.md" });
+    const result = spawnSync(
+      process.execPath,
+      [join(root, "src/cli/index.ts"), "run", "--check", check, "summarize docs"],
+      {
+        cwd: workspace,
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          DEEPSEEK_API_KEY: "",
+          OPENAI_API_KEY: "",
+          PERSONAL_AGENT_SKIP_DOTENV: "1"
+        }
+      }
+    );
+
+    assert.equal(result.status, 1);
+    assert.match(result.stdout, /Completed Task Run/);
+    assert.match(result.stdout, /evaluation: fail/);
+
+    const latest = (await readFile(join(workspace, ".personal-agent/runs/latest"), "utf8")).trim();
+    const evaluation = JSON.parse(
+      await readFile(join(workspace, ".personal-agent/runs", latest, "evaluation.json"), "utf8")
+    );
+    assert.equal(evaluation.executionIntegrity.verdict, "pass");
+    assert.equal(evaluation.taskCorrectness.verdict, "fail");
+    assert.equal(evaluation.verdict, "fail");
+    assert.equal(evaluation.taskCorrectness.checks[0].evidence[0].reference, "missing-result.md");
+    assert.equal(evaluation.taskCorrectness.checks[0].evidence[0].detail, "Expected file does not exist.");
   } finally {
     await rm(workspace, { recursive: true, force: true });
   }
@@ -282,7 +360,7 @@ test("cli run records unavailable model review when --review uses bootstrap", as
       await readFile(join(workspace, ".personal-agent/runs", latest, "evaluation.json"), "utf8")
     );
 
-    assert.equal(evaluation.verdict, "pass");
+    assert.equal(evaluation.verdict, "partial");
     assert.deepEqual(evaluation.modelReview, {
       verdict: "unavailable",
       reason: "Model-assisted review requires a real Model Provider."
@@ -508,7 +586,7 @@ test("cli history lists recent Task Runs", async () => {
     assert.equal(history.status, 0);
     assert.match(history.stdout, /Recent Task Runs/);
     assert.match(history.stdout, /completed/);
-    assert.match(history.stdout, /evaluation: pass/);
+    assert.match(history.stdout, /evaluation: partial/);
     assert.match(history.stdout, /report: .*\.personal-agent\/runs\/.*\/report\.md/);
     assert.match(history.stdout, /summarize docs/);
   } finally {

@@ -1,6 +1,7 @@
 import { access, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
+import type { StructuredSuccessCheck } from "../core/success-check.ts";
 import { readLatestCheckpoint } from "./checkpoints.ts";
 import { isNotFound } from "./shared.ts";
 import { ensureWorkspaceState } from "./workspace.ts";
@@ -11,6 +12,7 @@ export interface CreateTaskRunInput {
   goal: string;
   mode: TaskMode;
   successCheck: string;
+  successChecks?: StructuredSuccessCheck[];
 }
 
 export interface TaskRunHandle {
@@ -25,6 +27,7 @@ export interface TaskRunMetadata {
   goal: string;
   mode: TaskMode;
   successCheck: string;
+  successChecks?: StructuredSuccessCheck[];
   status: TaskRunStatus;
   createdAt: string;
   updatedAt: string;
@@ -59,6 +62,7 @@ export async function createTaskRun(
         goal: input.goal,
         mode: input.mode,
         successCheck: input.successCheck,
+        ...(input.successChecks && input.successChecks.length > 0 ? { successChecks: input.successChecks } : {}),
         status: "active",
         createdAt: now,
         updatedAt: now

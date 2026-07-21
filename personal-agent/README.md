@@ -36,6 +36,13 @@ Run one workspace task:
 a-agent run "帮我总结当前目录"
 ```
 
+Add one or more objective Success Checks when the outcome is machine-verifiable:
+
+```bash
+a-agent run --check '{"type":"report_contains","value":"package.json"}' "总结当前目录"
+a-agent run --check '{"type":"file_exists","path":"summary.md"}' "创建 summary.md"
+```
+
 Start a persistent terminal chat and enter `exit` or `quit` when finished:
 
 ```bash
@@ -58,7 +65,7 @@ a-agent eval skill-pack <name-or-path>
 
 | Command | Purpose |
 | --- | --- |
-| `a-agent run [--learn] [--review] "<task>"` | Run one workspace task. |
+| `a-agent run [--learn] [--review] [--check '<json>']... "<task>"` | Run one task with optional objective Success Checks. |
 | `a-agent start [--learn] [--review]` | Read multiple independent tasks from the terminal. |
 | `a-agent chat [--learn] [--review]` | Keep multiple Owner messages in one chat Task Run. |
 | `a-agent resume [--learn] [--review]` | Resume the latest active Task Run checkpoint. |
@@ -84,6 +91,7 @@ Every workspace gets an ignored `.personal-agent/` directory containing:
 ```
 
 These files are intentionally inspectable. They are the source of truth for history, resume, export, and learning.
+Evaluation V2 separates execution integrity from task correctness and records the artifact evidence used by each verdict.
 
 ## Development Checks
 

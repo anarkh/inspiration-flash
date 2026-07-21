@@ -38,6 +38,8 @@ Learning focus: release baselines, reproducibility, and configuration boundaries
 
 ## Phase 2: Task Evaluation V2
 
+Status: in progress. Structured Success Checks, evidence-bearing execution/correctness dimensions, and CLI failure exit codes are implemented. Golden Task Run suites and human verdict override remain.
+
 Deliverables:
 
 - Separate execution integrity from task correctness.
