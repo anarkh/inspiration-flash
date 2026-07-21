@@ -1,5 +1,9 @@
 .codex/
+.personal-agent/
 node_modules/
 dist/
+.env
+.env.*
+!.env.example
 log/*.log
 log/*.log.*

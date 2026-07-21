@@ -1,0 +1,26 @@
+{
+  "name": "@ranarkh/agent",
+  "version": "0.1.0",
+  "description": "Local CLI-first Personal Agent for workspace tasks.",
+  "type": "module",
+  "bin": {
+    "a-agent": "dist/cli/index.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "node ./src/cli/index.ts",
+    "test": "node --test ./test/**/*.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.0"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^17.4.2"
+  }
+}
