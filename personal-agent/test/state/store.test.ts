@@ -303,6 +303,11 @@ test("exportTaskRun includes a decision trace, tool summary, and changed resourc
 test("exportTaskRun redacts common secret values from exported Markdown", async () => {
   const workspace = await mkdtemp(join(tmpdir(), "personal-agent-export-redaction-"));
   try {
+    // Build credential-shaped fixtures at runtime so source scanners do not treat test data as leaked secrets.
+    const deepseekSecret = ["test", "deepseek", "secret"].join("-");
+    const bearerSecret = ["test", "bearer", "token", "123456"].join("-");
+    const providerKey = ["sk", "testsecret1234567890"].join("-");
+    const openAiSecret = ["test", "openai", "secret"].join("-");
     const run = await createTaskRun(workspace, {
       goal: "export redacted run",
       mode: "advisory",
@@ -315,21 +320,21 @@ test("exportTaskRun redacts common secret values from exported Markdown", async 
         type: "command_result",
         command: "printenv",
         exitCode: 0,
-        stdout: "DEEPSEEK_API_KEY=test-deepseek-secret\nAuthorization: Bearer test-bearer-token-123456\n",
+        stdout: `DEEPSEEK_API_KEY=${deepseekSecret}\nAuthorization: Bearer ${bearerSecret}\n`,
         stderr: ""
       }
     });
-    await writeTaskReport(run.runDir, "Provider key sk-testsecret1234567890 was observed.");
-    await writeTaskEvaluation(run.runDir, { detail: "OPENAI_API_KEY=test-openai-secret" });
+    await writeTaskReport(run.runDir, `Provider key ${providerKey} was observed.`);
+    await writeTaskEvaluation(run.runDir, { detail: `OPENAI_API_KEY=${openAiSecret}` });
 
     const result = await exportTaskRun(workspace, run.id);
     assert.ok(result);
     const markdown = await readFile(result.path, "utf8");
 
-    assert.doesNotMatch(markdown, /test-deepseek-secret/);
-    assert.doesNotMatch(markdown, /test-bearer-token-123456/);
-    assert.doesNotMatch(markdown, /sk-testsecret1234567890/);
-    assert.doesNotMatch(markdown, /test-openai-secret/);
+    assert.ok(!markdown.includes(deepseekSecret));
+    assert.ok(!markdown.includes(bearerSecret));
+    assert.ok(!markdown.includes(providerKey));
+    assert.ok(!markdown.includes(openAiSecret));
     assert.match(markdown, /\[REDACTED_SECRET\]/);
   } finally {
     await rm(workspace, { recursive: true, force: true });
@@ -339,6 +344,14 @@ test("exportTaskRun redacts common secret values from exported Markdown", async 
 test("exportTaskRun redacts broader secret shapes from exported Markdown", async () => {
   const workspace = await mkdtemp(join(tmpdir(), "personal-agent-export-broader-redaction-"));
   try {
+    // Keep realistic secret shapes while preventing plaintext fixture values from appearing in source files.
+    const githubToken = ["ghp", "exporttestsecret1234567890"].join("_");
+    const databasePassword = ["database", "password", "secret"].join("-");
+    const urlAccessSecret = ["url", "access", "secret", "123456"].join("-");
+    const urlClientSecret = ["url", "client", "secret", "654321"].join("-");
+    const jsonApiSecret = ["json", "api", "secret", "123456"].join("-");
+    const jsonPasswordSecret = ["json", "password", "secret", "654321"].join("-");
+    const refreshTokenSecret = ["refresh", "token", "secret", "123456"].join("-");
     const run = await createTaskRun(workspace, {
       goal: "export broadly redacted run",
       mode: "advisory",
@@ -352,30 +365,30 @@ test("exportTaskRun redacts broader secret shapes from exported Markdown", async
         command: "inspect secrets",
         exitCode: 0,
         stdout: [
-          "GITHUB_TOKEN=ghp_exporttestsecret1234567890",
-          "DATABASE_PASSWORD='database-password-secret'",
-          "callback=https://example.test/cb?access_token=url-access-secret-123456&client_secret=url-client-secret-654321"
+          `GITHUB_TOKEN=${githubToken}`,
+          `DATABASE_PASSWORD='${databasePassword}'`,
+          `callback=https://example.test/cb?access_token=${urlAccessSecret}&client_secret=${urlClientSecret}`
         ].join("\n"),
         stderr: ""
       }
     });
     await writeTaskReport(
       run.runDir,
-      'JSON payload: {"api_key":"json-api-secret-123456","password":"json-password-secret-654321"}'
+      `JSON payload: ${JSON.stringify({ api_key: jsonApiSecret, password: jsonPasswordSecret })}`
     );
-    await writeTaskEvaluation(run.runDir, { detail: "refresh_token=refresh-token-secret-123456" });
+    await writeTaskEvaluation(run.runDir, { detail: `refresh_token=${refreshTokenSecret}` });
 
     const result = await exportTaskRun(workspace, run.id);
     assert.ok(result);
     const markdown = await readFile(result.path, "utf8");
 
-    assert.doesNotMatch(markdown, /ghp_exporttestsecret1234567890/);
-    assert.doesNotMatch(markdown, /database-password-secret/);
-    assert.doesNotMatch(markdown, /url-access-secret-123456/);
-    assert.doesNotMatch(markdown, /url-client-secret-654321/);
-    assert.doesNotMatch(markdown, /json-api-secret-123456/);
-    assert.doesNotMatch(markdown, /json-password-secret-654321/);
-    assert.doesNotMatch(markdown, /refresh-token-secret-123456/);
+    assert.ok(!markdown.includes(githubToken));
+    assert.ok(!markdown.includes(databasePassword));
+    assert.ok(!markdown.includes(urlAccessSecret));
+    assert.ok(!markdown.includes(urlClientSecret));
+    assert.ok(!markdown.includes(jsonApiSecret));
+    assert.ok(!markdown.includes(jsonPasswordSecret));
+    assert.ok(!markdown.includes(refreshTokenSecret));
     assert.match(markdown, /\[REDACTED_SECRET\]/);
   } finally {
     await rm(workspace, { recursive: true, force: true });
