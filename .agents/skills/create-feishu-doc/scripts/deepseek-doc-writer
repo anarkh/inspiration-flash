@@ -1,0 +1,117 @@
+#!/bin/zsh
+set -euo pipefail
+
+if [[ -t 0 ]]; then
+  print -u2 -- "send the redacted document brief on stdin"
+  exit 2
+fi
+
+# The sentinel preserves trailing newlines that command substitution strips.
+document_brief="$(cat; print -rn -- $'\x1f')"
+document_brief="${document_brief%$'\x1f'}"
+if [[ -z "${document_brief//[[:space:]]/}" ]]; then
+  print -u2 -- "document brief is empty"
+  exit 2
+fi
+
+secret_prefix_pattern='(plat_|sk[-_]|gh[pousr]_|github_pat_|xox[baprs]-)[[:alnum:]_=-]{12,}'
+cloud_secret_pattern='((AKIA|ASIA)[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{35}|ya29\.[0-9A-Za-z_-]{20,})'
+jwt_pattern='eyJ[0-9A-Za-z_-]{10,}\.eyJ[0-9A-Za-z_-]{10,}\.[0-9A-Za-z_-]{10,}'
+bearer_pattern='[Bb]earer[[:space:]]+[0-9A-Za-z._~+/=-]{20,}'
+private_key_pattern='-----BEGIN[[:space:]][A-Z0-9 ]*PRIVATE KEY-----'
+assignment_pattern="(api[_-]?key|access[_-]?token|auth[_-]?token|secret|password)[[:space:]]*[:=][[:space:]]*[\"']?[0-9a-z/+_.=-]{12,}"
+
+contains_likely_secret() {
+  local text="$1"
+  local lower_text="${(L)text}"
+  [[ "$text" =~ $secret_prefix_pattern ||
+     "$text" =~ $cloud_secret_pattern ||
+     "$text" =~ $jwt_pattern ||
+     "$text" =~ $bearer_pattern ||
+     "$text" =~ $private_key_pattern ||
+     "$lower_text" =~ $assignment_pattern ]]
+}
+
+if contains_likely_secret "$document_brief"; then
+  print -u2 -- "document brief contains a likely plaintext credential; redact it first"
+  exit 2
+fi
+
+script_dir="${0:A:h}"
+instructions_file="${script_dir:h}/references/writer-prompt.md"
+if [[ ! -r "$instructions_file" ]]; then
+  print -u2 -- "document writer instructions are unavailable"
+  exit 2
+fi
+
+api_key="$(/usr/bin/security find-generic-password \
+  -s codex-deepseek-doc-writer -w 2>/dev/null || true)"
+if [[ -z "$api_key" ]]; then
+  print -u2 -- "DeepSeek API credential is unavailable in macOS Keychain"
+  exit 2
+fi
+
+runtime_dir="$(mktemp -d "${TMPDIR:-/tmp}/deepseek-doc-writer.XXXXXXXX")"
+cleanup() {
+  api_key=""
+  if [[ -d "$runtime_dir" && "$runtime_dir" == */deepseek-doc-writer.* ]]; then
+    command rm -r -- "$runtime_dir" || true
+  fi
+}
+trap cleanup EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+request_file="$runtime_dir/request.json"
+response_file="$runtime_dir/response.json"
+curl_config="$runtime_dir/curl.conf"
+command chmod 700 "$runtime_dir"
+
+/usr/bin/jq -n \
+  --rawfile system "$instructions_file" \
+  --arg brief "$document_brief" '
+  {
+    model: "deepseek-v4-pro",
+    max_tokens: 16384,
+    system: $system,
+    messages: [{role: "user", content: $brief}]
+  }
+' >"$request_file"
+
+# Keep the credential out of process arguments and delete this file on exit.
+{
+  print -r -- 'silent'
+  print -r -- 'show-error'
+  print -r -- 'fail-with-body'
+  print -r -- 'connect-timeout = 15'
+  print -r -- 'max-time = 300'
+  print -r -- 'header = "content-type: application/json"'
+  print -r -- 'header = "anthropic-version: 2023-06-01"'
+  print -r -- "header = \"x-api-key: $api_key\""
+} >"$curl_config"
+command chmod 600 "$request_file" "$curl_config"
+
+if ! /usr/bin/curl --config "$curl_config" \
+  --request POST \
+  --data-binary "@$request_file" \
+  --output "$response_file" \
+  https://api.deepseek.com/anthropic/v1/messages; then
+  error_message="$(/usr/bin/jq -r '.error.message // "DeepSeek document worker request failed"' "$response_file" 2>/dev/null || true)"
+  print -u2 -- "${error_message:-DeepSeek document worker request failed}"
+  exit 3
+fi
+
+document="$(/usr/bin/jq -er '
+  [.content[]? | select(.type == "text") | .text] | join("\n") | select(length > 0)
+' "$response_file" 2>/dev/null || true)"
+if [[ -z "$document" ]]; then
+  print -u2 -- "DeepSeek document worker returned no document text"
+  exit 3
+fi
+if contains_likely_secret "$document"; then
+  print -u2 -- "DeepSeek document worker output contained a likely plaintext credential"
+  exit 3
+fi
+
+print -r -- "$document"

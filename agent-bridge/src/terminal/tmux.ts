@@ -1,7 +1,7 @@
 import { spawn, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdir, readFile, rm, stat } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { basename, dirname, join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import type { Agent } from "../core/types.ts";
 import { BYPASS_ENV } from "../core/constants.ts";
@@ -138,9 +138,14 @@ async function runInTmux(
 
   const exitPath = join(workDir, "exit-code.txt");
   const donePath = join(workDir, "done");
+  const stdinPath = join(workDir, "stdin.txt");
+  const outputPath = join(workDir, "output.txt");
   await Promise.all([
     rm(exitPath, { force: true }),
-    rm(donePath, { force: true })
+    rm(donePath, { force: true }),
+    rm(outputPath, { force: true }),
+    // Some print-mode CLIs only consume stdin when it is non-TTY.
+    writeFile(stdinPath, input, "utf8")
   ]);
 
   const commandLine = formatCommandLine(command, args);
@@ -151,7 +156,7 @@ async function runInTmux(
     attachOptions,
     runOptions.cwd,
     commandLine,
-    shellCommandWithExitMarker(command, args, runOptions.env, exitPath, donePath)
+    shellCommandWithExitMarker(command, args, runOptions.env, stdinPath, outputPath, exitPath, donePath, shouldUseUserShellEnvironment(attachOptions.agent, command))
   );
   attachOptions.onStart?.({
     pid: panePid,
@@ -160,18 +165,8 @@ async function runInTmux(
     cwd: runOptions.cwd
   }, session);
 
-  if (input.length > 0) {
-    await delay(250);
-    await pasteIntoTmux(tmux, sessionName, input);
-    if (!input.endsWith("\n") && !input.endsWith("\r")) {
-      await execTmux(tmux, ["send-keys", "-t", sessionName, "C-m"]);
-    }
-    await delay(50);
-    await execTmux(tmux, ["send-keys", "-t", sessionName, "C-d"]);
-  }
-
   try {
-    await waitForCommandDone(donePath, session.logPath, runOptions.timeout);
+    await waitForCommandDone(donePath, session.logPath, outputPath, runOptions.timeout);
   } catch (error) {
     await execTmux(tmux, ["send-keys", "-t", sessionName, "C-c"]).catch(() => undefined);
     const output = await readFile(session.logPath, "utf8").catch(() => "");
@@ -192,8 +187,7 @@ async function runInTmux(
     throw timeout;
   }
 
-  await delay(200);
-  const output = await readFile(session.logPath, "utf8").catch(() => "");
+  const output = await readCommandOutput(session.logPath, outputPath);
   const code = Number.parseInt((await readFile(exitPath, "utf8").catch(() => "1")).trim(), 10);
   const exitCode = Number.isInteger(code) ? code : 1;
   const footer = `\r\n\x1b[90m# process exited with code ${exitCode}\x1b[0m\r\n`;
@@ -441,22 +435,43 @@ function shellCommandWithExitMarker(
   command: string,
   args: string[],
   env: NodeJS.ProcessEnv,
+  stdinPath: string,
+  outputPath: string,
   exitPath: string,
-  donePath: string
+  donePath: string,
+  useUserShellEnvironment: boolean
 ): string {
+  const shell = env.SHELL ?? process.env.SHELL ?? "/bin/sh";
   const executable = shellQuote([
-    ...envCommandPrefix(env),
+    ...(useUserShellEnvironment ? [] : envCommandPrefix(env)),
     command,
     ...args
   ]);
-  return [
-    executable,
+  const inner = [
+    `${executable} < ${shellQuote([stdinPath])} > ${shellQuote([outputPath])} 2>&1`,
     "agent_bridge_code=$?",
+    `cat ${shellQuote([outputPath])}`,
+    `rm -f ${shellQuote([stdinPath])}`,
     "printf '\\r\\n\\033[90m# agent-bridge command exit code %s\\033[0m\\r\\n' \"$agent_bridge_code\"",
     `printf '%s\\n' "$agent_bridge_code" > ${shellQuote([exitPath])}`,
     `touch ${shellQuote([donePath])}`,
-    `exec ${shellQuote([env.SHELL ?? process.env.SHELL ?? "/bin/sh"])}`
+    `exec ${shellQuote([shell])}`
   ].join("; ");
+  if (!useUserShellEnvironment) {
+    return inner;
+  }
+  const bypass = `${BYPASS_ENV}=${shellQuote([env[BYPASS_ENV] ?? "1"])}`;
+  return shellQuote([
+    shell,
+    "-ilc",
+    `${bypass} ${inner}`
+  ]);
+}
+
+function shouldUseUserShellEnvironment(agent: Agent, command: string): boolean {
+  const executable = basename(command).replace(/\.exe$/i, "");
+  const expected = agent.kind === "claude" ? "claude" : agent.kind;
+  return executable === expected;
 }
 
 function envCommandPrefix(env: NodeJS.ProcessEnv): string[] {
@@ -479,13 +494,16 @@ function envCommandPrefix(env: NodeJS.ProcessEnv): string[] {
     : ["env", ...values.map(([key, value]) => `${key}=${value}`)];
 }
 
-async function waitForCommandDone(donePath: string, logPath: string, timeout: number): Promise<void> {
+async function waitForCommandDone(donePath: string, logPath: string, outputPath: string, timeout: number): Promise<void> {
   const started = Date.now();
   while (Date.now() - started < timeout) {
     if (await stat(donePath).then(() => true, () => false)) {
       return;
     }
-    const output = await readFile(logPath, "utf8").catch(() => "");
+    const output = [
+      await readFile(logPath, "utf8").catch(() => ""),
+      await readFile(outputPath, "utf8").catch(() => "")
+    ].join("\n");
     const knownError = detectKnownAgentError(output);
     if (knownError && !hasBridgeResultJson(output)) {
       const line = firstKnownAgentErrorLine(output, knownError) ?? knownError.title("Agent");
@@ -494,6 +512,19 @@ async function waitForCommandDone(donePath: string, logPath: string, timeout: nu
     await delay(200);
   }
   throw new Error(`Agent command timed out after ${timeout} ms`);
+}
+
+async function readCommandOutput(logPath: string, outputPath: string): Promise<string> {
+  await delay(200);
+  const [log, commandOutput] = await Promise.all([
+    readFile(logPath, "utf8").catch(() => ""),
+    readFile(outputPath, "utf8").catch(() => "")
+  ]);
+  if (!commandOutput.trim() || log.includes(commandOutput.trim())) {
+    return log;
+  }
+  await appendTerminalLog(logPath, commandOutput);
+  return `${log}${commandOutput}`;
 }
 
 async function waitForInteractiveResult(logPath: string, outputOffset: number, timeout: number): Promise<string> {
@@ -701,10 +732,12 @@ function spawnCollect(command: string, args: string[], input?: string): Promise<
 async function enqueueTerminalRun<T>(terminalId: string, run: () => Promise<T>): Promise<T> {
   const previous = terminalQueues.get(terminalId) ?? Promise.resolve();
   const current = previous.catch(() => undefined).then(run);
-  terminalQueues.set(terminalId, current.finally(() => {
-    if (terminalQueues.get(terminalId) === current) {
+  // Keep the queue drain promise resolved so command failures reach only callers.
+  const queued = current.then(() => undefined, () => undefined).finally(() => {
+    if (terminalQueues.get(terminalId) === queued) {
       terminalQueues.delete(terminalId);
     }
-  }));
+  });
+  terminalQueues.set(terminalId, queued);
   return current;
 }

@@ -132,15 +132,38 @@ test("help exposes top-level lifecycle commands without service namespace", asyn
   try {
     const result = await runCli(["--help"], dir, join(dir, "config"), join(dir, "state"));
     assert.equal(result.code, 0, result.stderr);
+    assert.match(result.stdout, /\nUsage:\n  agent-bridge <command> \[options\]\n/);
+    assert.match(result.stdout, /\n  help \[command\]\n/);
     assert.match(result.stdout, /\n  version\n/);
+    assert.match(result.stdout, /\n  upgrade\n/);
     assert.match(result.stdout, /\n  list\n/);
     assert.match(result.stdout, /\n  remove \[--producer codex\|claude\|aiden\|--all\] \[--scope project\|global\|both\]\n/);
     assert.match(result.stdout, /\n  start\n/);
     assert.match(result.stdout, /\n  status\n/);
     assert.match(result.stdout, /\n  dashboard\n/);
     assert.match(result.stdout, /\n  stop\n/);
+    assert.match(result.stdout, /\n  restart\n/);
     assert.doesNotMatch(result.stdout, /service start|service run/);
     assert.doesNotMatch(result.stdout, /agent list|agent add|agent remove/);
+
+    const command = await runCli(["help"], dir, join(dir, "config"), join(dir, "state"));
+    assert.equal(command.code, 0, command.stderr);
+    assert.equal(command.stdout, result.stdout);
+
+    const send = await runCli(["help", "send"], dir, join(dir, "config"), join(dir, "state"));
+    assert.equal(send.code, 0, send.stderr);
+    assert.match(send.stdout, /Usage:\n  agent-bridge send --to codex\|claude\|aiden --message <text>/);
+    assert.match(send.stdout, /direct validation message/);
+
+    const upgrade = await runCli(["help", "upgrade"], dir, join(dir, "config"), join(dir, "state"));
+    assert.equal(upgrade.code, 0, upgrade.stderr);
+    assert.match(upgrade.stdout, /Usage:\n  agent-bridge upgrade/);
+    assert.match(upgrade.stdout, /npm package to the latest version/);
+
+    const restart = await runCli(["help", "restart"], dir, join(dir, "config"), join(dir, "state"));
+    assert.equal(restart.code, 0, restart.stderr);
+    assert.match(restart.stdout, /Usage:\n  agent-bridge restart/);
+    assert.match(restart.stdout, /Restart the local Agent Bridge service/);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
@@ -167,6 +190,67 @@ test("version command prints the package version", async () => {
     assert.equal(shortFlag.stdout, expected);
     assert.equal(shortFlag.stderr, "");
   } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("upgrade command updates the global npm package and prompts restart", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "agent-bridge-upgrade-"));
+  try {
+    const fakeNpm = join(dir, "fake-npm.mjs");
+    const argsPath = join(dir, "npm-args.json");
+    await writeFile(fakeNpm, `#!${process.execPath}
+import { writeFileSync } from "node:fs";
+writeFileSync(process.env.AGENT_BRIDGE_TEST_NPM_ARGS ?? "", JSON.stringify(process.argv.slice(2)));
+`, "utf8");
+    await chmod(fakeNpm, 0o755);
+
+    const result = await runCli(["upgrade"], dir, join(dir, "config"), join(dir, "state"), {
+      extraEnv: {
+        AGENT_BRIDGE_NPM_COMMAND: fakeNpm,
+        AGENT_BRIDGE_TEST_NPM_ARGS: argsPath
+      }
+    });
+
+    assert.equal(result.code, 0, result.stderr);
+    assert.deepEqual(JSON.parse(await readFile(argsPath, "utf8")), ["install", "-g", "@ranarkh/agent-bridge@latest"]);
+    assert.match(result.stdout, /Upgrading @ranarkh\/agent-bridge@latest/);
+    assert.match(result.stdout, /Upgrade complete/);
+    assert.match(result.stdout, /agent-bridge stop/);
+    assert.match(result.stdout, /agent-bridge start/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("restart command replaces a running service process", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "agent-bridge-restart-"));
+  const configDir = join(dir, "config");
+  const stateDir = join(dir, "state");
+  try {
+    await mkdir(configDir);
+    await mkdir(stateDir);
+    await writeConfig(configDir, await freePort(), []);
+
+    const start = await runCli(["start"], dir, configDir, stateDir);
+    assert.equal(start.code, 0, start.stderr);
+    assert.match(start.stdout, /Service started on port/);
+
+    const before = await runCli(["status"], dir, configDir, stateDir);
+    assert.equal(before.code, 0, before.stderr);
+    const beforePid = servicePid(before.stdout);
+
+    const restart = await runCli(["restart"], dir, configDir, stateDir);
+    assert.equal(restart.code, 0, restart.stderr);
+    assert.match(restart.stdout, /Stopped service pid/);
+    assert.match(restart.stdout, /Service started on port/);
+
+    const after = await runCli(["status"], dir, configDir, stateDir);
+    assert.equal(after.code, 0, after.stderr);
+    const afterPid = servicePid(after.stdout);
+    assert.notEqual(afterPid, beforePid);
+  } finally {
+    await runCli(["stop"], dir, configDir, stateDir).catch(() => undefined);
     await rm(dir, { recursive: true, force: true });
   }
 });
@@ -420,6 +504,68 @@ console.log(JSON.stringify({
   }
 });
 
+test("send chat mode posts a non-review message and returns plain output", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "agent-bridge-send-chat-"));
+  const projectDir = join(dir, "project");
+  const configDir = join(dir, "config");
+  const stateDir = join(dir, "state");
+  const promptPath = join(dir, "seen-prompt.txt");
+  try {
+    await mkdir(projectDir);
+    await mkdir(configDir);
+    await mkdir(stateDir);
+    const fakeClaude = join(dir, "fake-claude.mjs");
+    await writeFile(fakeClaude, `#!${process.execPath}
+import { writeFileSync } from "node:fs";
+let input = "";
+process.stdin.on("data", (chunk) => input += chunk);
+process.stdin.on("end", () => {
+  writeFileSync(process.env.AGENT_BRIDGE_TEST_PROMPT ?? "", input);
+  console.log(JSON.stringify({ type: "result", result: "plain chat answer" }));
+});
+`, "utf8");
+    await chmod(fakeClaude, 0o755);
+    await writeConfig(configDir, await freePort(), [{
+      id: "claude",
+      kind: "claude",
+      label: "Claude Code",
+      command: fakeClaude,
+      enabled: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }]);
+
+    const result = await runCli([
+      "send",
+      "--to",
+      "claude",
+      "--mode",
+      "chat",
+      "--message",
+      "hello without review",
+      "--workspace",
+      projectDir,
+      "--session-id",
+      "chat-session"
+    ], projectDir, configDir, stateDir, {
+      extraEnv: { AGENT_BRIDGE_TEST_PROMPT: promptPath }
+    });
+    assert.equal(result.code, 0, result.stderr);
+    const response = JSON.parse(result.stdout);
+    assert.equal(response.result.verdict, "pass");
+    assert.equal(response.result.summary, "plain chat answer");
+    assert.equal("rawOutput" in response.result, false);
+
+    const prompt = await readFile(promptPath, "utf8");
+    assert.match(prompt, /Answer the direct message normally/);
+    assert.match(prompt, /hello without review/);
+    assert.doesNotMatch(prompt, /Return strict JSON only/);
+  } finally {
+    await runCli(["stop"], projectDir, configDir, stateDir).catch(() => undefined);
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
 test("send reads stdin and file messages and does not de-duplicate direct repeats", async () => {
   const dir = await mkdtemp(join(tmpdir(), "agent-bridge-send-message-"));
   const projectDir = join(dir, "project");
@@ -499,6 +645,14 @@ test("send validates the target and message source", async () => {
     });
     assert.equal(pipedConflict.code, 1);
     assert.match(pipedConflict.stderr, /exactly one direct message source/);
+
+    const invalidMode = await runCli(["send", "--to", "aiden", "--mode", "nope", "--message", "hello"], dir, join(dir, "config"), join(dir, "state"));
+    assert.equal(invalidMode.code, 1);
+    assert.match(invalidMode.stderr, /--mode must be review or chat/);
+
+    const missingModeValue = await runCli(["send", "--to", "aiden", "--message", "hello", "--mode"], dir, join(dir, "config"), join(dir, "state"));
+    assert.equal(missingModeValue.code, 1);
+    assert.match(missingModeValue.stderr, /--mode must be review or chat/);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
@@ -600,6 +754,12 @@ async function writeConfig(configDir: string, port: number, agents: unknown[]): 
     agents,
     routes: []
   }, null, 2)}\n`, "utf8");
+}
+
+function servicePid(output: string): number {
+  const match = output.match(/pid (\d+)/);
+  assert.ok(match, output);
+  return Number.parseInt(match[1], 10);
 }
 
 async function freePort(): Promise<number> {

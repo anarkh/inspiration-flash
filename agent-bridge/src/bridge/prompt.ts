@@ -1,8 +1,12 @@
-import type { EndpointKind, GitContext, NormalizedHookPayload } from "../core/types.ts";
+import type { BridgeOutputMode, EndpointKind, GitContext, NormalizedHookPayload } from "../core/types.ts";
 
 export interface BridgePromptOptions {
   includeGitContext?: boolean;
   gitContextReason?: string;
+}
+
+export interface DirectBridgePromptOptions {
+  mode?: BridgeOutputMode;
 }
 
 export function buildBridgePrompt(payload: NormalizedHookPayload, git: GitContext, options: BridgePromptOptions = {}): string {
@@ -35,7 +39,10 @@ export function buildBridgePrompt(payload: NormalizedHookPayload, git: GitContex
   ].join("\n");
 }
 
-export function buildDirectBridgePrompt(payload: NormalizedHookPayload, consumer: EndpointKind, message: string): string {
+export function buildDirectBridgePrompt(payload: NormalizedHookPayload, consumer: EndpointKind, message: string, options: DirectBridgePromptOptions = {}): string {
+  if (options.mode === "chat") {
+    return buildDirectChatPrompt(payload, consumer, message);
+  }
   return [
     "You are a consumer agent connected through Agent Bridge for a direct CLI validation message.",
     "Answer the direct message. Do not modify files unless the message explicitly asks for code or file changes.",
@@ -51,6 +58,26 @@ export function buildDirectBridgePrompt(payload: NormalizedHookPayload, consumer
     "- pass: you successfully answered the direct message or found no blocking issue.",
     "- fail: there is a concrete bug, broken requirement, unsafe behavior, or missing validation/test that should be fixed.",
     "- uncertain: the context is insufficient or your output cannot confidently pass.",
+    "",
+    "Direct message context:",
+    JSON.stringify({
+      producer: payload.producer,
+      consumer,
+      cwd: payload.cwd,
+      sessionId: payload.sessionId,
+      turnId: payload.turnId
+    }, null, 2),
+    "",
+    "Direct message:",
+    message
+  ].join("\n");
+}
+
+function buildDirectChatPrompt(payload: NormalizedHookPayload, consumer: EndpointKind, message: string): string {
+  return [
+    "You are a consumer agent connected through Agent Bridge for a direct CLI chat message.",
+    "Answer the direct message normally in plain text. Do not review the producer, assign a verdict, or return Agent Bridge JSON.",
+    "Do not modify files unless the message explicitly asks for code or file changes.",
     "",
     "Direct message context:",
     JSON.stringify({

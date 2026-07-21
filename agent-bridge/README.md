@@ -36,17 +36,22 @@ node ./dist/cli/index.js setup
 ## Commands
 
 ```bash
+agent-bridge help
+agent-bridge help send
+agent-bridge upgrade
 agent-bridge setup
 agent-bridge list
 agent-bridge remove --producer codex --scope project
 agent-bridge remove --all --scope both
 agent-bridge hooks clear
 agent-bridge start
+agent-bridge restart
 agent-bridge status
 agent-bridge dashboard
 agent-bridge stop
 agent-bridge run --file <payload.json>
 agent-bridge send --to aiden --message "hello" --workspace /path/to/repo --session-id demo
+agent-bridge send --to aiden --mode chat --message "hello" --workspace /path/to/repo
 agent-bridge send --to aiden --message "hello" --workspace /path/to/repo --session-id demo --raw-output
 ```
 
@@ -90,7 +95,7 @@ test/
 - `list` prints configured producer-to-consumer routes and the consumer CLI command each route calls.
 - `status` shows service health, configured routes, active bridge runs, and recent consumer agent results.
 - `dashboard` starts the local service if needed and opens a console with consumer agents, their CLI runs, and a WebSocket-connected xterm view.
-- `send` sends a direct validation message to one consumer CLI without installing hooks or configuring producer-to-consumer routes. It starts/reuses the local service and prints the `BridgeResponse` JSON to stdout, omitting `result.rawOutput` by default. Use `--raw-output` or `--full` when debugging terminal parser output.
+- `send` sends a direct validation message to one consumer CLI without installing hooks or configuring producer-to-consumer routes. Use `--mode chat` for a plain non-review response instead of a verdict JSON review. It starts/reuses the local service and prints the `BridgeResponse` JSON to stdout, omitting `result.rawOutput` by default. Use `--raw-output` or `--full` when debugging terminal parser output.
 - `remove` deletes one route or all Agent Bridge config, then clears the matching producer hooks in the selected scope.
 - `hooks clear` removes only Agent Bridge managed hook commands for the selected producer and scope.
 - Hook commands print a short progress hint to stderr so the producer session is not silent while the consumer agent is running.

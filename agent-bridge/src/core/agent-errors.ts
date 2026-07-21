@@ -16,7 +16,7 @@ const KNOWN_AGENT_ERRORS: KnownAgentError[] = [{
   suggestedPrompt: "Retry the bridge run after the consumer agent provider rate limit clears, or switch the route to another available consumer agent."
 }, {
   kind: "auth",
-  pattern: /not\s+(?:logged|signed)\s+in|login required|authentication required|not authenticated|please\s+(?:log|sign)\s+in|missing (?:api key|credentials)|invalid api key|unauthorized request/i,
+  pattern: /not\s+(?:logged|signed)\s+in|login required|authentication required|not authenticated|please\s+(?:log|sign)\s+in|missing (?:api key|credentials)|invalid (?:api key|authentication credentials)|unauthorized request/i,
   title: (agent) => `${agent} authentication unavailable`,
   summary: (agent) => `${agent} authentication is unavailable in the hook environment, so the consumer CLI could not produce a JSON verdict.`,
   suggestedPrompt: "Open the Agent Bridge dashboard terminal for this run, verify the consumer CLI login in that environment, then retry the bridge run."

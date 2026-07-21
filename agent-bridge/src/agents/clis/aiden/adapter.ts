@@ -75,7 +75,7 @@ async function runAidenAgent(agent: Agent, cwd: string, prompt: string, context?
       contextDir,
       "--max-turns",
       "2",
-      buildAidenTerminalInput(`Read the bridge context file and return only the requested JSON:\n${promptPath}`, context)
+      buildAidenTerminalInput(`${contextFileInstruction(context)}\n${promptPath}`, context)
     ], "", context, {
       timeout: AGENT_TIMEOUT_MS,
       env: bridgeBypassEnv()
@@ -85,6 +85,12 @@ async function runAidenAgent(agent: Agent, cwd: string, prompt: string, context?
       await rm(contextDir, { recursive: true, force: true });
     }
   }
+}
+
+function contextFileInstruction(context?: AgentRunContext): string {
+  return context?.outputMode === "chat"
+    ? "Read the bridge context file and answer the direct message in plain text:"
+    : "Read the bridge context file and return only the requested JSON:";
 }
 
 function buildAidenArgs(options: AgentBuildArgsOptions): string[] {

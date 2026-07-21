@@ -1,29 +1,41 @@
 #!/usr/bin/env node
+import { spawn } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { stdin, stdout, stderr } from "node:process";
 import { loadConfig, removeAllBridgeConfig, removeRoute, upsertAgent, upsertRoute } from "../config/store.ts";
 import { bridgeGateTimeoutMs, BYPASS_ENV, PRODUCER_LABELS } from "../core/constants.ts";
-import type { Agent, BridgeMention, BridgeMessageSender, BridgeResponse, BridgeRoute, ConfigScope, EndpointKind, HookEvent, RawDirectEnvelope, RawHookEnvelope } from "../core/types.ts";
+import type { Agent, BridgeMention, BridgeMessageSender, BridgeOutputMode, BridgeResponse, BridgeRoute, ConfigScope, EndpointKind, HookEvent, RawDirectEnvelope, RawHookEnvelope } from "../core/types.ts";
 import { clearHooks, configureHooks } from "../hooks/configure.ts";
 import { mapBridgeToProducerResponse } from "../hooks/producer-response.ts";
 import { detectAllAgentClis } from "../agents/registry.ts";
 import { runBridge, selectRouteAgents } from "../bridge/runner.ts";
-import { printDashboardUrl, printServiceStatus, runServiceForeground, startService, stopService, submitBridge, submitDirectBridge } from "../service/server.ts";
+import { printDashboardUrl, printServiceStatus, restartService, runServiceForeground, startService, stopService, submitBridge, submitDirectBridge } from "../service/server.ts";
 import { chooseMany, chooseOne } from "./interactive.ts";
 import { resolveHookConfigCwd } from "./project-root.ts";
 
 type HookCleanupScope = ConfigScope | "both";
 type RemoveTarget = { all: true } | { all: false; producer: EndpointKind };
+type PackageJson = { name?: string; version?: string };
 
 async function main(argv: string[]): Promise<void> {
   const [command, subcommand] = argv;
-  if (!command || command === "help" || command === "--help" || command === "-h") {
+  if (!command || command === "--help" || command === "-h") {
     printHelp();
+    return;
+  }
+
+  if (command === "help") {
+    printHelp(subcommand);
     return;
   }
 
   if (command === "version" || command === "--version" || command === "-v") {
     await versionCommand();
+    return;
+  }
+
+  if (command === "upgrade") {
+    await upgradeCommand();
     return;
   }
 
@@ -58,6 +70,11 @@ async function main(argv: string[]): Promise<void> {
 
   if (command === "stop") {
     await stopService();
+    return;
+  }
+
+  if (command === "restart") {
+    await restartService();
     return;
   }
 
@@ -115,11 +132,48 @@ async function setupCommand(): Promise<void> {
 }
 
 async function versionCommand(): Promise<void> {
-  const packageJson = JSON.parse(await readFile(new URL("../../package.json", import.meta.url), "utf8")) as { version?: string };
+  const packageJson = await readPackageJson();
   if (!packageJson.version) {
     throw new Error("Unable to read agent-bridge package version.");
   }
   stdout.write(`${packageJson.version}\n`);
+}
+
+async function upgradeCommand(): Promise<void> {
+  const packageJson = await readPackageJson();
+  if (!packageJson.name) {
+    throw new Error("Unable to read agent-bridge package name.");
+  }
+  const target = `${packageJson.name}@latest`;
+  stdout.write(`Upgrading ${target}...\n`);
+  await runUpgradeCommand(process.env.AGENT_BRIDGE_NPM_COMMAND ?? "npm", ["install", "-g", target]);
+  stdout.write([
+    "Upgrade complete. Restart Agent Bridge to use the new version:",
+    "  agent-bridge stop",
+    "  agent-bridge start",
+    ""
+  ].join("\n"));
+}
+
+async function readPackageJson(): Promise<PackageJson> {
+  return JSON.parse(await readFile(new URL("../../package.json", import.meta.url), "utf8")) as PackageJson;
+}
+
+function runUpgradeCommand(command: string, args: string[]): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, {
+      env: process.env,
+      stdio: ["ignore", "inherit", "inherit"]
+    });
+    child.on("error", reject);
+    child.on("close", (code) => {
+      if (code === 0) {
+        resolve();
+        return;
+      }
+      reject(new Error(`Upgrade command failed with exit code ${code ?? "unknown"}.`));
+    });
+  });
 }
 
 async function chooseProducerSet(title: string, allDescription: string): Promise<EndpointKind[]> {
@@ -324,6 +378,7 @@ async function runCommand(args: string[]): Promise<void> {
 async function sendCommand(args: string[]): Promise<void> {
   const consumer = parseEndpointFlag(args, "--to");
   const producer = parseOptionalEndpointFlag(args, "--producer") ?? "codex";
+  const mode = parseDirectMode(args);
   const message = await readDirectMessage(args);
   const includeRawOutput = args.includes("--raw-output") || args.includes("--full");
   const envelope: RawDirectEnvelope = {
@@ -333,6 +388,7 @@ async function sendCommand(args: string[]): Promise<void> {
     sessionId: valueAfter(args, "--session-id"),
     producer,
     turnId: valueAfter(args, "--turn-id"),
+    mode,
     sender: senderFromArgs(args),
     mentions: mentionsFromArgs(args)
   };
@@ -429,6 +485,18 @@ function parseEventFlag(args: string[], flag: string): HookEvent {
     return value;
   }
   throw new Error(`${flag} must be stop or post-tool-use`);
+}
+
+function parseDirectMode(args: string[]): BridgeOutputMode {
+  const index = args.indexOf("--mode");
+  if (index === -1) {
+    return "review";
+  }
+  const value = args[index + 1];
+  if (value === "review" || value === "chat") {
+    return value;
+  }
+  throw new Error("--mode must be review or chat");
 }
 
 function workspaceValue(args: string[]): string {
@@ -591,24 +659,122 @@ function positionalArgs(args: string[]): string[] {
   return positionals;
 }
 
-function printHelp(): void {
+function printHelp(topic?: string): void {
+  if (topic && topic !== "--help" && topic !== "-h") {
+    const helpText = COMMAND_HELP[topic];
+    if (!helpText) {
+      throw new Error(`Unknown help topic: ${topic}`);
+    }
+    stdout.write(helpText);
+    return;
+  }
+
   stdout.write(`agent-bridge
 
+Usage:
+  agent-bridge <command> [options]
+
 Commands:
+  help [command]
   version
+  upgrade
   setup
   list
   remove [--producer codex|claude|aiden|--all] [--scope project|global|both]
   hooks clear
   start
   stop
+  restart
   status
   dashboard
   hook --producer codex|claude|aiden --event stop
   run --file <payload.json>
   send --to codex|claude|aiden --message <text> [--workspace <path>] [--session-id <id>] [--raw-output]
+  send --to codex|claude|aiden --message <text> --mode chat [--workspace <path>]
 `);
 }
+
+const COMMAND_HELP: Record<string, string> = {
+  help: `Usage:
+  agent-bridge help [command]
+
+Show top-level help or detailed help for one command.
+`,
+  version: `Usage:
+  agent-bridge version
+  agent-bridge --version
+  agent-bridge -v
+
+Print the installed Agent Bridge version.
+`,
+  upgrade: `Usage:
+  agent-bridge upgrade
+
+Update the global Agent Bridge npm package to the latest version, then restart the service.
+`,
+  setup: `Usage:
+  agent-bridge setup
+
+Interactively configure producer hooks and producer-to-consumer routes.
+`,
+  list: `Usage:
+  agent-bridge list
+
+Print configured producer-to-consumer routes and consumer CLI commands.
+`,
+  remove: `Usage:
+  agent-bridge remove [--producer codex|claude|aiden|--all] [--scope project|global|both]
+
+Remove one route or all Agent Bridge config, then clear matching hooks.
+`,
+  hooks: `Usage:
+  agent-bridge hooks clear
+
+Remove only Agent Bridge managed hook commands for the selected producer and scope.
+`,
+  start: `Usage:
+  agent-bridge start
+
+Start the local Agent Bridge service.
+`,
+  stop: `Usage:
+  agent-bridge stop
+
+Stop the local Agent Bridge service.
+`,
+  restart: `Usage:
+  agent-bridge restart
+
+Restart the local Agent Bridge service.
+`,
+  status: `Usage:
+  agent-bridge status
+
+Show service health, configured routes, active runs, and recent runs.
+`,
+  dashboard: `Usage:
+  agent-bridge dashboard
+
+Start the local service if needed and print the dashboard URL.
+`,
+  hook: `Usage:
+  agent-bridge hook --producer codex|claude|aiden --event stop
+
+Internal producer hook entrypoint. Reads hook JSON from stdin.
+`,
+  run: `Usage:
+  agent-bridge run --file <payload.json>
+
+Run one raw hook payload file through Agent Bridge and print JSON.
+`,
+  send: `Usage:
+  agent-bridge send --to codex|claude|aiden --message <text> [--mode review|chat] [--workspace <path>] [--session-id <id>] [--raw-output]
+  agent-bridge send --to codex|claude|aiden --file <message.txt> [--mode review|chat] [--workspace <path>]
+  printf '%s' <message> | agent-bridge send --to codex|claude|aiden [--mode review|chat] [--workspace <path>]
+
+Send a direct validation message or chat message to one consumer CLI without installing hooks.
+`
+};
 
 function formatDuration(ms: number): string {
   const seconds = Math.ceil(ms / 1000);

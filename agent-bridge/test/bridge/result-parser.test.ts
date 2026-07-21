@@ -25,6 +25,22 @@ test("extracts Claude result field before parsing", () => {
   assert.match(text, /"verdict":"pass"/);
 });
 
+test("parses Claude result field embedded in terminal output", () => {
+  const output = [
+    "# Agent Bridge tmux terminal",
+    "$ claude -p --output-format json",
+    JSON.stringify({
+      type: "result",
+      result: "{\"verdict\":\"pass\",\"summary\":\"claude connection ok\",\"findings\":[],\"suggestedPrompt\":\"\"}"
+    }),
+    "# agent-bridge command exit code 0"
+  ].join("\n");
+
+  const result = parseBridgeOutput(output, "Claude Code");
+  assert.equal(result.verdict, "pass");
+  assert.equal(result.summary, "claude connection ok");
+});
+
 test("parses final verdict JSON from terminal output with earlier JSON snippets", () => {
   const output = [
     "# Agent Bridge tmux terminal",
@@ -93,6 +109,15 @@ test("marks unstructured output uncertain", () => {
   assert.equal(result.findings[0].title, "Unstructured agent output");
 });
 
+test("treats unstructured chat-mode output as a successful answer", () => {
+  const result = parseBridgeOutput("Plain answer\nwith detail.", "Claude Code", { mode: "chat" });
+  assert.equal(result.verdict, "pass");
+  assert.equal(result.summary, "Plain answer\nwith detail.");
+  assert.deepEqual(result.findings, []);
+  assert.equal(result.suggestedPrompt, "");
+  assert.equal(result.rawOutput, "Plain answer\nwith detail.");
+});
+
 test("summarizes provider rate limits", () => {
   const result = parseBridgeOutput("429 Gateway retry policy failed: code: rate_limit_reached; Requests have exceeded the throughput limit", "Aiden");
   assert.equal(result.verdict, "uncertain");
@@ -105,4 +130,9 @@ test("summarizes consumer authentication failures", () => {
   assert.equal(result.verdict, "uncertain");
   assert.equal(result.summary, "Aiden authentication is unavailable in the hook environment, so the consumer CLI could not produce a JSON verdict.");
   assert.equal(result.findings[0].title, "Aiden authentication unavailable");
+
+  const claude = parseBridgeOutput("API Error: 401 Invalid authentication credentials", "Claude Code");
+  assert.equal(claude.verdict, "uncertain");
+  assert.equal(claude.summary, "Claude Code authentication is unavailable in the hook environment, so the consumer CLI could not produce a JSON verdict.");
+  assert.equal(claude.findings[0].title, "Claude Code authentication unavailable");
 });
