@@ -12,6 +12,7 @@ import {
   parseStructuredSuccessCheck,
   type StructuredSuccessCheck
 } from "../core/success-check.ts";
+import { runGoldenTaskRunEvals } from "../evals/golden-task-runs.ts";
 import { createConfiguredProvider } from "../model/configured-provider.ts";
 import type { ModelProvider } from "../model/provider.ts";
 import { runSkillPackEvals } from "../skills/evals.ts";
@@ -59,6 +60,7 @@ Usage:
   ${cliCommandName} memory
   ${cliCommandName} memory append [--section <section>] <note>
   ${cliCommandName} memory apply-suggestions [--yes] [run-id]
+  ${cliCommandName} eval golden
   ${cliCommandName} eval skill-pack <name-or-path>
   ${cliCommandName} export [run-id]
   ${cliCommandName} history [--status <active|completed>] [--limit <count>] [--offset <count>]
@@ -163,8 +165,36 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
   }
 
   if (command === "eval") {
+    if (argv[1] === "golden") {
+      if (argv.length > 2) {
+        process.stderr.write(`${cliCommandName}: eval golden does not accept arguments.\n`);
+        return 1;
+      }
+
+      const result = await runGoldenTaskRunEvals({
+        workspace: process.cwd(),
+        /** Prefixes deterministic fixture steps with their golden case id. */
+        logStep(message) {
+          process.stderr.write(`${message}\n`);
+        }
+      });
+      process.stdout.write(
+        [
+          `Golden Task Runs: ${result.passedCount} passed, ${result.failedCount} failed`,
+          ...result.cases.map(
+            (evalCase) =>
+              `${evalCase.id}: ${evalCase.status} | expected ${evalCase.expectedVerdict} | actual ${evalCase.actualVerdict ?? "unavailable"}`
+          ),
+          `Report: ${result.reportPath}`,
+          `Results: ${result.resultsPath}`
+        ].join("\n")
+      );
+      process.stdout.write("\n");
+      return result.failedCount === 0 ? 0 : 1;
+    }
+
     if (argv[1] !== "skill-pack") {
-      process.stderr.write(`${cliCommandName}: eval requires subcommand: skill-pack.\n`);
+      process.stderr.write(`${cliCommandName}: eval requires subcommand: golden or skill-pack.\n`);
       return 1;
     }
 

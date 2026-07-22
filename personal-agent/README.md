@@ -61,6 +61,12 @@ Run a Skill Pack evaluation:
 a-agent eval skill-pack <name-or-path>
 ```
 
+Run the deterministic core-workflow regression suite without calling a remote model:
+
+```bash
+a-agent eval golden
+```
+
 ## Main Commands
 
 | Command | Purpose |
@@ -72,6 +78,7 @@ a-agent eval skill-pack <name-or-path>
 | `a-agent history` | List recent Task Runs and evaluation status. |
 | `a-agent export [run-id]` | Export an inspectable Markdown run report. |
 | `a-agent memory` | Read or update Project Memory. |
+| `a-agent eval golden` | Run repeatable read, write, chat, memory, resume, and Skill Pack fixtures. |
 | `a-agent eval skill-pack <name-or-path>` | Execute a Skill Pack eval manifest. |
 
 ## Runtime Artifacts
@@ -82,6 +89,10 @@ Every workspace gets an ignored `.personal-agent/` directory containing:
 .personal-agent/
   config.json
   memory.md
+  evals/golden-task-runs/<eval-id>/
+    report.md
+    results.json
+    workspaces/<case-id>/
   runs/<run-id>/
     run.json
     events.jsonl
@@ -92,6 +103,7 @@ Every workspace gets an ignored `.personal-agent/` directory containing:
 
 These files are intentionally inspectable. They are the source of truth for history, resume, export, and learning.
 Evaluation V2 separates execution integrity from task correctness and records the artifact evidence used by each verdict.
+The golden suite keeps each deterministic fixture in an isolated workspace and reports both the expected and actual verdict. A fixture passes only when those verdicts match; the chat fixture deliberately expects `partial` until chat gains an objective Success Check.
 
 ## Development Checks
 

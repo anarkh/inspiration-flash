@@ -38,6 +38,7 @@ test("cli prints help", () => {
   assert.match(result.stdout, /resume \[--learn\] \[--review\]/);
   assert.match(result.stdout, /memory append \[--section <section>\] <note>/);
   assert.match(result.stdout, /memory apply-suggestions \[--yes\] \[run-id\]/);
+  assert.match(result.stdout, /eval golden/);
   assert.match(result.stdout, /eval skill-pack <name-or-path>/);
   assert.match(result.stdout, /export \[run-id\]/);
   assert.match(result.stdout, /history \[--status <active\|completed>\] \[--limit <count>\] \[--offset <count>\]/);
@@ -123,6 +124,36 @@ test("cli eval skill-pack runs a local Skill Pack eval manifest", async () => {
     assert.match(result.stdout, /Evaluated Skill Pack docs-helper: 1 passed, 0 failed/);
     assert.match(result.stdout, /Report:/);
     assert.match(result.stderr, /\[agent\] turn 1 plan/);
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test("cli eval golden runs every deterministic core workflow", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-cli-eval-golden-"));
+  try {
+    const result = spawnSync(process.execPath, [join(root, "src/cli/index.ts"), "eval", "golden"], {
+      cwd: workspace,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        DEEPSEEK_API_KEY: "",
+        OPENAI_API_KEY: "",
+        PERSONAL_AGENT_SKIP_DOTENV: "1"
+      }
+    });
+
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(result.stdout, /Golden Task Runs: 6 passed, 0 failed/);
+    assert.match(result.stdout, /chat: passed \| expected partial \| actual partial/);
+    assert.match(result.stdout, /skill-pack: passed \| expected pass \| actual pass/);
+    assert.match(result.stderr, /\[golden:read\] \[agent\] turn 1 plan/);
+
+    const latestPath = join(workspace, ".personal-agent/evals/golden-task-runs/latest");
+    const latest = (await readFile(latestPath, "utf8")).trim();
+    const persisted = JSON.parse(await readFile(join(latest, "results.json"), "utf8"));
+    assert.equal(persisted.passedCount, 6);
+    assert.equal(persisted.failedCount, 0);
   } finally {
     await rm(workspace, { recursive: true, force: true });
   }

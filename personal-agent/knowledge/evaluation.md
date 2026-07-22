@@ -85,6 +85,37 @@ a-agent run --check '{"type":"tool_succeeded","tool":"write_file"}' "write summa
 
 `report_contains` is intentionally a weak content grader: a model can repeat expected text without solving the task. Prefer file and tool evidence for side-effecting tasks, and later combine deterministic checks with calibrated model judges for semantic quality.
 
+## Golden Task Run Suite
+
+`src/evals/golden-task-runs.ts` implements a repeatable regression suite for the six core workflows. Run it with:
+
+```bash
+a-agent eval golden
+```
+
+The command does not call DeepSeek or another remote model. Each case uses a fixed local `ModelProvider`, but still passes through the real runner, Local Tools, Confirmation Gate, checkpoints, state files, Task Evaluation, and Skill Pack eval code. Every suite run creates isolated case workspaces under `.personal-agent/evals/golden-task-runs/<eval-id>/workspaces/`, then writes a human-readable `report.md`, machine-readable `results.json`, and a `latest` pointer.
+
+The golden contract is:
+
+| Workflow | Evaluation source | Expected verdict | Evidence exercised |
+| --- | --- | --- | --- |
+| read | Task Evaluation | `pass` | `read_file`, report text, tool result |
+| write | Task Evaluation | `pass` | approved `write_file`, file content, tool result |
+| chat | Task Evaluation | `partial` | two Owner turns, two replies, unavailable objective correctness |
+| memory | Task Evaluation | `pass` | reflection, Memory Suggestion, learning signal |
+| resume | Task Evaluation | `pass` | saved plan, checkpoint replay, final report |
+| Skill Pack | Skill Pack eval | `pass` | discovery, guidance injection, manifest grader |
+
+A golden case passes only when its actual verdict equals the declared expected verdict and its workflow-specific artifact assertions hold. This distinction matters for chat: `partial` remains visible and is the expected baseline, while the golden *case* passes because the runtime reproduced that honest result. Skill Pack grading is also kept separate from the underlying Task Evaluation, which remains `partial` when no structured Success Check was declared.
+
+Compared with alternatives:
+
+- Snapshot tests compare serialized output cheaply, but fail on harmless timestamp and path changes and can miss behavioral errors. Golden cases compare semantic verdicts and inspect selected artifacts instead.
+- Replaying production traces gives more realistic coverage, but introduces private data, provider drift, and nondeterministic model output. These fixtures are synthetic and secret-free.
+- Hosted eval platforms add experiment tracking and cross-model statistics, but require network access and more infrastructure. The local suite is fast, inspectable, and works offline.
+
+The advantage is stable end-to-end coverage of stateful agent workflows with direct failure artifacts. The limitations are equally important: fixed providers do not measure real-model quality, six fixtures do not represent the full task distribution, and expected verdict changes require an intentional fixture update. Real-provider and production-derived evals should be added later as separate layers, not mixed into this deterministic gate.
+
 ## Alternatives And Tradeoffs
 
 Common agent systems use several evaluation approaches:
@@ -126,12 +157,12 @@ Malformed review output is recorded as `invalid` instead of failing the complete
 
 Current version:
 - Run deterministic checks over the Task Run files.
+- Run the six deterministic Golden Task Run fixtures with `a-agent eval golden`.
 - Run Skill Pack eval manifests locally with `a-agent eval skill-pack <name-or-path>`.
 - Optionally ask the selected real Model Provider for a structured self-review with `--review`.
 
 Later versions:
 - Let the Owner override the verdict.
-- Add golden Task Runs for repeatable regression testing.
 - Use External Review through Agent Bridge for important Task Runs.
 - Calibrate model-assisted graders with golden examples collected from real Skill Pack evals.
 - Add retrieval-specific evals when Complex Embedding Retrieval is implemented.

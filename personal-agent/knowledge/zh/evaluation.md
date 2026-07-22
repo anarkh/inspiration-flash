@@ -86,6 +86,37 @@ a-agent run --check '{"type":"tool_succeeded","tool":"write_file"}' "写入 summ
 
 `report_contains` 有意保持为较弱的内容 grader：模型可能只复述期望文本，而没有真正完成任务。对于会产生副作用的任务，应优先使用文件和工具证据；后续再把确定性检查与经过 golden case 校准的 model judge 组合起来。
 
+## Golden Task Run 套件
+
+`src/evals/golden-task-runs.ts` 实现了覆盖六类核心工作流的可重复回归套件。运行命令是：
+
+```bash
+a-agent eval golden
+```
+
+这个命令不会调用 DeepSeek 或其他远程模型。每个 case 使用固定的本地 `ModelProvider`，但仍然经过真实的 runner、Local Tools、Confirmation Gate、checkpoint、state files、Task Evaluation 和 Skill Pack eval 代码。每次运行都会在 `.personal-agent/evals/golden-task-runs/<eval-id>/workspaces/` 下创建隔离的 case workspace，并生成便于阅读的 `report.md`、机器可读的 `results.json` 和 `latest` 指针。
+
+当前 golden 契约如下：
+
+| 工作流 | 评测来源 | 预期 verdict | 覆盖的证据 |
+| --- | --- | --- | --- |
+| read | Task Evaluation | `pass` | `read_file`、report 文本、tool result |
+| write | Task Evaluation | `pass` | 已确认的 `write_file`、文件内容、tool result |
+| chat | Task Evaluation | `partial` | 两轮 Owner 输入、两轮回复、客观 correctness 不可用 |
+| memory | Task Evaluation | `pass` | reflection、Memory Suggestion、learning signal |
+| resume | Task Evaluation | `pass` | 已保存 plan、checkpoint replay、最终 report |
+| Skill Pack | Skill Pack eval | `pass` | discovery、guidance injection、manifest grader |
+
+只有实际 verdict 等于声明的预期 verdict，并且工作流专属 artifact 断言也成立时，golden case 才通过。chat 最能说明两层含义的区别：Task Evaluation 仍诚实地显示 `partial`；golden *case* 通过，是因为运行时稳定复现了这个预期结果。Skill Pack grader 也与底层 Task Evaluation 保持分离；没有声明结构化 Success Check 时，底层 Task Evaluation 仍然是 `partial`。
+
+与其他方案相比：
+
+- Snapshot test 比较序列化输出，成本低，但会被无害的时间戳和路径变化干扰，也可能漏掉行为错误。Golden case 改为比较语义 verdict，并检查选定 artifact。
+- 回放生产 trace 更接近真实任务，但会带来隐私数据、provider 漂移和模型输出不确定性。这里的 fixture 是合成且不含 secret 的。
+- 托管 eval 平台提供实验追踪和跨模型统计，但需要联网和更多基础设施。本地套件速度快、可检查，并且能离线运行。
+
+这种实现的优势是：能稳定地端到端覆盖有状态 Agent 工作流，失败时还能直接定位 artifact。局限也需要明确：固定 provider 不能衡量真实模型质量，六个 fixture 不能代表完整任务分布，预期 verdict 变化时也必须有意更新 fixture。未来应把真实 provider 和生产任务提炼出的 eval 作为独立层增加，而不是混进这个确定性 gate。
+
 ## 其他方案与权衡
 
 常见 Agent 系统通常采用以下评测方式：
@@ -128,14 +159,13 @@ a-agent run --check '{"type":"tool_succeeded","tool":"write_file"}' "写入 summ
 当前版本：
 
 - 对 Task Run 文件运行确定性检查。
+- 使用 `a-agent eval golden` 运行六个确定性的 Golden Task Run fixture。
 - 使用 `a-agent eval skill-pack <name-or-path>` 在本地运行 Skill Pack eval manifest。
 - 可以通过 `--review` 请求当前真实 Model Provider 做结构化自评。
 
 后续版本：
 
 - 允许 Owner 覆盖 verdict。
-
-- 增加 golden Task Runs 作为可重复回归测试。
 - 对重要 Task Run 通过 Agent Bridge 做 External Review。
 - 使用真实 Skill Pack eval 积累出的 golden examples 校准模型辅助 grader。
 - Complex Embedding Retrieval 实现后增加检索专项评测。
