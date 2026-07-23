@@ -1,14 +1,27 @@
 import type { Dirent } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
-import { join } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
 
 import { isJsonValueType, validateJsonSchemaDeclaration } from "./json-schema.ts";
+import {
+  resolveSkillPackSources,
+  type ResolveSkillPackSourcesOptions,
+  type SkillPackSource
+} from "./skill-sources.ts";
 
-export interface SkillPackSummary {
+/** Describes one concrete Skill Pack variant before same-name precedence is applied. */
+export interface SkillPackVariantSummary {
   name: string;
   description: string;
   path: string;
+  version?: string;
+  source: SkillPackSource;
   resources?: SkillPackResources;
+}
+
+/** Describes the selected variant and any lower-priority variants it shadows. */
+export interface SkillPackSummary extends SkillPackVariantSummary {
+  conflicts?: SkillPackVariantSummary[];
 }
 
 export interface SkillPackResources {
@@ -36,6 +49,7 @@ export interface SelectRelevantSkillPacksInput {
   goal: string;
   successCheck?: string;
   maxSkillPacks?: number;
+  sourceOptions?: ResolveSkillPackSourcesOptions;
 }
 
 interface ScoredSkillPack {
@@ -75,7 +89,7 @@ export async function selectRelevantSkillPackSummaries(
 export async function selectRelevantSkillPackMatches(
   input: SelectRelevantSkillPacksInput
 ): Promise<SelectedSkillPackSummary[]> {
-  const skillPacks = await discoverWorkspaceSkillPacks(input.workspace);
+  const skillPacks = await discoverSkillPacks(input.workspace, input.sourceOptions);
   const query = `${input.goal} ${input.successCheck ?? ""}`;
   const queryTerms = extractSkillPackTerms(query);
   if (skillPacks.length === 0 || queryTerms.size === 0) {
@@ -112,7 +126,10 @@ function stripSkillPackSelectionMetadata(skillPack: SelectedSkillPackSummary): S
     name: skillPack.name,
     description: skillPack.description,
     path: skillPack.path,
-    resources: skillPack.resources
+    version: skillPack.version,
+    source: skillPack.source,
+    resources: skillPack.resources,
+    conflicts: skillPack.conflicts
   };
 }
 
@@ -122,7 +139,10 @@ function formatSelectedSkillPack(item: ScoredSkillPack): SelectedSkillPackSummar
     name: item.skillPack.name,
     description: item.skillPack.description,
     path: item.skillPack.path,
+    version: item.skillPack.version,
+    source: item.skillPack.source,
     resources: item.skillPack.resources,
+    conflicts: item.skillPack.conflicts,
     score: item.score,
     explicitlyNamed: item.explicitlyNamed
   };
@@ -136,30 +156,87 @@ function skillPackIsExplicitlyNamed(skillPack: SkillPackSummary, query: string):
   return normalizedQuery.includes(normalizedName) || normalizedQuery.includes(normalizedPathName);
 }
 
-/** Discovers `.agents/skills/<name>/SKILL.md` files in the active workspace. */
+/** Discovers Skill Packs across ordered workspace, user, package, and configured catalogs. */
+export async function discoverSkillPacks(
+  workspace: string,
+  options: ResolveSkillPackSourcesOptions = {}
+): Promise<SkillPackSummary[]> {
+  const sources = await resolveSkillPackSources(workspace, options);
+  const variants: SkillPackVariantSummary[] = [];
+  for (const source of sources) {
+    variants.push(...(await discoverSkillPacksFromSource(workspace, source)));
+  }
+  return resolveSkillPackConflicts(variants);
+}
+
+/** Preserves the original workspace-only discovery API for focused callers and compatibility. */
 export async function discoverWorkspaceSkillPacks(workspace: string): Promise<SkillPackSummary[]> {
-  const skillsDir = join(workspace, ".agents", "skills");
-  const entries = await readDirectoryIfPresent(skillsDir);
-  const skillPacks: SkillPackSummary[] = [];
+  return discoverSkillPacks(workspace, {
+    userSkillsRoot: null,
+    packageSkillsRoot: null,
+    configuredRoots: []
+  });
+}
+
+/** Reads every valid Skill Pack directory from one catalog in deterministic name order. */
+async function discoverSkillPacksFromSource(
+  workspace: string,
+  source: SkillPackSource
+): Promise<SkillPackVariantSummary[]> {
+  const entries = (await readDirectoryIfPresent(source.root)).sort((left, right) =>
+    left.name.localeCompare(right.name)
+  );
+  const skillPacks: SkillPackVariantSummary[] = [];
 
   for (const entry of entries) {
-    if (!entry.isDirectory()) {
+    if (!entry.isDirectory() && !entry.isSymbolicLink()) {
       continue;
     }
 
-    const relativePath = `.agents/skills/${entry.name}/SKILL.md`;
-    const content = await readOptionalSkillFile(join(skillsDir, entry.name, "SKILL.md"));
+    const skillDir = join(source.root, entry.name);
+    const absolutePath = join(skillDir, "SKILL.md");
+    const displayPath = formatSkillPackPath(workspace, source, absolutePath);
+    const content = await readOptionalSkillFile(absolutePath);
     if (!content) {
       continue;
     }
 
     skillPacks.push({
-      ...parseSkillPackSummary(relativePath, content),
-      resources: await collectSkillPackResources(join(skillsDir, entry.name), `.agents/skills/${entry.name}`)
+      ...parseSkillPackSummary(displayPath, content),
+      source,
+      resources: await collectSkillPackResources(skillDir, dirname(displayPath))
     });
   }
 
   return skillPacks;
+}
+
+/** Chooses the first same-name variant and attaches lower-priority variants as conflicts. */
+function resolveSkillPackConflicts(variants: SkillPackVariantSummary[]): SkillPackSummary[] {
+  const winners = new Map<string, SkillPackSummary>();
+  for (const variant of variants) {
+    const identity = normalizeSkillPackMention(variant.name);
+    const winner = winners.get(identity);
+    if (!winner) {
+      winners.set(identity, { ...variant });
+      continue;
+    }
+    winner.conflicts = [...(winner.conflicts ?? []), variant];
+  }
+  return [...winners.values()];
+}
+
+/** Uses workspace-relative paths locally and absolute paths for external Skill Pack catalogs. */
+function formatSkillPackPath(workspace: string, source: SkillPackSource, absolutePath: string): string {
+  if (source.kind === "workspace") {
+    return normalizePathSeparators(relative(resolve(workspace), absolutePath));
+  }
+  return normalizePathSeparators(resolve(absolutePath));
+}
+
+/** Normalizes platform separators so persisted Skill Pack paths compare consistently. */
+function normalizePathSeparators(path: string): string {
+  return path.replace(/\\/g, "/");
 }
 
 /** Collects non-executable resource paths that an agent-ability style Skill Pack exposes. */
@@ -430,12 +507,16 @@ async function readOptionalSkillFile(path: string): Promise<string | null> {
 }
 
 /** Parses the small frontmatter subset used by Codex-style `SKILL.md` files. */
-function parseSkillPackSummary(path: string, content: string): SkillPackSummary {
+function parseSkillPackSummary(
+  path: string,
+  content: string
+): Pick<SkillPackVariantSummary, "name" | "description" | "path" | "version"> {
   const frontmatter = parseSkillFrontmatter(content);
   return {
     name: frontmatter.get("name") ?? fallbackSkillName(path),
     description: frontmatter.get("description") ?? "",
-    path
+    path,
+    version: frontmatter.get("version")
   };
 }
 
@@ -509,13 +590,38 @@ export function formatSkillPackContext(skillPacks: SkillPackSummary[]): string {
 
   const lines = ["# Relevant Skill Packs", "", "_Filtered to skills relevant to the current task._"];
   for (const skillPack of skillPacks) {
-    lines.push("", `## ${skillPack.name}`, "", `- path: ${skillPack.path}`);
+    lines.push(
+      "",
+      `## ${skillPack.name}`,
+      "",
+      `- path: ${skillPack.path}`,
+      `- source: ${skillPack.source.label} (priority ${skillPack.source.priority})`,
+      `- source root: ${skillPack.source.root}`
+    );
+    if (skillPack.version) {
+      lines.push(`- version: ${skillPack.version}`);
+    }
     if (skillPack.description.length > 0) {
       lines.push(`- description: ${skillPack.description}`);
     }
+    lines.push(...formatSkillPackConflicts(skillPack.conflicts));
     lines.push(...formatSkillPackResourceInventory(skillPack.resources));
   }
   return `${lines.join("\n")}\n`;
+}
+
+/** Formats shadowed same-name variants so source precedence remains visible to the model. */
+function formatSkillPackConflicts(conflicts: SkillPackVariantSummary[] | undefined): string[] {
+  if (!conflicts || conflicts.length === 0) {
+    return [];
+  }
+  return [
+    `- source conflicts: ${conflicts.length} lower-priority variant${conflicts.length === 1 ? "" : "s"} shadowed`,
+    ...conflicts.map((conflict) => {
+      const version = conflict.version ? `, version ${conflict.version}` : "";
+      return `  - ${conflict.source.label} (priority ${conflict.source.priority}${version}): ${conflict.path}`;
+    })
+  ];
 }
 
 /** Formats optional Skill Pack resources as inventory hints rather than executable actions. */
@@ -564,9 +670,14 @@ function firstUnknownField(value: Record<string, unknown>, allowedFields: string
   return Object.keys(value).find((field) => !allowed.has(field));
 }
 
-/** Checks Node filesystem errors without depending on a concrete error class. */
+/** Treats missing paths and non-directory Skill candidates as absent catalog entries. */
 function isNotFound(error: unknown): boolean {
-  return typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT";
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error.code === "ENOENT" || error.code === "ENOTDIR")
+  );
 }
 
 /** Checks whether a value can be safely inspected as a record. */

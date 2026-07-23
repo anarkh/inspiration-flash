@@ -1,10 +1,180 @@
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
-import { selectRelevantSkillPacks } from "../../src/skills/skill-packs.ts";
+import { discoverSkillPacks, selectRelevantSkillPacks } from "../../src/skills/skill-packs.ts";
+
+/** Writes a minimal versioned Skill Pack into one catalog for source-order tests. */
+async function writeVersionedSkillPack(
+  skillsRoot: string,
+  directoryName: string,
+  name: string,
+  version: string,
+  description = "Handles portable source tasks."
+): Promise<void> {
+  const skillDir = join(skillsRoot, directoryName);
+  await mkdir(skillDir, { recursive: true });
+  await writeFile(
+    join(skillDir, "SKILL.md"),
+    [
+      "---",
+      `name: ${name}`,
+      `version: ${version}`,
+      `description: ${description}`,
+      "---",
+      "",
+      `# ${name}`
+    ].join("\n"),
+    "utf8"
+  );
+}
+
+test("discoverSkillPacks applies ordered source precedence and preserves conflicts", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-skill-sources-workspace-"));
+  const userSkillsRoot = await mkdtemp(join(tmpdir(), "personal-agent-skill-sources-user-"));
+  const packageSkillsRoot = await mkdtemp(join(tmpdir(), "personal-agent-skill-sources-package-"));
+  const configuredRepository = await mkdtemp(join(tmpdir(), "personal-agent-skill-sources-configured-"));
+  try {
+    await writeVersionedSkillPack(join(workspace, ".agents/skills"), "shared-workspace", "shared-helper", "4.0.0");
+    await writeVersionedSkillPack(userSkillsRoot, "shared-user", "shared-helper", "3.0.0");
+    await writeVersionedSkillPack(packageSkillsRoot, "shared-package", "shared-helper", "2.0.0");
+    await writeVersionedSkillPack(
+      join(configuredRepository, ".agents/skills"),
+      "shared-configured",
+      "shared-helper",
+      "1.0.0"
+    );
+
+    const skillPacks = await discoverSkillPacks(workspace, {
+      userSkillsRoot,
+      packageSkillsRoot,
+      configuredRoots: [configuredRepository]
+    });
+    const selected = skillPacks.find((skillPack) => skillPack.name === "shared-helper");
+
+    assert.ok(selected);
+    assert.equal(selected.version, "4.0.0");
+    assert.equal(selected.source.kind, "workspace");
+    assert.equal(selected.source.priority, 1);
+    assert.deepEqual(
+      selected.conflicts?.map((conflict) => [
+        conflict.source.kind,
+        conflict.source.priority,
+        conflict.version
+      ]),
+      [
+        ["user", 2, "3.0.0"],
+        ["package", 3, "2.0.0"],
+        ["configured", 4, "1.0.0"]
+      ]
+    );
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+    await rm(userSkillsRoot, { recursive: true, force: true });
+    await rm(packageSkillsRoot, { recursive: true, force: true });
+    await rm(configuredRepository, { recursive: true, force: true });
+  }
+});
+
+test("discoverSkillPacks follows Skill Pack directory links in shared catalogs", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-linked-skill-workspace-"));
+  const userSkillsRoot = await mkdtemp(join(tmpdir(), "personal-agent-linked-skill-catalog-"));
+  const skillTarget = await mkdtemp(join(tmpdir(), "personal-agent-linked-skill-target-"));
+  try {
+    await writeFile(
+      join(skillTarget, "SKILL.md"),
+      [
+        "---",
+        "name: linked-helper",
+        "description: Handles a shared linked skill.",
+        "---",
+        "",
+        "# Linked Helper"
+      ].join("\n"),
+      "utf8"
+    );
+    await symlink(skillTarget, join(userSkillsRoot, "linked-helper"));
+
+    const skillPacks = await discoverSkillPacks(workspace, {
+      userSkillsRoot,
+      packageSkillsRoot: null,
+      configuredRoots: []
+    });
+
+    assert.equal(skillPacks.length, 1);
+    assert.equal(skillPacks[0]?.name, "linked-helper");
+    assert.equal(skillPacks[0]?.source.kind, "user");
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+    await rm(userSkillsRoot, { recursive: true, force: true });
+    await rm(skillTarget, { recursive: true, force: true });
+  }
+});
+
+test("selectRelevantSkillPacks reads configured repository roots from workspace config", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-skill-config-workspace-"));
+  const configuredRepository = await mkdtemp(join(tmpdir(), "personal-agent-skill-config-source-"));
+  try {
+    await mkdir(join(workspace, ".personal-agent"), { recursive: true });
+    await writeFile(
+      join(workspace, ".personal-agent/config.json"),
+      `${JSON.stringify({ skillRoots: [configuredRepository] }, null, 2)}\n`,
+      "utf8"
+    );
+    await writeVersionedSkillPack(
+      join(configuredRepository, ".agents/skills"),
+      "portable-helper",
+      "portable-helper",
+      "1.2.3",
+      "Handles portable configured source tasks."
+    );
+
+    const context = await selectRelevantSkillPacks({
+      workspace,
+      goal: "Use portable-helper for this configured source task.",
+      sourceOptions: {
+        userSkillsRoot: null,
+        packageSkillsRoot: null
+      }
+    });
+
+    assert.match(context, /portable-helper/);
+    assert.match(context, /source: configured\[1\] \(priority 2\)/);
+    assert.match(context, /version: 1\.2\.3/);
+    assert.match(context, new RegExp(configuredRepository.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+    await rm(configuredRepository, { recursive: true, force: true });
+  }
+});
+
+test("selectRelevantSkillPacks rejects malformed skillRoots config", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-skill-config-invalid-"));
+  try {
+    await mkdir(join(workspace, ".personal-agent"), { recursive: true });
+    await writeFile(
+      join(workspace, ".personal-agent/config.json"),
+      `${JSON.stringify({ skillRoots: ["", 42] }, null, 2)}\n`,
+      "utf8"
+    );
+
+    await assert.rejects(
+      selectRelevantSkillPacks({
+        workspace,
+        goal: "discover configured skills",
+        sourceOptions: {
+          userSkillsRoot: null,
+          packageSkillsRoot: null
+        }
+      }),
+      /skillRoots must be an array of non-empty strings/
+    );
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
 
 test("selectRelevantSkillPacks prioritizes an explicitly named Skill Pack", async () => {
   const workspace = await mkdtemp(join(tmpdir(), "personal-agent-skill-packs-explicit-"));

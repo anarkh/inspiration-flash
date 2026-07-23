@@ -34,6 +34,7 @@
 | Project Memory | [中文](./project-memory.md) | [English](../project-memory.md) |
 | 恢复重试 | [中文](./recovery-attempts.md) | [English](../recovery-attempts.md) |
 | Skill Packs | [中文](./skill-packs.md) | [English](../skill-packs.md) |
+| Skill 来源与优先级 | [中文](./skill-sources.md) | [English](../skill-sources.md) |
 | 状态架构 | [中文](./state-architecture.md) | [English](../state-architecture.md) |
 | Task Conversation | [中文](./task-conversation.md) | [English](../task-conversation.md) |
 | Task Export | [中文](./task-export.md) | [English](../task-export.md) |

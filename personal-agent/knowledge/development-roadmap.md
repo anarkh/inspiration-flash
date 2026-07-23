@@ -36,7 +36,7 @@ The MVP already has many visible capabilities, while its weakest point is provin
 
 The roadmap retains the first-party loop through the learning-heavy phases. Frameworks are reconsidered only when measured orchestration, handoff, or retrieval complexity justifies migration.
 
-Task Evaluation V2 is now complete: structured checks, evidence dimensions, Golden Task Runs, and audited human verdict overrides meet the Phase 2 gate. Ability Bridge and ordered Skill sources are therefore the next default workstream.
+Task Evaluation V2 is now complete: structured checks, evidence dimensions, Golden Task Runs, and audited human verdict overrides meet the Phase 2 gate. Phase 3 is now in progress: ordered workspace, user, package, and configured Skill sources, conflict metadata, and external Skill Pack eval execution are implemented. Explicit CLI Skill selection and full external guidance loading remain before the phase gate is complete.
 
 ## Advantages
 

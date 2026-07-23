@@ -58,15 +58,15 @@ Learning focus: agent evaluation, deterministic graders, model judges, and human
 
 ## Phase 3: Ability Bridge And Skill Sources
 
-Status: next.
+Status: in progress. Ordered multi-source discovery, source/version conflict metadata, the `codex/agent-ability` resource compatibility boundary, and external Skill Pack eval execution are implemented. Explicit CLI selection and full external guidance loading remain.
 
 Deliverables:
 
-- Discover Skill Packs from ordered workspace, user, package, and configured roots.
-- Preserve source and version metadata when several roots contain the same skill name.
+- Discover Skill Packs from ordered workspace, user, package, and configured roots. (complete)
+- Preserve source and version metadata when several roots contain the same skill name. (complete)
 - Add explicit Skill Pack selection to the CLI.
-- Define the compatibility boundary for `codex/agent-ability` resources.
-- Run existing Skill Pack evals without copying skills into every target workspace.
+- Define the compatibility boundary for `codex/agent-ability` resources. (complete)
+- Run existing Skill Pack evals without copying skills into every target workspace. (complete)
 
 Completion gate:
 

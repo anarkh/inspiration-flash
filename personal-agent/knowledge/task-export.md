@@ -40,11 +40,11 @@ The Markdown sections are:
 - Memory Suggestions, when available
 - Events
 
-`Decision Trace` is a compact human-readable summary derived from `events.jsonl`. It turns provider steps and observations into lines such as `plan: ...`, `tool: write_file`, `tool_result: write_file -> file_written`, and `skill_packs_confirmation: denied`.
+`Decision Trace` is a compact human-readable summary derived from `events.jsonl`. It turns provider steps and observations into lines such as `plan: ...`, `tool: write_file`, `tool_result: write_file -> file_written`, and `skill_packs_confirmation: denied`. A Skill Pack selection also reports the number of deterministic same-name source conflicts it resolved.
 
 `Local Tools Used` is a de-duplicated list of tools seen in `tool` and `tool_result` events.
 
-`Skill Packs Used` is a de-duplicated list of Skill Pack names and paths from `skill_packs` events recorded by the runner. When the selected Skill Pack includes an agent-ability style resource inventory, this section also shows its `references`, `scripts`, `evals` paths, and static eval manifest summary. If scripts are present, the export inserts the same inventory-only warning used in provider context, so the reader does not mistake script discovery for script execution. These events are audit metadata only; they are not fed back into the provider event stream.
+`Skill Packs Used` is a de-duplicated list of Skill Pack names and paths from `skill_packs` events recorded by the runner. It includes the winning source, priority, source root, optional version, and every shadowed same-name variant. When the selected Skill Pack includes an agent-ability style resource inventory, this section also shows its `references`, `scripts`, `evals` paths, and static eval manifest summary. If scripts are present, the export inserts the same inventory-only warning used in provider context, so the reader does not mistake script discovery for script execution. These events are audit metadata only; they are not fed back into the provider event stream.
 
 `Changed Resources` currently records files reported by tool observations such as `file_written`. It is intentionally conservative: proposed writes that were not confirmed do not count as changed resources.
 
@@ -104,6 +104,7 @@ Current tests verify:
 - export output includes metadata, report, evaluation, and events,
 - export output includes Decision Trace, Local Tools Used, Skill Packs Used, Skill Pack resource inventory, eval manifest summary, and Changed Resources,
 - export output summarizes Skill Pack confirmation decisions in Decision Trace,
+- export output records Skill Pack source, version, precedence conflicts, and conflict counts,
 - export output redacts common API key, bearer token, environment, JSON, URL query, and GitHub token patterns,
 - export output includes Memory Suggestions when present,
 - CLI `a-agent export` exports the latest run,

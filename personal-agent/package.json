@@ -9,7 +9,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "dev": "node ./src/cli/index.ts",
-    "test": "node --test ./test/**/*.test.ts",
+    "test": "A_AGENT_USER_SKILLS_ROOT=.test-empty-user-skills node --test ./test/**/*.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {

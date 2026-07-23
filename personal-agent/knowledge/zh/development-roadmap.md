@@ -36,7 +36,7 @@ MVP 已经有不少可见能力，但最薄弱的部分是证明任务结果真�
 
 在学习密集的阶段继续保留 first-party loop。只有实际测得的编排、handoff 或 retrieval 复杂度足以证明迁移价值时，才重新评估框架。
 
-Task Evaluation V2 现已完成：结构化 checks、证据维度、Golden Task Runs 和带审计记录的人工 verdict override 已满足 Phase 2 gate。因此下一条默认工作流进入 Ability Bridge 和有顺序的 Skill sources。
+Task Evaluation V2 现已完成：结构化 checks、证据维度、Golden Task Runs 和带审计记录的人工 verdict override 已满足 Phase 2 gate。Phase 3 已进入进行中状态：有序的 workspace、user、package、configured Skill sources、冲突元数据和外部 Skill Pack eval 执行已经实现。完成阶段门槛前，仍需补齐显式 CLI Skill 选择和完整外部 guidance 加载。
 
 ## 优势
 

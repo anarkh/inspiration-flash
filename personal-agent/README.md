@@ -61,6 +61,18 @@ Run a Skill Pack evaluation:
 a-agent eval skill-pack <name-or-path>
 ```
 
+Share Skill Packs from another checkout by adding its repository root or direct skills directory to the current workspace's `.personal-agent/config.json`:
+
+```json
+{
+  "skillRoots": [
+    "/path/to/agent-ability-checkout"
+  ]
+}
+```
+
+Discovery order is workspace, `~/.agents/skills`, package, then configured roots. Same-name conflicts and optional versions are recorded in Task Export; external eval manifests run without copying the Skill Pack into the workspace.
+
 Run the deterministic core-workflow regression suite without calling a remote model:
 
 ```bash

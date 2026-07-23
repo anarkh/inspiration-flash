@@ -171,7 +171,12 @@ function formatDecisionTraceEvent(event: unknown): string {
     return `tool_result: ${event.tool} -> ${outputType}`;
   }
   if (event.type === "skill_packs" && Array.isArray(event.skillPacks)) {
-    return `skill_packs: ${event.skillPacks.length} selected`;
+    const conflictCount = countSkillPackSourceConflicts(event.skillPacks);
+    const conflictSummary =
+      conflictCount > 0
+        ? `; ${conflictCount} same-name source conflict${conflictCount === 1 ? "" : "s"} resolved`
+        : "";
+    return `skill_packs: ${event.skillPacks.length} selected${conflictSummary}`;
   }
   if (event.type === "skill_packs_confirmation" && typeof event.approved === "boolean") {
     return `skill_packs_confirmation: ${event.approved ? "approved" : "denied"}`;
@@ -223,7 +228,51 @@ function collectSkillPacksUsed(events: unknown[]): string[] {
 function formatSkillPackUsed(skillPack: Record<string, unknown>): string[] {
   const name = typeof skillPack.name === "string" ? skillPack.name : "unknown";
   const path = typeof skillPack.path === "string" ? skillPack.path : "unknown";
-  return [[`${name} (${path})`, ...formatSkillPackResources(skillPack.resources)].join("\n")];
+  return [
+    [
+      `${name} (${path})`,
+      ...formatSkillPackSource(skillPack.source),
+      ...formatSkillPackVersion(skillPack.version),
+      ...formatSkillPackSourceConflicts(skillPack.conflicts),
+      ...formatSkillPackResources(skillPack.resources)
+    ].join("\n")
+  ];
+}
+
+/** Formats selected source identity and precedence for exported Skill Pack audit data. */
+function formatSkillPackSource(source: unknown): string[] {
+  if (
+    !isRecord(source) ||
+    typeof source.label !== "string" ||
+    typeof source.root !== "string" ||
+    typeof source.priority !== "number"
+  ) {
+    return [];
+  }
+  return [`  - source: ${source.label} (priority ${source.priority})`, `  - source root: ${source.root}`];
+}
+
+/** Formats an optional Skill Pack version without inventing one for legacy packs. */
+function formatSkillPackVersion(version: unknown): string[] {
+  return typeof version === "string" && version.length > 0 ? [`  - version: ${version}`] : [];
+}
+
+/** Formats every shadowed same-name source variant in the Task Run export. */
+function formatSkillPackSourceConflicts(conflicts: unknown): string[] {
+  if (!Array.isArray(conflicts) || conflicts.length === 0) {
+    return [];
+  }
+  const lines = [`  - source conflicts: ${conflicts.length} shadowed`];
+  for (const conflict of conflicts) {
+    if (!isRecord(conflict) || typeof conflict.path !== "string" || !isRecord(conflict.source)) {
+      continue;
+    }
+    const label = typeof conflict.source.label === "string" ? conflict.source.label : "unknown";
+    const priority = typeof conflict.source.priority === "number" ? conflict.source.priority : "unknown";
+    const version = typeof conflict.version === "string" ? `, version ${conflict.version}` : "";
+    lines.push(`    - ${label} (priority ${priority}${version}): ${conflict.path}`);
+  }
+  return lines;
 }
 
 /** Formats agent-ability resource inventory paths under a selected Skill Pack. */
@@ -270,6 +319,16 @@ function formatSkillPackEvalManifest(value: unknown): string | null {
   }
   const reason = typeof value.reason === "string" ? value.reason : "unknown reason";
   return `invalid (${reason})`;
+}
+
+/** Counts shadowed Skill Pack variants recorded across one selection event. */
+function countSkillPackSourceConflicts(skillPacks: unknown[]): number {
+  return skillPacks.reduce<number>((count, skillPack) => {
+    if (!isRecord(skillPack) || !Array.isArray(skillPack.conflicts)) {
+      return count;
+    }
+    return count + skillPack.conflicts.length;
+  }, 0);
 }
 
 /** Collects resources that tool observations report as changed by the Task Run. */

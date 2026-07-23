@@ -36,6 +36,7 @@ test("ensureWorkspaceState creates config and memory files", async () => {
     assert.equal(config.modelProvider, "deepseek");
     assert.equal(config.model, "deepseek-v4-flash");
     assert.equal(config.learningLens, false);
+    assert.deepEqual(config.skillRoots, []);
     assert.match(memory, /# Project Memory/);
   } finally {
     await rm(workspace, { recursive: true, force: true });
@@ -255,6 +256,27 @@ test("exportTaskRun includes a decision trace, tool summary, and changed resourc
           name: "docs-helper",
           description: "Helps summarize docs.",
           path: ".agents/skills/docs-helper/SKILL.md",
+          version: "2.0.0",
+          source: {
+            kind: "workspace",
+            label: "workspace",
+            root: join(workspace, ".agents/skills"),
+            priority: 1
+          },
+          conflicts: [
+            {
+              name: "docs-helper",
+              description: "Lower-priority docs guidance.",
+              path: "/tmp/user-skills/docs-helper/SKILL.md",
+              version: "1.0.0",
+              source: {
+                kind: "user",
+                label: "user",
+                root: "/tmp/user-skills",
+                priority: 2
+              }
+            }
+          ],
           resources: {
             references: [".agents/skills/docs-helper/references/guide.md"],
             scripts: [".agents/skills/docs-helper/scripts/search_index.py"],
@@ -281,6 +303,7 @@ test("exportTaskRun includes a decision trace, tool summary, and changed resourc
     assert.match(markdown, /- tool: write_file/);
     assert.match(markdown, /- tool_result: write_file -> file_written/);
     assert.match(markdown, /- skill_packs_confirmation: denied/);
+    assert.match(markdown, /skill_packs: 1 selected; 1 same-name source conflict resolved/);
     assert.match(markdown, /## Local Tools Used/);
     assert.match(markdown, /- write_file/);
     const skillPackSection = markdown.slice(
@@ -288,6 +311,10 @@ test("exportTaskRun includes a decision trace, tool summary, and changed resourc
       markdown.indexOf("## Changed Resources")
     );
     assert.match(skillPackSection, /docs-helper \(\.agents\/skills\/docs-helper\/SKILL\.md\)/);
+    assert.match(skillPackSection, /source: workspace \(priority 1\)/);
+    assert.match(skillPackSection, /version: 2\.0\.0/);
+    assert.match(skillPackSection, /source conflicts: 1 shadowed/);
+    assert.match(skillPackSection, /user \(priority 2, version 1\.0\.0\)/);
     assert.match(skillPackSection, /\.agents\/skills\/docs-helper\/references\/guide\.md/);
     assert.match(skillPackSection, /scripts are inventory only and are not auto-executed/);
     assert.match(skillPackSection, /\.agents\/skills\/docs-helper\/scripts\/search_index\.py/);

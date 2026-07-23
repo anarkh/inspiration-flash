@@ -40,11 +40,11 @@ Markdown 分区包括：
 - Memory Suggestions，存在时展示
 - Events
 
-`Decision Trace` 是从 `events.jsonl` 生成的紧凑可读摘要。它会把 provider steps 和 observations 转成类似 `plan: ...`、`tool: write_file`、`tool_result: write_file -> file_written`、`skill_packs_confirmation: denied` 的行。
+`Decision Trace` 是从 `events.jsonl` 生成的紧凑可读摘要。它会把 provider steps 和 observations 转成类似 `plan: ...`、`tool: write_file`、`tool_result: write_file -> file_written`、`skill_packs_confirmation: denied` 的行。Skill Pack selection 还会报告确定性解决了多少同名来源冲突。
 
 `Local Tools Used` 是从 `tool` 和 `tool_result` events 中提取出来的去重工具列表。
 
-`Skill Packs Used` 是从 runner 记录的 `skill_packs` events 中提取出来的去重 Skill Pack name 和 path 列表。如果已选 Skill Pack 包含 agent-ability 风格 resource inventory，这个分区也会展示它的 `references`、`scripts`、`evals` paths，以及静态 eval manifest 摘要。如果存在 scripts，导出会写入和 provider context 一致的 inventory-only 提醒，避免读者把“发现了脚本路径”误解成“脚本已经执行”。这些 events 只作为审计 metadata，不会回传进 provider event stream。
+`Skill Packs Used` 是从 runner 记录的 `skill_packs` events 中提取出来的去重 Skill Pack name 和 path 列表。它会展示胜出的 source、priority、source root、可选 version，以及所有被覆盖的同名变体。如果已选 Skill Pack 包含 agent-ability 风格 resource inventory，这个分区也会展示它的 `references`、`scripts`、`evals` paths，以及静态 eval manifest 摘要。如果存在 scripts，导出会写入和 provider context 一致的 inventory-only 提醒，避免读者把“发现了脚本路径”误解成“脚本已经执行”。这些 events 只作为审计 metadata，不会回传进 provider event stream。
 
 `Changed Resources` 目前记录工具 observation 明确报告的文件变更，例如 `file_written`。它是保守的：只被提议但没有确认执行的写入，不算 changed resources。
 
@@ -104,6 +104,7 @@ Owner 正在学习 agent run 的工作方式。Markdown export 可以用普通�
 - export output 包含 metadata、report、evaluation 和 events。
 - export output 包含 Decision Trace、Local Tools Used、Skill Packs Used、Skill Pack resource inventory、eval manifest summary 和 Changed Resources。
 - export output 会在 Decision Trace 中总结 Skill Pack confirmation 决策。
+- export output 会记录 Skill Pack source、version、优先级冲突和冲突数量。
 - export output 会脱敏常见 API key、bearer token、环境变量、JSON、URL query 和 GitHub token 模式。
 - 存在 Memory Suggestions 时，export output 会包含它们。
 - CLI `a-agent export` 会导出 latest run。

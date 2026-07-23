@@ -544,6 +544,9 @@ function createSkillPackConfirmation(skillPacks: SelectedSkillPackSummary[]): Co
       skillPacks: skillPacks.map((skillPack) => ({
         name: skillPack.name,
         path: skillPack.path,
+        version: skillPack.version,
+        source: skillPack.source,
+        conflicts: skillPack.conflicts,
         score: skillPack.score,
         explicitlyNamed: skillPack.explicitlyNamed
       }))
@@ -557,7 +560,10 @@ function stripSkillPackSelectionMetadata(skillPack: SelectedSkillPackSummary): S
     name: skillPack.name,
     description: skillPack.description,
     path: skillPack.path,
-    resources: skillPack.resources
+    version: skillPack.version,
+    source: skillPack.source,
+    resources: skillPack.resources,
+    conflicts: skillPack.conflicts
   };
 }
 

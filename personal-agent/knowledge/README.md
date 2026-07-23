@@ -45,6 +45,7 @@ Each article should cover:
 | Project Memory | [English](./project-memory.md) | [中文](./zh/project-memory.md) |
 | Recovery Attempts | [English](./recovery-attempts.md) | [中文](./zh/recovery-attempts.md) |
 | Skill Packs | [English](./skill-packs.md) | [中文](./zh/skill-packs.md) |
+| Skill Sources And Precedence | [English](./skill-sources.md) | [中文](./zh/skill-sources.md) |
 | State Architecture | [English](./state-architecture.md) | [中文](./zh/state-architecture.md) |
 | Task Conversation | [English](./task-conversation.md) | [中文](./zh/task-conversation.md) |
 | Task Export | [English](./task-export.md) | [中文](./zh/task-export.md) |
