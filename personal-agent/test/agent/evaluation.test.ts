@@ -28,6 +28,8 @@ test("Evaluation V2 fails a wrong non-empty report with visible evidence", async
     assert.equal(evaluation.executionIntegrity.verdict, "pass");
     assert.equal(evaluation.taskCorrectness.verdict, "fail");
     assert.equal(evaluation.verdict, "fail");
+    assert.equal(evaluation.effectiveVerdict, "fail");
+    assert.deepEqual(evaluation.humanOverrides, []);
     assert.equal(evaluation.successCheck, "fail");
     assert.deepEqual(evaluation.taskCorrectness.checks[0], {
       id: "expected-marker",

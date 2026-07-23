@@ -14,6 +14,7 @@ import {
   updateTaskRunStatus,
   writeCheckpoint,
   writeMemorySuggestions,
+  writeTaskEvaluation,
   writeTaskReport
 } from "../../src/state/store.ts";
 
@@ -39,6 +40,7 @@ test("cli prints help", () => {
   assert.match(result.stdout, /memory append \[--section <section>\] <note>/);
   assert.match(result.stdout, /memory apply-suggestions \[--yes\] \[run-id\]/);
   assert.match(result.stdout, /eval golden/);
+  assert.match(result.stdout, /eval override \[run-id\] --verdict <pass\|partial\|fail\|blocked> --reason <text>/);
   assert.match(result.stdout, /eval skill-pack <name-or-path>/);
   assert.match(result.stdout, /export \[run-id\]/);
   assert.match(result.stdout, /history \[--status <active\|completed>\] \[--limit <count>\] \[--offset <count>\]/);
@@ -154,6 +156,103 @@ test("cli eval golden runs every deterministic core workflow", async () => {
     const persisted = JSON.parse(await readFile(join(latest, "results.json"), "utf8"));
     assert.equal(persisted.passedCount, 6);
     assert.equal(persisted.failedCount, 0);
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test("cli eval override records an audited effective verdict and exposes it in history", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-cli-eval-override-"));
+  try {
+    const run = await createTaskRun(workspace, {
+      goal: "review generated summary",
+      mode: "advisory",
+      successCheck: "summary is correct"
+    });
+    await writeTaskEvaluation(run.runDir, {
+      schemaVersion: 2,
+      verdict: "fail",
+      effectiveVerdict: "fail",
+      humanOverrides: []
+    });
+    await updateTaskRunStatus(run.runDir, "completed");
+
+    const override = spawnSync(
+      process.execPath,
+      [
+        join(root, "src/cli/index.ts"),
+        "eval",
+        "override",
+        run.id,
+        "--verdict",
+        "pass",
+        "--reason",
+        "Owner inspected the generated summary."
+      ],
+      {
+        cwd: workspace,
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          DEEPSEEK_API_KEY: "",
+          OPENAI_API_KEY: "",
+          PERSONAL_AGENT_SKIP_DOTENV: "1"
+        }
+      }
+    );
+
+    assert.equal(override.status, 0, override.stderr);
+    assert.match(override.stdout, /Deterministic verdict: fail/);
+    assert.match(override.stdout, /Previous effective verdict: fail/);
+    assert.match(override.stdout, /Effective verdict: pass/);
+    assert.match(override.stdout, /Reason: Owner inspected the generated summary/);
+
+    const evaluation = JSON.parse(await readFile(join(run.runDir, "evaluation.json"), "utf8"));
+    assert.equal(evaluation.verdict, "fail");
+    assert.equal(evaluation.effectiveVerdict, "pass");
+    assert.equal(evaluation.humanOverrides.length, 1);
+
+    const history = spawnSync(process.execPath, [join(root, "src/cli/index.ts"), "history"], {
+      cwd: workspace,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        PERSONAL_AGENT_SKIP_DOTENV: "1"
+      }
+    });
+    assert.equal(history.status, 0, history.stderr);
+    assert.match(history.stdout, /evaluation: pass \(human override; deterministic: fail\)/);
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test("cli eval override requires both a valid verdict and an audit reason", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-cli-eval-override-invalid-"));
+  try {
+    const invalidVerdict = spawnSync(
+      process.execPath,
+      [join(root, "src/cli/index.ts"), "eval", "override", "--verdict", "maybe", "--reason", "manual review"],
+      {
+        cwd: workspace,
+        encoding: "utf8",
+        env: { ...process.env, PERSONAL_AGENT_SKIP_DOTENV: "1" }
+      }
+    );
+    assert.equal(invalidVerdict.status, 1);
+    assert.match(invalidVerdict.stderr, /--verdict must be pass, partial, fail, or blocked/);
+
+    const missingReason = spawnSync(
+      process.execPath,
+      [join(root, "src/cli/index.ts"), "eval", "override", "--verdict", "pass"],
+      {
+        cwd: workspace,
+        encoding: "utf8",
+        env: { ...process.env, PERSONAL_AGENT_SKIP_DOTENV: "1" }
+      }
+    );
+    assert.equal(missingReason.status, 1);
+    assert.match(missingReason.stderr, /requires --reason <text>/);
   } finally {
     await rm(workspace, { recursive: true, force: true });
   }

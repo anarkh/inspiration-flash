@@ -12,6 +12,15 @@ Store a post-run evaluation with the Task Run:
 {
   "schemaVersion": 2,
   "verdict": "pass | partial | fail | blocked",
+  "effectiveVerdict": "pass | partial | fail | blocked",
+  "humanOverrides": [
+    {
+      "previousVerdict": "fail",
+      "verdict": "pass",
+      "reason": "Owner verified the generated artifact.",
+      "createdAt": "..."
+    }
+  ],
   "executionIntegrity": {
     "verdict": "pass | partial | fail",
     "evidence": [{ "source": "event", "reference": "events.jsonl", "detail": "..." }],
@@ -68,7 +77,7 @@ Current behavior:
 - `reportQuality` passes when the final report has usable text.
 - Memory Suggestions create a `Project Memory suggestion` learning signal and a `Review Memory Suggestions` follow-up.
 
-The top-level `verdict` is deterministic: failed execution integrity or task correctness produces `fail`; unavailable task correctness or partial execution integrity produces `partial`; otherwise the run is `pass`. The old scalar fields remain as compatibility summaries for history and existing integrations.
+The top-level `verdict` is deterministic: failed execution integrity or task correctness produces `fail`; unavailable task correctness or partial execution integrity produces `partial`; otherwise the run is `pass`. `effectiveVerdict` initially equals that result and changes only through an audited Owner override. The old scalar fields remain as compatibility summaries for history and existing integrations.
 
 ## Structured Success Checks
 
@@ -153,6 +162,40 @@ When a real provider is available, the runner sends the completed Task Report, v
 
 Malformed review output is recorded as `invalid` instead of failing the completed Task Run.
 
+## Human Verdict Override
+
+The Owner can record a reviewed verdict for the latest or a named Task Run:
+
+```bash
+a-agent eval override --verdict pass --reason "Owner verified the generated artifact."
+a-agent eval override <run-id> --verdict partial --reason "One edge case remains unresolved."
+```
+
+`src/state/evaluations.ts` reads the existing `evaluation.json`, validates its deterministic verdict and audit history, then appends:
+
+```json
+{
+  "previousVerdict": "fail",
+  "verdict": "pass",
+  "reason": "Owner verified the generated artifact.",
+  "createdAt": "2026-07-23T..."
+}
+```
+
+The original `verdict`, dimensions, checks, and evidence are never replaced. Only `effectiveVerdict` changes, and every later override appends another record whose `previousVerdict` points to the earlier effective result. `a-agent history` displays the effective verdict with its deterministic baseline; Task Export includes the full audit history. A non-empty reason is mandatory, and active runs without `evaluation.json` cannot be overridden.
+
+This is deliberately different from model-assisted review. A model review is advisory and cannot override deterministic evidence. The local Owner is the final authority and may change the effective conclusion, but the stored reason makes that judgment inspectable rather than silently authoritative.
+
+Alternatives and tradeoffs:
+
+- Replacing `verdict` in place is simpler, but destroys the distinction between machine evidence and human judgment and loses earlier decisions.
+- A separate override sidecar file keeps evaluation immutable, but every history, export, and integration reader must join two artifacts and handle divergence.
+- A database-backed event ledger offers stronger transactions and concurrent editing, but is premature while Task Runs are single-process local files.
+
+The chosen append-only field is compact, backward-compatible with older evaluations that contain only `verdict`, and easy to export. Its limitations are that file writes are not yet concurrency-safe and a human can intentionally mark a deterministic safety failure as effectively passing. The UI therefore always exposes the deterministic baseline rather than presenting the override as machine proof.
+
+Verification covers initial field creation, two consecutive overrides, reason trimming, legacy evaluation compatibility, missing-run and missing-evaluation behavior, history display, Task Export, and invalid CLI arguments.
+
 ## Automated vs Human Evaluation
 
 Current version:
@@ -160,9 +203,9 @@ Current version:
 - Run the six deterministic Golden Task Run fixtures with `a-agent eval golden`.
 - Run Skill Pack eval manifests locally with `a-agent eval skill-pack <name-or-path>`.
 - Optionally ask the selected real Model Provider for a structured self-review with `--review`.
+- Let the Owner record an audited effective verdict with `a-agent eval override`.
 
 Later versions:
-- Let the Owner override the verdict.
 - Use External Review through Agent Bridge for important Task Runs.
 - Calibrate model-assisted graders with golden examples collected from real Skill Pack evals.
 - Add retrieval-specific evals when Complex Embedding Retrieval is implemented.

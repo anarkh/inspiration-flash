@@ -67,6 +67,13 @@ Run the deterministic core-workflow regression suite without calling a remote mo
 a-agent eval golden
 ```
 
+Record an audited Owner verdict when artifact review disagrees with the deterministic evaluator:
+
+```bash
+a-agent eval override --verdict pass --reason "Owner verified the generated artifact."
+a-agent eval override <run-id> --verdict partial --reason "One edge case remains unresolved."
+```
+
 ## Main Commands
 
 | Command | Purpose |
@@ -79,6 +86,7 @@ a-agent eval golden
 | `a-agent export [run-id]` | Export an inspectable Markdown run report. |
 | `a-agent memory` | Read or update Project Memory. |
 | `a-agent eval golden` | Run repeatable read, write, chat, memory, resume, and Skill Pack fixtures. |
+| `a-agent eval override [run-id] --verdict <verdict> --reason "<reason>"` | Record an audited Owner verdict without replacing deterministic evidence. |
 | `a-agent eval skill-pack <name-or-path>` | Execute a Skill Pack eval manifest. |
 
 ## Runtime Artifacts
@@ -103,6 +111,7 @@ Every workspace gets an ignored `.personal-agent/` directory containing:
 
 These files are intentionally inspectable. They are the source of truth for history, resume, export, and learning.
 Evaluation V2 separates execution integrity from task correctness and records the artifact evidence used by each verdict.
+Its deterministic `verdict` remains immutable; an Owner override changes `effectiveVerdict` and appends a reasoned record to `humanOverrides`.
 The golden suite keeps each deterministic fixture in an isolated workspace and reports both the expected and actual verdict. A fixture passes only when those verdicts match; the chat fixture deliberately expects `partial` until chat gains an objective Success Check.
 
 ## Development Checks

@@ -12,6 +12,15 @@
 {
   "schemaVersion": 2,
   "verdict": "pass | partial | fail | blocked",
+  "effectiveVerdict": "pass | partial | fail | blocked",
+  "humanOverrides": [
+    {
+      "previousVerdict": "fail",
+      "verdict": "pass",
+      "reason": "Owner 已核对生成的 artifact。",
+      "createdAt": "..."
+    }
+  ],
   "executionIntegrity": {
     "verdict": "pass | partial | fail",
     "evidence": [{ "source": "event", "reference": "events.jsonl", "detail": "..." }],
@@ -69,7 +78,7 @@ Task Run 是否暴露了 Project Memory 更新、Knowledge Base 更新、Skill P
 - 最终 report 有可用文本时，`reportQuality` 为 `pass`。
 - Memory Suggestions 会生成 `Project Memory suggestion` learning signal，以及 `Review Memory Suggestions` follow-up。
 
-顶层 `verdict` 是确定性的：execution integrity 或 task correctness 失败会得到 `fail`；task correctness 不可用或 execution integrity 只有 partial 会得到 `partial`；其余情况为 `pass`。旧的标量字段继续作为兼容摘要，供 history 和已有集成读取。
+顶层 `verdict` 是确定性的：execution integrity 或 task correctness 失败会得到 `fail`；task correctness 不可用或 execution integrity 只有 partial 会得到 `partial`；其余情况为 `pass`。`effectiveVerdict` 初始值等于该结果，只有经过审计的 Owner override 才能改变它。旧的标量字段继续作为兼容摘要，供 history 和已有集成读取。
 
 ## 结构化 Success Check
 
@@ -154,6 +163,40 @@ a-agent eval golden
 
 如果模型自评输出格式错误，会记录为 `invalid`，而不是让已经完成的 Task Run 失败。
 
+## 人工 Verdict Override
+
+Owner 可以为 latest Task Run 或指定 Task Run 记录人工复核结论：
+
+```bash
+a-agent eval override --verdict pass --reason "Owner 已核对生成的 artifact。"
+a-agent eval override <run-id> --verdict partial --reason "仍有一个边界情况未解决。"
+```
+
+`src/state/evaluations.ts` 会读取已有 `evaluation.json`，验证确定性 verdict 和现有审计历史，然后追加：
+
+```json
+{
+  "previousVerdict": "fail",
+  "verdict": "pass",
+  "reason": "Owner 已核对生成的 artifact。",
+  "createdAt": "2026-07-23T..."
+}
+```
+
+原始 `verdict`、各评测维度、checks 和 evidence 都不会被替换。只有 `effectiveVerdict` 会改变；后续每次 override 都继续追加记录，并通过 `previousVerdict` 指向前一个有效结论。`a-agent history` 会同时展示有效 verdict 和确定性基线，Task Export 会包含完整审计历史。reason 必须非空；还没有 `evaluation.json` 的 active run 不能被 override。
+
+它与模型辅助自评有意保持不同。模型自评只是 advisory，不能覆盖确定性证据。Local Owner 是最终决策者，可以修改有效结论，但必须留下 reason，避免人工判断变成不可追踪的权威结果。
+
+其他方案与权衡：
+
+- 直接原地替换 `verdict` 更简单，但会破坏机器证据和人工判断的边界，也会丢失较早决策。
+- 单独使用 override sidecar file 可以保持 evaluation 文件不变，但 history、export 和所有 integration 都必须关联两个 artifact，并处理两边不一致。
+- 数据库事件账本能提供更强的事务和并发编辑能力，但当前 Task Run 仍是单进程本地文件，引入它还太早。
+
+当前选择的 append-only 字段结构紧凑，兼容只有 `verdict` 的旧 evaluation，也容易进入 export。局限是文件写入暂时不支持并发安全，而且人工可以有意把确定性的安全失败标成有效 pass。因此界面始终显示确定性基线，不会把人工 override 伪装成机器证明。
+
+验证覆盖初始字段、连续两次 override、reason trim、旧 evaluation 兼容、run 或 evaluation 缺失、history 展示、Task Export，以及无效 CLI 参数。
+
 ## 自动评测与人工评测
 
 当前版本：
@@ -162,10 +205,10 @@ a-agent eval golden
 - 使用 `a-agent eval golden` 运行六个确定性的 Golden Task Run fixture。
 - 使用 `a-agent eval skill-pack <name-or-path>` 在本地运行 Skill Pack eval manifest。
 - 可以通过 `--review` 请求当前真实 Model Provider 做结构化自评。
+- 可以通过 `a-agent eval override` 记录带审计理由的 Owner 有效 verdict。
 
 后续版本：
 
-- 允许 Owner 覆盖 verdict。
 - 对重要 Task Run 通过 Agent Bridge 做 External Review。
 - 使用真实 Skill Pack eval 积累出的 golden examples 校准模型辅助 grader。
 - Complex Embedding Retrieval 实现后增加检索专项评测。

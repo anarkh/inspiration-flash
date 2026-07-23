@@ -38,14 +38,14 @@ Learning focus: release baselines, reproducibility, and configuration boundaries
 
 ## Phase 2: Task Evaluation V2
 
-Status: in progress. Structured Success Checks, evidence-bearing execution/correctness dimensions, CLI failure exit codes, and Golden Task Run fixtures are implemented. Human verdict override remains.
+Status: complete. Structured Success Checks, evidence-bearing execution/correctness dimensions, CLI failure exit codes, Golden Task Run fixtures, and audited human verdict overrides are implemented.
 
 Deliverables:
 
 - Separate execution integrity from task correctness.
 - Add executable or structured Success Checks for supported task classes.
 - Build golden Task Run fixtures for read, write, chat, memory, resume, and Skill Pack workflows. (complete)
-- Add human verdict override with an audit reason.
+- Add human verdict override with an audit reason. (complete)
 - Record evidence used by every evaluation dimension.
 
 Completion gate:
@@ -57,6 +57,8 @@ Completion gate:
 Learning focus: agent evaluation, deterministic graders, model judges, and human review.
 
 ## Phase 3: Ability Bridge And Skill Sources
+
+Status: next.
 
 Deliverables:
 

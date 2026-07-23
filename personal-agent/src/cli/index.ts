@@ -12,10 +12,8 @@ import {
   parseStructuredSuccessCheck,
   type StructuredSuccessCheck
 } from "../core/success-check.ts";
-import { runGoldenTaskRunEvals } from "../evals/golden-task-runs.ts";
 import { createConfiguredProvider } from "../model/configured-provider.ts";
 import type { ModelProvider } from "../model/provider.ts";
-import { runSkillPackEvals } from "../skills/evals.ts";
 import {
   appendProjectMemory,
   evaluateMemorySuggestionQuality,
@@ -31,6 +29,7 @@ import {
   type ProjectMemorySection,
   type TaskRunMetadata
 } from "../state/store.ts";
+import { runEvalCommand } from "./eval-command.ts";
 
 // Keep default history output compact while letting callers opt into a smaller
 // page size with `--limit` and page position with `--offset`.
@@ -61,6 +60,7 @@ Usage:
   ${cliCommandName} memory append [--section <section>] <note>
   ${cliCommandName} memory apply-suggestions [--yes] [run-id]
   ${cliCommandName} eval golden
+  ${cliCommandName} eval override [run-id] --verdict <pass|partial|fail|blocked> --reason <text>
   ${cliCommandName} eval skill-pack <name-or-path>
   ${cliCommandName} export [run-id]
   ${cliCommandName} history [--status <active|completed>] [--limit <count>] [--offset <count>]
@@ -165,65 +165,7 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
   }
 
   if (command === "eval") {
-    if (argv[1] === "golden") {
-      if (argv.length > 2) {
-        process.stderr.write(`${cliCommandName}: eval golden does not accept arguments.\n`);
-        return 1;
-      }
-
-      const result = await runGoldenTaskRunEvals({
-        workspace: process.cwd(),
-        /** Prefixes deterministic fixture steps with their golden case id. */
-        logStep(message) {
-          process.stderr.write(`${message}\n`);
-        }
-      });
-      process.stdout.write(
-        [
-          `Golden Task Runs: ${result.passedCount} passed, ${result.failedCount} failed`,
-          ...result.cases.map(
-            (evalCase) =>
-              `${evalCase.id}: ${evalCase.status} | expected ${evalCase.expectedVerdict} | actual ${evalCase.actualVerdict ?? "unavailable"}`
-          ),
-          `Report: ${result.reportPath}`,
-          `Results: ${result.resultsPath}`
-        ].join("\n")
-      );
-      process.stdout.write("\n");
-      return result.failedCount === 0 ? 0 : 1;
-    }
-
-    if (argv[1] !== "skill-pack") {
-      process.stderr.write(`${cliCommandName}: eval requires subcommand: golden or skill-pack.\n`);
-      return 1;
-    }
-
-    const target = argv[2];
-    if (!target) {
-      process.stderr.write(`${cliCommandName}: eval skill-pack requires a name or path.\n`);
-      return 1;
-    }
-
-    const result = await runSkillPackEvals({
-      workspace: process.cwd(),
-      skillPack: target,
-      provider: createConfiguredProvider(),
-      /** Prints the underlying Task Run steps for each eval case. */
-      logStep(message) {
-        process.stderr.write(`${message}\n`);
-      },
-      confirmAction: confirmInTerminal
-    });
-
-    process.stdout.write(
-      [
-        `Evaluated Skill Pack ${result.skillPack.name}: ${result.passedCount} passed, ${result.failedCount} failed`,
-        `Report: ${result.reportPath}`,
-        `Results: ${result.resultsPath}`
-      ].join("\n")
-    );
-    process.stdout.write("\n");
-    return result.failedCount === 0 ? 0 : 1;
+    return runEvalCommand(argv.slice(1), process.cwd(), cliCommandName);
   }
 
   if (command === "export") {
@@ -659,7 +601,7 @@ function parseRunOptionFlags(args: string[], command: string): LearningFlagOptio
 
 /** Formats one Task Run metadata record for the history command. */
 function formatHistoryRun(run: TaskRunMetadata): string {
-  const evaluation = run.evaluationVerdict ? ` | evaluation: ${run.evaluationVerdict}` : "";
+  const evaluation = formatHistoryEvaluation(run);
   const report = run.reportPath ? ` | report: ${run.reportPath}` : "";
   const checkpointDetails = [
     typeof run.latestCheckpointTurn === "number" ? `turn ${run.latestCheckpointTurn}` : undefined,
@@ -668,6 +610,22 @@ function formatHistoryRun(run: TaskRunMetadata): string {
   const checkpointSuffix = checkpointDetails.length > 0 ? ` (${checkpointDetails.join(", ")})` : "";
   const checkpoint = run.latestCheckpointId ? ` | checkpoint: ${run.latestCheckpointId}${checkpointSuffix}` : "";
   return `${run.id} | ${run.status} | ${run.mode}${evaluation}${report}${checkpoint} | ${run.updatedAt} | ${run.goal}`;
+}
+
+/** Formats the effective verdict while keeping a human override visibly tied to its deterministic result. */
+function formatHistoryEvaluation(run: TaskRunMetadata): string {
+  if (!run.evaluationVerdict) {
+    return "";
+  }
+  if (!run.humanOverrideCount) {
+    return ` | evaluation: ${run.evaluationVerdict}`;
+  }
+
+  const deterministic = run.deterministicEvaluationVerdict
+    ? `; deterministic: ${run.deterministicEvaluationVerdict}`
+    : "";
+  const revisions = run.humanOverrideCount > 1 ? `; revisions: ${run.humanOverrideCount}` : "";
+  return ` | evaluation: ${run.evaluationVerdict} (human override${deterministic}${revisions})`;
 }
 
 /** Formats a compact page summary for filtered Task Run history output. */

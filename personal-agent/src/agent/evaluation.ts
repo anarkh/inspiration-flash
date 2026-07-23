@@ -3,6 +3,7 @@ import { resolve, sep } from "node:path";
 
 import { parseAgentStep } from "../core/agent-step.ts";
 import type { StructuredSuccessCheck } from "../core/success-check.ts";
+import type { HumanVerdictOverride, TaskVerdict } from "../core/task-verdict.ts";
 import type { ModelProvider, ModelProviderEvent } from "../model/provider.ts";
 import type { MemorySuggestion } from "../state/store.ts";
 
@@ -35,7 +36,11 @@ export interface EvaluationDimension {
 
 export interface TaskEvaluation {
   schemaVersion: 2;
-  verdict: "pass" | "partial" | "fail" | "blocked";
+  // `verdict` remains the immutable deterministic result. Human review changes
+  // effectiveVerdict and appends audit records instead of replacing evidence.
+  verdict: TaskVerdict;
+  effectiveVerdict: TaskVerdict;
+  humanOverrides: HumanVerdictOverride[];
   executionIntegrity: EvaluationDimension;
   taskCorrectness: EvaluationDimension;
   // Compatibility summaries keep existing history and integrations readable
@@ -81,9 +86,12 @@ export async function createTaskEvaluation(input: CreateTaskEvaluationInput): Pr
   const learningSignals = collectLearningSignals(input.memorySuggestions);
   const followUps = collectFollowUps(input.memorySuggestions);
 
+  const verdict = combineTaskVerdict(executionIntegrity.verdict, taskCorrectness.verdict);
   return {
     schemaVersion: 2,
-    verdict: combineTaskVerdict(executionIntegrity.verdict, taskCorrectness.verdict),
+    verdict,
+    effectiveVerdict: verdict,
+    humanOverrides: [],
     executionIntegrity,
     taskCorrectness,
     successCheck,
