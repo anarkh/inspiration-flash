@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="180" viewBox="0 0 720 180" role="img" aria-labelledby="title desc">
+  <title id="title">天幕监察城</title>
+  <desc id="desc">城市上空的扫描天幕横跨三片街区，三座盲区中继在屋顶保持暗区，远端的万目监察者俯视街道。</desc>
+  <rect width="720" height="180" fill="#11191b"/>
+  <rect y="118" width="720" height="62" fill="#29312d"/>
+  <path d="M0 28H720V48H0z" fill="#8d493d"/>
+  <path d="M0 52H720V62H0z" fill="#d2a34d" opacity=".82"/>
+  <path d="M0 66H720V73H0z" fill="#6eaaa0" opacity=".72"/>
+  <path d="M45 18L168 118H116zM252 18L370 118H318zM470 18L610 118H548z" fill="#c9654f" opacity=".3"/>
+
+  <g stroke="#141819" stroke-width="3">
+    <path d="M12 113V72h58v41z" fill="#40575a"/>
+    <path d="M76 113V58h55v55z" fill="#58604f"/>
+    <path d="M138 113V82h73v31z" fill="#38474a"/>
+    <path d="M219 113V48h68v65z" fill="#695548"/>
+    <path d="M294 113V68h74v45z" fill="#3d5550"/>
+    <path d="M376 113V42h62v71z" fill="#555d64"/>
+    <path d="M446 113V76h76v37z" fill="#4d4a3e"/>
+    <path d="M530 113V55h63v58z" fill="#31505a"/>
+    <path d="M601 113V84h58v29z" fill="#625044"/>
+    <path d="M666 113V62h43v51z" fill="#3d4a43"/>
+  </g>
+
+  <g fill="#d7c584">
+    <path d="M24 82h8v8h-8zM42 82h8v8h-8zM90 69h8v8h-8zM108 69h8v8h-8z"/>
+    <path d="M235 60h8v8h-8zM254 60h8v8h-8zM393 55h8v8h-8zM412 55h8v8h-8z"/>
+    <path d="M548 69h8v8h-8zM568 69h8v8h-8zM680 75h8v8h-8z"/>
+  </g>
+
+  <g stroke="#91c79f" stroke-width="3" fill="#1d2925">
+    <path d="M110 128h42v30h-42z"/>
+    <path d="M339 126h42v32h-42z"/>
+    <path d="M555 128h42v30h-42z"/>
+  </g>
+  <g fill="#91c79f">
+    <path d="M128 117h6v12h-6zM357 115h6v12h-6zM573 117h6v12h-6z"/>
+    <path d="M119 137h24v5h-24zM348 136h24v5h-24zM564 137h24v5h-24z"/>
+  </g>
+  <g stroke="#d2a34d" stroke-width="2" fill="none">
+    <path d="M103 123q28-22 56 0"/>
+    <path d="M332 121q28-22 56 0"/>
+    <path d="M548 123q28-22 56 0"/>
+  </g>
+
+  <path d="M648 104c-17-7-27-23-24-39 4-23 20-37 42-37s39 15 42 37c3 17-7 33-24 39z" fill="#241e20" stroke="#c9654f" stroke-width="3"/>
+  <path d="M640 62q26-22 52 0-26 22-52 0z" fill="#e2d8b5" stroke="#8d493d" stroke-width="3"/>
+  <circle cx="666" cy="62" r="8" fill="#8d493d"/>
+  <g fill="#d2a34d">
+    <circle cx="642" cy="43" r="4"/><circle cx="657" cy="37" r="4"/><circle cx="674" cy="37" r="4"/><circle cx="690" cy="44" r="4"/>
+    <circle cx="639" cy="84" r="4"/><circle cx="655" cy="91" r="4"/><circle cx="675" cy="91" r="4"/><circle cx="692" cy="83" r="4"/>
+  </g>
+
+  <path d="M0 164h720" stroke="#9b7650" stroke-width="5"/>
+  <path d="M34 146h54M170 151h120M402 147h112M615 151h75" stroke="#6eaaa0" stroke-width="4"/>
+</svg>

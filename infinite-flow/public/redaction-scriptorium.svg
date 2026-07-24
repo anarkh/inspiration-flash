@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="180" viewBox="0 0 720 180" role="img" aria-label="Monumental manuscript archive split between intact illuminated pages and cut-away voids">
+  <rect width="720" height="180" fill="#172a2b"/>
+  <rect y="142" width="720" height="38" fill="#27393a"/>
+  <rect x="20" y="18" width="680" height="12" fill="#b77735"/>
+  <rect x="34" y="30" width="16" height="126" fill="#8f4d35"/>
+  <rect x="670" y="30" width="16" height="126" fill="#8f4d35"/>
+  <rect x="54" y="42" width="296" height="8" fill="#d7a34b"/>
+  <rect x="54" y="91" width="296" height="8" fill="#d7a34b"/>
+  <rect x="54" y="140" width="296" height="8" fill="#d7a34b"/>
+  <rect x="65" y="54" width="42" height="32" fill="#e8d9ab"/>
+  <rect x="72" y="59" width="9" height="22" fill="#c4483e"/>
+  <rect x="85" y="59" width="16" height="5" fill="#397d78"/>
+  <rect x="85" y="69" width="16" height="4" fill="#b77735"/>
+  <rect x="85" y="78" width="16" height="3" fill="#397d78"/>
+  <rect x="114" y="54" width="51" height="32" fill="#f0e5c5"/>
+  <rect x="121" y="60" width="37" height="4" fill="#397d78"/>
+  <rect x="121" y="69" width="29" height="4" fill="#8f4d35"/>
+  <rect x="121" y="78" width="34" height="3" fill="#d7a34b"/>
+  <rect x="172" y="54" width="40" height="32" fill="#d9c88f"/>
+  <rect x="179" y="60" width="26" height="20" fill="#315f62"/>
+  <rect x="219" y="54" width="56" height="32" fill="#f0e5c5"/>
+  <rect x="226" y="60" width="42" height="4" fill="#c4483e"/>
+  <rect x="226" y="69" width="35" height="4" fill="#397d78"/>
+  <rect x="226" y="78" width="40" height="3" fill="#b77735"/>
+  <rect x="282" y="54" width="57" height="32" fill="#e8d9ab"/>
+  <rect x="290" y="60" width="14" height="20" fill="#d7a34b"/>
+  <rect x="309" y="60" width="22" height="4" fill="#8f4d35"/>
+  <rect x="309" y="69" width="22" height="4" fill="#397d78"/>
+  <rect x="65" y="103" width="50" height="32" fill="#f0e5c5"/>
+  <rect x="72" y="109" width="36" height="4" fill="#b77735"/>
+  <rect x="72" y="118" width="27" height="4" fill="#397d78"/>
+  <rect x="72" y="127" width="34" height="3" fill="#c4483e"/>
+  <rect x="122" y="103" width="43" height="32" fill="#d9c88f"/>
+  <rect x="129" y="109" width="29" height="20" fill="#8f4d35"/>
+  <rect x="172" y="103" width="62" height="32" fill="#e8d9ab"/>
+  <rect x="180" y="109" width="46" height="4" fill="#397d78"/>
+  <rect x="180" y="118" width="38" height="4" fill="#c4483e"/>
+  <rect x="180" y="127" width="43" height="3" fill="#b77735"/>
+  <rect x="241" y="103" width="45" height="32" fill="#f0e5c5"/>
+  <rect x="248" y="109" width="12" height="20" fill="#315f62"/>
+  <rect x="265" y="109" width="14" height="4" fill="#d7a34b"/>
+  <rect x="265" y="118" width="14" height="4" fill="#8f4d35"/>
+  <rect x="293" y="103" width="46" height="32" fill="#d9c88f"/>
+  <rect x="300" y="109" width="32" height="4" fill="#c4483e"/>
+  <rect x="300" y="118" width="26" height="4" fill="#397d78"/>
+  <path d="M360 30H686V156H360V128L383 119L367 101L394 87L371 69L399 51L360 42Z" fill="#0a1113"/>
+  <path d="M360 30H398L387 47L413 59L391 76L416 91L390 106L407 125L379 137L390 156H360V128L383 119L367 101L394 87L371 69L399 51L360 42Z" fill="#c4483e"/>
+  <path d="M379 34H403L395 47L421 59L399 76L424 91L398 106L415 125L387 137L398 152H379L405 139L389 121L415 107L389 89L413 75L389 58L410 45Z" fill="#d7a34b"/>
+  <rect x="431" y="46" width="78" height="12" fill="#27393a"/>
+  <rect x="532" y="46" width="116" height="12" fill="#27393a"/>
+  <rect x="445" y="77" width="126" height="12" fill="#315f62"/>
+  <rect x="594" y="77" width="54" height="12" fill="#315f62"/>
+  <rect x="431" y="108" width="58" height="12" fill="#27393a"/>
+  <rect x="515" y="108" width="133" height="12" fill="#27393a"/>
+  <rect x="449" y="137" width="97" height="11" fill="#315f62"/>
+  <rect x="574" y="137" width="74" height="11" fill="#315f62"/>
+</svg>

@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="180" viewBox="0 0 720 180" role="img" aria-labelledby="title desc">
+  <title id="title">伪证裁定庭</title>
+  <desc id="desc">断电裁定庭内三座证据灯箱照亮四名嫌疑人剪影，中央高处是主审席。</desc>
+  <rect width="720" height="180" fill="#101416"/>
+  <rect y="24" width="720" height="124" fill="#1b2224"/>
+  <path d="M0 24h720v9H0zM0 139h720v9H0z" fill="#303a3d"/>
+  <path d="M34 42h170v88H34zM516 42h170v88H516z" fill="#151b1d" stroke="#3b474a" stroke-width="3"/>
+  <path d="M225 37h270v93H225z" fill="#0b0f10" stroke="#455154" stroke-width="3"/>
+  <path d="M257 37v93M463 37v93" stroke="#273033" stroke-width="4"/>
+  <g>
+    <path d="M74 57h105v61H74z" fill="#263234" stroke="#657477" stroke-width="3"/>
+    <path d="M84 67h85v41H84z" fill="#d5a94a"/>
+    <path d="M307 57h106v61H307z" fill="#263234" stroke="#657477" stroke-width="3"/>
+    <path d="M317 67h86v41h-86z" fill="#72b7a4"/>
+    <path d="M541 57h105v61H541z" fill="#263234" stroke="#657477" stroke-width="3"/>
+    <path d="M551 67h85v41h-85z" fill="#c86658"/>
+    <path d="M95 75h63v7H95zM95 89h48v7H95z" fill="#f2ddb0"/>
+    <path d="M328 75h64v7h-64zM328 89h42v7h-42z" fill="#d7eee7"/>
+    <path d="M562 75h63v7h-63zM562 89h51v7h-51z" fill="#f0d0c8"/>
+  </g>
+  <g fill="#080b0c">
+    <circle cx="118" cy="120" r="9"/><path d="M104 132h28l7 34H97z"/>
+    <circle cx="252" cy="119" r="9"/><path d="M238 131h28l7 35h-42z"/>
+    <circle cx="468" cy="119" r="9"/><path d="M454 131h28l7 35h-42z"/>
+    <circle cx="602" cy="120" r="9"/><path d="M588 132h28l7 34h-42z"/>
+  </g>
+  <g>
+    <path d="M292 29h136l18 22H274z" fill="#465255" stroke="#718084" stroke-width="3"/>
+    <path d="M307 51h106v57H307z" fill="#222b2d" stroke="#718084" stroke-width="3"/>
+    <circle cx="360" cy="68" r="11" fill="#0a0d0e"/>
+    <path d="M343 82h34l9 26h-52z" fill="#0a0d0e"/>
+    <path d="M282 108h156l13 20H269z" fill="#536064" stroke="#829093" stroke-width="3"/>
+    <path d="M334 116h52v8h-52z" fill="#c74f47"/>
+  </g>
+  <path d="M0 148h720v32H0z" fill="#0b0f10"/>
+  <path d="M0 148h720" stroke="#566164" stroke-width="3"/>
+  <path d="M172 148l-24 32M548 148l24 32M318 148l-7 32M402 148l7 32" stroke="#293235" stroke-width="3"/>
+</svg>

@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 180" role="img" aria-labelledby="title desc">
+  <title id="title">轮回城现实与镜像双相</title>
+  <desc id="desc">同一座层叠城市沿中轴分为青绿色现实侧和朱红色镜像侧</desc>
+  <rect width="360" height="180" fill="#173c3c"/>
+  <rect x="360" width="360" height="180" fill="#512d3b"/>
+  <rect y="132" width="360" height="48" fill="#205552"/>
+  <rect x="360" y="132" width="360" height="48" fill="#783f4c"/>
+  <path d="M0 143H720" stroke="#ddc86c" stroke-width="4"/>
+  <path d="M360 0V180" stroke="#f1db78" stroke-width="4"/>
+
+  <g fill="#5ab9a9" stroke="#b6e2d8" stroke-width="3">
+    <path d="M36 132V69h45V43h48v89z"/>
+    <path d="M145 132V31h54v24h34v77z"/>
+    <path d="M250 132V57h68v75z"/>
+  </g>
+  <g fill="#e17b72" stroke="#f0c1b7" stroke-width="3">
+    <path d="M684 132V69h-45V43h-48v89z"/>
+    <path d="M575 132V31h-54v24h-34v77z"/>
+    <path d="M470 132V57h-68v75z"/>
+  </g>
+
+  <g fill="#173c3c">
+    <rect x="51" y="82" width="13" height="16"/>
+    <rect x="88" y="58" width="13" height="16"/>
+    <rect x="161" y="47" width="15" height="17"/>
+    <rect x="187" y="70" width="15" height="17"/>
+    <rect x="268" y="75" width="14" height="17"/>
+    <rect x="293" y="100" width="14" height="17"/>
+  </g>
+  <g fill="#512d3b">
+    <rect x="656" y="82" width="13" height="16"/>
+    <rect x="619" y="58" width="13" height="16"/>
+    <rect x="544" y="47" width="15" height="17"/>
+    <rect x="518" y="70" width="15" height="17"/>
+    <rect x="438" y="75" width="14" height="17"/>
+    <rect x="413" y="100" width="14" height="17"/>
+  </g>
+
+  <path d="M13 132l46-23 45 23 47-23 47 23 46-23 46 23 70-37 70 37 46-23 46 23 47-23 47 23 45-23 46 23" fill="none" stroke="#f1db78" stroke-width="5" stroke-linejoin="bevel"/>
+  <path d="M309 143l51-31 51 31-51 30z" fill="#edcf65" stroke="#fff0a4" stroke-width="3"/>
+  <path d="M360 112v61l51-30z" fill="#df756e"/>
+  <path d="M334 143l26-16 26 16-26 15z" fill="#173c3c"/>
+  <path d="M360 127v31l26-15z" fill="#512d3b"/>
+
+  <g fill="#f0df91">
+    <rect x="21" y="151" width="58" height="8"/>
+    <rect x="94" y="151" width="84" height="8"/>
+    <rect x="194" y="151" width="69" height="8"/>
+    <rect x="457" y="151" width="69" height="8"/>
+    <rect x="542" y="151" width="84" height="8"/>
+    <rect x="641" y="151" width="58" height="8"/>
+  </g>
+</svg>
