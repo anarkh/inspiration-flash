@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="180" viewBox="0 0 720 180" role="img" aria-labelledby="title desc">
+  <title id="title">失联避难所</title>
+  <desc id="desc">停电避难所内有一副担架、三站应急灯、一名被搀扶的幸存者，以及走廊远处模仿人形的影子。</desc>
+  <rect width="720" height="180" fill="#111719"/>
+  <path d="M0 30h720v118H0z" fill="#1c282a"/>
+  <path d="M0 44h720v8H0zM0 132h720v16H0z" fill="#293638"/>
+  <path d="M38 52h238v80H38z" fill="#172123" stroke="#405052" stroke-width="3"/>
+  <path d="M444 52h238v80H444z" fill="#172123" stroke="#405052" stroke-width="3"/>
+  <path d="M280 52h160v80H280z" fill="#0b1011" stroke="#354345" stroke-width="3"/>
+  <path d="M302 52l21 80M418 52l-21 80" stroke="#202d2f" stroke-width="4"/>
+
+  <g stroke="#445456" stroke-width="3">
+    <path d="M86 53v79M148 53v79M210 53v79M492 53v79M554 53v79M616 53v79"/>
+    <path d="M39 91h236M445 91h236"/>
+  </g>
+
+  <g>
+    <path d="M104 43h30l7 9H97z" fill="#d9563f"/>
+    <rect x="109" y="29" width="20" height="14" rx="2" fill="#ee8b45"/>
+    <rect x="114" y="33" width="10" height="6" fill="#ffe49b"/>
+    <path d="M348 43h30l7 9h-44z" fill="#d9563f"/>
+    <rect x="353" y="29" width="20" height="14" rx="2" fill="#ee8b45"/>
+    <rect x="358" y="33" width="10" height="6" fill="#ffe49b"/>
+    <path d="M592 43h30l7 9h-44z" fill="#d9563f"/>
+    <rect x="597" y="29" width="20" height="14" rx="2" fill="#ee8b45"/>
+    <rect x="602" y="33" width="10" height="6" fill="#ffe49b"/>
+  </g>
+
+  <g transform="translate(56 104)">
+    <path d="M0 14h176l-12 24H18z" fill="#54696b" stroke="#819294" stroke-width="3"/>
+    <path d="M14 10h146v15H14z" fill="#c2cbc6"/>
+    <path d="M24 8h42v10H24z" fill="#8aa2a0"/>
+    <path d="M22 38v15M154 38v15" stroke="#7f9293" stroke-width="4"/>
+    <circle cx="22" cy="55" r="5" fill="#273638" stroke="#8da0a1" stroke-width="2"/>
+    <circle cx="154" cy="55" r="5" fill="#273638" stroke="#8da0a1" stroke-width="2"/>
+  </g>
+
+  <g transform="translate(492 70)">
+    <circle cx="30" cy="14" r="11" fill="#b79b80"/>
+    <path d="M18 28h26l9 48H10z" fill="#6e807d"/>
+    <path d="M18 76l-7 31M42 76l10 31" stroke="#738987" stroke-width="8" stroke-linecap="round"/>
+    <circle cx="80" cy="18" r="12" fill="#d1ad8e"/>
+    <path d="M66 31h28l10 43H58z" fill="#b84f43"/>
+    <path d="M70 73l-5 34M92 73l7 34" stroke="#8e3d37" stroke-width="8" stroke-linecap="round"/>
+    <path d="M42 37l28 9M92 39L43 57" stroke="#b99d83" stroke-width="7" stroke-linecap="round"/>
+  </g>
+
+  <g transform="translate(338 70)" fill="#050708">
+    <ellipse cx="22" cy="13" rx="10" ry="13"/>
+    <path d="M11 27h22l8 48H3z"/>
+    <path d="M10 74L3 106M33 74l9 32" stroke="#050708" stroke-width="8" stroke-linecap="round"/>
+    <path d="M7 36l-15 26M36 36l16 25" stroke="#050708" stroke-width="7" stroke-linecap="round"/>
+  </g>
+
+  <path d="M0 148h720v32H0z" fill="#0c1112"/>
+  <path d="M0 148h720" stroke="#576466" stroke-width="3"/>
+  <path d="M260 148l-28 32M460 148l28 32M325 148l-8 32M395 148l8 32" stroke="#273335" stroke-width="3"/>
+</svg>

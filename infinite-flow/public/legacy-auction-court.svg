@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="180" viewBox="0 0 720 180" role="img" aria-labelledby="title desc">
+  <title id="title">亡队遗产拍卖庭</title>
+  <desc id="desc">纪念碑式拍卖大厅内悬吊四件遗物拍品，中央落槌台前留有亡队的阴影。</desc>
+  <rect width="720" height="180" fill="#171b24"/>
+  <rect y="132" width="720" height="48" fill="#29303d"/>
+  <path d="M0 132V42h58v90H42V62H16v70zm82 0V18h58v114h-17V40H99v92zm498 0V18h58v114h-17V40h-24v92zm82 0V42h58v90h-16V62h-26v70z" fill="#4d5868"/>
+  <path d="M154 132V30h38v102h-12V50h-14v82zm374 0V30h38v102h-12V50h-14v82z" fill="#687587"/>
+  <rect x="205" y="25" width="310" height="10" fill="#7f8c9d"/>
+  <path d="M226 35v34m88-34v34m92-34v34m88-34v34" stroke="#b9c0c9" stroke-width="4"/>
+  <path d="M211 69h30l8 29h-46zm88 0h30l-3 29h-24zm92 0h30l10 29h-50zm88 0h30l-8 29h-24z" fill="#d5a844" stroke="#f1d378" stroke-width="3"/>
+  <path d="M217 78h18l4 12h-26zm88-2h18v14h-18zm91 5 10-9 10 18h-24zm91-5h16l-4 14h-16z" fill="#873c49"/>
+  <path d="M274 132h172l-16-25H290z" fill="#586677"/>
+  <rect x="326" y="92" width="68" height="13" rx="2" fill="#e5d9bd"/>
+  <path d="M350 64h28v25h-28z" fill="#c25d45"/>
+  <path d="M364 48h10v44h-10z" fill="#e5d9bd" transform="rotate(-24 369 70)"/>
+  <rect x="337" y="126" width="46" height="6" fill="#c25d45"/>
+  <path d="M164 180v-20l18-14 18 14v20zm42 0v-16l15-12 15 12v16zm278 0v-16l15-12 15 12v16zm36 0v-20l18-14 18 14v20z" fill="#10131a"/>
+  <path d="M183 146v-13h-8v-13h16v13h-8m38 19v-11h-7v-12h14v12h-7m278 11v-11h-7v-12h14v12h-7m39 5v-13h-8v-13h16v13h-8" fill="#873c49"/>
+  <path d="M0 154h140l28-22h79l22 22h182l22-22h79l28 22h140v26H0z" fill="#202630" opacity=".9"/>
+</svg>

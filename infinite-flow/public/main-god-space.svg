@@ -1,0 +1,155 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">黑曜石环形主神空间</title>
+  <desc id="desc">宏大的黑曜石环形大厅中央悬浮着主神光核，远处分布旧金与冷青标识的功能站，正前方是一座带红色危险标记的副本门。</desc>
+  <defs>
+    <linearGradient id="vault" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#10181b"/>
+      <stop offset="0.48" stop-color="#080c10"/>
+      <stop offset="1" stop-color="#030507"/>
+    </linearGradient>
+    <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#151b1d"/>
+      <stop offset="0.58" stop-color="#090d10"/>
+      <stop offset="1" stop-color="#020304"/>
+    </linearGradient>
+    <linearGradient id="obsidian" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#252c2e"/>
+      <stop offset="0.36" stop-color="#0b0f12"/>
+      <stop offset="0.7" stop-color="#171c1e"/>
+      <stop offset="1" stop-color="#050709"/>
+    </linearGradient>
+    <linearGradient id="gate" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#241715"/>
+      <stop offset="0.58" stop-color="#10090a"/>
+      <stop offset="1" stop-color="#050405"/>
+    </linearGradient>
+    <radialGradient id="core" cx="50%" cy="43%" r="58%">
+      <stop offset="0" stop-color="#fff4bd"/>
+      <stop offset="0.12" stop-color="#e8c76b"/>
+      <stop offset="0.32" stop-color="#76cbc4"/>
+      <stop offset="0.58" stop-color="#193d40"/>
+      <stop offset="0.8" stop-color="#071013"/>
+      <stop offset="1" stop-color="#020405"/>
+    </radialGradient>
+    <filter id="coreGlow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="10" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="softGlow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <clipPath id="hallClip">
+      <rect width="1600" height="900"/>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#hallClip)">
+    <rect width="1600" height="900" fill="url(#vault)"/>
+    <path d="M0 0h1600v112C1340 67 1060 44 800 44S260 67 0 112Z" fill="#05080a"/>
+    <path d="M96 137C346 48 1254 48 1504 137" fill="none" stroke="#273033" stroke-width="22"/>
+    <path d="M136 154C380 79 1220 79 1464 154" fill="none" stroke="#8b753e" stroke-opacity=".42" stroke-width="3"/>
+    <path d="M174 171C409 111 1191 111 1426 171" fill="none" stroke="#5ca7a4" stroke-opacity=".28" stroke-width="2"/>
+
+    <g fill="url(#obsidian)" stroke="#343d3f" stroke-width="2">
+      <path d="M40 140 175 115l55 470-170 70Z"/>
+      <path d="m226 102 112-18 32 427-127 57Z"/>
+      <path d="m384 76 101-11 18 395-108 39Z"/>
+      <path d="m1560 140-135-25-55 470 170 70Z"/>
+      <path d="m1374 102-112-18-32 427 127 57Z"/>
+      <path d="m1216 76-101-11-18 395 108 39Z"/>
+    </g>
+
+    <g fill="#090d0f" stroke="#b79a51" stroke-opacity=".32">
+      <path d="m75 189 76-17 18 257-84 31Z"/>
+      <path d="m262 141 58-10 12 230-64 24Z"/>
+      <path d="m1525 189-76-17-18 257 84 31Z"/>
+      <path d="m1338 141-58-10-12 230 64 24Z"/>
+    </g>
+
+    <path d="M-90 900C82 614 382 492 800 492s718 122 890 408Z" fill="url(#floor)" stroke="#2c3436" stroke-width="3"/>
+    <ellipse cx="800" cy="644" rx="656" ry="247" fill="none" stroke="#30393b" stroke-width="18"/>
+    <ellipse cx="800" cy="644" rx="570" ry="203" fill="none" stroke="#b09149" stroke-opacity=".44" stroke-width="3"/>
+    <ellipse cx="800" cy="644" rx="466" ry="155" fill="none" stroke="#5cb5af" stroke-opacity=".35" stroke-width="3"/>
+    <ellipse cx="800" cy="644" rx="350" ry="108" fill="#070b0d" stroke="#252f31" stroke-width="15"/>
+    <ellipse cx="800" cy="644" rx="282" ry="82" fill="none" stroke="#8f7740" stroke-opacity=".5" stroke-width="2"/>
+
+    <g stroke="#343e40" stroke-width="2" opacity=".9">
+      <path d="M800 492v405"/>
+      <path d="M622 504 493 892"/>
+      <path d="m978 504 129 388"/>
+      <path d="M454 555 194 836"/>
+      <path d="m1146 555 260 281"/>
+    </g>
+
+    <g id="stations">
+      <g transform="translate(126 390)">
+        <path d="m0 58 24-70h152l24 70-23 42H23Z" fill="url(#obsidian)" stroke="#9a8247" stroke-width="3"/>
+        <path d="M35 23h130" stroke="#d5ad53" stroke-width="6"/>
+        <path d="M54 46h92" stroke="#5b9996" stroke-width="3"/>
+      </g>
+      <g transform="translate(286 272)">
+        <path d="m0 52 20-62h124l20 62-20 34H20Z" fill="url(#obsidian)" stroke="#456f70" stroke-width="3"/>
+        <path d="M32 20h100" stroke="#67bcb7" stroke-width="5"/>
+        <path d="m18 62 26-8m102 8-26-8" stroke="#b18e45" stroke-width="3"/>
+      </g>
+      <g transform="translate(1310 390)">
+        <path d="m0 58 24-70h152l24 70-23 42H23Z" fill="url(#obsidian)" stroke="#9a8247" stroke-width="3"/>
+        <path d="M35 23h130" stroke="#d5ad53" stroke-width="6"/>
+        <path d="M54 46h92" stroke="#a34740" stroke-width="3"/>
+      </g>
+      <g transform="translate(1150 272)">
+        <path d="m0 52 20-62h124l20 62-20 34H20Z" fill="url(#obsidian)" stroke="#456f70" stroke-width="3"/>
+        <path d="M32 20h100" stroke="#67bcb7" stroke-width="5"/>
+        <path d="m18 62 26-8m102 8-26-8" stroke="#b18e45" stroke-width="3"/>
+      </g>
+      <g transform="translate(452 540)">
+        <path d="m0 45 17-52h108l17 52-18 30H18Z" fill="url(#obsidian)" stroke="#657e6b" stroke-width="3"/>
+        <path d="M28 19h86" stroke="#7fa07a" stroke-width="5"/>
+      </g>
+      <g transform="translate(1006 540)">
+        <path d="m0 45 17-52h108l17 52-18 30H18Z" fill="url(#obsidian)" stroke="#815046" stroke-width="3"/>
+        <path d="M28 19h86" stroke="#b34b43" stroke-width="5"/>
+      </g>
+    </g>
+
+    <g id="dungeon-gate" transform="translate(650 558)">
+      <path d="M0 213V70L42 0h216l42 70v143Z" fill="url(#obsidian)" stroke="#8d7540" stroke-width="5"/>
+      <path d="M38 213V82l34-45h156l34 45v131Z" fill="url(#gate)" stroke="#a4443c" stroke-width="5"/>
+      <path d="m78 80 72-31 72 31v133H78Z" fill="#060506" stroke="#c14d43" stroke-width="3"/>
+      <path d="M150 51v160M79 117h142" stroke="#963a35" stroke-width="2"/>
+      <path d="m107 88 43-19 43 19-19 20h-48Z" fill="#321313" stroke="#d76051" stroke-width="3" filter="url(#softGlow)"/>
+      <path d="M16 199h268" stroke="#e0b654" stroke-width="5"/>
+    </g>
+
+    <g id="main-core" transform="translate(800 360)">
+      <ellipse rx="185" ry="52" fill="none" stroke="#63b9b3" stroke-opacity=".58" stroke-width="3"/>
+      <ellipse rx="148" ry="40" fill="none" stroke="#d5ac50" stroke-opacity=".7" stroke-width="4" transform="rotate(-14)"/>
+      <ellipse rx="116" ry="30" fill="none" stroke="#6bc0ba" stroke-opacity=".5" stroke-width="2" transform="rotate(18)"/>
+      <path d="M-69 0 0-74 69 0 0 74Z" fill="#0a1517" stroke="#d6ae55" stroke-width="4"/>
+      <circle r="48" fill="url(#core)" stroke="#e8c76b" stroke-width="4" filter="url(#coreGlow)"/>
+      <path d="M0-35 30 0 0 35-30 0Z" fill="none" stroke="#f6e4a3" stroke-width="3"/>
+      <circle r="11" fill="#fff3b4"/>
+    </g>
+
+    <g fill="#b84940" filter="url(#softGlow)">
+      <path d="m616 602 10-18 10 18-10 18Z"/>
+      <path d="m964 602 10-18 10 18-10 18Z"/>
+      <path d="m760 800 12-22 12 22-12 22Z"/>
+      <path d="m816 800 12-22 12 22-12 22Z"/>
+    </g>
+
+    <g fill="#72c0ba" opacity=".85">
+      <rect x="95" y="474" width="6" height="58"/>
+      <rect x="1499" y="474" width="6" height="58"/>
+      <rect x="386" y="194" width="4" height="62"/>
+      <rect x="1210" y="194" width="4" height="62"/>
+    </g>
+    <g fill="#d8ae52" opacity=".8">
+      <rect x="174" y="254" width="5" height="92"/>
+      <rect x="1421" y="254" width="5" height="92"/>
+      <rect x="508" y="104" width="4" height="54"/>
+      <rect x="1088" y="104" width="4" height="54"/>
+    </g>
+  </g>
+</svg>

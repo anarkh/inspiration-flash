@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="180" viewBox="0 0 720 180" role="img" aria-labelledby="title desc">
+  <title id="title">众生原型库</title>
+  <desc id="desc">原型罐、螺旋档案与四路基因光汇聚在原型库中央。</desc>
+  <rect width="720" height="180" fill="#0b1418"/>
+  <rect y="132" width="720" height="48" fill="#162126"/>
+  <path d="M0 132H720" stroke="#52636a" stroke-width="2"/>
+  <path d="M70 132L115 88H605L650 132" fill="#1d2c31" stroke="#5d7479" stroke-width="2"/>
+
+  <g fill="#20363a" stroke="#78979a" stroke-width="2">
+    <path d="M86 34h76l8 12v82H78V46z"/>
+    <path d="M183 23h84l8 13v92h-100V36z"/>
+    <path d="M458 23h84l8 13v92H450V36z"/>
+    <path d="M558 34h76l8 12v82h-92V46z"/>
+  </g>
+  <g fill="#3f595b">
+    <rect x="91" y="40" width="58" height="9"/>
+    <rect x="192" y="30" width="66" height="9"/>
+    <rect x="467" y="30" width="66" height="9"/>
+    <rect x="571" y="40" width="58" height="9"/>
+  </g>
+  <g fill="#182629" stroke="#9ab4b2" stroke-width="2">
+    <path d="M95 55h52v62l-7 8h-38l-7-8z"/>
+    <path d="M195 46h62v69l-8 10h-46l-8-10z"/>
+    <path d="M468 46h62v69l-8 10h-46l-8-10z"/>
+    <path d="M572 55h52v62l-7 8h-38l-7-8z"/>
+  </g>
+  <g fill="#78b6a2">
+    <path d="M112 70l9-7 9 7-2 26-7 12-7-12z"/>
+    <path d="M216 63l10-9 10 9-2 31-8 17-8-17z"/>
+    <path d="M489 63l10-9 10 9-2 31-8 17-8-17z"/>
+    <path d="M586 70l9-7 9 7-2 26-7 12-7-12z"/>
+  </g>
+
+  <g fill="#1b252b" stroke="#8aa6af" stroke-width="2">
+    <rect x="292" y="18" width="136" height="106" rx="4"/>
+    <rect x="304" y="29" width="112" height="84" rx="3"/>
+  </g>
+  <g fill="none" stroke-width="4">
+    <path d="M328 37c43 12 21 29 64 41s21 25-1 31" stroke="#d9b960"/>
+    <path d="M392 37c-43 12-21 29-64 41s-21 25 1 31" stroke="#75b9c3"/>
+  </g>
+  <g stroke="#79949a" stroke-width="2">
+    <path d="M338 43h44M329 55h62M332 68h56M342 82h36M332 96h56"/>
+  </g>
+
+  <g fill="none" stroke-width="6" stroke-linecap="square">
+    <path d="M24 154H246L314 103" stroke="#d76155"/>
+    <path d="M24 166H268L326 113" stroke="#5a9ed0"/>
+    <path d="M696 154H474L406 103" stroke="#69b886"/>
+    <path d="M696 166H452L394 113" stroke="#dda94e"/>
+  </g>
+  <g fill="#0d171b" stroke="#9bb4b8" stroke-width="2">
+    <path d="M326 112h68l16 20-18 30h-64l-18-30z"/>
+    <rect x="339" y="122" width="42" height="28" rx="3"/>
+  </g>
+  <path d="M350 128h20l6 8-6 8h-20l-6-8z" fill="#d7cf93"/>
+  <g fill="#26383d">
+    <path d="M0 145h51v35H0zM669 145h51v35h-51z"/>
+    <path d="M63 139h43v41H63zM614 139h43v41h-43z"/>
+  </g>
+</svg>

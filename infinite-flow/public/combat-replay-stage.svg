@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="180" viewBox="0 0 720 180" role="img" aria-labelledby="title desc">
+  <title id="title">战痕复演场</title>
+  <desc id="desc">实体战斗复演舞台上架设双盘母带机、三段动作胶片窗与带有战痕的场记轨道。</desc>
+  <rect width="720" height="180" fill="#0d1114"/>
+  <rect y="18" width="720" height="118" fill="#1a2226"/>
+  <path d="M0 18h720v8H0zM0 128h720v8H0z" fill="#455158"/>
+  <path d="M20 40h170v76H20zM275 29h170v87H275zM530 40h170v76H530z" fill="#11171a" stroke="#718087" stroke-width="3"/>
+  <path d="M32 52h146v52H32zM287 41h146v63H287zM542 52h146v52H542z" fill="#29363b"/>
+  <path d="M43 63h124v30H43z" fill="#b74f43"/>
+  <path d="M298 52h124v41H298z" fill="#d6ab4b"/>
+  <path d="M553 63h124v30H553z" fill="#4fa89b"/>
+  <g fill="#f1dfb4">
+    <path d="M52 71h36v6H52zM52 82h56v5H52z"/>
+    <path d="M307 61h58v6h-58zM307 75h94v6h-94z"/>
+    <path d="M562 71h46v6h-46zM562 82h72v5h-72z"/>
+  </g>
+  <g fill="#080b0d">
+    <circle cx="137" cy="78" r="10"/><path d="M124 91h26l7 13h-40z"/>
+    <circle cx="382" cy="68" r="11"/><path d="M367 82h30l8 22h-46z"/>
+    <circle cx="642" cy="78" r="10"/><path d="M629 91h26l7 13h-40z"/>
+  </g>
+  <path d="M0 136h720v44H0z" fill="#121719"/>
+  <path d="M0 136h720" stroke="#6b777c" stroke-width="3"/>
+  <path d="M85 136l-18 44M635 136l18 44M258 136l-7 44M462 136l7 44" stroke="#354044" stroke-width="3"/>
+  <g transform="translate(219 112)">
+    <path d="M0 0h282l13 49H-13z" fill="#242c30" stroke="#738187" stroke-width="3"/>
+    <circle cx="45" cy="23" r="18" fill="#8d989c" stroke="#ced5d6" stroke-width="3"/>
+    <circle cx="45" cy="23" r="6" fill="#252d31"/>
+    <circle cx="237" cy="23" r="18" fill="#8d989c" stroke="#ced5d6" stroke-width="3"/>
+    <circle cx="237" cy="23" r="6" fill="#252d31"/>
+    <path d="M63 23h156" stroke="#d29b45" stroke-width="5"/>
+    <path d="M95 10h92v26H95z" fill="#0b1012" stroke="#647177" stroke-width="2"/>
+    <path d="M105 18h21v10h-21z" fill="#b74f43"/>
+    <path d="M131 18h21v10h-21z" fill="#d6ab4b"/>
+    <path d="M157 18h20v10h-20z" fill="#4fa89b"/>
+  </g>
+  <g fill="#d9c47b">
+    <path d="M27 143h48v5H27zM645 143h48v5h-48z"/>
+    <path d="M101 156h42v4h-42zM577 156h42v4h-42z"/>
+  </g>
+  <path d="M181 29l17 13-10 17 18 13-13 22" fill="none" stroke="#cf6756" stroke-width="4"/>
+  <path d="M520 31l-16 14 11 16-18 14 12 22" fill="none" stroke="#62b8aa" stroke-width="4"/>
+</svg>
