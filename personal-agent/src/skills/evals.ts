@@ -163,7 +163,8 @@ async function runOneSkillPackEvalCase(input: RunOneSkillPackEvalCaseInput): Pro
       successCheck: formatSkillPackEvalSuccessCheck(input.evalCase),
       provider: input.provider,
       logStep: input.logStep,
-      confirmAction: createEvalConfirmationHandler(input.skillPack, input.confirmAction)
+      skillSelectors: [input.skillPack.path],
+      confirmAction: input.confirmAction
     });
     const reportPath = join(run.runDir, "report.md");
     const report = await readFile(reportPath, "utf8");
@@ -525,19 +526,6 @@ function formatSkillPackEvalGoal(skillPack: SkillPackSummary, evalCase: SkillPac
     `Expected output marker: ${evalCase.expectedOutput}`,
     `Grader: ${formatSkillPackEvalGrader(evalCase.grader)}`
   ].join("\n");
-}
-
-/** Auto-selects the evaluated Skill Pack while delegating non-Skill confirmations to the caller. */
-function createEvalConfirmationHandler(
-  skillPack: SkillPackSummary,
-  confirmAction?: (request: ConfirmationRequired) => Promise<ConfirmationResponse> | ConfirmationResponse
-): (request: ConfirmationRequired) => Promise<ConfirmationResponse> | ConfirmationResponse {
-  return (request) => {
-    if (request.tool === "skill_packs") {
-      return { approved: true, selected: [skillPack.path] };
-    }
-    return confirmAction ? confirmAction(request) : false;
-  };
 }
 
 /** Checks one eval case using either final-report text or durable Task Run events. */

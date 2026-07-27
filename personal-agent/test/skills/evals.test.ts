@@ -65,6 +65,11 @@ test("runSkillPackEvals executes manifest cases and writes local reports", async
     assert.match(providerInputs[0]?.goal ?? "", /Use docs-helper Skill Pack/);
     assert.match(providerInputs[0]?.goal ?? "", /Answer the docs question with citations/);
     assert.match(providerInputs[0]?.skillPacks ?? "", /docs-helper/);
+    assert.match(providerInputs[0]?.skillPacks ?? "", /Full SKILL\.md Guidance/);
+    const taskRunMetadata = JSON.parse(
+      await readFile(join(result.cases[0]?.taskRunDir ?? "", "run.json"), "utf8")
+    );
+    assert.deepEqual(taskRunMetadata.skillSelectors, [".agents/skills/docs-helper/SKILL.md"]);
     assert.match(await readFile(result.reportPath, "utf8"), /PASS/);
     assert.match(await readFile(result.resultsPath, "utf8"), /"passedCount": 1/);
   } finally {

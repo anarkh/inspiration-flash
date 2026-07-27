@@ -52,9 +52,9 @@ const vagueTaskPatterns = [
 const help = `${cliCommandName}
 
 Usage:
-  ${cliCommandName} start [--learn] [--review]
-  ${cliCommandName} chat [--learn] [--review]
-  ${cliCommandName} run [--learn] [--review] [--check <json>]... <task>
+  ${cliCommandName} start [--learn] [--review] [--skill <name-or-path>]...
+  ${cliCommandName} chat [--learn] [--review] [--skill <name-or-path>]...
+  ${cliCommandName} run [--learn] [--review] [--skill <name-or-path>]... [--check <json>]... <task>
   ${cliCommandName} resume [--learn] [--review]
   ${cliCommandName} memory
   ${cliCommandName} memory append [--section <section>] <note>
@@ -66,8 +66,9 @@ Usage:
   ${cliCommandName} history [--status <active|completed>] [--limit <count>] [--offset <count>]
 
 Options:
-  --check <json>  Add an objective Success Check to a run.
-  --help, -h      Show this help.
+  --check <json>          Add an objective Success Check to a run.
+  --skill <name-or-path>  Select a Skill Pack explicitly; repeat to select up to four.
+  --help, -h              Show this help.
 `;
 
 interface LearningFlagOptions {
@@ -75,13 +76,17 @@ interface LearningFlagOptions {
   modelReview: boolean;
 }
 
-interface RunCommandArgs extends LearningFlagOptions {
+interface SkillFlagOptions extends LearningFlagOptions {
+  skillSelectors: string[];
+}
+
+interface RunCommandArgs extends SkillFlagOptions {
   task: string;
   successChecks: StructuredSuccessCheck[];
   error?: string;
 }
 
-interface RunTaskOptions extends LearningFlagOptions {
+interface RunTaskOptions extends SkillFlagOptions {
   successChecks?: StructuredSuccessCheck[];
 }
 
@@ -96,21 +101,21 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
 
   const [command] = argv;
   if (command === "start") {
-    const { learningLens, modelReview, error } = parseRunOptionFlags(argv.slice(1), "start");
+    const { learningLens, modelReview, skillSelectors, error } = parseRunOptionFlags(argv.slice(1), "start");
     if (error) {
       process.stderr.write(`${cliCommandName}: ${error}\n`);
       return 1;
     }
-    return runInteractiveTaskConversation({ learningLens, modelReview });
+    return runInteractiveTaskConversation({ learningLens, modelReview, skillSelectors });
   }
 
   if (command === "chat") {
-    const { learningLens, modelReview, error } = parseRunOptionFlags(argv.slice(1), "chat");
+    const { learningLens, modelReview, skillSelectors, error } = parseRunOptionFlags(argv.slice(1), "chat");
     if (error) {
       process.stderr.write(`${cliCommandName}: ${error}\n`);
       return 1;
     }
-    return runInteractiveChatConversation({ learningLens, modelReview });
+    return runInteractiveChatConversation({ learningLens, modelReview, skillSelectors });
   }
 
   if (command === "run") {
@@ -119,7 +124,7 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
       process.stderr.write(`${cliCommandName}: ${parsedRun.error}\n`);
       return 1;
     }
-    const { task, learningLens, modelReview, successChecks } = parsedRun;
+    const { task, learningLens, modelReview, skillSelectors, successChecks } = parsedRun;
     if (task.length === 0) {
       process.stderr.write(`${cliCommandName}: run requires a task.\n`);
       return 1;
@@ -130,8 +135,18 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
       return 1;
     }
 
-    const verdict = await runCliTask(clarifiedTask, { learningLens, modelReview, successChecks });
-    return verdict === "fail" || verdict === "blocked" ? 1 : 0;
+    try {
+      const verdict = await runCliTask(clarifiedTask, {
+        learningLens,
+        modelReview,
+        skillSelectors,
+        successChecks
+      });
+      return verdict === "fail" || verdict === "blocked" ? 1 : 0;
+    } catch (error) {
+      process.stderr.write(`${cliCommandName}: run failed: ${readUnknownErrorMessage(error)}\n`);
+      return 1;
+    }
   }
 
   if (command === "history") {
@@ -232,29 +247,34 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
       return 1;
     }
 
-    const result = await resumeLatestTask({
-      workspace: process.cwd(),
-      provider: createConfiguredProvider(),
-      learningLens,
-      modelReview,
-      /** Prints each visible resumed model step while the run is still active. */
-      logStep(message) {
-        process.stderr.write(`${message}\n`);
-      },
-      confirmAction: confirmInTerminal
-    });
+    try {
+      const result = await resumeLatestTask({
+        workspace: process.cwd(),
+        provider: createConfiguredProvider(),
+        learningLens,
+        modelReview,
+        /** Prints each visible resumed model step while the run is still active. */
+        logStep(message) {
+          process.stderr.write(`${message}\n`);
+        },
+        confirmAction: confirmInTerminal
+      });
 
-    if (result.status === "not_found") {
-      process.stdout.write("No Task Run to resume.\n");
-      return 0;
-    }
-    if (result.status === "already_completed") {
-      process.stdout.write(`Latest Task Run ${result.id} is already completed.\n`);
-      return 0;
-    }
+      if (result.status === "not_found") {
+        process.stdout.write("No Task Run to resume.\n");
+        return 0;
+      }
+      if (result.status === "already_completed") {
+        process.stdout.write(`Latest Task Run ${result.id} is already completed.\n`);
+        return 0;
+      }
 
-    process.stdout.write(`Resumed Task Run ${result.id} | evaluation: ${result.evaluationVerdict}\n`);
-    return result.evaluationVerdict === "fail" || result.evaluationVerdict === "blocked" ? 1 : 0;
+      process.stdout.write(`Resumed Task Run ${result.id} | evaluation: ${result.evaluationVerdict}\n`);
+      return result.evaluationVerdict === "fail" || result.evaluationVerdict === "blocked" ? 1 : 0;
+    } catch (resumeError) {
+      process.stderr.write(`${cliCommandName}: resume failed: ${readUnknownErrorMessage(resumeError)}\n`);
+      return 1;
+    }
   }
 
   process.stderr.write(`${cliCommandName}: command not implemented yet: ${command}\n`);
@@ -288,7 +308,7 @@ function resolveRealPath(path: string): string {
 
 /** Runs a minimal line-based Task Conversation until the Owner exits or stdin closes. */
 async function runInteractiveTaskConversation(
-  options: LearningFlagOptions = { learningLens: false, modelReview: false }
+  options: SkillFlagOptions = { learningLens: false, modelReview: false, skillSelectors: [] }
 ): Promise<number> {
   const terminal = createInterface({ input: process.stdin, output: process.stderr });
   let ranTask = false;
@@ -339,6 +359,9 @@ async function runInteractiveTaskConversation(
       return 1;
     }
     return 0;
+  } catch (error) {
+    process.stderr.write(`${cliCommandName}: start failed: ${readUnknownErrorMessage(error)}\n`);
+    return 1;
   } finally {
     terminal.close();
   }
@@ -346,7 +369,7 @@ async function runInteractiveTaskConversation(
 
 /** Runs one persistent chat conversation until the provider finishes or stdin closes. */
 async function runInteractiveChatConversation(
-  options: LearningFlagOptions = { learningLens: false, modelReview: false }
+  options: SkillFlagOptions = { learningLens: false, modelReview: false, skillSelectors: [] }
 ): Promise<number> {
   try {
     const provider = createConfiguredProvider();
@@ -359,6 +382,7 @@ async function runInteractiveChatConversation(
       messages: readInteractiveChatMessages(),
       learningLens: options.learningLens,
       modelReview: options.modelReview,
+      skillSelectors: options.skillSelectors,
       /** Prints each visible model step while the chat run is still active. */
       logStep(message) {
         process.stderr.write(`${message}\n`);
@@ -483,7 +507,7 @@ function isAmbiguousTaskBoundary(task: string): boolean {
 /** Runs one CLI task with the default provider, progress logging, and confirmation gates. */
 async function runCliTask(
   task: string,
-  options: RunTaskOptions = { learningLens: false, modelReview: false }
+  options: RunTaskOptions = { learningLens: false, modelReview: false, skillSelectors: [] }
 ): Promise<"pass" | "partial" | "fail" | "blocked"> {
   const successChecks = options.successChecks ?? [];
   const successCheck =
@@ -499,6 +523,7 @@ async function runCliTask(
     provider: createConfiguredProvider(),
     learningLens: options.learningLens,
     modelReview: options.modelReview,
+    skillSelectors: options.skillSelectors,
     /** Prints each visible model step while the run is still active. */
     logStep(message) {
       process.stderr.write(`${message}\n`);
@@ -514,6 +539,7 @@ async function runCliTask(
 function parseRunArgs(args: string[]): RunCommandArgs {
   let learningLens = false;
   let modelReview = false;
+  const skillSelectors: string[] = [];
   const successChecks: StructuredSuccessCheck[] = [];
   const taskParts: string[] = [];
 
@@ -527,10 +553,33 @@ function parseRunArgs(args: string[]): RunCommandArgs {
       modelReview = true;
       continue;
     }
+    if (arg === "--skill") {
+      const selector = args[index + 1];
+      if (!selector || selector.startsWith("--")) {
+        return {
+          task: "",
+          learningLens,
+          modelReview,
+          skillSelectors,
+          successChecks,
+          error: "run --skill requires a name or path."
+        };
+      }
+      skillSelectors.push(selector);
+      index += 1;
+      continue;
+    }
     if (arg === "--check") {
       const rawCheck = args[index + 1];
       if (!rawCheck) {
-        return { task: "", learningLens, modelReview, successChecks, error: "run --check requires JSON." };
+        return {
+          task: "",
+          learningLens,
+          modelReview,
+          skillSelectors,
+          successChecks,
+          error: "run --check requires JSON."
+        };
       }
       try {
         successChecks.push(
@@ -541,6 +590,7 @@ function parseRunArgs(args: string[]): RunCommandArgs {
           task: "",
           learningLens,
           modelReview,
+          skillSelectors,
           successChecks,
           error: `invalid run --check: ${readErrorMessage(error)}`
         };
@@ -553,8 +603,9 @@ function parseRunArgs(args: string[]): RunCommandArgs {
         task: "",
         learningLens,
         modelReview,
+        skillSelectors,
         successChecks,
-        error: "run accepts only --learn, --review, and repeated --check <json> options."
+        error: "run accepts only --learn, --review, repeated --skill <name-or-path>, and repeated --check <json> options."
       };
     }
     taskParts.push(arg);
@@ -568,12 +619,13 @@ function parseRunArgs(args: string[]): RunCommandArgs {
       task: "",
       learningLens,
       modelReview,
+      skillSelectors,
       successChecks,
       error: `duplicate Success Check id: ${duplicateId.id}`
     };
   }
 
-  return { task: taskParts.join(" ").trim(), learningLens, modelReview, successChecks };
+  return { task: taskParts.join(" ").trim(), learningLens, modelReview, skillSelectors, successChecks };
 }
 
 /** Converts JSON and Success Check parser failures into concise CLI diagnostics. */
@@ -581,22 +633,46 @@ function readErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-/** Parses commands whose only optional flags are execution-learning and model-review switches. */
-function parseRunOptionFlags(args: string[], command: string): LearningFlagOptions & { error?: string } {
-  const unknownArgs = args.filter((arg) => {
-    if (arg === "--learn" || arg === "--review") {
-      return false;
+/** Parses execution switches and repeatable Skill selectors for interactive commands. */
+function parseRunOptionFlags(args: string[], command: string): SkillFlagOptions & { error?: string } {
+  let learningLens = false;
+  let modelReview = false;
+  const skillSelectors: string[] = [];
+
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (arg === "--learn") {
+      learningLens = true;
+      continue;
     }
-    return command !== "run" || arg.startsWith("--");
-  });
-  if (unknownArgs.length > 0) {
+    if (arg === "--review") {
+      modelReview = true;
+      continue;
+    }
+    if (arg === "--skill" && command !== "resume") {
+      const selector = args[index + 1];
+      if (!selector || selector.startsWith("--")) {
+        return {
+          learningLens,
+          modelReview,
+          skillSelectors,
+          error: `${command} --skill requires a name or path.`
+        };
+      }
+      skillSelectors.push(selector);
+      index += 1;
+      continue;
+    }
+    const skillOption = command === "resume" ? "" : ", and repeated --skill <name-or-path>";
     return {
-      learningLens: args.includes("--learn"),
-      modelReview: args.includes("--review"),
-      error: `${command} accepts only --learn and --review.`
+      learningLens,
+      modelReview,
+      skillSelectors,
+      error: `${command} accepts only --learn, --review${skillOption}.`
     };
   }
-  return { learningLens: args.includes("--learn"), modelReview: args.includes("--review") };
+
+  return { learningLens, modelReview, skillSelectors };
 }
 
 /** Formats one Task Run metadata record for the history command. */

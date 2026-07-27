@@ -63,6 +63,16 @@ Workspace Skill Pack 继续使用 workspace-relative path。外部 Skill Pack �
 
 Skill Pack eval runner 现在也使用同一个 catalog。`a-agent eval skill-pack <name-or-path>` 可以定位并读取外部 `evals/evals.json`；生成的 Task Runs 和 eval reports 仍然保存在当前 workspace 的 `.personal-agent/` state 目录。
 
+任务命令可以用可重复的 `--skill` selector 跳过词法匹配：
+
+```bash
+a-agent run --skill docs-helper "总结文档"
+a-agent run --skill user:docs-helper "总结文档"
+a-agent run --skill configured:1:docs-helper "总结文档"
+```
+
+普通名称选择正常优先级胜出者。`workspace:`、`user:`、`package:`、`configured[1]:` 和更适合 shell 输入的 `configured:1:` 可以指定具体来源。界面中展示的 skill 目录或 `SKILL.md` path 可以指定精确变体。显式选择会替代自动匹配，最多选择四个 Skill，并拒绝在同一次 run 中加载同一归一化名称的两个来源变体。Selector 会在创建 Task Run 前解析，因此名称写错不会留下孤立的 active run。
+
 ## `codex/agent-ability` 兼容边界
 
 当前支持的可移植目录形态是：
@@ -77,9 +87,9 @@ Skill Pack eval runner 现在也使用同一个 catalog。`a-agent eval skill-pa
 
 `SKILL.md` parser 支持扁平的 `name`、`description` 和可选 `version` frontmatter。没有 `version` 的已有技能仍然有效。源文件中的嵌套 metadata 会被保留，但这一层不会解释它。
 
-`references/`、`scripts/` 和 `evals/` 只作为 resource inventory 被发现。Scripts 不会因此获得执行权限。外部 eval manifest 可以通过现有 eval runner 运行，但它不会自动执行其中的 scripts。
+完整的已选 `SKILL.md` 现在会作为 provider guidance 加载。单文件上限是 64 KiB，合计上限是 128 KiB，无效 UTF-8 会被拒绝。`skill_packs` 审计 event 只保存字节数和 SHA-256，不保存完整正文。恢复时会重新解析已记录的精确 path；如果摘要发生变化，run 会拒绝继续。
 
-这仍然属于 Guided Skill Use，不是最终 ability runtime。自动匹配目前注入的是 metadata 和 resource inventory，还不是完整的 `SKILL.md` 指令正文。显式 CLI 选择和完整 guidance 加载契约仍属于 Phase 3 的后续工作。
+`references/`、`scripts/` 和 `evals/` 仍只作为 resource inventory 被发现。References 不会递归加载，scripts 也不会因此获得执行权限。外部 eval manifest 可以通过现有 eval runner 运行，但它不会自动执行其中的 scripts。这仍属于 Guided Skill Use，而不是最终的类型化 ability runtime。
 
 ## 其他常见方案
 
@@ -110,6 +120,9 @@ Workspace 仍然是状态所有者：外部 Skill Pack 从原始来源读取，�
 - 来源选择确定、可见。
 - `version` 可选，因此已有 Skill Pack 继续兼容。
 - 可以直接配置 `codex/agent-ability` 风格仓库根目录。
+- CLI 可以选择正常优先级胜出者，也可以选择被覆盖的具体来源，无需复制文件。
+- 完整 guidance 与可审计摘要绑定，同时不会把正文复制进 run artifacts。
+- 即使之后出现更高优先级变体，resume 仍保留最初选择的来源。
 - 外部 eval 复用已有 Task Run 和 grader pipeline。
 - 缺失的可选来源不会破坏普通任务。
 - 无效 `skillRoots` 会给出聚焦错误，不会被部分接受。
@@ -121,8 +134,10 @@ Workspace 仍然是状态所有者：外部 Skill Pack 从原始来源读取，�
 - user-root discovery 可能带来更多词法匹配和确认提示。
 - 绝对外部路径会让本地审计产物依赖当前机器。
 - 字符串路径去重还不会合并 symlink alias。
-- 完整外部 Skill 指令和 references 还没有加载到 provider context。
-- 还没有专门的 CLI 参数选择特定来源变体。
+- 完整外部指令属于不可信模型输入；configured roots 仍是 Owner 的本地信任决策。
+- 对已选 guidance 的正常编辑也会阻断 resume，Owner 需要开启新 run。
+- Reference 内容不会自动加载，依赖 reference 的 Skill 仍需要未来的类型化工具。
+- 四个 Skill 和字节上限用灵活性换取了可控的上下文边界。
 - Configured roots 属于本地信任决策；这一层不校验签名或 provenance。
 
 ## 评测
@@ -138,7 +153,13 @@ Focused tests 会验证：
 - configured Skill metadata 会进入 provider context，
 - Task Export 包含 source、version 和 conflict 明细，
 - Decision Trace 会报告已解决的同名冲突，
+- 普通名称、来源限定和精确 path selector 都能解析到确定的变体，
+- 不存在、数量过多和同名多来源 selector 会在执行前失败，
+- 可以显式选择 configured 来源中被正常优先级覆盖的变体，
+- provider context 包含完整的已选 `SKILL.md`，
+- events 和 exports 只包含 guidance hash 与字节数，
+- resume 会保留精确来源并拒绝摘要漂移，
 - 一个无关临时 workspace 无需复制 Skill Pack，就能运行外部 configured Skill Pack eval，
 - 已有 workspace-only Skill Pack 行为和 graders 继续通过。
 
-Phase 3 下一步应增加显式 CLI Skill Pack 选择，包括主动选择被覆盖来源变体的能力。
+这些检查完成了 Phase 3 的来源和 guidance gate。通过类型化方式执行已批准 Skill scripts 仍属于 Phase 4。

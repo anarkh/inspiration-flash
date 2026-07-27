@@ -12,13 +12,13 @@ During a Task Run, the runner scans an ordered set of Skill Pack catalogs beginn
 
 Workspace, user, package, and configured catalogs now share one deterministic precedence contract. See [Skill Sources And Precedence](./skill-sources.md) for source configuration, same-name conflict behavior, and the `codex/agent-ability` portability boundary.
 
-It selects skills whose name or description overlaps with the current goal and Success Check, prioritizes skills explicitly named by the Owner, then passes a small Markdown summary to the Model Provider as visible context.
+It selects skills whose name or description overlaps with the current goal and Success Check, or accepts repeatable explicit `--skill` selectors. After confirmation when required, it loads the complete selected `SKILL.md` and passes it to the Model Provider as visible context.
 
 This is not a strong plugin runtime yet. Skill scripts are not executed directly by the Skill Pack layer. Eval manifests can now be executed through the normal Task Run loop, but that still does not grant Skill Pack scripts automatic execution rights. `evals/` is a Personal Agent QA layer; it is not required by Anthropic-style Skill discovery.
 
 ## How It Works Here
 
-`src/skills/skill-packs.ts` owns the Skill Pack discovery and context boundary. `src/skills/evals.ts` owns the local Skill Pack eval runner.
+`src/skills/skill-packs.ts` owns discovery and context formatting. `src/skills/skill-selection.ts` resolves CLI selectors. `src/skills/skill-guidance.ts` loads bounded instruction files and creates event-safe digest summaries. `src/skills/evals.ts` owns the local Skill Pack eval runner.
 
 The MVP flow is:
 
@@ -39,8 +39,10 @@ description: Helps summarize workspace documentation and README files.
 7. Read `evals/evals.json` when present and summarize whether it follows `schemas/skill-evals.schema.json`.
 8. Extract lightweight keyword terms from the task goal, Success Check, skill name, and skill description.
 9. Detect explicit Owner mentions such as `use docs-helper skill`.
-10. Keep matching skills, sort explicitly named skills first, and format them as:
-11. When more than one selected Skill Pack was not all explicitly named by the Owner, ask for confirmation before injecting matched guidance.
+10. When `--skill` is present, resolve its plain-name, source-qualified, or exact-path selectors instead of lexical matches.
+11. Ask for confirmation before loading any automatically inferred Skill that was not explicitly named by the Owner.
+12. Load each selected `SKILL.md` as strict UTF-8, enforcing 64 KiB per file and 128 KiB combined.
+13. Format metadata, resource inventory, digest, and the complete instruction body as:
 
 ```markdown
 # Relevant Skill Packs
@@ -57,13 +59,30 @@ description: Helps summarize workspace documentation and README files.
   - scripts: .agents/skills/docs-helper/scripts/search_index.py
   - evals: .agents/skills/docs-helper/evals/evals.json
   - eval manifest: valid (1 eval)
+- guidance: full SKILL.md (412 bytes, sha256 ...)
+
+### Full SKILL.md Guidance
+
+--- BEGIN SKILL PACK GUIDANCE ... ---
+...complete selected SKILL.md...
+--- END SKILL PACK GUIDANCE ... ---
 ```
 
 The runner passes this context through `ModelProviderInput.skillPacks`. The OpenAI-compatible provider includes that field in the JSON prompt payload, so the default DeepSeek path receives the same Skill Pack context.
 
-When a fresh Task Run selects Skill Packs, the runner also records a `skill_packs` event containing selected names, paths, source metadata, versions, conflicts, and resource inventory. Task Export reads that event and renders a `Skill Packs Used` section. Decision Trace also reports how many same-name source conflicts were resolved.
+When a fresh Task Run selects Skill Packs, the runner records a `skill_packs` event containing selected names, paths, source metadata, versions, alternatives, resource inventory, explicit selector metadata, and guidance byte count plus SHA-256. The full instruction body is deliberately omitted. Task Export reads that event and renders a `Skill Packs Used` section.
 
-When a fresh Task Run finds multiple non-explicit matches, the runner creates a `skill_packs` confirmation request through the same confirmation path used by Local Tools. The Owner can approve all matches, deny all matches, or return selected Skill Pack paths. The CLI accepts numbered choices such as `1,3` for this case. If the Owner denies it, or if no confirmation handler is available, those ambiguous Skill Packs are not injected into the Model Provider. The confirmation decision and selected subset are recorded as a `skill_packs_confirmation` event for later review.
+When a fresh Task Run finds any automatically inferred match, the runner creates a `skill_packs` confirmation request through the same path used by Local Tools. The Owner can approve all, deny all, or return selected paths; the CLI accepts numbered choices such as `1,3`. A Skill explicitly named in task text or selected through `--skill` skips this inference confirmation. Selector resolution happens before Task Run creation, so invalid CLI selection cannot create orphan state.
+
+Explicit selection examples:
+
+```bash
+a-agent run --skill docs-helper "summarize docs"
+a-agent run --skill user:docs-helper "summarize docs"
+a-agent run --skill configured:1:docs-helper "summarize docs"
+```
+
+A plain name uses normal source precedence. A source qualifier or displayed path can choose a shadowed variant. Selection is capped at four Skills and cannot include two source variants of the same normalized name. Resume reloads the recorded exact path and compares its SHA-256; changed guidance blocks the run before another provider call.
 
 The Model Provider can use it to plan and choose tools, but the runner still executes only normal Agent Steps and Local Tools. Resource inventory paths are hints, not automatic execution permissions. When a Skill Pack exposes `scripts/`, the provider context and Task Export both add an explicit line that scripts are inventory only and are not auto-executed by the Skill Pack layer.
 
@@ -74,6 +93,8 @@ a-agent eval skill-pack docs-helper
 ```
 
 The command now resolves Skill Packs from every ordered source and can read an external eval manifest without copying the Skill Pack into the active workspace. Eval artifacts still belong to the active workspace.
+
+Each eval Task Run receives the already resolved exact `SKILL.md` path as its explicit selector. This prevents a second lexical match from evaluating different guidance when other catalogs contain related Skills.
 
 It resolves the Skill Pack by frontmatter name, directory name, skill directory path, or `SKILL.md` path. Then it reads `evals/evals.json`, turns each eval case into a normal Task Run that explicitly names the Skill Pack, and writes a report under `.personal-agent/evals/<skill>/<eval-run-id>/`. The manifest schema requires non-empty `skill_name` and `evals`; each case requires non-empty `id`, `prompt`, and `expected_output`. Unknown fields are rejected at the manifest, eval case, and grader levels, matching the schema's closed-object contract. Optional `files` entries must be strings when present, so fixture declarations stay explicit instead of being partially accepted. The first graders are deterministic: the default `contains` grader checks `expected_output`, an optional `regex` grader checks a declared non-empty pattern, and an optional `tool_trace` grader checks whether a named Local Tool appears in the Task Run event log. `tool_trace` can also require an `input_contains` substring, an `input_matches` partial JSON object, or an `input_schema` compact JSON Schema-style matcher so a case can verify the tool was called with the expected fixture path, argument fields, or typed input shape. `output_contains` verifies that a matching `tool_result` output contains expected evidence, `output_matches` verifies structured fields in `tool_result.output`, `output_type` verifies the result's top-level JSON-style type, and `output_schema` verifies a compact typed result shape. The compact schema matcher supports `type`, `required`, `properties`, `items`, `const`, `enum`, and `additionalProperties: false`. `model_judge` adds a semantic grader that sends the final Task Report and rubric to the configured `ModelProvider` and expects a JSON `pass` or `fail` verdict. Optional `judge_runs` and `pass_threshold` let the same case run up to five judge calls and require a configurable number of pass verdicts. Each model-judged case writes per-run judge details to both JSON and Markdown artifacts, including malformed judge output as `invalid`. This catches cases where the tool trace is structurally valid but the final report still fails the human intent, while preserving evidence for later calibration.
 
@@ -105,11 +126,14 @@ The project needs a bridge between no Skill Pack support and the future `codex/a
 - Preserves a clean boundary for future `codex/agent-ability` integration.
 - Uses deterministic keyword matching that is easy to test and explain.
 - Lets the Owner override weak keyword matching by naming a Skill Pack explicitly.
+- Lets the Owner use `--skill` to choose a precedence winner or a specific source variant.
+- Loads the complete selected instruction file while keeping event and export artifacts compact.
+- Binds resumed runs to the original guidance digest and source path.
 - Lets the Model Provider receive relevant skill guidance without coupling Agent Steps to a skill runtime.
 - Records selected Skill Packs in Task Export so later review can see which guidance influenced the run.
 - Records selected Skill Pack resource inventory in Task Export so later review can see which paths were exposed.
 - Labels Skill Pack scripts as inventory-only in provider context and Task Export, preserving the execution boundary for future runtimes.
-- Reuses Confirmation Gates when multiple automatically selected Skill Packs would otherwise be injected silently.
+- Reuses Confirmation Gates before any inferred Skill instructions are injected silently.
 - Supports subset selection when several automatic matches are useful but not all should enter the model context.
 - Recognizes agent-ability style `references/`, `scripts/`, and `evals/` resources without turning them into executable capabilities yet.
 - Summarizes `evals/evals.json` validity and eval count in regular Task Runs.
@@ -149,11 +173,12 @@ The project needs a bridge between no Skill Pack support and the future `codex/a
 - `model_judge` can catch semantic issues, but it adds model cost, latency, provider availability risk, and judge drift.
 - Repeated `model_judge` runs reduce single-call noise but multiply model cost and still do not prove correctness.
 - Model judge diagnostics make failures easier to audit, but they do not remove the need for real golden examples.
-- The CLI does not yet have a dedicated `--skill` option.
-- Explicit selection is still text-based; it does not validate an Owner intent beyond seeing the Skill Pack name in the task text.
+- Lexical explicit naming only checks that the Skill Pack name appears in task text; `--skill` is the stronger deterministic choice.
 - Subset selection is path-based and terminal-oriented; there is no richer interactive picker yet.
 - Skill scripts are not run by this layer; they must still be invoked through normal Local Tools.
-- Automatic matching still injects a summary and resource inventory rather than the complete `SKILL.md` body.
+- Full Skill instructions are untrusted model input, so choosing configured roots remains a supply-chain decision.
+- Editing selected guidance intentionally blocks resume because silently changing instructions would make the run irreproducible.
+- File and combined byte limits can reject unusually large Skills.
 
 ## Evaluation
 
@@ -165,10 +190,16 @@ Current tests verify:
 - Task Export and Decision Trace expose source conflicts,
 - runner filters Skill Packs by task relevance,
 - explicit Owner-named Skill Packs are prioritized over higher-scoring keyword matches,
-- runner passes relevant Skill Pack summaries to the Model Provider,
+- runner passes the complete selected `SKILL.md` to the Model Provider,
 - runner records selected Skill Packs for Task Export,
-- runner asks for confirmation before injecting multiple automatically matched Skill Packs,
+- runner asks for confirmation before loading one or several automatically inferred Skill Packs,
 - runner injects only the selected Skill Pack subset when confirmation returns selected paths,
+- plain, source-qualified, and exact-path `--skill` selectors resolve deterministic variants,
+- an explicit selector can choose a normally shadowed configured source,
+- unknown selectors fail before Task Run state is created,
+- guidance loading enforces UTF-8 and byte limits,
+- events retain digest and byte count without retaining the full guidance body,
+- resume retains the exact source and rejects changed guidance,
 - terminal confirmation parsing maps numbered Skill Pack choices to selected paths,
 - agent-ability style resource inventories are included in Skill Pack provider context,
 - runner preserves resource inventory when passing selected Skill Packs to the Model Provider,

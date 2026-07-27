@@ -63,6 +63,16 @@ Workspace Skill Pack paths stay workspace-relative. External Skill Pack and reso
 
 The Skill Pack eval runner now uses the same catalog. `a-agent eval skill-pack <name-or-path>` can locate and read an external `evals/evals.json`, while all generated Task Runs and eval reports remain under the active workspace's `.personal-agent/` state directory.
 
+Task commands can bypass lexical matching with a repeatable `--skill` selector:
+
+```bash
+a-agent run --skill docs-helper "summarize docs"
+a-agent run --skill user:docs-helper "summarize docs"
+a-agent run --skill configured:1:docs-helper "summarize docs"
+```
+
+A plain name chooses the normal precedence winner. `workspace:`, `user:`, `package:`, `configured[1]:`, and the shell-friendly `configured:1:` forms choose a concrete source. A displayed skill-directory or `SKILL.md` path chooses an exact variant. Explicit selection replaces automatic matching, supports at most four Skills, and refuses to load two source variants of the same normalized skill name in one run. Resolution happens before Task Run creation, so an unknown selector does not leave an orphan active run.
+
 ## `codex/agent-ability` Compatibility Boundary
 
 The currently supported portable shape is:
@@ -77,9 +87,9 @@ The currently supported portable shape is:
 
 The `SKILL.md` parser supports flat `name`, `description`, and optional `version` frontmatter. Existing skills without `version` remain valid. Nested metadata is preserved in the source file but is not interpreted by this layer.
 
-`references/`, `scripts/`, and `evals/` are discovered as resource inventory. Scripts do not receive execution permission. External eval manifests can run through the existing eval runner, but this does not execute their scripts automatically.
+The complete selected `SKILL.md` is now loaded as provider guidance. Each file is limited to 64 KiB, combined guidance is limited to 128 KiB, and invalid UTF-8 is rejected. The `skill_packs` audit event stores only byte count and SHA-256, not the full body. Resume resolves the recorded exact path and refuses to continue if that digest changed.
 
-This is still Guided Skill Use, not the final ability runtime. Automatic matching currently injects metadata and resource inventory, not the complete `SKILL.md` instruction body. Explicit CLI selection and the full guidance-loading contract remain Phase 3 work.
+`references/`, `scripts/`, and `evals/` are still discovered as resource inventory. References are not recursively loaded, and scripts do not receive execution permission. External eval manifests can run through the existing eval runner, but this does not execute their scripts automatically. This remains Guided Skill Use rather than the final typed ability runtime.
 
 ## Other Common Approaches
 
@@ -110,6 +120,9 @@ The workspace remains the state owner: external Skill Packs are read from their 
 - Source choice is deterministic and visible.
 - Legacy Skill Packs remain valid because `version` is optional.
 - Repository roots from `codex/agent-ability` can be configured directly.
+- The CLI can choose a precedence winner or a specific shadowed source without copying files.
+- Full guidance is bound to an auditable digest without duplicating its body into run artifacts.
+- Resume keeps the originally selected source even if a higher-priority variant appears later.
 - External evals reuse the existing Task Run and grader pipeline.
 - Missing optional roots do not break normal tasks.
 - Invalid `skillRoots` config fails with a focused error instead of being partially accepted.
@@ -121,8 +134,10 @@ The workspace remains the state owner: external Skill Packs are read from their 
 - User-root discovery can introduce more lexical matches and confirmation prompts.
 - Absolute external paths make local audit artifacts machine-specific.
 - String-path de-duplication does not yet collapse symlink aliases.
-- Full external Skill instructions and references are not loaded into provider context yet.
-- There is no dedicated CLI flag for choosing a specific source variant.
+- Full external instructions are untrusted model input; configured roots remain an Owner trust decision.
+- A legitimate edit to selected guidance blocks resume until the Owner starts a new run.
+- Reference contents are not loaded automatically, so a Skill that depends on them must use future typed tools.
+- The four-Skill and byte limits trade flexibility for a bounded context surface.
 - Configured roots are local trust decisions; this layer does not verify signatures or provenance.
 
 ## Evaluation
@@ -138,7 +153,13 @@ Focused tests verify:
 - configured Skill metadata appears in provider context,
 - Task Export includes source, version, and conflict details,
 - Decision Trace reports resolved same-name conflicts,
+- plain, source-qualified, and exact-path selectors resolve deterministic variants,
+- unknown, excessive, and duplicate-source selectors fail before execution,
+- a configured shadowed variant can be selected explicitly,
+- provider context contains the complete selected `SKILL.md`,
+- events and exports contain only guidance hash and byte count,
+- resume preserves the exact selected source and rejects digest drift,
 - an unrelated temporary workspace runs an external configured Skill Pack eval without copying the Skill Pack,
 - existing workspace-only Skill Pack behavior and graders still pass.
 
-The next Phase 3 step should add explicit CLI Skill Pack selection, including a way to choose a shadowed source variant deliberately.
+These checks complete the Phase 3 source and guidance gate. Typed execution of approved Skill scripts remains Phase 4 work.

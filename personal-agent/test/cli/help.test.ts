@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -33,9 +33,12 @@ test("cli prints help", () => {
 
   assert.equal(result.status, 0);
   assert.match(result.stdout, /a-agent/);
-  assert.match(result.stdout, /run \[--learn\] \[--review\] \[--check <json>\]\.\.\. <task>/);
-  assert.match(result.stdout, /start \[--learn\] \[--review\]/);
-  assert.match(result.stdout, /chat \[--learn\] \[--review\]/);
+  assert.match(
+    result.stdout,
+    /run \[--learn\] \[--review\] \[--skill <name-or-path>\]\.\.\. \[--check <json>\]\.\.\. <task>/
+  );
+  assert.match(result.stdout, /start \[--learn\] \[--review\] \[--skill <name-or-path>\]\.\.\./);
+  assert.match(result.stdout, /chat \[--learn\] \[--review\] \[--skill <name-or-path>\]\.\.\./);
   assert.match(result.stdout, /resume \[--learn\] \[--review\]/);
   assert.match(result.stdout, /memory append \[--section <section>\] <note>/);
   assert.match(result.stdout, /memory apply-suggestions \[--yes\] \[run-id\]/);
@@ -70,7 +73,10 @@ test("cli runs when invoked through an installed binary symlink", async () => {
 
     assert.equal(result.status, 0);
     assert.match(result.stdout, /a-agent/);
-    assert.match(result.stdout, /run \[--learn\] \[--review\] \[--check <json>\]\.\.\. <task>/);
+    assert.match(
+      result.stdout,
+      /run \[--learn\] \[--review\] \[--skill <name-or-path>\]\.\.\. \[--check <json>\]\.\.\. <task>/
+    );
   } finally {
     await rm(workspace, { recursive: true, force: true });
   }
@@ -296,6 +302,94 @@ test("cli run completes a bootstrap Task Run in the current workspace", async ()
   }
 });
 
+test("cli run explicitly selects a configured Skill source and records its guidance digest", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-cli-explicit-skill-"));
+  const configuredRoot = await mkdtemp(join(tmpdir(), "personal-agent-cli-configured-skills-"));
+  const guidanceMarker = "CLI FULL GUIDANCE MARKER";
+  try {
+    await mkdir(join(workspace, ".personal-agent"), { recursive: true });
+    await mkdir(join(configuredRoot, "portable-helper"), { recursive: true });
+    await writeFile(
+      join(workspace, ".personal-agent/config.json"),
+      `${JSON.stringify({ skillRoots: [configuredRoot] }, null, 2)}\n`,
+      "utf8"
+    );
+    await writeFile(
+      join(configuredRoot, "portable-helper/SKILL.md"),
+      [
+        "---",
+        "name: portable-helper",
+        "description: Helps with portable tasks.",
+        "---",
+        "",
+        guidanceMarker
+      ].join("\n"),
+      "utf8"
+    );
+
+    const result = spawnSync(
+      process.execPath,
+      [
+        join(root, "src/cli/index.ts"),
+        "run",
+        "--skill",
+        "configured:1:portable-helper",
+        "use portable guidance"
+      ],
+      {
+        cwd: workspace,
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          DEEPSEEK_API_KEY: "",
+          OPENAI_API_KEY: "",
+          PERSONAL_AGENT_SKIP_DOTENV: "1"
+        }
+      }
+    );
+
+    assert.equal(result.status, 0, result.stderr);
+    const latest = (await readFile(join(workspace, ".personal-agent/runs/latest"), "utf8")).trim();
+    const runDir = join(workspace, ".personal-agent/runs", latest);
+    const metadata = JSON.parse(await readFile(join(runDir, "run.json"), "utf8"));
+    const events = await readFile(join(runDir, "events.jsonl"), "utf8");
+
+    assert.deepEqual(metadata.skillSelectors, ["configured:1:portable-helper"]);
+    assert.deepEqual(metadata.selectedSkillPaths, [join(configuredRoot, "portable-helper/SKILL.md")]);
+    assert.match(events, /"guidance":\{"sha256":"[a-f0-9]{64}","bytes":\d+\}/);
+    assert.doesNotMatch(events, new RegExp(guidanceMarker));
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+    await rm(configuredRoot, { recursive: true, force: true });
+  }
+});
+
+test("cli run reports an unknown explicit Skill without creating Task Run state", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-cli-missing-skill-"));
+  try {
+    const result = spawnSync(
+      process.execPath,
+      [join(root, "src/cli/index.ts"), "run", "--skill", "missing-helper", "summarize docs"],
+      {
+        cwd: workspace,
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          DEEPSEEK_API_KEY: "",
+          OPENAI_API_KEY: "",
+          PERSONAL_AGENT_SKIP_DOTENV: "1"
+        }
+      }
+    );
+
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /a-agent: run failed: Skill Pack not found: missing-helper/);
+    await assert.rejects(readFile(join(workspace, ".personal-agent/runs/latest"), "utf8"), /ENOENT/);
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
 test("cli run accepts a structured Success Check and records its evidence", async () => {
   const workspace = await mkdtemp(join(tmpdir(), "personal-agent-cli-success-check-"));
   try {
@@ -407,6 +501,48 @@ test("cli chat keeps multiple inputs in one persistent Task Run", async () => {
     assert.equal((events.match(/"type":"owner_message"/g) ?? []).length, 2);
     assert.match(events, /"content":"你好"/);
     assert.match(events, /"content":"结束"/);
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test("cli chat keeps an explicit Skill selection for the conversation", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-cli-chat-skill-"));
+  const marker = "CHAT GUIDANCE BODY";
+  try {
+    await mkdir(join(workspace, ".agents/skills/chat-helper"), { recursive: true });
+    await writeFile(
+      join(workspace, ".agents/skills/chat-helper/SKILL.md"),
+      ["---", "name: chat-helper", "description: Helps with chat.", "---", "", marker].join("\n"),
+      "utf8"
+    );
+    const result = spawnSync(
+      process.execPath,
+      [join(root, "src/cli/index.ts"), "chat", "--skill", "chat-helper"],
+      {
+        cwd: workspace,
+        encoding: "utf8",
+        input: "你好\n",
+        env: {
+          ...process.env,
+          DEEPSEEK_API_KEY: "",
+          OPENAI_API_KEY: "",
+          PERSONAL_AGENT_SKIP_DOTENV: "1",
+          A_AGENT_USER_SKILLS_ROOT: join(workspace, "empty-user-skills")
+        }
+      }
+    );
+
+    assert.equal(result.status, 0, result.stderr);
+    const latest = (await readFile(join(workspace, ".personal-agent/runs/latest"), "utf8")).trim();
+    const runDir = join(workspace, ".personal-agent/runs", latest);
+    const metadata = JSON.parse(await readFile(join(runDir, "run.json"), "utf8"));
+    const events = await readFile(join(runDir, "events.jsonl"), "utf8");
+
+    assert.deepEqual(metadata.skillSelectors, ["chat-helper"]);
+    assert.deepEqual(metadata.selectedSkillPaths, [".agents/skills/chat-helper/SKILL.md"]);
+    assert.match(events, /"type":"skill_packs"/);
+    assert.doesNotMatch(events, new RegExp(marker));
   } finally {
     await rm(workspace, { recursive: true, force: true });
   }
@@ -582,6 +718,87 @@ test("cli start reads one interactive task and completes a bootstrap Task Run", 
     assert.equal(metadata.goal, "summarize interactive docs");
     assert.equal(metadata.status, "completed");
     assert.match(report, /summarize interactive docs/);
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test("cli start applies one explicit Skill selection to every interactive task", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-cli-start-skill-"));
+  const guidanceMarker = "START FULL GUIDANCE MARKER";
+  try {
+    await mkdir(join(workspace, ".agents/skills/start-helper"), { recursive: true });
+    await writeFile(
+      join(workspace, ".agents/skills/start-helper/SKILL.md"),
+      [
+        "---",
+        "name: start-helper",
+        "description: Helps every task in one start session.",
+        "---",
+        "",
+        guidanceMarker
+      ].join("\n"),
+      "utf8"
+    );
+
+    const result = spawnSync(
+      process.execPath,
+      [join(root, "src/cli/index.ts"), "start", "--skill", "start-helper"],
+      {
+        cwd: workspace,
+        encoding: "utf8",
+        input: ["summarize first docs", "summarize second docs", "exit"].join("\n"),
+        env: {
+          ...process.env,
+          DEEPSEEK_API_KEY: "",
+          OPENAI_API_KEY: "",
+          PERSONAL_AGENT_SKIP_DOTENV: "1"
+        }
+      }
+    );
+
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal((result.stdout.match(/Completed Task Run/g) ?? []).length, 2);
+    const runsRoot = join(workspace, ".personal-agent/runs");
+    const runIds = (await readdir(runsRoot)).filter((entry) => entry.startsWith("run-"));
+    assert.equal(runIds.length, 2);
+    for (const runId of runIds) {
+      const runDir = join(runsRoot, runId);
+      const metadata = JSON.parse(await readFile(join(runDir, "run.json"), "utf8"));
+      const events = await readFile(join(runDir, "events.jsonl"), "utf8");
+
+      assert.deepEqual(metadata.skillSelectors, ["start-helper"]);
+      assert.deepEqual(metadata.selectedSkillPaths, [".agents/skills/start-helper/SKILL.md"]);
+      assert.match(events, /"guidance":\{"sha256":"[a-f0-9]{64}","bytes":\d+\}/);
+      assert.doesNotMatch(events, new RegExp(guidanceMarker));
+    }
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test("cli start rejects an unknown explicit Skill before creating Task Run state", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-cli-start-missing-skill-"));
+  try {
+    const result = spawnSync(
+      process.execPath,
+      [join(root, "src/cli/index.ts"), "start", "--skill", "missing-helper"],
+      {
+        cwd: workspace,
+        encoding: "utf8",
+        input: "summarize interactive docs\n",
+        env: {
+          ...process.env,
+          DEEPSEEK_API_KEY: "",
+          OPENAI_API_KEY: "",
+          PERSONAL_AGENT_SKIP_DOTENV: "1"
+        }
+      }
+    );
+
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /a-agent: start failed: Skill Pack not found: missing-helper/);
+    await assert.rejects(readFile(join(workspace, ".personal-agent/runs/latest"), "utf8"), /ENOENT/);
   } finally {
     await rm(workspace, { recursive: true, force: true });
   }
@@ -977,6 +1194,69 @@ test("cli resume continues the latest active Task Run", async () => {
     assert.match(result.stdout, new RegExp(`Resumed Task Run ${run.id}`));
     assert.equal(metadata.status, "completed");
     assert.match(report, /resume docs/);
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test("cli resume reports changed Skill guidance without an unhandled stack", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-resume-skill-drift-cli-"));
+  try {
+    const skillPath = ".agents/skills/docs-helper/SKILL.md";
+    await mkdir(join(workspace, ".agents/skills/docs-helper"), { recursive: true });
+    await writeFile(
+      join(workspace, skillPath),
+      ["---", "name: docs-helper", "description: Helps with docs.", "---", "", "CURRENT BODY"].join("\n"),
+      "utf8"
+    );
+    const run = await createTaskRun(workspace, {
+      goal: "resume docs",
+      mode: "advisory",
+      successCheck: "resume produces report",
+      skillSelectors: ["docs-helper"],
+      selectedSkillPaths: [skillPath]
+    });
+    await appendRunEvent(run.runDir, {
+      type: "skill_packs",
+      skillPacks: [
+        {
+          name: "docs-helper",
+          description: "Helps with docs.",
+          path: skillPath,
+          source: {
+            kind: "workspace",
+            label: "workspace",
+            root: join(workspace, ".agents/skills"),
+            priority: 1
+          },
+          selection: {
+            mode: "explicit",
+            selector: "docs-helper",
+            precedenceOverridden: false
+          },
+          guidance: {
+            sha256: "0".repeat(64),
+            bytes: 1
+          }
+        }
+      ]
+    });
+
+    const result = spawnSync(process.execPath, [join(root, "src/cli/index.ts"), "resume"], {
+      cwd: workspace,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        DEEPSEEK_API_KEY: "",
+        OPENAI_API_KEY: "",
+        PERSONAL_AGENT_SKIP_DOTENV: "1",
+        A_AGENT_USER_SKILLS_ROOT: join(workspace, "empty-user-skills")
+      }
+    });
+
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /a-agent: resume failed: Skill Pack guidance changed since Task Run started/);
+    assert.doesNotMatch(result.stderr, /\n\s+at /);
   } finally {
     await rm(workspace, { recursive: true, force: true });
   }

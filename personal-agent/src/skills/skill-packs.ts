@@ -8,6 +8,7 @@ import {
   type ResolveSkillPackSourcesOptions,
   type SkillPackSource
 } from "./skill-sources.ts";
+import type { SkillPackGuidanceMap } from "./skill-guidance.ts";
 
 /** Describes one concrete Skill Pack variant before same-name precedence is applied. */
 export interface SkillPackVariantSummary {
@@ -19,9 +20,17 @@ export interface SkillPackVariantSummary {
   resources?: SkillPackResources;
 }
 
-/** Describes the selected variant and any lower-priority variants it shadows. */
+/** Describes the selected variant and any same-name source alternatives retained for audit. */
 export interface SkillPackSummary extends SkillPackVariantSummary {
   conflicts?: SkillPackVariantSummary[];
+  selection?: SkillPackSelectionMetadata;
+}
+
+/** Records an explicit Owner selector and whether it overrides normal source precedence. */
+export interface SkillPackSelectionMetadata {
+  mode: "explicit";
+  selector: string;
+  precedenceOverridden: boolean;
 }
 
 export interface SkillPackResources {
@@ -82,7 +91,7 @@ export async function selectRelevantSkillPacks(input: SelectRelevantSkillPacksIn
 export async function selectRelevantSkillPackSummaries(
   input: SelectRelevantSkillPacksInput
 ): Promise<SkillPackSummary[]> {
-  return (await selectRelevantSkillPackMatches(input)).map(stripSkillPackSelectionMetadata);
+  return (await selectRelevantSkillPackMatches(input)).map(stripSkillPackMatcherMetadata);
 }
 
 /** Selects relevant local Skill Packs with scores and explicit-mention metadata. */
@@ -120,8 +129,8 @@ export async function selectRelevantSkillPackMatches(
     .map(formatSelectedSkillPack);
 }
 
-/** Removes matcher-only fields before exposing a plain Skill Pack summary. */
-function stripSkillPackSelectionMetadata(skillPack: SelectedSkillPackSummary): SkillPackSummary {
+/** Removes score and mention fields before exposing a plain Skill Pack summary. */
+function stripSkillPackMatcherMetadata(skillPack: SelectedSkillPackSummary): SkillPackSummary {
   return {
     name: skillPack.name,
     description: skillPack.description,
@@ -129,7 +138,8 @@ function stripSkillPackSelectionMetadata(skillPack: SelectedSkillPackSummary): S
     version: skillPack.version,
     source: skillPack.source,
     resources: skillPack.resources,
-    conflicts: skillPack.conflicts
+    conflicts: skillPack.conflicts,
+    selection: skillPack.selection
   };
 }
 
@@ -143,6 +153,7 @@ function formatSelectedSkillPack(item: ScoredSkillPack): SelectedSkillPackSummar
     source: item.skillPack.source,
     resources: item.skillPack.resources,
     conflicts: item.skillPack.conflicts,
+    selection: item.skillPack.selection,
     score: item.score,
     explicitlyNamed: item.explicitlyNamed
   };
@@ -583,7 +594,10 @@ function extractSkillPackTerms(value: string): Set<string> {
 }
 
 /** Formats selected Skill Packs as visible provider context. */
-export function formatSkillPackContext(skillPacks: SkillPackSummary[]): string {
+export function formatSkillPackContext(
+  skillPacks: SkillPackSummary[],
+  guidance: SkillPackGuidanceMap = new Map()
+): string {
   if (skillPacks.length === 0) {
     return "";
   }
@@ -604,23 +618,56 @@ export function formatSkillPackContext(skillPacks: SkillPackSummary[]): string {
     if (skillPack.description.length > 0) {
       lines.push(`- description: ${skillPack.description}`);
     }
+    lines.push(...formatSkillPackSelection(skillPack.selection));
     lines.push(...formatSkillPackConflicts(skillPack.conflicts));
     lines.push(...formatSkillPackResourceInventory(skillPack.resources));
+    lines.push(...formatSkillPackGuidance(skillPack, guidance));
   }
   return `${lines.join("\n")}\n`;
 }
 
-/** Formats shadowed same-name variants so source precedence remains visible to the model. */
+/** Formats same-name source alternatives without assuming the normal winner was selected. */
 function formatSkillPackConflicts(conflicts: SkillPackVariantSummary[] | undefined): string[] {
   if (!conflicts || conflicts.length === 0) {
     return [];
   }
   return [
-    `- source conflicts: ${conflicts.length} lower-priority variant${conflicts.length === 1 ? "" : "s"} shadowed`,
+    `- source variants: ${conflicts.length} alternative${conflicts.length === 1 ? "" : "s"}`,
     ...conflicts.map((conflict) => {
       const version = conflict.version ? `, version ${conflict.version}` : "";
       return `  - ${conflict.source.label} (priority ${conflict.source.priority}${version}): ${conflict.path}`;
     })
+  ];
+}
+
+/** Formats explicit selection metadata before the selected guidance body. */
+function formatSkillPackSelection(selection: SkillPackSelectionMetadata | undefined): string[] {
+  if (!selection) {
+    return [];
+  }
+  return [
+    `- selection: explicit (--skill ${selection.selector})`,
+    `- source precedence overridden: ${selection.precedenceOverridden ? "yes" : "no"}`
+  ];
+}
+
+/** Appends the complete selected `SKILL.md` content with its audit digest. */
+function formatSkillPackGuidance(
+  skillPack: SkillPackSummary,
+  guidance: SkillPackGuidanceMap
+): string[] {
+  const loaded = guidance.get(skillPack.path);
+  if (!loaded) {
+    return [];
+  }
+  return [
+    `- guidance: full SKILL.md (${loaded.bytes} bytes, sha256 ${loaded.sha256})`,
+    "",
+    "### Full SKILL.md Guidance",
+    "",
+    `--- BEGIN SKILL PACK GUIDANCE ${loaded.sha256} ---`,
+    loaded.content.trimEnd(),
+    `--- END SKILL PACK GUIDANCE ${loaded.sha256} ---`
   ];
 }
 

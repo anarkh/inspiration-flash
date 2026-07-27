@@ -401,7 +401,9 @@ test("runTask passes relevant Skill Pack summaries to the Model Provider", async
       assert.match(skillPacks, /Helps summarize workspace documentation/);
       assert.match(skillPacks, /\.agents\/skills\/docs-helper\/SKILL\.md/);
       assert.match(skillPacks, /\.agents\/skills\/docs-helper\/references\/guide\.md/);
-      assert.doesNotMatch(skillPacks, /deploy-helper/);
+      assert.match(skillPacks, /Use this skill when summarizing docs\./);
+      assert.match(skillPacks, /guidance: full SKILL\.md/);
+      assert.doesNotMatch(skillPacks, /service-deployer/);
       return { type: "finish", report: "Finished with relevant Skill Pack context." };
     }
   };
@@ -409,7 +411,7 @@ test("runTask passes relevant Skill Pack summaries to the Model Provider", async
   try {
     await mkdir(join(workspace, ".agents/skills/docs-helper"), { recursive: true });
     await mkdir(join(workspace, ".agents/skills/docs-helper/references"), { recursive: true });
-    await mkdir(join(workspace, ".agents/skills/deploy-helper"), { recursive: true });
+    await mkdir(join(workspace, ".agents/skills/service-deployer"), { recursive: true });
     await writeFile(
       join(workspace, ".agents/skills/docs-helper/SKILL.md"),
       [
@@ -426,10 +428,10 @@ test("runTask passes relevant Skill Pack summaries to the Model Provider", async
     );
     await writeFile(join(workspace, ".agents/skills/docs-helper/references/guide.md"), "# Docs guide\n", "utf8");
     await writeFile(
-      join(workspace, ".agents/skills/deploy-helper/SKILL.md"),
+      join(workspace, ".agents/skills/service-deployer/SKILL.md"),
       [
         "---",
-        "name: deploy-helper",
+        "name: service-deployer",
         "description: Helps deploy services.",
         "---",
         "",
@@ -440,7 +442,7 @@ test("runTask passes relevant Skill Pack summaries to the Model Provider", async
 
     await runTask({
       workspace,
-      goal: "summarize docs",
+      goal: "summarize docs with docs-helper",
       mode: "advisory",
       successCheck: "report references documentation",
       provider
@@ -479,6 +481,7 @@ test("runTask records selected Skill Packs for Task Export", async () => {
       goal: "summarize docs",
       mode: "advisory",
       successCheck: "report references documentation",
+      skillSelectors: ["docs-helper"],
       provider
     });
     const exported = await exportTaskRun(workspace, run.id);
@@ -488,6 +491,52 @@ test("runTask records selected Skill Packs for Task Export", async () => {
     assert.match(markdown, /## Skill Packs Used/);
     assert.match(markdown, /docs-helper/);
     assert.match(markdown, /\.agents\/skills\/docs-helper\/SKILL\.md/);
+    assert.match(markdown, /guidance: full SKILL\.md loaded/);
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test("runTask asks before loading one automatically inferred Skill Pack", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-runner-single-skill-confirm-"));
+  const requests: ConfirmationRequired[] = [];
+  const provider: ModelProvider = {
+    name: "fake",
+    async nextStep(input) {
+      assert.equal(input.skillPacks, undefined);
+      return { type: "finish", report: "Finished without inferred Skill guidance." };
+    }
+  };
+
+  try {
+    await mkdir(join(workspace, ".agents/skills/docs-helper"), { recursive: true });
+    await writeFile(
+      join(workspace, ".agents/skills/docs-helper/SKILL.md"),
+      [
+        "---",
+        "name: docs-helper",
+        "description: Helps summarize docs.",
+        "---",
+        "",
+        "# Docs Helper"
+      ].join("\n"),
+      "utf8"
+    );
+
+    await runTask({
+      workspace,
+      goal: "summarize docs",
+      mode: "advisory",
+      successCheck: "report references docs",
+      provider,
+      confirmAction(confirmation) {
+        requests.push(confirmation);
+        return false;
+      }
+    });
+
+    assert.equal(requests.length, 1);
+    assert.match(requests[0]?.reason ?? "", /one Skill Pack matched automatically/);
   } finally {
     await rm(workspace, { recursive: true, force: true });
   }
@@ -554,6 +603,96 @@ test("runTask asks before injecting multiple automatically matched Skill Packs",
       ".agents/skills/docs-helper/SKILL.md",
       ".agents/skills/readme-helper/SKILL.md"
     ]);
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test("runTask loads an explicitly selected shadowed source while persisting only guidance audit data", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-runner-explicit-source-"));
+  const configuredRoot = await mkdtemp(join(tmpdir(), "personal-agent-runner-configured-skills-"));
+  const externalMarker = "EXTERNAL FULL GUIDANCE BODY";
+  const workspaceMarker = "WORKSPACE FULL GUIDANCE BODY";
+  try {
+    await mkdir(join(workspace, ".personal-agent"), { recursive: true });
+    await mkdir(join(workspace, ".agents/skills/docs-helper"), { recursive: true });
+    await mkdir(join(configuredRoot, "docs-helper"), { recursive: true });
+    await writeFile(
+      join(workspace, ".personal-agent/config.json"),
+      `${JSON.stringify({ skillRoots: [configuredRoot] }, null, 2)}\n`,
+      "utf8"
+    );
+    await writeFile(
+      join(workspace, ".agents/skills/docs-helper/SKILL.md"),
+      ["---", "name: docs-helper", "description: Shared docs helper.", "---", "", workspaceMarker].join("\n"),
+      "utf8"
+    );
+    await writeFile(
+      join(configuredRoot, "docs-helper/SKILL.md"),
+      ["---", "name: docs-helper", "description: Shared docs helper.", "---", "", externalMarker].join("\n"),
+      "utf8"
+    );
+
+    const run = await runTask({
+      workspace,
+      goal: "summarize docs",
+      mode: "advisory",
+      successCheck: "report references docs",
+      skillSelectors: ["configured:1:docs-helper"],
+      provider: {
+        name: "fake",
+        async nextStep(input) {
+          assert.match(input.skillPacks ?? "", new RegExp(externalMarker));
+          assert.doesNotMatch(input.skillPacks ?? "", new RegExp(workspaceMarker));
+          assert.match(input.skillPacks ?? "", /source precedence overridden: yes/);
+          return { type: "finish", report: "Finished with configured guidance." };
+        }
+      }
+    });
+
+    const eventsText = await readFile(join(run.runDir, "events.jsonl"), "utf8");
+    const metadata = JSON.parse(await readFile(join(run.runDir, "run.json"), "utf8"));
+    const skillEvent = eventsText
+      .trim()
+      .split("\n")
+      .map((line) => JSON.parse(line))
+      .map((entry) => entry.event)
+      .find((event) => event.type === "skill_packs");
+
+    assert.ok(skillEvent);
+    assert.doesNotMatch(eventsText, new RegExp(externalMarker));
+    assert.deepEqual(metadata.skillSelectors, ["configured:1:docs-helper"]);
+    assert.deepEqual(metadata.selectedSkillPaths, [join(configuredRoot, "docs-helper/SKILL.md")]);
+    assert.equal(skillEvent.skillPacks[0].selection.precedenceOverridden, true);
+    assert.equal(typeof skillEvent.skillPacks[0].guidance.sha256, "string");
+    assert.equal(typeof skillEvent.skillPacks[0].guidance.bytes, "number");
+    assert.equal("content" in skillEvent.skillPacks[0].guidance, false);
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+    await rm(configuredRoot, { recursive: true, force: true });
+  }
+});
+
+test("runTask rejects an unknown explicit Skill before creating Task Run state", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-runner-missing-skill-"));
+  try {
+    await assert.rejects(
+      runTask({
+        workspace,
+        goal: "summarize docs",
+        mode: "advisory",
+        successCheck: "report references docs",
+        skillSelectors: ["missing-helper"],
+        provider: {
+          name: "fake",
+          async nextStep() {
+            throw new Error("provider should not be called");
+          }
+        }
+      }),
+      /Skill Pack not found: missing-helper/
+    );
+    await assert.rejects(readFile(join(workspace, ".personal-agent/runs/latest"), "utf8"), /ENOENT/);
   } finally {
     await rm(workspace, { recursive: true, force: true });
   }
@@ -826,6 +965,121 @@ test("resumeLatestTask continues the latest active run from checkpoint events", 
     assert.equal(sawPriorPlan, true);
     assert.equal(sawMemory, true);
     assert.match(await readFile(join(run.runDir, "report.md"), "utf8"), /Resumed from checkpoint/);
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test("resumeLatestTask keeps the originally selected external Skill source after precedence changes", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-resume-skill-source-"));
+  const configuredRoot = await mkdtemp(join(tmpdir(), "personal-agent-resume-configured-skills-"));
+  const externalMarker = "ORIGINAL EXTERNAL GUIDANCE";
+  const laterWorkspaceMarker = "LATER WORKSPACE GUIDANCE";
+  try {
+    await mkdir(join(workspace, ".personal-agent"), { recursive: true });
+    await mkdir(join(configuredRoot, "docs-helper"), { recursive: true });
+    await writeFile(
+      join(workspace, ".personal-agent/config.json"),
+      `${JSON.stringify({ skillRoots: [configuredRoot] }, null, 2)}\n`,
+      "utf8"
+    );
+    await writeFile(
+      join(configuredRoot, "docs-helper/SKILL.md"),
+      ["---", "name: docs-helper", "description: Helps with docs.", "---", "", externalMarker].join("\n"),
+      "utf8"
+    );
+
+    await assert.rejects(
+      runTask({
+        workspace,
+        goal: "summarize docs",
+        mode: "advisory",
+        successCheck: "report references docs",
+        skillSelectors: ["configured:1:docs-helper"],
+        provider: {
+          name: "pause",
+          async nextStep() {
+            throw new Error("pause before first model step");
+          }
+        }
+      }),
+      /pause before first model step/
+    );
+
+    await mkdir(join(workspace, ".agents/skills/docs-helper"), { recursive: true });
+    await writeFile(
+      join(workspace, ".agents/skills/docs-helper/SKILL.md"),
+      ["---", "name: docs-helper", "description: Helps with docs.", "---", "", laterWorkspaceMarker].join("\n"),
+      "utf8"
+    );
+
+    const resumed = await resumeLatestTask({
+      workspace,
+      provider: {
+        name: "resume",
+        async nextStep(input) {
+          assert.match(input.skillPacks ?? "", new RegExp(externalMarker));
+          assert.doesNotMatch(input.skillPacks ?? "", new RegExp(laterWorkspaceMarker));
+          return { type: "finish", report: "Resumed with original external guidance." };
+        }
+      }
+    });
+
+    assert.equal(resumed.status, "completed");
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+    await rm(configuredRoot, { recursive: true, force: true });
+  }
+});
+
+test("resumeLatestTask rejects changed Skill guidance before calling the provider", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-resume-skill-drift-"));
+  const skillPath = join(workspace, ".agents/skills/docs-helper/SKILL.md");
+  let resumeProviderCalled = false;
+  try {
+    await mkdir(join(workspace, ".agents/skills/docs-helper"), { recursive: true });
+    await writeFile(
+      skillPath,
+      ["---", "name: docs-helper", "description: Helps with docs.", "---", "", "ORIGINAL BODY"].join("\n"),
+      "utf8"
+    );
+    await assert.rejects(
+      runTask({
+        workspace,
+        goal: "summarize docs",
+        mode: "advisory",
+        successCheck: "report references docs",
+        skillSelectors: ["docs-helper"],
+        provider: {
+          name: "pause",
+          async nextStep() {
+            throw new Error("pause before first model step");
+          }
+        }
+      }),
+      /pause before first model step/
+    );
+
+    await writeFile(
+      skillPath,
+      ["---", "name: docs-helper", "description: Helps with docs.", "---", "", "CHANGED BODY"].join("\n"),
+      "utf8"
+    );
+
+    await assert.rejects(
+      resumeLatestTask({
+        workspace,
+        provider: {
+          name: "resume",
+          async nextStep() {
+            resumeProviderCalled = true;
+            return { type: "finish", report: "Provider should not run." };
+          }
+        }
+      }),
+      /Skill Pack guidance changed since Task Run started/
+    );
+    assert.equal(resumeProviderCalled, false);
   } finally {
     await rm(workspace, { recursive: true, force: true });
   }

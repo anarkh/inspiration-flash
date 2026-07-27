@@ -40,11 +40,13 @@ Markdown 分区包括：
 - Memory Suggestions，存在时展示
 - Events
 
-`Decision Trace` 是从 `events.jsonl` 生成的紧凑可读摘要。它会把 provider steps 和 observations 转成类似 `plan: ...`、`tool: write_file`、`tool_result: write_file -> file_written`、`skill_packs_confirmation: denied` 的行。Skill Pack selection 还会报告确定性解决了多少同名来源冲突。
+`Metadata` 会在使用显式选择时展示原始 `--skill` selectors 和最终解析到的精确 paths。
+
+`Decision Trace` 是从 `events.jsonl` 生成的紧凑可读摘要。它会把 provider steps 和 observations 转成类似 `plan: ...`、`tool: write_file`、`tool_result: write_file -> file_written`、`skill_packs_confirmation: denied` 的行。Skill selection 还会总结同名替代来源、显式选择、优先级覆盖和完整 guidance 文件加载数量。
 
 `Local Tools Used` 是从 `tool` 和 `tool_result` events 中提取出来的去重工具列表。
 
-`Skill Packs Used` 是从 runner 记录的 `skill_packs` events 中提取出来的去重 Skill Pack name 和 path 列表。它会展示胜出的 source、priority、source root、可选 version，以及所有被覆盖的同名变体。如果已选 Skill Pack 包含 agent-ability 风格 resource inventory，这个分区也会展示它的 `references`、`scripts`、`evals` paths，以及静态 eval manifest 摘要。如果存在 scripts，导出会写入和 provider context 一致的 inventory-only 提醒，避免读者把“发现了脚本路径”误解成“脚本已经执行”。这些 events 只作为审计 metadata，不会回传进 provider event stream。
+`Skill Packs Used` 是从 runner 记录的 `skill_packs` events 中提取出来的去重 Skill Pack name 和 path 列表。它会展示 source、priority、source root、可选 version、同名替代来源、显式 selector、是否覆盖正常优先级，以及 guidance 字节数和 SHA-256。Skill 审计层不会把完整 `SKILL.md` 正文复制到该 event 或分区。Resource inventory 仍会展示 `references`、`scripts`、`evals` 和静态 eval manifest metadata；scripts 继续带有 inventory-only 提醒。这些审计 events 不会回传进 provider event stream。
 
 `Changed Resources` 目前记录工具 observation 明确报告的文件变更，例如 `file_written`。它是保守的：只被提议但没有确认执行的写入，不算 changed resources。
 
@@ -82,6 +84,8 @@ Owner 正在学习 agent run 的工作方式。Markdown export 可以用普通�
 - 在原始 event JSON 前提供可读摘要。
 - 展示使用过哪些 Local Tools，以及哪些文件发生了变更。
 - 展示本次 Task Run 命中了哪些 Skill Packs、暴露了哪些 resource inventory paths，以及是否识别到 eval manifest。
+- 展示某个来源变体是否由显式 selector 选择，以及是否覆盖正常优先级。
+- 通过摘要证明加载了哪一份 guidance bytes，而不复制完整指令正文。
 - 把 Skill Pack scripts 标记为 inventory-only，让导出保留和模型上下文一致的执行边界。
 - 当 run 产生候选 Project Memory notes 时，也会一起展示。
 - 生成 Markdown 时会脱敏常见环境变量、JSON、URL query、bearer、GitHub 和 `sk-...` secret 模式。
@@ -95,6 +99,7 @@ Owner 正在学习 agent run 的工作方式。Markdown export 可以用普通�
 - 暂时不包含 checkpoint 内容或详细 tool statistics。
 - 脱敏是基于模式匹配的，仍可能漏掉不常见 secret 格式或产生误报。
 - 原始 run 文件不会被脱敏，所以仍应把它们当成本地私有 artifacts 对待。
+- 摘要只能证明字节一致，不能证明 Skill 指令可信或正确。
 
 ## 评测
 
@@ -105,6 +110,8 @@ Owner 正在学习 agent run 的工作方式。Markdown export 可以用普通�
 - export output 包含 Decision Trace、Local Tools Used、Skill Packs Used、Skill Pack resource inventory、eval manifest summary 和 Changed Resources。
 - export output 会在 Decision Trace 中总结 Skill Pack confirmation 决策。
 - export output 会记录 Skill Pack source、version、优先级冲突和冲突数量。
+- export output 会记录显式 selector、精确 path、优先级覆盖、guidance 字节数和 SHA-256。
+- export output 不会包含完整 guidance 正文。
 - export output 会脱敏常见 API key、bearer token、环境变量、JSON、URL query 和 GitHub token 模式。
 - 存在 Memory Suggestions 时，export output 会包含它们。
 - CLI `a-agent export` 会导出 latest run。

@@ -138,10 +138,13 @@ CLI 目前故意保持很薄。`start` 会逐行读取任务，直到 `exit`、`
 - 输入关闭后由 runner 完成 chat，并生成 evaluation。
 - runner 会把 Project Memory 注入 fresh run 和 resumed run。
 - runner 会在存在相关 note 命中时过滤掉不相关的 Project Memory notes。
-- runner 会发现并注入相关 Skill Pack 摘要。
+- runner 会发现已选 Skill Pack，并注入完整 `SKILL.md`。
 - Owner 显式点名的 Skill Pack 会优先于关键词分数更高的普通匹配。
-- runner 会在注入多个自动命中的 Skill Packs 前请求确认。
+- 支持可重复的普通名称、来源限定和精确 path `--skill` 选择。
+- runner 会在加载任何自动推断 Skill Pack 前请求确认。
 - runner 支持对已确认的 Skill Pack 候选做子集选择。
+- Skill guidance 使用严格 UTF-8 和大小上限加载，event 只持久化摘要。
+- resume 会保留精确来源，并拒绝 guidance 摘要漂移。
 - 终端会解析编号形式的 Skill Pack 子集选择。
 - Skill Pack provider context 会包含 agent-ability 风格 references、scripts 和 eval resources。
 - Skill Pack provider context 和 Task Export 会把 scripts 标记为 inventory-only，而不是自动可执行能力。
@@ -151,6 +154,7 @@ CLI 目前故意保持很薄。`start` 会逐行读取任务，直到 `exit`、`
 - Skill Pack eval manifest 现在有 JSON Schema，并会拒绝缺少 `skill_name`、包含未知字段、包含坏 `files`、包含空必填字符串、regex pattern 无效的 manifest，同时支持多错误报告。
 - OpenAI-compatible provider 会把 Skill Pack context 放进 prompt payload。
 - Task Run export 会展示已选 Skill Packs。
+- Task Run export 会展示显式 selector、优先级覆盖和 guidance 摘要 metadata。
 - Task Run export 会展示已选 Skill Pack 的 resource inventory。
 - Task Run export 的 Decision Trace 会总结 Skill Pack confirmation 决策。
 - Task Run export 会展示 Decision Trace、Local Tools Used 和 Changed Resources 摘要。

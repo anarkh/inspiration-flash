@@ -40,11 +40,13 @@ The Markdown sections are:
 - Memory Suggestions, when available
 - Events
 
-`Decision Trace` is a compact human-readable summary derived from `events.jsonl`. It turns provider steps and observations into lines such as `plan: ...`, `tool: write_file`, `tool_result: write_file -> file_written`, and `skill_packs_confirmation: denied`. A Skill Pack selection also reports the number of deterministic same-name source conflicts it resolved.
+`Metadata` includes original `--skill` selectors and exact resolved paths when explicit selection was used.
+
+`Decision Trace` is a compact human-readable summary derived from `events.jsonl`. It turns provider steps and observations into lines such as `plan: ...`, `tool: write_file`, `tool_result: write_file -> file_written`, and `skill_packs_confirmation: denied`. A Skill selection also summarizes same-name alternatives, explicit selections, precedence overrides, and full guidance files loaded.
 
 `Local Tools Used` is a de-duplicated list of tools seen in `tool` and `tool_result` events.
 
-`Skill Packs Used` is a de-duplicated list of Skill Pack names and paths from `skill_packs` events recorded by the runner. It includes the winning source, priority, source root, optional version, and every shadowed same-name variant. When the selected Skill Pack includes an agent-ability style resource inventory, this section also shows its `references`, `scripts`, `evals` paths, and static eval manifest summary. If scripts are present, the export inserts the same inventory-only warning used in provider context, so the reader does not mistake script discovery for script execution. These events are audit metadata only; they are not fed back into the provider event stream.
+`Skill Packs Used` is a de-duplicated list of Skill Pack names and paths from `skill_packs` events recorded by the runner. It includes source, priority, source root, optional version, same-name alternatives, explicit selector, precedence override status, and guidance byte count plus SHA-256. The Skill audit layer does not copy the complete `SKILL.md` body into this event or section. Resource inventory still shows `references`, `scripts`, `evals`, and static eval manifest metadata; scripts retain the inventory-only warning. These audit events are not fed back into the provider event stream.
 
 `Changed Resources` currently records files reported by tool observations such as `file_written`. It is intentionally conservative: proposed writes that were not confirmed do not count as changed resources.
 
@@ -82,6 +84,8 @@ The Owner is learning how agent runs work. A Markdown export keeps the run under
 - Adds readable summaries before the raw event JSON.
 - Shows which Local Tools were used and which files were changed.
 - Shows which Skill Packs were selected for the run, which resource inventory paths were exposed, and whether an eval manifest was recognized.
+- Shows whether a source variant was selected explicitly and whether normal precedence was overridden.
+- Proves which guidance bytes were loaded through a digest without copying the full instruction body.
 - Marks Skill Pack scripts as inventory-only so exports preserve the same execution boundary shown to the model.
 - Includes candidate Project Memory notes when the run produced them.
 - Redacts common environment, JSON, URL query, bearer, GitHub, and `sk-...` secret patterns from the generated Markdown.
@@ -95,6 +99,7 @@ The Owner is learning how agent runs work. A Markdown export keeps the run under
 - It does not yet include checkpoint contents or detailed tool statistics.
 - Redaction is pattern-based and can still miss uncommon secret formats or produce false positives.
 - Raw run files are not redacted, so they should still be treated as local private artifacts.
+- A digest proves byte identity, not that the Skill instructions were trustworthy or correct.
 
 ## Evaluation
 
@@ -105,6 +110,8 @@ Current tests verify:
 - export output includes Decision Trace, Local Tools Used, Skill Packs Used, Skill Pack resource inventory, eval manifest summary, and Changed Resources,
 - export output summarizes Skill Pack confirmation decisions in Decision Trace,
 - export output records Skill Pack source, version, precedence conflicts, and conflict counts,
+- export output records explicit selector, exact path, precedence override, guidance byte count, and SHA-256,
+- export output does not contain the complete guidance body,
 - export output redacts common API key, bearer token, environment, JSON, URL query, and GitHub token patterns,
 - export output includes Memory Suggestions when present,
 - CLI `a-agent export` exports the latest run,

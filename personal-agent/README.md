@@ -43,6 +43,16 @@ a-agent run --check '{"type":"report_contains","value":"package.json"}' "总结�
 a-agent run --check '{"type":"file_exists","path":"summary.md"}' "创建 summary.md"
 ```
 
+Select a Skill Pack explicitly when you know which guidance should be used:
+
+```bash
+a-agent run --skill docs-helper "总结当前目录"
+a-agent run --skill user:docs-helper "总结当前目录"
+a-agent run --skill configured:1:docs-helper "总结当前目录"
+```
+
+`--skill` is repeatable up to four times and also accepts a displayed skill directory or `SKILL.md` path. A plain name uses normal source precedence; a source-qualified selector can deliberately choose a shadowed variant.
+
 Start a persistent terminal chat and enter `exit` or `quit` when finished:
 
 ```bash
@@ -71,7 +81,7 @@ Share Skill Packs from another checkout by adding its repository root or direct 
 }
 ```
 
-Discovery order is workspace, `~/.agents/skills`, package, then configured roots. Same-name conflicts and optional versions are recorded in Task Export; external eval manifests run without copying the Skill Pack into the workspace.
+Discovery order is workspace, `~/.agents/skills`, package, then configured roots. Same-name variants, explicit selectors, optional versions, and loaded-guidance digests are recorded in Task Export. The selected `SKILL.md` body is loaded into model context, while the Skill audit event stores only its digest and byte count. External eval manifests run without copying the Skill Pack into the workspace.
 
 Run the deterministic core-workflow regression suite without calling a remote model:
 
@@ -90,9 +100,9 @@ a-agent eval override <run-id> --verdict partial --reason "One edge case remains
 
 | Command | Purpose |
 | --- | --- |
-| `a-agent run [--learn] [--review] [--check '<json>']... "<task>"` | Run one task with optional objective Success Checks. |
-| `a-agent start [--learn] [--review]` | Read multiple independent tasks from the terminal. |
-| `a-agent chat [--learn] [--review]` | Keep multiple Owner messages in one chat Task Run. |
+| `a-agent run [--learn] [--review] [--skill <selector>]... [--check '<json>']... "<task>"` | Run one task with optional Skill selection and objective Success Checks. |
+| `a-agent start [--learn] [--review] [--skill <selector>]...` | Read multiple independent tasks using one explicit Skill selection. |
+| `a-agent chat [--learn] [--review] [--skill <selector>]...` | Keep multiple Owner messages and one Skill selection in one chat Task Run. |
 | `a-agent resume [--learn] [--review]` | Resume the latest active Task Run checkpoint. |
 | `a-agent history` | List recent Task Runs and evaluation status. |
 | `a-agent export [run-id]` | Export an inspectable Markdown run report. |

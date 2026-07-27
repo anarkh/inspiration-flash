@@ -14,6 +14,8 @@ export interface CreateTaskRunInput {
   mode: TaskMode;
   successCheck: string;
   successChecks?: StructuredSuccessCheck[];
+  skillSelectors?: string[];
+  selectedSkillPaths?: string[];
 }
 
 export interface TaskRunHandle {
@@ -29,6 +31,8 @@ export interface TaskRunMetadata {
   mode: TaskMode;
   successCheck: string;
   successChecks?: StructuredSuccessCheck[];
+  skillSelectors?: string[];
+  selectedSkillPaths?: string[];
   status: TaskRunStatus;
   createdAt: string;
   updatedAt: string;
@@ -66,6 +70,10 @@ export async function createTaskRun(
         mode: input.mode,
         successCheck: input.successCheck,
         ...(input.successChecks && input.successChecks.length > 0 ? { successChecks: input.successChecks } : {}),
+        ...(input.skillSelectors && input.skillSelectors.length > 0 ? { skillSelectors: input.skillSelectors } : {}),
+        ...(input.selectedSkillPaths && input.selectedSkillPaths.length > 0
+          ? { selectedSkillPaths: input.selectedSkillPaths }
+          : {}),
         status: "active",
         createdAt: now,
         updatedAt: now
