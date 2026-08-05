@@ -83,6 +83,8 @@ Share Skill Packs from another checkout by adding its repository root or direct 
 
 Discovery order is workspace, `~/.agents/skills`, package, then configured roots. Same-name variants, explicit selectors, optional versions, and loaded-guidance digests are recorded in Task Export. The selected `SKILL.md` body is loaded into model context, while the Skill audit event stores only its digest and byte count. External eval manifests run without copying the Skill Pack into the workspace.
 
+Local Tools are registered through a provider-neutral typed registry. The same declared schemas validate model input, validate tool output, and generate the model-visible catalog; malformed calls become durable `tool_error` observations so the model and evaluator can see why execution did not occur.
+
 Run the deterministic core-workflow regression suite without calling a remote model:
 
 ```bash
@@ -107,7 +109,7 @@ a-agent eval override <run-id> --verdict partial --reason "One edge case remains
 | `a-agent history` | List recent Task Runs and evaluation status. |
 | `a-agent export [run-id]` | Export an inspectable Markdown run report. |
 | `a-agent memory` | Read or update Project Memory. |
-| `a-agent eval golden` | Run repeatable read, write, chat, memory, resume, and Skill Pack fixtures. |
+| `a-agent eval golden` | Run repeatable read, malformed-tool, write, chat, memory, resume, and Skill Pack fixtures. |
 | `a-agent eval override [run-id] --verdict <verdict> --reason "<reason>"` | Record an audited Owner verdict without replacing deterministic evidence. |
 | `a-agent eval skill-pack <name-or-path>` | Execute a Skill Pack eval manifest. |
 

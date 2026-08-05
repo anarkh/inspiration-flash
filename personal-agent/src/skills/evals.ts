@@ -13,7 +13,7 @@ import {
   validateJsonSchemaDeclaration,
   type JsonSchema,
   type JsonValueType
-} from "./json-schema.ts";
+} from "../core/json-schema.ts";
 import { discoverSkillPacks, type SkillPackSummary } from "./skill-packs.ts";
 
 export interface RunSkillPackEvalsInput {

@@ -97,7 +97,7 @@ a-agent run --check '{"type":"tool_succeeded","tool":"write_file"}' "写入 summ
 
 ## Golden Task Run 套件
 
-`src/evals/golden-task-runs.ts` 实现了覆盖六类核心工作流的可重复回归套件。运行命令是：
+`src/evals/golden-task-runs.ts` 实现了覆盖七类核心工作流的可重复回归套件。运行命令是：
 
 ```bash
 a-agent eval golden
@@ -111,12 +111,13 @@ a-agent eval golden
 | --- | --- | --- | --- |
 | read | Task Evaluation | `pass` | `read_file`、report 文本、tool result |
 | write | Task Evaluation | `pass` | 已确认的 `write_file`、文件内容、tool result |
+| tool error | Task Evaluation | `fail` | schema 拒绝、持久化 `tool_error`、未成功的工具检查 |
 | chat | Task Evaluation | `partial` | 两轮 Owner 输入、两轮回复、客观 correctness 不可用 |
 | memory | Task Evaluation | `pass` | reflection、Memory Suggestion、learning signal |
 | resume | Task Evaluation | `pass` | 已保存 plan、checkpoint replay、最终 report |
 | Skill Pack | Skill Pack eval | `pass` | discovery、guidance injection、manifest grader |
 
-只有实际 verdict 等于声明的预期 verdict，并且工作流专属 artifact 断言也成立时，golden case 才通过。chat 最能说明两层含义的区别：Task Evaluation 仍诚实地显示 `partial`；golden *case* 通过，是因为运行时稳定复现了这个预期结果。Skill Pack grader 也与底层 Task Evaluation 保持分离；没有声明结构化 Success Check 时，底层 Task Evaluation 仍然是 `partial`。
+只有实际 verdict 等于声明的预期 verdict，并且工作流专属 artifact 断言也成立时，golden case 才通过。chat 和 tool error 能说明两层含义的区别：Task Evaluation 仍诚实地显示 `partial` 或 `fail`；golden *case* 通过，是因为运行时稳定复现了这些预期结果。Skill Pack grader 也与底层 Task Evaluation 保持分离；没有声明结构化 Success Check 时，底层 Task Evaluation 仍然是 `partial`。
 
 与其他方案相比：
 
@@ -124,7 +125,7 @@ a-agent eval golden
 - 回放生产 trace 更接近真实任务，但会带来隐私数据、provider 漂移和模型输出不确定性。这里的 fixture 是合成且不含 secret 的。
 - 托管 eval 平台提供实验追踪和跨模型统计，但需要联网和更多基础设施。本地套件速度快、可检查，并且能离线运行。
 
-这种实现的优势是：能稳定地端到端覆盖有状态 Agent 工作流，失败时还能直接定位 artifact。局限也需要明确：固定 provider 不能衡量真实模型质量，六个 fixture 不能代表完整任务分布，预期 verdict 变化时也必须有意更新 fixture。未来应把真实 provider 和生产任务提炼出的 eval 作为独立层增加，而不是混进这个确定性 gate。
+这种实现的优势是：能稳定地端到端覆盖有状态 Agent 工作流，失败时还能直接定位 artifact。局限也需要明确：固定 provider 不能衡量真实模型质量，七个 fixture 不能代表完整任务分布，预期 verdict 变化时也必须有意更新 fixture。未来应把真实 provider 和生产任务提炼出的 eval 作为独立层增加，而不是混进这个确定性 gate。
 
 ## 其他方案与权衡
 
@@ -225,7 +226,7 @@ Manifest 契约记录在 `schemas/skill-evals.schema.json`。它是 Personal Age
 
 运行期 parser 使用一个小型字段白名单，模拟 schema 里的 `additionalProperties: false` 规则。未知的顶层 manifest 字段、eval case 字段和 grader 字段都会在任何 Task Run 开始前被拒绝。静态 Skill Pack inventory 也使用同类检查，所以普通 Task Run 会展示 `eval manifest: invalid (...)`，而不是默默把草稿 metadata 当成正式契约的一部分。当多个 eval case 都无效时，两条路径会把 case 错误聚合成一条消息；只有单个错误时仍保持简洁文案。
 
-第一版 graders 故意保持确定性。默认使用 `contains`：最终 Task Report 在 Unicode 归一化和大小写折叠后包含 `expected_output` 字符串，就算通过。case 也可以声明 `grader: { "type": "regex", "pattern": "..." }`，用于期望证据更适合用模式表达的场景。Regex grader 会在任何 Task Run 开始前校验 `pattern` 是非空字符串，这样 manifest 错误更容易修。case 还可以声明 `grader: { "type": "tool_trace", "tool": "read_file" }`，只有 Task Run 事件日志里出现该 Local Tool 时才通过。`tool_trace` 还支持 `input_contains`，例如 `grader: { "type": "tool_trace", "tool": "read_file", "input_contains": "notes.md" }`，用于检查匹配 tool call event 的序列化输入。它也支持 `input_matches`，例如 `grader: { "type": "tool_trace", "tool": "read_file", "input_matches": { "path": "notes.md" } }`，用于把部分 JSON 对象和 tool call input 做结构化匹配。`input_schema` 会把一个 compact JSON Schema-style matcher 应用到工具调用输入上，例如 `grader: { "type": "tool_trace", "tool": "read_file", "input_schema": { "type": "object", "required": ["path"], "properties": { "path": { "type": "string" } } } }`。`output_contains` 会检查匹配 `tool_result` event 的序列化输出，例如 `grader: { "type": "tool_trace", "tool": "read_file", "output_contains": "alpha marker" }`。`output_matches` 会把部分 JSON 对象和 `tool_result.output` 做匹配，例如 `grader: { "type": "tool_trace", "tool": "run_command", "output_matches": { "exitCode": 0 } }`。`output_type` 会检查顶层 JSON 风格输出类型，例如 `object`、`array` 或 `string`。`output_schema` 会把同一个 compact schema matcher 应用到 `tool_result.output`，例如要求 `run_command` 返回一个带数字 `exitCode` 和字符串 `stdout` 的对象。这个 compact schema 子集支持 `type`、`required`、`properties`、`items`、`const`、`enum` 和 `additionalProperties: false`。它不是完整 JSON Schema 2020-12 实现；它是为 eval fixture 准备的小型确定性 validator，后续如果真实 Skill Pack 需要更多 schema 特性，可以替换为 Ajv 或其他完整 validator。
+第一版 graders 故意保持确定性。默认使用 `contains`：最终 Task Report 在 Unicode 归一化和大小写折叠后包含 `expected_output` 字符串，就算通过。case 也可以声明 `grader: { "type": "regex", "pattern": "..." }`，用于期望证据更适合用模式表达的场景。Regex grader 会在任何 Task Run 开始前校验 `pattern` 是非空字符串，这样 manifest 错误更容易修。case 还可以声明 `grader: { "type": "tool_trace", "tool": "read_file" }`，只有 Task Run 事件日志里出现该 Local Tool 时才通过。`tool_trace` 还支持 `input_contains`，例如 `grader: { "type": "tool_trace", "tool": "read_file", "input_contains": "notes.md" }`，用于检查匹配 tool call event 的序列化输入。它也支持 `input_matches`，例如 `grader: { "type": "tool_trace", "tool": "read_file", "input_matches": { "path": "notes.md" } }`，用于把部分 JSON 对象和 tool call input 做结构化匹配。`input_schema` 会把一个 compact JSON Schema-style matcher 应用到工具调用输入上，例如 `grader: { "type": "tool_trace", "tool": "read_file", "input_schema": { "type": "object", "required": ["path"], "properties": { "path": { "type": "string" } } } }`。`output_contains` 会检查匹配 `tool_result` event 的序列化输出，例如 `grader: { "type": "tool_trace", "tool": "read_file", "output_contains": "alpha marker" }`。`output_matches` 会把部分 JSON 对象和 `tool_result.output` 做匹配，例如 `grader: { "type": "tool_trace", "tool": "run_command", "output_matches": { "exitCode": 0 } }`。`output_type` 会检查顶层 JSON 风格输出类型，例如 `object`、`array` 或 `string`。`output_schema` 会把同一个 compact schema matcher 应用到 `tool_result.output`，例如要求 `run_command` 返回一个带数字 `exitCode` 和字符串 `stdout` 的对象。这个 compact schema 子集支持 `type`、`required`、`properties`、`items`、`const`、`enum`、`minLength`、`anyOf` 和 `additionalProperties: false`。它不是完整 JSON Schema 2020-12 实现；它是 eval fixture 与类型化 Tool Registry 共用的小型确定性 validator，后续如果真实 Skill Pack 需要更多 schema 特性，可以替换为 Ajv 或其他完整 validator。
 
 `model_judge` 是第一版语义 grader。case 可以声明 `grader: { "type": "model_judge", "rubric": "Pass only if ..." }`。普通 Task Run 完成后，eval runner 会把 prompt、expected output note、rubric 和最终 Task Report 发给当前配置的 `ModelProvider`。provider 必须返回一个 `finish` step，并且 report 中包含 `{ "verdict": "pass" | "fail", "reason": "..." }` 形状的 JSON。这样 eval 就能检查那些很难用确定性文本、轨迹或 schema 表达的质量要求。
 

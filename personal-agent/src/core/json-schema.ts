@@ -8,7 +8,17 @@ export interface JsonSchemaValidationResult {
 }
 
 const jsonValueTypes = ["string", "number", "boolean", "object", "array", "null"] as const;
-const supportedSchemaFields = new Set(["type", "required", "properties", "items", "const", "enum", "additionalProperties"]);
+const supportedSchemaFields = new Set([
+  "type",
+  "required",
+  "properties",
+  "items",
+  "const",
+  "enum",
+  "anyOf",
+  "minLength",
+  "additionalProperties"
+]);
 
 /** Checks whether a schema type declaration uses one of the supported JSON-style value types. */
 export function isJsonValueType(value: unknown): value is JsonValueType {
@@ -88,6 +98,16 @@ function validateJsonSchemaNode(schema: JsonSchema, path: string): JsonSchemaVal
     return enumResult;
   }
 
+  const anyOfResult = validateAnyOfDeclaration(schema.anyOf, path);
+  if (!anyOfResult.valid) {
+    return anyOfResult;
+  }
+
+  const minLengthResult = validateMinLengthDeclaration(schema.minLength, path);
+  if (!minLengthResult.valid) {
+    return minLengthResult;
+  }
+
   if (schema.additionalProperties !== undefined && typeof schema.additionalProperties !== "boolean") {
     return { valid: false, reason: `${path}.additionalProperties must be a boolean` };
   }
@@ -161,8 +181,43 @@ function validateEnumDeclaration(value: unknown, path: string): JsonSchemaValida
   return { valid: false, reason: `${path}.enum must be a non-empty array` };
 }
 
+/** Validates `anyOf` as a non-empty list of recursively valid schema branches. */
+function validateAnyOfDeclaration(value: unknown, path: string): JsonSchemaValidationResult {
+  if (value === undefined) {
+    return { valid: true };
+  }
+  if (!Array.isArray(value) || value.length === 0) {
+    return { valid: false, reason: `${path}.anyOf must be a non-empty schema array` };
+  }
+  for (const [index, branch] of value.entries()) {
+    if (!isNonEmptyRecord(branch)) {
+      return { valid: false, reason: `${path}.anyOf[${index}] must be a non-empty schema object` };
+    }
+    const result = validateJsonSchemaNode(branch, `${path}.anyOf[${index}]`);
+    if (!result.valid) {
+      return result;
+    }
+  }
+  return { valid: true };
+}
+
+/** Validates `minLength` as a non-negative integer when present. */
+function validateMinLengthDeclaration(value: unknown, path: string): JsonSchemaValidationResult {
+  if (value === undefined) {
+    return { valid: true };
+  }
+  return typeof value === "number" && Number.isInteger(value) && value >= 0
+    ? { valid: true }
+    : { valid: false, reason: `${path}.minLength must be a non-negative integer` };
+}
+
 /** Recursively validates a value against one supported schema node. */
 function validateValueAgainstSchema(value: unknown, schema: JsonSchema, path: string): JsonSchemaValidationResult {
+  const anyOfResult = validateAnyOfConstraint(value, schema.anyOf, path);
+  if (!anyOfResult.valid) {
+    return anyOfResult;
+  }
+
   const constResult = validateConstConstraint(value, schema.const, path);
   if (!constResult.valid) {
     return constResult;
@@ -178,12 +233,41 @@ function validateValueAgainstSchema(value: unknown, schema: JsonSchema, path: st
     return typeResult;
   }
 
+  const minLengthResult = validateMinLengthConstraint(value, schema.minLength, path);
+  if (!minLengthResult.valid) {
+    return minLengthResult;
+  }
+
   const objectResult = validateObjectConstraints(value, schema, path);
   if (!objectResult.valid) {
     return objectResult;
   }
 
   return validateArrayConstraints(value, schema, path);
+}
+
+/** Requires a runtime value to match at least one declared `anyOf` branch. */
+function validateAnyOfConstraint(value: unknown, branches: unknown, path: string): JsonSchemaValidationResult {
+  if (!Array.isArray(branches)) {
+    return { valid: true };
+  }
+  const failures: string[] = [];
+  for (const branch of branches) {
+    if (!isRecord(branch)) {
+      continue;
+    }
+    const result = validateValueAgainstSchema(value, branch, path);
+    if (result.valid) {
+      return result;
+    }
+    if (result.reason) {
+      failures.push(result.reason);
+    }
+  }
+  return {
+    valid: false,
+    reason: `${path} did not match any anyOf branch${failures.length > 0 ? `: ${failures.join("; ")}` : ""}`
+  };
 }
 
 /** Checks an exact literal match when a schema declares `const`. */
@@ -215,6 +299,16 @@ function validateTypeConstraint(value: unknown, expectedType: unknown, path: str
   return expectedTypes.includes(actualType)
     ? { valid: true }
     : { valid: false, reason: `${path} type was ${actualType}, expected ${expectedTypes.join(" or ")}` };
+}
+
+/** Checks the minimum string length declared by one schema node. */
+function validateMinLengthConstraint(value: unknown, minimum: unknown, path: string): JsonSchemaValidationResult {
+  if (minimum === undefined || typeof value !== "string" || typeof minimum !== "number") {
+    return { valid: true };
+  }
+  return value.length >= minimum
+    ? { valid: true }
+    : { valid: false, reason: `${path} length was ${value.length}, expected at least ${minimum}` };
 }
 
 /** Checks object-specific schema constraints such as `required`, `properties`, and closed objects. */
@@ -281,10 +375,10 @@ function validateAdditionalProperties(
   additionalProperties: unknown,
   path: string
 ): JsonSchemaValidationResult {
-  if (additionalProperties !== false || !isRecord(properties)) {
+  if (additionalProperties !== false) {
     return { valid: true };
   }
-  const allowed = new Set(Object.keys(properties));
+  const allowed = new Set(isRecord(properties) ? Object.keys(properties) : []);
   const extra = Object.keys(value).find((property) => !allowed.has(property));
   return extra ? { valid: false, reason: `${path}.${extra} is not allowed` } : { valid: true };
 }

@@ -22,6 +22,7 @@ import {
 } from "../state/store.ts";
 import {
   applyConfirmedToolAction,
+  createLocalToolErrorResult,
   executeLocalTool,
   isConfirmationRequired,
   type ConfirmationRequired,
@@ -401,7 +402,14 @@ async function recordAgentStepAndObservations(
 
 /** Executes one Local Tool step and appends its observation to the provider-visible event stream. */
 async function recordToolObservation(input: ContinueTaskRunInput, step: Extract<AgentStep, { type: "tool" }>): Promise<void> {
-  let output = await executeLocalTool(input.workspace, step.tool, step.input);
+  let output: unknown;
+  try {
+    output = await executeLocalTool(input.workspace, step.tool, step.input);
+  } catch (error) {
+    // Invalid and failed calls remain visible to the provider and evaluator as
+    // durable observations instead of terminating the entire Task Run.
+    output = createLocalToolErrorResult(step.tool, error);
+  }
   if (isConfirmationRequired(output)) {
     emitLearningLens(
       input,
@@ -410,7 +418,11 @@ async function recordToolObservation(input: ContinueTaskRunInput, step: Extract<
     );
     const decision = input.confirmAction ? await input.confirmAction(output) : false;
     if (confirmationWasApproved(decision)) {
-      output = await applyConfirmedToolAction(input.workspace, output);
+      try {
+        output = await applyConfirmedToolAction(input.workspace, output);
+      } catch (error) {
+        output = createLocalToolErrorResult(step.tool, error);
+      }
     } else {
       output = {
         type: "confirmation_denied",

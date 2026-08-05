@@ -369,7 +369,7 @@ function failedWorkspaceCheck(id: string, path: string, detail: string): Evaluat
   return { id, verdict: "fail", evidence: [{ source: "workspace", reference: path, detail }] };
 }
 
-/** Treats rejected, denied, unresolved, and non-zero command outputs as unsuccessful. */
+/** Treats rejected, denied, malformed, unresolved, and non-zero command outputs as unsuccessful. */
 function toolOutputSucceeded(output: unknown): boolean {
   // Read/list/search tools return strings or arrays. Object results must use a
   // known success type so future error shapes fail closed instead of passing.
@@ -379,7 +379,12 @@ function toolOutputSucceeded(output: unknown): boolean {
   if (!isRecord(output) || typeof output.type !== "string") {
     return false;
   }
-  if (output.type === "rejected" || output.type === "confirmation_denied" || output.type === "confirmation_required") {
+  if (
+    output.type === "rejected" ||
+    output.type === "tool_error" ||
+    output.type === "confirmation_denied" ||
+    output.type === "confirmation_required"
+  ) {
     return false;
   }
   if (output.type === "command_result") {

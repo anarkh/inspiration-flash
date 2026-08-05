@@ -153,10 +153,11 @@ test("Evaluation V2 fails file checks when a workspace symlink resolves outside"
   }
 });
 
-test("Evaluation V2 fails rejected, denied, unresolved, non-zero, and unknown tool results", async () => {
+test("Evaluation V2 fails rejected, malformed, denied, unresolved, non-zero, and unknown tool results", async () => {
   const workspace = await mkdtemp(join(tmpdir(), "personal-agent-evaluation-tool-failures-"));
   const failedOutputs = [
     { type: "rejected" },
+    { type: "tool_error", phase: "input_validation" },
     { type: "confirmation_denied" },
     { type: "confirmation_required" },
     { type: "command_result", exitCode: 1 },

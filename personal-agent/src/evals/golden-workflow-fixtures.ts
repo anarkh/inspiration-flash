@@ -14,6 +14,7 @@ import {
 } from "./golden-task-run-shared.ts";
 
 const readMarker = "golden-read-marker";
+const toolErrorMarker = "golden-tool-error-marker";
 const writeMarker = "golden-write-marker";
 const memoryMarker = "Owner prefers deterministic golden evaluations.";
 const resumeMarker = "golden-resume-marker";
@@ -54,6 +55,47 @@ export async function runReadGoldenCase(
   const evaluation = await readTaskEvaluation(run.runDir);
   return taskRunExecution(run.id, run.runDir, evaluation.verdict, [
     { label: "fixture", path: fixturePath },
+    { label: "report", path: join(run.runDir, "report.md") },
+    { label: "evaluation", path: join(run.runDir, "evaluation.json") }
+  ]);
+}
+
+/** Exercises schema rejection, durable tool_error evidence, and provider recovery. */
+export async function runToolErrorGoldenCase(
+  workspace: string,
+  logStep: (message: string) => void
+): Promise<GoldenTaskRunCaseExecution> {
+  const provider: ModelProvider = {
+    name: "golden-tool-error",
+    /** Produces one malformed call, then verifies the durable observation before finishing. */
+    async nextStep(input) {
+      if (input.turn === 1) {
+        return { type: "tool", tool: "read_file", input: {} };
+      }
+      const output = findToolResultOutput(input.events, "read_file");
+      assertGolden(
+        isRecord(output) && output.type === "tool_error" && output.phase === "input_validation",
+        "Malformed read_file input did not produce an input_validation tool_error."
+      );
+      return { type: "finish", report: `Recorded expected validation failure: ${toolErrorMarker}` };
+    }
+  };
+  const run = await runTask({
+    workspace,
+    goal: "Record a malformed Local Tool call without executing it.",
+    mode: "advisory",
+    successCheck: "Persist the validation failure and mark the tool call unsuccessful.",
+    successChecks: [
+      { id: "tool-error-report", type: "report_contains", value: toolErrorMarker },
+      { id: "tool-error-unsuccessful", type: "tool_succeeded", tool: "read_file" }
+    ],
+    provider,
+    logStep
+  });
+  const evaluation = await readTaskEvaluation(run.runDir);
+  assertGolden(evaluation.verdict === "fail", `Expected failed tool correctness, received ${evaluation.verdict}.`);
+  return taskRunExecution(run.id, run.runDir, evaluation.verdict, [
+    { label: "events", path: join(run.runDir, "events.jsonl") },
     { label: "report", path: join(run.runDir, "report.md") },
     { label: "evaluation", path: join(run.runDir, "evaluation.json") }
   ]);

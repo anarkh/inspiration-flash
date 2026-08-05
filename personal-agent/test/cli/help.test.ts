@@ -152,15 +152,16 @@ test("cli eval golden runs every deterministic core workflow", async () => {
     });
 
     assert.equal(result.status, 0, result.stderr);
-    assert.match(result.stdout, /Golden Task Runs: 6 passed, 0 failed/);
+    assert.match(result.stdout, /Golden Task Runs: 7 passed, 0 failed/);
     assert.match(result.stdout, /chat: passed \| expected partial \| actual partial/);
     assert.match(result.stdout, /skill-pack: passed \| expected pass \| actual pass/);
+    assert.match(result.stdout, /tool-error: passed \| expected fail \| actual fail/);
     assert.match(result.stderr, /\[golden:read\] \[agent\] turn 1 plan/);
 
     const latestPath = join(workspace, ".personal-agent/evals/golden-task-runs/latest");
     const latest = (await readFile(latestPath, "utf8")).trim();
     const persisted = JSON.parse(await readFile(join(latest, "results.json"), "utf8"));
-    assert.equal(persisted.passedCount, 6);
+    assert.equal(persisted.passedCount, 7);
     assert.equal(persisted.failedCount, 0);
   } finally {
     await rm(workspace, { recursive: true, force: true });

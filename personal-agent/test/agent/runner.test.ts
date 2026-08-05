@@ -797,6 +797,49 @@ test("runTask executes Local Tool steps and returns observations to the provider
   }
 });
 
+test("runTask persists malformed Local Tool calls as provider-visible tool errors", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-tool-error-runner-"));
+  let observedError: unknown;
+  const provider: ModelProvider = {
+    name: "fake",
+    /** Produces malformed input, then captures the provider-visible recovery evidence. */
+    async nextStep(input) {
+      if (input.turn === 1) {
+        return { type: "tool", tool: "read_file", input: {} };
+      }
+      const result = input.events.find(
+        (event) => typeof event === "object" && event !== null && "type" in event && event.type === "tool_result"
+      );
+      if (result && typeof result === "object" && "output" in result) {
+        observedError = result.output;
+      }
+      return { type: "finish", report: "Malformed tool input was recorded." };
+    }
+  };
+
+  try {
+    const result = await runTask({
+      workspace,
+      goal: "read a missing path argument",
+      mode: "advisory",
+      successCheck: "Task records the malformed tool call",
+      provider
+    });
+    const events = await readFile(join(result.runDir, "events.jsonl"), "utf8");
+
+    assert.deepEqual(observedError, {
+      type: "tool_error",
+      tool: "read_file",
+      phase: "input_validation",
+      reason: "Local Tool read_file input failed schema validation: $.path is required"
+    });
+    assert.match(events, /"type":"tool_error"/);
+    assert.match(events, /"phase":"input_validation"/);
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
 test("runTask writes model reflection notes as Memory Suggestions", async () => {
   const workspace = await mkdtemp(join(tmpdir(), "personal-agent-memory-suggestions-"));
   const provider: ModelProvider = {

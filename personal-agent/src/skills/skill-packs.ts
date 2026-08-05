@@ -2,7 +2,7 @@ import type { Dirent } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
 import { dirname, join, relative, resolve } from "node:path";
 
-import { isJsonValueType, validateJsonSchemaDeclaration } from "./json-schema.ts";
+import { isJsonValueType, validateJsonSchemaDeclaration } from "../core/json-schema.ts";
 import {
   resolveSkillPackSources,
   type ResolveSkillPackSourcesOptions,

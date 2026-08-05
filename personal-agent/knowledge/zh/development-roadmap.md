@@ -36,7 +36,7 @@ MVP 已经有不少可见能力，但最薄弱的部分是证明任务结果真�
 
 在学习密集的阶段继续保留 first-party loop。只有实际测得的编排、handoff 或 retrieval 复杂度足以证明迁移价值时，才重新评估框架。
 
-Task Evaluation V2 已满足 Phase 2 gate。Phase 3 现在也满足完成门槛：有序 Skill sources、冲突元数据、支持来源限定的显式 CLI 选择、有大小上限的完整 `SKILL.md` 加载、基于摘要的恢复校验，以及外部 Skill Pack eval 都已实现。Phase 4 的类型化工具与 Skill runtime 成为当前最早未完成阶段，因此是下一条默认开发主线。
+Task Evaluation V2 已满足 Phase 2 gate。Phase 3 现在也满足完成门槛：有序 Skill sources、冲突元数据、支持来源限定的显式 CLI 选择、有大小上限的完整 `SKILL.md` 加载、基于摘要的恢复校验，以及外部 Skill Pack eval 都已实现。Phase 4 已进入进行中状态：第一个增量用类型化 Tool Registry、声明式 schema、集中式确认处理器和持久化工具错误替代了硬编码分发。每工具资源策略与经过批准的 Skill Pack 脚本执行仍需完成，Phase 4 gate 还未通过。
 
 ## 优势
 

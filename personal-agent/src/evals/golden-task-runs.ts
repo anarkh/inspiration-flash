@@ -8,12 +8,13 @@ import {
   runMemoryGoldenCase,
   runReadGoldenCase,
   runResumeGoldenCase,
+  runToolErrorGoldenCase,
   runWriteGoldenCase
 } from "./golden-workflow-fixtures.ts";
 import type { GoldenTaskRunCaseExecution } from "./golden-task-run-shared.ts";
 import { runSkillPackGoldenCase } from "./golden-skill-pack-fixture.ts";
 
-export type GoldenTaskRunWorkflow = "read" | "write" | "chat" | "memory" | "resume" | "skill-pack";
+export type GoldenTaskRunWorkflow = "read" | "tool-error" | "write" | "chat" | "memory" | "resume" | "skill-pack";
 export type GoldenTaskRunVerdict = TaskEvaluation["verdict"];
 export type GoldenTaskRunEvaluationSource = "task_evaluation" | "skill_pack_eval";
 
@@ -68,6 +69,13 @@ export const goldenTaskRunCaseDefinitions: readonly GoldenTaskRunCaseDefinition[
     workflow: "write",
     description: "Approve a fixture write and verify both the file artifact and successful tool result.",
     expectedVerdict: "pass",
+    evaluationSource: "task_evaluation"
+  },
+  {
+    id: "tool-error",
+    workflow: "tool-error",
+    description: "Reject malformed Local Tool input and persist a provider-visible validation error.",
+    expectedVerdict: "fail",
     evaluationSource: "task_evaluation"
   },
   {
@@ -176,6 +184,9 @@ async function executeGoldenWorkflow(
   }
   if (workflow === "write") {
     return runWriteGoldenCase(workspace, logStep);
+  }
+  if (workflow === "tool-error") {
+    return runToolErrorGoldenCase(workspace, logStep);
   }
   if (workflow === "chat") {
     return runChatGoldenCase(workspace, logStep);

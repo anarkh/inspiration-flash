@@ -48,6 +48,8 @@ test("OpenAI-compatible provider parses a JSON Agent Step response", async () =>
   assert.match(requests[0]?.init.body ?? "", /test-model/);
   assert.match(requests[0]?.init.body ?? "", /Owner prefers concise CLI output/);
   assert.match(requests[0]?.init.body ?? "", /docs-helper/);
+  assert.match(requests[0]?.init.body ?? "", /Available local tools and input schemas/);
+  assert.match(requests[0]?.init.body ?? "", /\\"minLength\\":1/);
 });
 
 test("OpenAI-compatible provider normalizes common model plan fields", async () => {

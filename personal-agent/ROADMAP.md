@@ -79,12 +79,12 @@ Learning focus: capability discovery, precedence, portability, and compatibility
 
 ## Phase 4: Typed Tool And Skill Runtime
 
-Status: next.
+Status: in progress. The typed Tool Registry, declared input/output schemas, centralized confirmation handlers, schema-derived provider catalog, and durable `tool_error` observations are implemented. Per-tool resource policy and executable Skill Pack scripts remain.
 
 Deliverables:
 
-- Replace the hard-coded tool switch with a typed tool registry.
-- Validate tool inputs and outputs with declared schemas.
+- Replace the hard-coded tool switch with a typed tool registry. (complete)
+- Validate tool inputs and outputs with declared schemas. (complete)
 - Add per-tool permissions, timeout, cancellation, output limits, and redaction.
 - Execute approved Skill Pack scripts through the same Confirmation Gate as Local Tools.
 - Strengthen command parsing and risk classification without invoking a shell implicitly.
