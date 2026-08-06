@@ -1,0 +1,24 @@
+{
+  "name": "token-relay-workspace",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "npm run build -w @anarkhli/protocol && npm run build -w @anarkhli/provider-sdk && npm run build -w @token-relay/relay-server",
+    "typecheck": "npm run build -w @anarkhli/protocol && npm run typecheck -w @anarkhli/provider-sdk && npm run typecheck -w @token-relay/relay-server",
+    "test": "npm run build && node --test ./test/*.test.mjs ./packages/provider-sdk/test/*.test.mjs",
+    "check": "npm run typecheck && npm test"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/ws": "^8.18.1",
+    "typescript": "^5.9.0"
+  },
+  "engines": {
+    "node": ">=22.13.0"
+  }
+}

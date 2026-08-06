@@ -1,0 +1,14 @@
+{
+  "relayUrl": "ws://127.0.0.1:8787/provider/v1/connect",
+  "providerToken": "${TOKEN_RELAY_PROVIDER_TOKEN}",
+  "concurrency": 1,
+  "jobTimeoutMs": 300000,
+  "maxOutputBytes": 2097152,
+  "models": {
+    "gpt-5.6-sol": {
+      "adapter": "codex",
+      "command": "codex",
+      "cliModel": "gpt-5.6-sol"
+    }
+  }
+}

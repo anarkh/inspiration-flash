@@ -1,0 +1,35 @@
+{
+  "name": "@token-relay/relay-server",
+  "version": "0.1.0",
+  "description": "Central HTTP and WebSocket relay for Token Relay.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "token-relay-server": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node ./dist/cli.js",
+    "dev": "npm run build && node ./dist/cli.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@anarkhli/protocol": "0.1.0",
+    "ws": "^8.18.3"
+  },
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "license": "MIT"
+}

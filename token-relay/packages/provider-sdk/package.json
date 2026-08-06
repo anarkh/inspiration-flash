@@ -1,0 +1,48 @@
+{
+  "name": "@anarkhli/provider-sdk",
+  "version": "0.1.0",
+  "description": "Provider-side SDK and CLI for Token Relay.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "token-relay-provider": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "provider.config.example.json",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "npm run build -w @anarkhli/protocol && tsc -p tsconfig.json --noEmit",
+    "test": "npm run build -w @anarkhli/protocol && npm run build && node --test ./test/*.test.mjs",
+    "prepack": "npm run build -w @anarkhli/protocol && npm run build"
+  },
+  "keywords": [
+    "llm",
+    "relay",
+    "provider",
+    "codex",
+    "claude",
+    "cli"
+  ],
+  "dependencies": {
+    "@anarkhli/protocol": "0.1.0",
+    "ws": "^8.18.3"
+  },
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  }
+}
