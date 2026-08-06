@@ -68,6 +68,40 @@ describe('main god directive system', () => {
     expect(objectiveKinds).toContain('broadcast_snapshot');
     expect(objectiveKinds).toContain('escort_checkpoints');
     expect(objectiveKinds).toContain('escort_snapshot');
+    expect(
+      getDirectiveForDungeon('demon_tower_1').optionalObjectives.find(
+        (objective) => objective.kind === 'low_damage'
+      )?.description
+    ).toContain('治疗不会回退累计值');
+  });
+
+  it('frames the first low-damage target as an optional reward without weakening it', () => {
+    const directive = getDirectiveForDungeon('demon_tower_1');
+    const lowDamageObjective = directive.optionalObjectives.find(
+      (objective) => objective.kind === 'low_damage'
+    );
+
+    expect(directive.brief).toContain('可选额外奖励');
+    expect(directive.brief).toContain('不影响Boss、出口或主线通关');
+    expect(lowDamageObjective).toMatchObject({
+      damageLimit: 20,
+      description: expect.stringContaining('不影响Boss、出口或主线通关')
+    });
+    expect(lowDamageObjective?.description).toContain('守势');
+    expect(lowDamageObjective?.description).toContain('减伤');
+
+    const exceeded = evaluateDirective(directive, {
+      ...baseSummary,
+      damageTaken: 21
+    });
+    expect(exceeded.status).toBe('failed');
+    expect(exceeded.objectiveResults).toContainEqual(
+      expect.objectContaining({
+        id: 'demon_tower_1_low_damage',
+        completed: false,
+        progressText: '承伤 21/20'
+      })
+    );
   });
 
   it('marks a directive active while required clears are still in progress', () => {
@@ -81,7 +115,7 @@ describe('main god directive system', () => {
     });
 
     expect(result.status).toBe('active');
-    expect(result.progressText).toBe('1/3 required nodes cleared');
+    expect(result.progressText).toBe('节点清理 1/3');
     expect(result.rewardPreview).toBe(directive.reward.preview);
     expect(result.objectiveResults.some((objective) => !objective.completed)).toBe(true);
   });
@@ -91,7 +125,7 @@ describe('main god directive system', () => {
     const result = evaluateDirective(directive, baseSummary);
 
     expect(result.status).toBe('completed');
-    expect(result.progressText).toBe('3/3 required nodes cleared');
+    expect(result.progressText).toBe('节点清理 3/3');
     expect(result.objectiveResults.every((objective) => objective.completed)).toBe(true);
   });
 
@@ -115,7 +149,7 @@ describe('main god directive system', () => {
     const result = evaluateDirective(directive, baseSummary);
 
     expect(result.status).toBe('locked');
-    expect(result.progressText).toBe('Locked until 虚界王座 run starts');
+    expect(result.progressText).toBe('进入虚界王座后开始记录');
     expect(result.objectiveResults.every((objective) => !objective.completed)).toBe(true);
   });
 
@@ -141,6 +175,35 @@ describe('main god directive system', () => {
         expect.objectContaining({ kind: 'capture', completed: true }),
         expect.objectContaining({ kind: 'low_damage', completed: true })
       ])
+    );
+  });
+
+  it('completes capture objectives from permanent ownership without claiming a new run capture', () => {
+    const directive = getDirectiveForDungeon('demon_tower_1');
+    const owned = evaluateDirective(directive, {
+      ...baseSummary,
+      captures: [],
+      ownedPetIds: ['mist_kitten']
+    });
+    const capturedAgain = evaluateDirective(directive, {
+      ...baseSummary,
+      captures: ['mist_kitten'],
+      ownedPetIds: ['mist_kitten']
+    });
+
+    expect(owned.objectiveResults).toContainEqual(
+      expect.objectContaining({
+        id: 'demon_tower_1_capture_mist_kitten',
+        completed: true,
+        progressText: '已永久拥有'
+      })
+    );
+    expect(capturedAgain.objectiveResults).toContainEqual(
+      expect.objectContaining({
+        id: 'demon_tower_1_capture_mist_kitten',
+        completed: true,
+        progressText: '本轮已捕获'
+      })
     );
   });
 
@@ -171,7 +234,7 @@ describe('main god directive system', () => {
           id: 'temporal_observatory_calibration_route',
           kind: 'route',
           completed: true,
-          progressText: '2/2 route anchors cleared'
+          progressText: '路线锚点 2/2'
         })
       ])
     );
@@ -189,7 +252,7 @@ describe('main god directive system', () => {
     expect(missedFuture.status).toBe('failed');
     expect(missedFuture.objectiveResults.find((objective) => objective.kind === 'route')).toMatchObject({
       completed: false,
-      progressText: '1/2 route anchors cleared'
+      progressText: '路线锚点 1/2'
     });
   });
 
@@ -251,7 +314,7 @@ describe('main god directive system', () => {
     expect(missedEffect.status).toBe('failed');
     expect(missedEffect.objectiveResults).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ kind: 'route', completed: false, progressText: '1/2 route anchors cleared' }),
+        expect.objectContaining({ kind: 'route', completed: false, progressText: '路线锚点 1/2' }),
         expect.objectContaining({ kind: 'equip', completed: false }),
         expect.objectContaining({ kind: 'low_damage', completed: false })
       ])
@@ -355,7 +418,7 @@ describe('main god directive system', () => {
     });
     expect(missedClause.status).toBe('failed');
     expect(missedClause.objectiveResults).toEqual(expect.arrayContaining([
-      expect.objectContaining({ kind: 'route', completed: false, progressText: '2/3 route anchors cleared' }),
+      expect.objectContaining({ kind: 'route', completed: false, progressText: '路线锚点 2/3' }),
       expect.objectContaining({ kind: 'equip', completed: false }),
       expect.objectContaining({ kind: 'low_damage', completed: false })
     ]));
@@ -435,7 +498,7 @@ describe('main god directive system', () => {
     });
     expect(missedBid.status).toBe('failed');
     expect(missedBid.objectiveResults).toEqual(expect.arrayContaining([
-      expect.objectContaining({ id: 'legacy_auction_court_four_decisions_two_bids', completed: false, progressText: '4/4 auction decisions; 1/2 bids' }),
+      expect.objectContaining({ id: 'legacy_auction_court_four_decisions_two_bids', completed: false, progressText: '拍卖决策 4/4；竞价 1/2' }),
       expect.objectContaining({ kind: 'equip', completed: false }),
       expect.objectContaining({ kind: 'low_damage', completed: false })
     ]));
@@ -501,9 +564,9 @@ describe('main god directive system', () => {
     expect(completed.status).toBe('completed');
     expect(completed.rewardPreview).toBe('奖励点 760、灵蕴 3、原型血清 2');
     expect(completed.objectiveResults).toEqual([
-      expect.objectContaining({ completed: true, progressText: '3/3 splices; 2/2 unique genes' }),
-      expect.objectContaining({ completed: true, progressText: 'Active bloodline snapshot valid' }),
-      expect.objectContaining({ completed: true, progressText: '88/88 damage taken' })
+      expect.objectContaining({ completed: true, progressText: '拼接 3/3；不同基因 2/2' }),
+      expect.objectContaining({ completed: true, progressText: '活性血脉快照有效' }),
+      expect.objectContaining({ completed: true, progressText: '承伤 88/88' })
     ]);
 
     const sameGene = evaluateDirective(directive, {
@@ -522,7 +585,7 @@ describe('main god directive system', () => {
     });
     expect(sameGene.status).toBe('failed');
     expect(sameGene.objectiveResults).toEqual(expect.arrayContaining([
-      expect.objectContaining({ kind: 'genesis_splice', completed: false, progressText: '3/3 splices; 1/2 unique genes' }),
+      expect.objectContaining({ kind: 'genesis_splice', completed: false, progressText: '拼接 3/3；不同基因 1/2' }),
       expect.objectContaining({ kind: 'active_bloodline', completed: true }),
       expect.objectContaining({ kind: 'low_damage', completed: false })
     ]));
@@ -637,9 +700,9 @@ describe('main god directive system', () => {
     });
     expect(completed.status).toBe('completed');
     expect(completed.objectiveResults).toEqual([
-      expect.objectContaining({ completed: true, progressText: '3/3 relays; 2/1 mute; 1/1 broadcast' }),
-      expect.objectContaining({ completed: true, progressText: '0/4 boss noise' }),
-      expect.objectContaining({ completed: true, progressText: '92/92 damage taken' })
+      expect.objectContaining({ completed: true, progressText: '中继 3/3；静默 2/1；广播 1/1' }),
+      expect.objectContaining({ completed: true, progressText: '首领噪声 0/4' }),
+      expect.objectContaining({ completed: true, progressText: '承伤 92/92' })
     ]);
 
     const malformed = evaluateDirective(directive, {
@@ -737,9 +800,9 @@ describe('main god directive system', () => {
     });
     expect(completed.status).toBe('completed');
     expect(completed.objectiveResults).toEqual([
-      expect.objectContaining({ completed: true, progressText: '3/3 checkpoints; 1/1 treat; 2/1 push; survivor 80' }),
-      expect.objectContaining({ completed: true, progressText: '80/50 boss survivor hp' }),
-      expect.objectContaining({ completed: true, progressText: '98/98 damage taken' })
+      expect.objectContaining({ completed: true, progressText: '检查点 3/3；救治 1/1；推进 2/1；幸存者生命 80' }),
+      expect.objectContaining({ completed: true, progressText: '首领战幸存者生命 80/50' }),
+      expect.objectContaining({ completed: true, progressText: '承伤 98/98' })
     ]);
 
     const malformed = evaluateDirective(directive, {
@@ -841,9 +904,9 @@ describe('main god directive system', () => {
     });
     expect(completed.status).toBe('completed');
     expect(completed.objectiveResults).toEqual([
-      expect.objectContaining({ completed: true, progressText: '3/3 evidence; 3/2 trusted; accusation correct; appeal unused' }),
-      expect.objectContaining({ completed: true, progressText: '3/2 trusted at boss; verdict correct; appeal unused' }),
-      expect.objectContaining({ completed: true, progressText: '105/105 damage taken' })
+      expect.objectContaining({ completed: true, progressText: '证据 3/3；可信 3/2；指控正确；未申诉' }),
+      expect.objectContaining({ completed: true, progressText: '首领战可信证据 3/2；裁决正确；未申诉' }),
+      expect.objectContaining({ completed: true, progressText: '承伤 105/105' })
     ]);
 
     const failed = evaluateDirective(directive, {
@@ -911,8 +974,8 @@ describe('main god directive system', () => {
     });
     expect(completed.status).toBe('completed');
     expect(completed.objectiveResults).toEqual([
-      expect.objectContaining({ completed: true, progressText: '3/3 takes; route sequence; boss completed' }),
-      expect.objectContaining({ completed: true, progressText: '112/112 damage taken' })
+      expect.objectContaining({ completed: true, progressText: '镜次 3/3；路线 sequence；首领已完成' }),
+      expect.objectContaining({ completed: true, progressText: '承伤 112/112' })
     ]);
 
     expect(evaluateDirective(directive, {
@@ -976,8 +1039,8 @@ describe('main god directive system', () => {
     });
     expect(completed.status).toBe('completed');
     expect(completed.objectiveResults).toEqual([
-      expect.objectContaining({ completed: true, progressText: '3/3 relays; route shadow; boss completed' }),
-      expect.objectContaining({ completed: true, progressText: '120/120 damage taken' })
+      expect.objectContaining({ completed: true, progressText: '中继 3/3；路线 shadow；首领已完成' }),
+      expect.objectContaining({ completed: true, progressText: '承伤 120/120' })
     ]);
 
     expect(evaluateDirective(directive, {

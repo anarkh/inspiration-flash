@@ -4,6 +4,7 @@ export const legacyAuctionCourtDungeon: DungeonDefinition = {
   id: 'legacy_auction_court',
   name: '亡队遗产拍卖庭',
   tier: 13,
+  genre: 'modern',
   recommendedPower: 780,
   theme: '无人归还的队伍遗产在此重新估价，竞标者必须用本轮筹码证明自己有资格继承亡者留下的力量。',
   recommended: '推荐战力 780、满级终盘装备、稳定界门补给，以及能承受连续竞价反噬的生命储备。',

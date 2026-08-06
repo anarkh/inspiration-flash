@@ -51,6 +51,24 @@ describe('combat intents', () => {
     expect(intent.dangerousActions).toContain('weapon_skill');
   });
 
+  it('announces every third rogue-sentry volley with the same guard counter and damage values', () => {
+    const charging = getCombatIntent(createInput({ monsterId: 'rogue_sentry', turn: 2 }));
+    const volley = getCombatIntent(createInput({ monsterId: 'rogue_sentry', turn: 3 }));
+    const nextVolley = getCombatIntent(createInput({ monsterId: 'rogue_sentry', turn: 6 }));
+
+    expect(charging.id).toBe('regular-pursuit');
+    expect(volley).toMatchObject({
+      id: 'sentry-suppressive-volley',
+      name: '压制齐射',
+      severity: 'danger'
+    });
+    expect(volley.consequence).toContain('15 点物理伤害');
+    expect(volley.consequence).toContain('4 点余波');
+    expect(volley.recommendedActions).toEqual(['guard']);
+    expect(volley.dangerousActions).toContain('weapon_skill');
+    expect(nextVolley).toEqual(volley);
+  });
+
   it('warns about an unused even-turn shift and recognizes gate sense', () => {
     const exposed = getCombatIntent(createInput({ monsterId: 'portal_molt_beast', turn: 2, effects: {} }));
     const locked = getCombatIntent(
@@ -66,6 +84,55 @@ describe('combat intents', () => {
     expect(locked.consequence).toContain('观门法');
     expect(locked.dangerousActions).toEqual([]);
     expect(alreadyShifted.id).toBe('regular-pursuit');
+  });
+
+  it('shows the phase-hunter shield every turn and classifies the two new weapon skills by damage kind', () => {
+    const oddBreach = getCombatIntent(
+      createInput({
+        monsterId: 'phase_hunter_drone',
+        turn: 1,
+        equipped: { ...baseEquipped, weapon: 'breach_shotgun' }
+      })
+    );
+    const oddCoil = getCombatIntent(
+      createInput({
+        monsterId: 'phase_hunter_drone',
+        turn: 1,
+        equipped: { ...baseEquipped, weapon: 'phase_coil_rifle' }
+      })
+    );
+    const evenBreach = getCombatIntent(
+      createInput({
+        monsterId: 'phase_hunter_drone',
+        turn: 2,
+        equipped: { ...baseEquipped, weapon: 'breach_shotgun' }
+      })
+    );
+    const evenCoil = getCombatIntent(
+      createInput({
+        monsterId: 'phase_hunter_drone',
+        turn: 2,
+        equipped: { ...baseEquipped, weapon: 'phase_coil_rifle' }
+      })
+    );
+
+    expect(oddBreach).toMatchObject({
+      id: 'phase-hunter-shield',
+      name: '奇数回合物理相位盾',
+      severity: 'danger'
+    });
+    expect(oddBreach.consequence).toContain('物理伤害降至 50%');
+    expect(oddBreach.consequence).toContain('雷火符');
+    expect(oddBreach.recommendedActions).toEqual(['art', 'use_thunder_talisman']);
+    expect(oddBreach.dangerousActions).toEqual(['attack', 'weapon_skill']);
+    expect(oddCoil.recommendedActions).toEqual(['art', 'weapon_skill', 'use_thunder_talisman']);
+    expect(oddCoil.dangerousActions).toEqual(['attack']);
+
+    expect(evenBreach.name).toBe('偶数回合术法相位盾');
+    expect(evenBreach.recommendedActions).toEqual(['attack', 'weapon_skill', 'use_thunder_talisman']);
+    expect(evenBreach.dangerousActions).toEqual(['art']);
+    expect(evenCoil.recommendedActions).toEqual(['attack', 'use_thunder_talisman']);
+    expect(evenCoil.dangerousActions).toEqual(['art', 'weapon_skill']);
   });
 
   it('uses the recorded offense and equipped weapon to flag repeated judge actions', () => {

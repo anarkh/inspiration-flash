@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   TIER_RECOMMENDED_POWER,
+  getPlayerPowerBreakdown,
   getPlayerPowerFromLoadout,
   getReadinessFromPower,
   getRecommendedPowerForTier,
@@ -13,12 +14,9 @@ const starterLoadout = {
     attack: 19,
     artPower: 13,
     defense: 8,
-    speed: 14
-  },
-  lingyun: 1,
-  learnedMethodCount: 0,
-  equipmentLevelTotal: 3,
-  ownedPetCount: 0
+    speed: 14,
+    trapCheck: 5
+  }
 };
 
 const investedLoadout = {
@@ -27,12 +25,9 @@ const investedLoadout = {
     attack: 38,
     artPower: 42,
     defense: 10,
-    speed: 14
-  },
-  lingyun: 9,
-  learnedMethodCount: 2,
-  equipmentLevelTotal: 5,
-  ownedPetCount: 1
+    speed: 14,
+    trapCheck: 18
+  }
 };
 
 describe('progression curve', () => {
@@ -68,9 +63,19 @@ describe('progression curve', () => {
     expect(getTierReadiness(starterLoadout, 19)).toBe('deadly');
   });
 
-  it('raises power after gear, method, and pet investment so late risk drops', () => {
+  it('derives power only from effective stats and exposes an auditable breakdown', () => {
+    expect(getPlayerPowerBreakdown(starterLoadout)).toEqual({
+      offense: 88,
+      survival: 50,
+      mobility: 21,
+      exploration: 8,
+      total: 167
+    });
+  });
+
+  it('raises power after effective-stat investment so later risk drops', () => {
     expect(getPlayerPowerFromLoadout(investedLoadout)).toBeGreaterThan(getPlayerPowerFromLoadout(starterLoadout));
     expect(getTierReadiness(starterLoadout, 10)).toBe('deadly');
-    expect(getTierReadiness(investedLoadout, 9)).not.toBe('deadly');
+    expect(getTierReadiness(investedLoadout, 8)).not.toBe('deadly');
   });
 });

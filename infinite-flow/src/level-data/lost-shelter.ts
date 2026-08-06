@@ -4,8 +4,9 @@ export const lostShelterDungeon: DungeonDefinition = {
   id: 'lost_shelter',
   name: '失联避难所',
   tier: 16,
+  genre: 'modern',
   recommendedPower: 1040,
-  theme: '封闭避难所仍按失效名单执行撤离，探索者必须护送最后一批幸存者穿过三处检查点，识破拟声求救并终止失联总控。',
+  theme: '现代城市防灾避难所仍按失效名单执行武装撤离；探索者必须利用枪械、掩体与急救物资护送最后一批幸存者穿过三处检查点，并终止失联总控。',
   recommended: '推荐战力 1040、完整终盘套装、三类机关反制品，以及足以维持幸存者护送与首领战的恢复储备。',
   rewardPreview: '救援铭牌、终局材料、奖励点 1580-3900',
   grid: { width: 6, height: 5, startNodeId: 'shelter_gate' },
@@ -21,9 +22,9 @@ export const lostShelterDungeon: DungeonDefinition = {
       reward: { rewardPoints: 390, items: { armor_patch: 1 } }
     },
     {
-      id: 'north_rescue_patrol', type: 'monster', title: '北区拟声巡救者', position: { x: 2, y: 0 },
-      description: '披着救援服的拟声体沿北廊巡回点名，用熟悉的求救口令诱使护送队伍脱离阵形。',
-      monsterId: 'mimic_survivor'
+      id: 'north_rescue_patrol', type: 'monster', title: '北区失控哨戒炮', position: { x: 2, y: 0 },
+      description: '失控的自动哨戒炮封锁北廊，每隔三轮完成一次压制齐射，迫使护送队寻找掩体。',
+      monsterId: 'rogue_sentry'
     },
     {
       id: 'north_checkpoint', type: 'reward', title: '北区护送检查点', position: { x: 3, y: 0 },
@@ -132,7 +133,7 @@ export const lostShelterDungeon: DungeonDefinition = {
     },
     {
       id: 'field_survey_archive', type: 'reward', fieldSurveyId: 'survey_shelter_rescue_archive', title: '救援调查档案', position: { x: 0, y: 4 },
-      description: '调查档案汇总历次失联救援留下的黑匣记录，可还原四件救援装备参与撤离的完整路径。',
+      description: '调查档案汇总历次失联救援留下的黑匣记录，可还原五件救援装备参与撤离的完整路径。',
       reward: { rewardPoints: 430, items: { rescue_badge: 1 } }
     },
     {
@@ -147,7 +148,7 @@ export const lostShelterDungeon: DungeonDefinition = {
     },
     {
       id: 'south_supply_cache', type: 'reward', equipmentHuntClueId: 'equipment_hunt_lost_shelter', title: '南区救援物资柜', position: { x: 3, y: 4 },
-      description: '物资柜内的回收单保存第二条救援装备轨迹，与北区记录共同指向四件成熟装备。',
+      description: '物资柜内的回收单保存第二条救援装备轨迹，与北区记录共同指向五件成熟装备。',
       reward: { rewardPoints: 390, items: { focus_incense: 1 } }
     },
     {

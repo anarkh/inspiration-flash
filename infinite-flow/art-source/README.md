@@ -15,8 +15,9 @@ their own resolutions without reverse-engineering the Web DOM.
 
 ## Generated Sources
 
-All generated sources were created with the built-in ImageGen path on 2026-07-21. Runtime revisions are immutable
-`-v1` files; future replacements should create `-v2` siblings and update `src/game-assets.ts`.
+Generated sources were created with the built-in ImageGen path. Runtime revisions are immutable
+(`-v1`, `-v2`, and later); future replacements should create revision siblings and update
+`src/game-assets.ts`.
 
 | Source | Grid | Row-major content |
 | --- | --- | --- |
@@ -35,6 +36,12 @@ All generated sources were created with the built-in ImageGen path on 2026-07-21
 | `generated/monster-atlas-late-3-v1.png` | 3 x 3 | false testimony judge through all-sight warden; see `prompts/monster-atlas-late-3-v1.md` |
 | `generated/equipment-atlas-late-v1.png` | 5 x 4 | symbiote cowl through blindline cutter; see `prompts/equipment-atlas-late-v1.md` |
 | `generated/equipment-atlas-final-v1.png` | 3 x 1 | predictive visor, matte shell, inverse prism; see `prompts/equipment-atlas-final-v1.md` |
+
+The Tier 12–19 `-v2` dungeon banners and the standalone modern/future equipment
+and monster additions were generated independently on 2026-07-30. Their exact
+briefs, crop intent, and runtime mappings are preserved in
+`prompts/dungeon-banners-late-v2.md` and
+`prompts/modern-future-content-v1.md`.
 
 The complete generation briefs live in `art-source/prompts/`. They preserve exact cell order, visual intent, and
 negative constraints instead of relying on the current Web layout as undocumented production memory.

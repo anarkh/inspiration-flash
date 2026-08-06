@@ -608,6 +608,20 @@ export const MONSTERS: Record<MonsterId, MonsterDefinition> = {
     ability: '复制队伍中最虚弱者的声音与上一回合动作；连续回应同类求救时，它会借机重演该动作并扰乱分诊。',
     counter: '先观察呼吸与名单编号，再交替武力、术法和防御；不要连续回应相同求救口令，即可让伪装失去同步样本。'
   },
+  rogue_sentry: {
+    id: 'rogue_sentry',
+    name: '失控哨戒炮',
+    dungeonId: 'lost_shelter',
+    maxHp: 495,
+    attack: 67,
+    artPower: 70,
+    defense: 36,
+    speed: 32,
+    rewardPoints: 1940,
+    drop: { rescue_badge: 1 },
+    ability: '每 3 回合完成一次压制齐射，在常规攻击后追加高额物理伤害。',
+    counter: '观察哨戒炮的三段充能灯号，在第 3 回合使用守御可显著减轻压制齐射。'
+  },
   shelter_enforcer: {
     id: 'shelter_enforcer',
     name: '避难所执行体',
@@ -775,6 +789,20 @@ export const MONSTERS: Record<MonsterId, MonsterDefinition> = {
     drop: { observation_shard: 1 },
     ability: '按当前扫描相位展开扇形视锥，连续停留在同类行动上会被标记并追加一次术法扫射。',
     counter: '保持武力、术法与防御轮换，并利用移动后的相位变化让下一次视锥落在空街。'
+  },
+  phase_hunter_drone: {
+    id: 'phase_hunter_drone',
+    name: '相位猎杀号',
+    dungeonId: 'panopticon_city',
+    maxHp: 620,
+    attack: 92,
+    artPower: 108,
+    defense: 51,
+    speed: 43,
+    rewardPoints: 2720,
+    drop: { observation_shard: 1 },
+    ability: '奇数回合展开物理相位盾、偶数回合展开术法相位盾，大幅削减对应类型的直接伤害。',
+    counter: '按回合切换武力与术法伤害，或使用符箓绕过相位盾，即可持续命中无人机核心。'
   },
   blindspot_auditor: {
     id: 'blindspot_auditor',

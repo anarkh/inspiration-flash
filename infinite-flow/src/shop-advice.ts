@@ -79,6 +79,7 @@ const DUNGEON_REASON_MAP: Partial<Record<EquipmentId | MethodId | PetId | ItemId
   anechoic_mantle: ['silent_broadcast_tower'],
   last_channel_beacon: ['silent_broadcast_tower'],
   rescue_carbine: ['lost_shelter'],
+  breach_shotgun: ['lost_shelter'],
   triage_visor: ['lost_shelter'],
   evacuation_plate: ['lost_shelter'],
   blackbox_beacon: ['lost_shelter'],
@@ -91,6 +92,7 @@ const DUNGEON_REASON_MAP: Partial<Record<EquipmentId | MethodId | PetId | ItemId
   buffer_plate: ['combat_replay_stage'],
   thaw_metronome: ['combat_replay_stage'],
   blindline_cutter: ['panopticon_city'],
+  phase_coil_rifle: ['panopticon_city'],
   predictive_visor: ['panopticon_city'],
   matte_shell: ['panopticon_city'],
   inverse_prism: ['panopticon_city'],
@@ -148,10 +150,10 @@ const ITEM_USE_TEXT: Partial<Record<ItemId, string>> = {
   legacy_scrip: `遗产筹码是 Tier 13 装备的淬炼与兑换材料，用于${EQUIPMENT.legacy_gavel.name}、${EQUIPMENT.anonymous_veil.name}、${EQUIPMENT.escrow_plate.name}与${EQUIPMENT.final_lot_bell.name}，主要从亡队遗产拍卖庭获取。`,
   genesis_serum: `原型血清是 Tier 14 血统养成与成熟装备兑换材料，用于${EQUIPMENT.helix_cleaver.name}、${EQUIPMENT.symbiote_cowl.name}、${EQUIPMENT.carapace_harness.name}与${EQUIPMENT.rebirth_amulet.name}，主要从众生原型库探索与失控原型收容中获取。`,
   silence_core: `静默晶核是 Tier 15 装备的淬炼与兑换材料，用于${EQUIPMENT.hushblade.name}、${EQUIPMENT.dead_air_headset.name}、${EQUIPMENT.anechoic_mantle.name}与${EQUIPMENT.last_channel_beacon.name}，只能从寂声广播塔探索与广播守卫收容中获取。`,
-  rescue_badge: `救援铭牌是 Tier 16 装备的淬炼与兑换材料，用于${EQUIPMENT.rescue_carbine.name}、${EQUIPMENT.triage_visor.name}、${EQUIPMENT.evacuation_plate.name}与${EQUIPMENT.blackbox_beacon.name}，只能从失联避难所探索与避难所执行体收容中获取。`,
+  rescue_badge: `救援铭牌是 Tier 16 装备的淬炼与兑换材料，用于${EQUIPMENT.rescue_carbine.name}、${EQUIPMENT.breach_shotgun.name}、${EQUIPMENT.triage_visor.name}、${EQUIPMENT.evacuation_plate.name}与${EQUIPMENT.blackbox_beacon.name}，只能从失联避难所探索与避难所执行体收容中获取。`,
   truth_fragment: `真证碎片是 Tier 17 装备的淬炼与兑换材料，用于${EQUIPMENT.cross_examiner_sabre.name}、${EQUIPMENT.forensic_visor.name}、${EQUIPMENT.custody_shell.name}与${EQUIPMENT.appeal_seal.name}，只能从伪证裁定庭的证据路线与档案删录官收容中获取。`,
   combat_reel: `战斗母带是 Tier 18 装备的淬炼与兑换材料，用于${EQUIPMENT.frame_engraver.name}、${EQUIPMENT.cue_visor.name}、${EQUIPMENT.buffer_plate.name}与${EQUIPMENT.thaw_metronome.name}，只能从战痕复演场的脚本与影片补给路线、连戏编辑收容中获取。`,
-  observation_shard: `观测棱片是 Tier 19 装备的淬炼与兑换材料，用于${EQUIPMENT.blindline_cutter.name}、${EQUIPMENT.predictive_visor.name}、${EQUIPMENT.matte_shell.name}与${EQUIPMENT.inverse_prism.name}，只能从天幕监察城的盲区事件、折光调查与监察精英收容中获取。`
+  observation_shard: `观测棱片是 Tier 19 装备的淬炼与兑换材料，用于${EQUIPMENT.blindline_cutter.name}、${EQUIPMENT.phase_coil_rifle.name}、${EQUIPMENT.predictive_visor.name}、${EQUIPMENT.matte_shell.name}与${EQUIPMENT.inverse_prism.name}，只能从天幕监察城的盲区事件、折光调查与监察精英收容中获取。`
 };
 
 function canPay(state: GameState, cost: Cost = {}): boolean {

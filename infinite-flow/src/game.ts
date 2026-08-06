@@ -1,5 +1,8 @@
-import { getPlayerPowerFromLoadout, getReadinessFromPower } from './progression';
-import type { ProgressionReadiness } from './progression';
+import {
+  getPlayerPowerBreakdown as calculatePlayerPowerBreakdown,
+  getReadinessFromPower
+} from './progression';
+import type { PlayerPowerBreakdown, ProgressionReadiness } from './progression';
 
 import { applyMonsterCombatEffects } from './combat-effects';
 import type { CombatDamageKind, CombatEffectAction, CombatEffectState } from './combat-effects';
@@ -113,6 +116,12 @@ import { evaluateDirective, getDirectiveForDungeon } from './directive-system';
 import type { DirectiveEvaluation } from './directive-system';
 import { getCampaignProgress } from './campaign-progress';
 import type { CampaignDungeonGate } from './campaign-progress';
+import {
+  EXPLORATION_REWARD_VERSION,
+  EXPLORATION_SUPPLY_INTERVAL,
+  getExplorationClearReward,
+  usesCurrentExplorationRewardRules
+} from './exploration-rewards';
 import { evaluateTask, getMainlineRequirementText, getTaskById, getUnlockedDungeonIdsFromMainline } from './task-system';
 import { evaluateEventOptions, getDungeonEvents, resolveDungeonEventChoice } from './dungeon-events';
 import type { DungeonEvent, DungeonEventContext, DungeonEventRequirement, EvaluatedDungeonEventOption } from './dungeon-events';
@@ -217,7 +226,12 @@ import type {
   RedactionChoice,
   RedactionClauseStatus
 } from './dungeon-laws';
-import { getLegalAdjacentTargetIds, getRouteBlockReason, getRouteGateStatus } from './dungeon-routes';
+import {
+  getLegalAdjacentTargetIds,
+  getProceduralBossAccessStatus,
+  getRouteBlockReason,
+  getRouteGateStatus
+} from './dungeon-routes';
 import type { DungeonRouteGateStatus } from './dungeon-routes';
 import {
   evaluateRunProtocolReward,
@@ -229,6 +243,33 @@ import {
   scaleTrapForRunProtocol
 } from './run-protocols';
 import type { RunProtocolDefinition, RunProtocolId } from './run-protocols';
+import {
+  applyInfernoMapSnapshot,
+  areInfernoNodesConnected,
+  createInfernoMapSnapshot,
+  getInfernoConnectionIds,
+  getInfernoTierModifiers,
+  getInfernoUnlockedTier as getUnlockedInfernoTier,
+  scaleInfernoItemDrops,
+  scaleInfernoRewardPoints,
+  scaleMonsterForInfernoTier,
+  scaleTrapForInfernoTier,
+  unlockNextInfernoTier
+} from './inferno-system';
+import type {
+  InfernoMapSnapshot,
+  InfernoProgress
+} from './inferno-system';
+import {
+  compareEquipmentRolls,
+  createEquipmentRoll,
+  getEquipmentRolledBaseStats,
+  getEquipmentRollScore
+} from './equipment-rolls';
+import type {
+  EquipmentRoll,
+  EquipmentRollMap
+} from './equipment-rolls';
 import {
   advanceRunPressureOnNodeClear,
   calculateRunPressureBonus,
@@ -438,6 +479,7 @@ export type DungeonId =
   | 'false_testimony_court'
   | 'combat_replay_stage'
   | 'panopticon_city';
+export type DungeonGenre = 'cultivation' | 'modern' | 'science_fiction' | 'anomaly';
 export type NodeType = 'monster' | 'trap' | 'portal' | 'reward' | 'exit';
 export type ItemKind = 'combat' | 'trap' | 'portal' | 'material';
 export const EQUIPMENT_SLOTS = ['weapon', 'head', 'armor', 'hands', 'feet', 'waist', 'charm'] as const;
@@ -580,6 +622,7 @@ export type EquipmentId =
   | 'anechoic_mantle'
   | 'last_channel_beacon'
   | 'rescue_carbine'
+  | 'breach_shotgun'
   | 'triage_visor'
   | 'evacuation_plate'
   | 'blackbox_beacon'
@@ -592,6 +635,7 @@ export type EquipmentId =
   | 'buffer_plate'
   | 'thaw_metronome'
   | 'blindline_cutter'
+  | 'phase_coil_rifle'
   | 'predictive_visor'
   | 'matte_shell'
   | 'inverse_prism';
@@ -642,6 +686,7 @@ export type MonsterId =
   | 'dead_air_mimic'
   | 'last_broadcaster'
   | 'mimic_survivor'
+  | 'rogue_sentry'
   | 'shelter_enforcer'
   | 'evacuation_horror'
   | 'shelter_overseer'
@@ -654,6 +699,7 @@ export type MonsterId =
   | 'retake_double'
   | 'final_cut_director'
   | 'sweep_sentinel'
+  | 'phase_hunter_drone'
   | 'blindspot_auditor'
   | 'exposure_double'
   | 'all_sight_warden';
@@ -769,6 +815,7 @@ export type DungeonDefinition = {
   id: DungeonId;
   name: string;
   tier: number;
+  genre: DungeonGenre;
   recommendedPower: number;
   theme: string;
   recommended: string;
@@ -842,11 +889,14 @@ export type CycleImprintId =
 export type RunProtocolSnapshot = {
   id: RunProtocolId;
   rulesVersion: 1;
+  infernoTier?: number;
 };
 
 export type DungeonEntryOptions = {
   flowVersion?: 2;
   hiddenTaskSeed?: number;
+  infernoTier?: number;
+  infernoMapSeed?: number;
 };
 
 export type RunProtocolSettlement = {
@@ -862,6 +912,16 @@ export type RunProtocolSettlement = {
     itemId: ItemId;
     amount: number;
   };
+  infernoTier?: number;
+  unlockedInfernoTier?: number;
+};
+
+export type EquipmentRollSettlement = {
+  equipmentId: EquipmentId;
+  roll: EquipmentRoll;
+  outcome: 'acquired' | 'upgraded' | 'salvaged';
+  previousItemPower?: number;
+  salvageRewardPoints: number;
 };
 
 export type RunPressureSettlement = {
@@ -940,10 +1000,12 @@ export type CombatReplayCombatState = {
 
 export type DungeonRun = {
   entryFlowVersion?: 2;
+  explorationRewardVersion?: number;
   hiddenTaskSeed?: number;
   dungeonId: DungeonId;
   currentNodeId: string;
   clearedNodeIds: string[];
+  discoveredNodeIds?: string[];
   captures: number;
   capturedPetIds: PetId[];
   usedItems: ItemId[];
@@ -958,6 +1020,8 @@ export type DungeonRun = {
   equipmentMemorySnapshot?: EquipmentMemoryRunSnapshot;
   equipmentMemoryHunt?: EquipmentMemoryHuntRunState;
   protocol?: RunProtocolSnapshot;
+  infernoMap?: InfernoMapSnapshot;
+  carriedEquipmentRolls?: EquipmentRollMap;
   pressureState?: RunPressureState;
   relicState?: RunRelicState;
   soulSkillState?: EquipmentSoulSkillRunState;
@@ -975,6 +1039,7 @@ export type DungeonRun = {
   bloodlineSnapshot?: BloodlineRunSnapshot;
   pendingEquipmentOffer?: PendingEquipmentOffer;
   lastLootSettlement?: RunLootSettlement<ItemId, EquipmentId>;
+  lastAutoEquippedEquipmentIds?: EquipmentId[];
   lastProtocolSettlement?: RunProtocolSettlement;
   lastPressureSettlement?: RunPressureSettlement;
   lastRelicSettlement?: RunRelicSettlement;
@@ -982,12 +1047,14 @@ export type DungeonRun = {
   lastRouteContractSettlement?: RouteContractSettlement;
   lastEquipmentMemoryHuntSettlement?: EquipmentMemoryHuntSettlement;
   lastPursuitSettlement?: RunPursuitSettlement;
+  lastEquipmentRollSettlement?: EquipmentRollSettlement;
 };
 
 export type PendingEquipmentOffer = {
   offerId: string;
   equipmentIds: EquipmentId[];
   guaranteedEquipmentId?: EquipmentId;
+  equipmentRolls?: EquipmentRollMap;
 };
 
 export type AvailableDungeonEvent = Omit<DungeonEvent, 'options'> & {
@@ -1035,6 +1102,7 @@ export type GameState = {
   inventory: Record<ItemId, number>;
   ownedEquipment: EquipmentId[];
   equipmentLevels: Partial<Record<EquipmentId, number>>;
+  equipmentRolls?: EquipmentRollMap;
   equipmentAttunements?: EquipmentAttunementMap;
   equipmentTemperRanks?: EquipmentTemperMap;
   equipmentMemories?: EquipmentMemoryMap;
@@ -1052,6 +1120,8 @@ export type GameState = {
   bloodlineRanks: Partial<Record<BloodlineId, BloodlineRank>>;
   activeBloodline?: BloodlineId;
   completedDungeonIds: DungeonId[];
+  infernoProgress?: InfernoProgress;
+  enteredDungeonIds?: DungeonId[];
   claimedDirectiveIds: string[];
   claimedTaskIds: string[];
   ownedPets: PetId[];
@@ -1276,7 +1346,7 @@ export const ITEMS: Record<ItemId, ItemDefinition> = {
     name: '止血丹',
     kind: 'combat',
     description: '战斗中回复 36 点生命。',
-    cost: { rewardPoints: 180 }
+    cost: { rewardPoints: 120 }
   },
   thunder_talisman: {
     id: 'thunder_talisman',
@@ -1324,7 +1394,7 @@ export const ITEMS: Record<ItemId, ItemDefinition> = {
     id: 'armor_patch',
     name: '护甲补片',
     kind: 'combat',
-    description: '战斗前临时加固护甲，适合挑战高攻怪。',
+    description: '防御时自动消耗一枚，降低本次反击伤害。',
     cost: { rewardPoints: 140 }
   },
   focus_incense: {
@@ -1943,6 +2013,16 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     perLevel: { attack: 9, artPower: 2 },
     maxLevel: 3
   },
+  breach_shotgun: {
+    id: 'breach_shotgun',
+    name: '破门霰弹枪',
+    slot: 'weapon',
+    description: '星炉专精；为近距突入与压制齐射设计的现代破门武器，专属战技可大幅降低目标防御影响。',
+    cost: { rewardPoints: 1820, lingyun: 7, items: { rescue_badge: 1, star_iron: 1 } },
+    base: { attack: 35, defense: 2 },
+    perLevel: { attack: 10, defense: 1 },
+    maxLevel: 3
+  },
   triage_visor: {
     id: 'triage_visor',
     name: '分诊目镜',
@@ -2063,6 +2143,16 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     perLevel: { attack: 12, artPower: 3 },
     maxLevel: 3
   },
+  phase_coil_rifle: {
+    id: 'phase_coil_rifle',
+    name: '相位线圈步枪',
+    slot: 'weapon',
+    description: '时序专精；以交替相位线圈切换实弹与术式输出，专属战技可贯穿动态护盾并进行攻术合流。',
+    cost: { rewardPoints: 2320, lingyun: 10, items: { observation_shard: 1, chronal_glass: 1 } },
+    base: { attack: 43, artPower: 12, speed: 2 },
+    perLevel: { attack: 13, artPower: 3, speed: 1 },
+    maxLevel: 3
+  },
   predictive_visor: {
     id: 'predictive_visor',
     name: '先见目镜',
@@ -2100,7 +2190,7 @@ export const METHODS: Record<MethodId, MethodDefinition> = {
     id: 'mist_breathing',
     name: '吐纳诀',
     description: '在雾、潮声和幻觉里稳住心神，能发现隐藏奖励。',
-    cost: { rewardPoints: 300 },
+    cost: { rewardPoints: 280 },
     stats: { spirit: 1 },
     passive: '奖励节点出现隐藏路线，陷阱检定更容易通过。'
   },
@@ -2619,6 +2709,44 @@ function settleDungeonRunRouteContract(
   };
 }
 
+const RUN_ECONOMY_OUTCOME_LABELS: Record<ReturnType<typeof calculateRunEconomy>['outcome'], string> = {
+  clean_clear: '完美撤离',
+  normal_clear: '稳定通关',
+  retreat: '主动撤退',
+  failed_recovered: '濒死回收'
+};
+
+const ROUTE_CONTRACT_STATUS_LABELS: Record<
+  NonNullable<RouteContractSettlement['state']>['status'],
+  string
+> = {
+  active: '进行中',
+  secured: '目标已完成',
+  failed: '失败',
+  lost: '已失效',
+  banked: '已入账'
+};
+
+const ROUTE_CONTRACT_REASON_LABELS: Record<
+  NonNullable<NonNullable<RouteContractSettlement['state']>['reason']>,
+  string
+> = {
+  out_of_order: '目标顺序错误',
+  incomplete_exit: '离场时目标未完成',
+  retreat: '主动撤退',
+  failure: '濒死回收',
+  cross_dungeon: '跨副本转移'
+};
+
+function getRouteContractSettlementLabel(
+  state: NonNullable<RouteContractSettlement['state']>
+): string {
+  const statusLabel = ROUTE_CONTRACT_STATUS_LABELS[state.status];
+  return state.reason
+    ? `${statusLabel}（${ROUTE_CONTRACT_REASON_LABELS[state.reason]}）`
+    : statusLabel;
+}
+
 function settleDungeonRunEquipmentMemoryHunt(
   run: DungeonRun,
   outcome: EquipmentMemoryHuntRunOutcome,
@@ -2804,9 +2932,43 @@ function getNormalizedRunPursuitSettlement(value: unknown): RunPursuitSettlement
   };
 }
 
+function getExplorationClearRewardForNode(state: GameState, nodeId: string): RewardBundle {
+  if (!state.run) return {};
+  const reward = getExplorationClearReward(
+    state.run,
+    DUNGEONS[state.run.dungeonId],
+    nodeId
+  );
+  return {
+    ...(reward.rewardPoints > 0 ? { rewardPoints: reward.rewardPoints } : {}),
+    ...(Object.keys(reward.items).length > 0 ? { items: reward.items } : {})
+  };
+}
+
+function formatRewardItems(items: Readonly<Partial<Record<ItemId, number>>> = {}): string {
+  return (Object.entries(items) as Array<[ItemId, number]>)
+    .filter(([, amount]) => amount > 0)
+    .map(([itemId, amount]) => `${ITEMS[itemId].name} x${amount}`)
+    .join('、');
+}
+
+function formatRewardGains(reward: RewardBundle): string {
+  return [
+    (reward.rewardPoints ?? 0) > 0 ? `${reward.rewardPoints} 点奖励` : '',
+    (reward.lingyun ?? 0) > 0 ? `灵蕴 x${reward.lingyun}` : '',
+    formatRewardItems(reward.items)
+  ].filter(Boolean).join('、');
+}
+
+function getExplorationClearRewardStatusLine(state: GameState, nodeId: string): string {
+  const rewardText = formatRewardGains(getExplorationClearRewardForNode(state, nodeId));
+  return rewardText ? `探索结算追加 ${rewardText}。` : '';
+}
+
 function markNodeCleared(state: GameState, nodeId: string, damageTaken = 0): GameState {
   if (!state.run || state.run.clearedNodeIds.includes(nodeId)) return state;
 
+  const explorationReward = getExplorationClearRewardForNode(state, nodeId);
   const node = getNodeById(DUNGEONS[state.run.dungeonId], nodeId);
   const clearedNodeIds = [...state.run.clearedNodeIds, nodeId];
   const pressureState =
@@ -2849,16 +3011,21 @@ function markNodeCleared(state: GameState, nodeId: string, damageTaken = 0): Gam
       ? discoverHiddenRouteContract({
           dungeonId: advancedRun.dungeonId,
           seed: advancedRun.hiddenTaskSeed,
-          clearedNodeIds
+          clearedNodeIds,
+          currentNodeId: advancedRun.currentNodeId,
+          connectionIdsByNodeId: getInfernoConnectionIds(advancedRun.infernoMap)
         })
       : undefined;
   const run = discoveredHiddenTask
     ? { ...advancedRun, routeContractState: discoveredHiddenTask }
     : advancedRun;
-  const clearedState: GameState = {
-    ...state,
-    run
-  };
+  const clearedState = applyRunReward(
+    {
+      ...state,
+      run
+    },
+    explorationReward
+  );
   const hiddenTaskDefinition = discoveredHiddenTask
     ? getRouteContractById(discoveredHiddenTask.contractId, discoveredHiddenTask.dungeonId)
     : undefined;
@@ -2878,7 +3045,9 @@ function markNodeCleared(state: GameState, nodeId: string, damageTaken = 0): Gam
 
 function getCurrentNode(state: GameState): DungeonNode | undefined {
   if (!state.run) return undefined;
-  return DUNGEONS[state.run.dungeonId].nodes.find((node) => node.id === state.run?.currentNodeId);
+  return getCurrentDungeonDefinition(state)?.nodes.find(
+    (node) => node.id === state.run?.currentNodeId
+  );
 }
 
 function getNormalizedDungeonLawState(state: GameState): DungeonLawState | undefined {
@@ -3663,6 +3832,27 @@ export function getTacticalLoadoutStatus(state: GameState): TacticalLoadoutStatu
   };
 }
 
+export function getPriorityFittedTacticalItemIds(
+  state: GameState,
+  priorityItemIds: readonly TacticalItemId[]
+): TacticalItemId[] {
+  const activeFieldRigs = getActiveEquipmentFieldRigs(state.equipped);
+  const candidates = [...new Set([
+    ...priorityItemIds,
+    ...getPreparedTacticalItemIds(state)
+  ])].filter((itemId) => state.inventory[itemId] > 0);
+  let fittedItemIds: TacticalItemId[] = [];
+
+  for (const itemId of candidates) {
+    const candidateItemIds = [...fittedItemIds, itemId];
+    if (validateTacticalLoadout(candidateItemIds, activeFieldRigs).isValid) {
+      fittedItemIds = candidateItemIds;
+    }
+  }
+
+  return fittedItemIds;
+}
+
 export function configureTacticalLoadout(state: GameState, itemIds: readonly string[]): GameState {
   if (state.phase !== 'hub') {
     return appendLog(state, '只能在主神空间配置战术携行。');
@@ -4395,6 +4585,41 @@ function getRunProtocolId(run: DungeonRun | undefined): RunProtocolId {
   return run?.protocol?.id ?? 'standard';
 }
 
+function getRunInfernoTier(run: DungeonRun | undefined): number {
+  return run?.protocol?.id === 'deep' && Number.isSafeInteger(run.protocol.infernoTier) &&
+    (run.protocol.infernoTier ?? 0) >= 1
+    ? run.protocol.infernoTier!
+    : 1;
+}
+
+function isLayeredInfernoRun(run: DungeonRun | undefined): boolean {
+  return run?.protocol?.id === 'deep' &&
+    Number.isSafeInteger(run.protocol.infernoTier) &&
+    (run.protocol.infernoTier ?? 0) >= 1;
+}
+
+export function getInfernoUnlockedTier(state: GameState, dungeonId: DungeonId): number {
+  return getUnlockedInfernoTier(
+    state.infernoProgress,
+    dungeonId,
+    state.completedDungeonIds
+  );
+}
+
+export function getCurrentInfernoTier(state: GameState): number | undefined {
+  return isLayeredInfernoRun(state.run)
+    ? getRunInfernoTier(state.run)
+    : undefined;
+}
+
+export function getCurrentDungeonDefinition(state: GameState): DungeonDefinition | undefined {
+  if (!state.run) return undefined;
+  const dungeon = DUNGEONS[state.run.dungeonId];
+  return state.run.protocol?.id === 'deep' && state.run.infernoMap
+    ? applyInfernoMapSnapshot(dungeon, state.run.infernoMap)
+    : dungeon;
+}
+
 export type CurrentRunProtocol = {
   snapshot: RunProtocolSnapshot;
   definition: RunProtocolDefinition;
@@ -4495,7 +4720,10 @@ function getProtocolMonster(
     isBoss: Boolean(bossDefinition),
     anchorCompletedBeforeBoss
   });
-  const pressureMonster = scaleMonsterForRunPressure(protocolMonster, state.run?.pressureState);
+  const infernoMonster = getRunProtocolId(state.run) === 'deep'
+    ? scaleMonsterForInfernoTier(protocolMonster, getRunInfernoTier(state.run))
+    : protocolMonster;
+  const pressureMonster = scaleMonsterForRunPressure(infernoMonster, state.run?.pressureState);
   if (!bossDefinition || !state.run) return pressureMonster;
 
   const pursuitState = getStrictRunPursuitState(state.run);
@@ -4775,6 +5003,60 @@ function areAdjacentNodes(source: DungeonNode, target: DungeonNode): boolean {
   return dx + dy === 1;
 }
 
+function areRunNodesAdjacent(
+  run: Pick<DungeonRun, 'protocol' | 'infernoMap'>,
+  source: DungeonNode,
+  target: DungeonNode
+): boolean {
+  const proceduralConnection = areInfernoNodesConnected(
+    run.protocol?.id === 'deep' ? run.infernoMap : undefined,
+    source.id,
+    target.id
+  );
+  return proceduralConnection ?? areAdjacentNodes(source, target);
+}
+
+type RunDiscoveryInput = Pick<
+  DungeonRun,
+  'dungeonId' | 'currentNodeId' | 'clearedNodeIds' | 'protocol' | 'infernoMap' | 'discoveredNodeIds'
+>;
+
+export function getRunDiscoveredNodeIds(
+  run: RunDiscoveryInput,
+  dungeon: DungeonDefinition = DUNGEONS[run.dungeonId]
+): string[] {
+  const validNodeIds = new Set(dungeon.nodes.map((node) => node.id));
+  const discoveredNodeIds = new Set(
+    (run.discoveredNodeIds ?? []).filter((nodeId) => validNodeIds.has(nodeId))
+  );
+  const revealOrigins = new Set([
+    run.currentNodeId,
+    ...run.clearedNodeIds.filter((nodeId) => validNodeIds.has(nodeId))
+  ]);
+
+  for (const nodeId of revealOrigins) {
+    const source = getNodeById(dungeon, nodeId);
+    if (!source) continue;
+    discoveredNodeIds.add(source.id);
+    for (const target of dungeon.nodes) {
+      if (areRunNodesAdjacent(run, source, target)) {
+        discoveredNodeIds.add(target.id);
+      }
+    }
+  }
+
+  return dungeon.nodes
+    .filter((node) => discoveredNodeIds.has(node.id))
+    .map((node) => node.id);
+}
+
+function withRunDiscovery(run: DungeonRun, dungeon: DungeonDefinition): DungeonRun {
+  return {
+    ...run,
+    discoveredNodeIds: getRunDiscoveredNodeIds(run, dungeon)
+  };
+}
+
 export function getCurrentRouteGateStatus(
   state: GameState,
   targetNodeId: string
@@ -4796,23 +5078,41 @@ export function getCurrentRouteBlockReason(state: GameState, targetNodeId: strin
   const lawState = getNormalizedDungeonLawState(state);
   if (!lawState) return undefined;
 
-  return getRouteBlockReason(
+  const exactRouteBlockReason = getRouteBlockReason(
     state.run.dungeonId,
     state.run.currentNodeId,
     targetNodeId,
     lawState
   );
+  if (exactRouteBlockReason) return exactRouteBlockReason;
+
+  if (
+    state.run.protocol?.id !== 'deep' ||
+    !state.run.infernoMap ||
+    !getBossDefinitionForNode(state.run.dungeonId, targetNodeId)
+  ) {
+    return undefined;
+  }
+  const bossAccess = getProceduralBossAccessStatus(
+    state.run.dungeonId,
+    targetNodeId,
+    lawState
+  );
+  return bossAccess.allowed
+    ? undefined
+    : bossAccess.blockReason ?? '首领入口条件尚未满足。';
 }
 
 export function getCurrentLegalAdjacentTargetIds(state: GameState): string[] {
   if (!state.run) return [];
-  const dungeon = DUNGEONS[state.run.dungeonId];
+  const dungeon = getCurrentDungeonDefinition(state);
+  if (!dungeon) return [];
   const currentNode = getNodeById(dungeon, state.run.currentNodeId);
   const lawState = getNormalizedDungeonLawState(state);
   if (!currentNode || !lawState) return [];
 
   const adjacentTargetIds = dungeon.nodes
-    .filter((node) => areAdjacentNodes(currentNode, node))
+    .filter((node) => areRunNodesAdjacent(state.run!, currentNode, node))
     .map((node) => node.id);
 
   return getLegalAdjacentTargetIds(
@@ -4820,7 +5120,7 @@ export function getCurrentLegalAdjacentTargetIds(state: GameState): string[] {
     currentNode.id,
     adjacentTargetIds,
     lawState
-  );
+  ).filter((targetNodeId) => getCurrentRouteBlockReason(state, targetNodeId) === undefined);
 }
 
 function getCurrentEquipmentSoulSkillRunState(state: GameState): EquipmentSoulSkillRunState | undefined {
@@ -5225,13 +5525,18 @@ export function useEquipmentSoulSkill(
 
     const consumed = consumeCurrentEquipmentSoulSkill(state, skillId, status.definition);
     if (consumed === state || !consumed.run) return appendLog(state, `${status.definition.name}没有响应。`);
-    const targetNode = getNodeById(DUNGEONS[consumed.run.dungeonId], targetNodeId);
+    const dungeon = DUNGEONS[consumed.run.dungeonId];
+    const targetNode = getNodeById(dungeon, targetNodeId);
+    const movedRun = withRunDiscovery(
+      { ...consumed.run, currentNodeId: targetNodeId },
+      dungeon
+    );
     return appendLog(
       {
         ...consumed,
         phase: 'explore',
         combat: undefined,
-        run: { ...consumed.run, currentNodeId: targetNodeId }
+        run: movedRun
       },
       `${status.definition.name}沿已清理路线退回${targetNode?.title ?? targetNodeId}，原陷阱仍未处理。`
     );
@@ -5395,7 +5700,10 @@ function getPermanentDerivedStats(state: GameState): DerivedStats {
 
   for (const equipment of getEquippedDefinitions(state)) {
     const level = state.equipmentLevels[equipment.id] ?? 1;
-    addPartialStats(statTotals, equipment.base);
+    addPartialStats(
+      statTotals,
+      getEquipmentRolledBaseStats(equipment.base, state.equipmentRolls?.[equipment.id])
+    );
     for (let i = 1; i < level; i += 1) {
       addPartialStats(statTotals, equipment.perLevel);
     }
@@ -5445,26 +5753,14 @@ export function getDerivedStats(state: GameState): DerivedStats {
   };
 }
 
-export function getPlayerPower(state: GameState): number {
+export function getPlayerPowerBreakdown(state: GameState): PlayerPowerBreakdown {
   const stats = getPermanentDerivedStats(state);
-  const bankedLingyun = Math.max(0, state.lingyun - (state.run?.lootBag.lingyun ?? 0));
-  const equippedEquipmentIds = new Set(Object.values(state.equipped));
-  const equipmentLevelTotal = (Object.entries(state.equipmentLevels) as Array<[EquipmentId, number]>).reduce((total, [equipmentId, level]) => {
-    if (!equippedEquipmentIds.has(equipmentId)) return total;
 
-    const equipment = EQUIPMENT[equipmentId];
-    const hasPowerStats = Object.keys(equipment.base).length > 0 || Object.keys(equipment.perLevel).length > 0;
+  return calculatePlayerPowerBreakdown({ stats });
+}
 
-    return hasPowerStats ? total + (level ?? 0) : total;
-  }, 0);
-
-  return getPlayerPowerFromLoadout({
-    stats,
-    lingyun: bankedLingyun,
-    learnedMethodCount: state.learnedMethods.length,
-    equipmentLevelTotal,
-    ownedPetCount: state.ownedPets.length
-  });
+export function getPlayerPower(state: GameState): number {
+  return getPlayerPowerBreakdown(state).total;
 }
 
 export function getDungeonReadiness(state: GameState, dungeonId: DungeonId): DungeonReadiness {
@@ -5497,6 +5793,7 @@ export function getDirectiveEvaluation(state: GameState, dungeonId = state.run?.
     totalNodes: dungeon.nodes.length,
     damageTaken: state.run?.damageTaken ?? 0,
     captures: state.run?.capturedPetIds ?? state.run?.captures ?? 0,
+    ownedPetIds: state.ownedPets,
     usedItems: state.run?.usedItems ?? [],
     learnedMethods: state.learnedMethods,
     equippedIds: Object.values(state.equipped),
@@ -5600,6 +5897,7 @@ export function createInitialState(): GameState {
     },
     equipmentAttunements: {},
     equipmentTemperRanks: {},
+    equipmentRolls: {},
     equipmentMemories: {},
     equipped: {
       weapon: 'training_blade',
@@ -5610,7 +5908,7 @@ export function createInitialState(): GameState {
       waist: 'patched_belt',
       charm: 'plain_charm'
     },
-    preparedItemIds: [...DEFAULT_PREPARED_TACTICAL_ITEM_IDS],
+    preparedItemIds: [],
     preparedRelicFrame: 'assault',
     archivedRelicIds: [],
     preparedEquipmentMemoryHunt: undefined,
@@ -5618,6 +5916,8 @@ export function createInitialState(): GameState {
     methodRanks: {},
     bloodlineRanks: {},
     completedDungeonIds: [],
+    infernoProgress: {},
+    enteredDungeonIds: [],
     claimedDirectiveIds: [],
     claimedTaskIds: [],
     ownedPets: [],
@@ -6119,6 +6419,15 @@ function createHiddenTaskSeed(value: number | undefined): number {
   return Math.floor(Math.random() * 0xffff_ffff) + 1;
 }
 
+function appendEnteredDungeonId(
+  enteredDungeonIds: readonly DungeonId[] | undefined,
+  dungeonId: DungeonId
+): DungeonId[] {
+  return enteredDungeonIds?.includes(dungeonId)
+    ? [...enteredDungeonIds]
+    : [...(enteredDungeonIds ?? []), dungeonId];
+}
+
 export function enterDungeon(
   state: GameState,
   dungeonId: DungeonId,
@@ -6129,6 +6438,9 @@ export function enterDungeon(
   const simplifiedEntry = options.flowVersion === 2;
   const dungeon = DUNGEONS[dungeonId];
   if (!dungeon) return appendLog(state, '未知副本，无法进入。');
+  if (state.player.hp <= 0) {
+    return appendLog(state, '当前生命为 0，无法进入副本。请先返回主神空间接受回收修复。');
+  }
 
   const protocolDefinition = getRunProtocolDefinition(dungeonId, protocolId);
   if (!protocolDefinition) return appendLog(state, '未知轮回协议，无法进入副本。');
@@ -6156,6 +6468,25 @@ export function enterDungeon(
   }
   if (!isRunProtocolAvailable(dungeonId, protocolId, state.completedDungeonIds)) {
     return appendLog(state, `轮回协议锁定：先完成${dungeon.name}的标准探索。`);
+  }
+  const layeredInferno = simplifiedEntry && protocolDefinition.id === 'deep';
+  const unlockedInfernoTier = getInfernoUnlockedTier(state, dungeonId);
+  const requestedInfernoTier = layeredInferno
+    ? options.infernoTier ?? unlockedInfernoTier
+    : undefined;
+  if (
+    layeredInferno &&
+    (
+      !Number.isSafeInteger(requestedInfernoTier) ||
+      (requestedInfernoTier ?? 0) < 1 ||
+      unlockedInfernoTier < 1 ||
+      (requestedInfernoTier ?? 0) > unlockedInfernoTier
+    )
+  ) {
+    return appendLog(
+      state,
+      `炼狱层级未解锁：当前最高可进入第 ${unlockedInfernoTier} 层，必须逐层通关。`
+    );
   }
 
   const preparedEquipmentMemoryHunt = simplifiedEntry
@@ -6264,16 +6595,32 @@ export function enterDungeon(
   const combatReplayState = dungeonId === 'combat_replay_stage'
     ? createCombatReplayRunState(entryState)
     : undefined;
+  const infernoTier = layeredInferno
+    ? requestedInfernoTier!
+    : undefined;
+  const infernoMap = layeredInferno
+      ? createInfernoMapSnapshot({
+          dungeon,
+          seed: createHiddenTaskSeed(options.infernoMapSeed),
+          bossNodeId: getBossDefinition(dungeonId).nodeId,
+          entryNodeId: dungeon.grid.startNodeId,
+          priorityNodeIds: getRunProtocolRequiredNodeIds(protocolDefinition)
+        })
+    : undefined;
 
   const nextState: GameState = {
     ...entryState,
     phase: 'explore' as const,
+    enteredDungeonIds: appendEnteredDungeonId(entryState.enteredDungeonIds, dungeonId),
     preparedItemIds: [...tacticalLoadout.itemIds],
     preparedRelicFrame: relicPreparation.preparedRelicFrame,
     archivedRelicIds: [...relicPreparation.archivedRelicIds],
     preparedRelicSeedId: relicPreparation.preparedRelicSeedId,
     run: {
       ...(simplifiedEntry ? { entryFlowVersion: 2 as const } : {}),
+      ...(simplifiedEntry
+        ? { explorationRewardVersion: EXPLORATION_REWARD_VERSION }
+        : {}),
       ...(simplifiedEntry ? { hiddenTaskSeed: createHiddenTaskSeed(options.hiddenTaskSeed) } : {}),
       dungeonId,
       currentNodeId: dungeon.grid.startNodeId,
@@ -6293,8 +6640,11 @@ export function enterDungeon(
       ...(equipmentMemoryHunt === undefined ? {} : { equipmentMemoryHunt }),
       protocol: {
         id: protocolDefinition.id,
-        rulesVersion: 1 as const
+        rulesVersion: 1 as const,
+        ...(infernoTier === undefined ? {} : { infernoTier })
       },
+      ...(infernoMap === undefined ? {} : { infernoMap }),
+      carriedEquipmentRolls: {},
       pressureState: createRunPressureState(),
       relicState,
       soulSkillState,
@@ -6317,11 +6667,21 @@ export function enterDungeon(
     combat: undefined,
     lastOutcome: undefined
   };
+  const discoveredNextState: GameState = {
+    ...nextState,
+    run: withRunDiscovery(nextState.run!, dungeon)
+  };
   const sequenceBreakText =
     gate?.availabilityKind === 'sequence_break' ? `越级挑战：${gate.requirementText} ` : '';
 
   const protocolText = simplifiedEntry
-    ? ` 当前难度：${protocolDefinition.id === 'standard' ? '普通' : protocolDefinition.id === 'imprint' ? '困难' : '炼狱'}。`
+    ? protocolDefinition.id === 'deep'
+      ? ` 当前难度：炼狱第 ${infernoTier} 层；地图种子 ${infernoMap?.seed ?? 0} 已冻结，${
+          infernoTier === unlockedInfernoTier
+            ? `通关后解锁第 ${unlockedInfernoTier + 1} 层`
+            : `低层复刷不推进层级；通关第 ${unlockedInfernoTier} 层后解锁第 ${unlockedInfernoTier + 1} 层`
+        }。`
+      : ` 当前难度：${protocolDefinition.id === 'standard' ? '普通' : '困难'}。`
     : protocolDefinition.id === 'imprint'
       ? ` 轮回协议「${protocolDefinition.name}」已生效。`
       : protocolDefinition.id === 'deep'
@@ -6369,7 +6729,7 @@ export function enterDungeon(
     : `${relicFrameText}${relicSeedText}${conduitText}${soulSkillText}${equipmentHuntText}${equipmentMemoryHuntText}${routeContractText}${broadcastPassiveText}${escortSnapshotText}${verdictSnapshotText}${panopticonSnapshotText}`;
 
   return appendLog(
-    nextState,
+    discoveredNextState,
     `${sequenceBreakText}副本开启：${dungeon.name}。${dungeon.theme}${protocolText}${entrySystemText}`
   );
 }
@@ -6432,18 +6792,18 @@ function advanceCurrentRunPursuitAfterMove(state: GameState): GameState {
   const pursuitState = getStrictRunPursuitState(state.run);
   if (!pursuitState) return state;
 
-  const dungeon = DUNGEONS[state.run.dungeonId];
+  const dungeon = getCurrentDungeonDefinition(state);
+  if (!dungeon) return state;
   const lawState = getNormalizedDungeonLawState(state);
   const blockedEdges: Array<{ fromNodeId: string; toNodeId: string }> = [];
-  if (lawState) {
-    for (const source of dungeon.nodes) {
-      for (const target of dungeon.nodes) {
-        if (
-          areAdjacentNodes(source, target) &&
-          getRouteBlockReason(dungeon.id, source.id, target.id, lawState)
-        ) {
+  for (const source of dungeon.nodes) {
+    for (const target of dungeon.nodes) {
+      if (!areAdjacentNodes(source, target)) continue;
+      if (
+        !areRunNodesAdjacent(state.run, source, target) ||
+        (lawState && getRouteBlockReason(dungeon.id, source.id, target.id, lawState))
+      ) {
           blockedEdges.push({ fromNodeId: source.id, toNodeId: target.id });
-        }
       }
     }
   }
@@ -6773,16 +7133,20 @@ function advancePanopticonAfterMove(state: GameState, targetNode: DungeonNode): 
 
 export function moveToNode(state: GameState, nodeId: string): GameState {
   if (!state.run) return appendLog(state, '你还没有进入副本。');
+  if (state.player.hp <= 0) {
+    return resolveRunFailure(state, '当前生命已经归零，主神强制回收。');
+  }
   if (state.phase === 'combat') return appendLog(state, '战斗中无法走格移动。');
 
-  const dungeon = DUNGEONS[state.run.dungeonId];
+  const dungeon = getCurrentDungeonDefinition(state);
+  if (!dungeon) return appendLog(state, '当前副本地图快照不可用。');
   const currentNode = getNodeById(dungeon, state.run.currentNodeId);
   const targetNode = getNodeById(dungeon, nodeId);
 
   if (!targetNode) return appendLog(state, '当前副本没有这个格子。');
   if (!currentNode) return appendLog(state, '当前位置不在副本网格上。');
   if (targetNode.id === currentNode.id) return appendLog(state, `你已经站在${targetNode.title}。`);
-  if (!areAdjacentNodes(currentNode, targetNode)) {
+  if (!areRunNodesAdjacent(state.run, currentNode, targetNode)) {
     return appendLog(state, `${targetNode.title}不在相邻格，无法直接移动。`);
   }
   const departureBlockReason = getNodeDepartureBlockReason(state);
@@ -6791,16 +7155,24 @@ export function moveToNode(state: GameState, nodeId: string): GameState {
   if (routeGate?.status === 'closed') {
     return appendLog(state, `路线「${routeGate.gate.label}」封闭：${routeGate.blockReason}`);
   }
+  const routeBlockReason = getCurrentRouteBlockReason(state, targetNode.id);
+  if (routeBlockReason) {
+    return appendLog(state, `路线封闭：${routeBlockReason}`);
+  }
 
+  const movedRun = withRunDiscovery(
+    {
+      ...state.run,
+      currentNodeId: targetNode.id
+    },
+    dungeon
+  );
   const movedState = appendLog(
     {
       ...state,
       phase: 'explore',
       combat: undefined,
-      run: {
-        ...state.run,
-        currentNodeId: targetNode.id
-      }
+      run: movedRun
     },
     `你移动到${targetNode.title}。`
   );
@@ -6812,6 +7184,9 @@ export function moveToNode(state: GameState, nodeId: string): GameState {
 
 export function selectNode(state: GameState, nodeId: string): GameState {
   if (!state.run) return appendLog(state, '你还没有进入副本。');
+  if (state.player.hp <= 0) {
+    return resolveRunFailure(state, '当前生命已经归零，主神强制回收。');
+  }
 
   const node = getNodeById(DUNGEONS[state.run.dungeonId], nodeId);
   if (!node) return appendLog(state, '当前副本没有这个节点。');
@@ -6833,6 +7208,12 @@ export function selectNode(state: GameState, nodeId: string): GameState {
   if (node.type === 'monster' && node.monsterId) {
     const monster = MONSTERS[node.monsterId];
     const bossDefinition = getBossDefinitionForNode(state.run.dungeonId, node.id);
+    if (bossDefinition && state.run.protocol?.id === 'deep') {
+      const bossBlockReason = getCurrentRouteBlockReason(state, node.id);
+      if (bossBlockReason) {
+        return appendLog(state, `首领区域尚未开放：${bossBlockReason}`);
+      }
+    }
     if (bossDefinition && state.run.dungeonId === 'panopticon_city') {
       const panopticonLaw = getNormalizedDungeonLawState(state);
       if (!panopticonLaw || !getPanopticonStatus(panopticonLaw).readyForBoss) {
@@ -6950,7 +7331,10 @@ function getTrapRiskResolution(state: GameState, node: DungeonNode) {
     : node.trap;
   // Trap stats layer deterministically: law, protocol, then cross-dungeon pressure.
   const protocolTrap = scaleTrapForRunProtocol(lawTrap, state.run.dungeonId, getRunProtocolId(state.run));
-  const trap = scaleTrapForRunPressure(protocolTrap, state.run.pressureState);
+  const infernoTrap = getRunProtocolId(state.run) === 'deep'
+    ? scaleTrapForInfernoTier(protocolTrap, getRunInfernoTier(state.run))
+    : protocolTrap;
+  const trap = scaleTrapForRunPressure(infernoTrap, state.run.pressureState);
   const stats = getDerivedStats(state);
   const utility = resolveCombatUtilityAction({
     action: 'trap_scout',
@@ -6990,13 +7374,15 @@ function resolveTrapRisk(
   const relicPrefix = damage < damageBeforeRelic
     ? `铁回响将陷阱伤害从 ${damageBeforeRelic} 点降至 ${damage} 点。`
     : '';
+  const explorationRewardLine = getExplorationClearRewardStatusLine(state, node.id);
+  const resultText = passed
+    ? `${prefix}${statusPrefix}${relicPrefix}${node.title}被你提前看破，但仍擦出 ${actualDamage} 点伤害。${explorationRewardLine ? ` ${explorationRewardLine}` : ''}`
+    : `${prefix}${statusPrefix}${relicPrefix}${node.title}爆发，你承受 ${actualDamage} 点伤害。${explorationRewardLine ? ` ${explorationRewardLine}` : ''}`;
+  const resolved = markNodeCleared(damaged, node.id, actualDamage);
 
-  return appendLog(
-    markNodeCleared(damaged, node.id, actualDamage),
-    passed
-      ? `${prefix}${statusPrefix}${relicPrefix}${node.title}被你提前看破，但仍擦出 ${actualDamage} 点伤害。`
-      : `${prefix}${statusPrefix}${relicPrefix}${node.title}爆发，你承受 ${actualDamage} 点伤害。`
-  );
+  return resolved.player.hp <= 0
+    ? resolveRunFailure(resolved, `${resultText} 主神强制回收。`)
+    : appendLog(resolved, resultText);
 }
 
 function resolveTrapWithForcedSoulPass(
@@ -7040,6 +7426,7 @@ export function handleTrap(state: GameState, choice: TrapChoice = 'auto'): GameS
     return appendLog(state, `${unavailableLog} ${node.title}尚未处理。`);
   }
   if (shouldCounter && counterItem) {
+    const explorationRewardLine = getExplorationClearRewardStatusLine(state, node.id);
     return appendLog(
       markNodeCleared(
         recordUsedItem(
@@ -7048,7 +7435,7 @@ export function handleTrap(state: GameState, choice: TrapChoice = 'auto'): GameS
         ),
         node.id
       ),
-      `${ITEMS[counterItem].name}压住陷阱灵光，你无伤通过${node.title}。`
+      `${ITEMS[counterItem].name}压住陷阱灵光，你无伤通过${node.title}。${explorationRewardLine ? ` ${explorationRewardLine}` : ''}`
     );
   }
 
@@ -7166,6 +7553,30 @@ function transitionRunPursuitThroughPortal(
   };
 }
 
+function getCrossDungeonProtocolBlockReason(
+  state: GameState,
+  targetDungeonId: DungeonId
+): string | undefined {
+  const protocol = state.run?.protocol ?? { id: 'standard' as const, rulesVersion: 1 as const };
+  if (!state.run || state.run.dungeonId === targetDungeonId || protocol.id === 'standard') {
+    return undefined;
+  }
+  if (!isRunProtocolAvailable(targetDungeonId, protocol.id, state.completedDungeonIds)) {
+    return `当前${protocol.id === 'imprint' ? '困难' : '炼狱'}难度尚未在${DUNGEONS[targetDungeonId].name}解锁。`;
+  }
+  if (
+    protocol.id === 'deep' &&
+    Number.isSafeInteger(protocol.infernoTier) &&
+    (protocol.infernoTier ?? 0) >= 1
+  ) {
+    const targetUnlockedTier = getInfernoUnlockedTier(state, targetDungeonId);
+    if (protocol.infernoTier! > targetUnlockedTier) {
+      return `${DUNGEONS[targetDungeonId].name}最高只解锁炼狱第 ${targetUnlockedTier} 层，不能携带第 ${protocol.infernoTier} 层跨门。`;
+    }
+  }
+  return undefined;
+}
+
 function resolvePortal(
   state: GameState,
   choice: PortalChoice = 'auto',
@@ -7177,10 +7588,18 @@ function resolvePortal(
   }
   const node = getCurrentNode(state);
   if (!node?.portal || !state.run) return appendLog(state, '当前位置没有传送门。');
+  const crossedDungeon = state.run.dungeonId !== node.portal.targetDungeonId;
 
   const targetGate = getCampaignGates(state).find((gate) => gate.dungeonId === node.portal?.targetDungeonId);
   if (targetGate?.status === 'locked') {
     return appendLog(state, `传送门被主线门禁拦截：${targetGate.requirementText}`);
+  }
+  const protocolBlockReason = getCrossDungeonProtocolBlockReason(
+    state,
+    node.portal.targetDungeonId
+  );
+  if (protocolBlockReason) {
+    return appendLog(state, `传送门拒绝跨副本协议：${protocolBlockReason}`);
   }
   if (offsetTargetNodeId && !getPortalOffsetTargetIds(state).includes(offsetTargetNodeId)) {
     return appendLog(state, '所选错位落点不是默认目标旁的合法节点。');
@@ -7256,7 +7675,9 @@ function resolvePortal(
   }
 
   const echoAvailability = getTacticalItemAvailability(nextState, 'echo_coin');
+  const explorationRewardLine = getExplorationClearRewardStatusLine(nextState, node.id);
   nextState = markNodeCleared(nextState, node.id);
+  if (explorationRewardLine) statusLines.push(explorationRewardLine);
   if (echoAvailability.available) {
     nextState = recordUsedItem(consumeItem(nextState, 'echo_coin'), 'echo_coin');
     nextState = applyRunReward(nextState, { rewardPoints: 20 });
@@ -7274,7 +7695,6 @@ function resolvePortal(
     ? markEquipmentHuntPortalCrossed(nextState.run.equipmentHunt)
     : undefined;
   const untransitionedSourceRun = nextState.run;
-  const crossedDungeon = untransitionedSourceRun?.dungeonId !== node.portal.targetDungeonId;
   const pursuitTransition = untransitionedSourceRun
     ? transitionRunPursuitThroughPortal(
         untransitionedSourceRun,
@@ -7318,15 +7738,56 @@ function resolvePortal(
   const equipmentMemoryHuntLog = getEquipmentMemoryHuntSettlementLog(
     equipmentMemoryHuntResult?.settlement
   );
+  const transportedProtocol = settledSourceRun?.protocol ?? {
+    id: 'standard' as const,
+    rulesVersion: 1 as const
+  };
+  const targetProtocolDefinition = getRunProtocolDefinition(
+    node.portal.targetDungeonId,
+    transportedProtocol.id
+  );
+  const transportedInfernoMap =
+    transportedProtocol.id === 'deep' && transportedProtocol.infernoTier !== undefined
+    ? crossedDungeon
+      ? createInfernoMapSnapshot({
+          dungeon: DUNGEONS[node.portal.targetDungeonId],
+          seed: createHiddenTaskSeed(
+            (
+              (
+                (settledSourceRun?.infernoMap?.seed ?? 1) +
+                DUNGEONS[node.portal.targetDungeonId].tier * 0x9e3779b1
+              ) %
+              0xffff_ffff
+            ) || 1
+          ),
+          bossNodeId: getBossDefinition(node.portal.targetDungeonId).nodeId,
+          entryNodeId: offsetTargetNodeId ?? node.portal.targetNodeId,
+          priorityNodeIds: targetProtocolDefinition
+            ? getRunProtocolRequiredNodeIds(targetProtocolDefinition)
+            : []
+        })
+      : settledSourceRun?.infernoMap
+    : undefined;
 
   const transportedState = appendLog(
     {
       ...nextState,
       phase: 'explore',
+      enteredDungeonIds: appendEnteredDungeonId(
+        nextState.enteredDungeonIds,
+        node.portal.targetDungeonId
+      ),
       run: {
         ...(settledSourceRun?.entryFlowVersion === 2
           ? {
               entryFlowVersion: 2 as const,
+              ...(settledSourceRun.explorationRewardVersion ===
+              EXPLORATION_REWARD_VERSION
+                ? {
+                    explorationRewardVersion:
+                      EXPLORATION_REWARD_VERSION
+                  }
+                : {}),
               hiddenTaskSeed: createHiddenTaskSeed(settledSourceRun.hiddenTaskSeed)
             }
           : {}),
@@ -7360,7 +7821,9 @@ function resolvePortal(
           ? { methodSnapshot: settledSourceRun.methodSnapshot }
           : {}),
         ...(sourceHasBloodlineSnapshot ? { bloodlineSnapshot: sourceBloodlineSnapshot } : {}),
-        protocol: settledSourceRun?.protocol ?? { id: 'standard', rulesVersion: 1 },
+        protocol: transportedProtocol,
+        ...(transportedInfernoMap === undefined ? {} : { infernoMap: transportedInfernoMap }),
+        carriedEquipmentRolls: settledSourceRun?.carriedEquipmentRolls ?? {},
         ...(settledSourceRun?.pressureState === undefined
           ? {}
           : { pressureState: settledSourceRun.pressureState }),
@@ -7420,9 +7883,18 @@ function resolvePortal(
     },
     `${statusPrefix}传送门开启，你被送往${DUNGEONS[node.portal.targetDungeonId].name}。${routeContractLog}`
   );
-  const memoryLoggedState = equipmentMemoryHuntLog
-    ? appendLog(transportedState, equipmentMemoryHuntLog)
+  const discoveredTransportedState = transportedState.run
+    ? {
+        ...transportedState,
+        run: withRunDiscovery(
+          transportedState.run,
+          DUNGEONS[node.portal.targetDungeonId]
+        )
+      }
     : transportedState;
+  const memoryLoggedState = equipmentMemoryHuntLog
+    ? appendLog(discoveredTransportedState, equipmentMemoryHuntLog)
+    : discoveredTransportedState;
   return pursuitTransition?.settlementLog
     ? appendSecondaryLog(memoryLoggedState, pursuitTransition.settlementLog)
     : memoryLoggedState;
@@ -7453,7 +7925,11 @@ function getResolvedNodeReward(
     line = node.reward.methodBonus.text;
   }
 
-  return { reward, line };
+  const rewardText = formatRewardGains(reward);
+  return {
+    reward,
+    line: rewardText ? `${line} 本次获得${rewardText}。` : line
+  };
 }
 
 function getRelicAdjustedRewardNodeReward(
@@ -7731,6 +8207,7 @@ export function resolveFieldSurvey(state: GameState, optionId: string): GameStat
         }
       : nextState.run
   };
+  const explorationRewardLine = getExplorationClearRewardStatusLine(nextState, node.id);
   nextState = markNodeCleared(nextState, node.id);
   nextState = applyRewardNodeRelicDraft(nextState, node, statusLines);
 
@@ -7740,9 +8217,10 @@ export function resolveFieldSurvey(state: GameState, optionId: string): GameStat
     getFieldSurveyRewardChangeLog(relicAdjusted.reward, surveyReward),
     getFieldSurveyCostLog(option),
     hpLine,
+    explorationRewardLine,
     ...statusLines,
     '战利品尚未结算。'
-  ].join(' ');
+  ].filter(Boolean).join(' ');
 
   if (nextState.player.hp <= 0) {
     return resolveRunFailure(nextState, `${summary} 主神在勘探反噬后强制回收。`);
@@ -7832,11 +8310,15 @@ function resolveNodeReward(
 
   nextState = applyRewardNodeRelicHealing(nextState, relicEffects, relicStatusLines);
 
+  const explorationRewardLine = getExplorationClearRewardStatusLine(nextState, node.id);
   nextState = markNodeCleared(nextState, node.id);
   nextState = applyRewardNodeRelicDraft(nextState, node, relicStatusLines);
 
   const relicText = relicStatusLines.length > 0 ? ` ${relicStatusLines.join(' ')}` : '';
-  return appendLog(nextState, `${line}${relicText} 战利品尚未结算。`);
+  return appendLog(
+    nextState,
+    `${line}${explorationRewardLine ? ` ${explorationRewardLine}` : ''}${relicText} 战利品尚未结算。`
+  );
 }
 
 function collectRewardWithSoulSeal(
@@ -7930,7 +8412,9 @@ function applyEncounterEquipmentLoot(
   nodeId: string
 ): { state: GameState; statusLine?: string } {
   if (!state.run) return { state };
-  if (state.run.entryFlowVersion === 2) return { state };
+  const infernoTier = isLayeredInfernoRun(state.run)
+    ? getRunInfernoTier(state.run)
+    : undefined;
 
   const equipmentHunt = isEquipmentHuntRunState(state.run.equipmentHunt)
     ? state.run.equipmentHunt
@@ -7954,6 +8438,12 @@ function applyEncounterEquipmentLoot(
     ownedEquipmentIds: state.ownedEquipment,
     carriedEquipmentIds: state.run.lootBag.equipmentIds,
     offersMade: state.run.lootOffersMade,
+    ...(infernoTier === undefined
+      ? {}
+      : {
+          includeOwnedEquipment: true,
+          rotationSeed: state.run.infernoMap?.seed
+        }),
     ...(guaranteedEquipmentId === undefined ? {} : { guaranteedEquipmentId })
   });
   if (!offer) return { state };
@@ -7969,16 +8459,39 @@ function applyEncounterEquipmentLoot(
       statusLine: `装备池已收集完毕，精英残骸拆解为 ${offer.salvageRewardPoints} 点未结算奖励。`
     };
   }
+  const equipmentRolls: EquipmentRollMap | undefined = infernoTier === undefined
+    ? undefined
+    : Object.fromEntries(
+        offer.equipmentIds.map((equipmentId) => {
+          const equipment = EQUIPMENT[equipmentId];
+          return [
+            equipmentId,
+            createEquipmentRoll({
+              equipmentId,
+              slot: equipment.slot,
+              base: equipment.base,
+              sourceTier: infernoTier,
+              seed: state.run?.infernoMap?.seed ?? 1
+            })
+          ];
+        })
+      );
+  const pendingEquipmentOffer: PendingEquipmentOffer = {
+    ...offer,
+    ...(equipmentRolls === undefined ? {} : { equipmentRolls })
+  };
 
   return {
     state: {
       ...state,
       run: {
         ...run,
-        pendingEquipmentOffer: offer
+        pendingEquipmentOffer
       }
     },
-    statusLine: '精英战利品已显现，必须选取一件装备或放弃后才能继续。'
+    statusLine: infernoTier === undefined
+      ? '首领/精英装备已显现，必须选取一件装备或放弃后才能继续。'
+      : `炼狱第 ${infernoTier} 层词条装备已显现；可选择重复底材，通关后按真实战力与综合词条裁决。`
   };
 }
 
@@ -8015,9 +8528,12 @@ export function resolveEquipmentLoot(state: GameState, equipmentId?: EquipmentId
     );
   }
   if (!offer.equipmentIds.includes(equipmentId)) return appendLog(state, '这件装备不在当前精英战利品中。');
+  const selectedRoll = offer.equipmentRolls?.[equipmentId];
 
   const selectionLog =
-    offer.guaranteedEquipmentId === undefined
+    selectedRoll
+      ? `你选择了${EQUIPMENT[equipmentId].name}（炼狱第 ${selectedRoll.sourceTier} 层，词条评分 ${getEquipmentRollScore(selectedRoll)}）；成功通关后将与装备架中的同名底材比较，按真实战力与综合词条保留更强结果。`
+      : offer.guaranteedEquipmentId === undefined
       ? `你选择了${EQUIPMENT[equipmentId].name}，通关后才能带回主神空间。`
       : equipmentId === offer.guaranteedEquipmentId
         ? `追猎目标${EQUIPMENT[equipmentId].name}已装入战利品袋，通关后才能带回主神空间。`
@@ -8029,6 +8545,12 @@ export function resolveEquipmentLoot(state: GameState, equipmentId?: EquipmentId
       run: {
         ...state.run,
         lootBag: addRunLoot(state.run.lootBag, { equipmentIds: [equipmentId] }),
+        carriedEquipmentRolls: selectedRoll
+          ? {
+              ...(state.run.carriedEquipmentRolls ?? {}),
+              [equipmentId]: selectedRoll
+            }
+          : state.run.carriedEquipmentRolls,
         pendingEquipmentOffer: undefined
       }
     },
@@ -8100,15 +8622,29 @@ function getAdjustedCombatRewardPoints(state: GameState, baseRewardPoints: numbe
 function finishCombatVictory(state: GameState, monster: MonsterDefinition): GameState {
   const signaled = signalCurrentCombatVictory(state);
   const combatDamageTaken = getCurrentCombatDamageTaken(signaled);
-  const combatRewardPoints = getAdjustedCombatRewardPoints(signaled, monster.rewardPoints);
+  const adjustedCombatRewardPoints = getAdjustedCombatRewardPoints(signaled, monster.rewardPoints);
+  const infernoTier = getRunProtocolId(signaled.run) === 'deep'
+    ? getRunInfernoTier(signaled.run)
+    : undefined;
+  const combatRewardPoints = infernoTier === undefined
+    ? adjustedCombatRewardPoints
+    : scaleInfernoRewardPoints(adjustedCombatRewardPoints, infernoTier);
+  const itemDrops = infernoTier === undefined
+    ? monster.drop
+    : scaleInfernoItemDrops(monster.drop, infernoTier);
   const rewarded = applyRunReward(signaled, {
     rewardPoints: combatRewardPoints,
-    items: monster.drop
+    items: itemDrops
   });
   const nodeId = state.combat?.nodeId ?? '';
+  const explorationRewardLine = getExplorationClearRewardStatusLine(rewarded, nodeId);
   const bossReward = applyBossVictoryReward(rewarded, nodeId);
   const encounterLoot = applyEncounterEquipmentLoot(bossReward.state, monster, nodeId);
   const statusLines = [bossReward.statusLine, encounterLoot.statusLine].filter(Boolean).join(' ');
+  const combatRewardText = formatRewardGains({
+    rewardPoints: combatRewardPoints,
+    items: itemDrops
+  });
 
   return appendLog(
     markNodeCleared(
@@ -8120,7 +8656,7 @@ function finishCombatVictory(state: GameState, monster: MonsterDefinition): Game
       nodeId,
       combatDamageTaken
     ),
-    `${monster.name}倒下，${combatRewardPoints} 点奖励进入战利品袋。${statusLines ? ` ${statusLines}` : ''}`
+    `${monster.name}倒下，${combatRewardText}进入战利品袋。${explorationRewardLine ? ` ${explorationRewardLine}` : ''}${statusLines ? ` ${statusLines}` : ''}`
   );
 }
 
@@ -8129,6 +8665,51 @@ function getExitReward(state: GameState): RewardBundle {
 
   const exitNode = DUNGEONS[state.run.dungeonId].nodes.find((node) => node.type === 'exit');
   return exitNode?.reward ?? {};
+}
+
+export function getRunEconomyPreview(
+  state: GameState,
+  exitStatus: RunExitStatus,
+  includeCurrentNode = false
+): ReturnType<typeof calculateRunEconomy> | undefined {
+  if (!state.run) return undefined;
+
+  const dungeon = DUNGEONS[state.run.dungeonId];
+  const clearedNodeIds = new Set(state.run.clearedNodeIds);
+  if (includeCurrentNode) clearedNodeIds.add(state.run.currentNodeId);
+
+  const economy = calculateRunEconomy({
+    baseRewardPoints: getExitReward(state).rewardPoints ?? 0,
+    clearedNodes: clearedNodeIds.size,
+    totalNodes: dungeon.nodes.length,
+    damageTaken: state.run.damageTaken,
+    captures: state.run.captures,
+    readiness: getDungeonReadiness(state, state.run.dungeonId),
+    dungeonTier: dungeon.tier,
+    exitStatus
+  });
+  const currentExplorationRewardRules = usesCurrentExplorationRewardRules(state.run);
+  if (currentExplorationRewardRules && exitStatus !== 'cleared') {
+    return {
+      ...economy,
+      rewardPoints: 0
+    };
+  }
+  if (
+    state.run.entryFlowVersion === 2 &&
+    !currentExplorationRewardRules
+  ) {
+    return economy;
+  }
+  if (exitStatus !== 'cleared' && clearedNodeIds.size === 0) {
+    return {
+      ...economy,
+      score: 0,
+      rewardMultiplier: 0,
+      rewardPoints: 0
+    };
+  }
+  return economy;
 }
 
 type DungeonRunPursuitSettlementResult = {
@@ -8201,7 +8782,25 @@ function getPursuitSettlementLog(settlement: RunPursuitSettlement | undefined): 
   ) {
     return `破界追兵结算：${name}虽已收容，但未能成功撤离，${materialName} x1 未带回，材料奖励为 0。`;
   }
-  return `破界追兵结算：${name}以 ${settlement.state.status}/${settlement.reason} 收束，材料奖励为 0。`;
+  if (settlement.state.status === 'disabled') {
+    return `破界追兵结算：本轮追兵未启用，${materialName}材料奖励为 0。`;
+  }
+  const statusLabels: Record<RunPursuitState['status'], string> = {
+    disabled: '未启用',
+    dormant: '尚未激活',
+    stalking: '追猎中',
+    contained: '已收容',
+    fused: '已与首领融合',
+    repelled: '已驱离'
+  };
+  const reasonLabels: Record<RunPursuitSettlement['reason'], string> = {
+    successful_exit: '成功撤离',
+    retreat: '主动撤退',
+    failure: '濒死回收',
+    stable_portal: '稳定门驱离',
+    forced_portal: '强制门转移'
+  };
+  return `破界追兵结算：${name}以“${statusLabels[settlement.state.status]} / ${reasonLabels[settlement.reason]}”收束，材料奖励为 0。`;
 }
 
 function createRunRelicSettlement(
@@ -8229,15 +8828,196 @@ function subtractItems(
   return next;
 }
 
+export function getRunLootSettlementPreview(
+  state: GameState,
+  exitStatus: RunExitStatus
+): RunLootSettlement<ItemId, EquipmentId> | undefined {
+  if (!state.run) return undefined;
+  const modernInterruptedRun =
+    usesCurrentExplorationRewardRules(state.run) && exitStatus !== 'cleared';
+  const lootSecurity = getRunLootSecurityStatus(state);
+  const modernLootSecured =
+    !modernInterruptedRun ||
+    lootSecurity.secured;
+  const settledLoot = settleRunLoot(state.run.lootBag, exitStatus);
+  return modernLootSecured
+    ? settledLoot
+    : {
+        retained: createEmptyRunLootBag<ItemId, EquipmentId>(),
+        lost: settleRunLoot(state.run.lootBag, 'cleared').retained
+      };
+}
+
+export type RunLootSecurityStatus = {
+  readonly enabled: boolean;
+  readonly clearedNodeCount: number;
+  readonly requiredNodeCount: number;
+  readonly secured: boolean;
+};
+
+export function getRunLootSecurityStatus(state: GameState): RunLootSecurityStatus {
+  if (!state.run) {
+    return {
+      enabled: false,
+      clearedNodeCount: 0,
+      requiredNodeCount: EXPLORATION_SUPPLY_INTERVAL,
+      secured: false
+    };
+  }
+  const currentDungeonClearedNodeCount = new Set(
+    state.run.clearedNodeIds.filter((nodeId) => {
+      const node = getNodeById(DUNGEONS[state.run!.dungeonId], nodeId);
+      return node?.type !== 'exit';
+    })
+  ).size;
+  const pressureClearedNodeCount = isRunPressureState(state.run.pressureState)
+    ? state.run.pressureState.clearedNodeCount
+    : 0;
+  const clearedNodeCount = Math.max(
+    currentDungeonClearedNodeCount,
+    pressureClearedNodeCount
+  );
+  const enabled = usesCurrentExplorationRewardRules(state.run);
+  return {
+    enabled,
+    clearedNodeCount,
+    requiredNodeCount: EXPLORATION_SUPPLY_INTERVAL,
+    secured: enabled && clearedNodeCount >= EXPLORATION_SUPPLY_INTERVAL
+  };
+}
+
+export type EquipmentRollCandidateEvaluation = {
+  readonly alreadyOwned: boolean;
+  readonly currentRoll?: EquipmentRoll;
+  readonly currentPower?: number;
+  readonly candidatePower?: number;
+  readonly comparison: number;
+};
+
+export function evaluateEquipmentRollCandidate(
+  state: GameState,
+  equipmentId: EquipmentId,
+  candidate: EquipmentRoll
+): EquipmentRollCandidateEvaluation {
+  const alreadyOwned = state.ownedEquipment.includes(equipmentId);
+  const currentRoll = state.equipmentRolls?.[equipmentId];
+  if (!alreadyOwned) {
+    return {
+      alreadyOwned,
+      currentRoll,
+      comparison: 1
+    };
+  }
+
+  const comparisonEquipped = {
+    ...state.equipped,
+    [EQUIPMENT[equipmentId].slot]: equipmentId
+  };
+  const currentPower = getPlayerPower({
+    ...state,
+    equipped: comparisonEquipped
+  });
+  const candidatePower = getPlayerPower({
+    ...state,
+    equipped: comparisonEquipped,
+    equipmentRolls: {
+      ...(state.equipmentRolls ?? {}),
+      [equipmentId]: candidate
+    }
+  });
+  return {
+    alreadyOwned,
+    currentRoll,
+    currentPower,
+    candidatePower,
+    comparison: candidatePower !== currentPower
+      ? candidatePower - currentPower
+      : compareEquipmentRolls(candidate, currentRoll)
+  };
+}
+
 function settleRunLootState(state: GameState, exitStatus: RunExitStatus): GameState {
   if (!state.run) return state;
 
-  const settlement = settleRunLoot(state.run.lootBag, exitStatus);
+  const settlement = getRunLootSettlementPreview(state, exitStatus);
+  if (!settlement) return state;
   const acquiredEquipmentIds = settlement.retained.equipmentIds.filter(
     (equipmentId) => !state.ownedEquipment.includes(equipmentId)
   );
   const equipmentLevels = { ...state.equipmentLevels };
   for (const equipmentId of acquiredEquipmentIds) equipmentLevels[equipmentId] = 1;
+  const equipmentRolls: Partial<Record<EquipmentId, EquipmentRoll>> = {
+    ...(state.equipmentRolls ?? {})
+  };
+  let equipmentRollSettlement: EquipmentRollSettlement | undefined;
+  let equippedRollChanged = false;
+  let duplicateSalvageRewardPoints = 0;
+  for (const equipmentId of settlement.retained.equipmentIds) {
+    const candidate = state.run.carriedEquipmentRolls?.[equipmentId];
+    if (!candidate) continue;
+    const current = equipmentRolls[equipmentId];
+    const alreadyOwned = state.ownedEquipment.includes(equipmentId);
+    const currentlyEquipped =
+      state.equipped[EQUIPMENT[equipmentId].slot] === equipmentId;
+    const candidateEvaluation = evaluateEquipmentRollCandidate(
+      { ...state, equipmentLevels, equipmentRolls },
+      equipmentId,
+      candidate
+    );
+    const shouldKeepCandidate =
+      !alreadyOwned ||
+      candidateEvaluation.comparison > 0;
+    if (shouldKeepCandidate) {
+      equipmentRolls[equipmentId] = candidate;
+      if (alreadyOwned && currentlyEquipped) equippedRollChanged = true;
+      equipmentRollSettlement = {
+        equipmentId,
+        roll: candidate,
+        outcome: alreadyOwned ? 'upgraded' : 'acquired',
+        ...(current === undefined ? {} : { previousItemPower: current.itemPower }),
+        salvageRewardPoints: 0
+      };
+    } else {
+      const salvageRewardPoints = getInfernoTierModifiers(
+        candidate.sourceTier
+      ).duplicateSalvageRewardPoints;
+      duplicateSalvageRewardPoints += salvageRewardPoints;
+      equipmentRollSettlement = {
+        equipmentId,
+        roll: candidate,
+        outcome: 'salvaged',
+        ...(current === undefined ? {} : { previousItemPower: current.itemPower }),
+        salvageRewardPoints
+      };
+    }
+  }
+  const equipped = { ...state.equipped };
+  const autoEquippedEquipmentIds: EquipmentId[] = [];
+  if (state.run.entryFlowVersion === 2 && exitStatus === 'cleared') {
+    for (const equipmentId of acquiredEquipmentIds) {
+      const slot = EQUIPMENT[equipmentId].slot;
+      const currentPower = getPlayerPower({
+        ...state,
+        equipmentLevels,
+        equipmentRolls,
+        equipped
+      });
+      const candidateEquipped = {
+        ...equipped,
+        [slot]: equipmentId
+      };
+      const candidatePower = getPlayerPower({
+        ...state,
+        equipmentLevels,
+        equipmentRolls,
+        equipped: candidateEquipped
+      });
+      if (candidatePower > currentPower) {
+        equipped[slot] = equipmentId;
+        autoEquippedEquipmentIds.push(equipmentId);
+      }
+    }
+  }
   const lostDurableItems = { ...settlement.lost.items };
   delete lostDurableItems.legacy_scrip;
   const retainedLegacyScrip = settlement.retained.items.legacy_scrip ?? 0;
@@ -8246,20 +9026,34 @@ function settleRunLootState(state: GameState, exitStatus: RunExitStatus): GameSt
     retainedLegacyScrip > 0 ? { legacy_scrip: retainedLegacyScrip } : undefined
   );
 
-  return {
+  const settledState: GameState = {
     ...state,
-    rewardPoints: Math.max(0, state.rewardPoints - settlement.lost.rewardPoints),
+    rewardPoints: Math.max(
+      0,
+      state.rewardPoints - settlement.lost.rewardPoints + duplicateSalvageRewardPoints
+    ),
     lingyun: Math.max(0, state.lingyun - settlement.lost.lingyun),
     inventory: settledInventory,
     ownedEquipment: [...state.ownedEquipment, ...acquiredEquipmentIds],
     equipmentLevels,
+    equipmentRolls,
+    equipped,
     run: {
       ...state.run,
       lootBag: createEmptyRunLootBag<ItemId, EquipmentId>(),
+      carriedEquipmentRolls: {},
       pendingEquipmentOffer: undefined,
-      lastLootSettlement: settlement
+      lastLootSettlement: settlement,
+      lastAutoEquippedEquipmentIds: autoEquippedEquipmentIds,
+      lastEquipmentRollSettlement: equipmentRollSettlement
     }
   };
+
+  return state.run.entryFlowVersion === 2 &&
+    exitStatus === 'cleared' &&
+    (autoEquippedEquipmentIds.length > 0 || equippedRollChanged)
+    ? normalizeHealth(settledState)
+    : settledState;
 }
 
 function resolveRunEconomySettlement(state: GameState, exitStatus: RunExitStatus, reason: string): GameState {
@@ -8275,22 +9069,14 @@ function resolveRunEconomySettlement(state: GameState, exitStatus: RunExitStatus
     routeContractResult.run,
     exitStatus === 'retreated' ? 'retreat' : 'failure'
   );
-  const dungeon = DUNGEONS[state.run.dungeonId];
-  const exitReward = getExitReward(state);
-  const economy = calculateRunEconomy({
-    baseRewardPoints: exitReward.rewardPoints ?? 0,
-    clearedNodes: state.run.clearedNodeIds.length,
-    totalNodes: dungeon.nodes.length,
-    damageTaken: state.run.damageTaken,
-    captures: state.run.captures,
-    readiness: getDungeonReadiness(state, state.run.dungeonId),
-    dungeonTier: dungeon.tier,
-    exitStatus
-  });
+  const economy = getRunEconomyPreview(state, exitStatus);
+  if (!economy) return appendLog(state, '当前没有可结算的副本进度。');
   const protocolId = getRunProtocolId(state.run);
   const simplifiedRun = state.run.entryFlowVersion === 2;
+  const currentExplorationRewardRules = usesCurrentExplorationRewardRules(state.run);
   const currentProtocol = getCurrentRunProtocol(state);
   const protocolInterrupted = protocolId !== 'standard';
+  const lootSecurity = getRunLootSecurityStatus(state);
   const protocolAnchorOutcome = currentProtocol
     ? `; anchors=${currentProtocol.completedAnchorCount}/${currentProtocol.requiredAnchorCount}`
     : '';
@@ -8324,8 +9110,16 @@ function resolveRunEconomySettlement(state: GameState, exitStatus: RunExitStatus
         ? ` 深层轮回协议失败：双锚点 ${currentProtocol?.completedAnchorCount ?? 0}/${currentProtocol?.requiredAnchorCount ?? 2}，不发放协议奖励或材料，已消耗的轮回刻印不返还。`
         : '';
   const routeContractStatus = routeContractSettlement?.state
-    ? ` ${simplifiedRun ? '隐藏任务' : '路线契约'}以 ${routeContractSettlement.state.status}/${routeContractSettlement.state.reason ?? 'none'} 独立结算，奖励为 0。`
+    ? ` ${simplifiedRun ? '隐藏任务' : '路线契约'}以 ${getRouteContractSettlementLabel(routeContractSettlement.state)}独立结算，奖励为 0。`
     : '';
+  const modernLootSecurityStatus =
+    lootSecurity.enabled &&
+    exitStatus !== 'cleared' &&
+    !lootSecurity.secured
+      ? ` 未清理满 ${lootSecurity.requiredNodeCount} 个非出口节点，战利品袋尚未固化，本轮袋中收益全部遗失。`
+      : lootSecurity.enabled && exitStatus !== 'cleared'
+        ? ' 本轮仅按战利品袋比例回收，不叠加额外撤退或濒死奖励。'
+        : '';
 
   // Retreat and failure payouts are recovery settlements only: no exit reward items, no directives, no campaign completion.
   const recoveredState = applyReward(
@@ -8335,7 +9129,12 @@ function resolveRunEconomySettlement(state: GameState, exitStatus: RunExitStatus
       combat: undefined,
       lastOutcome: outcomeText
     },
-    { rewardPoints: economy.rewardPoints }
+    {
+      rewardPoints:
+        currentExplorationRewardRules && exitStatus !== 'cleared'
+          ? 0
+          : economy.rewardPoints
+    }
   );
   const equipmentMemoryResult = settleGameStateEquipmentMemoryHunt(
     recoveredState,
@@ -8343,7 +9142,7 @@ function resolveRunEconomySettlement(state: GameState, exitStatus: RunExitStatus
   );
   const loggedState = appendLog(
     equipmentMemoryResult.state,
-    `${reason}主神按本轮表现回收结算：${economy.outcome}，倍率 ${economy.rewardMultiplier}x。${protocolFailureStatus}${routeContractStatus}${lootStatus ? ` ${lootStatus}` : ''}`
+    `${reason}主神按本轮表现回收结算：${RUN_ECONOMY_OUTCOME_LABELS[economy.outcome]}，奖励倍率 ${economy.rewardMultiplier}。${protocolFailureStatus}${routeContractStatus}${modernLootSecurityStatus}${lootStatus ? ` ${lootStatus}` : ''}`
   );
   const memoryLoggedState = equipmentMemoryResult.settlementLog
     ? appendLog(loggedState, equipmentMemoryResult.settlementLog)
@@ -8423,6 +9222,34 @@ function resolveMonsterEffects(
   };
 }
 
+export function getReadyCombatCapturePetId(state: GameState): PetId | undefined {
+  if (state.phase !== 'combat' || !state.combat) return undefined;
+  const monster = getCombatEncounterProfile(state)?.monster ?? MONSTERS[state.combat.monsterId];
+  if (!isCurrentDungeonFeatureAvailable(state, 'consumable')) return undefined;
+
+  for (const pet of Object.values(PETS)) {
+    if (
+      pet.source !== 'capture' ||
+      pet.captureFrom !== monster.id ||
+      state.ownedPets.includes(pet.id)
+    ) continue;
+    const captureItem = pet.captureItem ?? 'capture_net';
+    const itemAvailable = isTacticalItemId(captureItem)
+      ? getTacticalItemAvailability(state, captureItem).available
+      : isDungeonConsumableAvailable(state, captureItem) && state.inventory[captureItem] > 0;
+    if (!itemAvailable) continue;
+    const captureEffect = getCaptureCombatEffect({
+      context: getCombatMechanicsContext(state),
+      monsterMaxHp: monster.maxHp,
+      baseFailureDamage: Math.max(4, Math.floor(monster.attack * 0.5)),
+      itemId: captureItem
+    });
+    if (state.combat.monsterHp <= captureEffect.weakThreshold) return pet.id;
+  }
+
+  return undefined;
+}
+
 export function capturePet(state: GameState, petId: PetId): GameState {
   if (state.phase !== 'combat' || !state.combat) return appendLog(state, '当前没有可捕获目标。');
   if (state.ownedPets.includes(petId)) return appendLog(state, `你已经拥有${PETS[petId].name}。`);
@@ -8468,10 +9295,19 @@ export function capturePet(state: GameState, petId: PetId): GameState {
 
   const nodeId = state.combat.nodeId;
   const combatDamageTaken = getCurrentCombatDamageTaken(state);
-  const captureRewardPoints = getAdjustedCombatRewardPoints(
+  const adjustedCaptureRewardPoints = getAdjustedCombatRewardPoints(
     state,
     Math.floor(monster.rewardPoints * 0.35)
   );
+  const infernoTier = getRunProtocolId(state.run) === 'deep'
+    ? getRunInfernoTier(state.run)
+    : undefined;
+  const captureRewardPoints = infernoTier === undefined
+    ? adjustedCaptureRewardPoints
+    : scaleInfernoRewardPoints(adjustedCaptureRewardPoints, infernoTier);
+  const itemDrops = infernoTier === undefined
+    ? monster.drop
+    : scaleInfernoItemDrops(monster.drop, infernoTier);
   const victorySignaled = signalCurrentCombatVictory(state);
   const consumedCaptureItem = consumeItem(victorySignaled, captureItem);
   const captured = applyRunReward(
@@ -8496,15 +9332,20 @@ export function capturePet(state: GameState, petId: PetId): GameState {
       },
       captureItem
     ),
-    { rewardPoints: captureRewardPoints }
+    { rewardPoints: captureRewardPoints, items: itemDrops }
   );
   const bossReward = applyBossVictoryReward(captured, nodeId);
   const encounterLoot = applyEncounterEquipmentLoot(bossReward.state, monster, nodeId);
+  const explorationRewardLine = getExplorationClearRewardStatusLine(encounterLoot.state, nodeId);
   const statusLines = [bossReward.statusLine, encounterLoot.statusLine].filter(Boolean).join(' ');
+  const captureRewardText = formatRewardGains({
+    rewardPoints: captureRewardPoints,
+    items: itemDrops
+  });
 
   return appendLog(
     normalizeHealth(markNodeCleared(encounterLoot.state, nodeId, combatDamageTaken)),
-    `${captureEffect.statusLines.join('')}${ITEMS[captureItem].name}收束灵光，${pet.name}被捕获并进入出战位，${captureRewardPoints} 点奖励进入战利品袋。${statusLines ? ` ${statusLines}` : ''}`
+    `${captureEffect.statusLines.join('')}${ITEMS[captureItem].name}收束灵光，${pet.name}被捕获并进入出战位，${captureRewardText}进入战利品袋。${explorationRewardLine ? ` ${explorationRewardLine}` : ''}${statusLines ? ` ${statusLines}` : ''}`
   );
 }
 
@@ -9214,6 +10055,9 @@ export function performCombatAction(state: GameState, action: CombatAction): Gam
     if (!availability.available) {
       return appendLog(state, getTacticalItemUnavailableLog(state, 'healing_pill') ?? '止血丹暂时无法使用。');
     }
+    if (state.player.hp >= state.player.maxHp) {
+      return appendLog(state, '当前生命已满，无需使用止血丹。');
+    }
     const pillHealing = getAdjustedDungeonHealing(state, 36);
     nextState = consumeItem(state, 'healing_pill');
     nextState = recordUsedItem(nextState, 'healing_pill');
@@ -9393,14 +10237,14 @@ export function performCombatAction(state: GameState, action: CombatAction): Gam
   const monsterHp = Math.max(0, nextCombat.monsterHp - finalDamageToMonster);
   const actionLine =
     action === 'use_thunder_talisman'
-      ? `雷火符炸开，造成 ${finalDamageToMonster} 点伤害。`
+      ? `雷火符炸开，造成 ${observedDirectDamage} 点伤害。`
       : action === 'art'
-        ? `你运转灵力，造成 ${finalDamageToMonster} 点术法伤害。`
+        ? `你运转灵力，造成 ${observedDirectDamage} 点术法伤害。`
         : action === 'weapon_skill' && weaponSkillDefinition && weaponSkillResolution
-          ? `你发动${weaponSkillDefinition.name}，造成 ${finalDamageToMonster} 点${weaponSkillResolution.damageKind === 'art' ? '术法' : '物理'}伤害${weaponSkillHealing > 0 ? `，并回复 ${weaponSkillHealing} 点生命` : ''}。`
+          ? `你发动${weaponSkillDefinition.name}，造成 ${observedDirectDamage} 点${weaponSkillResolution.damageKind === 'art' ? '术法' : '物理'}伤害${weaponSkillHealing > 0 ? `，并回复 ${weaponSkillHealing} 点生命` : ''}。`
         : cloudStepSkirmishBonus > 0
-          ? `云隙步带你游斗切入，造成 ${finalDamageToMonster} 点伤害。`
-          : `你发动攻击，造成 ${finalDamageToMonster} 点伤害。`;
+          ? `云隙步带你游斗切入，造成 ${observedDirectDamage} 点伤害。`
+          : `你发动攻击，造成 ${observedDirectDamage} 点伤害。`;
 
   nextCombat = {
     ...effects.nextCombat,
@@ -9427,7 +10271,7 @@ export function performCombatAction(state: GameState, action: CombatAction): Gam
   }
 
   if ((nextState.combat?.monsterHp ?? monsterHp) <= 0) {
-    return finishCombatVictory(nextState, monster);
+    return finishCombatVictory(appendLog(nextState, actionLine), monster);
   }
 
   const replayBeforeCounter = normalizeCombatReplayCombatState(nextState.combat?.combatReplayState);
@@ -9439,11 +10283,14 @@ export function performCombatAction(state: GameState, action: CombatAction): Gam
   let afterMonster = monsterAttack(nextState, retaliationMonster, nextCombat, effects.damageToPlayer);
   afterMonster = releasePendingAfterbeat(afterMonster);
   if (afterMonster.player.hp <= 0) {
-    return resolveRunFailure(afterMonster, `${monster.name}把你逼到濒死，主神强制回收。`);
+    return resolveRunFailure(
+      appendLog(afterMonster, actionLine),
+      `${monster.name}把你逼到濒死，主神强制回收。`
+    );
   }
 
   if ((afterMonster.combat?.monsterHp ?? 1) <= 0) {
-    return finishCombatVictory(afterMonster, monster);
+    return finishCombatVictory(appendLog(afterMonster, actionLine), monster);
   }
 
   if (replayBeforeCounter?.boss && replayBeforeCounter.route === 'afterbeat') {
@@ -9451,6 +10298,62 @@ export function performCombatAction(state: GameState, action: CombatAction): Gam
   }
 
   return appendLog(applyContinuingCombatFocus(afterMonster, action, actionIntent), actionLine);
+}
+
+export type CombatActionDamagePreview = Readonly<{
+  damage: number;
+  monsterHpAfter: number;
+  playerWillFall?: boolean;
+}>;
+
+export function getCombatActionDamagePreview(
+  state: GameState,
+  action: Extract<CombatAction, 'attack' | 'art'>
+): CombatActionDamagePreview | undefined {
+  if (state.phase !== 'combat' || !state.combat) return undefined;
+
+  const monsterHpBefore = state.combat.monsterHp;
+  const previewInput: GameState = {
+    ...state,
+    log: [],
+    combat: {
+      ...state.combat,
+      log: []
+    }
+  };
+  const projected = performCombatAction(
+    previewInput,
+    action
+  );
+  const playerWillFall = projected.lastOutcome?.includes('outcome=failed_recovered') === true;
+  const damageProjection = playerWillFall
+    ? performCombatAction(
+    {
+          ...previewInput,
+          player: {
+            ...previewInput.player,
+            hp: Math.max(previewInput.player.maxHp, 1_000_000),
+            maxHp: Math.max(previewInput.player.maxHp, 1_000_000)
+          }
+        },
+        action
+      )
+    : projected;
+  const defeatedTarget = damageProjection.run?.clearedNodeIds.includes(state.combat.nodeId) === true;
+  const monsterHpAfter = defeatedTarget
+    ? 0
+    : damageProjection.combat?.nodeId === state.combat.nodeId
+      ? damageProjection.combat.monsterHp
+      : undefined;
+  if (monsterHpAfter === undefined || monsterHpAfter >= monsterHpBefore) return undefined;
+
+  return {
+    damage: monsterHpBefore - monsterHpAfter,
+    monsterHpAfter,
+    ...(playerWillFall
+      ? { playerWillFall: true }
+      : {})
+  };
 }
 
 export function resolveRetreat(state: GameState): GameState {
@@ -9529,6 +10432,7 @@ export function resolveExit(state: GameState): GameState {
           totalNodes: dungeon.nodes.length,
           damageTaken: runWithExit.damageTaken,
           captures: runWithExit.capturedPetIds,
+          ownedPetIds: state.ownedPets,
           usedItems: runWithExit.usedItems,
           learnedMethods: state.learnedMethods,
           equippedIds: Object.values(state.equipped),
@@ -9539,18 +10443,7 @@ export function resolveExit(state: GameState): GameState {
   // Repeat clears can farm run rewards, but first-clear directive rewards stay one-time.
   const shouldClaimDirective =
     !isRepeatClear && directive && directiveEvaluation?.status === 'completed' && !state.claimedDirectiveIds.includes(directive.id);
-  const economy = state.run && dungeon
-    ? calculateRunEconomy({
-        baseRewardPoints: node.reward.rewardPoints ?? 0,
-        clearedNodes: state.run.clearedNodeIds.length + 1,
-        totalNodes: dungeon.nodes.length,
-        damageTaken: state.run.damageTaken,
-        captures: state.run.captures,
-        readiness: getDungeonReadiness(state, state.run.dungeonId),
-        dungeonTier: dungeon.tier,
-        exitStatus: 'cleared'
-      })
-    : undefined;
+  const economy = getRunEconomyPreview(state, 'cleared', true);
   const pressureStatus = getCurrentRunPressure(state).status;
   const pressureRewardPointBonus = economy && pressureStatus
     ? calculateRunPressureBonus(economy.rewardPoints, pressureStatus.state)
@@ -9564,6 +10457,9 @@ export function resolveExit(state: GameState): GameState {
         }
       : undefined;
   const protocolId = getRunProtocolId(state.run);
+  const infernoTier = isLayeredInfernoRun(state.run)
+    ? getRunInfernoTier(state.run)
+    : undefined;
   const baseProtocolEvaluation = economy && runWithExit
     ? evaluateRunProtocolReward({
         dungeonId: runWithExit.dungeonId,
@@ -9576,7 +10472,11 @@ export function resolveExit(state: GameState): GameState {
   const simplifiedMaterialReward = simplifiedProtocol && runWithExit
     ? {
         itemId: DUNGEON_MATERIAL_REWARDS[runWithExit.dungeonId].itemId,
-        amount: protocolId === 'standard' ? 1 : protocolId === 'imprint' ? 2 : 3
+        amount: protocolId === 'standard'
+          ? 1
+          : protocolId === 'imprint'
+            ? 2
+            : getInfernoTierModifiers(infernoTier ?? 1).materialAmount
       }
     : undefined;
   const protocolEvaluation = simplifiedProtocol && baseProtocolEvaluation && protocolId !== 'standard'
@@ -9587,7 +10487,22 @@ export function resolveExit(state: GameState): GameState {
         requiredAnchorCount: 0,
         canGrantProtocolReward: baseProtocolEvaluation.bossDefeated,
         rewardPoints: baseProtocolEvaluation.bossDefeated
-          ? scaleRunProtocolRewardPoints(economy?.rewardPoints ?? 0, runWithExit.dungeonId, protocolId)
+          ? (
+              protocolId === 'deep'
+                ? scaleInfernoRewardPoints(
+                    scaleRunProtocolRewardPoints(
+                      economy?.rewardPoints ?? 0,
+                      runWithExit.dungeonId,
+                      protocolId
+                    ),
+                    infernoTier ?? 1
+                  )
+                : scaleRunProtocolRewardPoints(
+                    economy?.rewardPoints ?? 0,
+                    runWithExit.dungeonId,
+                    protocolId
+                  )
+            )
           : economy?.rewardPoints ?? 0,
         imprint: undefined,
         materialReward: undefined
@@ -9597,6 +10512,21 @@ export function resolveExit(state: GameState): GameState {
     ? Math.max(0, protocolEvaluation.rewardPoints - economy.rewardPoints)
     : 0;
   const protocolSucceeded = protocolId !== 'standard' && protocolEvaluation?.canGrantProtocolReward === true;
+  const nextInfernoProgress = protocolSucceeded && infernoTier !== undefined && state.run
+    ? unlockNextInfernoTier(
+        state.infernoProgress,
+        state.run.dungeonId,
+        infernoTier ?? 1,
+        state.completedDungeonIds
+      )
+    : state.infernoProgress;
+  const unlockedInfernoTier = infernoTier !== undefined && state.run
+    ? getUnlockedInfernoTier(
+        nextInfernoProgress,
+        state.run.dungeonId,
+        state.completedDungeonIds
+      )
+    : undefined;
   const protocolMaterialReward = protocolSucceeded ? protocolEvaluation?.materialReward : undefined;
   const protocolSettlement: RunProtocolSettlement | undefined =
     protocolId !== 'standard' && protocolEvaluation && state.run
@@ -9609,6 +10539,8 @@ export function resolveExit(state: GameState): GameState {
           protocolRewardPoints: protocolEvaluation.rewardPoints,
           rewardPointBonus: protocolSucceeded ? protocolRewardPointBonus : 0,
           cycleImprintGranted: !simplifiedProtocol && protocolSucceeded && protocolId === 'imprint',
+          ...(infernoTier === undefined ? {} : { infernoTier }),
+          ...(unlockedInfernoTier === undefined ? {} : { unlockedInfernoTier }),
           ...(protocolMaterialReward === undefined ? {} : { materialReward: protocolMaterialReward })
         }
       : undefined;
@@ -9670,7 +10602,7 @@ export function resolveExit(state: GameState): GameState {
   const paidRewardPoints = reward.rewardPoints ?? 0;
   const settlementText = isRepeatClear ? `${node.title}复刷结算。` : `${node.title}首次通关结算。`;
   const protocolOutcomeText = protocolSettlement
-    ? `; protocol=${protocolSettlement.protocol.id}:${protocolSettlement.status}; anchors=${protocolEvaluation?.completedAnchorCount ?? 0}/${protocolEvaluation?.requiredAnchorCount ?? 0}; protocolBonus=${protocolSettlement.rewardPointBonus}; cycleImprint=${protocolSettlement.cycleImprintGranted ? 1 : 0}${protocolSettlement.materialReward ? `; material=${protocolSettlement.materialReward.itemId}:${protocolSettlement.materialReward.amount}` : protocolSettlement.protocol.id === 'deep' ? '; material=none' : ''}`
+    ? `; protocol=${protocolSettlement.protocol.id}:${protocolSettlement.status}; anchors=${protocolEvaluation?.completedAnchorCount ?? 0}/${protocolEvaluation?.requiredAnchorCount ?? 0}; protocolBonus=${protocolSettlement.rewardPointBonus}; cycleImprint=${protocolSettlement.cycleImprintGranted ? 1 : 0}${protocolSettlement.infernoTier ? `; infernoTier=${protocolSettlement.infernoTier}; infernoUnlocked=${protocolSettlement.unlockedInfernoTier ?? protocolSettlement.infernoTier}` : ''}${protocolSettlement.materialReward ? `; material=${protocolSettlement.materialReward.itemId}:${protocolSettlement.materialReward.amount}` : protocolSettlement.protocol.id === 'deep' ? '; material=none' : ''}`
     : '';
   const pressureOutcomeText = pressureSettlement
     ? `; pressure=${pressureSettlement.tier}; pressureNodes=${pressureSettlement.state.clearedNodeCount}; pressureBonus=${pressureSettlement.rewardPointBonus}`
@@ -9688,7 +10620,9 @@ export function resolveExit(state: GameState): GameState {
   if (simplifiedProtocol && protocolSettlement) {
     const difficultyName = protocolSettlement.protocol.id === 'imprint' ? '困难' : '炼狱';
     protocolLog = protocolSettlement.status === 'succeeded'
-      ? ` ${difficultyName}难度完成，额外获得 ${protocolSettlement.rewardPointBonus} 奖励点。`
+      ? protocolSettlement.protocol.id === 'deep'
+        ? ` 炼狱第 ${protocolSettlement.infernoTier ?? 1} 层完成，额外获得 ${protocolSettlement.rewardPointBonus} 奖励点；第 ${protocolSettlement.unlockedInfernoTier ?? (protocolSettlement.infernoTier ?? 1) + 1} 层已解锁。`
+        : ` ${difficultyName}难度完成，额外获得 ${protocolSettlement.rewardPointBonus} 奖励点。`
       : ` ${difficultyName}难度未完成，不发放难度加成。`;
   } else if (protocolSettlement?.protocol.id === 'imprint') {
     protocolLog = protocolSettlement.status === 'succeeded'
@@ -9709,7 +10643,7 @@ export function resolveExit(state: GameState): GameState {
   const routeContractLog = routeContractSettlement?.state
     ? routeContractSettlement.rewarded
       ? ` ${simplifiedProtocol ? '隐藏任务' : '路线契约'}「${routeContractDefinition?.name ?? routeContractSettlement.state.contractId}」已入账，独立获得 ${routeContractRewardPoints} 奖励点。`
-      : ` ${simplifiedProtocol ? '隐藏任务' : '路线契约'}「${routeContractDefinition?.name ?? routeContractSettlement.state.contractId}」以 ${routeContractSettlement.state.status}/${routeContractSettlement.state.reason ?? 'none'} 结算，奖励为 0。`
+      : ` ${simplifiedProtocol ? '隐藏任务' : '路线契约'}「${routeContractDefinition?.name ?? routeContractSettlement.state.contractId}」以 ${getRouteContractSettlementLabel(routeContractSettlement.state)}结算，奖励为 0。`
     : '';
   const materialLog = simplifiedMaterialReward
     ? ` ${ITEMS[simplifiedMaterialReward.itemId].name} +${simplifiedMaterialReward.amount}，可在装备商人处兑换本章装备。`
@@ -9734,6 +10668,7 @@ export function resolveExit(state: GameState): GameState {
     : undefined;
   const exitSettledState: GameState = {
     ...rewardedState,
+    infernoProgress: nextInfernoProgress,
     run: rewardedState.run
       ? {
           ...rewardedState.run,
@@ -9779,8 +10714,8 @@ export function resolveExit(state: GameState): GameState {
     equipmentMemoryResult.state,
     economy
       ? isRepeatClear
-        ? `${node.title}亮起，已通关副本复刷结算：${economy.outcome}，倍率 ${economy.rewardMultiplier}x。${protocolLog}${pressureLog}${routeContractLog}${materialLog}${bankedEquipmentCount ? ` 带回 ${bankedEquipmentCount} 件装备。` : ''}`
-        : `${node.title}亮起，首次通关结算：${economy.outcome}，倍率 ${economy.rewardMultiplier}x。${protocolLog}${pressureLog}${routeContractLog}${materialLog}${bankedEquipmentCount ? ` 带回 ${bankedEquipmentCount} 件装备。` : ''}`
+        ? `${node.title}亮起，已通关副本复刷结算：${RUN_ECONOMY_OUTCOME_LABELS[economy.outcome]}，倍率 ${economy.rewardMultiplier}x。${protocolLog}${pressureLog}${routeContractLog}${materialLog}${bankedEquipmentCount ? ` 带回 ${bankedEquipmentCount} 件装备。` : ''}`
+        : `${node.title}亮起，首次通关结算：${RUN_ECONOMY_OUTCOME_LABELS[economy.outcome]}，倍率 ${economy.rewardMultiplier}x。${protocolLog}${pressureLog}${routeContractLog}${materialLog}${bankedEquipmentCount ? ` 带回 ${bankedEquipmentCount} 件装备。` : ''}`
       : isRepeatClear
         ? `${node.title}亮起，已通关副本重复探索完成。${routeContractLog}`
         : `${node.title}亮起，你首次通关本轮副本探索。${routeContractLog}`
@@ -9847,14 +10782,46 @@ export function returnToHub(state: GameState): GameState {
     return appendLog(state, '先归档或放弃本轮回响遗物，再返回主神空间。');
   }
 
+  const normalized = normalizeHealth({
+    ...state,
+    phase: 'hub',
+    run: undefined,
+    combat: undefined,
+    lastOutcome: undefined
+  });
+  const recoveredHp = normalized.player.maxHp;
   return appendLog(
-    normalizeHealth({
-      ...state,
-      phase: 'hub',
-      run: undefined,
-      combat: undefined,
-      lastOutcome: undefined
-    }),
-    '你回到主神空间，兑换碑刷新出新的可选项。'
+    {
+      ...normalized,
+      player: {
+        ...normalized.player,
+        hp: recoveredHp
+      }
+    },
+    recoveredHp === normalized.player.hp
+      ? '你回到主神空间，兑换碑刷新出新的可选项。'
+      : `你回到主神空间，主神完成免费离场修复，生命恢复至 ${recoveredHp}/${normalized.player.maxHp}。`
+  );
+}
+
+export function recoverAtHub(state: GameState): GameState {
+  if (state.phase !== 'hub') {
+    return appendLog(state, '免费恢复仅能在主神空间使用。');
+  }
+
+  const normalized = normalizeHealth(state);
+  if (normalized.player.hp >= normalized.player.maxHp) {
+    return appendLog(normalized, `当前生命已满（${normalized.player.maxHp}/${normalized.player.maxHp}），无需恢复。`);
+  }
+
+  return appendLog(
+    {
+      ...normalized,
+      player: {
+        ...normalized.player,
+        hp: normalized.player.maxHp
+      }
+    },
+    `主神完成免费恢复，生命恢复至 ${normalized.player.maxHp}/${normalized.player.maxHp}。`
   );
 }

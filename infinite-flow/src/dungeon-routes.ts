@@ -248,6 +248,18 @@ export type DungeonRouteGateStatus =
       readonly blockReason: string;
     };
 
+export type ProceduralBossAccessStatus =
+  | {
+      readonly allowed: true;
+      readonly eligibleSourceNodeIds: readonly string[];
+      readonly blockReason?: undefined;
+    }
+  | {
+      readonly allowed: false;
+      readonly eligibleSourceNodeIds: readonly [];
+      readonly blockReason: string;
+    };
+
 export type DungeonRouteSectorDisplay = {
   readonly id: string;
   readonly label: string;
@@ -1766,10 +1778,23 @@ function isRequirementMet(requirement: DungeonRouteLawRequirement, state: Dungeo
   }
 }
 
-function getClosedReason(requirement: DungeonRouteLawRequirement): string {
+function getClosedReason(
+  requirement: DungeonRouteLawRequirement,
+  lawState: DungeonLawState
+): string {
   switch (requirement.kind) {
-    case 'fog_pressure_at_most':
+    case 'fog_pressure_at_most': {
+      const relief = DUNGEON_LAW_LANDMARKS.demon_tower_1;
+      const recoveryExhausted =
+        lawState.dungeonId === 'demon_tower_1' &&
+        lawState.law.kind === 'demon_tower' &&
+        relief.reliefNodeIds.every((nodeId) => lawState.clearedNodeIds.includes(nodeId)) &&
+        relief.reliefEventIds.every((eventId) => lawState.resolvedEventIds.includes(eventId));
+      if (recoveryExhausted) {
+        return `雾压需降至 ${requirement.maximum} 或以下；减压地标均已结算，改走白光裂口侧路或撤回。`;
+      }
       return `雾压需降至 ${requirement.maximum} 或以下；先去雾后暗格或静默香案减压。`;
+    }
     case 'metro_tide': {
       const tideLabel: Record<MetroTide, string> = { ebb: '退潮', flood: '涨潮', mirror: '镜潮' };
       return `仅${tideLabel[requirement.tide]}时通行；先到信号箱暗格复位潮序。`;
@@ -1941,7 +1966,41 @@ export function getRouteGateStatus(
     gate,
     status: 'closed',
     isOpen: false,
-    blockReason: gate.closedReason ?? getClosedReason(gate.requirement)
+    blockReason: gate.closedReason ?? getClosedReason(gate.requirement, lawState)
+  };
+}
+
+export function getProceduralBossAccessStatus(
+  dungeonId: DungeonRouteDungeonId,
+  bossNodeId: string,
+  lawState: DungeonLawState
+): ProceduralBossAccessStatus {
+  const bossGates = getDungeonRouteGates(dungeonId).filter(
+    (gate) => gate.toNodeId === bossNodeId
+  );
+  if (bossGates.length === 0) {
+    return { allowed: true, eligibleSourceNodeIds: [] };
+  }
+
+  const statuses = bossGates.map((gate) =>
+    getRouteGateStatus(dungeonId, gate.fromNodeId, gate.toNodeId, lawState)
+  );
+  const eligibleSourceNodeIds = bossGates
+    .filter((_, index) => statuses[index]?.isOpen)
+    .map((gate) => gate.fromNodeId);
+  if (eligibleSourceNodeIds.length > 0) {
+    return { allowed: true, eligibleSourceNodeIds };
+  }
+
+  const blockReasons = [...new Set(
+    statuses.flatMap((status) => status?.blockReason ? [status.blockReason] : [])
+  )];
+  return {
+    allowed: false,
+    eligibleSourceNodeIds: [],
+    blockReason: blockReasons.length === 1
+      ? blockReasons[0]
+      : `首领入口尚未开放：${blockReasons.join('；')}`
   };
 }
 

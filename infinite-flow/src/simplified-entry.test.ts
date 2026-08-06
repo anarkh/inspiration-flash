@@ -10,8 +10,13 @@ import {
   createInitialState,
   enterDungeon,
   getEquipmentRecipePurchaseStatus,
+  getPlayerPower,
+  getRunEconomyPreview,
+  handleTrap,
   performCombatAction,
+  resolveEquipmentLoot,
   resolveExit,
+  resolveRetreat,
   selectNode,
   usePortal,
   type GameState
@@ -64,7 +69,11 @@ describe('simplified dungeon entry flow', () => {
 
       expect(entered.phase).toBe('explore');
       expect(entered.inventory.cycle_imprint).toBe(0);
-      expect(entered.run).toMatchObject({ entryFlowVersion: 2, hiddenTaskSeed: 17 });
+      expect(entered.run).toMatchObject({
+        entryFlowVersion: 2,
+        explorationRewardVersion: 1,
+        hiddenTaskSeed: 17
+      });
       expect(settled.inventory.demon_bone - entered.inventory.demon_bone).toBe(expectedAmount);
     }
   });
@@ -106,13 +115,9 @@ describe('simplified dungeon entry flow', () => {
     expect(purchased.lingyun).toBe(unlocked.lingyun);
   });
 
-  it('does not interrupt modern exploration with whole-equipment loot choices', () => {
+  it('turns the first elite victory into visible materials and a permanent equipment upgrade', () => {
     const entered = enterDungeon(
-      {
-        ...createInitialState(),
-        completedDungeonIds: ['demon_tower_1'],
-        claimedTaskIds: ['mainline_clear_demon_tower_1']
-      },
+      createInitialState(),
       'demon_tower_1',
       'standard',
       undefined,
@@ -128,8 +133,134 @@ describe('simplified dungeon entry flow', () => {
     );
 
     expect(defeated.phase).toBe('explore');
-    expect(defeated.run?.pendingEquipmentOffer).toBeUndefined();
-    expect(defeated.run?.lootOffersMade).toBe(0);
+    expect(defeated.run?.pendingEquipmentOffer?.equipmentIds).toHaveLength(3);
+    expect(defeated.run?.lootOffersMade).toBe(1);
+    expect(defeated.run?.lootBag.items.demon_bone).toBe(2);
+    expect(defeated.log.some((line) => line.includes('妖骨 x2'))).toBe(true);
+
+    const selectedEquipmentId = defeated.run?.pendingEquipmentOffer?.equipmentIds[0];
+    if (!selectedEquipmentId) throw new Error('Expected an equipment candidate');
+    const powerBefore = getPlayerPower(defeated);
+    const selected = resolveEquipmentLoot(defeated, selectedEquipmentId);
+    const settled = resolveExit(readyForExit(selected));
+
+    expect(selected.run?.lootBag.equipmentIds).toContain(selectedEquipmentId);
+    expect(settled.ownedEquipment).toContain(selectedEquipmentId);
+    expect(settled.equipped[EQUIPMENT[selectedEquipmentId].slot]).toBe(selectedEquipmentId);
+    expect(settled.run?.lastAutoEquippedEquipmentIds).toContain(selectedEquipmentId);
+    expect(getPlayerPower(settled)).toBeGreaterThan(powerBefore);
+    expect(settled.inventory.demon_bone).toBeGreaterThanOrEqual(3);
+  });
+
+  it('guarantees modern exploration income and a supply every third first-clear', () => {
+    const entered = enterDungeon(
+      createInitialState(),
+      'demon_tower_1',
+      'standard',
+      undefined,
+      { flowVersion: 2, hiddenTaskSeed: 27 }
+    );
+    const startingPills = entered.inventory.healing_pill;
+    let explored = handleTrap(atNode(entered, 'blood_rune_trap'), 'risk');
+    explored = handleTrap(atNode(explored, 'loose_tile_trap'), 'risk');
+    explored = handleTrap(atNode(explored, 'left_watch_trap'), 'risk');
+
+    expect(explored.run?.lootBag.rewardPoints).toBe(90);
+    expect(explored.run?.lootBag.items.healing_pill).toBe(1);
+    expect(explored.inventory.healing_pill).toBe(startingPills + 1);
+    expect(explored.log.some((line) => line.includes('探索结算追加'))).toBe(true);
+  });
+
+  it('does not let an uncommitted opening kill mint repeatable retreat income', () => {
+    const initial = createInitialState();
+    const entered = enterDungeon(
+      initial,
+      'demon_tower_1',
+      'standard',
+      undefined,
+      { flowVersion: 2, hiddenTaskSeed: 28 }
+    );
+    const started = selectNode(atNode(entered, 'fog_lesser_demon'), 'fog_lesser_demon');
+    const defeated = performCombatAction(
+      {
+        ...started,
+        combat: started.combat ? { ...started.combat, monsterHp: 1 } : started.combat
+      },
+      'attack'
+    );
+    const preview = getRunEconomyPreview(defeated, 'retreated');
+    const retreated = resolveRetreat(defeated);
+
+    expect(defeated.run?.clearedNodeIds).toEqual(['fog_lesser_demon']);
+    expect(defeated.run?.lootBag.rewardPoints).toBeGreaterThan(0);
+    expect(preview?.rewardPoints).toBe(0);
+    expect(retreated.run?.lastLootSettlement?.retained.rewardPoints).toBe(0);
+    expect(retreated.run?.lastLootSettlement?.lost.rewardPoints)
+      .toBe(defeated.run?.lootBag.rewardPoints);
+    expect(retreated.rewardPoints).toBe(initial.rewardPoints);
+    expect(retreated.log.some((line) => line.includes('未清理满 3 个非出口节点'))).toBe(true);
+  });
+
+  it('unlocks proportional retreat recovery at the three-node exploration milestone without a bonus payout', () => {
+    const initial = createInitialState();
+    let explored = enterDungeon(
+      initial,
+      'demon_tower_1',
+      'standard',
+      undefined,
+      { flowVersion: 2, hiddenTaskSeed: 30 }
+    );
+    explored = handleTrap(atNode(explored, 'blood_rune_trap'), 'risk');
+    explored = handleTrap(atNode(explored, 'loose_tile_trap'), 'risk');
+    explored = handleTrap(atNode(explored, 'left_watch_trap'), 'risk');
+    const bagPoints = explored.run?.lootBag.rewardPoints ?? 0;
+    const retreated = resolveRetreat(explored);
+
+    expect(bagPoints).toBe(90);
+    expect(retreated.run?.lastLootSettlement?.retained.rewardPoints).toBe(45);
+    expect(retreated.run?.lastLootSettlement?.lost.rewardPoints).toBe(45);
+    expect(retreated.rewardPoints - initial.rewardPoints).toBe(45);
+    expect(retreated.log.some((line) => line.includes('不叠加额外撤退或濒死奖励'))).toBe(true);
+  });
+
+  it('preserves the original retreat settlement for a pre-version modern save', () => {
+    const initial = createInitialState();
+    const entered = enterDungeon(
+      initial,
+      'demon_tower_1',
+      'standard',
+      undefined,
+      { flowVersion: 2, hiddenTaskSeed: 31 }
+    );
+    if (!entered.run) throw new Error('Expected an active dungeon run');
+    const {
+      explorationRewardVersion: _discardedRewardVersion,
+      ...preVersionRun
+    } = entered.run;
+    const preVersionSave: GameState = {
+      ...entered,
+      rewardPoints: entered.rewardPoints + 100,
+      run: {
+        ...preVersionRun,
+        clearedNodeIds: ['fog_lesser_demon'],
+        lootBag: {
+          ...entered.run.lootBag,
+          rewardPoints: 100
+        }
+      }
+    };
+    const preview = getRunEconomyPreview(preVersionSave, 'retreated');
+    const retreated = resolveRetreat(preVersionSave);
+
+    expect(preVersionSave.run?.explorationRewardVersion).toBeUndefined();
+    expect(preview?.rewardPoints).toBeGreaterThan(0);
+    expect(retreated.run?.lastLootSettlement?.retained.rewardPoints).toBe(50);
+    expect(retreated.run?.lastLootSettlement?.lost.rewardPoints).toBe(50);
+    expect(retreated.rewardPoints).toBe(
+      initial.rewardPoints + 50 + (preview?.rewardPoints ?? 0)
+    );
+    expect(retreated.log.join('\n')).not.toContain('未清理满 3 个非出口节点');
+    expect(retreated.log.join('\n')).not.toContain('不叠加额外撤退或濒死奖励');
   });
 
   it('keeps the simplified rules after crossing into another dungeon', () => {
@@ -155,6 +286,7 @@ describe('simplified dungeon entry flow', () => {
     expect(transported.run).toMatchObject({
       dungeonId: 'metro_abyss',
       entryFlowVersion: 2,
+      explorationRewardVersion: 1,
       hiddenTaskSeed: 29
     });
   });

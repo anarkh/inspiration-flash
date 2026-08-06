@@ -411,6 +411,34 @@ describe('monster combat effects', () => {
     expect(guardedBurst.damageToPlayer).toBe(4);
   });
 
+  it('fires the rogue sentry suppression volley every third turn and makes guard a strong counter', () => {
+    const beforeVolley = applyMonsterCombatEffects({
+      monsterId: 'rogue_sentry', turn: 2, incomingDamage: 32, monsterHp: 495, monsterMaxHp: 495,
+      damageKind: 'physical', player: { ...basePlayer, action: 'attack' }
+    });
+    const volley = applyMonsterCombatEffects({
+      monsterId: 'rogue_sentry', turn: 3, incomingDamage: 32, monsterHp: 463, monsterMaxHp: 495,
+      damageKind: 'physical', player: { ...basePlayer, action: 'attack' }
+    });
+    const guardedVolley = applyMonsterCombatEffects({
+      monsterId: 'rogue_sentry', turn: 3, incomingDamage: 0, monsterHp: 463, monsterMaxHp: 495,
+      damageKind: 'physical', player: { ...basePlayer, action: 'guard' }
+    });
+    const nextVolley = applyMonsterCombatEffects({
+      monsterId: 'rogue_sentry', turn: 6, incomingDamage: 32, monsterHp: 367, monsterMaxHp: 495,
+      damageKind: 'art', player: { ...basePlayer, action: 'art' }
+    });
+
+    expect(beforeVolley.damageToPlayer).toBe(0);
+    expect(volley.damageToPlayer).toBe(15);
+    expect(volley.statusLines).toContain(
+      '失控哨戒炮完成压制齐射，追加 15 点物理伤害；每第三回合守御可显著削弱。'
+    );
+    expect(guardedVolley.damageToPlayer).toBe(4);
+    expect(guardedVolley.statusLines[0]).toContain('仅追加 4 点物理余波伤害');
+    expect(nextVolley.damageToPlayer).toBe(15);
+  });
+
   it('makes portal molt beast phase on even turns unless rift counters are present', () => {
     const shifted = applyMonsterCombatEffects({
       monsterId: 'portal_molt_beast',
@@ -532,6 +560,41 @@ describe('monster combat effects', () => {
     expect(artBlocked.damageToMonster).toBe(24);
     expect(physicalBlocked.statusLines).toContain('变异守库体展开奇数轮武力甲壳，本次伤害由 40 降至 24。');
     expect(artBlocked.statusLines).toContain('变异守库体展开偶数轮术法甲壳，本次伤害由 40 降至 24。');
+  });
+
+  it('alternates phase hunter shields while damage switching and talismans bypass them without state', () => {
+    const oddPhysical = applyMonsterCombatEffects({
+      monsterId: 'phase_hunter_drone', turn: 1, incomingDamage: 41, monsterHp: 620, monsterMaxHp: 620,
+      damageKind: 'physical', player: { ...basePlayer, action: 'attack' }
+    });
+    const oddArt = applyMonsterCombatEffects({
+      monsterId: 'phase_hunter_drone', turn: 1, incomingDamage: 41, monsterHp: 620, monsterMaxHp: 620,
+      damageKind: 'art', player: { ...basePlayer, action: 'art' }
+    });
+    const oddTalisman = applyMonsterCombatEffects({
+      monsterId: 'phase_hunter_drone', turn: 1, incomingDamage: 41, monsterHp: 620, monsterMaxHp: 620,
+      damageKind: 'talisman', player: { ...basePlayer, action: 'use_thunder_talisman' }
+    });
+    const evenArt = applyMonsterCombatEffects({
+      monsterId: 'phase_hunter_drone', turn: 2, incomingDamage: 41, monsterHp: 579, monsterMaxHp: 620,
+      damageKind: 'art', player: { ...basePlayer, action: 'art' }
+    });
+    const evenPhysical = applyMonsterCombatEffects({
+      monsterId: 'phase_hunter_drone', turn: 2, incomingDamage: 41, monsterHp: 579, monsterMaxHp: 620,
+      damageKind: 'physical', player: { ...basePlayer, action: 'attack' }
+    });
+
+    expect(oddPhysical.damageToMonster).toBe(21);
+    expect(oddPhysical.statusLines[0]).toContain('奇数轮物理相位盾');
+    expect(oddArt.damageToMonster).toBe(41);
+    expect(oddArt.statusLines[0]).toContain('切换伤害类型');
+    expect(oddTalisman.damageToMonster).toBe(41);
+    expect(oddTalisman.statusLines[0]).toContain('雷火符绕过奇数轮物理相位盾');
+    expect(evenArt.damageToMonster).toBe(21);
+    expect(evenArt.statusLines[0]).toContain('偶数轮术法相位盾');
+    expect(evenPhysical.damageToMonster).toBe(41);
+    expect(oddPhysical.nextState).toEqual(createInitialCombatEffectState());
+    expect(evenArt.nextState).toEqual(createInitialCombatEffectState());
   });
 
   it('copies the player highest derived stat for main god echo pressure', () => {

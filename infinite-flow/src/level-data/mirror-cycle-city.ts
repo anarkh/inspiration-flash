@@ -4,6 +4,7 @@ export const mirrorCycleCityDungeon: DungeonDefinition = {
   id: 'mirror_cycle_city',
   name: '镜海轮回城',
   tier: 11,
+  genre: 'anomaly',
   recommendedPower: 630,
   theme: '镜海把整座城折成现实与镜像两层，探索者必须三次校准相位、辨认真伪锚点，才能直面无名镜王。',
   recommended: '推荐战力 630、相位防护、充足的界门补给与能交替输出武力和术法的完整配装。',

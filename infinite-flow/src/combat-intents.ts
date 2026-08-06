@@ -4,7 +4,9 @@ export type CombatIntentId =
   | 'regular-pursuit'
   | 'fog-armor-rend'
   | 'spark-burst'
+  | 'sentry-suppressive-volley'
   | 'rift-shift'
+  | 'phase-hunter-shield'
   | 'furnace-repeat-verdict'
   | 'pulse-wave'
   | 'dream-item-lock'
@@ -44,8 +46,21 @@ function hasEquipment(input: CombatIntentInput, equipmentId: GameState['equipped
 
 function getWeaponSkillEffectAction(input: CombatIntentInput): 'attack' | 'art' | undefined {
   // Combat effects classify weapon skills by their damage kind before recording the previous action.
-  if (input.equipped.weapon === 'armor_piercing_sword' || input.equipped.weapon === 'bone_spear') return 'attack';
-  if (input.equipped.weapon === 'ember_staff' || input.equipped.weapon === 'starforged_edge') return 'art';
+  if (
+    input.equipped.weapon === 'armor_piercing_sword' ||
+    input.equipped.weapon === 'bone_spear' ||
+    input.equipped.weapon === 'breach_shotgun'
+  ) {
+    return 'attack';
+  }
+  if (
+    input.equipped.weapon === 'ember_staff' ||
+    input.equipped.weapon === 'starforged_edge' ||
+    input.equipped.weapon === 'chronal_edge' ||
+    input.equipped.weapon === 'phase_coil_rifle'
+  ) {
+    return 'art';
+  }
   return undefined;
 }
 
@@ -95,6 +110,17 @@ export function getCombatIntent(input: CombatIntentInput): CombatIntent {
     };
   }
 
+  if (input.monsterId === 'rogue_sentry' && input.turn > 0 && input.turn % 3 === 0) {
+    return {
+      id: 'sentry-suppressive-volley',
+      name: '压制齐射',
+      severity: 'danger',
+      consequence: '失控哨戒炮本回合会追加 15 点物理伤害；守御可将压制齐射降为 4 点余波。',
+      recommendedActions: ['guard'],
+      dangerousActions: ['attack', 'art', 'weapon_skill', 'use_healing_pill', 'use_thunder_talisman']
+    };
+  }
+
   if (
     input.monsterId === 'portal_molt_beast' &&
     input.turn > 0 &&
@@ -113,6 +139,37 @@ export function getCombatIntent(input: CombatIntentInput): CombatIntent {
         ? ['attack', 'art', 'weapon_skill', 'use_thunder_talisman']
         : ['use_thunder_talisman'],
       dangerousActions: riftLocked ? [] : ['attack', 'art', 'weapon_skill']
+    };
+  }
+
+  if (input.monsterId === 'phase_hunter_drone' && input.turn > 0) {
+    const shieldsPhysical = input.turn % 2 === 1;
+    const weaponSkillAction = getWeaponSkillEffectAction(input);
+    const recommendedActions: CombatAction[] = shieldsPhysical
+      ? ['art', 'use_thunder_talisman']
+      : ['attack', 'use_thunder_talisman'];
+    const dangerousActions: CombatAction[] = shieldsPhysical ? ['attack'] : ['art'];
+
+    if (weaponSkillAction) {
+      if (
+        (shieldsPhysical && weaponSkillAction === 'attack') ||
+        (!shieldsPhysical && weaponSkillAction === 'art')
+      ) {
+        dangerousActions.push('weapon_skill');
+      } else {
+        recommendedActions.splice(1, 0, 'weapon_skill');
+      }
+    }
+
+    const shieldLabel = shieldsPhysical ? '奇数回合物理相位盾' : '偶数回合术法相位盾';
+    const damageLabel = shieldsPhysical ? '物理' : '术法';
+    return {
+      id: 'phase-hunter-shield',
+      name: shieldLabel,
+      severity: 'danger',
+      consequence: `相位猎杀无人机将把本回合${damageLabel}伤害降至 50%；切换伤害类型或使用雷火符可完整贯穿。`,
+      recommendedActions,
+      dangerousActions
     };
   }
 

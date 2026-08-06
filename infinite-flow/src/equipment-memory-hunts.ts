@@ -67,6 +67,7 @@ export type EquipmentMemoryEquipmentId =
   | 'anechoic_mantle'
   | 'last_channel_beacon'
   | 'rescue_carbine'
+  | 'breach_shotgun'
   | 'triage_visor'
   | 'evacuation_plate'
   | 'blackbox_beacon'
@@ -79,6 +80,7 @@ export type EquipmentMemoryEquipmentId =
   | 'buffer_plate'
   | 'thaw_metronome'
   | 'blindline_cutter'
+  | 'phase_coil_rifle'
   | 'predictive_visor'
   | 'matte_shell'
   | 'inverse_prism';
@@ -321,6 +323,7 @@ export const EQUIPMENT_MEMORY_EQUIPMENT_CATALOG = Object.freeze([
   'anechoic_mantle',
   'last_channel_beacon',
   'rescue_carbine',
+  'breach_shotgun',
   'triage_visor',
   'evacuation_plate',
   'blackbox_beacon',
@@ -333,6 +336,7 @@ export const EQUIPMENT_MEMORY_EQUIPMENT_CATALOG = Object.freeze([
   'buffer_plate',
   'thaw_metronome',
   'blindline_cutter',
+  'phase_coil_rifle',
   'predictive_visor',
   'matte_shell',
   'inverse_prism'
@@ -349,7 +353,7 @@ export const EQUIPMENT_MEMORY_ATTUNEMENT_IDS = Object.freeze([
   'chronal_stasis'
 ] as const) satisfies readonly EquipmentAttunementId[];
 
-export const EQUIPMENT_MEMORY_HUNT_COMBINATION_COUNT = 1064 as const;
+export const EQUIPMENT_MEMORY_HUNT_COMBINATION_COUNT = 1102 as const;
 
 const EQUIPMENT_MEMORY_IDS = Object.freeze(
   EQUIPMENT_MEMORY_CATALOG.map((definition) => definition.id)

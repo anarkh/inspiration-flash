@@ -6,9 +6,11 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "assets:audit": "vite-node scripts/asset-inventory.ts",
+    "knowledge:verify": "vite-node scripts/verify-knowledge-base.ts",
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
     "smoke:ui": "node scripts/smoke-ui.mjs",
+    "smoke:ui:all": "SMOKE_SUITE=all node scripts/smoke-ui.mjs",
     "test": "vitest"
   },
   "devDependencies": {

@@ -1,0 +1,1304 @@
+{
+  "schemaVersion": 1,
+  "acceptanceVersion": "v2",
+  "document": "docs/knowledge-base/06-migration-acceptance-checklist.md",
+  "idPattern": "^AC-(?:[A-Z]+-)+(?:\\d{2}|\\d{3})$",
+  "expectedCounts": {
+    "total": 103,
+    "leaf": 94,
+    "releaseEvidence": 6,
+    "attestation": 2,
+    "derived": 1
+  },
+  "partitions": {
+    "leaf": [
+      "AC-CONTENT-001",
+      "AC-CONTENT-002",
+      "AC-CONTENT-003",
+      "AC-CONTENT-004",
+      "AC-CONTENT-005",
+      "AC-CONTENT-006",
+      "AC-CONTENT-007",
+      "AC-CONTENT-008",
+      "AC-COMPAT-001",
+      "AC-COMPAT-002",
+      "AC-COMPAT-003",
+      "AC-COMPAT-004",
+      "AC-COMPAT-005",
+      "AC-STATE-001",
+      "AC-STATE-002",
+      "AC-STATE-003",
+      "AC-STATE-004",
+      "AC-STATE-005",
+      "AC-STATE-006",
+      "AC-SESSION-001",
+      "AC-SESSION-002",
+      "AC-SESSION-003",
+      "AC-SESSION-004",
+      "AC-FREEZE-001",
+      "AC-FREEZE-002",
+      "AC-FREEZE-003",
+      "AC-FREEZE-004",
+      "AC-FREEZE-005",
+      "AC-FREEZE-006",
+      "AC-MAP-001",
+      "AC-MAP-002",
+      "AC-MAP-003",
+      "AC-MAP-004",
+      "AC-MAP-005",
+      "AC-LAW-01",
+      "AC-LAW-02",
+      "AC-LAW-03",
+      "AC-LAW-04",
+      "AC-LAW-05",
+      "AC-LAW-06",
+      "AC-LAW-07",
+      "AC-LAW-08",
+      "AC-LAW-09",
+      "AC-LAW-10",
+      "AC-LAW-11",
+      "AC-LAW-12",
+      "AC-LAW-13",
+      "AC-LAW-14",
+      "AC-LAW-15",
+      "AC-LAW-16",
+      "AC-LAW-17",
+      "AC-LAW-18",
+      "AC-LAW-19",
+      "AC-COMBAT-001",
+      "AC-COMBAT-002",
+      "AC-COMBAT-003",
+      "AC-COMBAT-004",
+      "AC-COMBAT-005",
+      "AC-SETTLE-001",
+      "AC-SETTLE-002",
+      "AC-SETTLE-003",
+      "AC-SETTLE-004",
+      "AC-SAVE-001",
+      "AC-SAVE-002",
+      "AC-SAVE-003",
+      "AC-SAVE-004",
+      "AC-SAVE-005",
+      "AC-SAVE-006",
+      "AC-SAVE-007",
+      "AC-SAVE-008",
+      "AC-SAVE-009",
+      "AC-SAVE-010",
+      "AC-SAVE-011",
+      "AC-SAVE-012",
+      "AC-SEED-001",
+      "AC-SEED-002",
+      "AC-SEED-003",
+      "AC-SEED-004",
+      "AC-SEED-005",
+      "AC-SEED-006",
+      "AC-SEED-007",
+      "AC-SEED-008",
+      "AC-SEED-009",
+      "AC-HASH-001",
+      "AC-HASH-002",
+      "AC-HASH-003",
+      "AC-ASSET-001",
+      "AC-ASSET-002",
+      "AC-ASSET-003",
+      "AC-ASSET-004",
+      "AC-UI-001",
+      "AC-UI-002",
+      "AC-UI-003",
+      "AC-UI-004"
+    ],
+    "releaseEvidence": [
+      "AC-RELEASE-002",
+      "AC-RELEASE-003",
+      "AC-RELEASE-004",
+      "AC-RELEASE-005",
+      "AC-RELEASE-006",
+      "AC-RELEASE-007"
+    ],
+    "attestation": [
+      "AC-RELEASE-008",
+      "AC-RELEASE-009"
+    ],
+    "derived": [
+      "AC-RELEASE-001"
+    ]
+  },
+  "cases": [
+    {
+      "id": "AC-CONTENT-001",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "19 章目录",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "catalog-19-dungeons",
+      "expected": "`DungeonId` 与 `DUNGEON_ORDER` 恰含 19 章且顺序一致"
+    },
+    {
+      "id": "AC-CONTENT-002",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "章节元数据与地图",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "catalog-chapter-metadata",
+      "expected": "每章名称、题材、推荐战力、主题、起点、节点和真实相邻边与 oracle 相同"
+    },
+    {
+      "id": "AC-CONTENT-003",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "Boss 与出口",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "catalog-boss-exit",
+      "expected": "每章 Boss、双阶段、掉落、Boss 门与出口封印一致"
+    },
+    {
+      "id": "AC-CONTENT-004",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "全内容数量",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "catalog-counts",
+      "expected": "30 道具、65 装备、59 怪物、6 宠物、7 功法、4 血统、3 同伴、9 回响均可按稳定 ID 读取"
+    },
+    {
+      "id": "AC-CONTENT-005",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "装备记忆组合",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "equipment-memory-matrix",
+      "expected": "19 记忆、58 可承载装备、1102 组合完整一致"
+    },
+    {
+      "id": "AC-CONTENT-006",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "隐藏路线契约",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "route-contract-catalog",
+      "expected": "57 契约完整且每章恰为 3 个"
+    },
+    {
+      "id": "AC-CONTENT-007",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "任务与指令",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "task-directive-catalog",
+      "expected": "63 主神任务与 19 主神指令完整"
+    },
+    {
+      "id": "AC-CONTENT-008",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "稳定 ID",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "stable-id-localization-rename",
+      "expected": "改显示名/本地化/文件名不改变任何持久化 ID"
+    },
+    {
+      "id": "AC-COMPAT-001",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "遭遇替换",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "web-v1-two-encounter-aliases",
+      "expected": "两个旧遭遇 ID 均迁到指定新遭遇，奖励/清理状态不重复"
+    },
+    {
+      "id": "AC-COMPAT-002",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "旧装备追猎",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "web-v1-equipment-hunt",
+      "expected": "旧追猎状态可解释、恢复并按旧语义结算"
+    },
+    {
+      "id": "AC-COMPAT-003",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "旧单功法快照",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "web-v1-methodSnapshot",
+      "expected": "`methodSnapshot` 迁移到兼容视图，不从大厅重抓 rank"
+    },
+    {
+      "id": "AC-COMPAT-004",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "缺失冻结快照",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "web-v1-missing-run-snapshots",
+      "expected": "仅禁用本局对应系统，永久进度和其他 run 状态不重置"
+    },
+    {
+      "id": "AC-COMPAT-005",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "历史 key/未来版本",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "key-scan-v1-and-future",
+      "expected": "能发现 `save:v1`；未知未来版本被拒绝且原文不覆盖"
+    },
+    {
+      "id": "AC-STATE-001",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "phase 组合",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "state-phase-matrix",
+      "expected": "`phase/run/combat/lastOutcome` 及 combat 所属 encounter node 的所有可达组合合法，非法命令无状态变化"
+    },
+    {
+      "id": "AC-STATE-002",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "数值不变量",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "state-numeric-boundaries",
+      "expected": "HP 在 `0...派生 maxHp`；货币、库存、材料为非负安全整数；所有等级/品阶在各自 `1...catalog max`"
+    },
+    {
+      "id": "AC-STATE-003",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "装备不变量",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "state-equipped-owned",
+      "expected": "已装备项均已拥有且等级合法"
+    },
+    {
+      "id": "AC-STATE-004",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "恰好一次领取",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "state-idempotent-rewards",
+      "expected": "节点、任务、指令、候选和结算不能重复领取"
+    },
+    {
+      "id": "AC-STATE-005",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "派生战力",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "state-power-oracle",
+      "expected": "全套边界 fixture 与 Web oracle 数值一致"
+    },
+    {
+      "id": "AC-STATE-006",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "UI 无领域副本",
+      "methods": [
+        "A-AC",
+        "A-SMOKE"
+      ],
+      "fixtureId": "ui-no-writable-domain-copy",
+      "expected": "路线门、法则、任务完成态只来自 session state"
+    },
+    {
+      "id": "AC-SESSION-001",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "唯一写入口",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "session-only-dispatch",
+      "expected": "客户端领域修改只经 `GameSession.dispatch(): Promise<DispatchResult>`"
+    },
+    {
+      "id": "AC-SESSION-002",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "串行与去重",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "session-commandid-race",
+      "expected": "session 是 ID 唯一生成方；快速输入串行；拒绝后序号连续；有 receipt 的重复返回原 revision，已淘汰但不高于 watermark 的重复返回当前 durable revision 且 events 为空；跳号、异 epoch、坏格式和重启重试均不重跑 reducer"
+    },
+    {
+      "id": "AC-SESSION-003",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "revision",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "session-revision-monotonic",
+      "expected": "成功状态变更的 `stateRevision` 恰好 `+1`；首次 committed/rejected 的 `ledgerRevision` 恰好 `+1`；rejected 不增 stateRevision，duplicate 两者都不增；旧 revision 不覆盖新 revision"
+    },
+    {
+      "id": "AC-SESSION-004",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "hub-only 双守卫",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "session-hub-command-phase-matrix",
+      "expected": "购买、装备、整备、升级、领奖、入场在 session 与 reducer 两层拒绝非 hub 调用"
+    },
+    {
+      "id": "AC-FREEZE-001",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "协议与地图",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "freeze-protocol-inferno",
+      "expected": "难度、协议、炼狱层、seed lineage 和地图入场冻结"
+    },
+    {
+      "id": "AC-FREEZE-002",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "携行与战利品",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "freeze-tactical-loadout",
+      "expected": "大厅库存变化不改变当前 run 可用类型，携行与战利品分离"
+    },
+    {
+      "id": "AC-FREEZE-003",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "回响与导管",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "freeze-relic-conduit",
+      "expected": "框架、种子、导管、pending draft、器魂与共享 charge 可恢复且不回填"
+    },
+    {
+      "id": "AC-FREEZE-004",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "成长快照",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "freeze-growth-snapshots",
+      "expected": "同伴/功法/血统及各 rank 入场冻结"
+    },
+    {
+      "id": "AC-FREEZE-005",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "装备来源",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "freeze-equipment-sources",
+      "expected": "铭刻勘探、装备记忆、章节被动与 Boss 快照不从大厅回填"
+    },
+    {
+      "id": "AC-FREEZE-006",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "宠物实时语义",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "pet-live-active-and-capture",
+      "expected": "宠物不臆造 run 快照；战斗读取顶层 `activePet/petLevels`，局内捕获切 active 后可在本局后续战斗即时生效"
+    },
+    {
+      "id": "AC-MAP-001",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "合法移动与可见性",
+      "methods": [
+        "A-AC",
+        "A-SMOKE"
+      ],
+      "fixtureId": "map-edge-visibility",
+      "expected": "只能沿合法边；当前位置/相邻/侦察/清理/未侦察五态可区分，相邻名称和类型可见"
+    },
+    {
+      "id": "AC-MAP-002",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "路线门",
+      "methods": [
+        "A-AC",
+        "A-SMOKE"
+      ],
+      "fixtureId": "map-route-gate-reason",
+      "expected": "关闭时显示真实原因而非迷雾；Boss 门与出口封印分别结算"
+    },
+    {
+      "id": "AC-MAP-003",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "侦察与 pending",
+      "methods": [
+        "A-AC",
+        "A-SMOKE"
+      ],
+      "fixtureId": "map-scout-pending",
+      "expected": "已侦察不退回问号；pending 只锁移动，不锁帮助、角色、任务和撤退"
+    },
+    {
+      "id": "AC-MAP-004",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "侵蚀与追兵",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "map-pressure-pursuit",
+      "expected": "侵蚀仅在非出口首次清理推进；追兵路径、接触、宽限、收容、Boss 融合一致"
+    },
+    {
+      "id": "AC-MAP-005",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "隐藏契约顺序",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "map-route-contract-order",
+      "expected": "契约必须 1→2，失败不阻主线且不重复奖励"
+    },
+    {
+      "id": "AC-LAW-01",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "第 1 章妖塔",
+      "methods": [
+        "A-AC",
+        "A-SMOKE"
+      ],
+      "fixtureId": "law-01-demon-tower",
+      "expected": "雾压、恢复地标、高雾侧路和门禁与 oracle 状态/事件一致"
+    },
+    {
+      "id": "AC-LAW-02",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "第 2 章地铁",
+      "methods": [
+        "A-AC",
+        "A-SMOKE"
+      ],
+      "fixtureId": "law-02-metro",
+      "expected": "潮序循环和信号校准一致"
+    },
+    {
+      "id": "AC-LAW-03",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "第 3 章矿井",
+      "methods": [
+        "A-AC",
+        "A-SMOKE"
+      ],
+      "fixtureId": "law-03-mine",
+      "expected": "重力切换、陷阱与防御修正一致"
+    },
+    {
+      "id": "AC-LAW-04",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "第 4 章病院",
+      "methods": [
+        "A-AC",
+        "A-SMOKE"
+      ],
+      "fixtureId": "law-04-hospital",
+      "expected": "污染、治疗削弱与净化路线一致"
+    },
+    {
+      "id": "AC-LAW-05",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "第 5 章竞技场",
+      "methods": [
+        "A-AC",
+        "A-SMOKE"
+      ],
+      "fixtureId": "law-05-arena",
+      "expected": "力/术/守记录、重复受罚与三式改判一致"
+    },
+    {
+      "id": "AC-LAW-06",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "第 6 章梦档案馆",
+      "methods": [
+        "A-AC",
+        "A-SMOKE"
+      ],
+      "fixtureId": "law-06-dream",
+      "expected": "道具/功法/宠物封存及重置一致"
+    },
+    {
+      "id": "AC-LAW-07",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "第 7 章虚界城",
+      "methods": [
+        "A-AC",
+        "A-SMOKE"
+      ],
+      "fixtureId": "law-07-virtual",
+      "expected": "战斗开局分布冻结并正确克制偏科"
+    },
+    {
+      "id": "AC-LAW-08",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "第 8 章时序",
+      "methods": [
+        "A-AC",
+        "A-SMOKE"
+      ],
+      "fixtureId": "law-08-chronal",
+      "expected": "双锚分别与共同开放路线一致"
+    },
+    {
+      "id": "AC-LAW-09",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "第 9 章因果账本",
+      "methods": [
+        "A-AC",
+        "A-SMOKE"
+      ],
+      "fixtureId": "law-09-causal",
+      "expected": "平衡/透支/偿还与追缴印一致"
+    },
+    {
+      "id": "AC-LAW-10",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "第 10 章熵海",
+      "methods": [
+        "A-AC",
+        "A-SMOKE"
+      ],
+      "fixtureId": "law-10-entropy",
+      "expected": "三航向、熵值和崩解层一致"
+    },
+    {
+      "id": "AC-LAW-11",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "第 11 章镜城",
+      "methods": [
+        "A-AC",
+        "A-SMOKE"
+      ],
+      "fixtureId": "law-11-mirror",
+      "expected": "三相位、切换生命代价、锚点和镜壳一致"
+    },
+    {
+      "id": "AC-LAW-12",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "第 12 章删界",
+      "methods": [
+        "A-AC",
+        "A-SMOKE"
+      ],
+      "fixtureId": "law-12-redaction",
+      "expected": "三条款核准/删去、关区与 Boss 快照一致"
+    },
+    {
+      "id": "AC-LAW-13",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "第 13 章拍卖",
+      "methods": [
+        "A-AC",
+        "A-SMOKE"
+      ],
+      "fixtureId": "law-13-auction",
+      "expected": "四拍品竞得/焚毁/放弃、动态价格与继承一致"
+    },
+    {
+      "id": "AC-LAW-14",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "第 14 章原型库",
+      "methods": [
+        "A-AC",
+        "A-SMOKE"
+      ],
+      "fixtureId": "law-14-genesis",
+      "expected": "三槽有序基因、血清支付、专精/万象分流一致"
+    },
+    {
+      "id": "AC-LAW-15",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "第 15 章广播塔",
+      "methods": [
+        "A-AC",
+        "A-SMOKE"
+      ],
+      "fixtureId": "law-15-broadcast",
+      "expected": "三中继、noise、奖励与区域分流一致"
+    },
+    {
+      "id": "AC-LAW-16",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "第 16 章避难所",
+      "methods": [
+        "A-AC",
+        "A-SMOKE"
+      ],
+      "fixtureId": "law-16-shelter",
+      "expected": "幸存者 100 HP、治疗/强推、同伴与奖励分流一致"
+    },
+    {
+      "id": "AC-LAW-17",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "第 17 章裁定庭",
+      "methods": [
+        "A-AC",
+        "A-SMOKE"
+      ],
+      "fixtureId": "law-17-verdict",
+      "expected": "证据污染、嫌疑人、原始裁决冻结与翻案一致"
+    },
+    {
+      "id": "AC-LAW-18",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "第 18 章复演场",
+      "methods": [
+        "A-AC",
+        "A-SMOKE"
+      ],
+      "fixtureId": "law-18-replay",
+      "expected": "三段真实动作值、路线与 Boss 复演一致"
+    },
+    {
+      "id": "AC-LAW-19",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "第 19 章监察城",
+      "methods": [
+        "A-AC",
+        "A-SMOKE"
+      ],
+      "fixtureId": "law-19-panopticon",
+      "expected": "三相扫描、曝光、中继、路线与 Boss 快照一致"
+    },
+    {
+      "id": "AC-COMBAT-001",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "回合与输入",
+      "methods": [
+        "A-AC",
+        "A-SMOKE"
+      ],
+      "fixtureId": "combat-one-action-one-turn",
+      "expected": "一个主要动作只推进一回合；同 physicalId 一次，不同动作可快速连续执行"
+    },
+    {
+      "id": "AC-COMBAT-002",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "意图与公式",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "combat-oracle-vectors",
+      "expected": "意图/推荐基于当前动作；伤害、治疗、防御、效果、取整与 oracle 一致"
+    },
+    {
+      "id": "AC-COMBAT-003",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "战意与次数",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "combat-resource-counters",
+      "expected": "战意 0/3→3/3、武器技消费/回补；器魂、同伴、各功法、血统次数独立"
+    },
+    {
+      "id": "AC-COMBAT-004",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "Boss 与捕获",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "combat-boss-capture",
+      "expected": "觉醒一次，阶段属性/日志一致；捕获条件、消耗和归属一致"
+    },
+    {
+      "id": "AC-COMBAT-005",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "战斗强杀",
+      "methods": [
+        "A-AC",
+        "M-DEVICE"
+      ],
+      "fixtureId": "combat-kill-after-each-action",
+      "expected": "每种动作 ack 边界强杀后恢复到同一已结算回合，不重复敌我行动"
+    },
+    {
+      "id": "AC-SETTLE-001",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "首次奖励",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "settle-first-clear-only",
+      "expected": "节点奖励只发一次；首次通关、目录、材料兑换一致"
+    },
+    {
+      "id": "AC-SETTLE-002",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "通关/撤退/濒死",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "settle-exit-matrix",
+      "expected": "通关全带回；≥3 非出口节点撤退 50%、濒死 20% 且无装备；<3 不固化收益"
+    },
+    {
+      "id": "AC-SETTLE-003",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "子系统结算",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "settle-subsystem-matrix",
+      "expected": "协议、指令、隐藏任务、追兵、委托、装备记忆、回响分别恰好结算一次"
+    },
+    {
+      "id": "AC-SETTLE-004",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "跨副本传送",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "settle-cross-dungeon-portal",
+      "expected": "普通/稳定/强闯/错位传送不丢失或复制临时战利品、快照和结算"
+    },
+    {
+      "id": "AC-SAVE-001",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "Web v1 raw 导入",
+      "methods": [
+        "A-AC",
+        "M-DEVICE"
+      ],
+      "fixtureId": "save-web-v1-import",
+      "expected": "历史 key、文件及平台 transfer 的 raw 走同一 codec，迁移后状态一致且保留 import backup"
+    },
+    {
+      "id": "AC-SAVE-002",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "生命周期往返",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "save-phase-roundtrip",
+      "expected": "新档、整备、探索、pending、普通战斗、Boss、结果页 encode/decode 后 canonical hash 不变"
+    },
+    {
+      "id": "AC-SAVE-003",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "顺序保持",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "save-order-roundtrip",
+      "expected": "地图、任务、回响、词条和所有数组顺序不漂移"
+    },
+    {
+      "id": "AC-SAVE-004",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "局部修复",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "save-repairable-fields",
+      "expected": "可修复字段局部降级，不丢整档或永久进度"
+    },
+    {
+      "id": "AC-SAVE-005",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "坏档原文安全",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "save-rejected-backup-faults",
+      "expected": "payload/reason/index 按 adapter 完成 durable 校验后才可删原 key：requires-flush 必须 flush 后再全部回读；任一点失败时唯一原文仍逐字节存在"
+    },
+    {
+      "id": "AC-SAVE-006",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "非法活动局",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "save-invalid-inferno-run",
+      "expected": "仅丢临时收益，永久进度保留；HP 0 走真实失败结算"
+    },
+    {
+      "id": "AC-SAVE-007",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "command ledger/revision envelope",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "save-envelope-ledger-revisions",
+      "expected": "envelope 含合法 `stateRevision/ledgerRevision/commandLedger/checksum`；拒绝也推进连续 ledger，最近至少 256 条 outcome receipt；checksum 覆盖除自身外的完整 JCS envelope"
+    },
+    {
+      "id": "AC-SAVE-008",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "三 key 原子提交",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "save-tmp-formal-backup-fault-grid",
+      "expected": "在 reducer 后首写 tmp 前、tmp 回读、备份、promote、flush、正式回读、公开/ack、清 tmp 各边界强杀；正式回读前保持旧可见状态，正式回读后即使公开前强杀、cleanup 失败或 ack 丢失也恢复已提交 revision，同 ID 不重跑 reducer/events"
+    },
+    {
+      "id": "AC-SAVE-009",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "ack 与重试语义",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "save-ack-storage-failure",
+      "expected": "只有正式 key 回读持久后才原子公开 state/events 并 ack；失败以同 command/candidate 续提，不重跑 reducer、不再次取 seed、不重复发事件；已淘汰 receipt 仍由 watermark 阻止重跑"
+    },
+    {
+      "id": "AC-SAVE-010",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "pause/hide flush",
+      "methods": [
+        "A-AC",
+        "M-DEVICE"
+      ],
+      "fixtureId": "save-pause-hide-deadline",
+      "expected": "write-through 与 requires-flush 两类 adapter 均覆盖；停止新输入并 drain；durable/recoverable-timeout/blocked 分别报告 durable 与 candidate revision，超时保留 recoveryKey，resume 恢复完成前不开放输入"
+    },
+    {
+      "id": "AC-SAVE-011",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "强杀选择顺序",
+      "methods": [
+        "A-AC",
+        "M-DEVICE"
+      ],
+      "fixtureId": "save-recovery-candidate-matrix",
+      "expected": "覆盖纯有效、有效+无效、未来 formal+有效 tmp、无效 tmp+有效 formal；任何将覆盖的非候选 raw 先验证 rejected 三件套，未来 formal 不自动覆盖；同 ledgerRevision 仅逐字节相同可按位置去重，内容不同按 split-brain 阻断"
+    },
+    {
+      "id": "AC-SAVE-012",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "raw 导入导出端口",
+      "methods": [
+        "A-AC",
+        "M-DEVICE"
+      ],
+      "fixtureId": "save-transfer-capabilities",
+      "expected": "localStorage 保持 JS code unit，外部 payload 保持 bytes且端口不解码；非法 UTF-8 由 codec 拒绝并原样备份；rejected/import 的 payload、reason/meta、index 均越过 adapter durable 边界且最终回读，重启可发现、逐字节导出且只能显式删除"
+    },
+    {
+      "id": "AC-SEED-001",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "入场 seed 必填",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "seed-enter-bundle-validation",
+      "expected": "新入场 bundle 普通含 hidden、炼狱另含 inferno且只接受 version 1；0/缺失/越界/未知版本均拒绝且不取随机；codec 可为历史活动 run 生成判别式 version 0 lineage"
+    },
+    {
+      "id": "AC-SEED-002",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "root 派生",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "seed-root-label-golden-v1",
+      "expected": "version 1 固定标签派生的 nonzero uint32 与跨语言 vectors 逐项一致"
+    },
+    {
+      "id": "AC-SEED-003",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "隐藏契约",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "seed-hidden-contract",
+      "expected": "同 seed/rulesVersion/命令序列得到同一隐藏路线契约"
+    },
+    {
+      "id": "AC-SEED-004",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "炼狱地图",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "seed-inferno-topology",
+      "expected": "同 seed 得到完全相同拓扑、起点、Boss、优先节点与门"
+    },
+    {
+      "id": "AC-SEED-005",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "其他随机链",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "seed-relic-affix-tiebreak",
+      "expected": "回响候选、装备 affix/品质、同分排序、奖励取整一致"
+    },
+    {
+      "id": "AC-SEED-006",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "恢复不取随机",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "seed-resume-random-spy",
+      "expected": "活动局恢复、保存重试、重复 commandId 时 `SeedPort` 调用数为 0"
+    },
+    {
+      "id": "AC-SEED-007",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "全传送与 legacy 覆盖",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "seed-portal-mode-and-legacy-v0-matrix",
+      "expected": "v1 普通/稳定/强闯/错位/跨副本共享持久 lineage，hop 一次一增且可重放；导入中的 Web v1 活动 run 使用 rulesVersion 0 与旧 `previousSeed + tier * 0x9e3779b1` 向量直到结算"
+    },
+    {
+      "id": "AC-SEED-008",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "领域无隐式随机",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "seed-forbidden-api-spy",
+      "expected": "rules/codec 内 `Math.random`、平台 RNG、时钟和设备熵均不可达；缺 seed 明确拒绝"
+    },
+    {
+      "id": "AC-SEED-009",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "低层算法 vectors",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "seed-cross-language-primitives",
+      "expected": "uint32、`Math.imul`、UTF-16 hash、stable sort、round/floor/ceil 与 vectors 一致"
+    },
+    {
+      "id": "AC-HASH-001",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "canonical 编码",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "hash-canonical-json-v1",
+      "expected": "JCS/UTF-8 规则、key 排序、数组顺序和非法数拒绝符合协议，保存 canonical JSON 证据"
+    },
+    {
+      "id": "AC-HASH-002",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "payload 边界",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "hash-domain-projection-v1",
+      "expected": "全领域 state/snapshot/pending/settlement/seed 纳入；UI、savedAt、envelope checksum、stateRevision、ledgerRevision 和完整 commandLedger 排除"
+    },
+    {
+      "id": "AC-HASH-003",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "双端 SHA-256",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "hash-cross-client-golden",
+      "expected": "规定的大厅/入场/炼狱/pending/Boss/传送/结算/迁移 fixture 输出相同 64 位小写 hash"
+    },
+    {
+      "id": "AC-ASSET-001",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "manifest 完整",
+      "methods": [
+        "A-WEB",
+        "A-AC"
+      ],
+      "fixtureId": "asset-manifest-187",
+      "expected": "187 key 可解析；59 怪物、65 装备、30 道具、6 宠物、19 副本都有资源"
+    },
+    {
+      "id": "AC-ASSET-002",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "稳定 key 与 revision",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "asset-key-revision-cache",
+      "expected": "key 不由显示名/文件名推导；handle、cache、报告携带同一 manifestRevision，不混版"
+    },
+    {
+      "id": "AC-ASSET-003",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "错误分类",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "asset-error-taxonomy",
+      "expected": "九类错误及 retryable 与协议一致，诊断包含 key/revision/code"
+    },
+    {
+      "id": "AC-ASSET-004",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "fallback 与生命周期",
+      "methods": [
+        "A-AC",
+        "A-SMOKE"
+      ],
+      "fixtureId": "asset-failure-release-retry",
+      "expected": "缺图可见且不阻规则；章节按需 preload/release；弱网/分包/低内存正确重试或降级"
+    },
+    {
+      "id": "AC-UI-001",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "响应式可达",
+      "methods": [
+        "A-SMOKE",
+        "M-DEVICE"
+      ],
+      "fixtureId": "ui-390x844-320x568",
+      "expected": "390×844 无全局横溢；320×568 核心动作可达；安全区/放大字体/手势区不遮挡"
+    },
+    {
+      "id": "AC-UI-002",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "触控与返回",
+      "methods": [
+        "A-SMOKE",
+        "M-DEVICE"
+      ],
+      "fixtureId": "ui-touch-back-focus",
+      "expected": "主要目标与 `?` ≥44×44；返回先关顶层；关闭帮助回原入口/等价选中态"
+    },
+    {
+      "id": "AC-UI-003",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "非颜色信息",
+      "methods": [
+        "A-SMOKE",
+        "M-DEVICE"
+      ],
+      "fixtureId": "ui-noncolor-status",
+      "expected": "推荐、高风险、锁定、完成均有文字/图形辅助"
+    },
+    {
+      "id": "AC-UI-004",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "信息完整",
+      "methods": [
+        "A-SMOKE",
+        "M-DEVICE"
+      ],
+      "fixtureId": "ui-help-and-mechanics",
+      "expected": "帮助保留 title、summary、mechanic、guidance、readout 与 keywords；法则、战利品、携行、路线说明不因小屏删除"
+    },
+    {
+      "id": "AC-RELEASE-001",
+      "priority": "P0",
+      "kind": "derived",
+      "name": "全阻断项闭合",
+      "methods": [
+        "A-DERIVE"
+      ],
+      "fixtureId": "acceptance-derived-final",
+      "expected": "只读派生其余 102 个稳定 ID：94 leaf、release 002–007、attestation 008–009 全部且仅有 PASS，三份冻结证据绑定同一 candidate/spec 且 hash 可复算；只原子生成独立 final-evidence，不检查自身或修改输入"
+    },
+    {
+      "id": "AC-RELEASE-002",
+      "priority": "P0",
+      "kind": "releaseEvidence",
+      "name": "19 章完整结算",
+      "methods": [
+        "A-RELEASE"
+      ],
+      "fixtureId": "release-19-full-settlements",
+      "expected": "每章至少一条从入场到合法结算的命令 fixture，最终 hash/events/settlement 与 oracle 一致，并绑定 leafEvidenceSha256"
+    },
+    {
+      "id": "AC-RELEASE-003",
+      "priority": "P0",
+      "kind": "releaseEvidence",
+      "name": "自然试玩",
+      "methods": [
+        "A-RELEASE",
+        "M-DEVICE"
+      ],
+      "fixtureId": "release-chapter-1-natural-play",
+      "expected": "第一章不使用调试跳转完成自然整备、探索、Boss、出口、回大厅和重启恢复，并绑定 leafEvidenceSha256"
+    },
+    {
+      "id": "AC-RELEASE-004",
+      "priority": "P0",
+      "kind": "releaseEvidence",
+      "name": "终章恢复",
+      "methods": [
+        "A-RELEASE",
+        "A-SMOKE",
+        "M-DEVICE"
+      ],
+      "fixtureId": "release-chapter-17-19-restart",
+      "expected": "17–19 章各完成法则选择、Boss，并在 pending/战斗后强杀恢复，绑定同一候选与 leafEvidenceSha256"
+    },
+    {
+      "id": "AC-RELEASE-005",
+      "priority": "P0",
+      "kind": "releaseEvidence",
+      "name": "历史档矩阵",
+      "methods": [
+        "A-RELEASE",
+        "M-DEVICE"
+      ],
+      "fixtureId": "release-save-compat-matrix",
+      "expected": "Web v1 正常、旧快照、局部坏、完全坏、未来版本及 rejected-backup 失败全部得到规定结果"
+    },
+    {
+      "id": "AC-RELEASE-006",
+      "priority": "P0",
+      "kind": "releaseEvidence",
+      "name": "平台故障矩阵",
+      "methods": [
+        "A-RELEASE",
+        "M-DEVICE"
+      ],
+      "fixtureId": "release-platform-fault-matrix",
+      "expected": "pause/hide、强杀、空间不足、弱网、分包失败、低内存、快速输入均无重复结算或唯一 raw 丢失"
+    },
+    {
+      "id": "AC-RELEASE-007",
+      "priority": "P0",
+      "kind": "releaseEvidence",
+      "name": "双端与资源总门禁",
+      "methods": [
+        "A-RELEASE",
+        "A-WEB",
+        "A-SMOKE"
+      ],
+      "fixtureId": "release-oracle-hash-assets-ui",
+      "expected": "引用冻结 leaf 结果；另执行 Web 基线、全状态 hash、资源 revision 审计和目标端 UI smoke，全部绑定同一候选，不调用全量自发现"
+    },
+    {
+      "id": "AC-RELEASE-008",
+      "priority": "P0",
+      "kind": "attestation",
+      "name": "四视角独立签核",
+      "methods": [
+        "R-REVIEW"
+      ],
+      "fixtureId": "release-four-owner-signoff",
+      "expected": "产品、规则、存档、UI/无障碍分别签署 candidate + spec/leaf/release 三个 hash 的固定 subject digest，意见闭合；签名存于独立 attestation"
+    },
+    {
+      "id": "AC-RELEASE-009",
+      "priority": "P0",
+      "kind": "attestation",
+      "name": "版本与发布可追溯",
+      "methods": [
+        "A-RELEASE",
+        "R-REVIEW"
+      ],
+      "fixtureId": "release-version-trace",
+      "expected": "包版本、git SHA、schema/content/rules/hash/manifest revision 与发布物、固定 subject 完全一致，结果写入 attestation 但不修改被签输入"
+    }
+  ]
+}

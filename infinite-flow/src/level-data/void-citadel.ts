@@ -4,6 +4,7 @@ export const voidCitadelDungeon: DungeonDefinition = {
   id: 'void_citadel',
   name: '虚界城',
   tier: 7,
+  genre: 'science_fiction',
   recommendedPower: 390,
   theme: '主神空间的残响在虚界城回放，终盘副本要求玩家均衡成长。',
   recommended: '推荐战力 390、淬星剑胚、虚心诀或高阶宠物。',

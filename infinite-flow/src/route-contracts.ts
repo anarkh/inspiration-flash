@@ -72,6 +72,8 @@ export type HiddenRouteContractDiscoveryInput = Readonly<{
   dungeonId: DungeonId;
   seed: number;
   clearedNodeIds: readonly string[];
+  currentNodeId?: string;
+  connectionIdsByNodeId?: Readonly<Record<string, readonly string[]>>;
 }>;
 
 function defineContract(
@@ -177,7 +179,7 @@ const ROUTE_CONTRACTS_BY_DUNGEON = Object.freeze({
     defineContract('silent_broadcast_tower', 'broadcast_warden_anechoic', '终卫归静', '先击退终段广播守卫，再进入全消声室封存残余频道，让守卫的反击脉冲失去广播出口。', ['broadcast_warden_omega', 'anechoic_chamber'], 650)
   ),
   lost_shelter: contractSet(
-    defineContract('lost_shelter', 'shelter_patrol_recharge', '北巡续援', '先识破北区拟声巡救者，再抵达器魂救援充能舱切断接管回路，让救援装备保持真实回应。', ['north_rescue_patrol', 'soul_recharge_shelter'], 700),
+    defineContract('lost_shelter', 'shelter_patrol_recharge', '北巡续援', '先摧毁北区失控哨戒炮，再抵达器魂救援充能舱切断接管回路，让救援装备保持真实回应。', ['north_rescue_patrol', 'soul_recharge_shelter'], 700),
     defineContract('lost_shelter', 'shelter_collapse_command', '坍廊验权', '先穿过坍塌走廊压锁，再前往总控身份锁完成自我核验，证明护送队未被伪造口令接管。', ['collapsed_hall_trap', 'command_lock'], 700),
     defineContract('lost_shelter', 'shelter_horror_containment', '终撤收容', '先击退终段撤离畸变体，再进入失联收容舱封闭接管样本，让畸变撤离记录无法回写幸存者。', ['evacuation_horror_omega', 'containment_bay'], 700)
   ),
@@ -259,10 +261,59 @@ function isPositiveUint32(value: number): boolean {
   return Number.isInteger(value) && value >= 1 && value <= UINT32_MAX;
 }
 
+function isReachableInRouteGraph(
+  connectionIdsByNodeId: Readonly<Record<string, readonly string[]>>,
+  startNodeId: string,
+  targetNodeId: string,
+  blockedNodeId?: string
+): boolean {
+  if (
+    startNodeId === blockedNodeId ||
+    targetNodeId === blockedNodeId ||
+    !Object.prototype.hasOwnProperty.call(connectionIdsByNodeId, startNodeId) ||
+    !Object.prototype.hasOwnProperty.call(connectionIdsByNodeId, targetNodeId)
+  ) {
+    return false;
+  }
+  const visited = new Set([startNodeId]);
+  const queue = [startNodeId];
+  while (queue.length > 0) {
+    const nodeId = queue.shift()!;
+    if (nodeId === targetNodeId) return true;
+    for (const adjacentNodeId of connectionIdsByNodeId[nodeId] ?? []) {
+      if (adjacentNodeId === blockedNodeId || visited.has(adjacentNodeId)) continue;
+      if (!Object.prototype.hasOwnProperty.call(connectionIdsByNodeId, adjacentNodeId)) continue;
+      visited.add(adjacentNodeId);
+      queue.push(adjacentNodeId);
+    }
+  }
+  return false;
+}
+
+export function isOrderedRouteContractReachable(
+  connectionIdsByNodeId: Readonly<Record<string, readonly string[]>>,
+  currentNodeId: string,
+  targetNodeIds: readonly [string, string]
+): boolean {
+  const [firstTargetNodeId, secondTargetNodeId] = targetNodeIds;
+  return isReachableInRouteGraph(
+    connectionIdsByNodeId,
+    currentNodeId,
+    firstTargetNodeId,
+    secondTargetNodeId
+  ) && isReachableInRouteGraph(
+    connectionIdsByNodeId,
+    firstTargetNodeId,
+    secondTargetNodeId
+  );
+}
+
 export function discoverHiddenRouteContract({
   dungeonId,
   seed,
-  clearedNodeIds
+  clearedNodeIds,
+  currentNodeId,
+  connectionIdsByNodeId
 }: HiddenRouteContractDiscoveryInput): RouteContractRunState | undefined {
   if (!isPositiveUint32(seed)) return undefined;
 
@@ -293,6 +344,15 @@ export function discoverHiddenRouteContract({
     definition.dungeonId === dungeonId &&
     definition.targetNodeIds.every((nodeId) =>
       nodeById.has(nodeId) && !clearedNodeSet.has(nodeId)
+    ) &&
+    (
+      currentNodeId === undefined ||
+      connectionIdsByNodeId === undefined ||
+      isOrderedRouteContractReachable(
+        connectionIdsByNodeId,
+        currentNodeId,
+        definition.targetNodeIds
+      )
     )
   );
   if (candidates.length === 0) return undefined;

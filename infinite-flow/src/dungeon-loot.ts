@@ -45,6 +45,7 @@ export const DUNGEON_EQUIPMENT_POOLS = {
   ],
   lost_shelter: [
     'rescue_carbine',
+    'breach_shotgun',
     'triage_visor',
     'evacuation_plate',
     'blackbox_beacon'
@@ -63,6 +64,7 @@ export const DUNGEON_EQUIPMENT_POOLS = {
   ],
   panopticon_city: [
     'blindline_cutter',
+    'phase_coil_rifle',
     'predictive_visor',
     'matte_shell',
     'inverse_prism'
@@ -155,6 +157,8 @@ export type DungeonLootInput = {
   carriedEquipmentIds: readonly EquipmentId[];
   offersMade: number;
   guaranteedEquipmentId?: EquipmentId;
+  includeOwnedEquipment?: boolean;
+  rotationSeed?: number;
 };
 
 export type DungeonLootOffer =
@@ -190,20 +194,24 @@ export function getDungeonLootOffer({
   ownedEquipmentIds,
   carriedEquipmentIds,
   offersMade,
-  guaranteedEquipmentId
+  guaranteedEquipmentId,
+  includeOwnedEquipment = false,
+  rotationSeed
 }: DungeonLootInput): DungeonLootOffer | undefined {
   if (offersMade >= 1 || DUNGEON_ELITE_MONSTERS[dungeonId] !== monsterId) {
     return undefined;
   }
 
   const unavailableEquipmentIds = new Set<EquipmentId>([
-    ...ownedEquipmentIds,
+    ...(includeOwnedEquipment ? [] : ownedEquipmentIds),
     ...carriedEquipmentIds
   ]);
   const availableEquipmentIds = DUNGEON_EQUIPMENT_POOLS[dungeonId].filter(
     (equipmentId) => !unavailableEquipmentIds.has(equipmentId)
   );
-  const offerId = `dungeon-loot:${dungeonId}:${nodeId}`;
+  const offerId = `dungeon-loot:${dungeonId}:${nodeId}${
+    rotationSeed === undefined ? '' : `:${rotationSeed}`
+  }`;
 
   if (availableEquipmentIds.length === 0) {
     return {
@@ -212,7 +220,10 @@ export function getDungeonLootOffer({
     };
   }
 
-  const rotatedEquipmentIds = rotateByNodeId(availableEquipmentIds, nodeId);
+  const rotatedEquipmentIds = rotateByNodeId(
+    availableEquipmentIds,
+    rotationSeed === undefined ? nodeId : `${nodeId}:${rotationSeed}`
+  );
   if (
     guaranteedEquipmentId === undefined ||
     !availableEquipmentIds.some((equipmentId) => equipmentId === guaranteedEquipmentId)

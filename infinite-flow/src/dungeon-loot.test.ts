@@ -540,9 +540,10 @@ describe('dungeon loot', () => {
     })).toBeUndefined();
   });
 
-  it('uses exactly the four Tier-16 pieces and preserves guarantee, filtering, and 480 RP salvage', () => {
+  it('uses exactly the five Tier-16 pieces and preserves guarantee, filtering, and 480 RP salvage', () => {
     const expectedPool = [
       'rescue_carbine',
+      'breach_shotgun',
       'triage_visor',
       'evacuation_plate',
       'blackbox_beacon'
@@ -580,7 +581,9 @@ describe('dungeon loot', () => {
     });
     expect(filtered).toHaveProperty('equipmentIds');
     if (filtered && 'equipmentIds' in filtered) {
-      expect(new Set(filtered.equipmentIds)).toEqual(new Set(['evacuation_plate', 'blackbox_beacon']));
+      expect(new Set(filtered.equipmentIds)).toEqual(
+        new Set(['breach_shotgun', 'evacuation_plate', 'blackbox_beacon'])
+      );
       expect(filtered).not.toHaveProperty('guaranteedEquipmentId');
     }
 
@@ -971,6 +974,7 @@ describe('dungeon loot', () => {
   it('locks the Tier-19 pool, guarantee filtering, and 600-point salvage without rewriting Tier-18', () => {
     expect(DUNGEON_EQUIPMENT_POOLS.panopticon_city).toEqual([
       'blindline_cutter',
+      'phase_coil_rifle',
       'predictive_visor',
       'matte_shell',
       'inverse_prism'
@@ -994,7 +998,7 @@ describe('dungeon loot', () => {
       guaranteedEquipmentId: 'inverse_prism'
     })).toEqual({
       offerId: 'dungeon-loot:panopticon_city:blindspot_auditor_north',
-      equipmentIds: ['inverse_prism', 'matte_shell'],
+      equipmentIds: ['inverse_prism', 'matte_shell', 'phase_coil_rifle'],
       guaranteedEquipmentId: 'inverse_prism'
     });
 

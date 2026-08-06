@@ -6,14 +6,19 @@ export type ProgressionStats = {
   artPower: number;
   defense: number;
   speed: number;
+  trapCheck: number;
 };
 
 export type ProgressionLoadout = {
   stats: ProgressionStats;
-  lingyun: number;
-  learnedMethodCount: number;
-  equipmentLevelTotal: number;
-  ownedPetCount: number;
+};
+
+export type PlayerPowerBreakdown = {
+  offense: number;
+  survival: number;
+  mobility: number;
+  exploration: number;
+  total: number;
 };
 
 export const TIER_RECOMMENDED_POWER = [
@@ -44,21 +49,24 @@ export function getRecommendedPowerForTier(tier: number): number {
   return TIER_RECOMMENDED_POWER[tier - 1];
 }
 
-export function getPlayerPowerFromLoadout(loadout: ProgressionLoadout): number {
+export function getPlayerPowerBreakdown(loadout: ProgressionLoadout): PlayerPowerBreakdown {
   const { stats } = loadout;
+  const offense = Math.round(stats.attack * 3 + stats.artPower * 2.4);
+  const survival = Math.round(stats.maxHp * 0.25 + stats.defense * 3);
+  const mobility = Math.round(stats.speed * 1.5);
+  const exploration = Math.round(stats.trapCheck * 1.5);
 
-  // Weights favor stable combat stats, then add small account-growth nudges.
-  return Math.round(
-    stats.maxHp * 0.25 +
-      stats.attack * 3 +
-      stats.artPower * 2.4 +
-      stats.defense * 3 +
-      stats.speed * 1.5 +
-      loadout.lingyun * 4 +
-      loadout.learnedMethodCount * 18 +
-      loadout.equipmentLevelTotal * 4 +
-      loadout.ownedPetCount * 10
-  );
+  return {
+    offense,
+    survival,
+    mobility,
+    exploration,
+    total: offense + survival + mobility + exploration
+  };
+}
+
+export function getPlayerPowerFromLoadout(loadout: ProgressionLoadout): number {
+  return getPlayerPowerBreakdown(loadout).total;
 }
 
 export function getReadinessFromPower(playerPower: number, recommendedPower: number): ProgressionReadiness {

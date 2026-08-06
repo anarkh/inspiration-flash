@@ -4,6 +4,7 @@ export const entropyArkDungeon: DungeonDefinition = {
   id: 'entropy_ark',
   name: '熵海方舟',
   tier: 10,
+  genre: 'science_fiction',
   recommendedPower: 565,
   theme: '方舟在热寂潮汐中持续失序，探索者必须校正双舷压载并重刻航迹，才能抵达终末舵轮。',
   recommended: '推荐战力 565、熵航装备、稳定的界门补给与足以承受崩解的持续防护。',

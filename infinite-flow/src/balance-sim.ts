@@ -259,6 +259,8 @@ export type BalanceSimStage = {
   dungeonId: DungeonId;
   beforePower: number;
   afterPower: number;
+  nextPreparedPower?: number;
+  growthSignals?: string[];
   readiness: ReturnType<typeof getDungeonReadiness>;
   recommendedPower: number;
   plannedPurchases: EquipmentId[];
@@ -2641,9 +2643,10 @@ function chooseCombatAction(
   const sustainableHealing = pillHealing > estimatedIncomingDamage;
 
   if (monster.id === 'main_god_echo') {
+    const phaseTransitionBuffer = Math.max(4, Math.ceil(estimatedIncomingDamage * 0.2));
     if (
-      state.player.hp <= estimatedIncomingDamage &&
-      pillHealing > estimatedIncomingDamage &&
+      state.player.hp <= estimatedIncomingDamage + phaseTransitionBuffer &&
+      sustainableHealing &&
       isAvailable('use_healing_pill')
     ) {
       return 'use_healing_pill';
@@ -4497,14 +4500,6 @@ function investForDungeon(state: GameState, dungeonId: DungeonId): { state: Game
     );
   }
 
-  if (dungeonId === 'legacy_auction_court') {
-    while (nextState.inventory.healing_pill < 64) {
-      const beforeCount = nextState.inventory.healing_pill;
-      nextState = buyItem(nextState, 'healing_pill');
-      if (nextState.inventory.healing_pill === beforeCount) break;
-    }
-  }
-
   if (dungeonId === 'mirror_cycle_city') {
     nextState = restoreSimulationHealth(prepareTemporalRouteEquipment(nextState));
   }
@@ -4785,7 +4780,7 @@ function clearDungeonViaExit(state: GameState, dungeonId: DungeonId, evidence?: 
         dungeonId === 'panopticon_city'
       ? { healing_pill: 128, dispel_talisman: 16, armor_patch: 16, focus_incense: 16 }
       : dungeonId === 'legacy_auction_court'
-      ? { healing_pill: 128, focus_incense: 16, armor_patch: 16 }
+      ? { healing_pill: 128, focus_incense: 16, armor_patch: 20 }
       : dungeonId === 'redaction_scriptorium'
       ? { healing_pill: 64, dispel_talisman: 16, armor_patch: 16 }
       : dungeonId === 'mirror_cycle_city'
@@ -4818,7 +4813,7 @@ function clearDungeonViaExit(state: GameState, dungeonId: DungeonId, evidence?: 
           dungeonId === 'panopticon_city'
         ? ['healing_pill', 'dispel_talisman', 'armor_patch', 'focus_incense']
         : dungeonId === 'legacy_auction_court'
-        ? ['healing_pill', 'focus_incense', 'armor_patch']
+        ? ['armor_patch', 'healing_pill', 'focus_incense']
         : dungeonId === 'redaction_scriptorium'
         ? ['healing_pill', 'dispel_talisman', 'armor_patch']
         : dungeonId === 'mirror_cycle_city'
@@ -7854,15 +7849,10 @@ function simulateDungeonLawRoute(baseState: GameState, dungeonId: DungeonId): La
 
 function getStageWarnings(stage: Omit<BalanceSimStage, 'warnings'>): string[] {
   const warnings: string[] = [];
-  const powerGain = stage.afterPower - stage.beforePower;
   const overPowerRatio = stage.beforePower / stage.recommendedPower;
 
   if (stage.readiness === 'deadly') {
     warnings.push(`${stage.dungeonId} is deadly at ${stage.beforePower}/${stage.recommendedPower} power.`);
-  }
-
-  if (powerGain <= 0) {
-    warnings.push(`${stage.dungeonId} grants no simulated power growth.`);
   }
 
   // A normal route should feel prepared, not wildly overleveled before entry.
@@ -7873,15 +7863,42 @@ function getStageWarnings(stage: Omit<BalanceSimStage, 'warnings'>): string[] {
   return warnings;
 }
 
+function getStageProgressionWarning(
+  stage: Omit<BalanceSimStage, 'warnings'>,
+  hasFollowingStage: boolean
+): string | undefined {
+  if (!hasFollowingStage) return undefined;
+  const realizedPower = Math.max(stage.afterPower, stage.nextPreparedPower ?? stage.afterPower);
+  const hasBankableGrowth = stage.growthSignals?.some((signal) => signal !== 'campaign-clear') ?? false;
+  return realizedPower > stage.beforePower || hasBankableGrowth
+    ? undefined
+    : `${stage.dungeonId} grants neither effective power nor bankable growth before the next entry.`;
+}
+
+export function getBalanceVerdictFromWarnings(
+  warnings: readonly string[]
+): BalanceVerdict {
+  return warnings.some(
+    (warning) =>
+      warning.includes('deadly') ||
+      warning.includes('grants neither effective power nor bankable growth')
+  )
+    ? 'needs-adjustment'
+    : 'balanced';
+}
+
 export function simulateCampaignBalance(options: CampaignBalanceOptions = {}): CampaignBalanceResult {
   if (!options.rewards) {
     const route = simulateSevenDungeonVictoryRoute(options.initialState);
-    const stages = route.summaries.map((summary) => {
+    const stages = route.summaries.map((summary, index) => {
+      const nextPreparedPower = route.summaries[index + 1]?.beforePower;
       const stageWithoutWarnings = {
         tier: summary.tier,
         dungeonId: summary.dungeonId,
         beforePower: summary.beforePower,
         afterPower: summary.afterPower,
+        ...(nextPreparedPower === undefined ? {} : { nextPreparedPower }),
+        growthSignals: [...summary.growthSignals],
         readiness: summary.readinessBeforeEntry,
         recommendedPower: DUNGEONS[summary.dungeonId].recommendedPower,
         plannedPurchases: summary.plannedPurchases,
@@ -7890,15 +7907,22 @@ export function simulateCampaignBalance(options: CampaignBalanceOptions = {}): C
         plannedPets: summary.plannedPets
       };
 
+      const progressionWarning = getStageProgressionWarning(
+        stageWithoutWarnings,
+        index < route.summaries.length - 1
+      );
       return {
         ...stageWithoutWarnings,
-        warnings: getStageWarnings(stageWithoutWarnings)
+        warnings: [
+          ...getStageWarnings(stageWithoutWarnings),
+          ...(progressionWarning ? [progressionWarning] : [])
+        ]
       };
     });
     const warnings = stages.flatMap((stage) => stage.warnings);
 
     return {
-      verdict: warnings.some((warning) => warning.includes('deadly')) ? 'needs-adjustment' : 'balanced',
+      verdict: getBalanceVerdictFromWarnings(warnings),
       warnings,
       stages
     };
@@ -7965,6 +7989,7 @@ export function simulateCampaignBalance(options: CampaignBalanceOptions = {}): C
       dungeonId,
       beforePower,
       afterPower,
+      growthSignals: getRouteGrowthSignals(state, afterState),
       readiness,
       recommendedPower: dungeon.recommendedPower,
       plannedPurchases: invested.plannedPurchases,
@@ -7989,12 +8014,26 @@ export function simulateCampaignBalance(options: CampaignBalanceOptions = {}): C
     state = returnToHub(afterState);
   }
 
-  const warnings = stages.flatMap((stage) => stage.warnings);
+  const linkedStages = stages.map((stage, index) => {
+    const nextPreparedPower = stages[index + 1]?.beforePower;
+    const stageWithPreparation = {
+      ...stage,
+      ...(nextPreparedPower === undefined ? {} : { nextPreparedPower })
+    };
+    const progressionWarning = getStageProgressionWarning(
+      stageWithPreparation,
+      index < stages.length - 1
+    );
+    return progressionWarning
+      ? { ...stageWithPreparation, warnings: [...stageWithPreparation.warnings, progressionWarning] }
+      : stageWithPreparation;
+  });
+  const warnings = linkedStages.flatMap((stage) => stage.warnings);
 
   return {
-    verdict: warnings.some((warning) => warning.includes('deadly')) ? 'needs-adjustment' : 'balanced',
+    verdict: getBalanceVerdictFromWarnings(warnings),
     warnings,
-    stages
+    stages: linkedStages
   };
 }
 

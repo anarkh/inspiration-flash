@@ -277,6 +277,7 @@ describe('shop advice', () => {
 
     for (const equipmentId of [
       'rescue_carbine',
+      'breach_shotgun',
       'triage_visor',
       'evacuation_plate',
       'blackbox_beacon'
@@ -295,6 +296,7 @@ describe('shop advice', () => {
     expect(materialAdvice.recommendedForDungeonIds[0]).toBe('lost_shelter');
     expect(materialAdvice.reasonText).toContain('Tier 16');
     expect(materialAdvice.reasonText).toContain(EQUIPMENT.rescue_carbine.name);
+    expect(materialAdvice.reasonText).toContain(EQUIPMENT.breach_shotgun.name);
     expect(materialAdvice.reasonText).toContain(EQUIPMENT.triage_visor.name);
     expect(materialAdvice.reasonText).toContain(EQUIPMENT.evacuation_plate.name);
     expect(materialAdvice.reasonText).toContain(EQUIPMENT.blackbox_beacon.name);
@@ -365,6 +367,7 @@ describe('shop advice', () => {
 
     for (const equipmentId of [
       'blindline_cutter',
+      'phase_coil_rifle',
       'predictive_visor',
       'matte_shell',
       'inverse_prism'
@@ -385,6 +388,7 @@ describe('shop advice', () => {
     expect(materialAdvice.reasonText).toContain('Tier 19');
     expect(materialAdvice.reasonText).toContain('观测棱片');
     expect(materialAdvice.reasonText).toContain(EQUIPMENT.blindline_cutter.name);
+    expect(materialAdvice.reasonText).toContain(EQUIPMENT.phase_coil_rifle.name);
     expect(materialAdvice.reasonText).toContain(EQUIPMENT.predictive_visor.name);
     expect(materialAdvice.reasonText).toContain(EQUIPMENT.matte_shell.name);
     expect(materialAdvice.reasonText).toContain(EQUIPMENT.inverse_prism.name);
@@ -393,7 +397,7 @@ describe('shop advice', () => {
     expect(getItemAdvice(state, 'combat_reel').reasonText).toContain('Tier 18');
   });
 
-  it('exhaustively covers nineteen chapters and affordability for all fifty-six mature equipment', () => {
+  it('exhaustively covers nineteen chapters and affordability for all fifty-eight mature equipment', () => {
     const rich = withResources(createInitialState());
     const broke = {
       ...createInitialState(),
@@ -402,7 +406,7 @@ describe('shop advice', () => {
     };
 
     expect(DUNGEON_ORDER).toHaveLength(19);
-    expect(EQUIPMENT_MEMORY_EQUIPMENT_CATALOG).toHaveLength(56);
+    expect(EQUIPMENT_MEMORY_EQUIPMENT_CATALOG).toHaveLength(58);
     const coveredDungeonIds = new Set<string>();
     for (const equipmentId of EQUIPMENT_MEMORY_EQUIPMENT_CATALOG) {
       const affordable = getEquipmentPurchaseAdvice(rich, equipmentId);
@@ -413,7 +417,7 @@ describe('shop advice', () => {
       expect(unaffordable.affordabilityText).toContain('不足');
       expect(unaffordable.reasonText).toContain('暂时买不起');
     }
-    expect(new Set(EQUIPMENT_MEMORY_EQUIPMENT_CATALOG).size).toBe(56);
+    expect(new Set(EQUIPMENT_MEMORY_EQUIPMENT_CATALOG).size).toBe(58);
     expect(coveredDungeonIds).toEqual(new Set(DUNGEON_ORDER));
   });
 });

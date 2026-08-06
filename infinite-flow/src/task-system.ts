@@ -51,7 +51,9 @@ function hasCompletedDungeon(state: GameState, dungeonId: DungeonId): boolean {
 }
 
 function hasEnteredOrCompletedDungeon(state: GameState, dungeonId: DungeonId): boolean {
-  return state.run?.dungeonId === dungeonId || hasCompletedDungeon(state, dungeonId);
+  return state.run?.dungeonId === dungeonId ||
+    state.enteredDungeonIds?.includes(dungeonId) === true ||
+    hasCompletedDungeon(state, dungeonId);
 }
 
 function getClaimedTaskIds(state: GameState): string[] {
@@ -134,6 +136,7 @@ function isChapterUnlocked(state: GameState, dungeonId: DungeonId): boolean {
 
 function getDungeonEntryProgress(state: GameState, dungeonId: DungeonId): string {
   if (state.run?.dungeonId === dungeonId) return '1/1 当前正在探索';
+  if (state.enteredDungeonIds?.includes(dungeonId)) return '1/1 已记录入口';
   if (hasCompletedDungeon(state, dungeonId)) return '1/1 已完成副本';
   return '0/1 尚未踏入';
 }

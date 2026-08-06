@@ -39,6 +39,7 @@ import {
   resolveRedactionClause,
   selectCombatReplayRoute,
   selectNode,
+  type DungeonGenre,
   type DungeonId,
   type GameState
 } from './game';
@@ -81,6 +82,7 @@ type LevelDungeon = {
   id: DungeonId;
   name: string;
   tier: number;
+  genre: DungeonGenre;
   recommendedPower: number;
   grid: {
     width: number;
@@ -679,6 +681,7 @@ describe('level content tables', () => {
 
       expect(dungeon.id).toBe(dungeonId);
       expect(dungeon.tier).toBe(index + 1);
+      expect(['cultivation', 'modern', 'science_fiction', 'anomaly']).toContain(dungeon.genre);
       expect(dungeon.nodes.length).toBeGreaterThanOrEqual(30);
       expect(nodeIds.size).toBe(dungeon.nodes.length);
 
@@ -2233,7 +2236,7 @@ describe('level content tables', () => {
 
     expect(content.DUNGEON_ORDER.at(-4)).toBe('lost_shelter');
     expect(dungeon).toMatchObject({
-      id: 'lost_shelter', name: '失联避难所', tier: 16, recommendedPower: 1040,
+      id: 'lost_shelter', name: '失联避难所', tier: 16, genre: 'modern', recommendedPower: 1040,
       grid: { width: 6, height: 5, startNodeId: 'shelter_gate' }
     });
     expect(dungeon.nodes).toHaveLength(30);
@@ -2262,12 +2265,14 @@ describe('level content tables', () => {
       'equipment_hunt_lost_shelter', 'equipment_hunt_lost_shelter'
     ]);
     expect(getLevelNode(dungeon, 'field_survey_archive').fieldSurveyId).toBe('survey_shelter_rescue_archive');
+    expect(getLevelNode(dungeon, 'field_survey_archive').description).toContain('五件救援装备');
+    expect(getLevelNode(dungeon, 'south_supply_cache').description).toContain('五件成熟装备');
     expect(['evacuation_cache', 'desperate_armory'].map((id) => getLevelNode(dungeon, id).relicDraftId)).toEqual([
       'lost_shelter:evacuation:1', 'lost_shelter:desperate:2'
     ]);
     expect(getLevelNode(dungeon, 'soul_recharge_shelter').soulRechargeId).toBe('soul_node_shelter_recharge');
     expect(['north_rescue_patrol', 'mimic_survivor_alpha', 'mimic_survivor'].map((id) => getLevelNode(dungeon, id).monsterId)).toEqual([
-      'mimic_survivor', 'mimic_survivor', 'mimic_survivor'
+      'rogue_sentry', 'mimic_survivor', 'mimic_survivor'
     ]);
     expect(getLevelNode(dungeon, 'shelter_enforcer_north').monsterId).toBe('shelter_enforcer');
     expect(getLevelNode(dungeon, 'evacuation_horror_omega').monsterId).toBe('evacuation_horror');
@@ -2298,6 +2303,12 @@ describe('level content tables', () => {
     expect(getLevelNode(dungeon, memoryEvent?.nodeId ?? '').type).toBe('reward');
 
     expect(content.MONSTERS.mimic_survivor).toMatchObject({ maxHp: 480, attack: 64, artPower: 72, defense: 33, speed: 38, rewardPoints: 1870, drop: { rescue_badge: 1 } });
+    expect(content.MONSTERS.rogue_sentry).toMatchObject({
+      name: '失控哨戒炮', dungeonId: 'lost_shelter', maxHp: 495, attack: 67, artPower: 70, defense: 36,
+      speed: 32, rewardPoints: 1940, drop: { rescue_badge: 1 }
+    });
+    expect(content.MONSTERS.rogue_sentry.ability).toContain('每 3 回合');
+    expect(content.MONSTERS.rogue_sentry.counter).toContain('第 3 回合使用守御');
     expect(content.MONSTERS.shelter_enforcer).toMatchObject({ maxHp: 510, attack: 68, artPower: 74, defense: 38, speed: 34, rewardPoints: 2000, drop: { rescue_badge: 2 } });
     expect(content.MONSTERS.evacuation_horror).toMatchObject({ maxHp: 555, attack: 72, artPower: 78, defense: 40, speed: 35, rewardPoints: 2150, drop: { rescue_badge: 2, rift_dust: 1 } });
     expect(content.MONSTERS.shelter_overseer).toMatchObject({ maxHp: 650, attack: 76, artPower: 90, defense: 44, speed: 38, rewardPoints: 2480, drop: { rescue_badge: 3, method_page: 1 } });
@@ -2467,7 +2478,7 @@ describe('level content tables', () => {
 
     expect(content.DUNGEON_ORDER.at(-1)).toBe('panopticon_city');
     expect(dungeon).toMatchObject({
-      id: 'panopticon_city', name: '天幕监察城', tier: 19, recommendedPower: 1350,
+      id: 'panopticon_city', name: '天幕监察城', tier: 19, genre: 'science_fiction', recommendedPower: 1350,
       grid: { width: 6, height: 5, startNodeId: 'panopticon_gate' }
     });
     expect(dungeon.nodes).toHaveLength(30);
@@ -2489,12 +2500,22 @@ describe('level content tables', () => {
     expect(getLevelNode(dungeon, 'soul_recharge_panopticon')).toMatchObject({
       type: 'monster', monsterId: 'blindspot_auditor', soulRechargeId: 'soul_node_panopticon_recharge'
     });
+    expect(getLevelNode(dungeon, 'sweep_sentinel_north')).toMatchObject({
+      type: 'monster', monsterId: 'phase_hunter_drone', position: { x: 4, y: 0 }
+    });
     expect(['upper_return_portal', 'lower_return_portal', 'refraction_return_portal'].map((id) => getLevelNode(dungeon, id).portal)).toEqual([
       { targetDungeonId: 'demon_tower_1', targetNodeId: 'sealed_cache', stableItem: 'gate_sigil' },
       { targetDungeonId: 'demon_tower_1', targetNodeId: 'fog_lesser_demon', stableItem: 'gate_sigil' },
       { targetDungeonId: 'demon_tower_1', targetNodeId: 'quiet_prayer_reward', stableItem: 'gate_sigil' }
     ]);
     expect(content.MONSTERS.sweep_sentinel).toMatchObject({ maxHp: 600 });
+    expect(content.MONSTERS.phase_hunter_drone).toMatchObject({
+      name: '相位猎杀号', dungeonId: 'panopticon_city', maxHp: 620, attack: 92, artPower: 108, defense: 51,
+      speed: 43, rewardPoints: 2720, drop: { observation_shard: 1 }
+    });
+    expect(content.MONSTERS.phase_hunter_drone.ability).toContain('奇数回合展开物理相位盾');
+    expect(content.MONSTERS.phase_hunter_drone.ability).toContain('偶数回合展开术法相位盾');
+    expect(content.MONSTERS.phase_hunter_drone.counter).toContain('符箓绕过相位盾');
     expect(content.MONSTERS.blindspot_auditor).toMatchObject({ maxHp: 640 });
     expect(content.MONSTERS.exposure_double).toMatchObject({ maxHp: 680 });
     expect(content.MONSTERS.all_sight_warden).toMatchObject({

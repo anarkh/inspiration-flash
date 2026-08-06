@@ -4,6 +4,8 @@ import {
   claimTaskReward,
   createInitialState,
   enterDungeon,
+  resolveRetreat,
+  returnToHub,
   type DungeonId,
   type GameState,
   type RewardBundle
@@ -136,6 +138,7 @@ describe('persistent main god task system', () => {
     const taskSystem = await loadTaskSystem();
     const initial = createInitialState();
     const inDemonTower = enterDungeon(initial, 'demon_tower_1');
+    const afterRetreat = returnToHub(resolveRetreat(inDemonTower));
     const clearedDemonTower: GameState = {
       ...initial,
       completedDungeonIds: ['demon_tower_1']
@@ -146,6 +149,10 @@ describe('persistent main god task system', () => {
     };
 
     expect(taskSystem.evaluateTask(inDemonTower, 'side_enter_demon_tower_1').completed).toBe(true);
+    expect(taskSystem.evaluateTask(afterRetreat, 'side_enter_demon_tower_1')).toMatchObject({
+      completed: true,
+      progressText: '1/1 已记录入口'
+    });
     expect(taskSystem.evaluateTask(clearedDemonTower, 'side_enter_demon_tower_1').completed).toBe(true);
     expect(taskSystem.evaluateTask(clearedDemonTower, 'side_directive_demon_tower_1').completed).toBe(false);
     expect(taskSystem.evaluateTask(directiveClaimed, 'side_directive_demon_tower_1').completed).toBe(true);
