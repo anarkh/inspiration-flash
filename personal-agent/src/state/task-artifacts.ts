@@ -43,6 +43,7 @@ export async function exportTaskRun(workspace: string, id?: string): Promise<Tas
     `- Updated At: ${run.updatedAt}`,
     `- Goal: ${run.goal}`,
     `- Success Check: ${run.successCheck}`,
+    ...formatTaskRunSkillSelection(run.skillSelectors, run.selectedSkillPaths),
     "",
     "## Decision Trace",
     "",
@@ -171,7 +172,19 @@ function formatDecisionTraceEvent(event: unknown): string {
     return `tool_result: ${event.tool} -> ${outputType}`;
   }
   if (event.type === "skill_packs" && Array.isArray(event.skillPacks)) {
-    return `skill_packs: ${event.skillPacks.length} selected`;
+    const conflictCount = countSkillPackSourceConflicts(event.skillPacks);
+    const explicitCount = countExplicitSkillPackSelections(event.skillPacks);
+    const overrideCount = countSkillPackPrecedenceOverrides(event.skillPacks);
+    const guidanceCount = countLoadedSkillPackGuidance(event.skillPacks);
+    const details = [
+      conflictCount > 0
+        ? `${conflictCount} same-name source alternative${conflictCount === 1 ? "" : "s"} recorded`
+        : null,
+      explicitCount > 0 ? `${explicitCount} explicitly selected` : null,
+      overrideCount > 0 ? `${overrideCount} precedence override${overrideCount === 1 ? "" : "s"}` : null,
+      guidanceCount > 0 ? `${guidanceCount} full guidance file${guidanceCount === 1 ? "" : "s"} loaded` : null
+    ].filter((detail): detail is string => detail !== null);
+    return `skill_packs: ${event.skillPacks.length} selected${details.length > 0 ? `; ${details.join("; ")}` : ""}`;
   }
   if (event.type === "skill_packs_confirmation" && typeof event.approved === "boolean") {
     return `skill_packs_confirmation: ${event.approved ? "approved" : "denied"}`;
@@ -223,7 +236,92 @@ function collectSkillPacksUsed(events: unknown[]): string[] {
 function formatSkillPackUsed(skillPack: Record<string, unknown>): string[] {
   const name = typeof skillPack.name === "string" ? skillPack.name : "unknown";
   const path = typeof skillPack.path === "string" ? skillPack.path : "unknown";
-  return [[`${name} (${path})`, ...formatSkillPackResources(skillPack.resources)].join("\n")];
+  return [
+    [
+      `${name} (${path})`,
+      ...formatSkillPackSource(skillPack.source),
+      ...formatSkillPackVersion(skillPack.version),
+      ...formatSkillPackSelection(skillPack.selection),
+      ...formatSkillPackGuidance(skillPack.guidance),
+      ...formatSkillPackSourceConflicts(skillPack.conflicts),
+      ...formatSkillPackResources(skillPack.resources)
+    ].join("\n")
+  ];
+}
+
+/** Formats the repeatable CLI selectors and their exact resolved paths in export metadata. */
+function formatTaskRunSkillSelection(
+  selectors: string[] | undefined,
+  selectedPaths: string[] | undefined
+): string[] {
+  const lines: string[] = [];
+  if (selectors && selectors.length > 0) {
+    lines.push(`- Skill Selectors: ${selectors.join(", ")}`);
+  }
+  if (selectedPaths && selectedPaths.length > 0) {
+    lines.push(`- Selected Skill Paths: ${selectedPaths.join(", ")}`);
+  }
+  return lines;
+}
+
+/** Formats selected source identity and precedence for exported Skill Pack audit data. */
+function formatSkillPackSource(source: unknown): string[] {
+  if (
+    !isRecord(source) ||
+    typeof source.label !== "string" ||
+    typeof source.root !== "string" ||
+    typeof source.priority !== "number"
+  ) {
+    return [];
+  }
+  return [`  - source: ${source.label} (priority ${source.priority})`, `  - source root: ${source.root}`];
+}
+
+/** Formats an optional Skill Pack version without inventing one for legacy packs. */
+function formatSkillPackVersion(version: unknown): string[] {
+  return typeof version === "string" && version.length > 0 ? [`  - version: ${version}`] : [];
+}
+
+/** Formats an explicit selector and whether it bypassed normal source precedence. */
+function formatSkillPackSelection(selection: unknown): string[] {
+  if (
+    !isRecord(selection) ||
+    selection.mode !== "explicit" ||
+    typeof selection.selector !== "string" ||
+    typeof selection.precedenceOverridden !== "boolean"
+  ) {
+    return [];
+  }
+  return [
+    `  - selection: explicit (--skill ${selection.selector})`,
+    `  - source precedence overridden: ${selection.precedenceOverridden ? "yes" : "no"}`
+  ];
+}
+
+/** Formats guidance audit metadata without copying the complete `SKILL.md` body into exports. */
+function formatSkillPackGuidance(guidance: unknown): string[] {
+  if (!isRecord(guidance) || typeof guidance.sha256 !== "string" || typeof guidance.bytes !== "number") {
+    return [];
+  }
+  return [`  - guidance: full SKILL.md loaded (${guidance.bytes} bytes, sha256 ${guidance.sha256})`];
+}
+
+/** Formats every same-name source alternative in the Task Run export. */
+function formatSkillPackSourceConflicts(conflicts: unknown): string[] {
+  if (!Array.isArray(conflicts) || conflicts.length === 0) {
+    return [];
+  }
+  const lines = [`  - source variants: ${conflicts.length} alternative${conflicts.length === 1 ? "" : "s"}`];
+  for (const conflict of conflicts) {
+    if (!isRecord(conflict) || typeof conflict.path !== "string" || !isRecord(conflict.source)) {
+      continue;
+    }
+    const label = typeof conflict.source.label === "string" ? conflict.source.label : "unknown";
+    const priority = typeof conflict.source.priority === "number" ? conflict.source.priority : "unknown";
+    const version = typeof conflict.version === "string" ? `, version ${conflict.version}` : "";
+    lines.push(`    - ${label} (priority ${priority}${version}): ${conflict.path}`);
+  }
+  return lines;
 }
 
 /** Formats agent-ability resource inventory paths under a selected Skill Pack. */
@@ -270,6 +368,47 @@ function formatSkillPackEvalManifest(value: unknown): string | null {
   }
   const reason = typeof value.reason === "string" ? value.reason : "unknown reason";
   return `invalid (${reason})`;
+}
+
+/** Counts same-name Skill Pack alternatives recorded across one selection event. */
+function countSkillPackSourceConflicts(skillPacks: unknown[]): number {
+  return skillPacks.reduce<number>((count, skillPack) => {
+    if (!isRecord(skillPack) || !Array.isArray(skillPack.conflicts)) {
+      return count;
+    }
+    return count + skillPack.conflicts.length;
+  }, 0);
+}
+
+/** Counts Skill Packs selected through an explicit CLI selector. */
+function countExplicitSkillPackSelections(skillPacks: unknown[]): number {
+  return skillPacks.filter(
+    (skillPack) =>
+      isRecord(skillPack) &&
+      isRecord(skillPack.selection) &&
+      skillPack.selection.mode === "explicit"
+  ).length;
+}
+
+/** Counts explicit selections that chose a normally shadowed source variant. */
+function countSkillPackPrecedenceOverrides(skillPacks: unknown[]): number {
+  return skillPacks.filter(
+    (skillPack) =>
+      isRecord(skillPack) &&
+      isRecord(skillPack.selection) &&
+      skillPack.selection.precedenceOverridden === true
+  ).length;
+}
+
+/** Counts selected Skill Packs whose complete instruction files were loaded for the model. */
+function countLoadedSkillPackGuidance(skillPacks: unknown[]): number {
+  return skillPacks.filter(
+    (skillPack) =>
+      isRecord(skillPack) &&
+      isRecord(skillPack.guidance) &&
+      typeof skillPack.guidance.sha256 === "string" &&
+      typeof skillPack.guidance.bytes === "number"
+  ).length;
 }
 
 /** Collects resources that tool observations report as changed by the Task Run. */

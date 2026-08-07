@@ -1,4 +1,5 @@
 import { parseAgentStep, type AgentStep } from "../core/agent-step.ts";
+import { formatLocalToolCatalogForPrompt } from "../tools/local-tools.ts";
 import type { ModelProvider, ModelProviderInput } from "./provider.ts";
 
 interface FetchResponse {
@@ -99,7 +100,7 @@ function createSystemPrompt(input: ModelProviderInput): string {
     "Schemas: message {type,content}; plan {type,summary,steps}; tool {type,tool,input}; confirm {type,prompt,action}; reflect {type,note,section?}; finish {type,report}.",
     "Events may include owner_message entries for visible user turns in chat mode.",
     "Use reflect with section stable-facts, preferences, project-conventions, or open-threads when you have a candidate Project Memory note; reflect does not save memory by itself.",
-    "Available local tools: list_files {}; read_file {path}; search_text {query}; write_file {path,content}; run_command {command}.",
+    `Available local tools and input schemas: ${formatLocalToolCatalogForPrompt()}.`,
     "write_file and workspace-writing commands may return confirmation_required instead of changing files immediately.",
     "Do not wrap the JSON in markdown."
   ].join(" ");

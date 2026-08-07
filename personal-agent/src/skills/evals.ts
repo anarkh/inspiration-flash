@@ -1,5 +1,5 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { basename, dirname, join } from "node:path";
+import { basename, dirname, isAbsolute, join, resolve } from "node:path";
 
 import { runTask } from "../agent/runner.ts";
 import { parseAgentStep } from "../core/agent-step.ts";
@@ -13,8 +13,8 @@ import {
   validateJsonSchemaDeclaration,
   type JsonSchema,
   type JsonValueType
-} from "./json-schema.ts";
-import { discoverWorkspaceSkillPacks, type SkillPackSummary } from "./skill-packs.ts";
+} from "../core/json-schema.ts";
+import { discoverSkillPacks, type SkillPackSummary } from "./skill-packs.ts";
 
 export interface RunSkillPackEvalsInput {
   workspace: string;
@@ -110,7 +110,7 @@ export async function runSkillPackEvals(input: RunSkillPackEvalsInput): Promise<
   const skillPack = await resolveSkillPackForEval(input.workspace, input.skillPack);
   const manifestPath = manifestPathForSkillPack(skillPack);
   const manifest = parseSkillPackEvalManifest(
-    await readFile(join(input.workspace, manifestPath), "utf8"),
+    await readFile(resolveSkillPackResourcePath(input.workspace, manifestPath), "utf8"),
     manifestPath
   );
   const evalDir = await createSkillPackEvalOutputDir(input.workspace, skillPack.name);
@@ -163,7 +163,8 @@ async function runOneSkillPackEvalCase(input: RunOneSkillPackEvalCaseInput): Pro
       successCheck: formatSkillPackEvalSuccessCheck(input.evalCase),
       provider: input.provider,
       logStep: input.logStep,
-      confirmAction: createEvalConfirmationHandler(input.skillPack, input.confirmAction)
+      skillSelectors: [input.skillPack.path],
+      confirmAction: input.confirmAction
     });
     const reportPath = join(run.runDir, "report.md");
     const report = await readFile(reportPath, "utf8");
@@ -234,9 +235,9 @@ function formatSkillPackEvalSuccessCheck(evalCase: SkillPackEvalCase): string {
   return `Task Run trace includes Local Tool: ${evalCase.grader.tool}`;
 }
 
-/** Resolves a Skill Pack by frontmatter name, directory name, or workspace-relative SKILL.md path. */
+/** Resolves a Skill Pack from all ordered sources by name, directory, or `SKILL.md` path. */
 async function resolveSkillPackForEval(workspace: string, target: string): Promise<SkillPackSummary> {
-  const skillPacks = await discoverWorkspaceSkillPacks(workspace);
+  const skillPacks = await discoverSkillPacks(workspace);
   const normalizedTarget = normalizeSkillPackTarget(target);
   const match = skillPacks.find((skillPack) => {
     const directoryName = basename(dirname(skillPack.path));
@@ -252,7 +253,12 @@ async function resolveSkillPackForEval(workspace: string, target: string): Promi
 
 /** Derives the conventional eval manifest path from a selected Skill Pack path. */
 function manifestPathForSkillPack(skillPack: SkillPackSummary): string {
-  return `${dirname(skillPack.path)}/evals/evals.json`;
+  return skillPack.resources?.evalManifest?.path ?? `${dirname(skillPack.path)}/evals/evals.json`;
+}
+
+/** Resolves workspace-relative manifests while preserving absolute external-source paths. */
+function resolveSkillPackResourcePath(workspace: string, path: string): string {
+  return isAbsolute(path) ? path : resolve(workspace, path);
 }
 
 /** Parses the local eval manifest shape used by agent-ability style Skill Packs. */
@@ -520,19 +526,6 @@ function formatSkillPackEvalGoal(skillPack: SkillPackSummary, evalCase: SkillPac
     `Expected output marker: ${evalCase.expectedOutput}`,
     `Grader: ${formatSkillPackEvalGrader(evalCase.grader)}`
   ].join("\n");
-}
-
-/** Auto-selects the evaluated Skill Pack while delegating non-Skill confirmations to the caller. */
-function createEvalConfirmationHandler(
-  skillPack: SkillPackSummary,
-  confirmAction?: (request: ConfirmationRequired) => Promise<ConfirmationResponse> | ConfirmationResponse
-): (request: ConfirmationRequired) => Promise<ConfirmationResponse> | ConfirmationResponse {
-  return (request) => {
-    if (request.tool === "skill_packs") {
-      return { approved: true, selected: [skillPack.path] };
-    }
-    return confirmAction ? confirmAction(request) : false;
-  };
 }
 
 /** Checks one eval case using either final-report text or durable Task Run events. */

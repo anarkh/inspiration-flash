@@ -1,6 +1,8 @@
 import { access, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
+import type { StructuredSuccessCheck } from "../core/success-check.ts";
+import { isTaskVerdict, type TaskVerdict } from "../core/task-verdict.ts";
 import { readLatestCheckpoint } from "./checkpoints.ts";
 import { isNotFound } from "./shared.ts";
 import { ensureWorkspaceState } from "./workspace.ts";
@@ -11,6 +13,9 @@ export interface CreateTaskRunInput {
   goal: string;
   mode: TaskMode;
   successCheck: string;
+  successChecks?: StructuredSuccessCheck[];
+  skillSelectors?: string[];
+  selectedSkillPaths?: string[];
 }
 
 export interface TaskRunHandle {
@@ -25,10 +30,15 @@ export interface TaskRunMetadata {
   goal: string;
   mode: TaskMode;
   successCheck: string;
+  successChecks?: StructuredSuccessCheck[];
+  skillSelectors?: string[];
+  selectedSkillPaths?: string[];
   status: TaskRunStatus;
   createdAt: string;
   updatedAt: string;
-  evaluationVerdict?: string;
+  evaluationVerdict?: TaskVerdict;
+  deterministicEvaluationVerdict?: TaskVerdict;
+  humanOverrideCount?: number;
   reportPath?: string;
   latestCheckpointId?: string;
   latestCheckpointTurn?: number;
@@ -59,6 +69,11 @@ export async function createTaskRun(
         goal: input.goal,
         mode: input.mode,
         successCheck: input.successCheck,
+        ...(input.successChecks && input.successChecks.length > 0 ? { successChecks: input.successChecks } : {}),
+        ...(input.skillSelectors && input.skillSelectors.length > 0 ? { skillSelectors: input.skillSelectors } : {}),
+        ...(input.selectedSkillPaths && input.selectedSkillPaths.length > 0
+          ? { selectedSkillPaths: input.selectedSkillPaths }
+          : {}),
         status: "active",
         createdAt: now,
         updatedAt: now
@@ -124,7 +139,7 @@ export async function listTaskRuns(workspace: string, limit = 20): Promise<TaskR
     if (metadata) {
       runs.push({
         ...metadata,
-        evaluationVerdict: await readTaskRunEvaluationVerdict(runDir),
+        ...(await readTaskRunEvaluationSummary(runDir)),
         reportPath: await readTaskRunReportPath(runDir),
         ...(await readTaskRunLatestCheckpointSummary(runDir))
       });
@@ -160,14 +175,29 @@ async function readTaskRunMetadata(runDir: string): Promise<TaskRunMetadata | nu
   }
 }
 
-/** Reads the optional Task Evaluation verdict used by compact history output. */
-async function readTaskRunEvaluationVerdict(runDir: string): Promise<string | undefined> {
+/** Reads deterministic and human-effective verdicts used by compact history output. */
+async function readTaskRunEvaluationSummary(
+  runDir: string
+): Promise<
+  Pick<TaskRunMetadata, "evaluationVerdict" | "deterministicEvaluationVerdict" | "humanOverrideCount">
+> {
   try {
     const evaluation = JSON.parse(await readFile(join(runDir, "evaluation.json"), "utf8")) as Record<string, unknown>;
-    return typeof evaluation.verdict === "string" ? evaluation.verdict : undefined;
+    const deterministicVerdict = isTaskVerdict(evaluation.verdict) ? evaluation.verdict : undefined;
+    const effectiveVerdict = isTaskVerdict(evaluation.effectiveVerdict)
+      ? evaluation.effectiveVerdict
+      : deterministicVerdict;
+    const humanOverrideCount = Array.isArray(evaluation.humanOverrides)
+      ? evaluation.humanOverrides.length
+      : 0;
+    return {
+      evaluationVerdict: effectiveVerdict,
+      deterministicEvaluationVerdict: deterministicVerdict,
+      humanOverrideCount
+    };
   } catch (error) {
     if (isNotFound(error)) {
-      return undefined;
+      return {};
     }
     throw error;
   }

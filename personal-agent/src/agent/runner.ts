@@ -1,5 +1,6 @@
 import { parseAgentStep, type AgentStep } from "../core/agent-step.ts";
-import { createModelAssistedReview, createTaskEvaluation } from "./evaluation.ts";
+import { createModelAssistedReview, createTaskEvaluation, type TaskEvaluation } from "./evaluation.ts";
+import type { StructuredSuccessCheck } from "../core/success-check.ts";
 import type { ModelProvider, ModelProviderEvent } from "../model/provider.ts";
 import {
   appendRunEvent,
@@ -21,27 +22,38 @@ import {
 } from "../state/store.ts";
 import {
   applyConfirmedToolAction,
+  createLocalToolErrorResult,
   executeLocalTool,
   isConfirmationRequired,
   type ConfirmationRequired,
   type ConfirmationResponse
 } from "../tools/local-tools.ts";
 import {
+  createAuditedSkillPackSummaries,
+  loadSkillPackGuidance,
+  verifySkillPackGuidanceDigests
+} from "../skills/skill-guidance.ts";
+import {
   formatSkillPackContext,
-  selectRelevantSkillPackMatches,
   type SelectedSkillPackSummary,
   type SkillPackSummary
 } from "../skills/skill-packs.ts";
+import {
+  selectExplicitSkillPackMatches,
+  selectTaskSkillPackMatches
+} from "../skills/skill-selection.ts";
 
 export interface RunTaskInput {
   workspace: string;
   goal: string;
   mode: TaskMode;
   successCheck: string;
+  successChecks?: StructuredSuccessCheck[];
   provider: ModelProvider;
   logStep?: (message: string) => void;
   learningLens?: boolean;
   modelReview?: boolean;
+  skillSelectors?: string[];
   confirmAction?: (request: ConfirmationRequired) => Promise<ConfirmationResponse> | ConfirmationResponse;
 }
 
@@ -49,6 +61,7 @@ export interface RunTaskResult {
   id: string;
   runDir: string;
   status: "completed";
+  evaluationVerdict: TaskEvaluation["verdict"];
 }
 
 export interface RunChatTaskInput {
@@ -58,6 +71,7 @@ export interface RunChatTaskInput {
   logStep?: (message: string) => void;
   learningLens?: boolean;
   modelReview?: boolean;
+  skillSelectors?: string[];
   confirmAction?: (request: ConfirmationRequired) => Promise<ConfirmationResponse> | ConfirmationResponse;
   onAgentMessage?: (message: string) => void;
 }
@@ -89,10 +103,25 @@ const maxRecoveryAttempts = 2;
 
 /** Starts a new Task Run, records the Owner request, and enters the agent loop. */
 export async function runTask(input: RunTaskInput): Promise<RunTaskResult> {
+  // Resolve explicit selectors before creating durable state so a typo cannot
+  // leave an orphan active Task Run behind.
+  const skillPacks = await selectTaskSkillPackMatches({
+    workspace: input.workspace,
+    goal: input.goal,
+    successCheck: input.successCheck,
+    skillSelectors: input.skillSelectors
+  });
+  const hasExplicitSkillSelectors = (input.skillSelectors?.length ?? 0) > 0;
+  const resolvedSelectors = skillPacks.flatMap((skillPack) =>
+    skillPack.selection ? [skillPack.selection.selector] : []
+  );
   const run = await createTaskRun(input.workspace, {
     goal: input.goal,
     mode: input.mode,
-    successCheck: input.successCheck
+    successCheck: input.successCheck,
+    successChecks: input.successChecks,
+    skillSelectors: hasExplicitSkillSelectors ? resolvedSelectors : undefined,
+    selectedSkillPaths: hasExplicitSkillSelectors ? skillPacks.map((skillPack) => skillPack.path) : undefined
   });
   const events: ModelProviderEvent[] = [];
 
@@ -108,6 +137,9 @@ export async function runTask(input: RunTaskInput): Promise<RunTaskResult> {
       goal: input.goal,
       mode: input.mode,
       successCheck: input.successCheck,
+      successChecks: input.successChecks,
+      skillSelectors: hasExplicitSkillSelectors ? resolvedSelectors : undefined,
+      selectedSkillPaths: hasExplicitSkillSelectors ? skillPacks.map((skillPack) => skillPack.path) : undefined,
       status: "active",
       createdAt: "",
       updatedAt: ""
@@ -116,6 +148,8 @@ export async function runTask(input: RunTaskInput): Promise<RunTaskResult> {
     interaction: "task",
     events: [],
     startTurn: 1,
+    skillPacks,
+    recordSkillPackEvent: true,
     logStep: input.logStep,
     learningLens: input.learningLens,
     modelReview: input.modelReview,
@@ -134,10 +168,24 @@ export async function runChatTask(input: RunChatTaskInput): Promise<RunChatTaskR
 
     const successCheck = "Chat produces a local Task Report when the conversation is finished";
     const goal = createChatGoal(firstMessage);
+    // Chat selects skills from the first Owner message and keeps that selection
+    // stable for the lifetime of the conversation.
+    const skillPackMatches = await selectTaskSkillPackMatches({
+      workspace: input.workspace,
+      goal,
+      successCheck,
+      skillSelectors: input.skillSelectors
+    });
+    const hasExplicitSkillSelectors = (input.skillSelectors?.length ?? 0) > 0;
+    const resolvedSelectors = skillPackMatches.flatMap((skillPack) =>
+      skillPack.selection ? [skillPack.selection.selector] : []
+    );
     const run = await createTaskRun(input.workspace, {
       goal,
       mode: "advisory",
-      successCheck
+      successCheck,
+      skillSelectors: hasExplicitSkillSelectors ? resolvedSelectors : undefined,
+      selectedSkillPaths: hasExplicitSkillSelectors ? skillPackMatches.map((skillPack) => skillPack.path) : undefined
     });
     const runRecord: TaskRunRecord = {
       id: run.id,
@@ -145,6 +193,8 @@ export async function runChatTask(input: RunChatTaskInput): Promise<RunChatTaskR
       goal,
       mode: "advisory",
       successCheck,
+      skillSelectors: hasExplicitSkillSelectors ? resolvedSelectors : undefined,
+      selectedSkillPaths: hasExplicitSkillSelectors ? skillPackMatches.map((skillPack) => skillPack.path) : undefined,
       status: "active",
       createdAt: "",
       updatedAt: ""
@@ -156,6 +206,8 @@ export async function runChatTask(input: RunChatTaskInput): Promise<RunChatTaskR
       interaction: "chat",
       events: [],
       startTurn: 1,
+      skillPacks: skillPackMatches,
+      recordSkillPackEvent: true,
       logStep: input.logStep,
       learningLens: input.learningLens,
       modelReview: input.modelReview,
@@ -168,22 +220,14 @@ export async function runChatTask(input: RunChatTaskInput): Promise<RunChatTaskR
       goal: runRecord.goal,
       successCheck: runRecord.successCheck
     });
-    const skillPackSummaries = await resolveSkillPackSelection({
+    const skillPacks = await prepareSkillPackContext({
+      workspace: input.workspace,
       runDir: run.runDir,
       startTurn: 1,
       confirmAction: input.confirmAction,
-      skillPacks: await selectRelevantSkillPackMatches({
-        workspace: input.workspace,
-        goal: runRecord.goal,
-        successCheck: runRecord.successCheck
-      })
+      skillPacks: skillPackMatches,
+      recordSkillPackEvent: true
     });
-    const skillPacks = formatSkillPackContext(skillPackSummaries);
-    if (skillPackSummaries.length > 0) {
-      // Skill Pack selection is durable audit data; the provider gets the
-      // formatted guidance field rather than this bookkeeping event.
-      await appendRunEvent(run.runDir, { type: "skill_packs", skillPacks: skillPackSummaries });
-    }
 
     let turn = 1;
     let ownerMessageCount = 0;
@@ -217,11 +261,13 @@ export async function resumeLatestTask(input: ResumeLatestTaskInput): Promise<Re
   }
 
   const checkpoint = await readLatestCheckpoint(run.runDir);
-  const allEvents = toProviderEvents(await readRunEvents(run.runDir));
+  const rawEvents = await readRunEvents(run.runDir);
+  const allEvents = toProviderEvents(rawEvents);
   const eventCount = readNumberField(checkpoint?.state, "eventCount");
   const checkpointTurn = readNumberField(checkpoint?.state, "turn");
   const events = typeof eventCount === "number" ? allEvents.slice(0, eventCount) : allEvents;
   const startTurn = (checkpointTurn ?? countAgentSteps(events)) + 1;
+  const restoredSkillPacks = await restoreSkillPackSelection(input.workspace, run, rawEvents, startTurn);
 
   return continueTaskRun({
     workspace: input.workspace,
@@ -230,6 +276,9 @@ export async function resumeLatestTask(input: ResumeLatestTaskInput): Promise<Re
     interaction: "task",
     events,
     startTurn,
+    skillPacks: restoredSkillPacks.skillPacks,
+    expectedSkillPackDigests: restoredSkillPacks.expectedDigests,
+    recordSkillPackEvent: restoredSkillPacks.recordSkillPackEvent,
     logStep: input.logStep,
     learningLens: input.learningLens,
     modelReview: input.modelReview,
@@ -244,6 +293,9 @@ interface ContinueTaskRunInput {
   interaction: "task" | "chat";
   events: ModelProviderEvent[];
   startTurn: number;
+  skillPacks: SelectedSkillPackSummary[];
+  expectedSkillPackDigests?: ReadonlyMap<string, string>;
+  recordSkillPackEvent: boolean;
   logStep?: (message: string) => void;
   learningLens?: boolean;
   modelReview?: boolean;
@@ -258,6 +310,18 @@ interface ResolveSkillPackSelectionInput {
   confirmAction?: (request: ConfirmationRequired) => Promise<ConfirmationResponse> | ConfirmationResponse;
 }
 
+interface PrepareSkillPackContextInput extends ResolveSkillPackSelectionInput {
+  workspace: string;
+  expectedDigests?: ReadonlyMap<string, string>;
+  recordSkillPackEvent: boolean;
+}
+
+interface RestoredSkillPackSelection {
+  skillPacks: SelectedSkillPackSummary[];
+  expectedDigests: ReadonlyMap<string, string>;
+  recordSkillPackEvent: boolean;
+}
+
 /** Drives provider turns until the model emits a finish step or the turn limit is reached. */
 async function continueTaskRun(input: ContinueTaskRunInput): Promise<RunTaskResult> {
   const projectMemory = selectRelevantProjectMemory({
@@ -265,22 +329,15 @@ async function continueTaskRun(input: ContinueTaskRunInput): Promise<RunTaskResu
     goal: input.run.goal,
     successCheck: input.run.successCheck
   });
-  const skillPackSummaries = await resolveSkillPackSelection({
+  const skillPacks = await prepareSkillPackContext({
+    workspace: input.workspace,
     runDir: input.run.runDir,
     startTurn: input.startTurn,
     confirmAction: input.confirmAction,
-    skillPacks: await selectRelevantSkillPackMatches({
-      workspace: input.workspace,
-      goal: input.run.goal,
-      successCheck: input.run.successCheck
-    })
+    skillPacks: input.skillPacks,
+    expectedDigests: input.expectedSkillPackDigests,
+    recordSkillPackEvent: input.recordSkillPackEvent
   });
-  const skillPacks = formatSkillPackContext(skillPackSummaries);
-  if (skillPackSummaries.length > 0 && input.startTurn === 1) {
-    // Record selected Skill Packs as durable audit data without feeding this
-    // bookkeeping event back into the provider event stream.
-    await appendRunEvent(input.run.runDir, { type: "skill_packs", skillPacks: skillPackSummaries });
-  }
 
   for (let turn = input.startTurn; turn < input.startTurn + maxTurns; turn++) {
     const step = await requestValidAgentStep(input, turn, projectMemory, skillPacks);
@@ -345,7 +402,14 @@ async function recordAgentStepAndObservations(
 
 /** Executes one Local Tool step and appends its observation to the provider-visible event stream. */
 async function recordToolObservation(input: ContinueTaskRunInput, step: Extract<AgentStep, { type: "tool" }>): Promise<void> {
-  let output = await executeLocalTool(input.workspace, step.tool, step.input);
+  let output: unknown;
+  try {
+    output = await executeLocalTool(input.workspace, step.tool, step.input);
+  } catch (error) {
+    // Invalid and failed calls remain visible to the provider and evaluator as
+    // durable observations instead of terminating the entire Task Run.
+    output = createLocalToolErrorResult(step.tool, error);
+  }
   if (isConfirmationRequired(output)) {
     emitLearningLens(
       input,
@@ -354,7 +418,11 @@ async function recordToolObservation(input: ContinueTaskRunInput, step: Extract<
     );
     const decision = input.confirmAction ? await input.confirmAction(output) : false;
     if (confirmationWasApproved(decision)) {
-      output = await applyConfirmedToolAction(input.workspace, output);
+      try {
+        output = await applyConfirmedToolAction(input.workspace, output);
+      } catch (error) {
+        output = createLocalToolErrorResult(step.tool, error);
+      }
     } else {
       output = {
         type: "confirmation_denied",
@@ -384,8 +452,10 @@ async function completeTaskRun(input: ContinueTaskRunInput, report: string): Pro
     await writeMemorySuggestions(input.run.runDir, memorySuggestions);
   }
   await writeTaskReport(input.run.runDir, report);
-  const evaluation = createTaskEvaluation({
+  const evaluation = await createTaskEvaluation({
+    workspace: input.workspace,
     successCheck: input.run.successCheck,
+    successChecks: input.run.successChecks,
     report,
     events: input.events,
     memorySuggestions
@@ -404,7 +474,12 @@ async function completeTaskRun(input: ContinueTaskRunInput, report: string): Pro
   await writeTaskEvaluation(input.run.runDir, evaluation);
   emitLearningLens(input, "evaluation", "Task Evaluation scores the report and trace from visible artifacts.");
   await updateTaskRunStatus(input.run.runDir, "completed");
-  return { id: input.run.id, runDir: input.run.runDir, status: "completed" };
+  return {
+    id: input.run.id,
+    runDir: input.run.runDir,
+    status: "completed",
+    evaluationVerdict: evaluation.verdict
+  };
 }
 
 /** Appends a user-visible Owner message to both in-memory context and the durable event log. */
@@ -475,9 +550,199 @@ function validateAgentStepForInteraction(step: AgentStep, interaction: "task" | 
   return step;
 }
 
-/** Resolves selected Skill Packs, asking the Owner before injecting ambiguous automatic matches. */
+/** Loads confirmed guidance, verifies resume digests, and records only an event-safe audit summary. */
+async function prepareSkillPackContext(input: PrepareSkillPackContextInput): Promise<string> {
+  const summaries = await resolveSkillPackSelection(input);
+  if (summaries.length === 0) {
+    return "";
+  }
+
+  const guidance = await loadSkillPackGuidance(input.workspace, summaries);
+  if (input.expectedDigests) {
+    verifySkillPackGuidanceDigests(guidance, input.expectedDigests);
+  }
+  if (input.recordSkillPackEvent) {
+    // Full guidance is model context, not durable event data. The digest and
+    // byte count are enough to audit which exact instructions influenced a run.
+    await appendRunEvent(input.runDir, {
+      type: "skill_packs",
+      skillPacks: createAuditedSkillPackSummaries(summaries, guidance)
+    });
+  }
+
+  return formatSkillPackContext(summaries, guidance);
+}
+
+/** Restores the exact selected Skill variants instead of rerunning source precedence on resume. */
+async function restoreSkillPackSelection(
+  workspace: string,
+  run: TaskRunRecord,
+  events: unknown[],
+  startTurn: number
+): Promise<RestoredSkillPackSelection> {
+  const recordedSelection = readRecordedSkillPackSelection(events);
+  if (recordedSelection) {
+    const matches = await selectExplicitSkillPackMatches({
+      workspace,
+      goal: run.goal,
+      successCheck: run.successCheck,
+      skillSelectors: recordedSelection.paths
+    });
+    return {
+      skillPacks: restoreRecordedSelectionMetadata(matches, recordedSelection.skillPacks),
+      expectedDigests: recordedSelection.digests,
+      recordSkillPackEvent: false
+    };
+  }
+
+  const confirmation = readRecordedSkillPackConfirmation(events);
+  if (confirmation) {
+    if (confirmation.paths.length === 0) {
+      return { skillPacks: [], expectedDigests: new Map(), recordSkillPackEvent: false };
+    }
+    const matches = await selectExplicitSkillPackMatches({
+      workspace,
+      goal: run.goal,
+      successCheck: run.successCheck,
+      skillSelectors: confirmation.paths
+    });
+    return {
+      skillPacks: restoreRecordedSelectionMetadata(matches, confirmation.skillPacks),
+      expectedDigests: new Map(),
+      recordSkillPackEvent: true
+    };
+  }
+
+  if (run.selectedSkillPaths && run.selectedSkillPaths.length > 0) {
+    const matches = await selectExplicitSkillPackMatches({
+      workspace,
+      goal: run.goal,
+      successCheck: run.successCheck,
+      skillSelectors: run.selectedSkillPaths
+    });
+    return {
+      skillPacks: restoreOriginalSelectors(matches, run.skillSelectors),
+      expectedDigests: new Map(),
+      recordSkillPackEvent: true
+    };
+  }
+
+  if (startTurn === 1) {
+    return {
+      skillPacks: await selectTaskSkillPackMatches({
+        workspace,
+        goal: run.goal,
+        successCheck: run.successCheck,
+        skillSelectors: run.skillSelectors
+      }),
+      expectedDigests: new Map(),
+      recordSkillPackEvent: true
+    };
+  }
+
+  return { skillPacks: [], expectedDigests: new Map(), recordSkillPackEvent: false };
+}
+
+/** Reads the latest durable Skill selection and its guidance digests from the event log. */
+function readRecordedSkillPackSelection(
+  events: unknown[]
+): { paths: string[]; digests: Map<string, string>; skillPacks: Map<string, Record<string, unknown>> } | null {
+  for (let index = events.length - 1; index >= 0; index -= 1) {
+    const event = events[index];
+    if (!isRecord(event) || event.type !== "skill_packs" || !Array.isArray(event.skillPacks)) {
+      continue;
+    }
+
+    const skillPacks = collectRecordedSkillPacks(event.skillPacks);
+    const paths = [...skillPacks.keys()];
+    const digests = new Map<string, string>();
+    for (const [path, skillPack] of skillPacks) {
+      if (isRecord(skillPack.guidance) && typeof skillPack.guidance.sha256 === "string") {
+        digests.set(path, skillPack.guidance.sha256);
+      }
+    }
+    return { paths, digests, skillPacks };
+  }
+  return null;
+}
+
+/** Reads an interrupted confirmation decision when no final Skill selection event exists yet. */
+function readRecordedSkillPackConfirmation(
+  events: unknown[]
+): { paths: string[]; skillPacks: Map<string, Record<string, unknown>> } | null {
+  for (let index = events.length - 1; index >= 0; index -= 1) {
+    const event = events[index];
+    if (
+      !isRecord(event) ||
+      event.type !== "skill_packs_confirmation" ||
+      !Array.isArray(event.selectedSkillPacks)
+    ) {
+      continue;
+    }
+    const skillPacks = collectRecordedSkillPacks(event.selectedSkillPacks);
+    return { paths: [...skillPacks.keys()], skillPacks };
+  }
+  return null;
+}
+
+/** Indexes structurally valid persisted Skill summaries by their exact displayed path. */
+function collectRecordedSkillPacks(values: unknown[]): Map<string, Record<string, unknown>> {
+  const skillPacks = new Map<string, Record<string, unknown>>();
+  for (const value of values) {
+    if (isRecord(value) && typeof value.path === "string") {
+      skillPacks.set(value.path, value);
+    }
+  }
+  return skillPacks;
+}
+
+/** Reapplies the original selection audit metadata after exact-path rediscovery. */
+function restoreRecordedSelectionMetadata(
+  matches: SelectedSkillPackSummary[],
+  recordedSkillPacks: ReadonlyMap<string, Record<string, unknown>>
+): SelectedSkillPackSummary[] {
+  return matches.map((match) => ({
+    ...match,
+    selection: readSkillPackSelectionMetadata(recordedSkillPacks.get(match.path)?.selection)
+  }));
+}
+
+/** Restores original CLI selector text for a run interrupted before its selection event was written. */
+function restoreOriginalSelectors(
+  matches: SelectedSkillPackSummary[],
+  selectors: string[] | undefined
+): SelectedSkillPackSummary[] {
+  return matches.map((match, index) => ({
+    ...match,
+    selection: match.selection
+      ? {
+          ...match.selection,
+          selector: selectors?.[index] ?? match.selection.selector
+        }
+      : undefined
+  }));
+}
+
+/** Parses only the explicit selection metadata fields trusted by provider-context formatting. */
+function readSkillPackSelectionMetadata(value: unknown): SkillPackSummary["selection"] {
+  if (
+    !isRecord(value) ||
+    value.mode !== "explicit" ||
+    typeof value.selector !== "string" ||
+    typeof value.precedenceOverridden !== "boolean"
+  ) {
+    return undefined;
+  }
+  return {
+    mode: "explicit",
+    selector: value.selector,
+    precedenceOverridden: value.precedenceOverridden
+  };
+}
+
+/** Resolves selected Skill Packs, asking the Owner before injecting automatic matches. */
 async function resolveSkillPackSelection(input: ResolveSkillPackSelectionInput): Promise<SkillPackSummary[]> {
-  const summaries = input.skillPacks.map(stripSkillPackSelectionMetadata);
+  const summaries = input.skillPacks.map(stripSkillPackMatcherMetadata);
   if (!shouldConfirmSkillPackSelection(input.skillPacks, input.startTurn)) {
     return summaries;
   }
@@ -511,27 +776,32 @@ function selectConfirmedSkillPacks(
   }
   if (typeof decision !== "boolean" && Array.isArray(decision.selected)) {
     const selected = new Set(decision.selected);
-    return skillPacks.filter((skillPack) => selected.has(skillPack.path)).map(stripSkillPackSelectionMetadata);
+    return skillPacks.filter((skillPack) => selected.has(skillPack.path)).map(stripSkillPackMatcherMetadata);
   }
-  return skillPacks.map(stripSkillPackSelectionMetadata);
+  return skillPacks.map(stripSkillPackMatcherMetadata);
 }
 
-/** Requires confirmation when multiple selected Skill Packs were not all explicitly named. */
+/** Requires confirmation before any automatically inferred Skill instructions enter model context. */
 function shouldConfirmSkillPackSelection(skillPacks: SelectedSkillPackSummary[], startTurn: number): boolean {
-  return startTurn === 1 && skillPacks.length > 1 && !skillPacks.every((skillPack) => skillPack.explicitlyNamed);
+  return startTurn === 1 && skillPacks.some((skillPack) => !skillPack.explicitlyNamed);
 }
 
-/** Creates a confirmation request for ambiguous Skill Pack guidance injection. */
+/** Creates a confirmation request for inferred Skill Pack guidance injection. */
 function createSkillPackConfirmation(skillPacks: SelectedSkillPackSummary[]): ConfirmationRequired {
+  const countLabel = skillPacks.length === 1 ? "one Skill Pack matched" : "multiple Skill Packs matched";
   return {
     type: "confirmation_required",
     tool: "skill_packs",
-    reason: "multiple Skill Packs matched automatically; approve before injecting all guidance",
+    reason: `${countLabel} automatically; approve before loading full guidance`,
     action: { skillPacks: skillPacks.map((skillPack) => skillPack.path) },
     preview: {
       skillPacks: skillPacks.map((skillPack) => ({
         name: skillPack.name,
         path: skillPack.path,
+        version: skillPack.version,
+        source: skillPack.source,
+        conflicts: skillPack.conflicts,
+        selection: skillPack.selection,
         score: skillPack.score,
         explicitlyNamed: skillPack.explicitlyNamed
       }))
@@ -539,13 +809,17 @@ function createSkillPackConfirmation(skillPacks: SelectedSkillPackSummary[]): Co
   };
 }
 
-/** Drops matcher-only fields before storing or formatting selected Skill Packs. */
-function stripSkillPackSelectionMetadata(skillPack: SelectedSkillPackSummary): SkillPackSummary {
+/** Drops score and mention fields before storing or formatting selected Skill Packs. */
+function stripSkillPackMatcherMetadata(skillPack: SelectedSkillPackSummary): SkillPackSummary {
   return {
     name: skillPack.name,
     description: skillPack.description,
     path: skillPack.path,
-    resources: skillPack.resources
+    version: skillPack.version,
+    source: skillPack.source,
+    resources: skillPack.resources,
+    conflicts: skillPack.conflicts,
+    selection: skillPack.selection
   };
 }
 
@@ -679,6 +953,11 @@ function isRecoveryEvent(value: unknown): value is Extract<ModelProviderEvent, {
     "attempt" in value &&
     typeof value.attempt === "number"
   );
+}
+
+/** Checks whether an unknown durable event can be inspected as a plain record. */
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 /** Reads a numeric checkpoint field without trusting the checkpoint shape. */

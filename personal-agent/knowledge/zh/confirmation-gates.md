@@ -31,6 +31,8 @@ Skill Pack confirmation 使用同一个 callback 形态，但可以返回更丰�
 
 runner 随后只注入这些被选中的 guidance blocks。
 
+由于已选 Skill 现在会贡献完整 `SKILL.md`，每个自动推断结果都需要确认，包括只有一个命中的情况。任务文本明确点名或通过 `--skill` 选择的 Skill 会被视为 Owner 已做出的选择，因此跳过这次推断确认。
+
 ## 其他常见方案
 
 **Always auto-apply**：
@@ -53,6 +55,7 @@ runner 随后只注入这些被选中的 guidance blocks。
 - 非交互式运行默认 fail closed，不会挂起。
 - 已确认命令仍以 `shell: false` 执行。
 - Skill Pack confirmation 可以选择子集，不再只能全量注入或全部拒绝。
+- 自动推断的 Skill 指令不能静默进入模型上下文。
 
 ## 劣势
 
@@ -71,6 +74,7 @@ runner 随后只注入这些被选中的 guidance blocks。
 - 终端提示会包含 reason、preview 和 action。
 - approval parsing 只接受 `y` 和 `yes`。
 - Skill Pack confirmation parsing 支持编号子集选择。
+- 单个和多个自动推断 Skill Pack 都需要确认。
 
 后续评测应增加：
 

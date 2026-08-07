@@ -65,10 +65,85 @@ test("runSkillPackEvals executes manifest cases and writes local reports", async
     assert.match(providerInputs[0]?.goal ?? "", /Use docs-helper Skill Pack/);
     assert.match(providerInputs[0]?.goal ?? "", /Answer the docs question with citations/);
     assert.match(providerInputs[0]?.skillPacks ?? "", /docs-helper/);
+    assert.match(providerInputs[0]?.skillPacks ?? "", /Full SKILL\.md Guidance/);
+    const taskRunMetadata = JSON.parse(
+      await readFile(join(result.cases[0]?.taskRunDir ?? "", "run.json"), "utf8")
+    );
+    assert.deepEqual(taskRunMetadata.skillSelectors, [".agents/skills/docs-helper/SKILL.md"]);
     assert.match(await readFile(result.reportPath, "utf8"), /PASS/);
     assert.match(await readFile(result.resultsPath, "utf8"), /"passedCount": 1/);
   } finally {
     await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test("runSkillPackEvals executes a configured external Skill Pack without copying it", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-external-skill-workspace-"));
+  const configuredRepository = await mkdtemp(join(tmpdir(), "personal-agent-external-skill-source-"));
+  const provider: ModelProvider = {
+    name: "fake",
+    async nextStep(input) {
+      assert.match(input.skillPacks ?? "", /portable-eval-helper/);
+      assert.match(input.skillPacks ?? "", /source: configured\[1\]/);
+      return { type: "finish", report: "Portable external eval marker: complete." };
+    }
+  };
+
+  try {
+    const skillDir = join(configuredRepository, ".agents/skills/portable-eval-helper");
+    await mkdir(join(workspace, ".personal-agent"), { recursive: true });
+    await mkdir(join(skillDir, "evals"), { recursive: true });
+    await writeFile(
+      join(workspace, ".personal-agent/config.json"),
+      `${JSON.stringify({ skillRoots: [configuredRepository] }, null, 2)}\n`,
+      "utf8"
+    );
+    await writeFile(
+      join(skillDir, "SKILL.md"),
+      [
+        "---",
+        "name: portable-eval-helper",
+        "version: 1.0.0",
+        "description: Runs a portable external Skill Pack evaluation.",
+        "---",
+        "",
+        "# Portable Eval Helper"
+      ].join("\n"),
+      "utf8"
+    );
+    await writeFile(
+      join(skillDir, "evals/evals.json"),
+      JSON.stringify(
+        {
+          skill_name: "portable-eval-helper",
+          evals: [
+            {
+              id: "portable-1",
+              prompt: "Return the portable external eval marker.",
+              expected_output: "Portable external eval marker: complete."
+            }
+          ]
+        },
+        null,
+        2
+      ),
+      "utf8"
+    );
+
+    const result = await runSkillPackEvals({
+      workspace,
+      skillPack: "portable-eval-helper",
+      provider
+    });
+
+    assert.equal(result.skillPack.source.kind, "configured");
+    assert.equal(result.skillPack.version, "1.0.0");
+    assert.ok(result.manifestPath.startsWith(configuredRepository));
+    assert.equal(result.passedCount, 1);
+    assert.equal(result.failedCount, 0);
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+    await rm(configuredRepository, { recursive: true, force: true });
   }
 });
 

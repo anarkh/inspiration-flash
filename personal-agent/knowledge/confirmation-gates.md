@@ -31,6 +31,8 @@ Skill Pack confirmation uses the same callback shape but can return a richer dec
 
 The runner then injects only those selected guidance blocks.
 
+Because a selected Skill now contributes its complete `SKILL.md`, every automatically inferred match requires confirmation, including a single match. A Skill explicitly named in task text or selected with `--skill` is treated as an Owner choice and skips this inference confirmation.
+
 ## Other Common Approaches
 
 **Always auto-apply**:
@@ -53,6 +55,7 @@ The project is CLI-first and learning-oriented. The Owner should see the propose
 - Non-interactive runs fail closed instead of hanging.
 - Confirmed commands are still run with `shell: false`.
 - Skill Pack confirmations can choose a subset instead of forcing all-or-nothing guidance injection.
+- Automatically inferred Skill instructions cannot enter model context silently.
 
 ## Disadvantages
 
@@ -71,6 +74,7 @@ Current tests verify:
 - terminal prompt formatting includes reason, preview, and action,
 - approval parsing accepts only `y` and `yes`.
 - Skill Pack confirmation parsing accepts numbered subset choices.
+- one and several automatically inferred Skill Packs require confirmation.
 
 Future evaluation should add:
 

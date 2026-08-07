@@ -36,6 +36,8 @@ The MVP already has many visible capabilities, while its weakest point is provin
 
 The roadmap retains the first-party loop through the learning-heavy phases. Frameworks are reconsidered only when measured orchestration, handoff, or retrieval complexity justifies migration.
 
+Task Evaluation V2 meets the Phase 2 gate. Phase 3 now also meets its gate: ordered Skill sources, conflict metadata, explicit source-aware CLI selection, bounded full `SKILL.md` loading, digest-bound resume, and external Skill Pack eval execution are implemented. Phase 4 is now in progress: the first increment replaced hard-coded dispatch with a typed Tool Registry, declared schemas, centralized confirmation handlers, and durable tool errors. Per-tool resource policy and approved Skill Pack script execution remain before the phase gate can pass.
+
 ## Advantages
 
 - Makes dependencies and stopping conditions explicit.

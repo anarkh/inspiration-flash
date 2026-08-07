@@ -138,10 +138,13 @@ The current tests cover:
 - runner-authored chat completion and evaluation after input closes.
 - runner injection of Project Memory into fresh and resumed Task Runs.
 - runner filtering of irrelevant Project Memory notes when relevant notes match the task.
-- runner discovery and injection of relevant Skill Pack summaries.
+- runner discovery and full `SKILL.md` injection for selected Skill Packs.
 - explicit Owner-named Skill Pack priority over higher-scoring keyword matches.
-- runner confirmation before injecting multiple automatically matched Skill Packs.
+- repeatable plain-name, source-qualified, and exact-path `--skill` selection.
+- runner confirmation before loading any automatically inferred Skill Pack.
 - runner subset selection for confirmed Skill Pack candidates.
+- bounded strict UTF-8 Skill guidance loading with digest-only event persistence.
+- exact-source resume with guidance digest drift rejection.
 - terminal parsing of numbered Skill Pack subset choices.
 - Skill Pack provider context for agent-ability style references, scripts, and eval resources.
 - Skill Pack provider context and Task Export mark scripts as inventory-only rather than auto-executable.
@@ -151,6 +154,7 @@ The current tests cover:
 - Skill Pack eval manifest JSON Schema plus missing `skill_name`, unknown-field, bad `files`, empty required string, multi-error, and regex pattern validation.
 - OpenAI-compatible provider inclusion of Skill Pack context in prompt payload.
 - Task Run export listing of selected Skill Packs.
+- Task Run export listing of explicit selector, precedence override, and guidance digest metadata.
 - Task Run export listing of selected Skill Pack resource inventory.
 - Task Run export Decision Trace summaries for Skill Pack confirmation decisions.
 - Task Run export summaries for Decision Trace, Local Tools Used, and Changed Resources.

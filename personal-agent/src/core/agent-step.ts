@@ -37,8 +37,8 @@ export function parseAgentStep(value: unknown): AgentStep {
 
   if (type === "tool") {
     requireString(value.tool, "tool");
-    // Tool input is intentionally left as `unknown`; each Local Tool validates
-    // its own schema so the Agent Step layer stays provider-neutral.
+    // Tool input remains `unknown` until the typed Tool Registry validates the
+    // selected definition's schema, keeping Agent Steps provider-neutral.
     return { type, tool: value.tool, input: value.input ?? null };
   }
 

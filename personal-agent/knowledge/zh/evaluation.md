@@ -10,7 +10,27 @@
 
 ```json
 {
+  "schemaVersion": 2,
   "verdict": "pass | partial | fail | blocked",
+  "effectiveVerdict": "pass | partial | fail | blocked",
+  "humanOverrides": [
+    {
+      "previousVerdict": "fail",
+      "verdict": "pass",
+      "reason": "Owner 已核对生成的 artifact。",
+      "createdAt": "..."
+    }
+  ],
+  "executionIntegrity": {
+    "verdict": "pass | partial | fail",
+    "evidence": [{ "source": "event", "reference": "events.jsonl", "detail": "..." }],
+    "checks": []
+  },
+  "taskCorrectness": {
+    "verdict": "pass | fail | unavailable",
+    "evidence": [{ "source": "report", "reference": "report.md", "detail": "..." }],
+    "checks": []
+  },
   "successCheck": "pass | fail | unavailable",
   "gateSafety": "pass | fail",
   "traceQuality": "pass | partial | fail",
@@ -43,17 +63,80 @@ Task Run 是否暴露了 Project Memory 更新、Knowledge Base 更新、Skill P
 
 ## 确定性 Evaluator
 
-`src/agent/evaluation.ts` 实现了 `runTask` 和 `resumeLatestTask` 使用的第一版任务后评测器。它只读取可见 artifact：声明的 Success Check、最终 Task Report、provider-neutral events，以及生成的 Memory Suggestions。
+`src/agent/evaluation.ts` 实现了 `runTask` 和 `resumeLatestTask` 使用的 Evaluation V2。它只读取可见 artifact：结构化 Success Check、最终 Task Report、provider-neutral events、workspace 文件，以及生成的 Memory Suggestions。
 
 当前行为：
 
-- 当非空 Success Check 对应一个非空 report 时，`successCheck` 为 `pass`；report 为空时为 `fail`；没有声明 Success Check 时为 `unavailable`。
+- `executionIntegrity` 组合 confirmation resolution、trace completeness 和 report presence；每项检查都会记录 verdict 所依据的 event 或 report。
+- `taskCorrectness` 执行声明的结构化 Success Check。只有自然语言 Success Check 时标记为 `unavailable`，因为非空 report 不能证明任务正确。
+- `report_contains` 对归一化并折叠大小写后的 Task Report 文本做包含检查。
+- `file_exists` 检查 workspace 相对路径是否确实是文件。
+- `file_contains` 检查归一化后的文件内容，并拒绝路径穿越或符号链接逃逸。
+- `tool_succeeded` 要求出现成功的匹配 `tool_result` event；rejected、denied、unresolved、非零退出命令和未知输出形状都会 fail closed。
 - 如果 durable event trace 中还残留未处理的 confirmation-required tool result，`gateSafety` 才会失败。
 - run 同时包含 plan 和 finish step 时，`traceQuality` 为 `pass`；没有 plan 但完成了 finish 时为 `partial`；没有 finish 时为 `fail`。
 - 最终 report 有可用文本时，`reportQuality` 为 `pass`。
 - Memory Suggestions 会生成 `Project Memory suggestion` learning signal，以及 `Review Memory Suggestions` follow-up。
 
-顶层 `verdict` 是确定性的：安全失败、Success Check 失败或 report quality 失败会得到 `fail`；Success Check 不可用或 trace quality 只有 partial 会得到 `partial`；其余情况为 `pass`。
+顶层 `verdict` 是确定性的：execution integrity 或 task correctness 失败会得到 `fail`；task correctness 不可用或 execution integrity 只有 partial 会得到 `partial`；其余情况为 `pass`。`effectiveVerdict` 初始值等于该结果，只有经过审计的 Owner override 才能改变它。旧的标量字段继续作为兼容摘要，供 history 和已有集成读取。
+
+## 结构化 Success Check
+
+`run` 命令支持重复传入 JSON 检查：
+
+```bash
+a-agent run --check '{"id":"report","type":"report_contains","value":"package.json"}' "总结当前 workspace"
+a-agent run --check '{"id":"file","type":"file_exists","path":"summary.md"}' "创建 summary.md"
+a-agent run --check '{"type":"file_contains","path":"summary.md","value":"Verification"}' "编写经过验证的总结"
+a-agent run --check '{"type":"tool_succeeded","tool":"write_file"}' "写入 summary.md"
+```
+
+`id` 可省略，CLI 会依次生成 `check-1`、`check-2`。未知字段、不支持的类型、空值和重复 id 会在 Task Run 创建前被拒绝。检查声明保存在 `run.json`，结果和证据保存在 `evaluation.json`。直接执行的 `run` 和完成后的 `resume` 在客观 verdict 为 `fail` 或 `blocked` 时返回非零退出码。
+
+`report_contains` 有意保持为较弱的内容 grader：模型可能只复述期望文本，而没有真正完成任务。对于会产生副作用的任务，应优先使用文件和工具证据；后续再把确定性检查与经过 golden case 校准的 model judge 组合起来。
+
+## Golden Task Run 套件
+
+`src/evals/golden-task-runs.ts` 实现了覆盖七类核心工作流的可重复回归套件。运行命令是：
+
+```bash
+a-agent eval golden
+```
+
+这个命令不会调用 DeepSeek 或其他远程模型。每个 case 使用固定的本地 `ModelProvider`，但仍然经过真实的 runner、Local Tools、Confirmation Gate、checkpoint、state files、Task Evaluation 和 Skill Pack eval 代码。每次运行都会在 `.personal-agent/evals/golden-task-runs/<eval-id>/workspaces/` 下创建隔离的 case workspace，并生成便于阅读的 `report.md`、机器可读的 `results.json` 和 `latest` 指针。
+
+当前 golden 契约如下：
+
+| 工作流 | 评测来源 | 预期 verdict | 覆盖的证据 |
+| --- | --- | --- | --- |
+| read | Task Evaluation | `pass` | `read_file`、report 文本、tool result |
+| write | Task Evaluation | `pass` | 已确认的 `write_file`、文件内容、tool result |
+| tool error | Task Evaluation | `fail` | schema 拒绝、持久化 `tool_error`、未成功的工具检查 |
+| chat | Task Evaluation | `partial` | 两轮 Owner 输入、两轮回复、客观 correctness 不可用 |
+| memory | Task Evaluation | `pass` | reflection、Memory Suggestion、learning signal |
+| resume | Task Evaluation | `pass` | 已保存 plan、checkpoint replay、最终 report |
+| Skill Pack | Skill Pack eval | `pass` | discovery、guidance injection、manifest grader |
+
+只有实际 verdict 等于声明的预期 verdict，并且工作流专属 artifact 断言也成立时，golden case 才通过。chat 和 tool error 能说明两层含义的区别：Task Evaluation 仍诚实地显示 `partial` 或 `fail`；golden *case* 通过，是因为运行时稳定复现了这些预期结果。Skill Pack grader 也与底层 Task Evaluation 保持分离；没有声明结构化 Success Check 时，底层 Task Evaluation 仍然是 `partial`。
+
+与其他方案相比：
+
+- Snapshot test 比较序列化输出，成本低，但会被无害的时间戳和路径变化干扰，也可能漏掉行为错误。Golden case 改为比较语义 verdict，并检查选定 artifact。
+- 回放生产 trace 更接近真实任务，但会带来隐私数据、provider 漂移和模型输出不确定性。这里的 fixture 是合成且不含 secret 的。
+- 托管 eval 平台提供实验追踪和跨模型统计，但需要联网和更多基础设施。本地套件速度快、可检查，并且能离线运行。
+
+这种实现的优势是：能稳定地端到端覆盖有状态 Agent 工作流，失败时还能直接定位 artifact。局限也需要明确：固定 provider 不能衡量真实模型质量，七个 fixture 不能代表完整任务分布，预期 verdict 变化时也必须有意更新 fixture。未来应把真实 provider 和生产任务提炼出的 eval 作为独立层增加，而不是混进这个确定性 gate。
+
+## 其他方案与权衡
+
+常见 Agent 系统通常采用以下评测方式：
+
+- 自然语言自评接入简单，但容易奖励自信、漂亮的报告。Evaluation V2 不允许自评替代确定性证据。
+- 许多托管 eval 平台使用 model judge，它能判断语义质量，但会增加成本、延迟和不确定性。本项目将它保持为可选且可审计的补充层。
+- 完整评测框架通常提供数据集、仪表盘和实验追踪，规模化后很有价值，但在当前本地学习阶段会隐藏过多机制。
+- 确定性 artifact 检查便宜、稳定、易解释，但只能覆盖能表达成文本、文件或工具事件的结果。
+
+因此我们当前选择本地结构化检查，优先保证可检查和可重复。缺点是检查类型仍少，文本检查可能被 grader gaming，而且暂时没有跨模型的统计对比。
 
 ## 模型辅助自评
 
@@ -81,19 +164,52 @@ Task Run 是否暴露了 Project Memory 更新、Knowledge Base 更新、Skill P
 
 如果模型自评输出格式错误，会记录为 `invalid`，而不是让已经完成的 Task Run 失败。
 
+## 人工 Verdict Override
+
+Owner 可以为 latest Task Run 或指定 Task Run 记录人工复核结论：
+
+```bash
+a-agent eval override --verdict pass --reason "Owner 已核对生成的 artifact。"
+a-agent eval override <run-id> --verdict partial --reason "仍有一个边界情况未解决。"
+```
+
+`src/state/evaluations.ts` 会读取已有 `evaluation.json`，验证确定性 verdict 和现有审计历史，然后追加：
+
+```json
+{
+  "previousVerdict": "fail",
+  "verdict": "pass",
+  "reason": "Owner 已核对生成的 artifact。",
+  "createdAt": "2026-07-23T..."
+}
+```
+
+原始 `verdict`、各评测维度、checks 和 evidence 都不会被替换。只有 `effectiveVerdict` 会改变；后续每次 override 都继续追加记录，并通过 `previousVerdict` 指向前一个有效结论。`a-agent history` 会同时展示有效 verdict 和确定性基线，Task Export 会包含完整审计历史。reason 必须非空；还没有 `evaluation.json` 的 active run 不能被 override。
+
+它与模型辅助自评有意保持不同。模型自评只是 advisory，不能覆盖确定性证据。Local Owner 是最终决策者，可以修改有效结论，但必须留下 reason，避免人工判断变成不可追踪的权威结果。
+
+其他方案与权衡：
+
+- 直接原地替换 `verdict` 更简单，但会破坏机器证据和人工判断的边界，也会丢失较早决策。
+- 单独使用 override sidecar file 可以保持 evaluation 文件不变，但 history、export 和所有 integration 都必须关联两个 artifact，并处理两边不一致。
+- 数据库事件账本能提供更强的事务和并发编辑能力，但当前 Task Run 仍是单进程本地文件，引入它还太早。
+
+当前选择的 append-only 字段结构紧凑，兼容只有 `verdict` 的旧 evaluation，也容易进入 export。局限是文件写入暂时不支持并发安全，而且人工可以有意把确定性的安全失败标成有效 pass。因此界面始终显示确定性基线，不会把人工 override 伪装成机器证明。
+
+验证覆盖初始字段、连续两次 override、reason trim、旧 evaluation 兼容、run 或 evaluation 缺失、history 展示、Task Export，以及无效 CLI 参数。
+
 ## 自动评测与人工评测
 
 当前版本：
 
 - 对 Task Run 文件运行确定性检查。
+- 使用 `a-agent eval golden` 运行六个确定性的 Golden Task Run fixture。
 - 使用 `a-agent eval skill-pack <name-or-path>` 在本地运行 Skill Pack eval manifest。
 - 可以通过 `--review` 请求当前真实 Model Provider 做结构化自评。
+- 可以通过 `a-agent eval override` 记录带审计理由的 Owner 有效 verdict。
 
 后续版本：
 
-- 允许 Owner 覆盖 verdict。
-
-- 增加 golden Task Runs 作为可重复回归测试。
 - 对重要 Task Run 通过 Agent Bridge 做 External Review。
 - 使用真实 Skill Pack eval 积累出的 golden examples 校准模型辅助 grader。
 - Complex Embedding Retrieval 实现后增加检索专项评测。
@@ -110,7 +226,7 @@ Manifest 契约记录在 `schemas/skill-evals.schema.json`。它是 Personal Age
 
 运行期 parser 使用一个小型字段白名单，模拟 schema 里的 `additionalProperties: false` 规则。未知的顶层 manifest 字段、eval case 字段和 grader 字段都会在任何 Task Run 开始前被拒绝。静态 Skill Pack inventory 也使用同类检查，所以普通 Task Run 会展示 `eval manifest: invalid (...)`，而不是默默把草稿 metadata 当成正式契约的一部分。当多个 eval case 都无效时，两条路径会把 case 错误聚合成一条消息；只有单个错误时仍保持简洁文案。
 
-第一版 graders 故意保持确定性。默认使用 `contains`：最终 Task Report 在 Unicode 归一化和大小写折叠后包含 `expected_output` 字符串，就算通过。case 也可以声明 `grader: { "type": "regex", "pattern": "..." }`，用于期望证据更适合用模式表达的场景。Regex grader 会在任何 Task Run 开始前校验 `pattern` 是非空字符串，这样 manifest 错误更容易修。case 还可以声明 `grader: { "type": "tool_trace", "tool": "read_file" }`，只有 Task Run 事件日志里出现该 Local Tool 时才通过。`tool_trace` 还支持 `input_contains`，例如 `grader: { "type": "tool_trace", "tool": "read_file", "input_contains": "notes.md" }`，用于检查匹配 tool call event 的序列化输入。它也支持 `input_matches`，例如 `grader: { "type": "tool_trace", "tool": "read_file", "input_matches": { "path": "notes.md" } }`，用于把部分 JSON 对象和 tool call input 做结构化匹配。`input_schema` 会把一个 compact JSON Schema-style matcher 应用到工具调用输入上，例如 `grader: { "type": "tool_trace", "tool": "read_file", "input_schema": { "type": "object", "required": ["path"], "properties": { "path": { "type": "string" } } } }`。`output_contains` 会检查匹配 `tool_result` event 的序列化输出，例如 `grader: { "type": "tool_trace", "tool": "read_file", "output_contains": "alpha marker" }`。`output_matches` 会把部分 JSON 对象和 `tool_result.output` 做匹配，例如 `grader: { "type": "tool_trace", "tool": "run_command", "output_matches": { "exitCode": 0 } }`。`output_type` 会检查顶层 JSON 风格输出类型，例如 `object`、`array` 或 `string`。`output_schema` 会把同一个 compact schema matcher 应用到 `tool_result.output`，例如要求 `run_command` 返回一个带数字 `exitCode` 和字符串 `stdout` 的对象。这个 compact schema 子集支持 `type`、`required`、`properties`、`items`、`const`、`enum` 和 `additionalProperties: false`。它不是完整 JSON Schema 2020-12 实现；它是为 eval fixture 准备的小型确定性 validator，后续如果真实 Skill Pack 需要更多 schema 特性，可以替换为 Ajv 或其他完整 validator。
+第一版 graders 故意保持确定性。默认使用 `contains`：最终 Task Report 在 Unicode 归一化和大小写折叠后包含 `expected_output` 字符串，就算通过。case 也可以声明 `grader: { "type": "regex", "pattern": "..." }`，用于期望证据更适合用模式表达的场景。Regex grader 会在任何 Task Run 开始前校验 `pattern` 是非空字符串，这样 manifest 错误更容易修。case 还可以声明 `grader: { "type": "tool_trace", "tool": "read_file" }`，只有 Task Run 事件日志里出现该 Local Tool 时才通过。`tool_trace` 还支持 `input_contains`，例如 `grader: { "type": "tool_trace", "tool": "read_file", "input_contains": "notes.md" }`，用于检查匹配 tool call event 的序列化输入。它也支持 `input_matches`，例如 `grader: { "type": "tool_trace", "tool": "read_file", "input_matches": { "path": "notes.md" } }`，用于把部分 JSON 对象和 tool call input 做结构化匹配。`input_schema` 会把一个 compact JSON Schema-style matcher 应用到工具调用输入上，例如 `grader: { "type": "tool_trace", "tool": "read_file", "input_schema": { "type": "object", "required": ["path"], "properties": { "path": { "type": "string" } } } }`。`output_contains` 会检查匹配 `tool_result` event 的序列化输出，例如 `grader: { "type": "tool_trace", "tool": "read_file", "output_contains": "alpha marker" }`。`output_matches` 会把部分 JSON 对象和 `tool_result.output` 做匹配，例如 `grader: { "type": "tool_trace", "tool": "run_command", "output_matches": { "exitCode": 0 } }`。`output_type` 会检查顶层 JSON 风格输出类型，例如 `object`、`array` 或 `string`。`output_schema` 会把同一个 compact schema matcher 应用到 `tool_result.output`，例如要求 `run_command` 返回一个带数字 `exitCode` 和字符串 `stdout` 的对象。这个 compact schema 子集支持 `type`、`required`、`properties`、`items`、`const`、`enum`、`minLength`、`anyOf` 和 `additionalProperties: false`。它不是完整 JSON Schema 2020-12 实现；它是 eval fixture 与类型化 Tool Registry 共用的小型确定性 validator，后续如果真实 Skill Pack 需要更多 schema 特性，可以替换为 Ajv 或其他完整 validator。
 
 `model_judge` 是第一版语义 grader。case 可以声明 `grader: { "type": "model_judge", "rubric": "Pass only if ..." }`。普通 Task Run 完成后，eval runner 会把 prompt、expected output note、rubric 和最终 Task Report 发给当前配置的 `ModelProvider`。provider 必须返回一个 `finish` step，并且 report 中包含 `{ "verdict": "pass" | "fail", "reason": "..." }` 形状的 JSON。这样 eval 就能检查那些很难用确定性文本、轨迹或 schema 表达的质量要求。
 

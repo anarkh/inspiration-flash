@@ -38,12 +38,14 @@ Learning focus: release baselines, reproducibility, and configuration boundaries
 
 ## Phase 2: Task Evaluation V2
 
+Status: complete. Structured Success Checks, evidence-bearing execution/correctness dimensions, CLI failure exit codes, Golden Task Run fixtures, and audited human verdict overrides are implemented.
+
 Deliverables:
 
 - Separate execution integrity from task correctness.
 - Add executable or structured Success Checks for supported task classes.
-- Build golden Task Run fixtures for read, write, chat, memory, resume, and Skill Pack workflows.
-- Add human verdict override with an audit reason.
+- Build golden Task Run fixtures for read, write, chat, memory, resume, and Skill Pack workflows. (complete)
+- Add human verdict override with an audit reason. (complete)
 - Record evidence used by every evaluation dimension.
 
 Completion gate:
@@ -56,27 +58,33 @@ Learning focus: agent evaluation, deterministic graders, model judges, and human
 
 ## Phase 3: Ability Bridge And Skill Sources
 
+Status: complete. Ordered multi-source discovery, source/version conflict metadata, explicit CLI selection, full bounded `SKILL.md` guidance loading, the `codex/agent-ability` resource compatibility boundary, and external Skill Pack eval execution are implemented.
+
 Deliverables:
 
-- Discover Skill Packs from ordered workspace, user, package, and configured roots.
-- Preserve source and version metadata when several roots contain the same skill name.
-- Add explicit Skill Pack selection to the CLI.
-- Define the compatibility boundary for `codex/agent-ability` resources.
-- Run existing Skill Pack evals without copying skills into every target workspace.
+- Discover Skill Packs from ordered workspace, user, package, and configured roots. (complete)
+- Preserve source and version metadata when several roots contain the same skill name. (complete)
+- Add explicit Skill Pack selection to the CLI. (complete)
+- Load the complete selected `SKILL.md` into model context while persisting only digest metadata. (complete)
+- Define the compatibility boundary for `codex/agent-ability` resources. (complete)
+- Run existing Skill Pack evals without copying skills into every target workspace. (complete)
 
 Completion gate:
 
 - `a-agent` can use and evaluate a configured `codex/agent-ability` skill from an unrelated temporary workspace.
 - Source precedence and conflicts are deterministic and visible in the Decision Trace.
+- Resume restores the exact selected source and rejects changed guidance before another model turn.
 
 Learning focus: capability discovery, precedence, portability, and compatibility contracts.
 
 ## Phase 4: Typed Tool And Skill Runtime
 
+Status: in progress. The typed Tool Registry, declared input/output schemas, centralized confirmation handlers, schema-derived provider catalog, and durable `tool_error` observations are implemented. Per-tool resource policy and executable Skill Pack scripts remain.
+
 Deliverables:
 
-- Replace the hard-coded tool switch with a typed tool registry.
-- Validate tool inputs and outputs with declared schemas.
+- Replace the hard-coded tool switch with a typed tool registry. (complete)
+- Validate tool inputs and outputs with declared schemas. (complete)
 - Add per-tool permissions, timeout, cancellation, output limits, and redaction.
 - Execute approved Skill Pack scripts through the same Confirmation Gate as Local Tools.
 - Strengthen command parsing and risk classification without invoking a shell implicitly.

@@ -7,7 +7,9 @@ import test from "node:test";
 import {
   applyConfirmedToolAction,
   executeLocalTool,
+  formatLocalToolCatalogForPrompt,
   listFiles,
+  listLocalToolDescriptors,
   readFileTool,
   searchText
 } from "../../src/tools/local-tools.ts";
@@ -33,6 +35,36 @@ test("local file tools accept common model aliases", async () => {
     await writeFile(join(workspace, "notes.md"), "alpha\n", "utf8");
 
     assert.deepEqual(await executeLocalTool(workspace, "list_directory", {}), ["notes.md"]);
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
+});
+
+test("local tool catalog exposes canonical schemas without advertising aliases as separate tools", () => {
+  const descriptors = listLocalToolDescriptors();
+  const promptCatalog = formatLocalToolCatalogForPrompt();
+
+  assert.deepEqual(descriptors.map((tool) => tool.name), [
+    "read_file",
+    "list_files",
+    "search_text",
+    "write_file",
+    "run_command"
+  ]);
+  assert.deepEqual(descriptors.find((tool) => tool.name === "list_files")?.aliases, ["list_directory", "ls"]);
+  assert.match(promptCatalog, /read_file \{"type":"object"/);
+  assert.doesNotMatch(promptCatalog, /list_directory \{/);
+});
+
+test("local tool schemas reject malformed inputs before workspace mutation", async () => {
+  const workspace = await mkdtemp(join(tmpdir(), "personal-agent-tools-invalid-input-"));
+  try {
+    await assert.rejects(
+      executeLocalTool(workspace, "write_file", { path: "draft.md", content: "", extra: true }),
+      /input failed schema validation/
+    );
+    await assert.rejects(executeLocalTool(workspace, "missing_tool", {}), /Unknown Local Tool: missing_tool/);
+    await assert.rejects(readFile(join(workspace, "draft.md"), "utf8"), /ENOENT/);
   } finally {
     await rm(workspace, { recursive: true, force: true });
   }

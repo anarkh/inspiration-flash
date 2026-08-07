@@ -25,6 +25,8 @@ test("skill eval manifest schema documents the optional quality-layer contract",
   assert.match(JSON.stringify(schema), /output_type/);
   assert.match(JSON.stringify(schema), /input_schema/);
   assert.match(JSON.stringify(schema), /output_schema/);
+  assert.match(JSON.stringify(schema), /minLength/);
+  assert.match(JSON.stringify(schema), /anyOf/);
   assert.match(JSON.stringify(schema), /model_judge/);
   assert.match(JSON.stringify(schema), /rubric/);
   assert.match(JSON.stringify(schema), /judge_runs/);

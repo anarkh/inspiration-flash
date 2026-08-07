@@ -36,6 +36,7 @@ test("ensureWorkspaceState creates config and memory files", async () => {
     assert.equal(config.modelProvider, "deepseek");
     assert.equal(config.model, "deepseek-v4-flash");
     assert.equal(config.learningLens, false);
+    assert.deepEqual(config.skillRoots, []);
     assert.match(memory, /# Project Memory/);
   } finally {
     await rm(workspace, { recursive: true, force: true });
@@ -80,7 +81,9 @@ test("createTaskRun records metadata and latest pointer", async () => {
     const run = await createTaskRun(workspace, {
       goal: "summarize docs",
       mode: "advisory",
-      successCheck: "summary covers docs"
+      successCheck: "summary covers docs",
+      skillSelectors: ["configured:1:docs-helper"],
+      selectedSkillPaths: ["/tmp/shared-skills/docs-helper/SKILL.md"]
     });
 
     const latest = await readLatestRunId(workspace);
@@ -90,6 +93,8 @@ test("createTaskRun records metadata and latest pointer", async () => {
     assert.equal(metadata.goal, "summarize docs");
     assert.equal(metadata.status, "active");
     assert.equal(metadata.mode, "advisory");
+    assert.deepEqual(metadata.skillSelectors, ["configured:1:docs-helper"]);
+    assert.deepEqual(metadata.selectedSkillPaths, ["/tmp/shared-skills/docs-helper/SKILL.md"]);
   } finally {
     await rm(workspace, { recursive: true, force: true });
   }
@@ -201,7 +206,9 @@ test("exportTaskRun writes a readable Markdown export for a Task Run", async () 
     const run = await createTaskRun(workspace, {
       goal: "export me",
       mode: "advisory",
-      successCheck: "export includes report"
+      successCheck: "export includes report",
+      skillSelectors: ["docs-helper"],
+      selectedSkillPaths: [".agents/skills/docs-helper/SKILL.md"]
     });
     await appendRunEvent(run.runDir, { type: "message", content: "working" });
     await writeTaskReport(run.runDir, "Exported report.");
@@ -216,6 +223,8 @@ test("exportTaskRun writes a readable Markdown export for a Task Run", async () 
     assert.match(markdown, /# Task Run Export/);
     assert.match(markdown, /export me/);
     assert.match(markdown, /Exported report/);
+    assert.match(markdown, /Skill Selectors: docs-helper/);
+    assert.match(markdown, /Selected Skill Paths: \.agents\/skills\/docs-helper\/SKILL\.md/);
     assert.match(markdown, /"verdict": "pass"/);
     assert.match(markdown, /"type": "message"/);
   } finally {
@@ -255,6 +264,36 @@ test("exportTaskRun includes a decision trace, tool summary, and changed resourc
           name: "docs-helper",
           description: "Helps summarize docs.",
           path: ".agents/skills/docs-helper/SKILL.md",
+          version: "2.0.0",
+          selection: {
+            mode: "explicit",
+            selector: "user:docs-helper",
+            precedenceOverridden: true
+          },
+          guidance: {
+            sha256: "a".repeat(64),
+            bytes: 321
+          },
+          source: {
+            kind: "workspace",
+            label: "workspace",
+            root: join(workspace, ".agents/skills"),
+            priority: 1
+          },
+          conflicts: [
+            {
+              name: "docs-helper",
+              description: "Lower-priority docs guidance.",
+              path: "/tmp/user-skills/docs-helper/SKILL.md",
+              version: "1.0.0",
+              source: {
+                kind: "user",
+                label: "user",
+                root: "/tmp/user-skills",
+                priority: 2
+              }
+            }
+          ],
           resources: {
             references: [".agents/skills/docs-helper/references/guide.md"],
             scripts: [".agents/skills/docs-helper/scripts/search_index.py"],
@@ -281,6 +320,10 @@ test("exportTaskRun includes a decision trace, tool summary, and changed resourc
     assert.match(markdown, /- tool: write_file/);
     assert.match(markdown, /- tool_result: write_file -> file_written/);
     assert.match(markdown, /- skill_packs_confirmation: denied/);
+    assert.match(
+      markdown,
+      /skill_packs: 1 selected; 1 same-name source alternative recorded; 1 explicitly selected; 1 precedence override; 1 full guidance file loaded/
+    );
     assert.match(markdown, /## Local Tools Used/);
     assert.match(markdown, /- write_file/);
     const skillPackSection = markdown.slice(
@@ -288,6 +331,13 @@ test("exportTaskRun includes a decision trace, tool summary, and changed resourc
       markdown.indexOf("## Changed Resources")
     );
     assert.match(skillPackSection, /docs-helper \(\.agents\/skills\/docs-helper\/SKILL\.md\)/);
+    assert.match(skillPackSection, /source: workspace \(priority 1\)/);
+    assert.match(skillPackSection, /version: 2\.0\.0/);
+    assert.match(skillPackSection, /selection: explicit \(--skill user:docs-helper\)/);
+    assert.match(skillPackSection, /source precedence overridden: yes/);
+    assert.match(skillPackSection, /guidance: full SKILL\.md loaded \(321 bytes, sha256 a{64}\)/);
+    assert.match(skillPackSection, /source variants: 1 alternative/);
+    assert.match(skillPackSection, /user \(priority 2, version 1\.0\.0\)/);
     assert.match(skillPackSection, /\.agents\/skills\/docs-helper\/references\/guide\.md/);
     assert.match(skillPackSection, /scripts are inventory only and are not auto-executed/);
     assert.match(skillPackSection, /\.agents\/skills\/docs-helper\/scripts\/search_index\.py/);

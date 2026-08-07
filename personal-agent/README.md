@@ -36,6 +36,23 @@ Run one workspace task:
 a-agent run "帮我总结当前目录"
 ```
 
+Add one or more objective Success Checks when the outcome is machine-verifiable:
+
+```bash
+a-agent run --check '{"type":"report_contains","value":"package.json"}' "总结当前目录"
+a-agent run --check '{"type":"file_exists","path":"summary.md"}' "创建 summary.md"
+```
+
+Select a Skill Pack explicitly when you know which guidance should be used:
+
+```bash
+a-agent run --skill docs-helper "总结当前目录"
+a-agent run --skill user:docs-helper "总结当前目录"
+a-agent run --skill configured:1:docs-helper "总结当前目录"
+```
+
+`--skill` is repeatable up to four times and also accepts a displayed skill directory or `SKILL.md` path. A plain name uses normal source precedence; a source-qualified selector can deliberately choose a shadowed variant.
+
 Start a persistent terminal chat and enter `exit` or `quit` when finished:
 
 ```bash
@@ -54,17 +71,46 @@ Run a Skill Pack evaluation:
 a-agent eval skill-pack <name-or-path>
 ```
 
+Share Skill Packs from another checkout by adding its repository root or direct skills directory to the current workspace's `.personal-agent/config.json`:
+
+```json
+{
+  "skillRoots": [
+    "/path/to/agent-ability-checkout"
+  ]
+}
+```
+
+Discovery order is workspace, `~/.agents/skills`, package, then configured roots. Same-name variants, explicit selectors, optional versions, and loaded-guidance digests are recorded in Task Export. The selected `SKILL.md` body is loaded into model context, while the Skill audit event stores only its digest and byte count. External eval manifests run without copying the Skill Pack into the workspace.
+
+Local Tools are registered through a provider-neutral typed registry. The same declared schemas validate model input, validate tool output, and generate the model-visible catalog; malformed calls become durable `tool_error` observations so the model and evaluator can see why execution did not occur.
+
+Run the deterministic core-workflow regression suite without calling a remote model:
+
+```bash
+a-agent eval golden
+```
+
+Record an audited Owner verdict when artifact review disagrees with the deterministic evaluator:
+
+```bash
+a-agent eval override --verdict pass --reason "Owner verified the generated artifact."
+a-agent eval override <run-id> --verdict partial --reason "One edge case remains unresolved."
+```
+
 ## Main Commands
 
 | Command | Purpose |
 | --- | --- |
-| `a-agent run [--learn] [--review] "<task>"` | Run one workspace task. |
-| `a-agent start [--learn] [--review]` | Read multiple independent tasks from the terminal. |
-| `a-agent chat [--learn] [--review]` | Keep multiple Owner messages in one chat Task Run. |
+| `a-agent run [--learn] [--review] [--skill <selector>]... [--check '<json>']... "<task>"` | Run one task with optional Skill selection and objective Success Checks. |
+| `a-agent start [--learn] [--review] [--skill <selector>]...` | Read multiple independent tasks using one explicit Skill selection. |
+| `a-agent chat [--learn] [--review] [--skill <selector>]...` | Keep multiple Owner messages and one Skill selection in one chat Task Run. |
 | `a-agent resume [--learn] [--review]` | Resume the latest active Task Run checkpoint. |
 | `a-agent history` | List recent Task Runs and evaluation status. |
 | `a-agent export [run-id]` | Export an inspectable Markdown run report. |
 | `a-agent memory` | Read or update Project Memory. |
+| `a-agent eval golden` | Run repeatable read, malformed-tool, write, chat, memory, resume, and Skill Pack fixtures. |
+| `a-agent eval override [run-id] --verdict <verdict> --reason "<reason>"` | Record an audited Owner verdict without replacing deterministic evidence. |
 | `a-agent eval skill-pack <name-or-path>` | Execute a Skill Pack eval manifest. |
 
 ## Runtime Artifacts
@@ -75,6 +121,10 @@ Every workspace gets an ignored `.personal-agent/` directory containing:
 .personal-agent/
   config.json
   memory.md
+  evals/golden-task-runs/<eval-id>/
+    report.md
+    results.json
+    workspaces/<case-id>/
   runs/<run-id>/
     run.json
     events.jsonl
@@ -84,6 +134,9 @@ Every workspace gets an ignored `.personal-agent/` directory containing:
 ```
 
 These files are intentionally inspectable. They are the source of truth for history, resume, export, and learning.
+Evaluation V2 separates execution integrity from task correctness and records the artifact evidence used by each verdict.
+Its deterministic `verdict` remains immutable; an Owner override changes `effectiveVerdict` and appends a reasoned record to `humanOverrides`.
+The golden suite keeps each deterministic fixture in an isolated workspace and reports both the expected and actual verdict. A fixture passes only when those verdicts match; the chat fixture deliberately expects `partial` until chat gains an objective Success Check.
 
 ## Development Checks
 
