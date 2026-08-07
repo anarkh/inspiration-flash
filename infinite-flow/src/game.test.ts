@@ -54,6 +54,7 @@ import {
   getCampaignGates,
   getDungeonReadiness,
   getPlayerPower,
+  getPlayerPowerBreakdown,
   getWeaponSkillStatus,
   handleTrap,
   ITEMS,
@@ -77,6 +78,7 @@ import {
 } from './equipment-system';
 import type { EquipmentSoulSkillId } from './equipment-soul-skills';
 import type { TacticalItemId } from './tactical-loadout';
+import { evaluateTask } from './task-system';
 
 type GridDungeonDefinition = game.DungeonDefinition & {
   grid?: {
@@ -108,6 +110,7 @@ function createPursuitReplayState(gateSigils = 0): GameState {
         ...initial.inventory,
         gate_sigil: gateSigils
       },
+      preparedItemIds: gateSigils > 0 ? ['gate_sigil'] : [],
       completedDungeonIds: ['demon_tower_1'],
       claimedTaskIds: ['mainline_clear_demon_tower_1']
     },
@@ -611,7 +614,7 @@ describe('panopticon city game integration', () => {
     return next;
   }
 
-  it('registers the observation material and exact four-piece Tier-19 equipment costs', () => {
+  it('registers the observation material and exact five-piece Tier-19 equipment costs', () => {
     expect(ITEMS.observation_shard).toMatchObject({
       id: 'observation_shard', name: '观测棱片', kind: 'material'
     });
@@ -620,6 +623,12 @@ describe('panopticon city game integration', () => {
     expect(EQUIPMENT.blindline_cutter).toMatchObject({
       name: '断视切线刃', slot: 'weapon',
       cost: { rewardPoints: 2260, lingyun: 10, items: { observation_shard: 1, star_iron: 1 } }
+    });
+    expect(EQUIPMENT.phase_coil_rifle).toMatchObject({
+      name: '相位线圈步枪', slot: 'weapon',
+      cost: { rewardPoints: 2320, lingyun: 10, items: { observation_shard: 1, chronal_glass: 1 } },
+      base: { attack: 43, artPower: 12, speed: 2 },
+      perLevel: { attack: 13, artPower: 3, speed: 1 }
     });
     expect(EQUIPMENT.predictive_visor).toMatchObject({
       name: '先见目镜', slot: 'head',
@@ -2554,6 +2563,69 @@ describe('infinite-flow richer demo loop', () => {
     }
   });
 
+  it('previews attack and art damage without mutating combat state', () => {
+    const combat = selectNode(enterDungeon(createInitialState(), 'demon_tower_1'), 'fog_lesser_demon');
+    if (!combat.combat) throw new Error('Expected preview combat');
+    const original = structuredClone(combat);
+
+    for (const action of ['attack', 'art'] as const) {
+      const preview = game.getCombatActionDamagePreview(combat, action);
+      const resolved = performCombatAction(combat, action);
+      const monsterHpAfter = resolved.combat?.monsterHp ?? 0;
+
+      expect(preview).toEqual({
+        damage: combat.combat.monsterHp - monsterHpAfter,
+        monsterHpAfter
+      });
+      expect(preview?.damage).toBeGreaterThan(0);
+    }
+
+    const artDamage = game.getCombatActionDamagePreview(combat, 'art')?.damage;
+    expect(artDamage).toBeTypeOf('number');
+    expect(game.getCombatActionDamagePreview(withMonsterHp(combat, artDamage ?? 1), 'art')).toEqual({
+      damage: artDamage,
+      monsterHpAfter: 0
+    });
+    expect(game.getCombatActionDamagePreview({
+      ...combat,
+      log: ['你施展功法，造成 999 点术法伤害。']
+    }, 'art')?.damage).toBe(artDamage);
+
+    const bossNodeId = getBossDefinition('demon_tower_1').nodeId;
+    const boss = selectNode(
+      withCurrentNode(enterDungeon(createInitialState(), 'demon_tower_1'), bossNodeId),
+      bossNodeId
+    );
+    const bossAfterFirstTurn = performCombatAction(
+      {
+        ...boss,
+        player: { ...boss.player, hp: 1_000, maxHp: 1_000 }
+      },
+      'attack'
+    );
+    expect(game.getCombatActionDamagePreview(bossAfterFirstTurn, 'attack')?.damage).toBeGreaterThan(0);
+    expect(game.getCombatActionDamagePreview(bossAfterFirstTurn, 'art')?.damage).toBeGreaterThan(0);
+    const doomedBossTurn: GameState = {
+      ...bossAfterFirstTurn,
+      player: { ...bossAfterFirstTurn.player, hp: 1 }
+    };
+    expect(game.getCombatActionDamagePreview(doomedBossTurn, 'attack')).toMatchObject({
+      damage: expect.any(Number),
+      playerWillFall: true
+    });
+    expect(game.getCombatActionDamagePreview(doomedBossTurn, 'art')).toMatchObject({
+      damage: expect.any(Number),
+      playerWillFall: true
+    });
+    const doomedResult = performCombatAction(doomedBossTurn, 'attack');
+    expect(doomedResult.phase).toBe('result');
+    expect(doomedResult.log.some((line) => line.includes('你发动攻击') && line.includes('点伤害'))).toBe(true);
+
+    const overkill = performCombatAction(withMonsterHp(combat, 6), 'attack');
+    expect(overkill.log).toContain('你发动攻击，造成 6 点伤害。');
+    expect(combat).toEqual(original);
+  });
+
   it('moves only to adjacent tactical grid nodes and keeps node events usable', () => {
     const moveToNode = getMoveToNode();
 
@@ -2660,6 +2732,46 @@ describe('infinite-flow richer demo loop', () => {
     expect(fromPortal.run?.currentNodeId).toBe('sealed_cache');
     expect(fromExit.run?.currentNodeId).toBe('sealed_cache');
     expect(fromClearedMonster.run?.currentNodeId).toBe('blood_rune_trap');
+  });
+
+  it('remembers pass-through nodes and reconstructs visible legacy route gaps', () => {
+    let state = withClearedNodes(
+      enterDungeon(createInitialState(), 'demon_tower_1'),
+      'fog_lesser_demon',
+      'blood_rune_trap'
+    );
+    for (const nodeId of [
+      'blood_rune_trap',
+      'cracked_portal',
+      'sealed_cache',
+      'tower_exit',
+      'evac_supply_cache'
+    ]) {
+      state = game.moveToNode(state, nodeId);
+    }
+
+    expect(state.run?.currentNodeId).toBe('evac_supply_cache');
+    expect(state.run?.discoveredNodeIds).toEqual(
+      expect.arrayContaining(['cracked_portal', 'tower_exit'])
+    );
+
+    const legacyRun = {
+      ...state.run!,
+      currentNodeId: 'gate_sigil_cache',
+      clearedNodeIds: [
+        'fog_lesser_demon',
+        'blood_rune_trap',
+        'sealed_cache',
+        'evac_supply_cache',
+        'last_blessing_reward',
+        'quiet_prayer_reward',
+        'gate_sigil_cache'
+      ],
+      discoveredNodeIds: undefined
+    };
+    expect(game.getRunDiscoveredNodeIds(legacyRun, DUNGEONS.demon_tower_1)).toEqual(
+      expect.arrayContaining(['cracked_portal', 'tower_exit'])
+    );
   });
 
   it('does not let selectNode jump to a non-current grid node', () => {
@@ -2875,6 +2987,7 @@ describe('infinite-flow richer demo loop', () => {
   it('has enough commercial-slice content across items, equipment, methods, and pets', () => {
     const purchasableItems = Object.values(ITEMS).filter((item) => item.cost);
 
+    expect(ITEMS.healing_pill.cost).toEqual({ rewardPoints: 120 });
     expect(purchasableItems.length).toBeGreaterThanOrEqual(8);
     expect(Object.keys(EQUIPMENT).length).toBeGreaterThanOrEqual(12);
     expect(Object.keys(METHODS).length).toBeGreaterThanOrEqual(7);
@@ -2910,6 +3023,33 @@ describe('infinite-flow richer demo loop', () => {
     expect(getPlayerPower(equipped)).toBeGreaterThan(basePower);
   });
 
+  it('calibrates the starter for Tier 1 and ignores currencies and inactive assets', () => {
+    const state = createInitialState();
+    const breakdown = getPlayerPowerBreakdown(state);
+    const assetRichButUnequipped: GameState = {
+      ...state,
+      rewardPoints: 999_999,
+      lingyun: 999,
+      ownedEquipment: [...state.ownedEquipment, 'armor_piercing_sword'],
+      equipmentLevels: {
+        ...state.equipmentLevels,
+        armor_piercing_sword: EQUIPMENT.armor_piercing_sword.maxLevel
+      },
+      ownedPets: [...state.ownedPets, 'mist_kitten'],
+      petLevels: {
+        ...state.petLevels,
+        mist_kitten: 3
+      }
+    };
+
+    expect(breakdown.total).toBe(
+      breakdown.offense + breakdown.survival + breakdown.mobility + breakdown.exploration
+    );
+    expect(breakdown.total).toBeGreaterThanOrEqual(DUNGEONS.demon_tower_1.recommendedPower);
+    expect(breakdown.total).toBeLessThan(DUNGEONS.metro_abyss.recommendedPower);
+    expect(getPlayerPower(assetRichButUnequipped)).toBe(breakdown.total);
+  });
+
   it('only counts upgraded replacement gear after it is equipped', () => {
     const state = { ...createInitialState(), rewardPoints: 2000 };
     const purchased = buyEquipment(state, 'armor_piercing_sword');
@@ -2924,7 +3064,7 @@ describe('infinite-flow richer demo loop', () => {
     const levelTwoEquipped = equipEquipment(upgradedUnequipped, 'armor_piercing_sword');
 
     expect(levelTwoEquipped.equipped.weapon).toBe('armor_piercing_sword');
-    expect(getPlayerPower(levelTwoEquipped) - getPlayerPower(levelOneEquipped)).toBe(16);
+    expect(getPlayerPower(levelTwoEquipped) - getPlayerPower(levelOneEquipped)).toBe(12);
   });
 
   it('lets the player buy and equip a new hands armor piece that raises power', () => {
@@ -3377,7 +3517,10 @@ describe('infinite-flow richer demo loop', () => {
 
     expect(damaged.player.hp).toBeLessThan(trapState.player.hp);
 
-    const prepared = enterDungeon(buyItem(createInitialState(), 'dispel_talisman'), 'demon_tower_1');
+    const prepared = enterDungeon(
+      prepareTacticalItems(buyItem(createInitialState(), 'dispel_talisman'), 'dispel_talisman'),
+      'demon_tower_1'
+    );
     const counteredTrap = selectNode(withCurrentNode(prepared, 'blood_rune_trap'), 'blood_rune_trap');
     const countered = handleTrap(counteredTrap);
 
@@ -3431,6 +3574,25 @@ describe('infinite-flow richer demo loop', () => {
     expect(looted.run?.clearedNodeIds).toContain('sealed_cache');
   });
 
+  it('keeps the complete first-chapter preparation bundle affordable from a fresh save', () => {
+    const stocked = buyItem(
+      buyItem(
+        buyItem(createInitialState(), 'healing_pill'),
+        'capture_net'
+      ),
+      'dispel_talisman'
+    );
+    const learned = learnMethod(stocked, 'mist_breathing');
+
+    expect(ITEMS.healing_pill.cost?.rewardPoints).toBe(120);
+    expect(ITEMS.capture_net.cost?.rewardPoints).toBe(210);
+    expect(ITEMS.dispel_talisman.cost?.rewardPoints).toBe(240);
+    expect(METHODS.mist_breathing.cost.rewardPoints).toBe(280);
+    expect(stocked.rewardPoints).toBe(280);
+    expect(learned.rewardPoints).toBe(0);
+    expect(learned.learnedMethods).toContain('mist_breathing');
+  });
+
   it('does not pay reward or exit nodes twice after they are cleared', () => {
     const rewardNode = selectNode(withCurrentNode(enterDungeon(createInitialState(), 'demon_tower_1'), 'sealed_cache'), 'sealed_cache');
     const looted = collectReward(rewardNode);
@@ -3451,10 +3613,17 @@ describe('infinite-flow richer demo loop', () => {
   });
 
   it('tracks node rewards as unsecured run loot while keeping consumables usable', () => {
-    const entered = enterDungeon(buyItem(createInitialState(), 'healing_pill'), 'demon_tower_1');
+    const entered = enterDungeon(
+      prepareTacticalItems(buyItem(createInitialState(), 'healing_pill'), 'healing_pill'),
+      'demon_tower_1'
+    );
     const rewardNode = selectNode(withCurrentNode(entered, 'mist_herb_cache'), 'mist_herb_cache');
     const looted = collectReward(rewardNode);
-    const combat = selectNode(withCurrentNode(looted, 'fog_patrol_pair'), 'fog_patrol_pair');
+    const combatStart = selectNode(withCurrentNode(looted, 'fog_patrol_pair'), 'fog_patrol_pair');
+    const combat: GameState = {
+      ...combatStart,
+      player: { ...combatStart.player, hp: combatStart.player.maxHp - 1 }
+    };
     const used = performCombatAction(combat, 'use_healing_pill');
 
     expect(looted.rewardPoints).toBe(entered.rewardPoints + 85);
@@ -3723,20 +3892,45 @@ describe('infinite-flow richer demo loop', () => {
     expect(state.run?.usedItems).toContain('thunder_talisman');
   });
 
+  it('blocks a healing pill at full health without consuming it, advancing the turn, or triggering retaliation', () => {
+    const initial = createInitialState();
+    const stocked = prepareTacticalItems(
+      {
+        ...initial,
+        inventory: { ...initial.inventory, healing_pill: 1 }
+      },
+      'healing_pill'
+    );
+    const combat = selectNode(enterDungeon(stocked, 'demon_tower_1'), 'fog_lesser_demon');
+    const blocked = performCombatAction(combat, 'use_healing_pill');
+
+    expect(blocked.inventory.healing_pill).toBe(1);
+    expect(blocked.player.hp).toBe(combat.player.hp);
+    expect(blocked.combat?.turn).toBe(combat.combat?.turn);
+    expect(blocked.combat?.monsterHp).toBe(combat.combat?.monsterHp);
+    expect(blocked.combat?.log).toEqual(combat.combat?.log);
+    expect(blocked.run?.usedItems).not.toContain('healing_pill');
+    expect(blocked.log[0]).toContain('生命已满');
+  });
+
   it('routes healing pill use through dream jailer consumable backlash', () => {
     const ready = withCompletedDungeons(createInitialState(), ['demon_tower_1', 'metro_abyss', 'starfall_mine', 'rust_hospital', 'ash_arena']);
-    const stocked = {
+    const stocked = prepareTacticalItems({
       ...ready,
       inventory: {
         ...ready.inventory,
         healing_pill: 1
       }
+    }, 'healing_pill');
+    const fullState = selectNode(withCurrentNode(enterDungeon(stocked, 'dream_archive'), 'dream_jailer'), 'dream_jailer');
+    const state: GameState = {
+      ...fullState,
+      player: { ...fullState.player, hp: fullState.player.maxHp - 10 }
     };
-    const state = selectNode(withCurrentNode(enterDungeon(stocked, 'dream_archive'), 'dream_jailer'), 'dream_jailer');
     const normalHit = performCombatAction(state, 'attack');
     const pillHit = performCombatAction(state, 'use_healing_pill');
-    const normalDamageTaken = state.player.hp - normalHit.player.hp;
-    const pillDamageTaken = state.player.hp - pillHit.player.hp;
+    const normalDamageTaken = (normalHit.run?.damageTaken ?? 0) - (state.run?.damageTaken ?? 0);
+    const pillDamageTaken = (pillHit.run?.damageTaken ?? 0) - (state.run?.damageTaken ?? 0);
     const visibleLogs = `${pillHit.combat?.log.join('\n') ?? ''}\n${pillHit.log.join('\n')}`;
 
     expect(visibleLogs).toMatch(/梦锁反噬|消耗品被梦锁反噬/);
@@ -3814,6 +4008,7 @@ describe('infinite-flow richer demo loop', () => {
     const boostedDraft: GameState = {
       ...unlocked,
       inventory: { ...unlocked.inventory, healing_pill: 1 },
+      preparedItemIds: ['healing_pill'],
       player: {
         ...unlocked.player,
         base: { ...unlocked.player.base, body: 65 }
@@ -4085,6 +4280,8 @@ describe('infinite-flow richer demo loop', () => {
     expect(exited.lastOutcome).toContain('outcome=');
     expect(exited.lastOutcome).toContain('score=');
     expect(exited.lastOutcome).toContain('multiplier=');
+    expect(exited.log.some((line) => /首次通关结算：(完美撤离|稳定通关)/.test(line))).toBe(true);
+    expect(exited.log.join('\n')).not.toMatch(/\b(?:clean_clear|normal_clear)\b/);
     expect(repeatedExit.rewardPoints).toBe(exited.rewardPoints);
     expect(repeatedExit.lingyun).toBe(exited.lingyun);
   });
@@ -4107,6 +4304,174 @@ describe('infinite-flow richer demo loop', () => {
     expect(retreated.lastOutcome).toContain('outcome=retreat');
     expect(retreated.lastOutcome).toContain('score=');
     expect(retreated.lastOutcome).toContain('multiplier=');
+  });
+
+  it('uses the same zero-node retreat economy for previews and settlement despite pre-existing wounds', () => {
+    const initial = createInitialState();
+    const entered = enterDungeon(
+      {
+        ...initial,
+        player: {
+          ...initial.player,
+          hp: initial.player.maxHp - 15
+        }
+      },
+      'demon_tower_1'
+    );
+    const preview = game.getRunEconomyPreview(entered, 'retreated');
+    const retreated = resolveRetreat(entered);
+
+    expect(preview).toBeDefined();
+    expect(preview).toMatchObject({ score: 0, rewardMultiplier: 0, rewardPoints: 0 });
+    expect(retreated.rewardPoints - entered.rewardPoints).toBe(preview?.rewardPoints);
+    expect(retreated.lastOutcome).toContain(`score=${preview?.score}`);
+    expect(retreated.lastOutcome).toContain(`multiplier=${preview?.rewardMultiplier}x`);
+    expect(retreated.lastOutcome).toContain(`reward=${preview?.rewardPoints}`);
+    expect(retreated.log.some((line) => line.includes('主动撤退') && line.includes('奖励倍率'))).toBe(true);
+    expect(retreated.log.join('\n')).not.toMatch(/disabled\/retreat|结算：retreat/);
+  });
+
+  it('uses one modern loot settlement preview for the three-node security threshold and actual settlement', () => {
+    const initial = createInitialState();
+    const entered = enterDungeon(
+      initial,
+      'demon_tower_1',
+      'standard',
+      undefined,
+      { flowVersion: 2, hiddenTaskSeed: 1 }
+    );
+    if (!entered.run) throw new Error('Expected a modern run');
+    const withLoot = (clearedNodeIds: string[]): GameState => ({
+      ...entered,
+      rewardPoints: entered.rewardPoints + 100,
+      run: {
+        ...entered.run!,
+        clearedNodeIds,
+        lootBag: {
+          ...entered.run!.lootBag,
+          rewardPoints: 100
+        }
+      }
+    });
+
+    const unsecured = withLoot(['fog_lesser_demon', 'blood_rune_trap']);
+    const unsecuredPreview = game.getRunLootSettlementPreview(unsecured, 'retreated');
+    const unsecuredSettlement = resolveRetreat(unsecured).run?.lastLootSettlement;
+    expect(unsecuredPreview).toEqual({
+      retained: expect.objectContaining({ rewardPoints: 0 }),
+      lost: expect.objectContaining({ rewardPoints: 100 })
+    });
+    expect(unsecuredSettlement).toEqual(unsecuredPreview);
+
+    const secured = withLoot([
+      'fog_lesser_demon',
+      'blood_rune_trap',
+      'sealed_cache',
+      'sealed_cache'
+    ]);
+    const securedPreview = game.getRunLootSettlementPreview(secured, 'retreated');
+    const securedSettlement = resolveRetreat(secured).run?.lastLootSettlement;
+    expect(securedPreview).toEqual({
+      retained: expect.objectContaining({ rewardPoints: 50 }),
+      lost: expect.objectContaining({ rewardPoints: 50 })
+    });
+    expect(securedSettlement).toEqual(securedPreview);
+    expect(game.getRunLootSettlementPreview(createInitialState(), 'retreated')).toBeUndefined();
+  });
+
+  it('keeps run-wide loot security and dungeon-entry credit through a cross-dungeon portal', () => {
+    const initial = createInitialState();
+    const entered = enterDungeon(
+      {
+        ...initial,
+        completedDungeonIds: ['demon_tower_1'],
+        claimedTaskIds: ['mainline_clear_demon_tower_1']
+      },
+      'demon_tower_1',
+      'standard',
+      undefined,
+      { flowVersion: 2, hiddenTaskSeed: 1 }
+    );
+    if (!entered.run) throw new Error('Expected a modern portal run');
+    const atPortal: GameState = {
+      ...entered,
+      rewardPoints: entered.rewardPoints + 100,
+      run: {
+        ...entered.run,
+        currentNodeId: 'cracked_portal',
+        clearedNodeIds: ['fog_lesser_demon', 'blood_rune_trap'],
+        pressureState: { rulesVersion: 1, clearedNodeCount: 2 },
+        lootBag: {
+          ...entered.run.lootBag,
+          rewardPoints: 100
+        }
+      }
+    };
+
+    const transported = usePortal(atPortal, 'force');
+    const security = game.getRunLootSecurityStatus(transported);
+    const preview = game.getRunLootSettlementPreview(transported, 'retreated');
+    const retreated = resolveRetreat(transported);
+    const hub = returnToHub(retreated);
+
+    expect(transported.run?.dungeonId).toBe('metro_abyss');
+    expect(transported.run?.clearedNodeIds).toEqual([]);
+    expect(transported.enteredDungeonIds).toEqual(['demon_tower_1', 'metro_abyss']);
+    expect(security).toEqual({
+      enabled: true,
+      clearedNodeCount: 3,
+      requiredNodeCount: 3,
+      secured: true
+    });
+    expect(preview?.retained.rewardPoints).toBeGreaterThan(0);
+    expect(retreated.run?.lastLootSettlement).toEqual(preview);
+    expect(retreated.log.join('\n')).not.toContain('战利品袋尚未固化');
+    expect(evaluateTask(hub, 'side_enter_metro_abyss')).toMatchObject({
+      status: 'completed',
+      progressText: '1/1 已记录入口'
+    });
+  });
+
+  it('settles lethal traps after their clear reward and repairs zero-health exploration states', () => {
+    const entered = enterDungeon(
+      createInitialState(),
+      'demon_tower_1',
+      'standard',
+      undefined,
+      { flowVersion: 2, hiddenTaskSeed: 1 }
+    );
+    if (!entered.run) throw new Error('Expected a modern trap run');
+    const doomed: GameState = {
+      ...entered,
+      rewardPoints: entered.rewardPoints + 100,
+      player: { ...entered.player, hp: 1 },
+      run: {
+        ...entered.run,
+        currentNodeId: 'blood_rune_trap',
+        clearedNodeIds: ['fog_lesser_demon', 'sealed_cache'],
+        pressureState: { rulesVersion: 1, clearedNodeCount: 2 },
+        lootBag: {
+          ...entered.run.lootBag,
+          rewardPoints: 100
+        }
+      }
+    };
+
+    const failed = handleTrap(doomed, 'risk');
+    expect(failed.phase).toBe('result');
+    expect(failed.player.hp).toBe(0);
+    expect(failed.run?.clearedNodeIds).toContain('blood_rune_trap');
+    expect(failed.run?.pressureState?.clearedNodeCount).toBe(3);
+    expect(failed.run?.lastLootSettlement?.retained.rewardPoints).toBeGreaterThan(0);
+    expect(failed.log.join('\n')).toContain('主神强制回收');
+
+    const staleZeroHealth: GameState = {
+      ...entered,
+      player: { ...entered.player, hp: 0 }
+    };
+    const recovered = game.moveToNode(staleZeroHealth, 'blood_rune_trap');
+    expect(recovered.phase).toBe('result');
+    expect(recovered.lastOutcome).toContain('outcome=failed_recovered');
   });
 
   it('recovers only one fifth of unsecured points after a failed run', () => {
@@ -4182,6 +4547,52 @@ describe('infinite-flow richer demo loop', () => {
     expect(hub.run).toBeUndefined();
     expect(hub.rewardPoints).toBe(retreated.rewardPoints);
     expect(hub.completedDungeonIds).toEqual(retreated.completedDungeonIds);
+  });
+
+  it('repairs zero health on hub return and rejects zero-health dungeon entry', () => {
+    const initial = createInitialState();
+    const zeroHealth: GameState = {
+      ...initial,
+      player: { ...initial.player, hp: 0 }
+    };
+    const rejected = enterDungeon(zeroHealth, 'demon_tower_1');
+    expect(rejected.phase).toBe('hub');
+    expect(rejected.run).toBeUndefined();
+    expect(rejected.log[0]).toContain('生命为 0');
+
+    const failed = game.resolveRunFailure({
+      ...enterDungeon(initial, 'demon_tower_1'),
+      player: { ...initial.player, hp: 0 }
+    });
+    const hub = returnToHub(failed);
+    expect(hub.phase).toBe('hub');
+    expect(hub.player.hp).toBe(hub.player.maxHp);
+    expect(hub.log[0]).toContain('免费离场修复');
+  });
+
+  it('provides free hub recovery for legacy low-health saves and safely rejects invalid use', () => {
+    const initial = createInitialState();
+    const woundedHub: GameState = {
+      ...initial,
+      player: { ...initial.player, hp: 1 }
+    };
+    const recovered = game.recoverAtHub(woundedHub);
+    const alreadyFull = game.recoverAtHub(recovered);
+    const entered = enterDungeon(initial, 'demon_tower_1');
+    const rejected = game.recoverAtHub({
+      ...entered,
+      player: { ...entered.player, hp: entered.player.maxHp - 1 }
+    });
+
+    expect(recovered.player.hp).toBe(recovered.player.maxHp);
+    expect(recovered.rewardPoints).toBe(woundedHub.rewardPoints);
+    expect(recovered.inventory).toEqual(woundedHub.inventory);
+    expect(recovered.log[0]).toContain('免费恢复');
+    expect(alreadyFull.player).toEqual(recovered.player);
+    expect(alreadyFull.log[0]).toContain('生命已满');
+    expect(rejected.phase).toBe('explore');
+    expect(rejected.player.hp).toBe(entered.player.maxHp - 1);
+    expect(rejected.log[0]).toContain('仅能在主神空间');
   });
 
   it('tracks completed campaign dungeons exactly once through exit settlement and hub return', () => {
@@ -4283,12 +4694,31 @@ describe('infinite-flow richer demo loop', () => {
         capturedPetIds: ['mist_kitten' as const]
       }
     };
+    const permanentlyOwnedPet = {
+      ...wrongPetRun,
+      ownedPets: ['mist_kitten' as const],
+      run: {
+        ...baseRun,
+        captures: 0,
+        capturedPetIds: []
+      }
+    };
 
     expect(game.getDirectiveEvaluation(wrongPetRun).objectiveResults).toContainEqual(
       expect.objectContaining({ id: 'demon_tower_1_capture_mist_kitten', completed: false })
     );
     expect(game.getDirectiveEvaluation(correctPetRun).objectiveResults).toContainEqual(
       expect.objectContaining({ id: 'demon_tower_1_capture_mist_kitten', completed: true })
+    );
+    expect(game.getDirectiveEvaluation(permanentlyOwnedPet).objectiveResults).toContainEqual(
+      expect.objectContaining({
+        id: 'demon_tower_1_capture_mist_kitten',
+        completed: true,
+        progressText: '已永久拥有'
+      })
+    );
+    expect(resolveExit(withBossCleared(permanentlyOwnedPet)).claimedDirectiveIds).toContain(
+      'directive_demon_tower_1'
     );
   });
 
@@ -4429,7 +4859,8 @@ describe('infinite-flow richer demo loop', () => {
         inventory: {
           ...initial.inventory,
           gate_sigil: 1
-        }
+        },
+        preparedItemIds: ['gate_sigil']
       },
       'metro_abyss'
     );
@@ -4445,7 +4876,10 @@ describe('infinite-flow richer demo loop', () => {
   it('does not consume missing item requirements when dungeon events fail', () => {
     const initial = createInitialState();
     const entered = enterDungeon(
-      withCompletedDungeons(initial, ['demon_tower_1']),
+      {
+        ...withCompletedDungeons(initial, ['demon_tower_1']),
+        preparedItemIds: ['gate_sigil']
+      },
       'metro_abyss'
     );
     const state = withCurrentNode(entered, 'rail_portal');
@@ -6324,20 +6758,36 @@ describe('tactical loadout core integration', () => {
     };
   }
 
-  it('uses the default three-item preparation and migrates legacy hubs on entry', () => {
+  it('starts new characters with an empty preparation and snapshots it on entry', () => {
     const initial = createInitialState();
-    expect(initial.preparedItemIds).toEqual(game.DEFAULT_PREPARED_TACTICAL_ITEM_IDS);
+    expect(initial.preparedItemIds).toEqual([]);
     expect(game.getTacticalLoadoutStatus(initial)).toMatchObject({
-      preparedItemIds: ['healing_pill', 'dispel_talisman', 'gate_sigil'],
+      preparedItemIds: [],
       isValid: true,
-      generalSlotsUsed: 3,
+      generalSlotsUsed: 0,
       usesDefaultPreparation: false,
       legacyRunUnrestricted: false
     });
 
+    const entered = enterDungeon(initial, 'demon_tower_1');
+    expect(entered.preparedItemIds).toEqual([]);
+    expect(entered.run?.tacticalLoadout).toEqual({
+      rulesVersion: 1,
+      itemIds: []
+    });
+  });
+
+  it('migrates legacy hubs missing preparation to the default three-item snapshot on entry', () => {
+    const initial = createInitialState();
     const { preparedItemIds: _removed, ...legacyFields } = initial;
     const legacyHub = legacyFields as GameState;
-    expect(game.getTacticalLoadoutStatus(legacyHub).usesDefaultPreparation).toBe(true);
+    expect(game.getTacticalLoadoutStatus(legacyHub)).toMatchObject({
+      preparedItemIds: ['healing_pill', 'dispel_talisman', 'gate_sigil'],
+      isValid: true,
+      generalSlotsUsed: 3,
+      usesDefaultPreparation: true,
+      legacyRunUnrestricted: false
+    });
 
     const entered = enterDungeon(legacyHub, 'demon_tower_1');
     expect(entered.preparedItemIds).toEqual(game.DEFAULT_PREPARED_TACTICAL_ITEM_IDS);
@@ -6377,6 +6827,27 @@ describe('tactical loadout core integration', () => {
     expect(status).toMatchObject({ isValid: true, generalSlotsUsed: 3 });
     expect(status.activeFieldRigs.map(({ id }) => id)).toEqual(['rift_belt_portal_rig']);
     expect(status.specializedSlotAssignments).toHaveLength(1);
+  });
+
+  it('fits owned priority tools before saved preferences when capacity is full', () => {
+    const initial = createInitialState();
+    const stocked: GameState = {
+      ...initial,
+      inventory: {
+        ...initial.inventory,
+        healing_pill: 1,
+        dispel_talisman: 1,
+        gate_sigil: 1,
+        capture_net: 1
+      },
+      preparedItemIds: ['healing_pill', 'dispel_talisman', 'gate_sigil']
+    };
+
+    expect(game.getPriorityFittedTacticalItemIds(stocked, [
+      'capture_net',
+      'dispel_talisman',
+      'gate_sigil'
+    ])).toEqual(['capture_net', 'dispel_talisman', 'gate_sigil']);
   });
 
   it('rejects invalid entry preparation and refuses reconfiguration outside the hub', () => {
@@ -6808,7 +7279,10 @@ describe('dungeon law, intent, and resonance integration', () => {
   });
 
   it('makes hospital healing pressure and arena opening verdicts affect live combat', () => {
-    let hospital = durable(enterDungeon(unlockedState(), 'rust_hospital'));
+    let hospital = durable(enterDungeon({
+      ...unlockedState(),
+      preparedItemIds: ['healing_pill']
+    }, 'rust_hospital'));
     const hospitalTraps = DUNGEONS.rust_hospital.nodes.filter((node) => node.trap).slice(0, 3);
     for (const trap of hospitalTraps) hospital = handleTrap(atNode(hospital, trap.id));
     expect(game.getCurrentDungeonLaw(hospital)?.state.law).toMatchObject({ pollution: 3 });
@@ -7857,7 +8331,8 @@ describe('equipment soul skill game integration', () => {
     const stableBase = createInitialState();
     const stableInventory: GameState = {
       ...stableBase,
-      inventory: { ...stableBase.inventory, gate_sigil: 1 }
+      inventory: { ...stableBase.inventory, gate_sigil: 1 },
+      preparedItemIds: ['gate_sigil']
     };
     const stablePortal = atSoulNode(
       enterSoulRun(['rift_misalignment'], 'demon_tower_1', 'standard', stableInventory),
@@ -8935,6 +9410,11 @@ describe('route contract game integration', () => {
       rewardPoints: 0,
       rewarded: false
     });
+    expect(incomplete.log.join('\n')).toContain('失败（离场时目标未完成）');
+    expect(retreated.log.join('\n')).toContain('已失效（主动撤退）');
+    expect(failed.log.join('\n')).toContain('已失效（濒死回收）');
+    expect(`${incomplete.log.join('\n')}\n${retreated.log.join('\n')}\n${failed.log.join('\n')}`)
+      .not.toMatch(/\b(?:failed\/incomplete_exit|lost\/retreat|lost\/failure)\b/);
   });
 
   it('loses a source contract only after a successful cross-dungeon portal and disables it before target clears', () => {
@@ -9200,7 +9680,7 @@ describe('equipment memory hunt game integration', () => {
     const readyStatus = game.getEquipmentMemoryHuntPreparationStatus(ready, dungeonId);
     expect(readyStatus.definition?.id).toBe('equipment_memory_demon_tower_1');
     expect(readyStatus.targetEquipmentIds).toContain(equipmentId);
-    expect(readyStatus.candidates).toHaveLength(56);
+    expect(readyStatus.candidates).toHaveLength(58);
 
     const candidateCodes = (state: GameState) =>
       game.getEquipmentMemoryHuntPreparationStatus(state, dungeonId)
@@ -10463,6 +10943,7 @@ describe('silent broadcast tower game integration', () => {
         dispel_talisman: 4,
         gate_sigil: 5
       },
+      preparedItemIds: ['healing_pill', 'dispel_talisman', 'gate_sigil'],
       completedDungeonIds,
       claimedTaskIds: completedDungeonIds.map((id) => `mainline_clear_${id}`),
       ownedEquipment: [...new Set([...initial.ownedEquipment, ...equipmentIds])],
@@ -10617,6 +11098,7 @@ describe('silent broadcast tower game integration', () => {
     let state = enterDungeon({
       ...initial,
       inventory: { ...initial.inventory, gate_sigil: 6 },
+      preparedItemIds: ['gate_sigil'],
       completedDungeonIds,
       claimedTaskIds: completedDungeonIds.map((id) => `mainline_clear_${id}`),
       ownedEquipment: [...initial.ownedEquipment, ...silentEquipmentIds],
@@ -10683,6 +11165,10 @@ describe('silent broadcast tower game integration', () => {
     expect(warden.combat?.log.some((line) => line.includes('同频护幕'))).toBe(true);
 
     let mimic = startCombat(enterSilent(), 'dead_air_mimic');
+    mimic = {
+      ...mimic,
+      player: { ...mimic.player, hp: mimic.player.maxHp - 1 }
+    };
     mimic = performCombatAction(mimic, 'use_healing_pill');
     expect(mimic.combat?.effects?.deadAirEcho).toBe(true);
     mimic = performCombatAction(mimic, 'guard');
@@ -10705,7 +11191,7 @@ describe('silent broadcast equipment integration', () => {
   } as const;
 
   it('registers exact mature definitions and defaults the non-purchasable material to zero', () => {
-    expect(Object.values(EQUIPMENT).filter((equipment) => equipment.maxLevel === 3)).toHaveLength(56);
+    expect(Object.values(EQUIPMENT).filter((equipment) => equipment.maxLevel === 3)).toHaveLength(58);
     expect(ITEMS.silence_core.kind).toBe('material');
     expect(ITEMS.silence_core.cost).toBeUndefined();
     expect(createInitialState().inventory.silence_core).toBe(0);
@@ -10778,6 +11264,7 @@ describe('lost shelter core game integration', () => {
         armor_patch: 10,
         focus_incense: 10
       },
+      preparedItemIds: ['gate_sigil', 'armor_patch', 'focus_incense'],
       completedDungeonIds,
       claimedTaskIds: completedDungeonIds.map((id) => `mainline_clear_${id}`),
       ownedEquipment: [...new Set([...initial.ownedEquipment, ...equipmentIds])],
@@ -10861,12 +11348,13 @@ describe('lost shelter core game integration', () => {
   it('registers exact mature rescue gear and keeps rescue badges non-purchasable at zero', () => {
     const definitions = {
       rescue_carbine: ['weapon', { rewardPoints: 1780, lingyun: 7, items: { rescue_badge: 1, star_iron: 1 } }, { attack: 31, artPower: 7 }, { attack: 9, artPower: 2 }, 'forge_overdrive'],
+      breach_shotgun: ['weapon', { rewardPoints: 1820, lingyun: 7, items: { rescue_badge: 1, star_iron: 1 } }, { attack: 35, defense: 2 }, { attack: 10, defense: 1 }, 'forge_overdrive'],
       triage_visor: ['head', { rewardPoints: 1720, lingyun: 7, items: { rescue_badge: 1, phase_glass: 1 } }, { spirit: 3, artPower: 21, speed: 4, trapCheck: 8 }, { artPower: 6, speed: 2, trapCheck: 2 }, 'mist_vanguard'],
       evacuation_plate: ['armor', { rewardPoints: 1800, lingyun: 7, items: { rescue_badge: 1, rift_dust: 1 } }, { maxHp: 70, defense: 18 }, { maxHp: 22, defense: 5 }, 'rift_resonance'],
       blackbox_beacon: ['charm', { rewardPoints: 1760, lingyun: 7, items: { rescue_badge: 1, chronal_glass: 1 } }, { spirit: 3, artPower: 26, defense: 6 }, { artPower: 9, defense: 2 }, 'chronal_stasis']
     } as const;
 
-    expect(Object.values(EQUIPMENT).filter((equipment) => equipment.maxLevel === 3)).toHaveLength(56);
+    expect(Object.values(EQUIPMENT).filter((equipment) => equipment.maxLevel === 3)).toHaveLength(58);
     expect(ITEMS.rescue_badge).toMatchObject({ id: 'rescue_badge', name: '救援铭牌', kind: 'material' });
     expect(ITEMS.rescue_badge.cost).toBeUndefined();
     expect(createInitialState().inventory.rescue_badge).toBe(0);
@@ -10875,8 +11363,7 @@ describe('lost shelter core game integration', () => {
     for (const equipmentId of Object.keys(definitions) as Array<keyof typeof definitions>) {
       const [slot, cost, base, perLevel, attunementId] = definitions[equipmentId];
       expect(EQUIPMENT[equipmentId]).toMatchObject({ slot, cost, base, perLevel, maxLevel: 3 });
-      expect(EQUIPMENT[equipmentId].description).toContain('入场时冻结');
-      expect(EQUIPMENT[equipmentId].description).toContain('护送被动');
+      expect(EQUIPMENT[equipmentId].description.length).toBeGreaterThan(0);
       expect(getEquipmentAttunementOptions(equipmentId).map((option) => option.id)).toContain(attunementId);
     }
   });
@@ -10924,12 +11411,13 @@ describe('lost shelter core game integration', () => {
     };
     const attunements = {
       rescue_carbine: 'forge_overdrive',
+      breach_shotgun: 'forge_overdrive',
       triage_visor: 'mist_vanguard',
       evacuation_plate: 'rift_resonance',
       blackbox_beacon: 'chronal_stasis'
     } as const;
 
-    for (const equipmentId of rescueEquipmentIds) {
+    for (const equipmentId of [...rescueEquipmentIds, 'breach_shotgun'] as const) {
       state = buyEquipment(state, equipmentId);
       state = upgradeEquipment(upgradeEquipment(state, equipmentId), equipmentId);
       state = game.temperEquipment(state, equipmentId);

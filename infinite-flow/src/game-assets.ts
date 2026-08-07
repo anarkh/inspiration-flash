@@ -148,6 +148,7 @@ const monsterAssets = [
   ['broadcast_warden', 'broadcast-warden', '以锁频盾护身的广播守卫'],
   ['last_broadcaster', 'last-broadcaster', '与三座中继桅杆融合的末频道播音主'],
   ['mimic_survivor', 'mimic-survivor', '皮下浮现第二张脸的拟声幸存者'],
+  ['rogue_sentry', 'rogue-sentry', '三段充能灯亮起的失控哨戒炮'],
   ['shelter_enforcer', 'shelter-enforcer', '路障与注射器构成双臂的避难所执行体'],
   ['evacuation_horror', 'evacuation-horror', '担架与撤离束带扭结成的撤离畸变体'],
   ['shelter_overseer', 'shelter-overseer', '监控屏与警报号角组成的失联总控'],
@@ -160,6 +161,7 @@ const monsterAssets = [
   ['retake_double', 'retake-double', '双躯共用一条脊柱的重拍替身'],
   ['final_cut_director', 'final-cut-director', '冻结画框环绕头部的终剪导演'],
   ['sweep_sentinel', 'sweep-sentinel', '扇形视锥扫过黑甲的扫视哨兵'],
+  ['phase_hunter_drone', 'phase-hunter-drone', '双相护盾包围核心的相位猎杀无人机'],
   ['blindspot_auditor', 'blindspot-auditor', '以空白账本覆面的盲区审计官'],
   ['exposure_double', 'exposure-double', '正反重影同时过曝的曝光替身'],
   ['all_sight_warden', 'all-sight-warden', '观测透镜环绕核心的万目监察者']
@@ -224,6 +226,7 @@ const equipmentAssets = [
   ['anechoic_mantle', 'anechoic-mantle', '表面铺满消声鳞纹的消声披甲'],
   ['last_channel_beacon', 'last-channel-beacon', '天线弯折并亮起急停灯的末路断播器'],
   ['rescue_carbine', 'rescue-carbine', '配有信标纹与青色导轨的救援卡宾枪'],
+  ['breach_shotgun', 'breach-shotgun', '为近距突入设计的破门霰弹枪'],
   ['triage_visor', 'triage-visor', '分光镜片映出警示灯的分诊目镜'],
   ['evacuation_plate', 'evacuation-plate', '肩灯与撤离信标点亮的撤离护甲'],
   ['blackbox_beacon', 'blackbox-beacon', '定位天线伸出黑匣外壳的黑匣信标'],
@@ -236,6 +239,7 @@ const equipmentAssets = [
   ['buffer_plate', 'buffer-plate', '多层甲板分散冲击的缓冲叠甲'],
   ['thaw_metronome', 'thaw-metronome', '摆杆亮起解冻光的解冻节拍器'],
   ['blindline_cutter', 'blindline-cutter', '折光刃口划出切线的断视切线刃'],
+  ['phase_coil_rifle', 'phase-coil-rifle', '交替相位线圈环绕枪身的相位线圈步枪'],
   ['predictive_visor', 'predictive-visor', '多相扫描镜片重叠的先见目镜'],
   ['matte_shell', 'matte-shell', '吸收光线的黑色消光披甲'],
   ['inverse_prism', 'inverse-prism', '青色折光逆行汇入红核的逆观棱镜']
@@ -295,15 +299,7 @@ const itemAssets = [
 ));
 
 const dungeonAssets = [
-  ['mirror_cycle_city', 'mirror-cycle-city', '轮回城现实与镜像双相街区'],
-  ['redaction_scriptorium', 'redaction-scriptorium', '被裁去部分书页的终稿院档案库'],
-  ['legacy_auction_court', 'legacy-auction-court', '悬挂亡队遗物的拍卖庭'],
-  ['genesis_vault', 'genesis-vault', '排列原型罐与螺旋档案的众生原型库'],
-  ['silent_broadcast_tower', 'silent-broadcast-tower', '波形灯断裂的寂声播音塔'],
-  ['lost_shelter', 'lost-shelter', '停电后仍有拟声影徘徊的失联避难所'],
-  ['false_testimony_court', 'false-testimony-court', '证据灯箱照亮嫌疑人剪影的伪证裁定庭'],
-  ['combat_replay_stage', 'combat-replay-stage', '架设母带机与动作胶片窗的战痕复演场'],
-  ['panopticon_city', 'panopticon-city', '扫描天幕横跨街区的天幕监察城']
+  ['mirror_cycle_city', 'mirror-cycle-city', '轮回城现实与镜像双相街区']
 ].map(([entityId, fileName, alt]) => defineAsset(
   'dungeon',
   entityId,
@@ -339,6 +335,27 @@ const generatedDungeonAssets = [
   'project-original-generated'
 ));
 
+const lateDungeonAssets = [
+  ['redaction_scriptorium', 'redaction-scriptorium', '红色删改光束贯穿黑色数据档案库的删界终稿院'],
+  ['legacy_auction_court', 'legacy-auction-court', '军事机库内悬挂武器箱与亡队遗物的拍卖庭'],
+  ['genesis_vault', 'genesis-vault', '生物罐、机械臂与发光基因核心环绕的众生原型库'],
+  ['silent_broadcast_tower', 'silent-broadcast-tower', '雷雨中三座中继阵列围绕现代应急广播塔'],
+  ['lost_shelter', 'lost-shelter', '担架、枪械箱与自动哨戒炮散落的现代地下避难所'],
+  ['false_testimony_court', 'false-testimony-court', '三座未来取证实验室围绕全息审讯台的裁定庭'],
+  ['combat_replay_stage', 'combat-replay-stage', '三面全息战术回放屏环绕未来军事模拟场'],
+  ['panopticon_city', 'panopticon-city', '无人机与机甲巡逻在轨道扫描天幕下的未来监察城']
+].map(([entityId, fileName, alt]) => defineAsset(
+  'dungeon',
+  entityId,
+  `/assets/dungeons/${fileName}-v2.png`,
+  alt,
+  'banner',
+  720,
+  180,
+  'cover',
+  'project-original-generated'
+));
+
 const sceneAssets = [
   defineAsset(
     'scene',
@@ -362,6 +379,7 @@ const assets = [
   ...itemAssets,
   ...dungeonAssets,
   ...generatedDungeonAssets,
+  ...lateDungeonAssets,
   ...sceneAssets
 ];
 

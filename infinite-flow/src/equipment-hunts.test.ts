@@ -117,7 +117,7 @@ describe('equipment hunts', () => {
         id: 'equipment_hunt_lost_shelter',
         dungeonId: 'lost_shelter',
         clueNodeIds: ['north_supply_cache', 'south_supply_cache'],
-        equipmentPool: ['rescue_carbine', 'triage_visor', 'evacuation_plate', 'blackbox_beacon'],
+        equipmentPool: ['rescue_carbine', 'breach_shotgun', 'triage_visor', 'evacuation_plate', 'blackbox_beacon'],
         eliteMonsterId: 'shelter_enforcer',
         soldOutRecoveryRewardPoints: 440
       },
@@ -141,7 +141,7 @@ describe('equipment hunts', () => {
         id: 'equipment_hunt_panopticon_city',
         dungeonId: 'panopticon_city',
         clueNodeIds: ['watchglass_cache', 'matte_supply'],
-        equipmentPool: ['blindline_cutter', 'predictive_visor', 'matte_shell', 'inverse_prism'],
+        equipmentPool: ['blindline_cutter', 'phase_coil_rifle', 'predictive_visor', 'matte_shell', 'inverse_prism'],
         eliteMonsterId: 'blindspot_auditor',
         soldOutRecoveryRewardPoints: 560
       }
@@ -233,6 +233,7 @@ describe('equipment hunts', () => {
       )
     );
     expect(getEquipmentHuntTargetIds('panopticon_city', ['blindline_cutter', 'matte_shell'])).toEqual([
+      'phase_coil_rifle',
       'predictive_visor',
       'inverse_prism'
     ]);
@@ -705,12 +706,13 @@ describe('equipment hunts', () => {
       id: 'equipment_hunt_lost_shelter',
       dungeonId: 'lost_shelter',
       clueNodeIds: ['north_supply_cache', 'south_supply_cache'],
-      equipmentPool: ['rescue_carbine', 'triage_visor', 'evacuation_plate', 'blackbox_beacon'],
+      equipmentPool: ['rescue_carbine', 'breach_shotgun', 'triage_visor', 'evacuation_plate', 'blackbox_beacon'],
       eliteMonsterId: 'shelter_enforcer',
       soldOutRecoveryRewardPoints: 440
     });
     expect(getEquipmentHuntTargetIds('lost_shelter', [])).toEqual(definition.equipmentPool);
     expect(getEquipmentHuntTargetIds('lost_shelter', ['rescue_carbine'])).toEqual([
+      'breach_shotgun',
       'triage_visor',
       'evacuation_plate',
       'blackbox_beacon'

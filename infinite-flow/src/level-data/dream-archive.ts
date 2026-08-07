@@ -4,6 +4,7 @@ export const dreamArchiveDungeon: DungeonDefinition = {
   id: 'dream_archive',
   name: '梦档案馆',
   tier: 6,
+  genre: 'anomaly',
   recommendedPower: 345,
   theme: '档案馆记录玩家失败过的每一种路线，并把它们折成新的幻觉。',
   recommended: '推荐虚心诀或灵力 7。',

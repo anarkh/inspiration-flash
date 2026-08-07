@@ -3,11 +3,17 @@
 Standalone browser prototype for an original infinite-flow game. The top-level
 `game/` Cocos project is intentionally untouched.
 
+## Knowledge Base
+
+未来小游戏、App 或其他客户端迁移请从
+[`docs/knowledge-base/README.md`](docs/knowledge-base/README.md) 开始。知识库集中说明
+不可丢失的产品语义、状态与存档边界、19 章内容目录、资源契约、迁移分层和验收门禁。
+
 ## Current Demo Loop
 
 This slice now covers a playable preparation and dungeon loop:
 
-Catalog totals are exact: 19 chapters, 56 mature equipment items, 19 equipment memories, 1064 equipment-memory combinations, 57 route contracts, 19 mainline tasks, and 44 side tasks. The 63 tasks award 5560 reward points in total.
+Catalog totals are exact: 19 chapters, 58 mature equipment items, 19 equipment memories, 1102 equipment-memory combinations, 57 route contracts, 19 mainline tasks, and 44 side tasks. The 63 tasks award 5560 reward points in total.
 
 1. Manage a character sheet and claim 63 tasks: 19 chapter mainlines and 44 side tasks, including global progression tasks.
 2. Choose an assault, bulwark, or wayfinder relic frame, then optionally seed its first draft with a previously archived relic.
@@ -136,7 +142,7 @@ Catalog totals are exact: 19 chapters, 56 mature equipment items, 19 equipment m
 
 ## 铭刻记忆狩猎
 
-十九章各有一段可恢复记忆，共 19 段记忆；56 件成熟装备共组成 1064 个收录格。同时完成目标事件与目标节点的双信号狩猎，才能把记忆带回并设为该装备的 active memory。active memory 会暂存 1 点溢出的战意，并在下一次武器技后回补 1 点战意。
+十九章各有一段可恢复记忆，共 19 段记忆；58 件成熟装备共组成 1102 个收录格。同时完成目标事件与目标节点的双信号狩猎，才能把记忆带回并设为该装备的 active memory。active memory 会暂存 1 点溢出的战意，并在下一次武器技后回补 1 点战意。
 
 ## 装备封存委托
 

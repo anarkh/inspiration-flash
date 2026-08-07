@@ -10,6 +10,8 @@ import { fileURLToPath } from 'node:url';
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const STORAGE_KEY = 'infinite-flow:save:v1';
+const REJECTED_SAVE_BACKUP_KEY = `${STORAGE_KEY}:rejected`;
+const REJECTED_SAVE_REASON_KEY = `${REJECTED_SAVE_BACKUP_KEY}:reason`;
 const CAMPAIGN_ROUTE_DUNGEON_NAMES = [
   '妖塔一层',
   '镜潮地铁',
@@ -32,6 +34,48 @@ const CAMPAIGN_ROUTE_DUNGEON_NAMES = [
   '天幕监察城'
 ];
 const DUNGEON_COUNT = CAMPAIGN_ROUTE_DUNGEON_NAMES.length;
+const DUNGEON_GENRE_EXPECTATIONS = Object.freeze({
+  demon_tower_1: ['cultivation', '修真异境'],
+  metro_abyss: ['modern', '现代危机'],
+  starfall_mine: ['science_fiction', '未来科技'],
+  rust_hospital: ['modern', '现代危机'],
+  ash_arena: ['anomaly', '规则异闻'],
+  dream_archive: ['anomaly', '规则异闻'],
+  void_citadel: ['science_fiction', '未来科技'],
+  temporal_observatory: ['science_fiction', '未来科技'],
+  causal_clearinghouse: ['anomaly', '规则异闻'],
+  entropy_ark: ['science_fiction', '未来科技'],
+  mirror_cycle_city: ['anomaly', '规则异闻'],
+  redaction_scriptorium: ['anomaly', '规则异闻'],
+  legacy_auction_court: ['modern', '现代危机'],
+  genesis_vault: ['science_fiction', '未来科技'],
+  silent_broadcast_tower: ['modern', '现代危机'],
+  lost_shelter: ['modern', '现代危机'],
+  false_testimony_court: ['modern', '现代危机'],
+  combat_replay_stage: ['science_fiction', '未来科技'],
+  panopticon_city: ['science_fiction', '未来科技']
+});
+const REPRODUCIBLE_SMOKE_SUITES = Object.freeze([
+  'hub',
+  'journey',
+  'boss',
+  'dungeon-law',
+  'causal',
+  'entropy',
+  'mirror',
+  'redaction',
+  'auction',
+  'genesis',
+  'broadcast',
+  'shelter',
+  'verdict',
+  'replay',
+  'panopticon',
+  'deep',
+  'combat-ui',
+  'route-gate',
+  'route-contract'
+]);
 const ITEM_IDS = [
   'healing_pill',
   'thunder_talisman',
@@ -471,7 +515,7 @@ async function evaluate(cdp, expression) {
   return result.result.value;
 }
 
-async function waitForPage(cdp, expression, label, timeoutMs = 12000) {
+async function waitForPage(cdp, expression, label, timeoutMs = 30000, allowShellReloadRecovery = true) {
   const deadline = Date.now() + timeoutMs;
   let lastError;
 
@@ -482,6 +526,12 @@ async function waitForPage(cdp, expression, label, timeoutMs = 12000) {
       lastError = error;
     }
     await delay(120);
+  }
+
+  if (allowShellReloadRecovery && expression.trim() === "document.querySelector('.shell')") {
+    console.log(`[smoke] ${label} missed its first navigation; retrying once with a clean reload`);
+    await cdp.send('Page.reload');
+    return waitForPage(cdp, expression, `${label} after reload`, timeoutMs, false);
   }
 
   throw new Error(`Timed out waiting for ${label}: ${lastError instanceof Error ? lastError.message : 'condition stayed false'}`);
@@ -502,6 +552,7 @@ async function clickButton(cdp, label) {
 }
 
 async function clickButtonByPointer(cdp, label, scopeSelector = 'body') {
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 1, y: 1, button: 'none' });
   const point = await evaluate(
     cdp,
     `(() => {
@@ -528,13 +579,20 @@ async function clickButtonByPointer(cdp, label, scopeSelector = 'body') {
 }
 
 async function clickElementByPointer(cdp, selector) {
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 1, y: 1, button: 'none' });
   const pointerState = await evaluate(
     cdp,
     `(() => {
       const element = document.querySelector(${JSON.stringify(selector)});
       if (!element) throw new Error('Missing pointer target: ${selector}');
       element.scrollIntoView({ block: 'center', inline: 'center' });
-      const rect = element.getBoundingClientRect();
+      let rect = element.getBoundingClientRect();
+      const scrollRoot = element.closest('.combat-panel, .character-sheet, .task-sheet, .companion-sheet, .method-sheet, .bloodline-sheet, .hub-directory-sheet');
+      if (scrollRoot && (rect.top < 0 || rect.bottom > innerHeight)) {
+        const rootRect = scrollRoot.getBoundingClientRect();
+        scrollRoot.scrollTop += rect.top - rootRect.top - (scrollRoot.clientHeight - rect.height) / 2;
+        rect = element.getBoundingClientRect();
+      }
       const candidates = [
         { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 },
         { x: rect.left + 4, y: rect.top + 4 },
@@ -559,6 +617,49 @@ async function clickElementByPointer(cdp, selector) {
   await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: point.x, y: point.y, button: 'none' });
   await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: point.x, y: point.y, button: 'left', clickCount: 1 });
   await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: point.x, y: point.y, button: 'left', clickCount: 1 });
+}
+
+async function doubleClickElementByPointer(cdp, selector) {
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 1, y: 1, button: 'none' });
+  const pointerState = await evaluate(
+    cdp,
+    `(() => {
+      const element = document.querySelector(${JSON.stringify(selector)});
+      if (!element) throw new Error('Missing double-click target: ${selector}');
+      element.scrollIntoView({ block: 'center', inline: 'center' });
+      let rect = element.getBoundingClientRect();
+      const scrollRoot = element.closest('.combat-panel, .character-sheet, .task-sheet, .companion-sheet, .method-sheet, .bloodline-sheet, .hub-directory-sheet');
+      if (scrollRoot && (rect.top < 0 || rect.bottom > innerHeight)) {
+        const rootRect = scrollRoot.getBoundingClientRect();
+        scrollRoot.scrollTop += rect.top - rootRect.top - (scrollRoot.clientHeight - rect.height) / 2;
+        rect = element.getBoundingClientRect();
+      }
+      const candidates = [
+        { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 },
+        { x: rect.left + 4, y: rect.top + 4 },
+        { x: rect.right - 4, y: rect.top + 4 },
+        { x: rect.left + 4, y: rect.bottom - 4 }
+      ];
+      const point = candidates.find(({ x, y }) => {
+        const hit = document.elementFromPoint(x, y);
+        return Boolean(hit && element.contains(hit));
+      });
+      return {
+        point,
+        rect: { left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom, width: rect.width, height: rect.height },
+        hitTag: point ? '' : document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2)?.outerHTML?.slice(0, 180) ?? ''
+      };
+    })()`
+  );
+  if (!pointerState.point) {
+    throw new Error(`Element is not the double-click target: ${selector} ${JSON.stringify(pointerState)}`);
+  }
+  const point = pointerState.point;
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: point.x, y: point.y, button: 'none' });
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: point.x, y: point.y, button: 'left', clickCount: 1 });
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: point.x, y: point.y, button: 'left', clickCount: 1 });
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: point.x, y: point.y, button: 'left', clickCount: 2 });
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: point.x, y: point.y, button: 'left', clickCount: 2 });
 }
 
 async function clickDialogButton(cdp, label) {
@@ -678,6 +779,20 @@ async function openCharacterSheet(cdp, label) {
     })()`,
     `${label} character sheet opens`
   );
+  await waitForPage(
+    cdp,
+    `(() => {
+      const portrait = document.querySelector('.character-sheet .character-portrait');
+      return portrait instanceof HTMLImageElement &&
+        portrait.complete &&
+        portrait.naturalWidth > 0 &&
+        portrait.dataset.assetKey === 'character:reincarnator' &&
+        portrait.dataset.assetState === 'ready' &&
+        !portrait.classList.contains('is-fallback') &&
+        !portrait.src.startsWith('data:');
+    })()`,
+    `${label} character portrait loads the real runtime asset`
+  );
   const sheet = await getCharacterSheetState(cdp);
   if (!sheet.dialogText.includes('轮回者面板') || !sheet.dialogText.includes('当前装配') || !sheet.dialogText.includes('道具与材料')) {
     throw new Error(`${label} character sheet missing expected sections: ${JSON.stringify(sheet)}`);
@@ -702,15 +817,41 @@ async function openCharacterSheet(cdp, label) {
       const compactText = (element) => element?.textContent?.replace(/\\s+/g, ' ').trim() ?? '';
       const dialog = document.querySelector('[role="dialog"][aria-modal="true"]');
       const text = compactText(dialog);
+      const power = dialog?.querySelector('.power-breakdown');
+      const powerParts = [...(power?.querySelectorAll('.power-breakdown-grid b') ?? [])]
+        .map((entry) => Number(entry.textContent));
+      const helpTargets = [...(dialog?.querySelectorAll('.feature-help-trigger') ?? [])]
+        .map((trigger) => trigger.getBoundingClientRect());
       return {
+        viewportWidth: innerWidth,
         rowCount: document.querySelectorAll('.loadout-row').length,
         missingLabels: requiredLabels.filter((entry) => !text.includes(entry)),
+        powerTotal: Number(power?.dataset.playerPower ?? 0),
+        powerParts,
+        hasPowerHelp: Boolean(power?.querySelector('[data-feature-help="playerPower"]')),
+        helpTargetCount: helpTargets.length,
+        minimumHelpWidth: Math.min(...helpTargets.map((rect) => rect.width)),
+        minimumHelpHeight: Math.min(...helpTargets.map((rect) => rect.height)),
+        powerText: compactText(power),
         text
       };
     })()`
   );
-  if (loadoutState.rowCount < 7 || loadoutState.missingLabels.length > 0) {
-    throw new Error(`${label} character sheet should show weapon, five armor slots, and charm, got ${JSON.stringify(loadoutState)}`);
+  if (
+    loadoutState.rowCount < 7 ||
+    loadoutState.missingLabels.length > 0 ||
+    loadoutState.powerTotal <= 0 ||
+    loadoutState.powerParts.length !== 4 ||
+    loadoutState.powerParts.reduce((total, value) => total + value, 0) !== loadoutState.powerTotal ||
+    !loadoutState.hasPowerHelp ||
+    loadoutState.helpTargetCount < 8 ||
+    loadoutState.minimumHelpWidth < (loadoutState.viewportWidth <= 760 ? 43.5 : 39.5) ||
+    loadoutState.minimumHelpHeight < (loadoutState.viewportWidth <= 760 ? 43.5 : 39.5) ||
+    !['输出', '生存', '机动', '探索'].every((label) => loadoutState.powerText.includes(label)) ||
+    !loadoutState.text.includes('MVP 固定角色配置') ||
+    !loadoutState.text.includes('当前版本暂不提供姓名与流派创建')
+  ) {
+    throw new Error(`${label} character sheet should identify the fixed MVP role and show weapon, five armor slots, and charm, got ${JSON.stringify(loadoutState)}`);
   }
   return sheet;
 }
@@ -778,6 +919,63 @@ async function pressEscape(cdp) {
   });
 }
 
+async function pressEnter(cdp) {
+  await cdp.send('Page.bringToFront');
+  await cdp.send('Input.dispatchKeyEvent', {
+    type: 'keyDown',
+    key: 'Enter',
+    code: 'Enter',
+    windowsVirtualKeyCode: 13,
+    nativeVirtualKeyCode: 13,
+    text: '\r',
+    unmodifiedText: '\r'
+  });
+  await cdp.send('Input.dispatchKeyEvent', {
+    type: 'keyUp',
+    key: 'Enter',
+    code: 'Enter',
+    windowsVirtualKeyCode: 13,
+    nativeVirtualKeyCode: 13
+  });
+}
+
+async function holdActivationKey(cdp, key) {
+  const keySpec = key === 'Enter'
+    ? {
+        key: 'Enter',
+        code: 'Enter',
+        windowsVirtualKeyCode: 13,
+        nativeVirtualKeyCode: 13,
+        text: '\r',
+        unmodifiedText: '\r'
+      }
+    : key === 'Space'
+      ? {
+          key: ' ',
+          code: 'Space',
+          windowsVirtualKeyCode: 32,
+          nativeVirtualKeyCode: 32,
+          text: ' ',
+          unmodifiedText: ' '
+        }
+      : undefined;
+  if (!keySpec) throw new Error(`Unsupported held activation key: ${key}`);
+
+  await cdp.send('Page.bringToFront');
+  await cdp.send('Input.dispatchKeyEvent', { type: 'keyDown', ...keySpec });
+  await delay(80);
+  await cdp.send('Input.dispatchKeyEvent', { type: 'keyDown', autoRepeat: true, ...keySpec });
+  await delay(20);
+  await cdp.send('Input.dispatchKeyEvent', { type: 'keyDown', autoRepeat: true, ...keySpec });
+  await cdp.send('Input.dispatchKeyEvent', {
+    type: 'keyUp',
+    key: keySpec.key,
+    code: keySpec.code,
+    windowsVirtualKeyCode: keySpec.windowsVirtualKeyCode,
+    nativeVirtualKeyCode: keySpec.nativeVirtualKeyCode
+  });
+}
+
 async function assertEscapeClosesCharacterSheet(cdp, label) {
   await pressEscape(cdp);
   await waitForPage(
@@ -789,6 +987,57 @@ async function assertEscapeClosesCharacterSheet(cdp, label) {
         document.activeElement === trigger;
     })()`,
     `${label} Escape closes character sheet and restores trigger focus`
+  );
+}
+
+async function assertEquipmentRollHelpEscape(cdp, label) {
+  const triggerSelector = '.character-sheet [data-feature-help="equipmentRoll"]';
+  await waitForPage(cdp, `document.querySelector(${JSON.stringify(triggerSelector)})`, `${label} roll help trigger renders`);
+  await clickElementByPointer(cdp, triggerSelector);
+  await waitForPage(
+    cdp,
+    `(() => {
+      const trigger = document.querySelector(${JSON.stringify(triggerSelector)});
+      const popover = document.querySelector('[data-feature-help-popover]');
+      return trigger?.getAttribute('aria-expanded') === 'true' &&
+        popover?.hidden === false &&
+        popover?.dataset.featureHelpId === 'equipmentRoll' &&
+        document.activeElement === popover;
+    })()`,
+    `${label} roll help opens and owns focus`
+  );
+  const closeTarget = await evaluate(
+    cdp,
+    `(() => {
+      const close = document.querySelector('[data-feature-help-close]');
+      const rect = close?.getBoundingClientRect();
+      return {
+        viewportWidth: innerWidth,
+        width: rect?.width ?? 0,
+        height: rect?.height ?? 0,
+        label: close?.getAttribute('aria-label') ?? ''
+      };
+    })()`
+  );
+  if (
+    closeTarget.viewportWidth <= 760 &&
+    (closeTarget.width < 43.5 || closeTarget.height < 43.5 || !closeTarget.label)
+  ) {
+    throw new Error(`${label} mobile help close target should be at least 44px and labelled: ${JSON.stringify(closeTarget)}`);
+  }
+  await pressEscape(cdp);
+  await waitForPage(
+    cdp,
+    `(() => {
+      const trigger = document.querySelector(${JSON.stringify(triggerSelector)});
+      const popover = document.querySelector('[data-feature-help-popover]');
+      return Boolean(document.querySelector('.character-sheet[role="dialog"][aria-modal="true"]')) &&
+        trigger?.getAttribute('aria-expanded') === 'false' &&
+        popover?.hidden === true &&
+        popover?.getAttribute('aria-hidden') === 'true' &&
+        document.activeElement === trigger;
+    })()`,
+    `${label} Escape closes only roll help and restores its trigger`
   );
 }
 
@@ -1000,7 +1249,7 @@ async function revealHiddenHubCardByPointer(cdp, selector, cardText) {
       return { exists: Boolean(card), visible: isVisible(card) };
     })()`
   );
-  if (!cardState.exists || cardState.visible) return;
+  if (cardState.visible) return;
   await clickElementByPointer(cdp, `[data-action="${actionId}"]`);
   await waitForPage(
     cdp,
@@ -1016,8 +1265,40 @@ async function revealHiddenHubCardByPointer(cdp, selector, cardText) {
   );
 }
 
+async function openHubDungeonDirectoryByPointer(cdp, label = 'dungeon directory') {
+  const visibleCardCount = await evaluate(
+    cdp,
+    `(() => {
+      const isVisible = (element) =>
+        Boolean(element?.getClientRects().length) &&
+        getComputedStyle(element).display !== 'none' &&
+        getComputedStyle(element).visibility !== 'hidden';
+      return [...document.querySelectorAll('.dungeon-card')].filter(isVisible).length;
+    })()`
+  );
+  if (visibleCardCount === DUNGEON_COUNT) return;
+  await waitForPage(
+    cdp,
+    `document.querySelector('[data-action="open-hub-dungeons"]:not(:disabled)')`,
+    `${label} trigger renders`
+  );
+  await clickElementByPointer(cdp, '[data-action="open-hub-dungeons"]');
+  await waitForPage(
+    cdp,
+    `(() => {
+      const isVisible = (element) =>
+        Boolean(element?.getClientRects().length) &&
+        getComputedStyle(element).display !== 'none' &&
+        getComputedStyle(element).visibility !== 'hidden';
+      return [...document.querySelectorAll('.dungeon-card')].filter(isVisible).length === ${DUNGEON_COUNT};
+    })()`,
+    `${label} exposes all ${DUNGEON_COUNT} dungeon cards`
+  );
+}
+
 async function clickCardButtonByPointer(cdp, selector, cardText, buttonText) {
   await revealHiddenHubCardByPointer(cdp, selector, cardText);
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 1, y: 1, button: 'none' });
   const point = await evaluate(
     cdp,
     `(() => {
@@ -1043,6 +1324,45 @@ async function clickCardButtonByPointer(cdp, selector, cardText, buttonText) {
   await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: point.x, y: point.y, button: 'none' });
   await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: point.x, y: point.y, button: 'left', clickCount: 1 });
   await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: point.x, y: point.y, button: 'left', clickCount: 1 });
+}
+
+async function activateCardButtonByKeyboard(cdp, selector, cardText, buttonText) {
+  await revealHiddenHubCardByPointer(cdp, selector, cardText);
+  const actionId = await evaluate(
+    cdp,
+    `(() => {
+      const card = [...document.querySelectorAll(${JSON.stringify(selector)})].find((candidate) =>
+        candidate.textContent.includes(${JSON.stringify(cardText)})
+      );
+      if (!card) throw new Error('Missing keyboard card: ${cardText}');
+      const button = [...card.querySelectorAll('button')].find((candidate) =>
+        !candidate.disabled && candidate.textContent.includes(${JSON.stringify(buttonText)})
+      );
+      if (!(button instanceof HTMLButtonElement)) {
+        throw new Error('Missing enabled keyboard button: ${cardText} / ${buttonText}');
+      }
+      button.scrollIntoView({ block: 'center', inline: 'center' });
+      button.focus({ preventScroll: true });
+      if (document.activeElement !== button) {
+        throw new Error('Keyboard card button did not receive focus: ${cardText} / ${buttonText}');
+      }
+      return button.dataset.action ?? '';
+    })()`
+  );
+  if (!actionId) throw new Error(`Keyboard card button is missing data-action: ${cardText} / ${buttonText}`);
+  await pressEnter(cdp);
+  return actionId;
+}
+
+async function enterDungeonByPointer(cdp, cardText) {
+  await clickCardButtonByPointer(cdp, '.dungeon-card', cardText, '准备进入');
+  await waitForPage(
+    cdp,
+    `document.querySelector('.protocol-sheet[role="dialog"][aria-modal="true"]')?.textContent.includes(${JSON.stringify(cardText)}) &&
+      document.querySelector('[data-action="confirm-protocol-entry"]:not(:disabled)')`,
+    `${cardText} preparation dialog renders`
+  );
+  await clickElementByPointer(cdp, '[data-action="confirm-protocol-entry"]');
 }
 
 async function getWeaponSkillControlState(cdp) {
@@ -1106,9 +1426,30 @@ async function finishActiveCombatByAttack(cdp, label) {
   );
 }
 
-async function clearCurrentMonsterByAttack(cdp, label) {
+async function clearCurrentMonsterByAttack(cdp, label, { expectFallbackGuard = false } = {}) {
   await clickButtonByPointer(cdp, '进入战斗', '.node-action-panel');
   await waitForPage(cdp, `document.querySelector('.combat-panel')`, `${label} combat starts`);
+  const fallbackCounter = await evaluate(
+    cdp,
+    `(() => {
+      const intent = document.querySelector('.combat-intent');
+      const text = intent?.textContent.replace(/\\s+/g, ' ').trim() ?? '';
+      const guard = document.querySelector('[data-action="combat-guard"]');
+      return {
+        active: text.includes('建议防御') && text.includes('当前不可用'),
+        guardCounter: guard?.classList.contains('intent-counter') ?? false,
+        guardRisk: guard?.classList.contains('intent-risk') ?? false
+      };
+    })()`
+  );
+  if (expectFallbackGuard && !fallbackCounter.active) {
+    throw new Error(`${label} should exercise the unavailable-special-counter fallback to guard`);
+  }
+  if (fallbackCounter.active && (!fallbackCounter.guardCounter || fallbackCounter.guardRisk)) {
+    throw new Error(
+      `${label} unavailable special counter should visibly downgrade to the green guard recommendation: ${JSON.stringify(fallbackCounter)}`
+    );
+  }
   const unloadedSkill = await getWeaponSkillControlState(cdp);
   if (
     unloadedSkill.exists ||
@@ -1166,7 +1507,10 @@ async function getRouteLockState(cdp, currentActionText) {
         distantCount: distantCells.length,
         distantAllDisabled: distantCells.every((cell) => cell.disabled),
         distantKeepDistanceCopy: distantCells.every((cell) =>
-          compactText(cell).includes('未相邻') || compactText(cell).includes('已清理')
+          compactText(cell).includes('未相邻') ||
+          compactText(cell).includes('已清理') ||
+          compactText(cell).includes('已侦察') ||
+          compactText(cell).includes('?')
         ),
         currentActionExists: Boolean(currentAction),
         currentActionEnabled: Boolean(currentAction && !currentAction.disabled)
@@ -1209,6 +1553,7 @@ async function assertRouteUnlocked(cdp, label, expectMovable = true) {
 }
 
 async function clickGridCell(cdp, cellText) {
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 1, y: 1, button: 'none' });
   const point = await evaluate(
     cdp,
     `(() => {
@@ -1270,6 +1615,7 @@ async function assertResponsiveSurface(
         if (!element) return { selector, exists: false };
         element.scrollIntoView({ block: 'center', inline: 'center' });
         const rect = element.getBoundingClientRect();
+        const style = getComputedStyle(element);
         const x = rect.left + rect.width / 2;
         const y = Math.max(2, Math.min(window.innerHeight - 2, rect.top + rect.height / 2));
         const hit = document.elementFromPoint(x, y);
@@ -1282,6 +1628,11 @@ async function assertResponsiveSurface(
           right: rect.right,
           width: rect.width,
           height: rect.height,
+          clientHeight: element.clientHeight,
+          scrollHeight: element.scrollHeight,
+          display: style.display,
+          position: style.position,
+          overflow: style.overflow,
           scrollX: window.scrollX,
           pointerTarget: Boolean(hit && element.contains(hit))
         };
@@ -1317,7 +1668,7 @@ async function assertResponsiveSurface(
     })()`
   );
   const invalidTargets = snapshot.targets.filter(
-    (target) => !target.exists || !target.insideX || target.width <= 0 || !target.pointerTarget
+    (target) => !target.exists || !target.insideX || target.width <= 0 || target.height <= 0
   );
   const invalidButtons = snapshot.buttons.filter(
     (button) =>
@@ -1341,6 +1692,106 @@ async function assertResponsiveSurface(
     throw new Error(`${label} should fit ${width}x${height} without horizontal overflow or occlusion: ${JSON.stringify(snapshot)}`);
   }
   return snapshot;
+}
+
+async function assertLateTierMapStatusAlwaysVisible(
+  cdp,
+  statusSelector,
+  width,
+  height,
+  label,
+  hiddenDetailSelector
+) {
+  await evaluate(
+    cdp,
+    `(() => {
+      const details = document.querySelector('.run-details');
+      if (!(details instanceof HTMLDetailsElement)) throw new Error('Missing run details');
+      details.open = false;
+      return true;
+    })()`
+  );
+  await waitForPage(
+    cdp,
+    `(() => {
+      const details = document.querySelector('.run-details');
+      const content = details?.querySelector('.run-details-content');
+      const status = document.querySelector(${JSON.stringify(statusSelector)});
+      const hiddenDetail = ${
+        hiddenDetailSelector
+          ? `document.querySelector(${JSON.stringify(hiddenDetailSelector)})`
+          : 'null'
+      };
+      if (!(details instanceof HTMLDetailsElement) || details.open || !status) return false;
+      const rect = status.getBoundingClientRect();
+      const style = getComputedStyle(status);
+      return status.getClientRects().length > 0 && rect.width > 0 && rect.height > 0 &&
+        style.display !== 'none' && style.visibility !== 'hidden' &&
+        !content?.contains(status) &&
+        ${
+          hiddenDetailSelector
+            ? 'Boolean(content?.contains(hiddenDetail)) && hiddenDetail.getClientRects().length === 0'
+            : 'true'
+        };
+    })()`,
+    `${label} status remains visible with collapsed run details`
+  );
+  const evidence = await evaluate(
+    cdp,
+    `(() => {
+      const details = document.querySelector('.run-details');
+      const content = details?.querySelector('.run-details-content');
+      const status = document.querySelector(${JSON.stringify(statusSelector)});
+      const hiddenDetail = ${
+        hiddenDetailSelector
+          ? `document.querySelector(${JSON.stringify(hiddenDetailSelector)})`
+          : 'null'
+      };
+      const rect = status?.getBoundingClientRect();
+      const style = status ? getComputedStyle(status) : undefined;
+      return {
+        viewport: [innerWidth, innerHeight],
+        detailsExists: details instanceof HTMLDetailsElement,
+        detailsOpen: details instanceof HTMLDetailsElement ? details.open : undefined,
+        detailsContentRects: content?.getClientRects().length ?? -1,
+        statusExists: Boolean(status),
+        statusRects: status?.getClientRects().length ?? 0,
+        statusWidth: rect?.width ?? 0,
+        statusHeight: rect?.height ?? 0,
+        statusDisplay: style?.display ?? '',
+        statusVisibility: style?.visibility ?? '',
+        insideHiddenContent: Boolean(content && status && content.contains(status)),
+        hiddenDetailExpected: ${Boolean(hiddenDetailSelector)},
+        hiddenDetailExists: Boolean(hiddenDetail),
+        hiddenDetailRects: hiddenDetail?.getClientRects().length ?? -1,
+        hiddenDetailInsideContent: Boolean(content && hiddenDetail && content.contains(hiddenDetail))
+      };
+    })()`
+  );
+  if (
+    evidence.viewport[0] !== width ||
+    evidence.viewport[1] !== height ||
+    !evidence.detailsExists ||
+    evidence.detailsOpen !== false ||
+    evidence.detailsContentRects !== 0 ||
+    !evidence.statusExists ||
+    evidence.statusRects <= 0 ||
+    evidence.statusWidth <= 0 ||
+    evidence.statusHeight <= 0 ||
+    evidence.statusDisplay === 'none' ||
+    evidence.statusVisibility === 'hidden' ||
+    evidence.insideHiddenContent ||
+    (
+      hiddenDetailSelector &&
+      (
+        !evidence.hiddenDetailExists ||
+        evidence.hiddenDetailRects !== 0 ||
+        !evidence.hiddenDetailInsideContent
+      )
+    )
+  ) {
+    throw new Error(`${label} status must stay non-zero and visible outside collapsed run details: ${JSON.stringify(evidence)}`);
+  }
 }
 
 async function runMobileDungeonMapSmoke(cdp, appUrl) {
@@ -1475,6 +1926,488 @@ async function runMobileDungeonMapSmoke(cdp, appUrl) {
   await waitForPage(cdp, `document.querySelectorAll('.dungeon-card').length === ${DUNGEON_COUNT}`, 'desktop state after mobile map smoke');
 }
 
+async function runNaturalFirstDungeonSmoke(cdp, appUrl) {
+  await setViewport(cdp, 1440, 900);
+  await evaluate(cdp, `localStorage.removeItem(${JSON.stringify(STORAGE_KEY)})`);
+  await cdp.send('Page.navigate', { url: appUrl });
+  await waitForPage(cdp, `document.querySelector('.hub-stage')`, 'natural first run fresh hub');
+
+  await clickElementByPointer(cdp, '[data-action="open-hub-supplies"]');
+  await waitForPage(
+    cdp,
+    `document.querySelector('.hub-directory-sheet')?.textContent.includes('补给商人') &&
+      [...document.querySelectorAll('.shop-card')].some((card) =>
+        card.textContent.includes('止血丹') && card.textContent.includes('120')
+      )`,
+    'natural first run healing pill price'
+  );
+  for (let purchase = 0; purchase < 4; purchase += 1) {
+    await clickCardButtonByPointer(cdp, '.shop-card', '止血丹', '兑换');
+  }
+  const prepared = await evaluate(
+    cdp,
+    `(() => {
+      const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
+      const shopStatus = document.querySelector('[data-tactical-shop-item="healing_pill"]');
+      return {
+        rewardPoints: saved.rewardPoints,
+        healingPills: saved.inventory.healing_pill,
+        preparedItemIds: saved.preparedItemIds,
+        shopState: shopStatus?.dataset.tacticalShopState ?? '',
+        shopText: shopStatus?.textContent.replace(/\\s+/g, ' ').trim() ?? '',
+        hasPreparationShortcut: Boolean(shopStatus?.querySelector('[data-action="open-tactical-preparation-healing_pill"]:not(:disabled)'))
+      };
+    })()`
+  );
+  if (
+    prepared.rewardPoints !== 370 ||
+    prepared.healingPills !== 4 ||
+    JSON.stringify(prepared.preparedItemIds) !== JSON.stringify([]) ||
+    prepared.shopState !== 'unprepared' ||
+    !prepared.shopText.includes('尚未携行') ||
+    !prepared.shopText.includes('入场前需要分配') ||
+    !prepared.hasPreparationShortcut
+  ) {
+    throw new Error(`Purchased supplies should stay uncarried and expose a clear preparation shortcut: ${JSON.stringify(prepared)}`);
+  }
+  await clickElementByPointer(cdp, '[data-action="open-tactical-preparation-healing_pill"]');
+  await waitForPage(
+    cdp,
+    `document.querySelector('.hub-archive[data-hub-archive="preparation"][open] > summary[aria-expanded="true"]') &&
+      document.activeElement === document.querySelector('.hub-archive[data-hub-archive="preparation"] > summary') &&
+      document.querySelector('[data-tactical-item="healing_pill"][data-selected="false"]')?.textContent.includes('尚未携行')`,
+    'purchased supply shortcut opens and focuses the still-unselected tactical preparation'
+  );
+  await clickElementByPointer(cdp, '.hub-directory-close');
+  await waitForPage(cdp, `!document.querySelector('.hub-directory-modal')`, 'natural first run supplies close');
+
+  await clickElementByPointer(cdp, '[data-action="open-hub-dungeons"]');
+  await waitForPage(cdp, `document.querySelectorAll('.dungeon-card').length === ${DUNGEON_COUNT}`, 'natural first run dungeon directory');
+  await clickCardButtonByPointer(cdp, '.dungeon-card', '妖塔一层', '准备进入');
+  await waitForPage(cdp, `document.querySelector('.protocol-sheet[role="dialog"]')`, 'natural first run preparation');
+  const firstClearGuidance = await evaluate(
+    cdp,
+    `(() => {
+      const protocol = document.querySelector('.protocol-sheet[role="dialog"]');
+      const guidance = protocol?.querySelector('[data-first-clear-guidance="demon_tower_1"]');
+      const text = guidance?.textContent.replace(/\\s+/g, '') ?? '';
+      const rect = guidance?.getBoundingClientRect();
+      return {
+        exists: Boolean(guidance),
+        role: guidance?.getAttribute('role') ?? '',
+        visible: Boolean(
+          guidance?.getClientRects().length &&
+          rect &&
+          rect.width > 0 &&
+          rect.height > 0 &&
+          getComputedStyle(guidance).display !== 'none' &&
+          getComputedStyle(guidance).visibility !== 'hidden'
+        ),
+        text
+      };
+    })()`
+  );
+  if (
+    !firstClearGuidance.exists ||
+    firstClearGuidance.role !== 'note' ||
+    !firstClearGuidance.visible ||
+    !firstClearGuidance.text.includes('只带1枚止血丹时优先较短路线') ||
+    !firstClearGuidance.text.includes('走完整北路建议携带3枚') ||
+    !firstClearGuidance.text.includes('全图清理属于高压玩法') ||
+    !firstClearGuidance.text.includes('铁衣诀') ||
+    !firstClearGuidance.text.includes('可选挑战不阻断通关') ||
+    !firstClearGuidance.text.includes('可选额外奖励') ||
+    !firstClearGuidance.text.includes('守势') ||
+    !firstClearGuidance.text.includes('承伤不超过20') ||
+    !firstClearGuidance.text.includes('持续累计到本局通关结算') ||
+    !firstClearGuidance.text.includes('不会阻断首领、出口或主线推进')
+  ) {
+    throw new Error(`Natural first preparation should explain route, supplies, mitigation, and the non-blocking damage directive: ${JSON.stringify(firstClearGuidance)}`);
+  }
+  const freshCarryState = await evaluate(
+    cdp,
+    `(() => {
+      const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
+      const carry = document.querySelector('[data-action="protocol-carry-critical-demon_tower_1"]');
+      return {
+        preparedItemIds: saved.preparedItemIds,
+        carryEnabled: Boolean(carry && !carry.disabled),
+        carryText: carry?.textContent.replace(/\\s+/g, ' ').trim() ?? ''
+      };
+    })()`
+  );
+  if (
+    JSON.stringify(freshCarryState.preparedItemIds) !== JSON.stringify([]) ||
+    !freshCarryState.carryEnabled ||
+    !freshCarryState.carryText.includes('携行')
+  ) {
+    throw new Error(`Fresh purchases should remain unselected until the player confirms the chapter loadout: ${JSON.stringify(freshCarryState)}`);
+  }
+  await clickElementByPointer(cdp, '[data-action="protocol-carry-critical-demon_tower_1"]');
+  await waitForPage(
+    cdp,
+    `(() => {
+      const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
+      const carry = document.querySelector('[data-action="protocol-carry-critical-demon_tower_1"]');
+      return JSON.stringify(saved.preparedItemIds) === JSON.stringify(['healing_pill']) &&
+        Boolean(carry?.disabled);
+    })()`,
+    'natural first run explicitly carries its stocked chapter supply'
+  );
+  await clickDialogButton(cdp, '进入普通');
+  await waitForPage(
+    cdp,
+    `(() => {
+      const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
+      return saved.run?.currentNodeId === 'fog_lesser_demon' &&
+        saved.run?.clearedNodeIds?.length === 0 &&
+        saved.run?.entryFlowVersion === 2 &&
+        saved.run?.explorationRewardVersion === 1 &&
+        document.querySelector('.grid-node.current')?.textContent.includes('雾中妖鬼');
+    })()`,
+    'natural first run starts at authored entrance'
+  );
+  const exploreGenre = await evaluate(
+    cdp,
+    `(() => {
+      const badge = document.querySelector('.explore-primary .dungeon-genre-badge');
+      return {
+        genre: badge?.dataset.dungeonGenre ?? '',
+        label: badge?.textContent.trim() ?? '',
+        title: badge?.getAttribute('title') ?? '',
+        ariaLabel: badge?.getAttribute('aria-label') ?? ''
+      };
+    })()`
+  );
+  if (
+    exploreGenre.genre !== 'cultivation' ||
+    exploreGenre.label !== '修真异境' ||
+    !exploreGenre.title.includes('题材仅描述世界来源，不改变基础操作') ||
+    exploreGenre.ariaLabel !== exploreGenre.title
+  ) {
+    throw new Error(`Exploration title should keep the compact accessible cultivation genre label: ${JSON.stringify(exploreGenre)}`);
+  }
+
+  await evaluate(
+    cdp,
+    `(() => {
+      const trigger = document.querySelector('[data-feature-help="lootBag"]');
+      if (!(trigger instanceof HTMLButtonElement)) throw new Error('Missing in-run loot-bag help');
+      trigger.scrollIntoView({ block: 'center', inline: 'nearest' });
+      trigger.focus({ preventScroll: true });
+      return document.activeElement === trigger;
+    })()`
+  );
+  await pressEnter(cdp);
+  await waitForPage(
+    cdp,
+    `(() => {
+      const popover = document.querySelector('[data-feature-help-popover][data-feature-help-id="lootBag"]');
+      const readout = popover?.querySelector('[data-feature-help-readout] > span');
+      const text = readout?.textContent ?? '';
+      return popover?.hidden === false &&
+        text.split('\\n').length === 3 &&
+        text.includes('本局可用：') &&
+        text.includes('结算带回：') &&
+        text.includes('撤退/濒死损失：') &&
+        getComputedStyle(readout).whiteSpace === 'pre-line';
+    })()`,
+    'loot-bag help presents three scannable rule lines'
+  );
+  await pressEscape(cdp);
+  await waitForPage(
+    cdp,
+    `document.querySelector('[data-feature-help-popover]')?.hidden === true &&
+      document.activeElement === document.querySelector('[data-feature-help="lootBag"]')`,
+    'loot-bag help closes back to its trigger'
+  );
+
+  await clearCurrentMonsterByAttack(cdp, 'natural first run entrance monster', { expectFallbackGuard: true });
+  await clickGridCell(cdp, '血字阶梯');
+  await waitForPage(
+    cdp,
+    `document.querySelector('[data-action="trap-risk-blood_rune_trap"]:not(:disabled)')`,
+    'natural first run reaches adjacent trap'
+  );
+  await clickElementByPointer(cdp, '[data-action="trap-risk-blood_rune_trap"]');
+  await waitForPage(
+    cdp,
+    `document.querySelector('.grid-node.current.cleared')?.textContent.includes('血字阶梯')`,
+    'natural first run clears adjacent trap'
+  );
+  await clickGridCell(cdp, '裂缝石门');
+  await waitForPage(
+    cdp,
+    `document.querySelector('.grid-node.current')?.textContent.includes('裂缝石门')`,
+    'natural first run crosses optional portal room'
+  );
+  await clickGridCell(cdp, '雾后暗格');
+  await waitForPage(
+    cdp,
+    `document.querySelector('[data-action="reward-current-sealed_cache"]:not(:disabled)')`,
+    'natural first run reaches reward room'
+  );
+  await clickElementByPointer(cdp, '[data-action="reward-current-sealed_cache"]');
+  await waitForPage(
+    cdp,
+    `(() => {
+      const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
+      return saved.run?.clearedNodeIds?.includes('fog_lesser_demon') &&
+        saved.run?.clearedNodeIds?.includes('blood_rune_trap') &&
+        saved.run?.clearedNodeIds?.includes('sealed_cache') &&
+        saved.run?.lootBag?.items?.healing_pill >= 1 &&
+        document.querySelector('.loot-bag')?.textContent.includes('止血丹');
+    })()`,
+    'natural first run earns third-room supply milestone'
+  );
+
+  await clickGridCell(cdp, '白光裂口');
+  const sealedExit = await getButtonState(cdp, '完成副本');
+  if (
+    !sealedExit.disabled ||
+    !sealedExit.text.includes('封印中') ||
+    !sealedExit.text.includes('雾塔剔骨监斩官')
+  ) {
+    throw new Error(`Natural first run should discover the sealed exit before its boss: ${JSON.stringify(sealedExit)}`);
+  }
+  await clickGridCell(cdp, '骨巷塔卒');
+  await waitForPage(
+    cdp,
+    `document.querySelector('.grid-node.current.boss-node[data-boss-node="true"]')?.textContent.includes('骨巷塔卒')`,
+    'natural first run reaches authored boss from the map'
+  );
+  await clickButtonByPointer(cdp, '进入战斗', '.node-action-panel');
+  await waitForPage(cdp, `document.querySelector('.combat-panel[data-boss-phase="sealed"]')`, 'natural first boss starts');
+  let awakened = false;
+  for (let actionCount = 0; actionCount < 24; actionCount += 1) {
+    const combatState = await evaluate(
+      cdp,
+      `(() => {
+        const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
+        const healButton = [...document.querySelectorAll('.combat-panel button')].find((button) =>
+          button.textContent.includes('止血丹')
+        );
+        return {
+          active: Boolean(document.querySelector('.combat-panel')),
+          hp: saved.player.hp,
+          maxHp: saved.player.maxHp,
+          canHeal: Boolean(healButton && !healButton.disabled),
+          bossPhase: saved.combat?.bossPhase
+        };
+      })()`
+    );
+    if (!combatState.active) break;
+    if (combatState.bossPhase === 'awakened') awakened = true;
+    const shouldHeal = combatState.canHeal && combatState.hp <= combatState.maxHp * 0.48;
+    await clickButtonByPointer(cdp, shouldHeal ? '止血丹' : '攻击', '.combat-panel');
+  }
+  await waitForPage(
+    cdp,
+    `!document.querySelector('.combat-panel') &&
+      document.querySelector('.equipment-loot-offer') &&
+      document.querySelector('.boss-seal-progress[data-boss-seal="cleared"]')`,
+    'natural first boss victory and equipment offer'
+  );
+  if (!awakened) {
+    throw new Error('Natural first boss should reach its awakened phase.');
+  }
+
+  const offer = await evaluate(
+    cdp,
+    `(() => {
+      const options = [...document.querySelectorAll('.loot-offer-option')];
+      const chosen = options.find((option) =>
+        Number(option.querySelector('.equipment-swap-preview')?.dataset.scoreDelta ?? 0) > 0
+      );
+      const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
+      return {
+        equipmentId: chosen?.dataset.lootEquipmentId,
+        name: chosen?.querySelector('h3')?.textContent.trim() ?? '',
+        powerBefore: Number(document.querySelector('.character-trigger')?.textContent.match(/战力\\s*(\\d+)/)?.[1] ?? 0),
+        demonBones: saved.run?.lootBag?.items?.demon_bone ?? 0
+      };
+    })()`
+  );
+  if (!offer.equipmentId || !offer.name || offer.powerBefore <= 0 || offer.demonBones < 2) {
+    throw new Error(`Natural first boss should expose a positive durable upgrade and material drop: ${JSON.stringify(offer)}`);
+  }
+  await clickCardButtonByPointer(cdp, '.loot-offer-option', offer.name, '选择');
+  await waitForPage(
+    cdp,
+    `!document.querySelector('.equipment-loot-offer') &&
+      document.querySelectorAll('.loot-offer-option').length === 0 &&
+      document.activeElement === document.querySelector('.node-action-panel')`,
+    'single-click equipment choice clears every candidate and restores node-action focus'
+  );
+  await clickGridCell(cdp, '白光裂口');
+  await clickButtonByPointer(cdp, '完成副本', '.node-action-panel');
+  await waitForPage(
+    cdp,
+    `document.querySelector('.result-panel') &&
+      document.querySelector('.settlement-growth')?.textContent.includes(${JSON.stringify(offer.name)})`,
+    'natural first run completes through the real exit'
+  );
+  const settlement = await evaluate(
+    cdp,
+    `(() => {
+      const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
+      return {
+        completed: saved.completedDungeonIds.includes('demon_tower_1'),
+        owned: saved.ownedEquipment.includes(${JSON.stringify(offer.equipmentId)}),
+        equipped: Object.values(saved.equipped).includes(${JSON.stringify(offer.equipmentId)}),
+        autoEquipped: saved.run?.lastAutoEquippedEquipmentIds?.includes(${JSON.stringify(offer.equipmentId)}),
+        retained: saved.run?.lastLootSettlement?.retained?.equipmentIds?.includes(${JSON.stringify(offer.equipmentId)}),
+        powerAfter: Number(document.querySelector('.settlement-growth')?.textContent.match(/当前战力\\s*(\\d+)/)?.[1] ?? 0)
+      };
+    })()`
+  );
+  if (
+    !settlement.completed ||
+    !settlement.owned ||
+    !settlement.equipped ||
+    !settlement.autoEquipped ||
+    !settlement.retained ||
+    settlement.powerAfter <= offer.powerBefore
+  ) {
+    throw new Error(`Natural first run should retain and auto-equip a real power increase: ${JSON.stringify({ offer, settlement })}`);
+  }
+
+  if (await evaluate(cdp, `Boolean(document.querySelector('[data-relic-archive="skip"]:not(:disabled)'))`)) {
+    await clickElementByPointer(cdp, '[data-relic-archive="skip"]');
+    await waitForPage(
+      cdp,
+      `!document.querySelector('[data-relic-archive="skip"]')`,
+      'natural first run resolves optional relic archive before returning'
+    );
+  }
+  await clickButtonByPointer(cdp, '返回主神空间', '.result-panel');
+  await waitForPage(
+    cdp,
+    `(() => {
+      const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
+      return saved.phase === 'hub' && saved.completedDungeonIds.includes('demon_tower_1');
+    })()`,
+    'natural first clear returns to completed hub'
+  );
+  await openHubDungeonDirectoryByPointer(cdp, 'completed first-clear guidance check');
+  await clickCardButtonByPointer(cdp, '.dungeon-card', '妖塔一层', '准备进入');
+  await waitForPage(
+    cdp,
+    `document.querySelector('.protocol-sheet[role="dialog"]') &&
+      !document.querySelector('[data-first-clear-guidance="demon_tower_1"]')`,
+    'completed first chapter no longer shows first-clear guidance'
+  );
+  const completedFirstClearMetric = await evaluate(
+    cdp,
+    `(() => {
+      const rows = [...document.querySelectorAll('.protocol-entry-metrics > span')];
+      const row = rows.find((candidate) => candidate.querySelector('small')?.textContent.trim() === '首通状态');
+      return {
+        label: row?.querySelector('small')?.textContent.trim() ?? '',
+        value: row?.querySelector('strong')?.textContent.replace(/\\s+/g, ' ').trim() ?? ''
+      };
+    })()`
+  );
+  if (
+    completedFirstClearMetric.label !== '首通状态' ||
+    !completedFirstClearMetric.value.includes('首通奖励已解锁') ||
+    completedFirstClearMetric.value.includes('首次通关')
+  ) {
+    throw new Error(`Completed Tier-1 preparation should show an unlocked first-clear reward metric: ${JSON.stringify(completedFirstClearMetric)}`);
+  }
+  await clickDialogButton(cdp, '取消');
+  await waitForPage(cdp, `!document.querySelector('.protocol-sheet')`, 'completed Tier-1 preparation closes');
+  if (await evaluate(cdp, `Boolean(document.querySelector('.hub-directory-modal'))`)) {
+    await clickElementByPointer(cdp, '.hub-directory-close');
+    await waitForPage(cdp, `!document.querySelector('.hub-directory-modal')`, 'completed dungeon directory closes before task claims');
+  }
+
+  const completedTaskModal = await openTaskModal(cdp, 'completed Tier-1 task double-click');
+  if (
+    !completedTaskModal.dialogText.includes('妖塔一层侦察') ||
+    !completedTaskModal.dialogText.includes('妖塔一层主线')
+  ) {
+    throw new Error(`Completed Tier-1 task modal should expose claimable side and mainline rewards: ${JSON.stringify(completedTaskModal)}`);
+  }
+
+  const sideClaimBefore = await evaluate(
+    cdp,
+    `(() => {
+      const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
+      return {
+        rewardPoints: saved.rewardPoints,
+        claimCount: saved.claimedTaskIds.filter((taskId) => taskId === 'side_enter_demon_tower_1').length,
+        enabled: Boolean(document.querySelector('[data-action="claim-side-task-side_enter_demon_tower_1"]:not(:disabled)'))
+      };
+    })()`
+  );
+  if (!sideClaimBefore.enabled || sideClaimBefore.claimCount !== 0) {
+    throw new Error(`Tier-1 side reward should begin claimable and unclaimed: ${JSON.stringify(sideClaimBefore)}`);
+  }
+  await doubleClickElementByPointer(cdp, '[data-action="claim-side-task-side_enter_demon_tower_1"]');
+  await waitForPage(
+    cdp,
+    `(() => {
+      const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
+      return saved.rewardPoints === ${sideClaimBefore.rewardPoints + 30} &&
+        saved.claimedTaskIds.filter((taskId) => taskId === 'side_enter_demon_tower_1').length === 1 &&
+        !document.querySelector('[data-action="claim-side-task-side_enter_demon_tower_1"]:not(:disabled)') &&
+        document.activeElement === document.querySelector('.task-close');
+    })()`,
+    'real side-task double-click grants once and restores task-close focus'
+  );
+
+  const mainlineClaimBefore = await evaluate(
+    cdp,
+    `(() => {
+      const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
+      return {
+        rewardPoints: saved.rewardPoints,
+        claimCount: saved.claimedTaskIds.filter((taskId) => taskId === 'mainline_clear_demon_tower_1').length,
+        enabled: Boolean(document.querySelector('[data-action="claim-mainline-task-mainline_clear_demon_tower_1"]:not(:disabled)'))
+      };
+    })()`
+  );
+  if (!mainlineClaimBefore.enabled || mainlineClaimBefore.claimCount !== 0) {
+    throw new Error(`Tier-1 mainline reward should begin claimable and unclaimed: ${JSON.stringify(mainlineClaimBefore)}`);
+  }
+  await doubleClickElementByPointer(
+    cdp,
+    '[data-action="claim-mainline-task-mainline_clear_demon_tower_1"]'
+  );
+  await delay(240);
+  const mainlineClaimAfter = await evaluate(
+    cdp,
+    `(() => {
+      const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
+      const active = document.activeElement;
+      return {
+        rewardPoints: saved.rewardPoints,
+        claimCount: saved.claimedTaskIds.filter((taskId) => taskId === 'mainline_clear_demon_tower_1').length,
+        oldClaimEnabled: Boolean(document.querySelector('[data-action="claim-mainline-task-mainline_clear_demon_tower_1"]:not(:disabled)')),
+        chapterTwoVisible: document.querySelector('.task-sheet')?.textContent.includes('镜潮地铁') ?? false,
+        focusOnTaskClose: active === document.querySelector('.task-close'),
+        activeTag: active?.tagName ?? '',
+        activeClass: active?.className ?? '',
+        activeText: active?.textContent?.replace(/\\s+/g, ' ').trim().slice(0, 160) ?? ''
+      };
+    })()`
+  );
+  if (
+    mainlineClaimAfter.rewardPoints !== mainlineClaimBefore.rewardPoints + 80 ||
+    mainlineClaimAfter.claimCount !== 1 ||
+    mainlineClaimAfter.oldClaimEnabled ||
+    !mainlineClaimAfter.chapterTwoVisible ||
+    !mainlineClaimAfter.focusOnTaskClose
+  ) {
+    throw new Error(`Real mainline double-click should grant once, unlock Chapter 2, and restore task-close focus: ${JSON.stringify({ before: mainlineClaimBefore, after: mainlineClaimAfter })}`);
+  }
+  await evaluate(cdp, `localStorage.removeItem(${JSON.stringify(STORAGE_KEY)})`);
+  await cdp.send('Page.navigate', { url: appUrl });
+  await waitForPage(cdp, `document.querySelector('.hub-stage')`, 'natural first run cleanup');
+  console.log('[smoke] natural first run: preparation copy -> boss -> single-click loot focus -> completed Tier-1 metric -> one-shot side/mainline double-click rewards');
+}
+
 async function runBossFlowSmoke(cdp, appUrl) {
   await cdp.send('Emulation.setDeviceMetricsOverride', {
     width: 390,
@@ -1507,8 +2440,12 @@ async function runBossFlowSmoke(cdp, appUrl) {
     };
 
     await cdp.send('Page.navigate', { url: appUrl });
-    await waitForPage(cdp, `document.querySelectorAll('.dungeon-card').length === ${DUNGEON_COUNT}`, 'legacy boss save fresh hub');
-    await clickCardButtonByPointer(cdp, '.dungeon-card', '妖塔一层', '进入副本');
+    await waitForPage(cdp, `document.querySelector('.hub-stage')`, 'legacy boss save fresh hub');
+    await clickElementByPointer(cdp, '[data-action="open-hub-dungeons"]');
+    await waitForPage(cdp, `document.querySelectorAll('.dungeon-card').length === ${DUNGEON_COUNT}`, 'legacy boss dungeon directory');
+    await clickCardButtonByPointer(cdp, '.dungeon-card', '妖塔一层', '准备进入');
+    await waitForPage(cdp, `document.querySelector('.protocol-sheet[role="dialog"]')`, 'legacy boss preparation opens');
+    await clickDialogButton(cdp, '进入普通');
     await waitForPage(cdp, `document.querySelector('.grid-node.current')`, 'legacy boss save fresh demon tower');
     const legacyExploreState = await evaluate(
       cdp,
@@ -1831,6 +2768,10 @@ async function runBossFlowSmoke(cdp, appUrl) {
         const offer = document.querySelector('.equipment-loot-offer');
         if (!offer) throw new Error('Missing restored elite offer');
         const options = [...offer.querySelectorAll('.loot-offer-option')];
+        const chosen = options.find((option) => {
+          const delta = Number(option.querySelector('.equipment-swap-preview')?.dataset.scoreDelta ?? 0);
+          return Number.isFinite(delta) && delta > 0;
+        });
         const buttons = [...offer.querySelectorAll('button')];
         const buttonHits = buttons.map((button) => {
           button.scrollIntoView({ block: 'center', inline: 'nearest' });
@@ -1854,8 +2795,10 @@ async function runBossFlowSmoke(cdp, appUrl) {
           offerScrollWidth: offer.scrollWidth,
           optionsFit: options.every((option) => option.scrollWidth <= option.clientWidth + 1),
           buttonHits,
-          chosenEquipmentId: options[0]?.dataset.lootEquipmentId,
-          chosenName: options[0]?.querySelector('h3')?.textContent.trim()
+          chosenEquipmentId: chosen?.dataset.lootEquipmentId,
+          chosenName: chosen?.querySelector('h3')?.textContent.trim(),
+          chosenScoreDelta: Number(chosen?.querySelector('.equipment-swap-preview')?.dataset.scoreDelta ?? 0),
+          powerBefore: Number(document.querySelector('.character-trigger')?.textContent.match(/战力\\s*(\\d+)/)?.[1] ?? 0)
         };
       })()`
     );
@@ -1867,23 +2810,30 @@ async function runBossFlowSmoke(cdp, appUrl) {
       !mobileOffer.optionsFit ||
       !mobileOffer.chosenEquipmentId ||
       !mobileOffer.chosenName ||
+      mobileOffer.chosenScoreDelta <= 0 ||
+      mobileOffer.powerBefore <= 0 ||
       mobileOffer.buttonHits.length < 2 ||
       mobileOffer.buttonHits.some((button) => button.height < 43.5 || !button.insideViewport || !button.pointerTarget)
     ) {
       throw new Error(`390x844 boss offer should fit and keep every command pointer-hittable: ${JSON.stringify(mobileOffer)}`);
     }
 
-    await clickCardButtonByPointer(cdp, '.loot-offer-option', mobileOffer.chosenName, '选择');
+    await doubleClickElementByPointer(
+      cdp,
+      `[data-action="loot-select-${mobileOffer.chosenEquipmentId}"]`
+    );
     await waitForPage(
       cdp,
       `(() => {
         const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
         return !document.querySelector('.equipment-loot-offer') &&
+          document.querySelectorAll('.loot-offer-option').length === 0 &&
           saved.run?.pendingEquipmentOffer === undefined &&
           saved.run?.lootBag?.equipmentIds?.includes(${JSON.stringify(mobileOffer.chosenEquipmentId)}) &&
-          !saved.ownedEquipment.includes(${JSON.stringify(mobileOffer.chosenEquipmentId)});
+          !saved.ownedEquipment.includes(${JSON.stringify(mobileOffer.chosenEquipmentId)}) &&
+          document.activeElement === document.querySelector('.node-action-panel');
       })()`,
-      'real equipment choice enters bag without ownership'
+      'real double-click equipment choice resolves once and restores node-action focus'
     );
     await assertRouteUnlocked(cdp, 'boss route after equipment choice');
 
@@ -1935,10 +2885,13 @@ async function runBossFlowSmoke(cdp, appUrl) {
         return {
           phase: saved.phase,
           owned: saved.ownedEquipment.includes(${JSON.stringify(mobileOffer.chosenEquipmentId)}),
+          equipped: Object.values(saved.equipped).includes(${JSON.stringify(mobileOffer.chosenEquipmentId)}),
           level: saved.equipmentLevels?.[${JSON.stringify(mobileOffer.chosenEquipmentId)}],
           retained: saved.run?.lastLootSettlement?.retained,
           lost: saved.run?.lastLootSettlement?.lost,
           summaryText: summary?.textContent.replace(/\\s+/g, ' ').trim() ?? '',
+          growthText: summary?.querySelector('.settlement-growth')?.textContent.replace(/\\s+/g, ' ').trim() ?? '',
+          powerAfter: Number(summary?.querySelector('.settlement-growth')?.textContent.match(/当前战力\\s*(\\d+)/)?.[1] ?? 0),
           retainedPoints: summary?.querySelector('.settlement-group.retained')?.dataset.settlementRetainedPoints,
           lostPoints: summary?.querySelector('.settlement-group.lost')?.dataset.settlementLostPoints,
           pageClientWidth: document.documentElement.clientWidth,
@@ -1949,6 +2902,7 @@ async function runBossFlowSmoke(cdp, appUrl) {
     if (
       settlement.phase !== 'result' ||
       !settlement.owned ||
+      !settlement.equipped ||
       settlement.level !== 1 ||
       settlement.retained?.rewardPoints !== 370 ||
       !settlement.retained?.equipmentIds?.includes(mobileOffer.chosenEquipmentId) ||
@@ -1960,6 +2914,9 @@ async function runBossFlowSmoke(cdp, appUrl) {
       !settlement.summaryText.includes('已遗失') ||
       !settlement.summaryText.includes('妖骨 x4') ||
       !settlement.summaryText.includes(mobileOffer.chosenName) ||
+      !settlement.growthText.includes('成长已生效') ||
+      !settlement.growthText.includes(mobileOffer.chosenName) ||
+      settlement.powerAfter <= mobileOffer.powerBefore ||
       settlement.pageScrollWidth > settlement.pageClientWidth + 1
     ) {
       throw new Error(`Exit should bank equipment and render a complete retained/lost summary: ${JSON.stringify(settlement)}`);
@@ -1976,7 +2933,7 @@ async function runBossFlowSmoke(cdp, appUrl) {
       'loot settlement restores after reload'
     );
     await clickButtonByPointer(cdp, '返回主神空间', '.result-panel');
-    await waitForPage(cdp, `document.querySelectorAll('.dungeon-card').length === ${DUNGEON_COUNT}`, 'return after boss loot settlement');
+    await waitForPage(cdp, `document.querySelector('.hub-stage')`, 'return after boss loot settlement');
     await clickButton(cdp, '重开');
     await waitForPage(
       cdp,
@@ -1991,7 +2948,7 @@ async function runBossFlowSmoke(cdp, appUrl) {
   }
 
   await cdp.send('Page.navigate', { url: appUrl });
-  await waitForPage(cdp, `document.querySelectorAll('.dungeon-card').length === ${DUNGEON_COUNT}`, 'desktop state after boss flow smoke');
+  await waitForPage(cdp, `document.querySelector('.hub-stage')`, 'desktop state after boss flow smoke');
 }
 
 async function getEnabledButtonCount(cdp, label) {
@@ -2949,6 +3906,10 @@ async function runLegacyRunMigrationSmoke(cdp, appUrl) {
     savedRun?.lawState?.dungeonId !== 'demon_tower_1' ||
     savedRun?.lawState?.law?.kind !== 'demon_tower' ||
     savedRun?.lawState?.law?.fogPressure !== 0 ||
+    !Array.isArray(savedRun?.discoveredNodeIds) ||
+    !['fog_lesser_demon', 'blood_rune_trap', 'ash_pit_trap'].every((nodeId) =>
+      savedRun.discoveredNodeIds.includes(nodeId)
+    ) ||
     JSON.stringify(migrated.savedState?.preparedItemIds) !== JSON.stringify(DEFAULT_PREPARED_TACTICAL_ITEM_IDS) ||
     Object.prototype.hasOwnProperty.call(savedRun ?? {}, 'tacticalLoadout') ||
     migrated.runTacticalMode !== 'legacy-unrestricted' ||
@@ -2957,7 +3918,7 @@ async function runLegacyRunMigrationSmoke(cdp, appUrl) {
     savedRun.lawState.clearedNodeIds.length !== 0 ||
     !migrated.lawStatusText.includes('场域法则') ||
     !migrated.lawStatusText.includes('妖雾压境') ||
-    migrated.lawLandmarkCount < 2 ||
+    migrated.lawLandmarkCount !== 0 ||
     migrated.savedState?.inventory?.cycle_imprint !== 0 ||
     migrated.savedState?.inventory?.redaction_ink !== 0 ||
     migrated.savedState?.inventory?.legacy_scrip !== 0 ||
@@ -2972,10 +3933,12 @@ async function runLegacyRunMigrationSmoke(cdp, appUrl) {
   await clickButton(cdp, '重开');
   await waitForPage(
     cdp,
-    `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null && document.querySelectorAll('.dungeon-card').length === ${DUNGEON_COUNT}`,
-    'restart after legacy run migration'
+    `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null &&
+      document.querySelector('.hub-stage') &&
+      document.querySelector('[data-action="open-hub-dungeons"]:not(:disabled)')`,
+    'restart after legacy run migration returns to the fresh hub'
   );
-  console.log('[smoke] legacy version-1 run restores default hub preparation while keeping this run explicitly unrestricted');
+  console.log('[smoke] legacy version-1 run restores default hub preparation, keeps this run explicitly unrestricted, and preserves fog-hidden law landmarks');
 }
 
 async function runBadRunLootRecoverySmoke(cdp, appUrl) {
@@ -3113,20 +4076,44 @@ function makeEquipmentCommissionHubSave(baseState, { nearComplete = false } = {}
 }
 
 async function assertInjectedSaveResets(cdp, appUrl, state, marker, label) {
+  const rejectedRaw = JSON.stringify({ version: 1, state });
   await injectGameState(cdp, state);
   await cdp.send('Page.navigate', { url: appUrl });
-  await waitForPage(cdp, `document.querySelectorAll('.dungeon-card').length === ${DUNGEON_COUNT}`, `${label} fallback renders`);
+  await waitForPage(
+    cdp,
+    `document.querySelector('[data-action="open-hub-dungeons"]') &&
+      document.querySelector('[data-invalid-save-recovery]') &&
+      document.querySelector('[data-action="clear-rejected-save"]')`,
+    `${label} fallback renders`
+  );
   const recovery = await evaluate(
     cdp,
     `(() => ({
       hasSavedKey: localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) !== null,
+      rejectedRaw: localStorage.getItem(${JSON.stringify(REJECTED_SAVE_BACKUP_KEY)}),
+      rejectedReason: localStorage.getItem(${JSON.stringify(REJECTED_SAVE_REASON_KEY)}),
       resources: document.querySelector('.resource-strip')?.textContent ?? '',
       body: document.body.textContent
     }))()`
   );
-  if (recovery.hasSavedKey || !recovery.resources.includes('850') || recovery.body.includes(marker)) {
+  if (
+    recovery.hasSavedKey ||
+    recovery.rejectedRaw !== rejectedRaw ||
+    !recovery.rejectedReason ||
+    !recovery.resources.includes('850') ||
+    recovery.body.includes(marker)
+  ) {
     throw new Error(`${label} should clear storage and restore initial state: ${JSON.stringify(recovery)}`);
   }
+  await clickElementByPointer(cdp, '[data-action="clear-rejected-save"]');
+  await waitForPage(
+    cdp,
+    `localStorage.getItem(${JSON.stringify(REJECTED_SAVE_BACKUP_KEY)}) === null &&
+      localStorage.getItem(${JSON.stringify(REJECTED_SAVE_REASON_KEY)}) === null &&
+      !document.querySelector('[data-invalid-save-recovery]') &&
+      document.activeElement === document.querySelector('[data-action="new-run"]')`,
+    `${label} rejected-save fixture cleanup`
+  );
 }
 
 async function runProtocolAndAttunementSaveValidationSmoke(cdp, appUrl) {
@@ -3346,12 +4333,23 @@ async function runTacticalLoadoutSaveValidationSmoke(cdp, appUrl) {
     cdp,
     `(() => {
       const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
-      const selected = [...document.querySelectorAll('[data-tactical-item][data-selected="true"]')]
-        .map((item) => item.dataset.tacticalItem);
       return JSON.stringify(saved.preparedItemIds) === JSON.stringify(${JSON.stringify(DEFAULT_PREPARED_TACTICAL_ITEM_IDS)}) &&
-        selected.join(',') === 'healing_pill,dispel_talisman,gate_sigil';
+        document.querySelector('.hub-stage');
     })()`,
-    'legacy hub tactical preparation migration'
+    'legacy hub tactical preparation migrates and re-saves'
+  );
+  await clickElementByPointer(cdp, '[data-action="open-hub-supplies"]');
+  await waitForPage(
+    cdp,
+    `document.querySelector('.hub-directory-sheet[role="dialog"][aria-modal="true"]')`,
+    'legacy migrated hub opens supplies'
+  );
+  await clickElementByPointer(cdp, '.hub-archive[data-hub-archive="preparation"] > summary');
+  await waitForPage(
+    cdp,
+    `[...document.querySelectorAll('[data-tactical-item][data-selected="true"]')]
+      .map((item) => item.dataset.tacticalItem).join(',') === 'healing_pill,dispel_talisman,gate_sigil'`,
+    'legacy migrated tactical defaults render in the current preparation directory'
   );
   const migratedHub = await evaluate(
     cdp,
@@ -3602,15 +4600,15 @@ async function runTacticalLoadoutPointerSmoke(cdp, appUrl) {
     cdp,
     `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null &&
       [...document.querySelectorAll('[data-tactical-item][data-selected="true"]')]
-        .map((item) => item.dataset.tacticalItem).join(',') === 'healing_pill,dispel_talisman,gate_sigil'`,
-    'restart clears save and restores default tactical preparation'
+        .length === 0`,
+    'restart clears save and restores an empty fresh tactical preparation'
   );
   await cdp.send('Page.navigate', { url: appUrl });
   await waitForPage(
     cdp,
     `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null &&
-      document.querySelectorAll('[data-tactical-item][data-selected="true"]').length === 3`,
-    'restart tactical defaults survive reload without a save'
+      document.querySelectorAll('[data-tactical-item][data-selected="true"]').length === 0`,
+    'empty fresh tactical preparation survives reload without a save'
   );
 
   const makeTrapState = () => {
@@ -3958,7 +4956,11 @@ async function getNextGridStepToward(cdp, targetSelector, avoidSelector = '') {
   );
 }
 
-async function finishProtocolCombatByPointer(cdp, label) {
+async function finishProtocolCombatByPointer(
+  cdp,
+  label,
+  { keepEquipmentOffer = false } = {}
+) {
   await clickButtonByPointer(cdp, '进入战斗', '.node-action-panel');
   await waitForPage(cdp, `document.querySelector('.combat-panel')`, `${label} combat starts`);
   const hasWeaponSkill = await evaluate(
@@ -3992,14 +4994,90 @@ async function finishProtocolCombatByPointer(cdp, label) {
 
   const stillInCombat = await evaluate(cdp, `Boolean(document.querySelector('.combat-panel'))`);
   if (stillInCombat) throw new Error(`${label} exceeded 80 real pointer combat rounds`);
-  if (await evaluate(cdp, `Boolean(document.querySelector('.equipment-loot-offer'))`)) {
+  const hasEquipmentOffer = await evaluate(
+    cdp,
+    `Boolean(document.querySelector('.equipment-loot-offer'))`
+  );
+  if (keepEquipmentOffer && !hasEquipmentOffer) {
+    const missingOffer = await evaluate(
+      cdp,
+      `(() => {
+        const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
+        return {
+          phase: saved.phase,
+          currentNodeId: saved.run?.currentNodeId,
+          clearedNodeIds: saved.run?.clearedNodeIds,
+          lootOffersMade: saved.run?.lootOffersMade,
+          pendingEquipmentOffer: saved.run?.pendingEquipmentOffer,
+          latestLog: saved.log?.[0],
+          nodeText: document.querySelector('.node-action-panel')?.textContent.replace(/\\s+/g, ' ').trim() ?? ''
+        };
+      })()`
+    );
+    throw new Error(
+      `${label} should produce a rolled equipment offer before settlement: ${JSON.stringify(missingOffer)}`
+    );
+  }
+  if (hasEquipmentOffer && !keepEquipmentOffer) {
+    const rolledOffer = await evaluate(
+      cdp,
+      `(() => {
+        const offer = document.querySelector('.equipment-loot-offer');
+        const roll = offer?.querySelector('.equipment-roll.candidate');
+        const heading = offer?.querySelector('.loot-offer-heading small')?.textContent.replace(/\\s+/g, ' ').trim() ?? '';
+        const rollText = roll?.textContent.replace(/\\s+/g, ' ').trim() ?? '';
+        return {
+          rolled: Boolean(roll),
+          heading,
+          rollText
+        };
+      })()`
+    );
+    if (
+      rolledOffer.rolled &&
+      (
+        !rolledOffer.heading.includes('真实战力与综合词条裁决') ||
+        rolledOffer.heading.includes('自动保留更高层级') ||
+        !rolledOffer.rollText.includes('词条评分') ||
+        rolledOffer.rollText.includes('高于当前') ||
+        rolledOffer.rollText.includes('不高于当前')
+      )
+    ) {
+      throw new Error(
+        `${label} rolled loot should describe its real power/affix verdict without treating tier or item power as decisive: ${JSON.stringify(rolledOffer)}`
+      );
+    }
     await clickButtonByPointer(cdp, '放弃', '.node-action-panel');
   }
-  await waitForPage(
-    cdp,
-    `document.querySelector('.grid-node.current.cleared') && !document.querySelector('.equipment-loot-offer')`,
-    `${label} clears and resolves loot`
-  );
+  try {
+    await waitForPage(
+      cdp,
+      keepEquipmentOffer
+        ? `document.querySelector('.grid-node.current.cleared') && document.querySelector('.equipment-loot-offer')`
+        : `document.querySelector('.grid-node.current.cleared') && !document.querySelector('.equipment-loot-offer')`,
+      keepEquipmentOffer
+        ? `${label} clears and keeps its loot offer pending`
+        : `${label} clears and resolves loot`
+    );
+  } catch (error) {
+    const evidence = await evaluate(
+      cdp,
+      `(() => {
+        const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
+        return {
+          phase: saved.phase,
+          currentNodeId: saved.run?.currentNodeId,
+          cleared: saved.run?.clearedNodeIds,
+          pendingOffer: saved.run?.pendingEquipmentOffer,
+          currentClasses: document.querySelector('.grid-node.current')?.className ?? '',
+          offerVisible: Boolean(document.querySelector('.equipment-loot-offer')),
+          relicDraftVisible: Boolean(document.querySelector('[data-relic-choice]')),
+          actionText: document.querySelector('.node-action-panel')?.textContent.replace(/\\s+/g, ' ').trim() ?? ''
+        };
+      })()`
+    );
+    throw new Error(`${error instanceof Error ? error.message : String(error)}; evidence=${JSON.stringify(evidence)}`);
+  }
 }
 
 async function finishTemporalCombatByPointer(cdp, nodeId, label) {
@@ -4068,6 +5146,14 @@ async function resolveCurrentProtocolNodeByPointer(cdp, label) {
   if (await evaluate(cdp, `Boolean(document.querySelector('.equipment-loot-offer'))`)) {
     await clickButtonByPointer(cdp, '放弃', '.node-action-panel');
   }
+  if (await evaluate(cdp, `Boolean(document.querySelector('[data-relic-choice]:not(:disabled)'))`)) {
+    await clickElementByPointer(cdp, '[data-relic-choice]:not(:disabled)');
+    await waitForPage(
+      cdp,
+      `!document.querySelector('[data-relic-choice]')`,
+      `${label} relic draft resolves`
+    );
+  }
   const action = await evaluate(
     cdp,
     `(() => {
@@ -4077,6 +5163,8 @@ async function resolveCurrentProtocolNodeByPointer(cdp, label) {
       const trapAction = buttons.find((button) => button.dataset.action?.startsWith('trap-counter-')) ??
         buttons.find((button) => button.dataset.action?.startsWith('trap-risk-'));
       if (trapAction) return trapAction.dataset.action;
+      const rewardAction = buttons.find((button) => button.dataset.action?.startsWith('reward-current-'));
+      if (rewardAction) return rewardAction.dataset.action;
       return 'blocked';
     })()`
   );
@@ -4085,6 +5173,17 @@ async function resolveCurrentProtocolNodeByPointer(cdp, label) {
   } else if (action.startsWith('trap-')) {
     await clickElementByPointer(cdp, `[data-action="${action}"]`);
     await waitForPage(cdp, `document.querySelector('.grid-node.current.cleared')`, `${label} trap clears`);
+  } else if (action.startsWith('reward-current-')) {
+    await clickElementByPointer(cdp, `[data-action="${action}"]`);
+    await waitForPage(cdp, `document.querySelector('.grid-node.current.cleared')`, `${label} reward clears`);
+    if (await evaluate(cdp, `Boolean(document.querySelector('[data-relic-choice]:not(:disabled)'))`)) {
+      await clickElementByPointer(cdp, '[data-relic-choice]:not(:disabled)');
+      await waitForPage(
+        cdp,
+        `!document.querySelector('[data-relic-choice]')`,
+        `${label} reward relic draft resolves`
+      );
+    }
   } else if (action === 'blocked') {
     throw new Error(`${label} has an unsupported route lock`);
   }
@@ -4125,6 +5224,71 @@ async function walkToUnresolvedNodeByPointer(cdp, targetSelector, label, avoidSe
     );
   }
   throw new Error(`${label} exceeded 50 real pointer moves`);
+}
+
+async function walkInfernoToUnresolvedNodeByPointer(
+  cdp,
+  targetNodeId,
+  label,
+  avoidNodeIds = []
+) {
+  for (let step = 0; step < 50; step += 1) {
+    const atTarget = await evaluate(
+      cdp,
+      `JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state.run?.currentNodeId === ${JSON.stringify(targetNodeId)}`
+    );
+    if (atTarget) return;
+    await resolveCurrentProtocolNodeByPointer(cdp, `${label} step ${step + 1}`);
+    const nextNodeId = await evaluate(
+      cdp,
+      `(() => {
+        const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
+        const currentNodeId = saved.run?.currentNodeId;
+        const nodes = saved.run?.infernoMap?.nodes;
+        if (!currentNodeId || !Array.isArray(nodes)) {
+          throw new Error('Missing active inferno map');
+        }
+        const connections = new Map(nodes.map((node) => [node.nodeId, node.connectionIds]));
+        const avoided = new Set(${JSON.stringify(avoidNodeIds)});
+        const queue = [currentNodeId];
+        const previous = new Map([[currentNodeId, null]]);
+        while (queue.length) {
+          const nodeId = queue.shift();
+          if (nodeId === ${JSON.stringify(targetNodeId)}) break;
+          for (const candidate of connections.get(nodeId) ?? []) {
+            if (
+              candidate !== ${JSON.stringify(targetNodeId)} &&
+              avoided.has(candidate)
+            ) continue;
+            if (previous.has(candidate)) continue;
+            previous.set(candidate, nodeId);
+            queue.push(candidate);
+          }
+        }
+        if (!previous.has(${JSON.stringify(targetNodeId)})) {
+          throw new Error('No explicit inferno path to ${targetNodeId}');
+        }
+        let nextNodeId = ${JSON.stringify(targetNodeId)};
+        while (previous.get(nextNodeId) !== currentNodeId) {
+          nextNodeId = previous.get(nextNodeId);
+          if (!nextNodeId) throw new Error('Broken inferno predecessor chain');
+        }
+        return nextNodeId;
+      })()`
+    );
+    await waitForPage(
+      cdp,
+      `document.querySelector('[data-action="grid-${nextNodeId}"]:not(:disabled)')`,
+      `${label} reveals linked node ${nextNodeId}`
+    );
+    await clickElementByPointer(cdp, `[data-action="grid-${nextNodeId}"]`);
+    await waitForPage(
+      cdp,
+      `JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state.run?.currentNodeId === ${JSON.stringify(nextNodeId)}`,
+      `${label} moves through explicit link to ${nextNodeId}`
+    );
+  }
+  throw new Error(`${label} exceeded 50 explicit inferno moves`);
 }
 
 async function completeCurrentDeepAnchorByPointer(cdp, label) {
@@ -4265,7 +5429,6 @@ async function runRouteContractPointerSmoke(cdp, appUrl) {
       height,
       rootSelector: '.dungeon-map',
       targetSelectors: [
-        '.run-route-contract-status',
         '[data-route-contract-order="1"]',
         '[data-route-contract-order="2"]'
       ],
@@ -4277,7 +5440,7 @@ async function runRouteContractPointerSmoke(cdp, appUrl) {
       cdp,
       `(() => {
         const status = document.querySelector('.run-route-contract-status');
-        const statusCells = [...status.children];
+        const statusCells = status ? [...status.children] : [];
         const targets = [...document.querySelectorAll('[data-route-contract-order]')];
         const intersects = (left, right) =>
           Math.min(left.right, right.right) - Math.max(left.left, right.left) > 1 &&
@@ -4307,7 +5470,8 @@ async function runRouteContractPointerSmoke(cdp, appUrl) {
         return {
           viewport: [window.innerWidth, window.innerHeight],
           pageOverflow: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) > window.innerWidth + 1,
-          statusOverflow: status.scrollWidth > status.clientWidth + 1,
+          closedStatusHidden: Boolean(status && status.getClientRects().length === 0),
+          statusOverflow: status ? status.scrollWidth > status.clientWidth + 1 : false,
           statusCellOverflow: statusCells.some((cell) => cell.scrollWidth > cell.clientWidth + 1),
           statusCollisions,
           targetLayouts
@@ -4317,6 +5481,7 @@ async function runRouteContractPointerSmoke(cdp, appUrl) {
     if (
       JSON.stringify(layout.viewport) !== JSON.stringify([width, height]) ||
       layout.pageOverflow ||
+      !layout.closedStatusHidden ||
       layout.statusOverflow ||
       layout.statusCellOverflow ||
       layout.statusCollisions.length > 0 ||
@@ -4331,6 +5496,7 @@ async function runRouteContractPointerSmoke(cdp, appUrl) {
   await injectGameState(cdp, makeProtocolHubSave());
   await cdp.send('Page.navigate', { url: appUrl });
   await waitForPage(cdp, `document.querySelector('.shell')`, 'replay-ready route-contract hub renders');
+  await openHubDungeonDirectoryByPointer(cdp, 'route-contract dungeon directory');
   const entryScope = await evaluate(
     cdp,
     `(() => {
@@ -4349,58 +5515,90 @@ async function runRouteContractPointerSmoke(cdp, appUrl) {
     !entryScope.hasSave ||
     entryScope.phase !== 'hub' ||
     !entryScope.marker ||
-    JSON.stringify(entryScope.protocolEntries) !== JSON.stringify(['open-protocol-demon_tower_1']) ||
+    !entryScope.protocolEntries.includes('open-protocol-demon_tower_1') ||
+    entryScope.protocolEntries.length !== DUNGEON_COUNT ||
     entryScope.routeControlsOnHub !== 0
   ) {
     throw new Error(`Only the cleared dungeon should expose route contracts through its protocol modal: ${JSON.stringify(entryScope)}`);
   }
 
   const storageBeforeModal = await evaluate(cdp, `localStorage.getItem(${JSON.stringify(STORAGE_KEY)})`);
-  await clickElementByPointer(cdp, '[data-action="open-protocol-demon_tower_1"]');
+  await clickCardButtonByPointer(cdp, '.dungeon-card', '妖塔一层', '准备进入');
   await waitForPage(
     cdp,
-    `document.querySelectorAll('[data-route-contract-option]').length === 4 &&
-      document.querySelector('.protocol-route-contract[data-route-contract-selected="none"]')`,
-    'route contract choices render inside the protocol modal'
+    `document.querySelector('.protocol-sheet [data-protocol-mode="standard"][aria-pressed="true"]') &&
+      document.querySelectorAll('[data-route-contract-option]').length === 0 &&
+      !document.querySelector('.protocol-route-contract')`,
+    'simplified protocol modal omits legacy route-contract preparation controls'
   );
-  await clickElementByPointer(cdp, `[data-route-contract-option="${contractId}"]`);
-  await waitForPage(
-    cdp,
-    `document.querySelector('.protocol-route-contract[data-route-contract-selected="${contractId}"]') &&
-      document.querySelector('[data-route-contract-option="${contractId}"][aria-checked="true"]')`,
-    'real pointer selects a canonical route contract'
-  );
-  await assertPreparationLayout(390, 844);
-  await assertPreparationLayout(1440, 900);
-
   await clickElementByPointer(cdp, '[data-protocol-mode="imprint"]');
   await waitForPage(
     cdp,
     `document.querySelector('[data-selected-protocol="imprint"]') &&
-      document.querySelector('.protocol-route-contract[data-route-contract-selected="${contractId}"]') &&
-      document.querySelector('[data-route-contract-option="${contractId}"][aria-checked="true"]')`,
-    'route contract selection survives a protocol mode switch'
+      document.querySelectorAll('[data-route-contract-option]').length === 0`,
+    'simplified protocol mode switch remains available without legacy route-contract controls'
   );
   await clickElementByPointer(cdp, '[data-protocol-mode="standard"]');
   await waitForPage(
     cdp,
     `document.querySelector('[data-selected-protocol="standard"]') &&
-      document.querySelector('.protocol-route-contract[data-route-contract-selected="${contractId}"]')`,
-    'route contract selection survives switching back to standard exploration'
+      document.querySelectorAll('[data-route-contract-option]').length === 0`,
+    'simplified protocol switches back to standard exploration'
   );
   const storageAfterPreparation = await evaluate(cdp, `localStorage.getItem(${JSON.stringify(STORAGE_KEY)})`);
   if (storageAfterPreparation !== storageBeforeModal) {
-    throw new Error('Route contract and protocol choices should remain non-persistent until entry confirmation.');
+    throw new Error('Simplified protocol choices should remain non-persistent until entry confirmation.');
   }
 
-  await setViewport(cdp, 390, 844);
-  await clickElementByPointer(cdp, '[data-action="confirm-protocol-entry"]');
+  await clickElementByPointer(cdp, '[data-action="close-protocol-modal"]');
+  await waitForPage(
+    cdp,
+    `!document.querySelector('.protocol-sheet') &&
+      document.querySelector('.hub-directory-modal') &&
+      document.activeElement === document.querySelector('[data-action="open-protocol-demon_tower_1"]')`,
+    'simplified protocol cancel restores its dungeon-directory trigger'
+  );
+  await clickCardButtonByPointer(cdp, '.dungeon-card', '妖塔一层', '准备进入');
+  await waitForPage(cdp, `document.querySelector('.protocol-sheet')`, 'directory protocol reopens for Escape focus');
+  await pressEscape(cdp);
+  await waitForPage(
+    cdp,
+    `!document.querySelector('.protocol-sheet') &&
+      document.querySelector('.hub-directory-modal') &&
+      document.activeElement === document.querySelector('[data-action="open-protocol-demon_tower_1"]')`,
+    'simplified protocol Escape restores its dungeon-directory trigger'
+  );
+  const routeRun = makeExploreSave({
+    dungeonId: 'demon_tower_1',
+    nodeId: 'fog_lesser_demon',
+    rewardPoints: 5000,
+    lingyun: 10,
+    inventory: {
+      healing_pill: 30,
+      thunder_talisman: 10,
+      dispel_talisman: 10,
+      gate_sigil: 5
+    },
+    ownedEquipment: ADVANCED_OWNED_EQUIPMENT,
+    equipmentLevels: ADVANCED_EQUIPMENT_LEVELS,
+    equipped: ADVANCED_EQUIPPED,
+    completedDungeonIds: ['demon_tower_1'],
+    log: ['canonical active route contract smoke fixture']
+  });
+  routeRun.run.routeContractState = {
+    rulesVersion: 1,
+    contractId,
+    dungeonId: 'demon_tower_1',
+    completedTargetCount: 0,
+    status: 'active'
+  };
+  await injectGameState(cdp, routeRun);
+  await cdp.send('Page.navigate', { url: appUrl });
   await waitForPage(
     cdp,
     `(() => {
       const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
-      return saved.phase === 'explore' && saved.run?.protocol?.id === 'standard' &&
-        saved.run.routeContractState?.contractId === '${contractId}' &&
+      return saved.phase === 'explore' && saved.run.routeContractState?.contractId === '${contractId}' &&
         saved.run.routeContractState.status === 'active' &&
         saved.run.routeContractState.completedTargetCount === 0 &&
         document.querySelector('[data-route-contract-status="active"][data-route-contract-selected="${contractId}"][data-route-contract-reward-points="${contractRewardPoints}"]') &&
@@ -4408,7 +5606,7 @@ async function runRouteContractPointerSmoke(cdp, appUrl) {
         document.querySelector('[data-route-contract-order="1"][data-route-contract-status="pending"]') &&
         document.querySelector('[data-route-contract-order="2"][data-route-contract-status="locked"]');
     })()`,
-    'confirmed route contract freezes two ordered map targets with target two locked'
+    'canonical route contract save restores two ordered map targets with target two locked'
   );
   await assertRunLayout(390, 844);
   await assertRunLayout(1440, 900);
@@ -4466,7 +5664,7 @@ async function runRouteContractPointerSmoke(cdp, appUrl) {
       document.querySelector('.run-route-contract-status[data-route-contract-status="secured"]')`,
     'route contract remains secured after real pointer Boss combat'
   );
-  await walkProtocolRouteByPointer(cdp, '.type-exit', 'route contract exit route');
+  await walkProtocolRouteByPointer(cdp, '[data-action="grid-tower_exit"]', 'route contract exit route');
   const beforeExit = await evaluate(
     cdp,
     `(() => {
@@ -4559,7 +5757,7 @@ async function runRouteContractPointerSmoke(cdp, appUrl) {
     targetSelectors: ['.route-contract-settlement', '.route-contract-settlement-reward'],
     label: '1440x900 restored route contract settlement'
   });
-  console.log('[smoke] route contract: cleared-only modal -> mode retention -> target 1 combat -> reward -> target 2 trap -> Boss -> exit banks exact +135 and survives reload');
+  console.log('[smoke] route contract: simplified modal contract -> canonical active save -> target 1 combat -> reward -> target 2 trap -> Boss -> exit banks exact +135 and survives reload');
 }
 
 async function getAttunementUiSnapshot(cdp) {
@@ -4602,7 +5800,7 @@ async function runProtocolAndAttunementPointerSmoke(cdp, appUrl) {
   );
   const storageBeforeModal = await evaluate(cdp, `localStorage.getItem(${JSON.stringify(STORAGE_KEY)})`);
 
-  await clickCardButtonByPointer(cdp, '.dungeon-card', '妖塔一层', '选择协议');
+  await clickCardButtonByPointer(cdp, '.dungeon-card', '妖塔一层', '准备进入');
   await waitForPage(cdp, `document.querySelector('.protocol-sheet [data-protocol-mode="standard"][aria-pressed="true"]')`, 'protocol modal defaults to standard');
   const mobileModal = await evaluate(
     cdp,
@@ -4649,14 +5847,14 @@ async function runProtocolAndAttunementPointerSmoke(cdp, appUrl) {
     `!document.querySelector('.protocol-modal') && document.activeElement === document.querySelector('[data-action="open-protocol-demon_tower_1"]')`,
     'protocol backdrop closes and restores focus'
   );
-  await clickCardButtonByPointer(cdp, '.dungeon-card', '妖塔一层', '选择协议');
+  await clickCardButtonByPointer(cdp, '.dungeon-card', '妖塔一层', '准备进入');
   await pressEscape(cdp);
   await waitForPage(
     cdp,
     `!document.querySelector('.protocol-modal') && document.activeElement === document.querySelector('[data-action="open-protocol-demon_tower_1"]')`,
     'protocol Escape closes and restores focus'
   );
-  await clickCardButtonByPointer(cdp, '.dungeon-card', '妖塔一层', '选择协议');
+  await clickCardButtonByPointer(cdp, '.dungeon-card', '妖塔一层', '准备进入');
   await clickButtonByPointer(cdp, '烙印', '.protocol-sheet');
   await waitForPage(cdp, `document.querySelector('[data-selected-protocol="imprint"]')`, 'imprint protocol segment selects');
   const storageAfterModeSwitch = await evaluate(cdp, `localStorage.getItem(${JSON.stringify(STORAGE_KEY)})`);
@@ -4664,7 +5862,7 @@ async function runProtocolAndAttunementPointerSmoke(cdp, appUrl) {
   await clickDialogButton(cdp, '取消');
   await waitForPage(cdp, `!document.querySelector('.protocol-modal')`, 'protocol cancel closes');
 
-  await clickCardButtonByPointer(cdp, '.dungeon-card', '妖塔一层', '选择协议');
+  await clickCardButtonByPointer(cdp, '.dungeon-card', '妖塔一层', '准备进入');
   await clickButtonByPointer(cdp, '烙印', '.protocol-sheet');
   await clickButtonByPointer(cdp, '确认烙印协议', '.protocol-sheet');
   await waitForPage(
@@ -4906,6 +6104,1017 @@ async function getDeepProtocolSettlementSnapshot(cdp) {
       };
     })()`
   );
+}
+
+async function runLayeredInfernoPresentationSmoke(cdp, appUrl) {
+  const hub = makeProtocolHubSave();
+  hub.infernoProgress = { demon_tower_1: 2 };
+  hub.inventory.cycle_imprint = 0;
+  hub.player.hp = 1;
+  hub.log = ['layered inferno presentation smoke save'];
+
+  await setViewport(cdp, 390, 844);
+  await injectGameState(cdp, hub);
+  await cdp.send('Page.navigate', { url: appUrl });
+  await waitForPage(cdp, `document.querySelector('.shell')`, 'layered inferno hub shell');
+  const hubSnapshot = await evaluate(
+    cdp,
+    `(() => {
+      const raw = localStorage.getItem(${JSON.stringify(STORAGE_KEY)});
+      const saved = raw ? JSON.parse(raw).state : null;
+      return {
+        hasSave: Boolean(raw),
+        phase: saved?.phase,
+        completedDungeonIds: saved?.completedDungeonIds,
+        infernoProgress: saved?.infernoProgress,
+        dungeonCards: document.querySelectorAll('.dungeon-card').length,
+        hasDungeonDirectory: Boolean(document.querySelector('[data-action="open-hub-dungeons"]')),
+        bodyText: document.body.textContent.replace(/\\s+/g, ' ').trim().slice(0, 500)
+      };
+    })()`
+  );
+  if (
+    !hubSnapshot.hasSave ||
+    hubSnapshot.phase !== 'hub' ||
+    !hubSnapshot.completedDungeonIds?.includes('demon_tower_1') ||
+    hubSnapshot.infernoProgress?.demon_tower_1 !== 2 ||
+    !hubSnapshot.hasDungeonDirectory
+  ) {
+    throw new Error(
+      `Completed layered-inferno hub should restore its progress and dungeon directory: ${JSON.stringify(hubSnapshot)}`
+    );
+  }
+  await clickElementByPointer(cdp, '[data-action="open-hub-dungeons"]');
+  await waitForPage(
+    cdp,
+    `document.querySelector('[data-action="open-protocol-demon_tower_1"]')`,
+    'completed dungeon renders layered inferno entry'
+  );
+  await clickCardButtonByPointer(cdp, '.dungeon-card', '妖塔一层', '准备进入');
+  await waitForPage(
+    cdp,
+    `document.querySelector('[data-protocol-mode="deep"]:not(:disabled)')`,
+    'layered inferno mode is enabled'
+  );
+  const recoveryExpectedHp = await evaluate(
+    cdp,
+    `(() => {
+      const button = document.querySelector('[data-action="protocol-recover-at-hub"]:not(:disabled)');
+      const hint = button?.querySelector('small')?.textContent ?? '';
+      const match = hint.match(/→\\s*(\\d+)\\/(\\d+)/);
+      if (!(button instanceof HTMLButtonElement) || !match || match[1] !== match[2]) {
+        throw new Error('Missing low-health protocol recovery control');
+      }
+      button.focus();
+      return Number(match[1]);
+    })()`
+  );
+  await pressEnter(cdp);
+  await delay(250);
+  const recoverySnapshot = await evaluate(
+    cdp,
+    `(() => {
+      const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
+      const sheet = document.querySelector('.protocol-sheet');
+      const confirm = sheet?.querySelector('[data-action="confirm-protocol-entry"]:not(:disabled)');
+      return {
+        hp: saved.player.hp,
+        maxHp: saved.player.maxHp,
+        recoveryExists: Boolean(sheet?.querySelector('[data-action="protocol-recover-at-hub"]')),
+        activeAction: document.activeElement?.getAttribute('data-action') ?? '',
+        activeInsideSheet: Boolean(sheet?.contains(document.activeElement)),
+        focusOnConfirm: document.activeElement === confirm
+      };
+    })()`,
+  );
+  if (
+    recoverySnapshot.hp !== recoveryExpectedHp ||
+    recoverySnapshot.maxHp !== recoveryExpectedHp ||
+    recoverySnapshot.recoveryExists ||
+    !recoverySnapshot.activeInsideSheet ||
+    !recoverySnapshot.focusOnConfirm
+  ) {
+    throw new Error(
+      `Protocol recovery should fill health and keep focus on the next stable action: expectedHp=${recoveryExpectedHp} snapshot=${JSON.stringify(recoverySnapshot)}`
+    );
+  }
+  await clickElementByPointer(cdp, '[data-protocol-mode="deep"]');
+  await waitForPage(
+    cdp,
+    `document.querySelector('[data-selected-protocol="deep"]') &&
+      document.querySelector('.inferno-tier-picker[data-inferno-tier="2"][data-inferno-unlocked="2"]')`,
+    'highest unlocked inferno layer is selected'
+  );
+  await evaluate(
+    cdp,
+    `(() => {
+      const down = document.querySelector('[data-action="inferno-tier-down"]:not(:disabled)');
+      if (!(down instanceof HTMLButtonElement)) throw new Error('Missing enabled inferno tier-down control');
+      down.focus();
+      return true;
+    })()`
+  );
+  await pressEnter(cdp);
+  await waitForPage(
+    cdp,
+    `(() => {
+      const picker = document.querySelector('.inferno-tier-picker[data-inferno-tier="1"][data-inferno-unlocked="2"]');
+      const copy = picker?.textContent.replace(/\\s+/g, ' ').trim() ?? '';
+      return Boolean(picker) &&
+        copy.includes('低层复刷不推进层级') &&
+        copy.includes('通关第 2 层后解锁第 3 层') &&
+        !copy.includes('本层通关解锁第 3 层') &&
+        document.activeElement === picker?.querySelector('[data-action="inferno-tier-up"]:not(:disabled)');
+    })()`,
+    'keyboard tier-down selects a replay layer, explains no unlock, and moves focus to tier-up at the boundary'
+  );
+  await pressEnter(cdp);
+  await waitForPage(
+    cdp,
+    `(() => {
+      const picker = document.querySelector('.inferno-tier-picker[data-inferno-tier="2"][data-inferno-unlocked="2"]');
+      const copy = picker?.textContent.replace(/\\s+/g, ' ').trim() ?? '';
+      return Boolean(picker) &&
+        copy.includes('本层通关解锁第 3 层') &&
+        !copy.includes('低层复刷不推进层级') &&
+        document.activeElement === picker?.querySelector('[data-action="inferno-tier-down"]:not(:disabled)');
+    })()`,
+    'keyboard tier-up returns to the frontier layer and moves focus to tier-down at the boundary'
+  );
+  await pressEnter(cdp);
+  await waitForPage(
+    cdp,
+    `document.querySelector('.inferno-tier-picker[data-inferno-tier="1"][data-inferno-unlocked="2"]') &&
+      document.activeElement === document.querySelector('[data-action="inferno-tier-up"]:not(:disabled)')`,
+    'keyboard can immediately lower the inferno tier again after the boundary focus fallback'
+  );
+  await clickElementByPointer(cdp, '[data-action="confirm-protocol-entry"]');
+  await waitForPage(
+    cdp,
+    `(() => {
+      const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
+      const status = document.querySelector('[data-run-protocol="deep"]')?.textContent.replace(/\\s+/g, ' ').trim() ?? '';
+      return saved.phase === 'explore' &&
+        saved.run?.protocol?.infernoTier === 1 &&
+        saved.infernoProgress?.demon_tower_1 === 2 &&
+        status.includes('低层复刷不推进层级') &&
+        status.includes('通关第 2 层后解锁第 3 层') &&
+        !status.includes('本层通关解锁第 3 层') &&
+        saved.log?.[0]?.includes('低层复刷不推进层级');
+    })()`,
+    'active lower-tier replay keeps the no-progression promise in status and log'
+  );
+
+  await injectGameState(cdp, hub);
+  await cdp.send('Page.navigate', { url: appUrl });
+  await waitForPage(cdp, `document.querySelector('.shell')`, 'layered inferno frontier-entry reset');
+  await clickElementByPointer(cdp, '[data-action="open-hub-dungeons"]');
+  await waitForPage(
+    cdp,
+    `document.querySelector('[data-action="open-protocol-demon_tower_1"]')`,
+    'layered inferno frontier-entry dungeon directory'
+  );
+  await clickCardButtonByPointer(cdp, '.dungeon-card', '妖塔一层', '准备进入');
+  await waitForPage(
+    cdp,
+    `document.querySelector('[data-protocol-mode="deep"]:not(:disabled)')`,
+    'layered inferno frontier-entry mode is enabled'
+  );
+  await clickElementByPointer(cdp, '[data-protocol-mode="deep"]');
+  await waitForPage(
+    cdp,
+    `document.querySelector('[data-selected-protocol="deep"]') &&
+      document.querySelector('.inferno-tier-picker[data-inferno-tier="2"][data-inferno-unlocked="2"]')`,
+    'layered inferno frontier layer is selected after reset'
+  );
+  const modal = await evaluate(
+    cdp,
+    `(() => {
+      const sheet = document.querySelector('.protocol-sheet');
+      const pressure = sheet?.querySelector('.protocol-pressure-grid')?.textContent.replace(/\\s+/g, ' ').trim() ?? '';
+      const selected = sheet?.querySelector('[data-selected-protocol="deep"]')?.textContent.replace(/\\s+/g, ' ').trim() ?? '';
+      return {
+        selected,
+        pressure,
+        downDisabled: sheet?.querySelector('[data-action="inferno-tier-down"]')?.disabled ?? true,
+        upDisabled: sheet?.querySelector('[data-action="inferno-tier-up"]')?.disabled ?? false,
+        confirmText: sheet?.querySelector('[data-action="confirm-protocol-entry"]')?.textContent.replace(/\\s+/g, ' ').trim() ?? '',
+        mentionsToken: sheet?.textContent.includes('轮回刻印') ?? false
+      };
+    })()`
+  );
+  if (
+    !modal.selected.includes('炼狱第 2 层') ||
+    !modal.pressure.includes('妖骨') ||
+    !modal.pressure.includes('x4') ||
+    modal.downDisabled ||
+    !modal.upDisabled ||
+    !modal.confirmText.includes('进入炼狱') ||
+    modal.mentionsToken
+  ) {
+    throw new Error(
+      `Layered inferno modal should show layer 2, its x4 material reward, and no legacy token cost: ${JSON.stringify(modal)}`
+    );
+  }
+  await assertResponsiveSurface(cdp, {
+    width: 390,
+    height: 844,
+    rootSelector: '.protocol-sheet',
+    targetSelectors: [
+      '[data-selected-protocol="deep"]',
+      '.inferno-tier-picker',
+      '.protocol-pressure-grid',
+      '.protocol-modal-actions'
+    ],
+    buttonSelectors: [
+      '[data-action="inferno-tier-down"]',
+      '[data-action="confirm-protocol-entry"]'
+    ],
+    minimumButtonHeight: 40,
+    checkRootOverflow: true,
+    label: 'mobile layered inferno modal'
+  });
+
+  await clickElementByPointer(cdp, '[data-action="confirm-protocol-entry"]');
+  await waitForPage(
+    cdp,
+    `(() => {
+      const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
+      return saved.phase === 'explore' &&
+        saved.inventory.cycle_imprint === 0 &&
+        saved.run?.entryFlowVersion === 2 &&
+        saved.run?.explorationRewardVersion === 1 &&
+        saved.run?.protocol?.id === 'deep' &&
+        saved.run?.protocol?.infernoTier === 2 &&
+        saved.run?.infernoMap?.rulesVersion === 1;
+    })()`,
+    'layered inferno entry freezes a versioned procedural run without token cost'
+  );
+
+  const layeredRunBaseline = await evaluate(
+    cdp,
+    `localStorage.getItem(${JSON.stringify(STORAGE_KEY)})`
+  );
+  if (!layeredRunBaseline) throw new Error('Missing layered inferno baseline save');
+
+  await evaluate(
+    cdp,
+    `(() => {
+      const envelope = JSON.parse(${JSON.stringify(layeredRunBaseline)});
+      envelope.state.run.protocol.infernoTier = 1;
+      delete envelope.state.run.infernoMap;
+      envelope.state.log = ['legacy fixed-map tier-one reload', ...envelope.state.log];
+      localStorage.setItem(${JSON.stringify(STORAGE_KEY)}, JSON.stringify(envelope));
+      return true;
+    })()`
+  );
+  for (let reload = 1; reload <= 2; reload += 1) {
+    await cdp.send('Page.reload', { ignoreCache: true });
+    await waitForPage(
+      cdp,
+      `(() => {
+        const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
+        return saved.phase === 'explore' &&
+          saved.run?.entryFlowVersion === 2 &&
+          saved.run?.protocol?.id === 'deep' &&
+          saved.run?.protocol?.infernoTier === 1 &&
+          saved.run?.infernoMap === undefined &&
+          saved.log.includes('legacy fixed-map tier-one reload');
+      })()`,
+      `legacy fixed-map tier-one reload ${reload}`
+    );
+  }
+
+  await evaluate(
+    cdp,
+    `localStorage.setItem(${JSON.stringify(STORAGE_KEY)}, ${JSON.stringify(layeredRunBaseline)})`
+  );
+  await cdp.send('Page.reload', { ignoreCache: true });
+  await waitForPage(cdp, `document.querySelector('.dungeon-map')`, 'restore layered baseline before topology repair');
+  await evaluate(
+    cdp,
+    `(() => {
+      const envelope = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)}));
+      const sourceNodeId = 'fog_lesser_demon';
+      const bossNodeId = 'bone_lane_monster';
+      const source = envelope.state.run.infernoMap.nodes.find((node) => node.nodeId === sourceNodeId);
+      const boss = envelope.state.run.infernoMap.nodes.find((node) => node.nodeId === bossNodeId);
+      if (!source || !boss) throw new Error('Missing inferno topology repair fixture nodes');
+      source.connectionIds = [...new Set([...source.connectionIds, bossNodeId])].sort();
+      boss.connectionIds = [...new Set([...boss.connectionIds, sourceNodeId])].sort();
+      envelope.state.log = ['unsafe inferno topology reload', ...envelope.state.log];
+      localStorage.setItem(${JSON.stringify(STORAGE_KEY)}, JSON.stringify(envelope));
+      return true;
+    })()`
+  );
+  await cdp.send('Page.reload', { ignoreCache: true });
+  await waitForPage(
+    cdp,
+    `document.body.textContent.includes('已修复旧版炼狱随机地图')`,
+    'unsafe inferno topology repairs locally'
+  );
+  const firstRepair = await evaluate(
+    cdp,
+    `(() => {
+      const baseline = JSON.parse(${JSON.stringify(layeredRunBaseline)}).state;
+      const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
+      const source = saved.run?.infernoMap?.nodes.find((node) => node.nodeId === 'fog_lesser_demon');
+      const boss = saved.run?.infernoMap?.nodes.find((node) => node.nodeId === 'bone_lane_monster');
+      return {
+        phase: saved.phase,
+        seed: saved.run?.infernoMap?.seed,
+        expectedSeed: baseline.run?.infernoMap?.seed,
+        map: saved.run?.infernoMap,
+        currentNodeId: saved.run?.currentNodeId,
+        expectedCurrentNodeId: baseline.run?.currentNodeId,
+        clearedNodeIds: saved.run?.clearedNodeIds,
+        expectedClearedNodeIds: baseline.run?.clearedNodeIds,
+        lootBag: saved.run?.lootBag,
+        expectedLootBag: baseline.run?.lootBag,
+        lawState: saved.run?.lawState,
+        expectedLawState: baseline.run?.lawState,
+        currentDiscovered: saved.run?.discoveredNodeIds?.includes(saved.run?.currentNodeId) ?? false,
+        sourceBypassesBoss: source?.connectionIds.includes('bone_lane_monster') ?? false,
+        bossAcceptsSource: boss?.connectionIds.includes('fog_lesser_demon') ?? false,
+        repairLogCount: saved.log.filter((line) => line.includes('已修复旧版炼狱随机地图')).length
+      };
+    })()`
+  );
+  if (
+    firstRepair.phase !== 'explore' ||
+    !firstRepair.seed ||
+    firstRepair.seed !== firstRepair.expectedSeed ||
+    firstRepair.currentNodeId !== firstRepair.expectedCurrentNodeId ||
+    JSON.stringify(firstRepair.clearedNodeIds) !==
+      JSON.stringify(firstRepair.expectedClearedNodeIds) ||
+    JSON.stringify(firstRepair.lootBag) !== JSON.stringify(firstRepair.expectedLootBag) ||
+    JSON.stringify(firstRepair.lawState) !== JSON.stringify(firstRepair.expectedLawState) ||
+    !firstRepair.currentDiscovered ||
+    firstRepair.sourceBypassesBoss ||
+    firstRepair.bossAcceptsSource ||
+    firstRepair.repairLogCount !== 1
+  ) {
+    throw new Error(`Unsafe inferno topology should repair once without ending the run: ${JSON.stringify(firstRepair)}`);
+  }
+  await cdp.send('Page.reload', { ignoreCache: true });
+  const secondRepair = await evaluate(
+    cdp,
+    `(() => {
+      const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
+      return {
+        phase: saved.phase,
+        seed: saved.run?.infernoMap?.seed,
+        map: saved.run?.infernoMap,
+        repairLogCount: saved.log.filter((line) => line.includes('已修复旧版炼狱随机地图')).length
+      };
+    })()`
+  );
+  if (
+    secondRepair.phase !== 'explore' ||
+    secondRepair.seed !== firstRepair.seed ||
+    JSON.stringify(secondRepair.map) !== JSON.stringify(firstRepair.map) ||
+    secondRepair.repairLogCount !== 1
+  ) {
+    throw new Error(`Repaired inferno topology should reload idempotently: first=${JSON.stringify(firstRepair)} second=${JSON.stringify(secondRepair)}`);
+  }
+
+  await evaluate(
+    cdp,
+    `(() => {
+      const envelope = JSON.parse(${JSON.stringify(layeredRunBaseline)});
+      envelope.state.run.protocol.infernoTier = 3;
+      envelope.state.rewardPoints += 111;
+      envelope.state.lingyun += 2;
+      envelope.state.inventory.demon_bone += 3;
+      envelope.state.run.lootBag.rewardPoints += 111;
+      envelope.state.run.lootBag.lingyun += 2;
+      envelope.state.run.lootBag.items.demon_bone =
+        (envelope.state.run.lootBag.items.demon_bone ?? 0) + 3;
+      envelope.state.log = ['illegal inferno tier reload', ...envelope.state.log];
+      localStorage.setItem(${JSON.stringify(STORAGE_KEY)}, JSON.stringify(envelope));
+      return true;
+    })()`
+  );
+  await cdp.send('Page.reload', { ignoreCache: true });
+  await waitForPage(
+    cdp,
+    `(() => {
+      const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
+      return saved.phase === 'hub' && !saved.run &&
+        saved.log.some((line) => line.includes('非法或未解锁的炼狱运行'));
+    })()`,
+    'illegal inferno tier is discarded without settlement'
+  );
+  const discardedIllegalRun = await evaluate(
+    cdp,
+    `(() => {
+      const baseline = JSON.parse(${JSON.stringify(layeredRunBaseline)}).state;
+      const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
+      return {
+        rewardPoints: saved.rewardPoints,
+        expectedRewardPoints: baseline.rewardPoints,
+        lingyun: saved.lingyun,
+        expectedLingyun: baseline.lingyun,
+        demonBone: saved.inventory.demon_bone,
+        expectedDemonBone: baseline.inventory.demon_bone,
+        infernoProgress: saved.infernoProgress,
+        expectedInfernoProgress: baseline.infernoProgress,
+        completedDungeonIds: saved.completedDungeonIds,
+        expectedCompletedDungeonIds: baseline.completedDungeonIds,
+        hasRun: Boolean(saved.run)
+      };
+    })()`
+  );
+  if (
+    discardedIllegalRun.rewardPoints !== discardedIllegalRun.expectedRewardPoints ||
+    discardedIllegalRun.lingyun !== discardedIllegalRun.expectedLingyun ||
+    discardedIllegalRun.demonBone !== discardedIllegalRun.expectedDemonBone ||
+    JSON.stringify(discardedIllegalRun.infernoProgress) !==
+      JSON.stringify(discardedIllegalRun.expectedInfernoProgress) ||
+    JSON.stringify(discardedIllegalRun.completedDungeonIds) !==
+      JSON.stringify(discardedIllegalRun.expectedCompletedDungeonIds) ||
+    discardedIllegalRun.hasRun
+  ) {
+    throw new Error(`Illegal inferno recovery should remove only provisional run loot: ${JSON.stringify(discardedIllegalRun)}`);
+  }
+
+  await evaluate(
+    cdp,
+    `(() => {
+      const envelope = JSON.parse(${JSON.stringify(layeredRunBaseline)});
+      delete envelope.state.run.infernoMap;
+      envelope.state.log = ['missing layered inferno map reload', ...envelope.state.log];
+      localStorage.setItem(${JSON.stringify(STORAGE_KEY)}, JSON.stringify(envelope));
+      return true;
+    })()`
+  );
+  await cdp.send('Page.reload', { ignoreCache: true });
+  await waitForPage(
+    cdp,
+    `(() => {
+      const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
+      return saved.phase === 'hub' && !saved.run &&
+        saved.log.some((line) => line.includes('非法或未解锁的炼狱运行'));
+    })()`,
+    'frontier layered inferno save without its frozen map is discarded locally'
+  );
+
+  await evaluate(
+    cdp,
+    `(() => {
+      const envelope = JSON.parse(${JSON.stringify(layeredRunBaseline)});
+      envelope.state.rewardPoints += 100;
+      envelope.state.run.clearedNodeIds = [];
+      envelope.state.run.pressureState = { rulesVersion: 1, clearedNodeCount: 3 };
+      envelope.state.run.lootBag.rewardPoints += 100;
+      envelope.state.log = ['cross-dungeon loot-security preview', ...envelope.state.log];
+      localStorage.setItem(${JSON.stringify(STORAGE_KEY)}, JSON.stringify(envelope));
+      return true;
+    })()`
+  );
+  await cdp.send('Page.reload', { ignoreCache: true });
+  await waitForPage(
+    cdp,
+    `(() => {
+      const hint = document.querySelector('[data-action="abandon-run"] small')?.textContent.replace(/\\s+/g, ' ').trim() ?? '';
+      return hint.includes('累计清理 3 个非出口节点') &&
+        hint.includes('战利品袋已固化') &&
+        !hint.includes('仅清理 0/3');
+    })()`,
+    'run-wide loot security drives the retreat preview after local clears reset'
+  );
+
+  await evaluate(
+    cdp,
+    `localStorage.setItem(${JSON.stringify(STORAGE_KEY)}, ${JSON.stringify(layeredRunBaseline)})`
+  );
+  await cdp.send('Page.reload', { ignoreCache: true });
+  await waitForPage(
+    cdp,
+    `document.querySelector('.dungeon-map')`,
+    'restore layered baseline after save recovery matrix'
+  );
+
+  await evaluate(
+    cdp,
+    `(() => {
+      const envelope = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)}));
+      const currentRoll = {
+        rulesVersion: 1,
+        seed: 1,
+        sourceTier: 1,
+        itemPower: 1120,
+        quality: 'rare',
+        affixes: [
+          { stat: 'trapCheck', value: 5, minimum: 3, maximum: 6, greater: false },
+          { stat: 'spirit', value: 3, minimum: 2, maximum: 4, greater: false }
+        ]
+      };
+      const candidateRoll = {
+        rulesVersion: 1,
+        seed: 2,
+        sourceTier: 2,
+        itemPower: 2105,
+        quality: 'rare',
+        affixes: [
+          { stat: 'trapCheck', value: 4, minimum: 3, maximum: 6, greater: false },
+          { stat: 'spirit', value: 2, minimum: 2, maximum: 4, greater: false }
+        ]
+      };
+      envelope.state.equipmentRolls = {
+        ...(envelope.state.equipmentRolls ?? {}),
+        mist_hood: currentRoll
+      };
+      delete envelope.state.equipmentRolls.spirit_robe;
+      envelope.state.run.pendingEquipmentOffer = {
+        offerId: 'smoke-layered-roll-verdict',
+        equipmentIds: ['mist_hood', 'spirit_robe', 'armor_piercing_sword'],
+        equipmentRolls: {
+          mist_hood: candidateRoll,
+          spirit_robe: {
+            rulesVersion: 1,
+            seed: 148,
+            sourceTier: 1,
+            itemPower: 1100,
+            quality: 'rare',
+            affixes: [
+              { stat: 'maxHp', value: 16, minimum: 16, maximum: 20, greater: false },
+              { stat: 'defense', value: 2, minimum: 2, maximum: 4, greater: false },
+              { stat: 'artPower', value: 1, minimum: 1, maximum: 3, greater: false }
+            ]
+          },
+          armor_piercing_sword: {
+            rulesVersion: 1,
+            seed: 3,
+            sourceTier: 2,
+            itemPower: 2110,
+            quality: 'rare',
+            affixes: [
+              { stat: 'attack', value: 15, minimum: 10, maximum: 18, greater: false },
+              { stat: 'speed', value: 3, minimum: 2, maximum: 4, greater: false }
+            ]
+          }
+        }
+      };
+      localStorage.setItem(${JSON.stringify(STORAGE_KEY)}, JSON.stringify(envelope));
+      return true;
+    })()`
+  );
+  await cdp.send('Page.reload', { ignoreCache: true });
+  await waitForPage(
+    cdp,
+    `document.querySelector('[data-loot-equipment-id="mist_hood"] .equipment-roll.candidate')`,
+    'rolled inferno candidate restores from the saved procedural run'
+  );
+  const verdict = await evaluate(
+    cdp,
+    `(() => {
+      const offer = document.querySelector('.equipment-loot-offer');
+      const card = offer?.querySelector('[data-loot-equipment-id="mist_hood"]');
+      const roll = card?.querySelector('.equipment-roll.candidate');
+      const preview = card?.querySelector('.equipment-swap-preview');
+      return {
+        heading: offer?.querySelector('.loot-offer-heading small')?.textContent.replace(/\\s+/g, ' ').trim() ?? '',
+        strong: roll?.querySelector('strong')?.textContent.replace(/\\s+/g, ' ').trim() ?? '',
+        text: roll?.textContent.replace(/\\s+/g, ' ').trim() ?? '',
+        comparison: Number(roll?.dataset.rollComparison ?? 0),
+        itemPower: roll?.dataset.itemPower ?? '',
+        rollAware: preview?.dataset.rollAware ?? '',
+        previewText: preview?.textContent.replace(/\\s+/g, ' ').trim() ?? ''
+      };
+    })()`
+  );
+  if (
+    !verdict.heading.includes('真实战力与综合词条裁决') ||
+    !verdict.heading.includes('层数只在价值持平时破同分') ||
+    !verdict.strong.includes('词条评分') ||
+    verdict.strong.includes('物品强度') ||
+    !verdict.text.includes('真实战力') ||
+    !verdict.text.includes('综合裁决未胜出') ||
+    verdict.text.includes('高于当前 1120') ||
+    verdict.text.includes('不高于当前 1120') ||
+    verdict.comparison >= 0 ||
+    verdict.itemPower !== '2105' ||
+    verdict.rollAware !== 'true' ||
+    !verdict.previewText.includes('战力评分')
+  ) {
+    throw new Error(
+      `Rolled candidate should expose the true negative power verdict while keeping item power as metadata only: ${JSON.stringify(verdict)}`
+    );
+  }
+  const unequippedFixedVerdict = await evaluate(
+    cdp,
+    `(() => {
+      const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
+      const card = document.querySelector('[data-loot-equipment-id="spirit_robe"]');
+      const roll = card?.querySelector('.equipment-roll.candidate');
+      return {
+        owned: saved.ownedEquipment.includes('spirit_robe'),
+        equipped: Object.values(saved.equipped ?? {}).includes('spirit_robe'),
+        currentRoll: saved.equipmentRolls?.spirit_robe,
+        text: roll?.textContent.replace(/\\s+/g, ' ').trim() ?? '',
+        comparison: Number(roll?.dataset.rollComparison ?? 0)
+      };
+    })()`
+  );
+  if (
+    !unequippedFixedVerdict.owned ||
+    unequippedFixedVerdict.equipped ||
+    unequippedFixedVerdict.currentRoll !== undefined ||
+    !unequippedFixedVerdict.text.includes('真实战力') ||
+    !unequippedFixedVerdict.text.includes('综合裁决未胜出') ||
+    unequippedFixedVerdict.text.includes('新底材') ||
+    unequippedFixedVerdict.comparison >= 0
+  ) {
+    throw new Error(
+      `Owned unequipped fixed gear should use the same true-power verdict as settlement: ${JSON.stringify(unequippedFixedVerdict)}`
+    );
+  }
+  await assertResponsiveSurface(cdp, {
+    width: 390,
+    height: 844,
+    rootSelector: '.equipment-loot-offer',
+    targetSelectors: [
+      '.loot-offer-heading',
+      '[data-loot-equipment-id="mist_hood"]',
+      '[data-loot-equipment-id="mist_hood"] .equipment-roll.candidate',
+      '[data-loot-equipment-id="mist_hood"] .equipment-swap-preview'
+    ],
+    buttonSelectors: [
+      '[data-loot-equipment-id="mist_hood"] button',
+      '[data-action="loot-decline-equipment"]'
+    ],
+    minimumButtonHeight: 40,
+    checkRootOverflow: true,
+    label: 'mobile rolled inferno verdict'
+  });
+
+  await clickElementByPointer(cdp, '[data-action="loot-decline-equipment"]');
+  await waitForPage(
+    cdp,
+    `!document.querySelector('.equipment-loot-offer')`,
+    'rolled inferno offer can be declined by pointer'
+  );
+  await evaluate(cdp, `localStorage.removeItem(${JSON.stringify(STORAGE_KEY)})`);
+  await cdp.send('Page.reload', { ignoreCache: true });
+  await waitForPage(
+    cdp,
+    `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null`,
+    'layered inferno presentation smoke cleanup'
+  );
+  console.log('[smoke] layered inferno: mobile layer entry, no legacy token cost, versioned procedural run, and true-power rolled-loot verdict pass');
+}
+
+async function runLayeredInfernoSettlementSmoke(cdp, appUrl) {
+  const hub = makeProtocolHubSave();
+  const makeStrongRoll = (seed, affixes) => ({
+    rulesVersion: 1,
+    seed,
+    sourceTier: 1,
+    itemPower: 1_999,
+    quality: 'ancestral',
+    affixes: affixes.map(([stat, value]) => ({
+      stat,
+      value,
+      minimum: 1,
+      maximum: value,
+      greater: false
+    }))
+  });
+  hub.infernoProgress = { demon_tower_1: 1 };
+  hub.inventory.cycle_imprint = 0;
+  hub.equipmentRolls = {
+    armor_piercing_sword: makeStrongRoll(101, [['attack', 80], ['speed', 20]]),
+    bone_spear: makeStrongRoll(102, [['attack', 75], ['speed', 20]]),
+    mist_hood: makeStrongRoll(103, [['trapCheck', 30], ['spirit', 20]]),
+    spirit_robe: makeStrongRoll(104, [['maxHp', 120], ['defense', 40]])
+  };
+  hub.log = ['layered inferno settlement smoke save'];
+
+  const enterUnlockedLayer = async (tier) => {
+    await clickCardButtonByPointer(cdp, '.dungeon-card', '妖塔一层', '准备进入');
+    await waitForPage(
+      cdp,
+      `document.querySelector('[data-protocol-mode="deep"]:not(:disabled)')`,
+      `inferno layer ${tier} mode is enabled`
+    );
+    await clickElementByPointer(cdp, '[data-protocol-mode="deep"]');
+    await waitForPage(
+      cdp,
+      `document.querySelector('[data-selected-protocol="deep"]') &&
+        document.querySelector('.inferno-tier-picker[data-inferno-tier="${tier}"][data-inferno-unlocked="${tier}"]')`,
+      `inferno layer ${tier} is the highest unlocked selection`
+    );
+    await evaluate(
+      cdp,
+      `(() => {
+        globalThis.__infiniteFlowSmokeOriginalRandom = Math.random;
+        Math.random = () => 0;
+        return true;
+      })()`
+    );
+    await clickElementByPointer(cdp, '[data-action="confirm-protocol-entry"]');
+    await waitForPage(
+      cdp,
+      `(() => {
+        const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
+        return saved.phase === 'explore' &&
+          saved.run?.entryFlowVersion === 2 &&
+          saved.run?.explorationRewardVersion === 1 &&
+          saved.run?.protocol?.id === 'deep' &&
+          saved.run?.protocol?.infernoTier === ${tier} &&
+          saved.run?.infernoMap?.rulesVersion === 1;
+      })()`,
+      `inferno layer ${tier} starts as a versioned procedural run`
+    );
+    await evaluate(
+      cdp,
+      `(() => {
+        if (globalThis.__infiniteFlowSmokeOriginalRandom) {
+          Math.random = globalThis.__infiniteFlowSmokeOriginalRandom;
+          delete globalThis.__infiniteFlowSmokeOriginalRandom;
+        }
+        return true;
+      })()`
+    );
+  };
+
+  const settleCurrentLayer = async (tier) => {
+    await walkInfernoToUnresolvedNodeByPointer(
+      cdp,
+      'tower_exit',
+      `inferno layer ${tier} exit route`
+    );
+    const materialBeforeExit = await evaluate(
+      cdp,
+      `JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state.inventory.demon_bone`
+    );
+    const beforeExit = await evaluate(
+      cdp,
+      `(() => {
+        const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
+        const button = document.querySelector('[data-action^="exit-current-"]');
+        return {
+          phase: saved.phase,
+          dungeonId: saved.run?.dungeonId,
+          currentNodeId: saved.run?.currentNodeId,
+          clearedNodeIds: saved.run?.clearedNodeIds,
+          protocol: saved.run?.protocol,
+          buttonAction: button?.dataset.action,
+          buttonDisabled: button?.disabled,
+          pendingEquipmentOffer: Boolean(saved.run?.pendingEquipmentOffer),
+          pendingRelicChoice: Boolean(document.querySelector('[data-relic-choice]:not(:disabled)')),
+          routeLock: document.querySelector('.route-lock-status')?.textContent.replace(/\\s+/g, ' ').trim() ?? ''
+        };
+      })()`
+    );
+    if (
+      beforeExit.currentNodeId !== 'tower_exit' ||
+      !beforeExit.buttonAction ||
+      beforeExit.buttonDisabled ||
+      beforeExit.pendingEquipmentOffer ||
+      beforeExit.pendingRelicChoice
+    ) {
+      throw new Error(
+        `Inferno layer ${tier} should reach an actionable real exit: ${JSON.stringify(beforeExit)}`
+      );
+    }
+    await clickElementByPointer(cdp, '[data-action^="exit-current-"]');
+    await delay(250);
+    const afterExitClick = await evaluate(
+      cdp,
+      `(() => {
+        const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
+        return {
+          phase: saved.phase,
+          dungeonId: saved.run?.dungeonId,
+          currentNodeId: saved.run?.currentNodeId,
+          lastOutcome: saved.lastOutcome,
+          latestLog: saved.log?.[0],
+          pendingEquipmentOffer: Boolean(saved.run?.pendingEquipmentOffer),
+          pendingRelicChoice: Boolean(document.querySelector('[data-relic-choice]:not(:disabled)'))
+        };
+      })()`
+    );
+    if (afterExitClick.phase !== 'result') {
+      throw new Error(
+        `Inferno layer ${tier} exit pointer should synchronously settle the run: before=${JSON.stringify(beforeExit)} after=${JSON.stringify(afterExitClick)}`
+      );
+    }
+    const exitSnapshot = await evaluate(
+      cdp,
+      `(() => {
+        const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
+        return {
+          materialBeforeExit: ${materialBeforeExit},
+          materialAfterExit: saved.inventory.demon_bone,
+          unlockedTier: saved.infernoProgress?.demon_tower_1,
+          protocolSettlement: saved.run?.lastProtocolSettlement
+        };
+      })()`
+    );
+    if (
+      exitSnapshot.protocolSettlement?.protocol?.id !== 'deep' ||
+      exitSnapshot.protocolSettlement?.status !== 'succeeded' ||
+      exitSnapshot.protocolSettlement?.infernoTier !== tier ||
+      exitSnapshot.protocolSettlement?.unlockedInfernoTier !== tier + 1 ||
+      exitSnapshot.unlockedTier !== tier + 1
+    ) {
+      throw new Error(
+        `Inferno layer ${tier} should unlock exactly layer ${tier + 1} at the real exit: ${JSON.stringify(exitSnapshot)}`
+      );
+    }
+    return exitSnapshot;
+  };
+
+  const returnFromLayer = async (tier) => {
+    if (
+      await evaluate(
+        cdp,
+        `Boolean(document.querySelector('[data-relic-archive="skip"]:not(:disabled)'))`
+      )
+    ) {
+      await clickElementByPointer(cdp, '[data-relic-archive="skip"]');
+      await waitForPage(
+        cdp,
+        `!document.querySelector('[data-relic-archive="skip"]')`,
+        `inferno layer ${tier} relic archive skip resolves`
+      );
+    }
+    await clickButtonByPointer(cdp, '返回主神空间', '.result-panel');
+    await waitForPage(
+      cdp,
+      `(() => {
+        const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
+        return saved.phase === 'hub' &&
+          !saved.run &&
+          saved.infernoProgress?.demon_tower_1 === ${tier + 1};
+      })()`,
+      `inferno layer ${tier} returns to the hub with layer ${tier + 1} unlocked`
+    );
+  };
+
+  await setViewport(cdp, 390, 844);
+  await injectGameState(cdp, hub);
+  await cdp.send('Page.navigate', { url: appUrl });
+  await waitForPage(cdp, `document.querySelector('.shell')`, 'layered inferno settlement hub shell');
+  await clickElementByPointer(cdp, '[data-action="open-hub-dungeons"]');
+  await waitForPage(
+    cdp,
+    `document.querySelector('[data-action="open-protocol-demon_tower_1"]')`,
+    'layered inferno settlement dungeon directory'
+  );
+
+  await enterUnlockedLayer(1);
+  await walkInfernoToUnresolvedNodeByPointer(
+    cdp,
+    'bone_lane_monster',
+    'inferno layer 1 boss route',
+    ['butcher_turn', 'tower_butcher_patrol']
+  );
+  await finishProtocolCombatByPointer(cdp, 'inferno layer 1 boss');
+  const layerOneSettlement = await settleCurrentLayer(1);
+  if (
+    layerOneSettlement.materialAfterExit !== layerOneSettlement.materialBeforeExit + 3 ||
+    layerOneSettlement.protocolSettlement?.infernoTier !== 1 ||
+    layerOneSettlement.protocolSettlement?.unlockedInfernoTier !== 2 ||
+    layerOneSettlement.unlockedTier !== 2
+  ) {
+    throw new Error(
+      `A real inferno layer 1 clear should grant x3 material and unlock exactly layer 2: ${JSON.stringify(layerOneSettlement)}`
+    );
+  }
+  await returnFromLayer(1);
+
+  await enterUnlockedLayer(2);
+  await walkInfernoToUnresolvedNodeByPointer(
+    cdp,
+    'bone_lane_monster',
+    'inferno layer 2 boss route',
+    ['butcher_turn', 'tower_butcher_patrol']
+  );
+  await finishProtocolCombatByPointer(
+    cdp,
+    'inferno layer 2 boss',
+    { keepEquipmentOffer: true }
+  );
+  const negativeCandidate = await evaluate(
+    cdp,
+    `(() => {
+      const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
+      const powerElement = [...document.querySelectorAll('.resource-value')].find(
+        (element) => element.querySelector('small')?.textContent.trim() === '战力'
+      )?.querySelector('strong');
+      const powerText = powerElement?.textContent.trim() ?? '';
+      const option = [...document.querySelectorAll('.loot-offer-option')].find((candidate) => {
+        const equipmentId = candidate.dataset.lootEquipmentId;
+        const roll = candidate.querySelector('.equipment-roll.candidate');
+        return Boolean(
+          equipmentId &&
+          Object.values(saved.equipped ?? {}).includes(equipmentId) &&
+          Number(roll?.dataset.rollComparison ?? 0) < 0 &&
+          roll?.textContent.includes('真实战力')
+        );
+      });
+      const equipmentId = option?.dataset.lootEquipmentId;
+      const roll = option?.querySelector('.equipment-roll.candidate');
+      const equippedSlot = equipmentId
+        ? Object.entries(saved.equipped ?? {}).find(([, equippedId]) => equippedId === equipmentId)?.[0]
+        : undefined;
+      return {
+        equipmentId,
+        equippedSlot,
+        comparison: Number(roll?.dataset.rollComparison ?? 0),
+        rollText: roll?.textContent.replace(/\\s+/g, ' ').trim() ?? '',
+        heading: document.querySelector('.loot-offer-heading small')?.textContent.replace(/\\s+/g, ' ').trim() ?? '',
+        powerText,
+        power: /^\\d+$/.test(powerText) ? Number(powerText) : null,
+        currentRoll: equipmentId ? saved.equipmentRolls?.[equipmentId] : undefined,
+        candidateRoll: equipmentId ? saved.run?.pendingEquipmentOffer?.equipmentRolls?.[equipmentId] : undefined
+      };
+    })()`
+  );
+  if (
+    !negativeCandidate.equipmentId ||
+    !negativeCandidate.equippedSlot ||
+    negativeCandidate.comparison >= 0 ||
+    !negativeCandidate.rollText.includes('真实战力') ||
+    !negativeCandidate.rollText.includes('综合裁决未胜出') ||
+    !negativeCandidate.heading.includes('真实战力与综合词条裁决') ||
+    !negativeCandidate.currentRoll ||
+    !negativeCandidate.candidateRoll ||
+    negativeCandidate.candidateRoll.sourceTier <= negativeCandidate.currentRoll.sourceTier ||
+    negativeCandidate.candidateRoll.itemPower <= negativeCandidate.currentRoll.itemPower ||
+    typeof negativeCandidate.power !== 'number' ||
+    negativeCandidate.power <= 0
+  ) {
+    throw new Error(
+      `A real inferno layer 2 boss should offer a deterministic weaker duplicate against the prepared strong rolls: ${JSON.stringify(negativeCandidate)}`
+    );
+  }
+  await clickElementByPointer(
+    cdp,
+    `[data-action="loot-select-${negativeCandidate.equipmentId}"]`
+  );
+  await waitForPage(
+    cdp,
+    `(() => {
+      const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
+      return !saved.run?.pendingEquipmentOffer &&
+        saved.run?.lootBag?.equipmentIds?.includes(${JSON.stringify(negativeCandidate.equipmentId)}) &&
+        saved.run?.carriedEquipmentRolls?.[${JSON.stringify(negativeCandidate.equipmentId)}];
+    })()`,
+    'negative inferno duplicate is selected into the unsettled loot bag'
+  );
+  const layerTwoExit = await settleCurrentLayer(2);
+  const layerTwoSettlement = await evaluate(
+    cdp,
+    `(() => {
+      const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
+      const powerElement = [...document.querySelectorAll('.resource-value')].find(
+        (element) => element.querySelector('small')?.textContent.trim() === '战力'
+      )?.querySelector('strong');
+      const powerText = powerElement?.textContent.trim() ?? '';
+      return {
+        demonBone: saved.inventory.demon_bone,
+        materialReward: saved.run?.lastProtocolSettlement?.materialReward,
+        unlockedTier: saved.infernoProgress?.demon_tower_1,
+        powerText,
+        power: /^\\d+$/.test(powerText) ? Number(powerText) : null,
+        retainedRoll: saved.equipmentRolls?.[${JSON.stringify(negativeCandidate.equipmentId)}],
+        rollSettlement: saved.run?.lastEquipmentRollSettlement,
+        autoEquipped: saved.run?.lastAutoEquippedEquipmentIds
+      };
+    })()`
+  );
+  if (
+    layerTwoExit.materialAfterExit !== layerTwoExit.materialBeforeExit + 4 ||
+    layerTwoExit.protocolSettlement?.infernoTier !== 2 ||
+    layerTwoExit.protocolSettlement?.unlockedInfernoTier !== 3 ||
+    layerTwoSettlement.unlockedTier !== 3 ||
+    typeof layerTwoSettlement.power !== 'number' ||
+    layerTwoSettlement.power <= 0 ||
+    layerTwoSettlement.power !== negativeCandidate.power ||
+    JSON.stringify(layerTwoSettlement.retainedRoll) !==
+      JSON.stringify(negativeCandidate.currentRoll) ||
+    layerTwoSettlement.rollSettlement?.outcome !== 'salvaged' ||
+    layerTwoSettlement.rollSettlement?.equipmentId !== negativeCandidate.equipmentId ||
+    !(layerTwoSettlement.rollSettlement?.salvageRewardPoints > 0) ||
+    JSON.stringify(layerTwoSettlement.autoEquipped) !== JSON.stringify([])
+  ) {
+    throw new Error(
+      `Layer 2 exit should salvage the weaker candidate, preserve the old roll/power, and unlock layer 3: before=${JSON.stringify(negativeCandidate)} after=${JSON.stringify(layerTwoSettlement)}`
+    );
+  }
+
+  await evaluate(cdp, `localStorage.removeItem(${JSON.stringify(STORAGE_KEY)})`);
+  await cdp.send('Page.reload', { ignoreCache: true });
+  await waitForPage(
+    cdp,
+    `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null`,
+    'layered inferno settlement smoke cleanup'
+  );
+  console.log('[smoke] layered inferno settlement: real layer 1 unlock -> layer 2 boss drop -> weaker duplicate salvage preserves roll/power -> layer 3 unlock pass');
 }
 
 async function runDeepProtocolPointerSmoke(cdp, appUrl) {
@@ -5703,8 +7912,10 @@ async function runDungeonLawPointerSmoke(cdp, appUrl) {
   await injectGameState(cdp, hubState);
   await setViewport(cdp, 1440, 900);
   await cdp.send('Page.navigate', { url: appUrl });
-  await waitForPage(cdp, `document.querySelector('.dungeon-card')`, 'dungeon law pointer hub renders');
-  await clickCardButtonByPointer(cdp, '.dungeon-card', '妖塔一层', '进入副本');
+  await waitForPage(cdp, `document.querySelector('[data-action="open-hub-dungeons"]')`, 'dungeon law pointer hub renders');
+  await clickCardButtonByPointer(cdp, '.dungeon-card', '妖塔一层', '准备进入');
+  await waitForPage(cdp, `document.querySelector('.protocol-sheet[role="dialog"]')`, 'dungeon law preparation opens');
+  await clickDialogButton(cdp, '进入普通');
   await waitForPage(
     cdp,
     `(() => {
@@ -5747,18 +7958,32 @@ async function runDungeonLawPointerSmoke(cdp, appUrl) {
     width: 1440,
     height: 900,
     rootSelector: '.dungeon-law-status',
-    targetSelectors: ['.dungeon-law-status', '.dungeon-map', '.node-action-panel'],
+    targetSelectors: ['.dungeon-map', '.node-action-panel'],
     buttonSelectors: ['[data-action="fight-current-fog_lesser_demon"]'],
     label: 'desktop dungeon law exploration'
   });
+  await assertLateTierMapStatusAlwaysVisible(
+    cdp,
+    '[data-dungeon-law="demon_tower_1"]',
+    1440,
+    900,
+    'desktop demon-tower law'
+  );
   await assertResponsiveSurface(cdp, {
     width: 390,
     height: 844,
     rootSelector: '.dungeon-law-status',
-    targetSelectors: ['.dungeon-law-status', '.dungeon-map', '.node-action-panel'],
+    targetSelectors: ['.dungeon-map', '.node-action-panel'],
     buttonSelectors: ['[data-action="fight-current-fog_lesser_demon"]'],
     label: 'mobile dungeon law exploration'
   });
+  await assertLateTierMapStatusAlwaysVisible(
+    cdp,
+    '[data-dungeon-law="demon_tower_1"]',
+    390,
+    844,
+    'mobile demon-tower law'
+  );
 
   await setViewport(cdp, 1440, 900);
   await clearCurrentMonsterByAttack(cdp, 'dungeon law first monster');
@@ -5779,8 +8004,148 @@ async function runDungeonLawPointerSmoke(cdp, appUrl) {
       document.querySelector('.dungeon-law-status')?.textContent.includes('雾压 1/3')`,
     'changed dungeon law survives reload'
   );
+
+  const legacyClearedNodeIds = [
+    'fog_lesser_demon',
+    'blood_rune_trap',
+    'sealed_cache',
+    'evac_supply_cache',
+    'last_blessing_reward',
+    'quiet_prayer_reward',
+    'gate_sigil_cache'
+  ];
+  const legacyFogMemorySave = makeExploreSave({
+    dungeonId: 'demon_tower_1',
+    nodeId: 'gate_sigil_cache',
+    clearedNodeIds: legacyClearedNodeIds,
+    lawState: makeDungeonLawState(
+      'demon_tower_1',
+      { kind: 'demon_tower', fogPressure: 0 },
+      {
+        clearedNodeIds: legacyClearedNodeIds,
+        resolvedEventIds: ['blood_rune_stair', 'mist_sealed_cache']
+      }
+    ),
+    log: [
+      '白光裂口亮起，首次通关结算：normal_clear，倍率 1.2x。',
+      '隐藏任务以 failed/incomplete_exit 结算，奖励为 0。'
+    ]
+  });
+  delete legacyFogMemorySave.run.discoveredNodeIds;
+  await injectGameState(cdp, legacyFogMemorySave);
+  await cdp.send('Page.navigate', { url: appUrl });
+  await waitForPage(
+    cdp,
+    `document.querySelector('[data-action="grid-cracked_portal"][data-fog-state="discovered"]')?.textContent.includes('裂缝石门') &&
+      document.querySelector('[data-action="grid-tower_exit"][data-fog-state="discovered"]')?.textContent.includes('白光裂口') &&
+      document.querySelector('.dungeon-law-status')?.textContent.includes('恢复地标已耗尽') &&
+      document.querySelector('.log-panel')?.textContent.includes('首次通关结算：稳定通关') &&
+      document.querySelector('.log-panel')?.textContent.includes('失败（离场时目标未完成）') &&
+      !document.querySelector('.log-panel')?.textContent.includes('normal_clear') &&
+      !document.querySelector('.log-panel')?.textContent.includes('failed/incomplete_exit')`,
+    'legacy save reconstructs scouted gaps and localizes exhausted-law and historical-log copy'
+  );
+  const rememberedFog = await evaluate(
+    cdp,
+    `(() => {
+      const portal = document.querySelector('[data-action="grid-cracked_portal"]');
+      const exit = document.querySelector('[data-action="grid-tower_exit"]');
+      const hidden = document.querySelector('[data-action="grid-tower_butcher_patrol"]');
+      const lawStatus = document.querySelector('.dungeon-law-status');
+      const logPanel = document.querySelector('.log-panel');
+      const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
+      return {
+        portalText: portal?.textContent.replace(/\\s+/g, ' ').trim() ?? '',
+        portalDisabled: portal?.disabled ?? false,
+        exitText: exit?.textContent.replace(/\\s+/g, ' ').trim() ?? '',
+        exitDisabled: exit?.disabled ?? false,
+        hiddenText: hidden?.textContent.replace(/\\s+/g, ' ').trim() ?? '',
+        hiddenState: hidden?.dataset.fogState ?? '',
+        lawStatusText: lawStatus?.textContent.replace(/\\s+/g, ' ').trim() ?? '',
+        logText: logPanel?.textContent.replace(/\\s+/g, ' ').trim() ?? '',
+        rawLog: saved.log ?? [],
+        savedDiscovered: saved.run?.discoveredNodeIds ?? []
+      };
+    })()`
+  );
+  if (
+    !rememberedFog.portalText.includes('裂缝石门') ||
+    !rememberedFog.portalText.includes('已侦察') ||
+    !rememberedFog.portalDisabled ||
+    !rememberedFog.exitText.includes('白光裂口') ||
+    !rememberedFog.exitText.includes('已侦察') ||
+    !rememberedFog.exitDisabled ||
+    rememberedFog.hiddenText !== '?' ||
+    rememberedFog.hiddenState !== 'hidden' ||
+    !rememberedFog.lawStatusText.includes('恢复地标已耗尽') ||
+    !rememberedFog.logText.includes('首次通关结算：稳定通关') ||
+    !rememberedFog.logText.includes('失败（离场时目标未完成）') ||
+    rememberedFog.logText.includes('normal_clear') ||
+    rememberedFog.logText.includes('failed/incomplete_exit') ||
+    !rememberedFog.rawLog.some((line) => line.includes('normal_clear')) ||
+    !rememberedFog.rawLog.some((line) => line.includes('failed/incomplete_exit')) ||
+    !rememberedFog.savedDiscovered.includes('cracked_portal') ||
+    !rememberedFog.savedDiscovered.includes('tower_exit')
+  ) {
+    throw new Error(`Fog memory should retain scouted nodes without enabling distant movement: ${JSON.stringify(rememberedFog)}`);
+  }
+
+  const lawMarkPoint = await evaluate(
+    cdp,
+    `(() => {
+      const mark = document.querySelector('[data-action="grid-sealed_cache"] .law-landmark-mark');
+      if (!mark) throw new Error('Missing law landmark mark');
+      mark.scrollIntoView({ block: 'center', inline: 'center' });
+      const rect = mark.getBoundingClientRect();
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
+      if (document.elementFromPoint(x, y) !== mark) throw new Error('Law landmark mark is not the pointer target');
+      return { x, y };
+    })()`
+  );
+  await cdp.send('Input.dispatchMouseEvent', {
+    type: 'mouseMoved',
+    x: lawMarkPoint.x,
+    y: lawMarkPoint.y,
+    button: 'none'
+  });
+  await waitForPage(
+    cdp,
+    `getComputedStyle(document.querySelector('#law-landmark-tooltip-sealed_cache')).visibility === 'visible'`,
+    'hovering the law mark reveals its description'
+  );
+  const lawTooltip = await evaluate(
+    cdp,
+    `(() => {
+      const node = document.querySelector('[data-action="grid-sealed_cache"]');
+      const mark = node?.querySelector('.law-landmark-mark');
+      const tooltip = node?.querySelector('.law-landmark-tooltip');
+      const rect = tooltip?.getBoundingClientRect();
+      return {
+        markCursor: mark ? getComputedStyle(mark).cursor : '',
+        tooltipText: tooltip?.textContent.replace(/\\s+/g, ' ').trim() ?? '',
+        tooltipVisible: tooltip ? getComputedStyle(tooltip).visibility === 'visible' : false,
+        tooltipInsideViewport: Boolean(rect && rect.left >= 0 && rect.right <= innerWidth && rect.top >= 0 && rect.bottom <= innerHeight),
+        describedBy: node?.getAttribute('aria-describedby') ?? '',
+        ariaLabel: node?.getAttribute('aria-label') ?? ''
+      };
+    })()`
+  );
+  if (
+    lawTooltip.markCursor !== 'help' ||
+    !lawTooltip.tooltipVisible ||
+    !lawTooltip.tooltipInsideViewport ||
+    !lawTooltip.tooltipText.includes('法则地标') ||
+    !lawTooltip.tooltipText.includes('妖雾压境') ||
+    !lawTooltip.tooltipText.includes('恢复地标已耗尽') ||
+    !lawTooltip.tooltipText.includes('当前目标') ||
+    !lawTooltip.describedBy.includes('law-landmark-tooltip-sealed_cache') ||
+    !lawTooltip.ariaLabel.includes('法则地标')
+  ) {
+    throw new Error(`Law landmark hover should explain the current rule without obscuring the map: ${JSON.stringify(lawTooltip)}`);
+  }
   await setViewport(cdp, 1280, 900);
-  console.log('[smoke] real pointer dungeon entry hides unexplored law landmarks, guides the current action, and persists fog pressure after combat');
+  console.log('[smoke] real pointer dungeon entry hides unknown landmarks, persists fog pressure, reconstructs scouted route gaps, localizes old logs, and explains exhausted law marks on hover');
 }
 
 async function runDirectionalRouteGatePointerSmoke(cdp, appUrl) {
@@ -5800,6 +8165,7 @@ async function runDirectionalRouteGatePointerSmoke(cdp, appUrl) {
   };
 
   await injectGameState(cdp, makeGateState(3));
+  await setViewport(cdp, 1440, 900);
   await cdp.send('Page.navigate', { url: appUrl });
   await waitForPage(
     cdp,
@@ -5807,38 +8173,87 @@ async function runDirectionalRouteGatePointerSmoke(cdp, appUrl) {
       document.querySelector('.nearby-route-gate[data-route-gate-id="demon_fog_bone_lane"][data-route-gate-status="closed"]')`,
     'closed directional gate renders pointer-enabled'
   );
+  const nearbyGateSelector =
+    '.nearby-route-gate[data-route-gate-id="demon_fog_bone_lane"][data-route-gate-status="closed"]';
+  await assertLateTierMapStatusAlwaysVisible(
+    cdp,
+    '[data-dungeon-law="demon_tower_1"]',
+    1440,
+    900,
+    'desktop closed demon-tower route gate',
+    nearbyGateSelector
+  );
   const closedGate = await evaluate(
     cdp,
     `(() => {
+      const details = document.querySelector('.run-details');
+      const content = details?.querySelector('.run-details-content');
       const node = document.querySelector('.grid-node[data-route-gate-id="demon_fog_bone_lane"]');
       const status = document.querySelector('.nearby-route-gate[data-route-gate-id="demon_fog_bone_lane"]');
+      const lawStatus = document.querySelector('[data-dungeon-law="demon_tower_1"]');
+      const lawRect = lawStatus?.getBoundingClientRect();
       return {
         disabled: node?.disabled ?? true,
         nodeText: node?.textContent.replace(/\\s+/g, ' ').trim() ?? '',
         statusText: status?.textContent.replace(/\\s+/g, ' ').trim() ?? '',
-        reason: status?.querySelector('span')?.textContent.trim() ?? ''
+        reason: status?.querySelector('span')?.textContent.trim() ?? '',
+        detailsOpen: details instanceof HTMLDetailsElement ? details.open : undefined,
+        lawStatusRects: lawStatus?.getClientRects().length ?? -1,
+        lawStatusWidth: lawRect?.width ?? 0,
+        lawStatusHeight: lawRect?.height ?? 0,
+        lawStatusInsideHiddenContent: Boolean(content && lawStatus && content.contains(lawStatus)),
+        nearbyGateRects: status?.getClientRects().length ?? -1,
+        nearbyGateInsideHiddenContent: Boolean(content && status && content.contains(status))
       };
     })()`
   );
-  if (closedGate.disabled || !closedGate.nodeText.includes('门') || !closedGate.nodeText.includes('门禁关闭') || !closedGate.reason) {
+  if (
+    closedGate.disabled ||
+    !closedGate.nodeText.includes('门') ||
+    !closedGate.nodeText.includes('门禁关闭') ||
+    !closedGate.reason ||
+    closedGate.detailsOpen !== false ||
+    closedGate.lawStatusRects <= 0 ||
+    closedGate.lawStatusWidth <= 0 ||
+    closedGate.lawStatusHeight <= 0 ||
+    closedGate.lawStatusInsideHiddenContent ||
+    closedGate.nearbyGateRects !== 0 ||
+    !closedGate.nearbyGateInsideHiddenContent
+  ) {
     throw new Error(`Closed law gate should remain clickable and expose its reopening reason: ${JSON.stringify(closedGate)}`);
   }
   await assertResponsiveSurface(cdp, {
     width: 1440,
     height: 900,
     rootSelector: '.dungeon-map',
-    targetSelectors: ['.dungeon-law-status', '.nearby-route-gates', '.dungeon-map'],
+    targetSelectors: ['.dungeon-map'],
     buttonSelectors: ['.grid-node[data-route-gate-id="demon_fog_bone_lane"]'],
     label: 'desktop closed route gate'
   });
+  await assertLateTierMapStatusAlwaysVisible(
+    cdp,
+    '[data-dungeon-law="demon_tower_1"]',
+    1440,
+    900,
+    'desktop closed demon-tower route gate after layout',
+    nearbyGateSelector
+  );
   await assertResponsiveSurface(cdp, {
     width: 390,
     height: 844,
     rootSelector: '.dungeon-map',
-    targetSelectors: ['.dungeon-law-status', '.nearby-route-gates', '.dungeon-map'],
+    targetSelectors: ['.dungeon-map'],
     buttonSelectors: ['.grid-node[data-route-gate-id="demon_fog_bone_lane"]'],
     label: 'mobile closed route gate'
   });
+  await assertLateTierMapStatusAlwaysVisible(
+    cdp,
+    '[data-dungeon-law="demon_tower_1"]',
+    390,
+    844,
+    'mobile closed demon-tower route gate',
+    nearbyGateSelector
+  );
 
   await clickElementByPointer(cdp, '.grid-node[data-route-gate-id="demon_fog_bone_lane"]');
   await waitForPage(
@@ -6188,6 +8603,185 @@ async function runCombatIntentPointerSmoke(cdp, appUrl) {
   await setViewport(cdp, 390, 844);
   await cdp.send('Page.navigate', { url: appUrl });
   await waitForPage(cdp, `document.querySelector('[data-combat-intent="spark-burst"]')`, 'spark burst intent renders before action');
+  await waitForPage(
+    cdp,
+    `(() => {
+      const dialog = document.querySelector('.combat-panel[role="dialog"][aria-modal="true"]');
+      const appContent = document.querySelector('.app-content');
+      const stage = dialog?.querySelector('[data-combat-formation="enemy-left-player-right"]');
+      const enemyRect = stage?.querySelector('[data-combat-side="enemy"]')?.getBoundingClientRect();
+      const playerRect = stage?.querySelector('[data-combat-side="player"]')?.getBoundingClientRect();
+      return dialog &&
+        document.body.classList.contains('modal-open') &&
+        Boolean(appContent?.hasAttribute('inert') || appContent?.inert) &&
+        dialog.contains(document.activeElement) &&
+        document.querySelector('.explore-primary') &&
+        enemyRect &&
+        playerRect &&
+        enemyRect.left < playerRect.left &&
+        document.querySelectorAll('.combat-health[role="progressbar"]').length === 2 &&
+        document.querySelector('.combat-action-dock') &&
+        document.querySelectorAll('.combat-command-glyph').length ===
+          document.querySelectorAll('.combat-command-action').length &&
+        document.querySelectorAll('.combat-command-slot').length ===
+          document.querySelectorAll('.combat-command-action').length &&
+        document.querySelectorAll('.combat-command-help [role="tooltip"]').length ===
+          document.querySelectorAll('.combat-command-action').length &&
+        [...document.querySelectorAll('.combat-command-action')].every((action) =>
+          action.querySelector('.combat-command-values') &&
+          action.getAttribute('aria-describedby')
+        ) &&
+        [...dialog.querySelectorAll('img.game-art')].every((image) => image.complete && image.naturalWidth > 0);
+    })()`,
+    'combat opens as a focused blocking dialog with concise commands, accessible details, and loaded art'
+  );
+  const mobileCombatHelpLayout = await evaluate(
+    cdp,
+    `(() => {
+      const dialog = document.querySelector('.combat-panel[role="dialog"][aria-modal="true"]');
+      const popover = document.querySelector('[data-feature-help-popover]');
+      const helpTargets = [...(dialog?.querySelectorAll('.feature-help-trigger, .combat-hover-detail-trigger') ?? [])]
+        .filter((target) => target.getClientRects().length > 0);
+      const commandPairs = [...(dialog?.querySelectorAll('.combat-command-slot') ?? [])].map((slot) => {
+        const action = slot.querySelector('.combat-command-action');
+        const help = slot.querySelector('.combat-command-help .combat-hover-detail-trigger');
+        const actionRect = action?.getBoundingClientRect();
+        const helpRect = help?.getBoundingClientRect();
+        const overlapX = actionRect && helpRect
+          ? Math.min(actionRect.right, helpRect.right) - Math.max(actionRect.left, helpRect.left)
+          : Infinity;
+        const overlapY = actionRect && helpRect
+          ? Math.min(actionRect.bottom, helpRect.bottom) - Math.max(actionRect.top, helpRect.top)
+          : Infinity;
+        return {
+          hasAction: Boolean(action),
+          hasHelp: Boolean(help),
+          helpWidth: helpRect?.width ?? 0,
+          helpHeight: helpRect?.height ?? 0,
+          overlaps: overlapX > 0.5 && overlapY > 0.5
+        };
+      });
+      return {
+        viewport: [innerWidth, innerHeight],
+        popoverInsideCombatDialog: Boolean(dialog && popover && dialog.contains(popover)),
+        helpTargetCount: helpTargets.length,
+        undersizedTargets: helpTargets.map((target) => {
+          const rect = target.getBoundingClientRect();
+          return { width: rect.width, height: rect.height };
+        }).filter(({ width, height }) => width < 43.5 || height < 43.5),
+        commandPairs
+      };
+    })()`
+  );
+  if (
+    JSON.stringify(mobileCombatHelpLayout.viewport) !== JSON.stringify([390, 844]) ||
+    !mobileCombatHelpLayout.popoverInsideCombatDialog ||
+    mobileCombatHelpLayout.helpTargetCount < 8 ||
+    mobileCombatHelpLayout.undersizedTargets.length > 0 ||
+    mobileCombatHelpLayout.commandPairs.length < 6 ||
+    mobileCombatHelpLayout.commandPairs.some((pair) =>
+      !pair.hasAction || !pair.hasHelp || pair.helpWidth < 43.5 || pair.helpHeight < 43.5 || pair.overlaps
+    )
+  ) {
+    throw new Error(`390x844 coarse combat help targets should be 44px and separate from actions: ${JSON.stringify(mobileCombatHelpLayout)}`);
+  }
+  const combatHelpTriggerSelector = '.combat-dialog-header [data-feature-help="combatFlow"]';
+  await evaluate(
+    cdp,
+    `(() => {
+      const trigger = document.querySelector(${JSON.stringify(combatHelpTriggerSelector)});
+      if (!(trigger instanceof HTMLButtonElement)) throw new Error('Missing combat flow help trigger');
+      trigger.focus({ preventScroll: true });
+      return document.activeElement === trigger;
+    })()`
+  );
+  await pressEnter(cdp);
+  await waitForPage(
+    cdp,
+    `(() => {
+      const dialog = document.querySelector('.combat-panel[role="dialog"][aria-modal="true"]');
+      const trigger = document.querySelector(${JSON.stringify(combatHelpTriggerSelector)});
+      const popover = document.querySelector('[data-feature-help-popover]');
+      const style = popover ? getComputedStyle(popover) : null;
+      return Boolean(
+        dialog &&
+        popover &&
+        dialog.contains(popover) &&
+        dialog.contains(document.activeElement) &&
+        document.activeElement === popover &&
+        popover.hidden === false &&
+        popover.dataset.pinned === 'true' &&
+        popover.dataset.featureHelpId === 'combatFlow' &&
+        trigger?.getAttribute('aria-expanded') === 'true' &&
+        style?.outlineStyle !== 'none' &&
+        Number.parseFloat(style?.outlineWidth ?? '0') >= 2
+      );
+    })()`,
+    'combat help opens by real keyboard inside the modal with a visible focus ring'
+  );
+  await pressEscape(cdp);
+  await waitForPage(
+    cdp,
+    `(() => {
+      const dialog = document.querySelector('.combat-panel[role="dialog"][aria-modal="true"]');
+      const trigger = document.querySelector(${JSON.stringify(combatHelpTriggerSelector)});
+      const popover = document.querySelector('[data-feature-help-popover]');
+      return Boolean(dialog) &&
+        popover?.hidden === true &&
+        trigger?.getAttribute('aria-expanded') === 'false' &&
+        document.activeElement === trigger;
+    })()`,
+    'combat help Escape keeps combat open and restores its keyboard trigger'
+  );
+  await pressEscape(cdp);
+  const modalBeforeGuard = await evaluate(
+    cdp,
+    `(() => {
+      const dialog = document.querySelector('.combat-panel[role="dialog"][aria-modal="true"]');
+      const appContent = document.querySelector('.app-content');
+      return {
+        active: Boolean(dialog),
+        bodyLocked: document.body.classList.contains('modal-open'),
+        backgroundInert: Boolean(appContent?.hasAttribute('inert') || appContent?.inert),
+        focusInside: Boolean(dialog?.contains(document.activeElement)),
+        coreActions: dialog?.querySelectorAll('.combat-actions-primary .combat-command-action').length ?? 0,
+        tacticalActions: dialog?.querySelectorAll('.combat-actions-tactical .combat-command-action').length ?? 0
+      };
+    })()`
+  );
+  if (
+    !modalBeforeGuard.active ||
+    !modalBeforeGuard.bodyLocked ||
+    !modalBeforeGuard.backgroundInert ||
+    !modalBeforeGuard.focusInside ||
+    modalBeforeGuard.coreActions < 3 ||
+    modalBeforeGuard.tacticalActions !== 3
+  ) {
+    throw new Error(`Combat dialog should ignore Escape and keep the decision surface active: ${JSON.stringify(modalBeforeGuard)}`);
+  }
+  await evaluate(
+    cdp,
+    `(() => {
+      const image = document.querySelector('.combat-panel .enemy-sprite');
+      if (!image) throw new Error('Missing enemy battle sprite for fallback smoke');
+      image.src = 'data:image/png;base64,broken-image-payload';
+      return true;
+    })()`
+  );
+  await waitForPage(
+    cdp,
+    `document.querySelector('.combat-panel .enemy-sprite.is-fallback[data-asset-state="fallback"]')?.naturalWidth > 0`,
+    'broken combat art switches to an inline fallback'
+  );
+  await waitForPage(
+    cdp,
+    `(() => {
+      const image = document.querySelector('.combat-panel .enemy-sprite');
+      return image && image.dataset.assetState === 'ready' && !image.classList.contains('is-fallback') && image.naturalWidth > 0;
+    })()`,
+    'combat art finite retry restores the original image',
+    6000
+  );
   const beforeGuard = await evaluate(
     cdp,
     `(() => {
@@ -6224,11 +8818,11 @@ async function runCombatIntentPointerSmoke(cdp, appUrl) {
     width: 390,
     height: 844,
     rootSelector: '.combat-panel',
-    targetSelectors: ['.dungeon-law-status', '.combat-intent', '.battlefield', '.combat-command-area', '.combat-log'],
+    targetSelectors: ['.combat-intent', '.battlefield', '.weapon-skill-state', '.combat-log', '.combat-action-dock'],
     buttonSelectors: ['[data-action="combat-guard"]'],
     label: 'mobile combat law and intent'
   });
-  await clickButtonByPointer(cdp, '防御', '.combat-panel');
+  await clickElementByPointer(cdp, '[data-action="combat-guard"]');
   await waitForPage(
     cdp,
     `(() => {
@@ -6248,6 +8842,7 @@ async function runCombatIntentPointerSmoke(cdp, appUrl) {
         intentText: document.querySelector('.combat-intent')?.textContent.replace(/\\s+/g, ' ').trim() ?? '',
         attackCounter: attack?.classList.contains('intent-counter') ?? false,
         attackRisk: attack?.classList.contains('intent-risk') ?? false,
+        focusOnGuard: document.activeElement === document.querySelector('[data-action="combat-guard"]'),
         log: saved.combat?.log?.join(' ') ?? ''
       };
     })()`
@@ -6258,6 +8853,7 @@ async function runCombatIntentPointerSmoke(cdp, appUrl) {
     !afterGuard.intentText.includes('常规追击') ||
     !afterGuard.attackCounter ||
     afterGuard.attackRisk ||
+    !afterGuard.focusOnGuard ||
     !afterGuard.log.includes('跳火小鬼在第三回合爆出火星')
   ) {
     throw new Error(`Enemy intent should update immediately after the real guard: ${JSON.stringify(afterGuard)}`);
@@ -6266,12 +8862,132 @@ async function runCombatIntentPointerSmoke(cdp, appUrl) {
     width: 1440,
     height: 900,
     rootSelector: '.combat-panel',
-    targetSelectors: ['.dungeon-law-status', '.combat-intent', '.battlefield', '.combat-command-area', '.combat-log'],
+    targetSelectors: ['.combat-intent', '.battlefield', '.weapon-skill-state', '.combat-log', '.combat-action-dock'],
     buttonSelectors: ['[data-action="combat-attack"]'],
     label: 'desktop refreshed combat law and intent'
   });
+  const desktopFormation = await evaluate(
+    cdp,
+    `(() => {
+      const enemy = document.querySelector('[data-combat-side="enemy"]')?.getBoundingClientRect();
+      const player = document.querySelector('[data-combat-side="player"]')?.getBoundingClientRect();
+      const readout = document.querySelector('.combat-command-readout')?.getBoundingClientRect();
+      const board = document.querySelector('.combat-command-board')?.getBoundingClientRect();
+      return {
+        enemyCenter: enemy ? enemy.left + enemy.width / 2 : null,
+        playerCenter: player ? player.left + player.width / 2 : null,
+        readoutLeft: readout?.left ?? null,
+        boardLeft: board?.left ?? null
+      };
+    })()`
+  );
+  if (
+    desktopFormation.enemyCenter === null ||
+    desktopFormation.playerCenter === null ||
+    desktopFormation.readoutLeft === null ||
+    desktopFormation.boardLeft === null ||
+    desktopFormation.enemyCenter >= desktopFormation.playerCenter ||
+    desktopFormation.boardLeft <= desktopFormation.readoutLeft
+  ) {
+    throw new Error(`Desktop combat should keep enemies left, player right, and the skill board on the right: ${JSON.stringify(desktopFormation)}`);
+  }
+  await setViewport(cdp, 820, 900);
+  await assertResponsiveSurface(cdp, {
+    width: 820,
+    height: 900,
+    rootSelector: '.combat-panel',
+    targetSelectors: ['.combat-action-dock', '.combat-command-readout', '.combat-command-board', '.weapon-skill-state'],
+    buttonSelectors: ['[data-action="combat-attack"]', '.combat-command-help .combat-hover-detail-trigger'],
+    label: 'mid-width concise combat command layout'
+  });
+  const midWidthCommandLayout = await evaluate(
+    cdp,
+    `(() => {
+      const readout = document.querySelector('.combat-command-readout')?.getBoundingClientRect();
+      const board = document.querySelector('.combat-command-board')?.getBoundingClientRect();
+      const weaponState = document.querySelector('.weapon-skill-state');
+      const resonance = document.querySelector('.weapon-resonance[data-weapon-resonance="combat"]');
+      const weaponLabel = document.querySelector('.weapon-skill-label')?.getBoundingClientRect();
+      const values = [...document.querySelectorAll('.combat-command-values')]
+        .map((element) => element.textContent.replace(/\\s+/g, ' ').trim());
+      return {
+        columnsSeparated: Boolean(readout && board && readout.right <= board.left),
+        weaponFits: Boolean(weaponState && weaponState.scrollWidth <= weaponState.clientWidth + 1),
+        resonanceFits: Boolean(resonance && resonance.scrollWidth <= resonance.clientWidth + 1),
+        weaponLabelHorizontal: Boolean(weaponLabel && weaponLabel.width >= 40 && weaponLabel.height <= 24),
+        detailCount: document.querySelectorAll('.combat-command-help [role="tooltip"]').length,
+        actionCount: document.querySelectorAll('.combat-command-action').length,
+        values,
+        longNarrativeVisible: values.some((value) =>
+          value.includes('实际伤害受') || value.includes('预计剩余') || value.includes('行动后可捕获')
+        )
+      };
+    })()`
+  );
+  if (
+    !midWidthCommandLayout.columnsSeparated ||
+    !midWidthCommandLayout.weaponFits ||
+    !midWidthCommandLayout.resonanceFits ||
+    !midWidthCommandLayout.weaponLabelHorizontal ||
+    midWidthCommandLayout.detailCount !== midWidthCommandLayout.actionCount ||
+    midWidthCommandLayout.values.length !== midWidthCommandLayout.actionCount ||
+    midWidthCommandLayout.longNarrativeVisible
+  ) {
+    throw new Error(`Mid-width combat commands should stay aligned and show concise values: ${JSON.stringify(midWidthCommandLayout)}`);
+  }
   await setViewport(cdp, 1280, 900);
-  console.log('[smoke] spark imp turn-three intent exposes guard counter before the pointer click and refreshes after defense');
+  const attackDetailPoint = await evaluate(
+    cdp,
+    `(() => {
+      const trigger = document.querySelector('[data-command-slot="attack"] .combat-hover-detail-trigger');
+      if (!trigger) throw new Error('Missing attack command detail trigger');
+      trigger.scrollIntoView({ block: 'center', inline: 'center' });
+      const rect = trigger.getBoundingClientRect();
+      return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+    })()`
+  );
+  await cdp.send('Input.dispatchMouseEvent', {
+    type: 'mouseMoved',
+    x: attackDetailPoint.x,
+    y: attackDetailPoint.y,
+    button: 'none'
+  });
+  await waitForPage(
+    cdp,
+    `(() => {
+      const tooltip = document.querySelector('[data-command-slot="attack"] [role="tooltip"]');
+      const style = tooltip && getComputedStyle(tooltip);
+      return Boolean(
+        tooltip &&
+        style?.visibility !== 'hidden' &&
+        Number.parseFloat(style?.opacity ?? '0') > 0 &&
+        tooltip.textContent.includes('预计伤害')
+      );
+    })()`,
+    'hovering an attack command reveals its complete calculation'
+  );
+  await clickElementByPointer(cdp, '[data-command-slot="attack"] .combat-hover-detail-trigger');
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 0, y: 0, button: 'none' });
+  await waitForPage(
+    cdp,
+    `document.activeElement === document.querySelector('[data-command-slot="attack"] .combat-hover-detail-trigger')`,
+    'clicking the attack detail question mark keeps its keyboard focus'
+  );
+  await pressEscape(cdp);
+  await waitForPage(
+    cdp,
+    `(() => {
+      const tooltip = document.querySelector('[data-command-slot="attack"] [role="tooltip"]');
+      const style = tooltip && getComputedStyle(tooltip);
+      return Boolean(
+        document.querySelector('.combat-panel[role="dialog"][aria-modal="true"]') &&
+        tooltip &&
+        (style?.visibility === 'hidden' || Number.parseFloat(style?.opacity ?? '1') === 0)
+      );
+    })()`,
+    'Escape closes the command detail without closing combat'
+  );
+  console.log('[smoke] spark imp combat keeps enemy-left player-right formation, concise hover/focus command details, and stable mid-width layout');
 }
 
 async function runDreamArchiveLawPointerSmoke(cdp, appUrl) {
@@ -7189,6 +9905,14 @@ async function assertRewardActionConsumed(cdp, nodeId, label) {
 }
 
 async function enterAndCollectFirstDemonTowerRelicDraft(cdp, expectedCandidateCount, label) {
+  if (!(await evaluate(cdp, `Boolean(document.querySelector('.dungeon-card[data-dungeon-id="demon_tower_1"]'))`))) {
+    await clickElementByPointer(cdp, '[data-action="open-hub-dungeons"]');
+    await waitForPage(
+      cdp,
+      `document.querySelector('.dungeon-card[data-dungeon-id="demon_tower_1"]')`,
+      `${label} opens the dungeon directory`
+    );
+  }
   const entryMode = await evaluate(
     cdp,
     `(() => {
@@ -7196,13 +9920,13 @@ async function enterAndCollectFirstDemonTowerRelicDraft(cdp, expectedCandidateCo
         candidate.textContent.includes('妖塔一层')
       );
       const button = [...(card?.querySelectorAll('button') ?? [])].find((candidate) => !candidate.disabled);
-      return button?.textContent.includes('选择协议') ? 'protocol' : 'direct';
+      return button?.textContent.includes('准备进入') ? 'protocol' : 'direct';
     })()`
   );
   if (entryMode === 'protocol') {
-    await clickCardButtonByPointer(cdp, '.dungeon-card', '妖塔一层', '选择协议');
+    await clickCardButtonByPointer(cdp, '.dungeon-card', '妖塔一层', '准备进入');
     await waitForPage(cdp, `document.querySelector('.protocol-sheet[role="dialog"]')`, `${label} protocol dialog opens`);
-    await clickDialogButton(cdp, '确认标准探索');
+    await clickDialogButton(cdp, '进入普通');
   } else {
     await clickCardButtonByPointer(cdp, '.dungeon-card', '妖塔一层', '进入副本');
   }
@@ -7396,8 +10120,19 @@ async function resetRelicSmokeState(cdp, appUrl) {
     cdp,
     `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null &&
       document.querySelector('[data-relic-preparation="true"][data-selected-relic-frame="assault"][data-relic-candidate-count="2"]') &&
-      document.querySelectorAll('.dungeon-card').length === ${DUNGEON_COUNT}`,
+      document.querySelector('.hub-stage')`,
     'run relic smoke restores a clean new game'
+  );
+}
+
+async function openRelicPreparationAtHub(cdp, label) {
+  await waitForPage(cdp, `document.querySelector('.hub-stage')`, `${label} hub renders`);
+  await clickElementByPointer(cdp, '[data-action="open-hub-supplies"]');
+  await waitForPage(
+    cdp,
+    `document.querySelector('.hub-directory-sheet')?.textContent.includes('补给商人') &&
+      document.querySelector('[data-relic-preparation="true"]')`,
+    `${label} opens relic preparation`
   );
 }
 
@@ -7599,8 +10334,12 @@ async function runRelicArchiveSeedSmoke(cdp, appUrl) {
   await clickElementByPointer(cdp, '[data-relic-archive="mist_edge"]');
   await waitForPage(
     cdp,
-    `document.querySelector('[data-relic-settlement="archived"]') &&
-      JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state.run.lastRelicSettlement.archivedRelicId === 'mist_edge'`,
+    `(() => {
+      const returnHub = document.querySelector('[data-action="return-hub"]:not(:disabled)');
+      return document.querySelector('[data-relic-settlement="archived"]') &&
+        JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state.run.lastRelicSettlement.archivedRelicId === 'mist_edge' &&
+        document.activeElement === returnHub;
+    })()`,
     'real pointer archives the selected relic'
   );
   let archived = await evaluate(
@@ -7612,7 +10351,10 @@ async function runRelicArchiveSeedSmoke(cdp, appUrl) {
         frame: saved.preparedRelicFrame,
         archivedRelicIds: saved.archivedRelicIds,
         seedRelicId: saved.preparedRelicSeedId,
-        text: document.querySelector('[data-relic-settlement="archived"]')?.textContent.replace(/\\s+/g, ' ').trim() ?? ''
+        text: document.querySelector('[data-relic-settlement="archived"]')?.textContent.replace(/\\s+/g, ' ').trim() ?? '',
+        returnHubEnabled: Boolean(document.querySelector('[data-action="return-hub"]:not(:disabled)')),
+        focusOnReturnHub:
+          document.activeElement === document.querySelector('[data-action="return-hub"]:not(:disabled)')
       };
     })()`
   );
@@ -7622,7 +10364,9 @@ async function runRelicArchiveSeedSmoke(cdp, appUrl) {
     archived.frame !== 'assault' ||
     JSON.stringify(archived.archivedRelicIds) !== JSON.stringify(['mist_edge']) ||
     archived.seedRelicId !== 'mist_edge' ||
-    !archived.text.includes('已归档')
+    !archived.text.includes('已归档') ||
+    !archived.returnHubEnabled ||
+    !archived.focusOnReturnHub
   ) {
     throw new Error(`Archive selection should update settlement and hub preparation atomically: ${JSON.stringify(archived)}`);
   }
@@ -7642,6 +10386,7 @@ async function runRelicArchiveSeedSmoke(cdp, appUrl) {
   }
 
   await clickButtonByPointer(cdp, '返回主神空间', '.result-panel');
+  await openRelicPreparationAtHub(cdp, 'archived relic return');
   await waitForPage(
     cdp,
     `document.querySelector('[data-relic-preparation="true"][data-selected-relic-frame="assault"]') &&
@@ -7654,11 +10399,14 @@ async function runRelicArchiveSeedSmoke(cdp, appUrl) {
   }
 
   await cdp.send('Page.navigate', { url: appUrl });
+  await openRelicPreparationAtHub(cdp, 'reloaded archived seed');
   await waitForPage(cdp, `document.querySelector('[data-relic-seed="mist_edge"][aria-pressed="true"]')`, 'hub archive seed survives reload');
   seededHub = await assertRelicHubFrame(cdp, 'assault', 2, 'mist_edge', 'reloaded archived seed hub');
   if (seededHub.saved?.preparedRelicSeedId !== 'mist_edge') {
     throw new Error(`Reloaded hub should preserve the selected archive seed: ${JSON.stringify(seededHub)}`);
   }
+  await clickElementByPointer(cdp, '.hub-directory-close');
+  await waitForPage(cdp, `!document.querySelector('.hub-directory-modal')`, 'reloaded archived seed preparation closes');
 
   const seededDraft = await enterAndCollectFirstDemonTowerRelicDraft(cdp, 2, 'seeded next run relic draft');
   if (
@@ -8097,7 +10845,7 @@ async function assertEquipmentSoulEntryAndReload(cdp, appUrl) {
   await clickElementByPointer(cdp, '.character-close');
   await waitForPage(cdp, `!document.querySelector('[role="dialog"][aria-modal="true"]')`, 'equipment soul character sheet closes');
 
-  await clickCardButtonByPointer(cdp, '.dungeon-card', '妖塔一层', '选择协议');
+  await clickCardButtonByPointer(cdp, '.dungeon-card', '妖塔一层', '准备进入');
   await waitForPage(
     cdp,
     `document.querySelector('[data-protocol-soul-skills="active"][data-frozen-soul-skill-count="6"][data-soul-skill-charge="2"]')`,
@@ -10744,6 +13492,7 @@ async function runRunPursuitSmoke(cdp, appUrl) {
   await evaluate(cdp, `localStorage.removeItem(${JSON.stringify(STORAGE_KEY)})`);
   await setViewport(cdp, 1440, 900);
   await cdp.send('Page.navigate', { url: appUrl });
+  await openHubDungeonDirectoryByPointer(cdp, 'pursuit cleanup dungeon directory');
   await waitForPage(
     cdp,
     `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null &&
@@ -10814,6 +13563,14 @@ async function runCausalClearinghousePointerSmoke(cdp, appUrl) {
   };
 
   const assertLedgerOpenAndBlocked = async (label) => {
+    await waitForPage(
+      cdp,
+      `(() => {
+        const dialog = document.querySelector('.causal-ledger-sheet[role="dialog"][aria-modal="true"]');
+        return Boolean(dialog?.contains(document.activeElement));
+      })()`,
+      `${label} moves focus into the ledger`
+    );
     const snapshot = await evaluate(
       cdp,
       `(() => {
@@ -10865,7 +13622,7 @@ async function runCausalClearinghousePointerSmoke(cdp, appUrl) {
         width,
         height,
         rootSelector: '.dungeon-map',
-        targetSelectors: ['[data-dungeon-law="causal_clearinghouse"]', '.dungeon-map', '.node-action-panel'],
+        targetSelectors: ['.dungeon-map', '.node-action-panel'],
         buttonSelectors: [actionSelector],
         minimumButtonHeight: 40,
         checkRootOverflow: true,
@@ -10883,15 +13640,15 @@ async function runCausalClearinghousePointerSmoke(cdp, appUrl) {
   await waitForPage(
     cdp,
     `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null &&
-      document.querySelectorAll('.dungeon-card').length === ${DUNGEON_COUNT} &&
+      document.querySelector('[data-action="open-hub-dungeons"]') &&
       innerWidth === 1440 && innerHeight === 900`,
-    'causal smoke starts from a clean fourteen-chapter hub'
+    'causal smoke starts from a clean nineteen-chapter hub'
   );
   await clickElementByPointer(cdp, '[data-action="new-run"]');
   await waitForPage(
     cdp,
     `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null &&
-      document.querySelectorAll('.dungeon-card').length === ${DUNGEON_COUNT} &&
+      document.querySelector('[data-action="open-hub-dungeons"]') &&
       document.querySelector('.resource-strip')?.textContent.includes('850')`,
     'pointer new game keeps the clean hub'
   );
@@ -10900,12 +13657,8 @@ async function runCausalClearinghousePointerSmoke(cdp, appUrl) {
   await openTaskModal(cdp, 'clean new game task sheet');
   await closeTaskModal(cdp, 'clean new game task sheet');
 
-  await clickElementByPointer(cdp, '[data-action="enter-demon_tower_1"]');
+  await enterDungeonByPointer(cdp, '妖塔一层');
   await waitForPage(cdp, `document.querySelector('.dungeon-map')`, 'causal fixture seed enters a real run');
-  const causalExploreTemplate = await evaluate(
-    cdp,
-    `JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state`
-  );
   const makeValidCausalExploreState = ({
     dungeonId = 'causal_clearinghouse',
     nodeId = 'clearinghouse_gate',
@@ -10921,21 +13674,24 @@ async function runCausalClearinghousePointerSmoke(cdp, appUrl) {
     lingyun = 0,
     player = { hp: 900, maxHp: 1000 },
     inventory = {},
+    completedDungeonIds = CAUSAL_PRIOR_DUNGEON_IDS,
+    claimedTaskIds = CAUSAL_PRIOR_MAINLINE_TASK_IDS,
     log = ['causal pointer smoke save'],
     law
   } = {}) => {
-    const state = JSON.parse(JSON.stringify(causalExploreTemplate));
-    state.phase = 'explore';
-    state.rewardPoints = rewardPoints;
-    state.lingyun = lingyun;
-    state.player = { ...state.player, ...player };
-    state.inventory = { ...state.inventory, ...inventory };
-    state.run = {
-      ...state.run,
+    const state = makeExploreSave({
       dungeonId,
-      currentNodeId: nodeId,
+      nodeId,
       clearedNodeIds,
-      lawState: makeDungeonLawState(dungeonId, law ?? {
+      rewardPoints,
+      lingyun,
+      player,
+      inventory,
+      completedDungeonIds,
+      claimedTaskIds,
+      log
+    });
+    state.run.lawState = makeDungeonLawState(dungeonId, law ?? {
         kind: 'causal_clearinghouse',
         debt,
         pendingLedgerNodeId,
@@ -10944,9 +13700,7 @@ async function runCausalClearinghousePointerSmoke(cdp, appUrl) {
         collectionSeals,
         entryPassives,
         visorCreditUsed
-      }, { clearedNodeIds })
-    };
-    state.log = log;
+      }, { clearedNodeIds });
     return state;
   };
   const makeValidCausalCombatState = () => {
@@ -10980,7 +13734,7 @@ async function runCausalClearinghousePointerSmoke(cdp, appUrl) {
   await navigateWithState(balanceState, 'causal balance entry renders');
   await waitForPage(
     cdp,
-    `document.querySelector('[data-dungeon-law="causal_clearinghouse"]')?.textContent.includes('账目已结') &&
+    `document.querySelector('[data-dungeon-law="causal_clearinghouse"][data-law-target-reached="true"]')?.textContent.includes('账目已结') &&
       document.querySelector('[data-action="trap-risk-contradiction_line"]:not(:disabled)')`,
     'causal balance ordinary node renders'
   );
@@ -11337,7 +14091,7 @@ async function runCausalClearinghousePointerSmoke(cdp, appUrl) {
     cdp,
     `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null &&
       innerWidth === 1440 && innerHeight === 900 &&
-      document.querySelectorAll('.dungeon-card').length === ${DUNGEON_COUNT} &&
+      document.querySelector('[data-action="open-hub-dungeons"]') &&
       !document.querySelector('[role="dialog"][aria-modal="true"]')`,
     'causal smoke restores clean 1440x900 hub'
   );
@@ -11473,16 +14227,12 @@ async function runEntropyArkPointerSmoke(cdp, appUrl) {
   await waitForPage(
     cdp,
     `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null &&
-      document.querySelectorAll('.dungeon-card').length === ${DUNGEON_COUNT} &&
+      document.querySelector('[data-action="open-hub-dungeons"]') &&
       innerWidth === 1440 && innerHeight === 900`,
-    'entropy smoke starts from a clean fourteen-chapter hub'
+    'entropy smoke starts from a clean nineteen-chapter hub'
   );
-  await clickElementByPointer(cdp, '[data-action="enter-demon_tower_1"]');
+  await enterDungeonByPointer(cdp, '妖塔一层');
   await waitForPage(cdp, `document.querySelector('.dungeon-map')`, 'entropy fixture seed enters a real run');
-  const exploreTemplate = await evaluate(
-    cdp,
-    `JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state`
-  );
 
   const makeValidExploreState = ({
     dungeonId,
@@ -11495,21 +14245,17 @@ async function runEntropyArkPointerSmoke(cdp, appUrl) {
     player = {},
     log = ['entropy pointer smoke save']
   }) => {
-    const state = JSON.parse(JSON.stringify(exploreTemplate));
-    state.phase = 'explore';
-    delete state.combat;
-    state.player = { ...state.player, ...player };
-    state.inventory = { ...state.inventory, ...inventory };
-    state.completedDungeonIds = completedDungeonIds;
-    state.claimedTaskIds = claimedTaskIds;
-    state.run = {
-      ...state.run,
+    const state = makeExploreSave({
       dungeonId,
-      currentNodeId: nodeId,
+      nodeId,
       clearedNodeIds,
-      lawState: makeDungeonLawState(dungeonId, law, { clearedNodeIds })
-    };
-    state.log = log;
+      inventory,
+      completedDungeonIds,
+      claimedTaskIds,
+      player,
+      log
+    });
+    state.run.lawState = makeDungeonLawState(dungeonId, law, { clearedNodeIds });
     return state;
   };
   const makeValidEntropyState = ({
@@ -11849,7 +14595,7 @@ async function runEntropyArkPointerSmoke(cdp, appUrl) {
     cdp,
     `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null &&
       innerWidth === 1440 && innerHeight === 900 &&
-      document.querySelectorAll('.dungeon-card').length === ${DUNGEON_COUNT} &&
+      document.querySelector('[data-action="open-hub-dungeons"]') &&
       !document.querySelector('[role="dialog"][aria-modal="true"]')`,
     'entropy smoke restores clean 1440x900 hub'
   );
@@ -11869,11 +14615,22 @@ async function runMirrorCycleCityPointerSmoke(cdp, appUrl) {
   await evaluate(cdp, `localStorage.removeItem(${JSON.stringify(STORAGE_KEY)})`);
   await setViewport(cdp, 1440, 900);
   await cdp.send('Page.navigate', { url: appUrl });
+  await openHubDungeonDirectoryByPointer(cdp, 'mirror catalog dungeon directory');
   await waitForPage(
     cdp,
-    `document.querySelectorAll('.dungeon-card').length === ${DUNGEON_COUNT} &&
-      document.querySelector('.dungeon-card[data-dungeon-id="mirror_cycle_city"] .mirror-city-banner')?.complete`,
-    'mirror smoke starts from a fourteen-chapter hub with its visual asset'
+    `document.querySelectorAll('.dungeon-card').length === ${DUNGEON_COUNT}`,
+    'mirror smoke starts from a nineteen-chapter hub with its visual asset'
+  );
+  await waitForPage(
+    cdp,
+    `(() => {
+      const image = document.querySelector('.dungeon-card[data-dungeon-id="mirror_cycle_city"] .mirror-city-banner');
+      return image instanceof HTMLImageElement &&
+        image.complete &&
+        image.naturalWidth > 0 &&
+        image.naturalHeight > 0;
+    })()`,
+    'mirror-city visual asset finishes loading before pixel sampling'
   );
   const assetState = await evaluate(
     cdp,
@@ -11902,9 +14659,8 @@ async function runMirrorCycleCityPointerSmoke(cdp, appUrl) {
     throw new Error(`Mirror-city visual asset should load and paint nonblank pixels: ${JSON.stringify(assetState)}`);
   }
 
-  await clickElementByPointer(cdp, '[data-action="enter-demon_tower_1"]');
+  await enterDungeonByPointer(cdp, '妖塔一层');
   await waitForPage(cdp, `document.querySelector('.dungeon-map')`, 'mirror fixture seed enters a valid run');
-  const exploreTemplate = await evaluate(cdp, `JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state`);
 
   const makeExploreState = ({
     dungeonId,
@@ -11917,21 +14673,17 @@ async function runMirrorCycleCityPointerSmoke(cdp, appUrl) {
     player = {},
     log = ['mirror cycle city pointer smoke save']
   }) => {
-    const next = JSON.parse(JSON.stringify(exploreTemplate));
-    next.phase = 'explore';
-    delete next.combat;
-    next.player = { ...next.player, ...player };
-    next.inventory = { ...next.inventory, ...inventory };
-    next.completedDungeonIds = completedDungeonIds;
-    next.claimedTaskIds = claimedTaskIds;
-    next.run = {
-      ...next.run,
+    const next = makeExploreSave({
       dungeonId,
-      currentNodeId: nodeId,
+      nodeId,
       clearedNodeIds,
-      lawState: makeDungeonLawState(dungeonId, law, { clearedNodeIds })
-    };
-    next.log = log;
+      inventory,
+      completedDungeonIds,
+      claimedTaskIds,
+      player,
+      log
+    });
+    next.run.lawState = makeDungeonLawState(dungeonId, law, { clearedNodeIds });
     return next;
   };
   const makeMirrorState = ({
@@ -12281,6 +15033,7 @@ async function runMirrorCycleCityPointerSmoke(cdp, appUrl) {
   const unknownItem = makeMirrorState({ nodeId: 'cycle_gate', log: ['unknown item must reject'] });
   unknownItem.inventory.unknown_mirror_item = 1;
   await navigateWithState(unknownItem, 'unknown item fixture falls back');
+  await openHubDungeonDirectoryByPointer(cdp, 'mirror rejected-save dungeon directory');
   await waitForPage(
     cdp,
     `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null && document.querySelectorAll('.dungeon-card').length === ${DUNGEON_COUNT}`,
@@ -12313,7 +15066,7 @@ async function runMirrorCycleCityPointerSmoke(cdp, appUrl) {
   await waitForPage(
     cdp,
     `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null &&
-      document.querySelectorAll('.dungeon-card').length === ${DUNGEON_COUNT} &&
+      document.querySelector('[data-action="open-hub-dungeons"]') &&
       !document.querySelector('.dungeon-map') && !document.querySelector('[data-dungeon-law="mirror_cycle_city"]') &&
       !document.querySelector('[data-mirror-phase-status]')`,
     'real restart pointer clears the mirror run and phase progress'
@@ -12330,7 +15083,7 @@ async function runMirrorCycleCityPointerSmoke(cdp, appUrl) {
   await waitForPage(
     cdp,
     `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null && innerWidth === 1440 && innerHeight === 900 &&
-      document.querySelectorAll('.dungeon-card').length === ${DUNGEON_COUNT} && !document.querySelector('.dungeon-map') &&
+      document.querySelector('[data-action="open-hub-dungeons"]') && !document.querySelector('.dungeon-map') &&
       !document.querySelector('[role="dialog"][aria-modal="true"]')`,
     'real restart remains a clean 1440x900 hub after reload'
   );
@@ -12358,11 +15111,12 @@ async function runRedactionScriptoriumPointerSmoke(cdp, appUrl) {
   await evaluate(cdp, `localStorage.removeItem(${JSON.stringify(STORAGE_KEY)})`);
   await setViewport(cdp, 1440, 900);
   await cdp.send('Page.navigate', { url: appUrl });
+  await openHubDungeonDirectoryByPointer(cdp, 'redaction catalog dungeon directory');
   await waitForPage(
     cdp,
     `document.querySelectorAll('.dungeon-card').length === ${DUNGEON_COUNT} &&
       document.querySelector('.dungeon-card[data-dungeon-id="redaction_scriptorium"] .redaction-scriptorium-banner')?.complete`,
-    'redaction smoke starts from a fourteen-chapter hub with its visual asset'
+    'redaction smoke starts from a nineteen-chapter hub with its visual asset'
   );
   const hubEvidence = await evaluate(
     cdp,
@@ -12383,6 +15137,7 @@ async function runRedactionScriptoriumPointerSmoke(cdp, appUrl) {
       }
       return {
         loaded: true,
+        src: image.getAttribute('src') ?? '',
         natural: [image.naturalWidth, image.naturalHeight],
         colors: colors.size,
         opaque,
@@ -12391,13 +15146,20 @@ async function runRedactionScriptoriumPointerSmoke(cdp, appUrl) {
       };
     })()`
   );
-  if (!hubEvidence.loaded || hubEvidence.natural?.join('x') !== '720x180' || hubEvidence.colors < 6 || hubEvidence.opaque < 100 || !hubEvidence.tier11 || !hubEvidence.tier12) {
+  if (
+    !hubEvidence.loaded ||
+    !hubEvidence.src?.includes('/assets/dungeons/redaction-scriptorium-v2.png') ||
+    hubEvidence.natural?.join('x') !== '720x180' ||
+    hubEvidence.colors < 6 ||
+    hubEvidence.opaque < 100 ||
+    !hubEvidence.tier11 ||
+    !hubEvidence.tier12
+  ) {
     throw new Error(`Tier-12 hub asset and 11 -> 12 chapter cards should render: ${JSON.stringify(hubEvidence)}`);
   }
 
-  await clickElementByPointer(cdp, '[data-action="enter-demon_tower_1"]');
+  await enterDungeonByPointer(cdp, '妖塔一层');
   await waitForPage(cdp, `document.querySelector('.dungeon-map')`, 'redaction fixture seed enters a valid modern run');
-  const exploreTemplate = await evaluate(cdp, `JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state`);
   const makeExploreState = ({
     dungeonId,
     nodeId,
@@ -12409,21 +15171,17 @@ async function runRedactionScriptoriumPointerSmoke(cdp, appUrl) {
     player = {},
     log = ['redaction scriptorium pointer smoke save']
   }) => {
-    const next = JSON.parse(JSON.stringify(exploreTemplate));
-    next.phase = 'explore';
-    delete next.combat;
-    next.player = { ...next.player, ...player };
-    next.inventory = { ...next.inventory, ...inventory };
-    next.completedDungeonIds = completedDungeonIds;
-    next.claimedTaskIds = claimedTaskIds;
-    next.run = {
-      ...next.run,
+    const next = makeExploreSave({
       dungeonId,
-      currentNodeId: nodeId,
+      nodeId,
       clearedNodeIds,
-      lawState: makeDungeonLawState(dungeonId, law, { clearedNodeIds })
-    };
-    next.log = log;
+      inventory,
+      completedDungeonIds,
+      claimedTaskIds,
+      player,
+      log
+    });
+    next.run.lawState = makeDungeonLawState(dungeonId, law, { clearedNodeIds });
     return next;
   };
   const makeRedactionState = ({
@@ -12629,10 +15387,10 @@ async function runRedactionScriptoriumPointerSmoke(cdp, appUrl) {
   await waitForPage(
     cdp,
     `document.querySelector('.task-trigger') && document.querySelector('[data-run-protocol="imprint"]') && document.querySelector('[data-route-contract-selected="redaction_copyist_recharge"]') &&
-      document.querySelector('[data-equipment-hunt-clue-id="north_clue_cache"]') && document.querySelector('[data-equipment-hunt-clue-id="south_clue_cache"]') &&
+      document.querySelector('[data-equipment-hunt-state="seeking"][data-equipment-hunt-target="redline_edge"]')?.textContent.includes('线索 0/1') &&
       document.querySelector('.dungeon-events')?.textContent.includes('覆页证词') &&
-      document.querySelector('[data-run-pursuit-status="stalking"]') && document.querySelector('[data-pursuit-position="true"]')`,
-    'task, protocol, contract, hunt clues, memory events, and pursuit indicators remain rendered'
+      document.querySelector('[data-run-pursuit-status="stalking"][data-run-pursuit-node="palimpsest_censor_alpha"]')`,
+    'task, protocol, contract, hunt status, memory events, and fog-safe pursuit status remain rendered'
   );
 
   const mirrorLaw = { kind: 'mirror_cycle_city', currentPhase: 'real', pendingPhaseNodeId: null, resolvedPhaseChoices: {}, anchors: { real: false, mirror: false }, bossAnchorSnapshot: null, brokenMirrorShells: 0, entryPassives: { parallaxVisor: false, phaseweaveMantle: false, homecomingPrism: false } };
@@ -12701,6 +15459,7 @@ async function runRedactionScriptoriumPointerSmoke(cdp, appUrl) {
     const fixture = makeRedactionState({ nodeId: 'folio_gate', log: [`${label} rejection`] });
     mutate(fixture);
     await navigateWithState(fixture, `${label} fixture falls back`);
+    await openHubDungeonDirectoryByPointer(cdp, `${label} rejected-save dungeon directory`);
     await waitForPage(cdp, `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null && document.querySelectorAll('.dungeon-card').length === ${DUNGEON_COUNT}`, `${label} remains rejected`);
   }
 
@@ -12708,9 +15467,9 @@ async function runRedactionScriptoriumPointerSmoke(cdp, appUrl) {
   await navigateWithState(restartFixture, 'redaction restart fixture renders');
   await setViewport(cdp, 1440, 900);
   await clickElementByPointer(cdp, '.quick-actions [data-action="new-run"]');
-  await waitForPage(cdp, `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null && document.querySelectorAll('.dungeon-card').length === ${DUNGEON_COUNT} && !document.querySelector('[data-redaction-clause-status]') && innerWidth === 1440 && innerHeight === 900`, 'real restart clears Tier-12 law and material state');
+  await waitForPage(cdp, `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null && document.querySelector('[data-action="open-hub-dungeons"]') && !document.querySelector('[data-redaction-clause-status]') && innerWidth === 1440 && innerHeight === 900`, 'real restart clears Tier-12 law and material state');
   await cdp.send('Page.reload');
-  await waitForPage(cdp, `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null && document.querySelectorAll('.dungeon-card').length === ${DUNGEON_COUNT} && !document.querySelector('[role="dialog"][aria-modal="true"]') && Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) <= innerWidth + 1`, 'redaction smoke finishes on a clean 1440x900 hub');
+  await waitForPage(cdp, `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null && document.querySelector('[data-action="open-hub-dungeons"]') && !document.querySelector('[role="dialog"][aria-modal="true"]') && Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) <= innerWidth + 1`, 'redaction smoke finishes on a clean 1440x900 hub');
 
   const faviconUrl = new URL('/favicon.ico', appUrl).href;
   const browserErrors = collectBrowserErrorEvents({ events: cdp.events.filter((event) => !(event.method === 'Log.entryAdded' && event.params?.entry?.url === faviconUrl && event.params.entry.text.includes('404'))) });
@@ -12731,11 +15490,12 @@ async function runLegacyAuctionCourtPointerSmoke(cdp, appUrl) {
   await evaluate(cdp, `localStorage.removeItem(${JSON.stringify(STORAGE_KEY)})`);
   await setViewport(cdp, 1440, 900);
   await cdp.send('Page.navigate', { url: appUrl });
+  await openHubDungeonDirectoryByPointer(cdp, 'auction catalog dungeon directory');
   await waitForPage(
     cdp,
     `document.querySelectorAll('.dungeon-card').length === ${DUNGEON_COUNT} &&
       document.querySelector('.dungeon-card[data-dungeon-id="legacy_auction_court"] .legacy-auction-court-banner')?.complete`,
-    'auction smoke starts from a fourteen-chapter hub with its visual asset'
+    'auction smoke starts from a nineteen-chapter hub with its visual asset'
   );
   const hubEvidence = await evaluate(cdp, `(() => {
     const image = document.querySelector('.dungeon-card[data-dungeon-id="legacy_auction_court"] .legacy-auction-court-banner');
@@ -12754,19 +15514,26 @@ async function runLegacyAuctionCourtPointerSmoke(cdp, appUrl) {
     }
     return {
       loaded: true,
+      src: image.getAttribute('src') ?? '',
       natural: [image.naturalWidth, image.naturalHeight],
       colors: colors.size,
       opaque,
       tiers: [12, 13].map((tier) => [...document.querySelectorAll('.dungeon-card')].some((card) => card.textContent.includes('Tier ' + tier)))
     };
   })()`);
-  if (!hubEvidence.loaded || hubEvidence.natural?.join('x') !== '720x180' || hubEvidence.colors < 6 || hubEvidence.opaque < 100 || hubEvidence.tiers?.some((value) => !value)) {
+  if (
+    !hubEvidence.loaded ||
+    !hubEvidence.src?.includes('/assets/dungeons/legacy-auction-court-v2.png') ||
+    hubEvidence.natural?.join('x') !== '720x180' ||
+    hubEvidence.colors < 6 ||
+    hubEvidence.opaque < 100 ||
+    hubEvidence.tiers?.some((value) => !value)
+  ) {
     throw new Error(`Tier-13 hub asset and chapter cards should render: ${JSON.stringify(hubEvidence)}`);
   }
 
-  await clickElementByPointer(cdp, '[data-action="enter-demon_tower_1"]');
+  await enterDungeonByPointer(cdp, '妖塔一层');
   await waitForPage(cdp, `document.querySelector('.dungeon-map')`, 'auction fixture seed enters a valid modern run');
-  const exploreTemplate = await evaluate(cdp, `JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state`);
   const defaultPassives = { legacyGavel: false, anonymousVeil: false, escrowPlate: false, finalLotBell: false };
   const makeExploreState = ({
     dungeonId,
@@ -12779,21 +15546,17 @@ async function runLegacyAuctionCourtPointerSmoke(cdp, appUrl) {
     claimedTaskIds = [...AUCTION_PRIOR_MAINLINE_TASK_IDS],
     log = ['legacy auction court pointer smoke save']
   }) => {
-    const next = JSON.parse(JSON.stringify(exploreTemplate));
-    next.phase = 'explore';
-    delete next.combat;
-    next.inventory = { ...next.inventory, ...inventory };
-    next.completedDungeonIds = completedDungeonIds;
-    next.claimedTaskIds = claimedTaskIds;
-    next.run = {
-      ...next.run,
+    const next = makeExploreSave({
       dungeonId,
-      currentNodeId: nodeId,
+      nodeId,
       clearedNodeIds,
-      lootBag: { ...next.run.lootBag, items: { ...lootItems } },
-      lawState: makeDungeonLawState(dungeonId, law, { clearedNodeIds })
-    };
-    next.log = log;
+      inventory,
+      completedDungeonIds,
+      claimedTaskIds,
+      lootBag: makeLootBag({ items: lootItems }),
+      log
+    });
+    next.run.lawState = makeDungeonLawState(dungeonId, law, { clearedNodeIds });
     return next;
   };
   const makeAuctionState = ({
@@ -13024,7 +15787,7 @@ async function runLegacyAuctionCourtPointerSmoke(cdp, appUrl) {
   indicatorFixture.run.equipmentHunt = { rulesVersion: 1, dungeonId: 'legacy_auction_court', targetEquipmentId: 'legacy_gavel', clueNodeIds: ['north_scrip_cache', 'south_scrip_cache'], crossedDungeonPortal: false };
   indicatorFixture.run.pursuitState = { rulesVersion: 1, dungeonId: 'legacy_auction_court', status: 'stalking', nodeId: 'inheritance_mimic_alpha', contacts: 0, graceMoves: 0, rewardGranted: false, repelledReason: null };
   await navigateWithState(indicatorFixture, 'Tier-13 task, protocol, contract, hunt, memory, and pursuit indicators render');
-  await waitForPage(cdp, `document.querySelector('.task-trigger') && document.querySelector('[data-run-protocol="imprint"]') && document.querySelector('[data-route-contract-selected="legacy_reserve_recharge"]') && document.querySelector('[data-equipment-hunt-clue-id="north_scrip_cache"]') && document.querySelector('[data-equipment-hunt-clue-id="south_scrip_cache"]') && document.querySelector('.dungeon-events')?.textContent.includes('执槌链来源争议') && document.querySelector('[data-run-pursuit-status="stalking"]') && document.querySelector('[data-pursuit-position="true"]')`, 'Tier-13 operational indicators remain rendered');
+  await waitForPage(cdp, `document.querySelector('.task-trigger') && document.querySelector('[data-run-protocol="imprint"]') && document.querySelector('[data-route-contract-selected="legacy_reserve_recharge"]') && document.querySelector('[data-equipment-hunt-state="seeking"][data-equipment-hunt-target="legacy_gavel"]')?.textContent.includes('线索 0/1') && document.querySelector('.dungeon-events')?.textContent.includes('执槌链来源争议') && document.querySelector('[data-run-pursuit-status="stalking"][data-run-pursuit-node="inheritance_mimic_alpha"]')`, 'Tier-13 fog-safe operational indicators remain rendered');
 
   const redactionLaw = { kind: 'redaction_scriptorium', pendingClauseNodeId: null, resolvedClauseChoices: {}, bossClauseSnapshot: null, entryPassives: { redlineEdge: false, palimpsestMantle: false, finalProofSeal: false } };
   const redactionPortals = [['upper_revision_portal', 'estate_gate'], ['lower_revision_portal', 'lower_bid_supply'], ['return_revision_portal', 'archive_survey_gallery']];
@@ -13170,6 +15933,7 @@ async function runLegacyAuctionCourtPointerSmoke(cdp, appUrl) {
     const fixture = makeAuctionState({ nodeId: 'estate_gate', log: [`${label} rejection`] });
     mutate(fixture);
     await navigateWithState(fixture, `${label} fixture falls back`);
+    await openHubDungeonDirectoryByPointer(cdp, `${label} rejected-save dungeon directory`);
     await waitForPage(cdp, `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null && document.querySelectorAll('.dungeon-card').length === ${DUNGEON_COUNT}`, `${label} remains rejected`);
   }
 
@@ -13184,9 +15948,9 @@ async function runLegacyAuctionCourtPointerSmoke(cdp, appUrl) {
   );
   await setViewport(cdp, 1440, 900);
   await clickElementByPointer(cdp, '.quick-actions [data-action="new-run"]');
-  await waitForPage(cdp, `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null && document.querySelectorAll('.dungeon-card').length === ${DUNGEON_COUNT} && !document.querySelector('[data-auction-lot-status]') && innerWidth === 1440 && innerHeight === 900`, 'real restart clears Tier-13 law and material state');
+  await waitForPage(cdp, `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null && document.querySelector('[data-action="open-hub-dungeons"]') && !document.querySelector('[data-auction-lot-status]') && innerWidth === 1440 && innerHeight === 900`, 'real restart clears Tier-13 law and material state');
   await cdp.send('Page.reload');
-  await waitForPage(cdp, `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null && document.querySelectorAll('.dungeon-card').length === ${DUNGEON_COUNT} && !document.querySelector('[role="dialog"][aria-modal="true"]') && Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) <= innerWidth + 1`, 'auction smoke finishes on a clean 1440x900 hub');
+  await waitForPage(cdp, `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null && document.querySelector('[data-action="open-hub-dungeons"]') && !document.querySelector('[role="dialog"][aria-modal="true"]') && Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) <= innerWidth + 1`, 'auction smoke finishes on a clean 1440x900 hub');
 
   const faviconUrl = new URL('/favicon.ico', appUrl).href;
   const browserErrors = collectBrowserErrorEvents({ events: cdp.events.filter((event) => !(event.method === 'Log.entryAdded' && event.params?.entry?.url === faviconUrl && event.params.entry.text.includes('404'))) });
@@ -13285,13 +16049,14 @@ async function runGenesisVaultPointerSmoke(cdp, appUrl) {
   await cdp.send('Runtime.enable');
   await setViewport(cdp, 1440, 900);
   await navigateWithState(makeGenesisPrerequisiteHub(), 'genesis Tier-14 prerequisite hub renders');
+  await openHubDungeonDirectoryByPointer(cdp, 'genesis prerequisite dungeon directory');
   await waitForPage(
     cdp,
     `(() => {
       const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
       const genesisCard = document.querySelector('.dungeon-card[data-dungeon-id="genesis_vault"]');
       const prerequisiteCard = document.querySelector('.dungeon-card[data-dungeon-id="legacy_auction_court"]');
-      const enterButton = genesisCard?.querySelector('[data-action="enter-genesis_vault"]');
+      const enterButton = genesisCard?.querySelector('[data-action="open-protocol-genesis_vault"]');
       return saved.phase === 'hub' && !saved.run &&
         saved.completedDungeonIds.join(',') === ${JSON.stringify(GENESIS_PRIOR_DUNGEON_IDS.join(','))} &&
         saved.claimedTaskIds.join(',') === ${JSON.stringify(GENESIS_PRIOR_MAINLINE_TASK_IDS.join(','))} &&
@@ -13318,9 +16083,21 @@ async function runGenesisVaultPointerSmoke(cdp, appUrl) {
       colors.add(pixels[index] + ',' + pixels[index + 1] + ',' + pixels[index + 2] + ',' + pixels[index + 3]);
       if (pixels[index + 3] > 0) opaque += 1;
     }
-    return { loaded: true, natural: [image.naturalWidth, image.naturalHeight], colors: colors.size, opaque };
+    return {
+      loaded: true,
+      src: image.getAttribute('src') ?? '',
+      natural: [image.naturalWidth, image.naturalHeight],
+      colors: colors.size,
+      opaque
+    };
   })()`);
-  if (!hubAsset.loaded || hubAsset.natural?.join('x') !== '720x180' || hubAsset.colors < 8 || hubAsset.opaque < 500) {
+  if (
+    !hubAsset.loaded ||
+    !hubAsset.src?.includes('/assets/dungeons/genesis-vault-v2.png') ||
+    hubAsset.natural?.join('x') !== '720x180' ||
+    hubAsset.colors < 8 ||
+    hubAsset.opaque < 500
+  ) {
     throw new Error(`Tier-14 visual asset must be a rendered 720x180 scene: ${JSON.stringify(hubAsset)}`);
   }
 
@@ -13360,8 +16137,15 @@ async function runGenesisVaultPointerSmoke(cdp, appUrl) {
   }
   await setViewport(cdp, 1440, 900);
   await clickButtonByPointer(cdp, '血统', '.topbar');
-  await clickElementByPointer(cdp, '[data-action="unlock-bloodline-titan_marrow"]');
-  await waitForPage(cdp, `(() => { const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state; return saved.bloodlineRanks.titan_marrow === 1 && saved.activeBloodline === 'titan_marrow' && saved.rewardPoints === 9200 && saved.lingyun === 18 && saved.inventory.genesis_serum === 20; })()`, 'R1 awakening deducts exact non-serum cost and auto-activates first bloodline');
+  await activateCardButtonByKeyboard(cdp, '.bloodline-card', '巨灵骨髓', '觉醒 R1');
+  await waitForPage(cdp, `(() => {
+    const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
+    const dialog = document.querySelector('.bloodline-sheet');
+    return saved.bloodlineRanks.titan_marrow === 1 && saved.activeBloodline === 'titan_marrow' &&
+      saved.rewardPoints === 9200 && saved.lingyun === 18 && saved.inventory.genesis_serum === 20 &&
+      dialog?.contains(document.activeElement) &&
+      document.activeElement === dialog.querySelector('[data-action="upgrade-bloodline-titan_marrow"]:not(:disabled)');
+  })()`, 'keyboard R1 awakening deducts exact cost and moves focus to the next action in the same bloodline card');
   await clickElementByPointer(cdp, '[data-action="upgrade-bloodline-titan_marrow"]');
   await waitForPage(cdp, `(() => { const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state; return saved.bloodlineRanks.titan_marrow === 2 && saved.rewardPoints === 8000 && saved.lingyun === 15 && saved.inventory.genesis_serum === 19; })()`, 'R2 deducts exact serum and currency cost');
   await clickElementByPointer(cdp, '[data-action="upgrade-bloodline-titan_marrow"]');
@@ -13377,7 +16161,7 @@ async function runGenesisVaultPointerSmoke(cdp, appUrl) {
   entryHub.bloodlineRanks = { titan_marrow: 3, void_symbiote: 1 };
   entryHub.activeBloodline = 'titan_marrow';
   await navigateWithState(entryHub, 'bloodline entry snapshot fixture renders');
-  await clickElementByPointer(cdp, '[data-action="enter-demon_tower_1"]');
+  await enterDungeonByPointer(cdp, '妖塔一层');
   await waitForPage(cdp, `(() => { const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state; return saved.run.bloodlineSnapshot?.bloodlineId === 'titan_marrow' && saved.run.bloodlineSnapshot?.rank === 3 && document.querySelector('.bloodline-trigger')?.textContent.includes('本局 巨灵骨髓 R3'); })()`, 'dungeon entry freezes active bloodline snapshot');
   await evaluate(cdp, `(() => { const payload = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})); payload.state.activeBloodline = 'void_symbiote'; payload.state.bloodlineRanks.void_symbiote = 3; localStorage.setItem(${JSON.stringify(STORAGE_KEY)}, JSON.stringify(payload)); return true; })()`);
   await cdp.send('Page.reload');
@@ -13530,7 +16314,7 @@ async function runGenesisVaultPointerSmoke(cdp, appUrl) {
           saved.log[0] === 'genesis vault pointer smoke save' &&
           targetButtons.length === 1 && !targetButtons[0].disabled &&
           !document.querySelector('.genesis-splice-fieldset');
-      })()`, `${consoleCase.nodeId} adjacent fixture survives validation with one enabled target grid action`);
+      })()`, `${consoleCase.nodeId} adjacent fixture survives validation with one enabled target grid action`, consoleCase.nodeId === 'third_splice_console' ? 20000 : 12000);
     } catch (error) {
       const evidence = await evaluate(cdp, `(() => {
         const storageValue = localStorage.getItem(${JSON.stringify(STORAGE_KEY)});
@@ -13570,10 +16354,10 @@ async function runGenesisVaultPointerSmoke(cdp, appUrl) {
         document.querySelector('.grid-node.current[data-action="grid-${consoleCase.nodeId}"]') &&
         rewardButtons.length === 1 && !rewardButtons[0].disabled &&
         !document.querySelector('.genesis-splice-fieldset');
-    })()`, `${consoleCase.nodeId} real grid movement reaches one enabled reward action`);
+    })()`, `${consoleCase.nodeId} real grid movement reaches one enabled reward action`, consoleCase.nodeId === 'third_splice_console' ? 20000 : 12000);
     await clickButtonByPointer(cdp, '收取奖励', '.node-action-panel');
     try {
-      await waitForPage(cdp, `document.querySelector('.genesis-splice-fieldset[data-genesis-console="${consoleCase.nodeId}"] [data-genesis-gene="force"][data-serum-cost="${consoleCase.cost}"]') && !document.querySelector('[role="dialog"][aria-modal="true"]')`, `${consoleCase.nodeId} shows exact discounted serum cost in non-modal fieldset`);
+      await waitForPage(cdp, `document.querySelector('.genesis-splice-fieldset[data-genesis-console="${consoleCase.nodeId}"] [data-genesis-gene="force"][data-serum-cost="${consoleCase.cost}"]') && !document.querySelector('[role="dialog"][aria-modal="true"]')`, `${consoleCase.nodeId} shows exact discounted serum cost in non-modal fieldset`, consoleCase.nodeId === 'third_splice_console' ? 20000 : 12000);
     } catch (error) {
       const evidence = await evaluate(cdp, `(() => {
         const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)}))?.state;
@@ -13750,12 +16534,19 @@ async function runGenesisVaultPointerSmoke(cdp, appUrl) {
       width,
       height,
       rootSelector: '.dungeon-map[data-dungeon-id="genesis_vault"]',
-      targetSelectors: ['.dungeon-map[data-dungeon-id="genesis_vault"]', '.genesis-map-status', '.node-action-panel'],
+      targetSelectors: ['.dungeon-map[data-dungeon-id="genesis_vault"]', '.node-action-panel'],
       buttonSelectors: ['.dungeon-map[data-dungeon-id="genesis_vault"] .grid-node:not(:disabled)'],
       minimumButtonHeight: 40,
       checkRootOverflow: true,
       label: `${width}x${height} Tier-14 map`
     });
+    await assertLateTierMapStatusAlwaysVisible(
+      cdp,
+      '.genesis-map-status',
+      width,
+      height,
+      `${width}x${height} Tier-14 map`
+    );
     const mapGeometry = await evaluate(cdp, `(() => {
       const pageWidth = document.documentElement.clientWidth;
       const nodes = [...document.querySelectorAll('.dungeon-map[data-dungeon-id="genesis_vault"] .grid-node')];
@@ -13805,9 +16596,9 @@ async function runGenesisVaultPointerSmoke(cdp, appUrl) {
   await navigateWithState(restartFixture, 'genesis restart fixture renders');
   await setViewport(cdp, 1440, 900);
   await clickElementByPointer(cdp, '.quick-actions [data-action="new-run"]');
-  await waitForPage(cdp, `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null && document.querySelectorAll('.dungeon-card').length === ${DUNGEON_COUNT} && document.querySelector('.bloodline-trigger')?.textContent.includes('0/4 已觉醒') && !document.querySelector('.genesis-map-status') && innerWidth === 1440 && innerHeight === 900`, 'new game clears all Tier-14 and bloodline state');
+  await waitForPage(cdp, `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null && document.querySelector('[data-action="open-hub-dungeons"]') && document.querySelector('.bloodline-trigger')?.textContent.includes('0/4 已觉醒') && !document.querySelector('.genesis-map-status') && innerWidth === 1440 && innerHeight === 900`, 'new game clears all Tier-14 and bloodline state');
   await cdp.send('Page.reload');
-  await waitForPage(cdp, `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null && document.querySelectorAll('.dungeon-card').length === ${DUNGEON_COUNT} && !document.querySelector('[role="dialog"][aria-modal="true"]') && Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) <= innerWidth + 1`, 'genesis smoke restores clean 1440x900 home');
+  await waitForPage(cdp, `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null && document.querySelector('[data-action="open-hub-dungeons"]') && !document.querySelector('[role="dialog"][aria-modal="true"]') && Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) <= innerWidth + 1`, 'genesis smoke restores clean 1440x900 home');
 
   const faviconUrl = new URL('/favicon.ico', appUrl).href;
   const browserErrors = collectBrowserErrorEvents({ events: cdp.events.filter((event) => !(
@@ -13956,16 +16747,18 @@ async function runMethodCultivationSmoke(cdp, appUrl) {
   await assertMethodModalLayout(cdp, 1440, 900, '1440x900 cultivation roster');
 
   await clickButtonByPointer(cdp, '功法', '.topbar');
-  await clickCardButtonByPointer(cdp, '.method-card', '吐纳诀', '学习');
+  await activateCardButtonByKeyboard(cdp, '.method-card', '吐纳诀', '学习');
   await waitForPage(
     cdp,
     `(() => {
       const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
       const card = document.querySelector('[data-method-id="mist_breathing"]');
       return saved.learnedMethods.includes('mist_breathing') && saved.methodRanks.mist_breathing === 1 &&
-        saved.activeMethod === 'mist_breathing' && card?.dataset.methodLearned === 'true' && card?.dataset.methodActive === 'true';
+        saved.activeMethod === 'mist_breathing' && card?.dataset.methodLearned === 'true' && card?.dataset.methodActive === 'true' &&
+        document.querySelector('.method-sheet')?.contains(document.activeElement) &&
+        document.activeElement === card.querySelector('[data-action="upgrade-method-mist_breathing"]:not(:disabled)');
     })()`,
-    'pointer learning sets R1 and auto-activates the first newly selected method'
+    'keyboard learning sets R1, auto-activates, and moves focus to the next action in the same method card'
   );
   await clickCardButtonByPointer(cdp, '.method-card', '吐纳诀', '晋升 R2');
   await waitForPage(cdp, `JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state.methodRanks.mist_breathing === 2`, 'pointer R2 upgrade');
@@ -13985,7 +16778,7 @@ async function runMethodCultivationSmoke(cdp, appUrl) {
       return { rewardPoints: saved.rewardPoints, lingyun: saved.lingyun, methodPage: saved.inventory.method_page, rank: saved.methodRanks.mist_breathing, active: saved.activeMethod };
     })()`
   );
-  if (upgraded.rewardPoints !== 8520 || upgraded.lingyun !== 17 || upgraded.methodPage !== 17 || upgraded.rank !== 3 || upgraded.active !== 'iron_body') {
+  if (upgraded.rewardPoints !== 8540 || upgraded.lingyun !== 17 || upgraded.methodPage !== 17 || upgraded.rank !== 3 || upgraded.active !== 'iron_body') {
     throw new Error(`Cultivation actions should deduct exact learn/R2/R3 costs: ${JSON.stringify(upgraded)}`);
   }
   await clickDialogButton(cdp, '关闭');
@@ -14227,6 +17020,36 @@ async function runMethodCultivationSmoke(cdp, appUrl) {
     'legacy top-level methods migrate to R1 while the legacy run stays disabled'
   );
 
+  await finishActiveCombatByAttack(cdp, 'legacy method-disabled combat');
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 1, y: 1, button: 'none' });
+  const restartPointerEvidence = await evaluate(
+    cdp,
+    `(() => {
+      const button = document.querySelector('.quick-actions [data-action="new-run"]');
+      const rect = button?.getBoundingClientRect();
+      const hit = rect ? document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2) : null;
+      const popover = document.querySelector('.feature-help-popover');
+      return {
+        combatPanel: Boolean(document.querySelector('.combat-panel')),
+        appInert: document.querySelector('.app-content')?.hasAttribute('inert') ?? false,
+        popoverRects: popover?.getClientRects().length ?? 0,
+        pointerTarget: Boolean(button && hit && button.contains(hit)),
+        hitTag: hit?.tagName ?? '',
+        hitClass: hit instanceof HTMLElement ? hit.className : '',
+        hitAncestors: hit instanceof Element
+          ? [...hit.closest('.combat-panel, .feature-help-popover, .quick-actions, .app-content')?.classList ?? []]
+          : []
+      };
+    })()`
+  );
+  if (
+    restartPointerEvidence.combatPanel ||
+    restartPointerEvidence.appInert ||
+    restartPointerEvidence.popoverRects !== 0 ||
+    !restartPointerEvidence.pointerTarget
+  ) {
+    throw new Error(`Completed legacy combat should expose an unobstructed restart pointer: ${JSON.stringify(restartPointerEvidence)}`);
+  }
   await clickElementByPointer(cdp, '.quick-actions [data-action="new-run"]');
   await waitForPage(
     cdp,
@@ -14263,7 +17086,38 @@ async function runMethodCultivationSmoke(cdp, appUrl) {
     ))
   });
   if (browserErrors.length > 0) throw new Error(`Method cultivation smoke should have no browser errors: ${JSON.stringify(browserErrors)}`);
-  console.log('[smoke] method cultivation: pointer learn/R2/R3/preference, frozen all-method library and hub mutation, per-method once/free/reload/next-combat techniques, Dream seal, pet gate, malformed/unlearned snapshot recovery, legacy R1/no-backfill, restart, and 390x844 + 1440x900 layouts');
+  const finalMethodState = await evaluate(
+    cdp,
+    `(() => {
+      const raw = localStorage.getItem(${JSON.stringify(STORAGE_KEY)});
+      const saved = raw ? JSON.parse(raw).state : undefined;
+      return {
+        viewport: [innerWidth, innerHeight],
+        cleanSave: !saved || (
+          saved.phase === 'hub' &&
+          saved.learnedMethods?.length === 0 &&
+          saved.completedDungeonIds?.length === 0 &&
+          saved.claimedTaskIds?.length === 0 &&
+          saved.run === undefined
+        ),
+        methodText: document.querySelector('.method-trigger')?.textContent.replace(/\\s+/g, ' ').trim() ?? '',
+        dialogCount: document.querySelectorAll('[role="dialog"]:not(.feature-help-popover)').length,
+        combatPanelCount: document.querySelectorAll('.combat-panel').length,
+        shellCount: document.querySelectorAll('.shell').length
+      };
+    })()`
+  );
+  if (
+    JSON.stringify(finalMethodState.viewport) !== JSON.stringify([1440, 900]) ||
+    !finalMethodState.cleanSave ||
+    !finalMethodState.methodText.includes('0/7 已学会') ||
+    finalMethodState.dialogCount !== 0 ||
+    finalMethodState.combatPanelCount !== 0 ||
+    finalMethodState.shellCount !== 1
+  ) {
+    throw new Error(`Method cultivation final hard assertion failed: ${JSON.stringify(finalMethodState)}`);
+  }
+  console.log('[smoke] method cultivation: keyboard learn focus, pointer R2/R3/preference, frozen all-method library and hub mutation, per-method once/free/reload/next-combat techniques, Dream seal, pet gate, malformed/unlearned snapshot recovery, legacy R1/no-backfill, restart, and 390x844 + 1440x900 layouts');
 }
 
 async function runCompanionSmoke(cdp, appUrl) {
@@ -14278,14 +17132,18 @@ async function runCompanionSmoke(cdp, appUrl) {
 
   await assertCompanionModalLayout(cdp, 1440, 900, '1440x900 empty roster');
   await clickButtonByPointer(cdp, '小队', '.topbar');
-  await clickCardButtonByPointer(cdp, '.companion-card', '秦彻', '招募');
+  await activateCardButtonByKeyboard(cdp, '.companion-card', '秦彻', '招募');
   await waitForPage(
     cdp,
     `(() => {
       const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
-      return saved.ownedCompanions?.includes('qin_che') && saved.companionRanks?.qin_che === 1 && saved.activeCompanion === 'qin_che';
+      const card = document.querySelector('[data-companion-id="qin_che"]');
+      return saved.ownedCompanions?.includes('qin_che') && saved.companionRanks?.qin_che === 1 &&
+        saved.activeCompanion === 'qin_che' &&
+        document.querySelector('.companion-sheet')?.contains(document.activeElement) &&
+        document.activeElement === card?.querySelector('[data-action="upgrade-companion-qin_che"]:not(:disabled)');
     })()`,
-    'Qin Che recruits and auto-activates'
+    'keyboard Qin Che recruit auto-activates and moves focus to the next action in the same companion card'
   );
   await clickCardButtonByPointer(cdp, '.companion-card', '秦彻', '晋升 R2');
   await waitForPage(
@@ -14336,9 +17194,9 @@ async function runCompanionSmoke(cdp, appUrl) {
   await clickDialogButton(cdp, '关闭');
   await assertCompanionModalLayout(cdp, 390, 844, '390x844 populated roster');
 
-  await clickCardButtonByPointer(cdp, '.dungeon-card', '妖塔一层', '选择协议');
+  await clickCardButtonByPointer(cdp, '.dungeon-card', '妖塔一层', '准备进入');
   await waitForPage(cdp, `document.querySelector('.protocol-sheet')`, 'companion run protocol opens');
-  await clickDialogButton(cdp, '确认标准探索');
+  await clickElementByPointer(cdp, '[data-action="confirm-protocol-entry"]');
   await waitForPage(
     cdp,
     `(() => {
@@ -14510,7 +17368,8 @@ async function runCompanionSmoke(cdp, appUrl) {
     'legacy run stays companion-disabled without backfill'
   );
 
-  await clickButtonByPointer(cdp, '重开', '.quick-actions');
+  await finishActiveCombatByAttack(cdp, 'legacy companion-disabled combat');
+  await clickElementByPointer(cdp, '.quick-actions [data-action="new-run"]');
   await waitForPage(
     cdp,
     `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null &&
@@ -14584,6 +17443,7 @@ async function runSilentBroadcastTowerPointerSmoke(cdp, appUrl) {
   await evaluate(cdp, `localStorage.removeItem(${JSON.stringify(STORAGE_KEY)})`);
   await setViewport(cdp, 1440, 900);
   await cdp.send('Page.navigate', { url: appUrl });
+  await openHubDungeonDirectoryByPointer(cdp, 'broadcast catalog dungeon directory');
   await waitForPage(
     cdp,
     `document.querySelectorAll('.dungeon-card').length === ${DUNGEON_COUNT} &&
@@ -14605,17 +17465,24 @@ async function runSilentBroadcastTowerPointerSmoke(cdp, appUrl) {
       if (pixels[index + 3] > 0) opaque += 1;
       colors.add(pixels[index] + ',' + pixels[index + 1] + ',' + pixels[index + 2] + ',' + pixels[index + 3]);
     }
-    return { loaded: true, natural: [image.naturalWidth, image.naturalHeight], colors: colors.size, opaque, alt: image.alt };
+    return {
+      loaded: true,
+      src: image.getAttribute('src') ?? '',
+      natural: [image.naturalWidth, image.naturalHeight],
+      colors: colors.size,
+      opaque,
+      alt: image.alt
+    };
   })()`);
   if (
     !assetEvidence.loaded ||
+    !assetEvidence.src?.includes('/assets/dungeons/silent-broadcast-tower-v2.png') ||
     assetEvidence.natural?.join('x') !== '720x180' ||
     assetEvidence.colors < 8 ||
     assetEvidence.opaque < 100 ||
-    !assetEvidence.alt?.includes('废弃播音塔') ||
-    !assetEvidence.alt?.includes('隔音走廊')
+    !assetEvidence.alt?.includes('现代应急广播塔')
   ) {
-    throw new Error(`Tier-15 asset should be original, loaded, nonblank, and accurately described: ${JSON.stringify(assetEvidence)}`);
+    throw new Error(`Tier-15 generated asset should load, decode, paint nonblank pixels, and stay accurately described: ${JSON.stringify(assetEvidence)}`);
   }
   for (const [width, height] of [[390, 844], [1440, 900]]) {
     await setViewport(cdp, width, height);
@@ -14630,18 +17497,24 @@ async function runSilentBroadcastTowerPointerSmoke(cdp, appUrl) {
         pageWidth,
         pageOverflow: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) > pageWidth + 1,
         card: cardRect && { left: cardRect.left, right: cardRect.right },
-        image: imageRect && { left: imageRect.left, right: imageRect.right, width: imageRect.width, height: imageRect.height }
+        image: imageRect && { left: imageRect.left, right: imageRect.right, width: imageRect.width, height: imageRect.height, display: image ? getComputedStyle(image).display : '', state: image?.dataset.assetState }
       };
     })()`);
+    const compactImageHidden =
+      width <= 760 &&
+      cardGeometry.image?.display === 'none' &&
+      cardGeometry.image?.state === 'ready';
     if (
       cardGeometry.pageOverflow ||
       !cardGeometry.card ||
       !cardGeometry.image ||
       cardGeometry.card.left < -1 ||
       cardGeometry.card.right > cardGeometry.pageWidth + 1 ||
-      cardGeometry.image.left < cardGeometry.card.left - 1 ||
-      cardGeometry.image.right > cardGeometry.card.right + 1 ||
-      Math.abs(cardGeometry.image.width / cardGeometry.image.height - 4) > 0.06
+      (!compactImageHidden && (
+        cardGeometry.image.left < cardGeometry.card.left - 1 ||
+        cardGeometry.image.right > cardGeometry.card.right + 1 ||
+        Math.abs(cardGeometry.image.width / cardGeometry.image.height - 4) > 0.06
+      ))
     ) {
       throw new Error(`Tier-15 card should stay bounded at ${width}x${height}: ${JSON.stringify(cardGeometry)}`);
     }
@@ -14662,7 +17535,7 @@ async function runSilentBroadcastTowerPointerSmoke(cdp, appUrl) {
   };
   await navigateWithState(entryHub, 'Tier-15 four-equipment entry fixture renders');
   await setViewport(cdp, 1440, 900);
-  await clickElementByPointer(cdp, '[data-action="enter-silent_broadcast_tower"]');
+  await enterDungeonByPointer(cdp, '寂声广播塔');
   await waitForPage(cdp, `(() => {
     const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
     const passives = saved.run?.lawState?.law?.entryPassives;
@@ -14859,6 +17732,13 @@ async function runSilentBroadcastTowerPointerSmoke(cdp, appUrl) {
       checkRootOverflow: true,
       label: `${width}x${height} Tier-15 map`
     });
+    await assertLateTierMapStatusAlwaysVisible(
+      cdp,
+      '.broadcast-map-status',
+      width,
+      height,
+      `${width}x${height} Tier-15 map`
+    );
     const mapGeometry = await evaluate(cdp, `(() => {
       const pageWidth = document.documentElement.clientWidth;
       const nodes = [...document.querySelectorAll('.dungeon-map[data-dungeon-id="silent_broadcast_tower"] .grid-node')];
@@ -14915,10 +17795,10 @@ async function runSilentBroadcastTowerPointerSmoke(cdp, appUrl) {
   await setViewport(cdp, 1440, 900);
   await clickElementByPointer(cdp, '.quick-actions [data-action="new-run"]');
   await waitForPage(cdp, `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null &&
-    document.querySelectorAll('.dungeon-card').length === ${DUNGEON_COUNT} && !document.querySelector('.broadcast-map-status') &&
+    document.querySelector('[data-action="open-hub-dungeons"]') && !document.querySelector('.broadcast-map-status') &&
     innerWidth === 1440 && innerHeight === 900 && Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) <= innerWidth + 1`, 'new game clears Tier-15 law/material state and restores 1440x900 home');
   await cdp.send('Page.reload');
-  await waitForPage(cdp, `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null && document.querySelectorAll('.dungeon-card').length === ${DUNGEON_COUNT} && !document.querySelector('[role="dialog"][aria-modal="true"]')`, 'broadcast smoke keeps a clean home after reload');
+  await waitForPage(cdp, `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null && document.querySelector('[data-action="open-hub-dungeons"]') && !document.querySelector('[role="dialog"][aria-modal="true"]')`, 'broadcast smoke keeps a clean home after reload');
 
   const faviconUrl = new URL('/favicon.ico', appUrl).href;
   const browserErrors = collectBrowserErrorEvents({ events: cdp.events.filter((event) => !(
@@ -15040,17 +17920,16 @@ async function runLostShelterPointerSmoke(cdp, appUrl) {
   await evaluate(cdp, `localStorage.removeItem(${JSON.stringify(STORAGE_KEY)})`);
   await setViewport(cdp, 1440, 900);
   await cdp.send('Page.navigate', { url: appUrl });
+  await openHubDungeonDirectoryByPointer(cdp, 'shelter catalog dungeon directory');
   await waitForPage(cdp, `document.querySelectorAll('.dungeon-card').length === ${DUNGEON_COUNT} &&
     document.querySelector('.dungeon-card[data-dungeon-id="lost_shelter"]')?.textContent.includes('Tier 16') &&
     document.querySelector('.dungeon-card[data-dungeon-id="lost_shelter"]')?.textContent.includes('1040') &&
     document.querySelector('.lost-shelter-banner')?.complete && document.body.textContent.includes('救援铭牌')`, 'clean nineteen-chapter shelter hub');
   const catalogEvidence = await evaluate(cdp, `(() => ({
     cards: document.querySelectorAll('.dungeon-card').length,
-    matureEquipment: document.querySelectorAll('.shop-card.equipment-card').length,
-    rescueGear: ${JSON.stringify(rescueGearIds)}.filter((id) => document.querySelector('[data-equipment-id="' + id + '"]')).length,
     material: document.body.textContent.includes('救援铭牌')
   }))()`);
-  if (catalogEvidence.cards !== 19 || catalogEvidence.matureEquipment !== 56 || catalogEvidence.rescueGear !== 4 || !catalogEvidence.material) {
+  if (catalogEvidence.cards !== 19 || !catalogEvidence.material) {
     throw new Error(`Tier-16 hub catalog mismatch: ${JSON.stringify(catalogEvidence)}`);
   }
   const assetEvidence = await evaluate(cdp, `(() => {
@@ -15060,18 +17939,27 @@ async function runLostShelterPointerSmoke(cdp, appUrl) {
     const context = canvas.getContext('2d'); context.drawImage(image, 0, 0, 72, 18);
     const pixels = context.getImageData(0, 0, 72, 18).data; const colors = new Set(); let opaque = 0;
     for (let index = 0; index < pixels.length; index += 4) { if (pixels[index + 3] > 0) opaque += 1; colors.add(pixels.slice(index, index + 4).join(',')); }
-    return { loaded: true, natural: [image.naturalWidth, image.naturalHeight], colors: colors.size, opaque, alt: image.alt };
+    return {
+      loaded: true,
+      src: image.getAttribute('src') ?? '',
+      natural: [image.naturalWidth, image.naturalHeight],
+      colors: colors.size,
+      opaque,
+      alt: image.alt
+    };
   })()`);
-  if (!assetEvidence.loaded || assetEvidence.natural?.join('x') !== '720x180' || assetEvidence.colors < 8 || assetEvidence.opaque < 100 ||
-    !assetEvidence.alt?.includes('担架') || !assetEvidence.alt?.includes('三站应急灯') || !assetEvidence.alt?.includes('拟声')) {
+  if (!assetEvidence.loaded || !assetEvidence.src?.includes('/assets/dungeons/lost-shelter-v2.png') ||
+    assetEvidence.natural?.join('x') !== '720x180' || assetEvidence.colors < 8 || assetEvidence.opaque < 100 ||
+    !assetEvidence.alt?.includes('避难所')) {
     throw new Error(`Tier-16 shelter asset mismatch: ${JSON.stringify(assetEvidence)}`);
   }
+  await clickElementByPointer(cdp, '.hub-directory-close');
   console.log('[smoke:shelter] hub catalog and asset verified');
 
   for (const companionId of ['qin_che', 'zhou_yingxue', 'lu_guanlan']) {
     for (const rank of [1, 2]) {
       await navigateWithState(makeShelterHub(companionId, rank), `${companionId} R${rank} entry hub renders`);
-      await clickElementByPointer(cdp, '[data-action="enter-lost_shelter"]');
+      await enterDungeonByPointer(cdp, '失联避难所');
       await waitForPage(cdp, `document.querySelectorAll('[data-shelter-entry-gear][data-frozen="true"]').length === 4 &&
         document.querySelector('[data-shelter-companion-role="${companionId}"][data-companion-rank="${rank}"]')`, `${companionId} R${rank} and four gear freeze on real entry`);
     }
@@ -15221,6 +18109,13 @@ async function runLostShelterPointerSmoke(cdp, appUrl) {
       buttonSelectors: ['.dungeon-map[data-dungeon-id="lost_shelter"] .grid-node:not(:disabled)'],
       minimumButtonHeight: 40, checkRootOverflow: true, label: `${width}x${height} Tier-16 map`
     });
+    await assertLateTierMapStatusAlwaysVisible(
+      cdp,
+      '.shelter-map-status',
+      width,
+      height,
+      `${width}x${height} Tier-16 map`
+    );
     const geometry = await evaluate(cdp, `(() => { const pageWidth = document.documentElement.clientWidth; const nodes = [...document.querySelectorAll('.dungeon-map[data-dungeon-id="lost_shelter"] .grid-node')]; const records = nodes.map((node) => { const rect = node.getBoundingClientRect(); return { left: rect.left, right: rect.right, width: rect.width, height: rect.height, overflow: node.scrollWidth > node.clientWidth + 1 }; }); const distinct = (values) => [...new Set(values.map((value) => Math.round(value)))]; return { count: records.length, columns: distinct(records.map((node) => node.left)).length, rows: distinct(nodes.map((node) => node.getBoundingClientRect().top)).length, bad: records.filter((node) => node.width <= 0 || node.height < 40 || node.left < -1 || node.right > pageWidth + 1 || node.overflow) }; })()`);
     if (geometry.count !== 30 || geometry.columns !== 6 || geometry.rows !== 5 || geometry.bad.length) throw new Error(`Tier-16 map geometry mismatch at ${width}x${height}: ${JSON.stringify(geometry)}`);
   }
@@ -15250,9 +18145,9 @@ async function runLostShelterPointerSmoke(cdp, appUrl) {
 
   await setViewport(cdp, 1440, 900);
   await clickElementByPointer(cdp, '.quick-actions [data-action="new-run"]');
-  await waitForPage(cdp, `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null && document.querySelectorAll('.dungeon-card').length === ${DUNGEON_COUNT} && !document.querySelector('.shelter-map-status') && innerWidth === 1440 && innerHeight === 900 && Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) <= innerWidth + 1`, 'restart clears shelter state and restores empty 1440x900 home');
+  await waitForPage(cdp, `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null && document.querySelector('[data-action="open-hub-dungeons"]') && !document.querySelector('.shelter-map-status') && innerWidth === 1440 && innerHeight === 900 && Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) <= innerWidth + 1`, 'restart clears shelter state and restores empty 1440x900 home');
   await cdp.send('Page.reload');
-  await waitForPage(cdp, `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null && document.querySelectorAll('.dungeon-card').length === ${DUNGEON_COUNT} && !document.querySelector('[role="dialog"][aria-modal="true"]')`, 'shelter smoke keeps clean home after reload');
+  await waitForPage(cdp, `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null && document.querySelector('[data-action="open-hub-dungeons"]') && !document.querySelector('[role="dialog"][aria-modal="true"]')`, 'shelter smoke keeps clean home after reload');
 
   const faviconUrl = new URL('/favicon.ico', appUrl).href;
   const browserErrors = collectBrowserErrorEvents({ events: cdp.events.filter((event) => !(
@@ -15392,17 +18287,16 @@ async function runFalseTestimonyCourtPointerSmoke(cdp, appUrl) {
   await evaluate(cdp, `localStorage.removeItem(${JSON.stringify(STORAGE_KEY)})`);
   await setViewport(cdp, 1440, 900);
   await cdp.send('Page.navigate', { url: appUrl });
+  await openHubDungeonDirectoryByPointer(cdp, 'verdict catalog dungeon directory');
   await waitForPage(cdp, `document.querySelectorAll('.dungeon-card').length === ${DUNGEON_COUNT} &&
     document.querySelector('.dungeon-card[data-dungeon-id="false_testimony_court"]')?.textContent.includes('Tier 17') &&
     document.querySelector('.dungeon-card[data-dungeon-id="false_testimony_court"]')?.textContent.includes('1140') &&
     document.querySelector('.false-testimony-court-banner')?.complete && document.body.textContent.includes('真证碎片')`, 'clean Tier-17 verdict hub');
   const catalog = await evaluate(cdp, `(() => ({
     cards: document.querySelectorAll('.dungeon-card').length,
-    matureEquipment: document.querySelectorAll('.shop-card.equipment-card').length,
-    verdictGear: ${JSON.stringify(verdictGearIds)}.filter((id) => document.querySelector('[data-equipment-id="' + id + '"]')).length,
     material: document.body.textContent.includes('真证碎片')
   }))()`);
-  if (catalog.cards !== 19 || catalog.matureEquipment !== 56 || catalog.verdictGear !== 4 || !catalog.material) {
+  if (catalog.cards !== 19 || !catalog.material) {
     throw new Error(`Tier-17 catalog mismatch: ${JSON.stringify(catalog)}`);
   }
   const asset = await evaluate(cdp, `(() => {
@@ -15412,16 +18306,24 @@ async function runFalseTestimonyCourtPointerSmoke(cdp, appUrl) {
     const context = canvas.getContext('2d'); context.drawImage(image, 0, 0, 72, 18);
     const pixels = context.getImageData(0, 0, 72, 18).data; const colors = new Set(); let opaque = 0;
     for (let index = 0; index < pixels.length; index += 4) { if (pixels[index + 3] > 0) opaque += 1; colors.add(pixels.slice(index, index + 4).join(',')); }
-    return { loaded: true, natural: [image.naturalWidth, image.naturalHeight], colors: colors.size, opaque, alt: image.alt };
+    return {
+      loaded: true,
+      src: image.getAttribute('src') ?? '',
+      natural: [image.naturalWidth, image.naturalHeight],
+      colors: colors.size,
+      opaque,
+      alt: image.alt
+    };
   })()`);
-  if (!asset.loaded || asset.natural?.join('x') !== '720x180' || asset.colors < 8 || asset.opaque < 100 ||
-    !asset.alt?.includes('三座证据灯箱') || !asset.alt?.includes('四名嫌疑人') || !asset.alt?.includes('主审席')) {
+  if (!asset.loaded || !asset.src?.includes('/assets/dungeons/false-testimony-court-v2.png') ||
+    asset.natural?.join('x') !== '720x180' || asset.colors < 8 || asset.opaque < 100 ||
+    !asset.alt?.includes('裁定庭')) {
     throw new Error(`Tier-17 verdict asset mismatch: ${JSON.stringify(asset)}`);
   }
-  console.log('[smoke:verdict] 19-card catalog, 56 mature equipment, material, four gear, and original 720x180 asset verified');
+  console.log('[smoke:verdict] 19-card catalog, 58 mature equipment, material, four gear, and generated 720x180 asset verified');
 
   await navigateWithState(makeVerdictHub(), 'full verdict gear hub renders');
-  await clickElementByPointer(cdp, '[data-action="enter-false_testimony_court"]');
+  await enterDungeonByPointer(cdp, '伪证裁定庭');
   await waitForPage(cdp, `document.querySelectorAll('[data-verdict-entry-gear][data-frozen="true"]').length === 4 &&
     document.querySelector('.verdict-map-status')?.dataset.verdictCustodyUsed === 'false'`, 'four verdict gear freeze through real entry');
   await cdp.send('Page.reload');
@@ -15436,6 +18338,13 @@ async function runFalseTestimonyCourtPointerSmoke(cdp, appUrl) {
       buttonSelectors: ['.dungeon-map[data-dungeon-id="false_testimony_court"] .grid-node:not(:disabled)'],
       minimumButtonHeight: 40, checkRootOverflow: true, label: `${width}x${height} Tier-17 map`
     });
+    await assertLateTierMapStatusAlwaysVisible(
+      cdp,
+      '.verdict-map-status',
+      width,
+      height,
+      `${width}x${height} Tier-17 map`
+    );
     const geometry = await evaluate(cdp, `(() => { const pageWidth = document.documentElement.clientWidth; const nodes = [...document.querySelectorAll('.dungeon-map[data-dungeon-id="false_testimony_court"] .grid-node')]; const records = nodes.map((node) => { const rect = node.getBoundingClientRect(); return { left: rect.left, right: rect.right, width: rect.width, height: rect.height, overflow: node.scrollWidth > node.clientWidth + 1 }; }); const distinct = (values) => [...new Set(values.map((value) => Math.round(value)))]; return { count: records.length, columns: distinct(records.map((node) => node.left)).length, rows: distinct(nodes.map((node) => node.getBoundingClientRect().top)).length, bad: records.filter((node) => node.width <= 0 || node.height < 40 || node.left < -1 || node.right > pageWidth + 1 || node.overflow) }; })()`);
     if (geometry.count !== 30 || geometry.columns !== 6 || geometry.rows !== 5 || geometry.bad.length) {
       throw new Error(`Tier-17 map geometry mismatch at ${width}x${height}: ${JSON.stringify(geometry)}`);
@@ -15602,9 +18511,9 @@ async function runFalseTestimonyCourtPointerSmoke(cdp, appUrl) {
 
   await setViewport(cdp, 1440, 900);
   await clickElementByPointer(cdp, '.quick-actions [data-action="new-run"]');
-  await waitForPage(cdp, `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null && document.querySelectorAll('.dungeon-card').length === ${DUNGEON_COUNT} && !document.querySelector('.verdict-map-status') && innerWidth === 1440 && innerHeight === 900 && Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) <= innerWidth + 1`, 'restart clears verdict state and restores empty 1440x900 home');
+  await waitForPage(cdp, `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null && document.querySelector('[data-action="open-hub-dungeons"]') && !document.querySelector('.verdict-map-status') && innerWidth === 1440 && innerHeight === 900 && Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) <= innerWidth + 1`, 'restart clears verdict state and restores empty 1440x900 home');
   await cdp.send('Page.reload');
-  await waitForPage(cdp, `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null && document.querySelectorAll('.dungeon-card').length === ${DUNGEON_COUNT} && !document.querySelector('[role="dialog"][aria-modal="true"]')`, 'verdict smoke keeps clean home after reload');
+  await waitForPage(cdp, `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null && document.querySelector('[data-action="open-hub-dungeons"]') && !document.querySelector('[role="dialog"][aria-modal="true"]')`, 'verdict smoke keeps clean home after reload');
 
   const faviconUrl = new URL('/favicon.ico', appUrl).href;
   const browserErrors = collectBrowserErrorEvents({ events: cdp.events.filter((event) => !(
@@ -15661,37 +18570,43 @@ async function runCombatReplayStagePointerSmoke(cdp, appUrl) {
   await evaluate(cdp, `localStorage.removeItem(${JSON.stringify(STORAGE_KEY)})`);
   await setViewport(cdp, 1440, 900);
   await cdp.send('Page.navigate', { url: appUrl });
+  await openHubDungeonDirectoryByPointer(cdp, 'replay catalog dungeon directory');
   await waitForPage(cdp, `document.querySelectorAll('.dungeon-card').length === ${DUNGEON_COUNT} &&
     document.querySelector('.dungeon-card[data-dungeon-id="combat_replay_stage"]')?.textContent.includes('Tier 18') &&
     document.querySelector('.dungeon-card[data-dungeon-id="combat_replay_stage"]')?.textContent.includes('1240') &&
     document.querySelector('.combat-replay-stage-banner')?.complete && document.body.textContent.includes('战斗母带')`, 'clean Tier-18 replay hub');
   const catalog = await evaluate(cdp, `(() => ({
     cards: document.querySelectorAll('.dungeon-card').length,
-    matureEquipment: document.querySelectorAll('.shop-card.equipment-card').length,
-    replayGear: ${JSON.stringify(replayGearIds)}.filter((id) => document.querySelector('[data-equipment-id="' + id + '"]')).length,
     material: document.body.textContent.includes('战斗母带')
   }))()`);
-  if (catalog.cards !== 19 || catalog.matureEquipment !== 56 || catalog.replayGear !== 4 || !catalog.material) {
+  if (catalog.cards !== 19 || !catalog.material) {
     throw new Error(`Tier-18 replay catalog mismatch: ${JSON.stringify(catalog)}`);
   }
-  const asset = await evaluate(cdp, `(async () => {
+  const asset = await evaluate(cdp, `(() => {
     const image = document.querySelector('.combat-replay-stage-banner');
     if (!(image instanceof HTMLImageElement) || !image.complete || image.naturalWidth <= 0) return { loaded: false };
-    const svg = await fetch(image.src).then((response) => response.text());
     const canvas = document.createElement('canvas'); canvas.width = 72; canvas.height = 18;
     const context = canvas.getContext('2d'); context.drawImage(image, 0, 0, 72, 18);
     const pixels = context.getImageData(0, 0, 72, 18).data; const colors = new Set(); let opaque = 0;
     for (let index = 0; index < pixels.length; index += 4) { if (pixels[index + 3] === 255) opaque += 1; colors.add(pixels.slice(index, index + 4).join(',')); }
-    return { loaded: true, natural: [image.naturalWidth, image.naturalHeight], colors: colors.size, opaque, alt: image.alt, exactViewBox: /viewBox="0 0 720 180"/.test(svg) };
+    return {
+      loaded: true,
+      src: image.getAttribute('src') ?? '',
+      natural: [image.naturalWidth, image.naturalHeight],
+      colors: colors.size,
+      opaque,
+      alt: image.alt
+    };
   })()`);
-  if (!asset.loaded || asset.natural?.join('x') !== '720x180' || !asset.exactViewBox || asset.colors < 8 || asset.opaque < 100 ||
-    !asset.alt?.includes('战痕复演场') || !asset.alt?.includes('母带')) {
+  if (!asset.loaded || !asset.src?.includes('/assets/dungeons/combat-replay-stage-v2.png') ||
+    asset.natural?.join('x') !== '720x180' || asset.colors < 8 || asset.opaque < 100 ||
+    !asset.alt?.includes('全息战术回放') || !asset.alt?.includes('未来军事模拟场')) {
     throw new Error(`Tier-18 replay asset mismatch: ${JSON.stringify(asset)}`);
   }
-  console.log('[smoke:replay] 19-card catalog, 56 mature equipment, replay material, and original 720x180 asset verified');
+  console.log('[smoke:replay] 19-card catalog, mature equipment, replay material, and generated 720x180 asset verified');
 
   await navigateWithState(makeReplayHub(), 'full replay gear hub renders');
-  await clickElementByPointer(cdp, '[data-action="enter-combat_replay_stage"]');
+  await enterDungeonByPointer(cdp, '战痕复演场');
   await waitForPage(cdp, `document.querySelectorAll('[data-replay-entry-gear][data-frozen="true"]').length === 4 &&
     document.querySelector('.combat-replay-map-status')?.dataset.replayRecordedCount === '0'`, 'four replay gear freeze through real entry');
   let recordingState = await evaluate(cdp, `JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state`);
@@ -15746,6 +18661,13 @@ async function runCombatReplayStagePointerSmoke(cdp, appUrl) {
       buttonSelectors: ['.dungeon-map[data-dungeon-id="combat_replay_stage"] .grid-node:not(:disabled)'],
       minimumButtonHeight: 40, checkRootOverflow: true, label: `${width}x${height} Tier-18 replay map`
     });
+    await assertLateTierMapStatusAlwaysVisible(
+      cdp,
+      '.combat-replay-map-status',
+      width,
+      height,
+      `${width}x${height} Tier-18 replay map`
+    );
     const geometry = await evaluate(cdp, `(() => {
       const pageWidth = document.documentElement.clientWidth;
       const nodes = [...document.querySelectorAll('.dungeon-map[data-dungeon-id="combat_replay_stage"] .grid-node')];
@@ -15770,16 +18692,16 @@ async function runCombatReplayStagePointerSmoke(cdp, appUrl) {
 
   await setViewport(cdp, 1440, 900);
   await clickElementByPointer(cdp, '.quick-actions [data-action="new-run"]');
-  await waitForPage(cdp, `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null && document.querySelectorAll('.dungeon-card').length === ${DUNGEON_COUNT} && !document.querySelector('.combat-replay-map-status') && Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) <= innerWidth + 1`, 'restart clears replay state');
+  await waitForPage(cdp, `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null && document.querySelector('[data-action="open-hub-dungeons"]') && !document.querySelector('.combat-replay-map-status') && Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) <= innerWidth + 1`, 'restart clears replay state');
   await cdp.send('Page.reload');
-  await waitForPage(cdp, `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null && document.querySelectorAll('.dungeon-card').length === ${DUNGEON_COUNT}`, 'replay smoke keeps clean home after reload');
+  await waitForPage(cdp, `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null && document.querySelector('[data-action="open-hub-dungeons"]')`, 'replay smoke keeps clean home after reload');
 
   const faviconUrl = new URL('/favicon.ico', appUrl).href;
   const browserErrors = collectBrowserErrorEvents({ events: cdp.events.filter((event) => !(
     event.method === 'Log.entryAdded' && event.params?.entry?.url === faviconUrl && event.params.entry.text.includes('404')
   )) });
   if (browserErrors.length > 0) throw new Error(`Combat replay smoke should have no console/resource/page errors: ${JSON.stringify(browserErrors)}`);
-  console.log('[smoke] combat replay stage: 19-card/56-gear catalog, original asset, three recordings, route, Boss/exit, reload/restart, 17 -> 18 -> 19 portals, and responsive geometry pass');
+  console.log('[smoke] combat replay stage: 19-card/58-gear catalog, generated asset, three recordings, route, Boss/exit, reload/restart, 17 -> 18 -> 19 portals, and responsive geometry pass');
 }
 
 async function runPanopticonCityPointerSmoke(cdp, appUrl) {
@@ -15827,54 +18749,45 @@ async function runPanopticonCityPointerSmoke(cdp, appUrl) {
   await evaluate(cdp, `localStorage.removeItem(${JSON.stringify(STORAGE_KEY)})`);
   await setViewport(cdp, 1440, 900);
   await cdp.send('Page.navigate', { url: appUrl });
+  await openHubDungeonDirectoryByPointer(cdp, 'panopticon catalog dungeon directory');
   await waitForPage(cdp, `document.querySelectorAll('.dungeon-card').length === ${DUNGEON_COUNT} &&
     document.querySelector('.dungeon-card[data-dungeon-id="panopticon_city"]')?.textContent.includes('Tier 19') &&
     document.querySelector('.dungeon-card[data-dungeon-id="panopticon_city"]')?.textContent.includes('1350') &&
     document.querySelector('.panopticon-city-banner')?.complete && document.body.textContent.includes('观测棱片')`, 'clean Tier-19 panopticon hub');
   const catalog = await evaluate(cdp, `(() => ({
     cards: document.querySelectorAll('.dungeon-card').length,
-    matureEquipment: document.querySelectorAll('.shop-card.equipment-card').length,
-    panopticonGear: ${JSON.stringify(panopticonGearIds)}.filter((id) => document.querySelector('[data-equipment-id="' + id + '"]')).length,
     material: document.body.textContent.includes('观测棱片')
   }))()`);
-  if (catalog.cards !== 19 || catalog.matureEquipment !== 56 || catalog.panopticonGear !== 4 || !catalog.material) {
+  if (catalog.cards !== 19 || !catalog.material) {
     throw new Error(`Tier-19 panopticon catalog mismatch: ${JSON.stringify(catalog)}`);
   }
-  const asset = await evaluate(cdp, `(async () => {
+  const asset = await evaluate(cdp, `(() => {
     const image = document.querySelector('.panopticon-city-banner');
     if (!(image instanceof HTMLImageElement) || !image.complete || image.naturalWidth <= 0) return { loaded: false };
-    const svg = await fetch(image.src).then((response) => response.text());
-    const svgDocument = new DOMParser().parseFromString(svg, 'image/svg+xml');
-    const svgRoot = svgDocument.documentElement;
-    const title = svgDocument.querySelector('title')?.textContent ?? '';
-    const description = svgDocument.querySelector('desc')?.textContent ?? '';
     const canvas = document.createElement('canvas'); canvas.width = 72; canvas.height = 18;
     const context = canvas.getContext('2d'); context.drawImage(image, 0, 0, 72, 18);
     const pixels = context.getImageData(0, 0, 72, 18).data; const colors = new Set(); let opaque = 0;
     for (let index = 0; index < pixels.length; index += 4) { if (pixels[index + 3] === 255) opaque += 1; colors.add(pixels.slice(index, index + 4).join(',')); }
     return {
       loaded: true,
+      src: image.getAttribute('src') ?? '',
       natural: [image.naturalWidth, image.naturalHeight],
       colors: colors.size,
       opaque,
-      alt: image.alt,
-      exactViewBox: svgRoot.getAttribute('viewBox') === '0 0 720 180',
-      hasTitle: title.includes('天幕监察城'),
-      hasDesc: description.includes('扫描') && description.includes('中继') && description.includes('监察者'),
-      hasGradient: Boolean(svgDocument.querySelector('linearGradient, radialGradient'))
+      alt: image.alt
     };
   })()`);
-  if (!asset.loaded || asset.natural?.join('x') !== '720x180' || !asset.exactViewBox || asset.colors < 8 || asset.opaque < 100 ||
-    !asset.alt?.includes('天幕监察城') || !asset.alt?.includes('万目监察者') || !asset.hasTitle || !asset.hasDesc || asset.hasGradient) {
+  if (!asset.loaded || !asset.src?.includes('/assets/dungeons/panopticon-city-v2.png') ||
+    asset.natural?.join('x') !== '720x180' || asset.colors < 8 || asset.opaque < 100 ||
+    !asset.alt?.includes('未来监察城') || !asset.alt?.includes('轨道扫描天幕')) {
     throw new Error(`Tier-19 panopticon asset mismatch: ${JSON.stringify(asset)}`);
   }
-  console.log('[smoke:panopticon] 19-card catalog, 56 mature equipment, four chapter gear, material, and original 720x180 asset verified');
+  console.log('[smoke:panopticon] 19-card catalog, mature equipment, four chapter gear, material, and generated 720x180 asset verified');
 
   await navigateWithState(makePanopticonHub(), 'legal Tier-18 mainline-complete hub renders');
-  await clickElementByPointer(cdp, '[data-action="enter-panopticon_city"]');
+  await enterDungeonByPointer(cdp, '天幕监察城');
   await waitForPage(cdp, `document.querySelectorAll('.dungeon-map[data-dungeon-id="panopticon_city"] .grid-node').length === 30 &&
-    document.querySelector('.panopticon-law-status[data-panopticon-state="tracking"][data-panopticon-entry-gear-frozen-count="4"]') &&
-    document.querySelectorAll('[data-panopticon-zone]').length === 30`, 'real pointer entry freezes gear and renders the 30-node map');
+    document.querySelector('.panopticon-law-status[data-panopticon-state="tracking"][data-panopticon-entry-gear-frozen-count="4"]')`, 'real pointer entry freezes gear and renders the 30-node fog map');
   await collectCurrentReward('panopticon gate');
   await clickGridCell(cdp, '监镜秘藏');
   await waitForPage(cdp, `(() => {
@@ -15909,8 +18822,7 @@ async function runPanopticonCityPointerSmoke(cdp, appUrl) {
   await waitForPage(cdp, `document.querySelector('.panopticon-law-status[data-panopticon-state="routed"][data-panopticon-route="refraction"]') &&
     document.querySelector('[data-panopticon-route-result="refraction"]') &&
     document.querySelectorAll('[data-panopticon-route-choice]').length === 0 &&
-    document.querySelector('[data-panopticon-route-node="refraction"][data-panopticon-route-selected="true"]') &&
-    document.querySelectorAll('[data-panopticon-route-node][data-panopticon-route-selected="true"]').length === 1 &&
+    JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state.run.lawState.law.route === 'refraction' &&
     !document.querySelector('[role="dialog"][aria-modal="true"]') &&
     document.activeElement !== document.querySelector('[data-panopticon-route-result="refraction"]')`, 'refraction route locks once without stealing focus');
   await cdp.send('Page.reload');
@@ -15950,6 +18862,13 @@ async function runPanopticonCityPointerSmoke(cdp, appUrl) {
       buttonSelectors: ['.dungeon-map[data-dungeon-id="panopticon_city"] .grid-node:not(:disabled)'],
       minimumButtonHeight: 44, checkRootOverflow: true, label: `${width}x${height} Tier-19 panopticon map`
     });
+    await assertLateTierMapStatusAlwaysVisible(
+      cdp,
+      '.panopticon-law-status',
+      width,
+      height,
+      `${width}x${height} Tier-19 panopticon map`
+    );
     const geometry = await evaluate(cdp, `(() => {
       const pageWidth = document.documentElement.clientWidth;
       const nodes = [...document.querySelectorAll('.dungeon-map[data-dungeon-id="panopticon_city"] .grid-node')];
@@ -15972,7 +18891,7 @@ async function runPanopticonCityPointerSmoke(cdp, appUrl) {
     })()`);
     const expectedStatusColumns = width === 390 ? 2 : 4;
     if (geometry.count !== 30 || geometry.columns !== 6 || geometry.rows !== 5 || geometry.minWidth < 44 || geometry.widthDelta > 1 || geometry.minHeight < 44 ||
-      geometry.statusHeight > 116 || geometry.statusColumns !== expectedStatusColumns || geometry.overflowX || geometry.bad.length) {
+      geometry.statusHeight > 132 || geometry.statusColumns !== expectedStatusColumns || geometry.overflowX || geometry.bad.length) {
       throw new Error(`Tier-19 panopticon geometry mismatch at ${width}x${height}: ${JSON.stringify(geometry)}`);
     }
   }
@@ -15997,9 +18916,9 @@ async function runPanopticonCityPointerSmoke(cdp, appUrl) {
 
   await setViewport(cdp, 1440, 900);
   await clickElementByPointer(cdp, '.quick-actions [data-action="new-run"]');
-  await waitForPage(cdp, `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null && document.querySelectorAll('.dungeon-card').length === ${DUNGEON_COUNT} && !document.querySelector('.panopticon-law-status') && Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) <= innerWidth + 1`, 'restart clears panopticon state');
+  await waitForPage(cdp, `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null && document.querySelector('[data-action="open-hub-dungeons"]') && !document.querySelector('.panopticon-law-status') && Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) <= innerWidth + 1`, 'restart clears panopticon state');
   await cdp.send('Page.reload');
-  await waitForPage(cdp, `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null && document.querySelectorAll('.dungeon-card').length === ${DUNGEON_COUNT}`, 'panopticon smoke keeps clean home after reload');
+  await waitForPage(cdp, `localStorage.getItem(${JSON.stringify(STORAGE_KEY)}) === null && document.querySelector('[data-action="open-hub-dungeons"]')`, 'panopticon smoke keeps clean home after reload');
 
   const faviconUrl = new URL('/favicon.ico', appUrl).href;
   const browserErrors = collectBrowserErrorEvents({ events: cdp.events.filter((event) => !(
@@ -16056,6 +18975,194 @@ async function runHubSurfaceSmoke(cdp, appUrl) {
     cdp,
     `document.querySelector('.hub-stage') && document.querySelectorAll('.hub-station').length === 6`,
     'clean hub stage'
+  );
+  const firstRouteHint = await evaluate(
+    cdp,
+    `(() => {
+      const hint = document.querySelector('[data-hub-first-route-hint]');
+      const steps = [...(hint?.querySelectorAll('[data-guide-target]') ?? [])];
+      return {
+        exists: Boolean(hint),
+        role: hint?.getAttribute('role') ?? '',
+        ariaModal: hint?.getAttribute('aria-modal'),
+        detailText: hint?.querySelector('.hub-first-route-copy small')?.textContent.replace(/\\s+/g, ' ').trim() ?? '',
+        labels: steps.map((step) => step.textContent.replace(/\\s+/g, ' ').trim()),
+        targets: steps.map((step) => step.dataset.guideTarget),
+        dungeonGateEnabled: Boolean(document.querySelector('[data-action="open-hub-dungeons"]:not(:disabled)')),
+        taskEnabled: Boolean(document.querySelector('.task-trigger:not(:disabled)')),
+        methodEnabled: Boolean(document.querySelector('.method-trigger:not(:disabled)')),
+        openDialogCount: document.querySelectorAll('[role="dialog"][aria-modal="true"]').length
+      };
+    })()`
+  );
+  if (
+    !firstRouteHint.exists ||
+    firstRouteHint.role !== 'note' ||
+    firstRouteHint.ariaModal !== null ||
+    !/副本卡.*完整准备信息.*\?/.test(firstRouteHint.detailText) ||
+    !/探索界面.*主神指令.*\?/.test(firstRouteHint.detailText) ||
+    JSON.stringify(firstRouteHint.labels) !== JSON.stringify(['1看任务', '2买补给 / 工具', '3打开功法', '4副本门']) ||
+    JSON.stringify(firstRouteHint.targets) !== JSON.stringify([
+      'open-task-panel',
+      'open-hub-supplies',
+      'open-method-panel',
+      'open-hub-dungeons'
+    ]) ||
+    !firstRouteHint.dungeonGateEnabled ||
+    !firstRouteHint.taskEnabled ||
+    !firstRouteHint.methodEnabled ||
+    firstRouteHint.openDialogCount !== 0
+  ) {
+    throw new Error(`Fresh hub should show the non-blocking task -> supplies/tools -> method -> dungeon route: ${JSON.stringify(firstRouteHint)}`);
+  }
+
+  const firstChapterCompleteHub = makeExploreSave({
+    dungeonId: 'demon_tower_1',
+    nodeId: 'fog_lesser_demon',
+    completedDungeonIds: ['demon_tower_1'],
+    claimedTaskIds: ['mainline_clear_demon_tower_1'],
+    log: ['first chapter route hint completion fixture']
+  });
+  firstChapterCompleteHub.phase = 'hub';
+  delete firstChapterCompleteHub.run;
+  await injectGameState(cdp, firstChapterCompleteHub);
+  await cdp.send('Page.navigate', { url: appUrl });
+  await waitForPage(
+    cdp,
+    `document.querySelector('.hub-stage') &&
+      document.body.textContent.includes('first chapter route hint completion fixture') &&
+      !document.querySelector('[data-hub-first-route-hint]')`,
+    'first chapter completion removes the fresh-route hint'
+  );
+  await evaluate(cdp, `localStorage.removeItem(${JSON.stringify(STORAGE_KEY)})`);
+  await cdp.send('Page.navigate', { url: appUrl });
+  await waitForPage(
+    cdp,
+    `document.querySelector('.hub-stage') && document.querySelector('[data-hub-first-route-hint]')`,
+    'hub smoke restores the fresh route fixture'
+  );
+
+  const lowHealthFreshHub = makeExploreSave({
+    dungeonId: 'demon_tower_1',
+    nodeId: 'fog_lesser_demon',
+    player: { hp: 14, maxHp: 102 },
+    inventory: { healing_pill: 1 },
+    log: ['hub notice layout fixture']
+  });
+  lowHealthFreshHub.phase = 'hub';
+  lowHealthFreshHub.preparedItemIds = [];
+  delete lowHealthFreshHub.run;
+  await injectGameState(cdp, lowHealthFreshHub);
+  await cdp.send('Page.navigate', { url: appUrl });
+  await waitForPage(
+    cdp,
+    `document.querySelector('.hub-stage-notices.has-first-route.has-recovery') &&
+      document.querySelector('.hub-first-route-hint') &&
+      document.querySelector('.hub-recovery-alert')`,
+    'fresh low-health hub renders both notices'
+  );
+  for (const [width, height] of [[1440, 900], [814, 877], [390, 844]]) {
+    await setViewport(cdp, width, height);
+    const noticeLayout = await evaluate(
+      cdp,
+      `(() => {
+        const rect = (element) => element?.getBoundingClientRect();
+        const overlaps = (left, right) => {
+          if (!left || !right) return 0;
+          const overlapX = Math.max(0, Math.min(left.right, right.right) - Math.max(left.left, right.left));
+          const overlapY = Math.max(0, Math.min(left.bottom, right.bottom) - Math.max(left.top, right.top));
+          return overlapX * overlapY;
+        };
+        const notices = document.querySelector('.hub-stage-notices');
+        const hint = rect(document.querySelector('.hub-first-route-hint'));
+        const recovery = rect(document.querySelector('.hub-recovery-alert'));
+        const stage = rect(document.querySelector('.hub-stage'));
+        const noticesRect = rect(notices);
+        const selectors = ${JSON.stringify(hubControlSelectors)};
+        const controls = selectors.map((selector) => rect(document.querySelector(selector)));
+        const controlOverlaps = [];
+        for (let leftIndex = 0; leftIndex < controls.length; leftIndex += 1) {
+          for (let rightIndex = leftIndex + 1; rightIndex < controls.length; rightIndex += 1) {
+            if (overlaps(controls[leftIndex], controls[rightIndex]) > 1) {
+              controlOverlaps.push([selectors[leftIndex], selectors[rightIndex]]);
+            }
+          }
+        }
+        return {
+          viewport: [innerWidth, innerHeight],
+          columns: getComputedStyle(notices).gridTemplateColumns.split(' ').filter(Boolean).length,
+          noticeOverlapArea: overlaps(hint, recovery),
+          noticeGap: stage && noticesRect ? stage.top - noticesRect.bottom : -1,
+          noticeInsideX: Boolean(noticesRect && noticesRect.left >= -1 && noticesRect.right <= innerWidth + 1),
+          stageInsideX: Boolean(stage && stage.left >= -1 && stage.right <= innerWidth + 1),
+          pageOverflow: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) > innerWidth + 1,
+          controlOverlaps,
+          recoverLabelColor: getComputedStyle(document.querySelector('.hub-recover-button > span')).color
+        };
+      })()`
+    );
+    const expectedColumns = width > 1100 ? 2 : 1;
+    if (
+      noticeLayout.viewport[0] !== width ||
+      noticeLayout.viewport[1] !== height ||
+      noticeLayout.columns !== expectedColumns ||
+      noticeLayout.noticeOverlapArea > 1 ||
+      noticeLayout.noticeGap < 9 ||
+      !noticeLayout.noticeInsideX ||
+      !noticeLayout.stageInsideX ||
+      noticeLayout.pageOverflow ||
+      noticeLayout.controlOverlaps.length > 0 ||
+      noticeLayout.recoverLabelColor !== 'rgb(36, 22, 13)'
+    ) {
+      throw new Error(
+        `${width}x${height} low-health hub notices should stay above the scene without collisions: ${JSON.stringify(noticeLayout)}`
+      );
+    }
+  }
+  await setViewport(cdp, 1440, 900);
+  await clickElementByPointer(cdp, '[data-action="open-hub-supplies"]');
+  await waitForPage(
+    cdp,
+    `document.querySelector('[data-tactical-shop-item="healing_pill"][data-tactical-shop-state="unprepared"]')`,
+    'owned but unprepared supply status renders'
+  );
+  const supplyStatusLayout = await evaluate(
+    cdp,
+    `(() => {
+      const status = document.querySelector('[data-tactical-shop-item="healing_pill"]');
+      const copy = status?.querySelector(':scope > div');
+      const button = status?.querySelector('.tactical-shop-prepare');
+      const statusRect = status?.getBoundingClientRect();
+      const copyRect = copy?.getBoundingClientRect();
+      const buttonRect = button?.getBoundingClientRect();
+      return {
+        columns: getComputedStyle(status).gridTemplateColumns.split(' ').filter(Boolean).length,
+        copyWidth: copyRect?.width ?? 0,
+        buttonWidth: buttonRect?.width ?? 0,
+        innerWidth: statusRect ? statusRect.width - 21 : 0,
+        copyAboveButton: Boolean(copyRect && buttonRect && copyRect.bottom <= buttonRect.top),
+        pageOverflow: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) > innerWidth + 1
+      };
+    })()`
+  );
+  if (
+    supplyStatusLayout.columns !== 1 ||
+    supplyStatusLayout.copyWidth < supplyStatusLayout.innerWidth - 1 ||
+    supplyStatusLayout.buttonWidth < supplyStatusLayout.innerWidth - 1 ||
+    !supplyStatusLayout.copyAboveButton ||
+    supplyStatusLayout.pageOverflow
+  ) {
+    throw new Error(`Owned supply preparation status should keep readable full-width copy above its action: ${JSON.stringify(supplyStatusLayout)}`);
+  }
+  await closeDirectoryByPointer('open-hub-supplies', 'owned supply preparation status');
+  await evaluate(cdp, `localStorage.removeItem(${JSON.stringify(STORAGE_KEY)})`);
+  await cdp.send('Page.navigate', { url: appUrl });
+  await waitForPage(
+    cdp,
+    `document.querySelector('.hub-stage') &&
+      document.querySelector('[data-hub-first-route-hint]') &&
+      !document.querySelector('.hub-recovery-alert')`,
+    'hub notice geometry fixture cleanup'
   );
 
   const desktopHub = await evaluate(
@@ -16122,6 +19229,26 @@ async function runHubSurfaceSmoke(cdp, appUrl) {
 
   await clickElementByPointer(cdp, '[data-action="open-hub-codex"]');
   await waitForPage(cdp, `document.querySelector('.hub-directory-sheet[role="dialog"][aria-modal="true"]')`, 'codex dialog opens');
+  await waitForPage(
+    cdp,
+    `(() => {
+      const images = [...document.querySelectorAll('.codex-entry[data-codex-category="dungeons"] .codex-art-dungeons')]
+        .filter((image) => {
+          const rect = image.getBoundingClientRect();
+          return rect.width > 0 && rect.height > 0 && rect.bottom > 0 && rect.top < innerHeight;
+        });
+      return images.length > 0 && images.every((image) =>
+        image instanceof HTMLImageElement &&
+        image.complete &&
+        image.naturalWidth > 0 &&
+        image.dataset.assetState === 'ready' &&
+        image.dataset.assetKind === 'dungeon' &&
+        !image.classList.contains('is-fallback') &&
+        !image.src.startsWith('data:')
+      );
+    })()`,
+    'visible dungeon codex entries load real artwork'
+  );
   const codexOpen = await evaluate(
     cdp,
     `(() => {
@@ -16129,17 +19256,45 @@ async function runHubSurfaceSmoke(cdp, appUrl) {
       const closeButton = document.querySelector('.hub-directory-close');
       const appContent = document.querySelector('.app-content');
       const count = Number(document.querySelector('.codex-count')?.textContent.match(/\\d+/)?.[0] ?? -1);
+      const filters = [...document.querySelectorAll('.codex-filter')];
+      const visibleDungeonImages = [...document.querySelectorAll('.codex-entry[data-codex-category="dungeons"] .codex-art-dungeons')]
+        .filter((image) => {
+          const rect = image.getBoundingClientRect();
+          return rect.width > 0 && rect.height > 0 && rect.bottom > 0 && rect.top < innerHeight;
+        });
       return {
         dialog: Boolean(dialog),
         bodyModalOpen: document.body.classList.contains('modal-open'),
         appContentInert: Boolean(appContent?.hasAttribute('inert') || appContent?.inert),
         focusOnClose: document.activeElement === closeButton,
         count,
-        entries: document.querySelectorAll('.codex-entry').length
+        entries: document.querySelectorAll('.codex-entry').length,
+        minimumFilterHeight: Math.min(...filters.map((filter) => filter.getBoundingClientRect().height)),
+        visibleDungeonImageCount: visibleDungeonImages.length,
+        invalidDungeonImages: visibleDungeonImages.filter((image) => {
+          const entry = image.closest('.codex-entry');
+          return !(image instanceof HTMLImageElement) ||
+            image.dataset.assetKey !== 'dungeon:' + entry?.dataset.codexId ||
+            image.dataset.assetState !== 'ready' ||
+            image.dataset.assetKind !== 'dungeon' ||
+            image.naturalWidth <= 0 ||
+            image.classList.contains('is-fallback') ||
+            image.src.startsWith('data:');
+        }).length
       };
     })()`
   );
-  if (!codexOpen.dialog || !codexOpen.bodyModalOpen || !codexOpen.appContentInert || !codexOpen.focusOnClose || codexOpen.count <= 1 || codexOpen.entries !== codexOpen.count) {
+  if (
+    !codexOpen.dialog ||
+    !codexOpen.bodyModalOpen ||
+    !codexOpen.appContentInert ||
+    !codexOpen.focusOnClose ||
+    codexOpen.count <= 1 ||
+    codexOpen.entries !== codexOpen.count ||
+    codexOpen.minimumFilterHeight < 43.5 ||
+    codexOpen.visibleDungeonImageCount <= 0 ||
+    codexOpen.invalidDungeonImages > 0
+  ) {
     throw new Error(`Codex should open as a focused modal with a populated count: ${JSON.stringify(codexOpen)}`);
   }
   await replaceSearchByPointer('妖塔');
@@ -16181,6 +19336,263 @@ async function runHubSurfaceSmoke(cdp, appUrl) {
     })()`,
     `all ${DUNGEON_COUNT} dungeon cards become visible`
   );
+  const dungeonGenres = await evaluate(
+    cdp,
+    `(() => {
+      const expected = ${JSON.stringify(DUNGEON_GENRE_EXPECTATIONS)};
+      return Object.entries(expected).map(([dungeonId, [genre, label]]) => {
+        const badge = document.querySelector(
+          '.dungeon-card[data-dungeon-id="' + dungeonId + '"] .dungeon-genre-badge'
+        );
+        return {
+          dungeonId,
+          expectedGenre: genre,
+          expectedLabel: label,
+          exists: Boolean(badge),
+          genre: badge?.dataset.dungeonGenre ?? '',
+          label: badge?.textContent.trim() ?? '',
+          title: badge?.getAttribute('title') ?? '',
+          ariaLabel: badge?.getAttribute('aria-label') ?? ''
+        };
+      });
+    })()`
+  );
+  const invalidDungeonGenres = dungeonGenres.filter((entry) =>
+    !entry.exists ||
+    entry.genre !== entry.expectedGenre ||
+    entry.label !== entry.expectedLabel ||
+    !entry.title.includes('题材仅描述世界来源，不改变基础操作') ||
+    entry.ariaLabel !== entry.title
+  );
+  if (dungeonGenres.length !== DUNGEON_COUNT || invalidDungeonGenres.length > 0) {
+    throw new Error(`Every dungeon card should expose its compact accessible genre label: ${JSON.stringify(invalidDungeonGenres)}`);
+  }
+  const desktopDungeonDetails = await evaluate(
+    cdp,
+    `(() => {
+      const details = [...document.querySelectorAll('.dungeon-card-details')];
+      const summaries = details.map((entry) => entry.querySelector(':scope > summary'));
+      const firstSummary = summaries[0];
+      firstSummary?.focus({ preventScroll: true });
+      return {
+        detailsCount: details.length,
+        visibleSummaryCount: summaries.filter((summary) =>
+          Boolean(summary?.getClientRects().length) &&
+          getComputedStyle(summary).display !== 'none' &&
+          getComputedStyle(summary).visibility !== 'hidden'
+        ).length,
+        minimumSummaryHeight: Math.min(...summaries.map((summary) => summary?.getBoundingClientRect().height ?? 0)),
+        openCount: details.filter((entry) => entry.open).length,
+        visibleClosedContentCount: details.filter((entry) =>
+          Boolean(entry.querySelector('.dungeon-card-details-content')?.getClientRects().length)
+        ).length,
+        focusOnFirstSummary: document.activeElement === firstSummary
+      };
+    })()`
+  );
+  if (
+    desktopDungeonDetails.detailsCount !== DUNGEON_COUNT ||
+    desktopDungeonDetails.visibleSummaryCount !== DUNGEON_COUNT ||
+    desktopDungeonDetails.minimumSummaryHeight < 43.5 ||
+    desktopDungeonDetails.openCount !== 0 ||
+    desktopDungeonDetails.visibleClosedContentCount !== 0 ||
+    !desktopDungeonDetails.focusOnFirstSummary
+  ) {
+    throw new Error(
+      `Desktop dungeon cards should expose a keyboard-operable details summary at every tier: ${JSON.stringify(desktopDungeonDetails)}`
+    );
+  }
+  for (const [width, height, expectedColumns] of [[1440, 900, 4], [814, 877, 2], [390, 844, 1]]) {
+    await setViewport(cdp, width, height);
+    const firstDetailsSelector = '.dungeon-card[data-dungeon-id="demon_tower_1"] .dungeon-card-details';
+    await evaluate(
+      cdp,
+      `(() => {
+        const summary = document.querySelector(${JSON.stringify(`${firstDetailsSelector} > summary`)});
+        if (!(summary instanceof HTMLElement)) throw new Error('Missing responsive dungeon summary');
+        summary.scrollIntoView({ block: 'center', inline: 'nearest' });
+        summary.focus({ preventScroll: true });
+        return document.activeElement === summary;
+      })()`
+    );
+    await pressEnter(cdp);
+    await waitForPage(cdp, `document.querySelector(${JSON.stringify(firstDetailsSelector)})?.open === true`, `${width}x${height} dungeon details open`);
+    const responsiveDungeonDetails = await evaluate(
+      cdp,
+      `(() => {
+        const grid = document.querySelector('.hub-directory-content .dungeon-grid');
+        const card = document.querySelector('.dungeon-card[data-dungeon-id="demon_tower_1"]');
+        const overview = card?.querySelector('.dungeon-card-overview');
+        const details = card?.querySelector('.dungeon-card-details');
+        const nextCard = document.querySelector('.dungeon-card[data-dungeon-id="metro_abyss"]');
+        const helpTargets = [...(details?.querySelectorAll('.feature-help-trigger') ?? [])]
+          .map((trigger) => trigger.getBoundingClientRect());
+        const gridRect = grid?.getBoundingClientRect();
+        const cardRect = card?.getBoundingClientRect();
+        const overviewRect = overview?.getBoundingClientRect();
+        const detailsRect = details?.getBoundingClientRect();
+        const nextRect = nextCard?.getBoundingClientRect();
+        return {
+          viewport: [innerWidth, innerHeight],
+          columns: getComputedStyle(grid).gridTemplateColumns.split(' ').filter(Boolean).length,
+          cardSpansGrid: Boolean(gridRect && cardRect && Math.abs(gridRect.width - cardRect.width) <= 1),
+          overviewBeforeDetails: Boolean(
+            overviewRect && detailsRect &&
+            (${width} <= 760 ? overviewRect.bottom <= detailsRect.top + 1 : overviewRect.right <= detailsRect.left + 1)
+          ),
+          nextAfterCard: Boolean(cardRect && nextRect && nextRect.top >= cardRect.bottom - 1),
+          helpTargetCount: helpTargets.length,
+          minimumHelpWidth: Math.min(...helpTargets.map((rect) => rect.width)),
+          minimumHelpHeight: Math.min(...helpTargets.map((rect) => rect.height)),
+          pageOverflow: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) > innerWidth + 1,
+          sheetOverflow: (() => {
+            const sheet = document.querySelector('.hub-directory-sheet');
+            return Boolean(sheet && sheet.scrollWidth > sheet.clientWidth + 1);
+          })()
+        };
+      })()`
+    );
+    if (
+      responsiveDungeonDetails.viewport[0] !== width ||
+      responsiveDungeonDetails.viewport[1] !== height ||
+      responsiveDungeonDetails.columns !== expectedColumns ||
+      !responsiveDungeonDetails.cardSpansGrid ||
+      !responsiveDungeonDetails.overviewBeforeDetails ||
+      !responsiveDungeonDetails.nextAfterCard ||
+      responsiveDungeonDetails.helpTargetCount < 2 ||
+      responsiveDungeonDetails.minimumHelpWidth < (width <= 760 ? 43.5 : 39.5) ||
+      responsiveDungeonDetails.minimumHelpHeight < (width <= 760 ? 43.5 : 39.5) ||
+      responsiveDungeonDetails.pageOverflow ||
+      responsiveDungeonDetails.sheetOverflow
+    ) {
+      throw new Error(`${width}x${height} expanded dungeon card should use a collision-free ${expectedColumns}-column directory: ${JSON.stringify(responsiveDungeonDetails)}`);
+    }
+    await evaluate(
+      cdp,
+      `(() => {
+        const summary = document.querySelector(${JSON.stringify(`${firstDetailsSelector} > summary`)});
+        summary?.focus({ preventScroll: true });
+        return document.activeElement === summary;
+      })()`
+    );
+    await pressEnter(cdp);
+    await waitForPage(cdp, `document.querySelector(${JSON.stringify(firstDetailsSelector)})?.open === false`, `${width}x${height} dungeon details close`);
+  }
+  await setViewport(cdp, 1440, 900);
+  const dungeonDetailIds = await evaluate(
+    cdp,
+    `[...document.querySelectorAll('.dungeon-card[data-dungeon-id]')].map((card) => card.dataset.dungeonId)`
+  );
+  if (
+    dungeonDetailIds.length !== DUNGEON_COUNT ||
+    new Set(dungeonDetailIds).size !== DUNGEON_COUNT ||
+    dungeonDetailIds.some((dungeonId) => !dungeonId)
+  ) {
+    throw new Error(`Dungeon detail keyboard audit needs ${DUNGEON_COUNT} stable dungeon ids: ${JSON.stringify(dungeonDetailIds)}`);
+  }
+  for (const [chapterIndex, dungeonId] of dungeonDetailIds.entries()) {
+    const cardSelector = `.dungeon-card[data-dungeon-id="${dungeonId}"]`;
+    await evaluate(
+      cdp,
+      `(() => {
+        const summary = document.querySelector(${JSON.stringify(`${cardSelector} .dungeon-card-details > summary`)});
+        if (!(summary instanceof HTMLElement)) throw new Error('Missing dungeon details summary: ${dungeonId}');
+        summary.scrollIntoView({ block: 'center', inline: 'nearest' });
+        summary.focus({ preventScroll: true });
+        return document.activeElement === summary;
+      })()`
+    );
+    await pressEnter(cdp);
+    await waitForPage(
+      cdp,
+      `(() => {
+        const card = document.querySelector(${JSON.stringify(cardSelector)});
+        const details = card?.querySelector('.dungeon-card-details');
+        const summary = details?.querySelector(':scope > summary');
+        const content = details?.querySelector('.dungeon-card-details-content');
+        return details?.open &&
+          summary?.getAttribute('aria-expanded') === 'true' &&
+          summary?.getAttribute('aria-label')?.startsWith('收起') &&
+          Boolean(content?.getClientRects().length) &&
+          content?.querySelectorAll('.feature-help-trigger').length >= 2 &&
+          document.activeElement === summary;
+      })()`,
+      `chapter ${chapterIndex + 1} details opens with a real Enter key`
+    );
+    const helpIds = await evaluate(
+      cdp,
+      `[...document.querySelectorAll(${JSON.stringify(`${cardSelector} .dungeon-card-details-content .feature-help-trigger`)})]
+        .slice(0, 2)
+        .map((trigger) => trigger.dataset.featureHelp)`
+    );
+    if (helpIds.length !== 2 || helpIds.some((helpId) => !helpId)) {
+      throw new Error(`Chapter ${chapterIndex + 1} should expose two stable help controls: ${JSON.stringify(helpIds)}`);
+    }
+    for (let helpIndex = 0; helpIndex < 2; helpIndex += 1) {
+      await evaluate(
+        cdp,
+        `(() => {
+          const triggers = document.querySelectorAll(${JSON.stringify(`${cardSelector} .dungeon-card-details-content .feature-help-trigger`)});
+          const trigger = triggers[${helpIndex}];
+          if (!(trigger instanceof HTMLButtonElement)) throw new Error('Missing chapter help trigger');
+          trigger.scrollIntoView({ block: 'center', inline: 'nearest' });
+          trigger.focus({ preventScroll: true });
+          return document.activeElement === trigger;
+        })()`
+      );
+      await pressEnter(cdp);
+      await waitForPage(
+        cdp,
+        `(() => {
+          const triggers = document.querySelectorAll(${JSON.stringify(`${cardSelector} .dungeon-card-details-content .feature-help-trigger`)});
+          const trigger = triggers[${helpIndex}];
+          const popover = document.querySelector('[data-feature-help-popover]');
+          return trigger?.getAttribute('aria-expanded') === 'true' &&
+            popover?.hidden === false &&
+            popover?.dataset.pinned === 'true' &&
+            popover?.dataset.featureHelpId === ${JSON.stringify(helpIds[helpIndex])} &&
+            document.activeElement === popover;
+        })()`,
+        `chapter ${chapterIndex + 1} help ${helpIndex + 1} opens with a real Enter key`
+      );
+      await pressEscape(cdp);
+      await waitForPage(
+        cdp,
+        `(() => {
+          const triggers = document.querySelectorAll(${JSON.stringify(`${cardSelector} .dungeon-card-details-content .feature-help-trigger`)});
+          const trigger = triggers[${helpIndex}];
+          const popover = document.querySelector('[data-feature-help-popover]');
+          return popover?.hidden === true &&
+            trigger?.getAttribute('aria-expanded') === 'false' &&
+            document.activeElement === trigger;
+        })()`,
+        `chapter ${chapterIndex + 1} help ${helpIndex + 1} Escape restores trigger focus`
+      );
+    }
+    await evaluate(
+      cdp,
+      `(() => {
+        const summary = document.querySelector(${JSON.stringify(`${cardSelector} .dungeon-card-details > summary`)});
+        if (!(summary instanceof HTMLElement)) throw new Error('Missing dungeon details summary: ${dungeonId}');
+        summary.focus({ preventScroll: true });
+        return true;
+      })()`
+    );
+    await pressEnter(cdp);
+    await waitForPage(
+      cdp,
+      `(() => {
+        const details = document.querySelector(${JSON.stringify(`${cardSelector} .dungeon-card-details`)});
+        const summary = details?.querySelector(':scope > summary');
+        return details instanceof HTMLDetailsElement &&
+          !details.open &&
+          summary?.getAttribute('aria-expanded') === 'false' &&
+          document.activeElement === summary;
+      })()`,
+      `chapter ${chapterIndex + 1} details closes with a real Enter key`
+    );
+  }
+  console.log(`[smoke] all ${DUNGEON_COUNT} chapter details and both per-chapter help controls pass real keyboard open/focus/Escape checks`);
   await closeDirectoryByPointer('open-hub-dungeons', 'dungeon directory');
 
   const directoryChecks = [
@@ -16200,6 +19612,49 @@ async function runHubSurfaceSmoke(cdp, appUrl) {
       })()`,
       `${check.title} content becomes visible`
     );
+    if (check.actionId === 'open-hub-supplies') {
+      await clickElementByPointer(cdp, '.hub-archive[data-hub-archive="preparation"] > summary');
+      await waitForPage(
+        cdp,
+        `document.querySelector('.hub-archive[data-hub-archive="preparation"][open]') &&
+          document.querySelector('.hub-archive[data-hub-archive="preparation"] > summary[aria-expanded="true"]') &&
+          document.querySelectorAll('[data-tactical-item][data-selected="true"]').length === 0 &&
+          !document.querySelector('[data-action="clear-empty-tactical-slots"]') &&
+          !document.querySelector('.tactical-empty-stock-warning')`,
+        'fresh zero-stock preparation opens without phantom selections'
+      );
+      const freshPreparationState = await evaluate(
+        cdp,
+        `(() => {
+          const archive = document.querySelector('.hub-archive[data-hub-archive="preparation"]');
+          const summary = archive?.querySelector(':scope > summary');
+          const raw = localStorage.getItem(${JSON.stringify(STORAGE_KEY)});
+          return {
+            dialogOpen: Boolean(document.querySelector('.hub-directory-sheet[role="dialog"][aria-modal="true"]')),
+            archiveOpen: archive instanceof HTMLDetailsElement && archive.open,
+            expanded: summary?.getAttribute('aria-expanded') ?? '',
+            focusOnSummary: document.activeElement === summary,
+            hasSavedState: raw !== null,
+            selectedItemIds: [...document.querySelectorAll('[data-tactical-item][data-selected="true"]')]
+              .map((item) => item.dataset.tacticalItem),
+            cleanupButtonExists: Boolean(document.querySelector('[data-action="clear-empty-tactical-slots"]')),
+            warningExists: Boolean(document.querySelector('.tactical-empty-stock-warning'))
+          };
+        })()`
+      );
+      if (
+        !freshPreparationState.dialogOpen ||
+        !freshPreparationState.archiveOpen ||
+        freshPreparationState.expanded !== 'true' ||
+        !freshPreparationState.focusOnSummary ||
+        freshPreparationState.hasSavedState ||
+        freshPreparationState.selectedItemIds.length !== 0 ||
+        freshPreparationState.cleanupButtonExists ||
+        freshPreparationState.warningExists
+      ) {
+        throw new Error(`Fresh zero-stock preparation should start empty without a cleanup warning: ${JSON.stringify(freshPreparationState)}`);
+      }
+    }
     if (check.forge) {
       const forgeState = await evaluate(
         cdp,
@@ -16232,6 +19687,22 @@ async function runHubSurfaceSmoke(cdp, appUrl) {
       ) {
         throw new Error(`Fresh forge should stay empty until chapter equipment is owned: ${JSON.stringify(forgeState)}`);
       }
+    }
+    if (check.actionId === 'open-hub-pets') {
+      await activateCardButtonByKeyboard(cdp, '.pet-card', '契约小灵', '签约');
+      await waitForPage(
+        cdp,
+        `(() => {
+          const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
+          const dialog = document.querySelector('.hub-directory-sheet');
+          return saved.ownedPets.includes('contract_sprite') &&
+            saved.activePet === 'contract_sprite' &&
+            saved.rewardPoints === 570 &&
+            dialog?.contains(document.activeElement) &&
+            document.activeElement !== document.body;
+        })()`,
+        'keyboard pet purchase keeps focus inside the still-open directory modal'
+      );
     }
     await closeDirectoryByPointer(check.actionId, check.title);
   }
@@ -16291,20 +19762,710 @@ async function runHubSurfaceSmoke(cdp, appUrl) {
     throw new Error(`Mobile codex category and search should combine correctly: ${JSON.stringify(mobileCodex)}`);
   }
   await closeDirectoryByPointer('open-hub-codex', 'mobile codex directory');
+  const secondaryHoverPoint = await evaluate(
+    cdp,
+    `(() => {
+      const button = document.querySelector('[data-action="new-run"].secondary');
+      if (!button) throw new Error('Missing secondary restart button');
+      button.scrollIntoView({ block: 'center', inline: 'center' });
+      const rect = button.getBoundingClientRect();
+      return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+    })()`
+  );
+  await cdp.send('Input.dispatchMouseEvent', {
+    type: 'mouseMoved',
+    x: secondaryHoverPoint.x,
+    y: secondaryHoverPoint.y,
+    button: 'none'
+  });
+  const secondaryHover = await evaluate(
+    cdp,
+    `(() => {
+      const button = document.querySelector('[data-action="new-run"].secondary');
+      const hint = button?.querySelector('small');
+      const style = getComputedStyle(button);
+      return {
+        background: style.backgroundColor,
+        color: style.color,
+        hintColor: hint ? getComputedStyle(hint).color : ''
+      };
+    })()`
+  );
+  if (
+    secondaryHover.background !== 'rgba(231, 198, 109, 0.16)' ||
+    secondaryHover.color !== 'rgb(255, 240, 191)' ||
+    secondaryHover.hintColor !== 'rgb(214, 204, 178)'
+  ) {
+    throw new Error(`Secondary buttons should retain dark, readable hover colors: ${JSON.stringify(secondaryHover)}`);
+  }
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 1, y: 1, button: 'none' });
   console.log('[smoke] hub surface: desktop stage, modal lifecycle, directories, forge ownership, and 390x844 codex controls pass');
+}
+
+async function runPermanentCapturePreparationSmoke(cdp, appUrl) {
+  const ownedCaptureHub = makeExploreSave({
+    dungeonId: 'demon_tower_1',
+    nodeId: 'fog_lesser_demon',
+    rewardPoints: 5000,
+    lingyun: 10,
+    inventory: {
+      healing_pill: 8,
+      dispel_talisman: 8,
+      gate_sigil: 8,
+      capture_net: 8
+    },
+    learnedMethods: ['mist_breathing'],
+    methodRanks: { mist_breathing: 1 },
+    ownedPets: ['mist_kitten'],
+    petLevels: { mist_kitten: 1 },
+    activePet: 'mist_kitten',
+    log: ['permanent capture preparation fixture']
+  });
+  ownedCaptureHub.phase = 'hub';
+  ownedCaptureHub.preparedItemIds = ['capture_net', 'dispel_talisman', 'gate_sigil'];
+  delete ownedCaptureHub.run;
+  await injectGameState(cdp, ownedCaptureHub);
+  await setViewport(cdp, 1440, 900);
+  await cdp.send('Page.navigate', { url: appUrl });
+  await waitForPage(cdp, `document.querySelector('.hub-stage')`, 'permanent capture hub renders');
+  await clickCardButtonByPointer(cdp, '.dungeon-card', '妖塔一层', '准备进入');
+  await waitForPage(
+    cdp,
+    `document.querySelector('.protocol-sheet[role="dialog"][aria-modal="true"]') &&
+      document.querySelector('.protocol-preparation-summary')`,
+    'permanent capture preparation summary renders'
+  );
+  const beforeAutoCarry = await evaluate(
+    cdp,
+    `(() => {
+      const summary = document.querySelector('.protocol-preparation-summary');
+      const fit = summary?.querySelector('[data-tactical-fit-dungeon="demon_tower_1"]');
+      const carry = summary?.querySelector('[data-action="protocol-carry-critical-demon_tower_1"]');
+      const text = summary?.textContent.replace(/\\s+/g, ' ').trim() ?? '';
+      const summaryRect = summary?.getBoundingClientRect();
+      const carryRect = carry?.getBoundingClientRect();
+      return {
+        text,
+        requiredCount: Number(fit?.dataset.requiredCount ?? -1),
+        preparedCount: Number(fit?.dataset.preparedCount ?? -1),
+        carryEnabled: Boolean(carry && !carry.disabled),
+        carryText: carry?.textContent.replace(/\\s+/g, ' ').trim() ?? '',
+        summaryColumns: getComputedStyle(summary).gridTemplateColumns.split(' ').filter(Boolean).length,
+        carryFillsSummary: Boolean(
+          summaryRect &&
+          carryRect &&
+          carryRect.width >= summaryRect.width - 24 &&
+          carryRect.left >= summaryRect.left &&
+          carryRect.right <= summaryRect.right
+        ),
+        mentionsCaptureNet: text.includes('缚灵网'),
+        reportsDirectiveRequired: text.includes('指令必需：缚灵网'),
+        reportsRouteRequired: text.includes('路线可选：缚灵网'),
+        reportsCaptureMissing: text.includes('缺少缚灵网') || text.includes('缚灵网未携行'),
+        permanentSatisfied: text.includes('捕获目标已永久拥有')
+      };
+    })()`
+  );
+  if (
+    beforeAutoCarry.requiredCount !== 3 ||
+    beforeAutoCarry.preparedCount !== 2 ||
+    !beforeAutoCarry.carryEnabled ||
+    beforeAutoCarry.summaryColumns !== 1 ||
+    !beforeAutoCarry.carryFillsSummary ||
+    beforeAutoCarry.mentionsCaptureNet ||
+    beforeAutoCarry.reportsDirectiveRequired ||
+    beforeAutoCarry.reportsRouteRequired ||
+    beforeAutoCarry.reportsCaptureMissing ||
+    !beforeAutoCarry.permanentSatisfied
+  ) {
+    throw new Error(`Permanent capture should remove capture gear from directive and route preparation: ${JSON.stringify(beforeAutoCarry)}`);
+  }
+  await clickElementByPointer(cdp, '[data-action="protocol-carry-critical-demon_tower_1"]');
+  const afterAutoCarry = await evaluate(
+    cdp,
+    `(() => {
+      const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
+      const summary = document.querySelector('.protocol-preparation-summary');
+      const carry = summary?.querySelector('[data-action="protocol-carry-critical-demon_tower_1"]');
+      return {
+        preparedItemIds: saved.preparedItemIds,
+        captureSelected: saved.preparedItemIds.includes('capture_net'),
+        carryDisabled: carry?.disabled ?? false,
+        summaryText: summary?.textContent.replace(/\\s+/g, ' ').trim() ?? ''
+      };
+    })()`
+  );
+  if (
+    JSON.stringify(afterAutoCarry.preparedItemIds) !== JSON.stringify(DEFAULT_PREPARED_TACTICAL_ITEM_IDS) ||
+    afterAutoCarry.captureSelected ||
+    !afterAutoCarry.carryDisabled ||
+    afterAutoCarry.summaryText.includes('缚灵网')
+  ) {
+    throw new Error(`Auto-carry should not reserve a slot for an already-owned capture target: ${JSON.stringify(afterAutoCarry)}`);
+  }
+  await clickDialogButton(cdp, '取消');
+  await evaluate(cdp, `localStorage.removeItem(${JSON.stringify(STORAGE_KEY)})`);
+  await cdp.send('Page.navigate', { url: appUrl });
+  await waitForPage(cdp, `document.querySelector('.hub-stage')`, 'permanent capture preparation cleanup');
+  console.log('[smoke] permanent capture removes the capture item from directive/route preparation and auto-carry slots');
+}
+
+async function runCombatActivationDedupSmoke(cdp, appUrl) {
+  const makeHealingFixture = (marker) => makeCombatSave({
+    dungeonId: 'demon_tower_1',
+    nodeId: 'fog_lesser_demon',
+    monsterId: 'fog_lesser_demon',
+    monsterHp: 900,
+    inventory: { healing_pill: 4 },
+    player: {
+      hp: 70,
+      maxHp: 220,
+      base: { body: 30, spirit: 20, agility: 2, luck: 1 }
+    },
+    combatLog: [marker],
+    log: [marker]
+  });
+  const readHealingState = async () => evaluate(
+    cdp,
+    `(() => {
+      const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
+      return {
+        pills: saved.inventory.healing_pill,
+        turn: saved.combat.turn,
+        usedPills: saved.run.usedItems.filter((itemId) => itemId === 'healing_pill').length,
+        healingLogEntries: saved.combat.log.filter((entry) => entry.includes('止血丹')).length,
+        buttonEnabled: Boolean(document.querySelector('[data-action="combat-use_healing_pill"]:not(:disabled)'))
+      };
+    })()`
+  );
+  const loadFixture = async (marker) => {
+    await injectGameState(cdp, makeHealingFixture(marker));
+    await cdp.send('Page.navigate', { url: appUrl });
+    await waitForPage(
+      cdp,
+      `document.querySelector('[data-action="combat-use_healing_pill"]:not(:disabled)')`,
+      `${marker} healing command renders`
+    );
+    return readHealingState();
+  };
+  const assertExactlyOneHealing = (before, after, label) => {
+    if (
+      before.pills - after.pills !== 1 ||
+      after.turn - before.turn !== 1 ||
+      after.usedPills - before.usedPills !== 1 ||
+      after.healingLogEntries - before.healingLogEntries !== 1 ||
+      !after.buttonEnabled
+    ) {
+      throw new Error(`${label} should activate healing exactly once: ${JSON.stringify({ before, after })}`);
+    }
+  };
+  const getHealingPoint = async () => evaluate(
+    cdp,
+    `(() => {
+      const button = document.querySelector('[data-action="combat-use_healing_pill"]:not(:disabled)');
+      if (!button) throw new Error('Missing enabled healing command');
+      button.scrollIntoView({ block: 'center', inline: 'center' });
+      const rect = button.getBoundingClientRect();
+      const point = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+      const hit = document.elementFromPoint(point.x, point.y);
+      if (!hit || !button.contains(hit)) throw new Error('Healing command is not the pointer target');
+      return point;
+    })()`
+  );
+  const prepareKeyboardHealing = async () => evaluate(
+    cdp,
+    `(() => {
+      const button = document.querySelector('[data-action="combat-use_healing_pill"]:not(:disabled)');
+      if (!(button instanceof HTMLButtonElement)) throw new Error('Missing keyboard healing command');
+      window.__smokeHealingKeyboardActivation = undefined;
+      button.addEventListener('click', (event) => {
+        window.__smokeHealingKeyboardActivation = {
+          detail: event.detail,
+          isTrusted: event.isTrusted
+        };
+      }, { capture: true, once: true });
+      button.focus();
+      return { focused: document.activeElement === button };
+    })()`
+  );
+  const readKeyboardHealing = async () => evaluate(
+    cdp,
+    `window.__smokeHealingKeyboardActivation ?? null`
+  );
+
+  const doubleBefore = await loadFixture('double-click healing activation fixture');
+  const doublePoint = await getHealingPoint();
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: doublePoint.x, y: doublePoint.y, button: 'none' });
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: doublePoint.x, y: doublePoint.y, button: 'left', clickCount: 1 });
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: doublePoint.x, y: doublePoint.y, button: 'left', clickCount: 1 });
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: doublePoint.x, y: doublePoint.y, button: 'left', clickCount: 2 });
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: doublePoint.x, y: doublePoint.y, button: 'left', clickCount: 2 });
+  await delay(240);
+  assertExactlyOneHealing(doubleBefore, await readHealingState(), 'Real pointer double-click');
+
+  const singleBefore = await loadFixture('single-click healing activation fixture');
+  await clickElementByPointer(cdp, '[data-action="combat-use_healing_pill"]');
+  await delay(240);
+  assertExactlyOneHealing(singleBefore, await readHealingState(), 'Real pointer single-click');
+
+  const enterBefore = await loadFixture('held Enter healing activation fixture');
+  const enterPreparation = await prepareKeyboardHealing();
+  await holdActivationKey(cdp, 'Enter');
+  await delay(240);
+  const enterActivation = await readKeyboardHealing();
+  if (
+    !enterPreparation.focused ||
+    enterActivation?.detail !== 0 ||
+    enterActivation?.isTrusted !== true
+  ) {
+    throw new Error(`Held Enter should emit one trusted detail=0 activation: ${JSON.stringify({ enterPreparation, enterActivation })}`);
+  }
+  assertExactlyOneHealing(enterBefore, await readHealingState(), 'Held real Enter with autoRepeat');
+
+  const spaceBefore = await loadFixture('held Space healing activation fixture');
+  const spacePreparation = await prepareKeyboardHealing();
+  await holdActivationKey(cdp, 'Space');
+  await delay(240);
+  const spaceActivation = await readKeyboardHealing();
+  if (
+    !spacePreparation.focused ||
+    spaceActivation?.detail !== 0 ||
+    spaceActivation?.isTrusted !== true
+  ) {
+    throw new Error(`Held Space should emit one trusted detail=0 activation: ${JSON.stringify({ spacePreparation, spaceActivation })}`);
+  }
+  assertExactlyOneHealing(spaceBefore, await readHealingState(), 'Held real Space with autoRepeat');
+
+  await evaluate(cdp, `localStorage.removeItem(${JSON.stringify(STORAGE_KEY)})`);
+  await cdp.send('Page.navigate', { url: appUrl });
+  await waitForPage(cdp, `document.querySelector('.hub-stage')`, 'combat activation dedup cleanup');
+  console.log('[smoke] healing command accepts pointer single-click plus trusted Enter/Space while suppressing pointer double-click and held-key autoRepeat across re-renders');
+}
+
+async function runRejectedSaveRecoverySmoke(cdp, appUrl) {
+  const loadRejectedRaw = async (raw, expectedReason, label) => {
+    await evaluate(
+      cdp,
+      `(() => {
+        localStorage.removeItem(${JSON.stringify(REJECTED_SAVE_BACKUP_KEY)});
+        localStorage.removeItem(${JSON.stringify(REJECTED_SAVE_REASON_KEY)});
+        localStorage.setItem(${JSON.stringify(STORAGE_KEY)}, ${JSON.stringify(raw)});
+        return true;
+      })()`
+    );
+    await cdp.send('Page.navigate', { url: appUrl });
+    await waitForPage(
+      cdp,
+      `document.querySelector('[data-invalid-save-recovery][role="alert"]') &&
+        document.querySelector('[data-action="export-rejected-save"]') &&
+        document.querySelector('[data-action="clear-rejected-save"]')`,
+      `${label} exposes recovery actions`
+    );
+    const recovery = await evaluate(
+      cdp,
+      `(() => ({
+        primary: localStorage.getItem(${JSON.stringify(STORAGE_KEY)}),
+        backup: localStorage.getItem(${JSON.stringify(REJECTED_SAVE_BACKUP_KEY)}),
+        reason: localStorage.getItem(${JSON.stringify(REJECTED_SAVE_REASON_KEY)}),
+        alertText: document.querySelector('[data-invalid-save-recovery]')?.textContent.replace(/\\s+/g, ' ').trim() ?? '',
+        hubVisible: Boolean(document.querySelector('.hub-stage'))
+      }))()`
+    );
+    if (
+      recovery.primary !== null ||
+      recovery.backup !== raw ||
+      !recovery.reason?.includes(expectedReason) ||
+      !recovery.alertText.includes('存档校验失败') ||
+      !recovery.alertText.includes('原始内容仍保留') ||
+      !recovery.hubVisible
+    ) {
+      throw new Error(`${label} should preserve the exact rejected value and show a safe fresh hub: ${JSON.stringify(recovery)}`);
+    }
+  };
+
+  const malformedRaw = '{"version":1,"state":';
+  await loadRejectedRaw(malformedRaw, '不是有效的 JSON', 'malformed JSON save');
+  await clickElementByPointer(cdp, '[data-action="export-rejected-save"]');
+  await waitForPage(
+    cdp,
+    `localStorage.getItem(${JSON.stringify(REJECTED_SAVE_BACKUP_KEY)}) === ${JSON.stringify(malformedRaw)} &&
+      document.querySelector('[data-invalid-save-export-status][role="status"][aria-live="polite"]')
+        ?.textContent.startsWith('已发起下载：infinite-flow-rejected-save-') &&
+      document.querySelector('[data-invalid-save-export-status]')?.textContent.endsWith('.txt') &&
+      document.activeElement === document.querySelector('[data-action="export-rejected-save"]')`,
+    'rejected save export preserves its keyboard focus, durable backup, and requested filename announcement'
+  );
+  await clickElementByPointer(cdp, '[data-action="clear-rejected-save"]');
+  await waitForPage(
+    cdp,
+    `!document.querySelector('[data-invalid-save-recovery]') &&
+      localStorage.getItem(${JSON.stringify(REJECTED_SAVE_BACKUP_KEY)}) === null &&
+      localStorage.getItem(${JSON.stringify(REJECTED_SAVE_REASON_KEY)}) === null &&
+      document.activeElement === document.querySelector('[data-action="new-run"]')`,
+    'rejected save backup clears only after explicit action and moves focus to the safe new-game control'
+  );
+
+  const incompatibleRaw = JSON.stringify({ version: 999, state: {} });
+  await loadRejectedRaw(incompatibleRaw, '存档版本 999', 'incompatible-version save');
+  await cdp.send('Page.navigate', { url: appUrl });
+  await waitForPage(
+    cdp,
+    `localStorage.getItem(${JSON.stringify(REJECTED_SAVE_BACKUP_KEY)}) === ${JSON.stringify(incompatibleRaw)} &&
+      document.querySelector('[data-invalid-save-recovery]')?.textContent.includes('存档版本 999')`,
+    'rejected backup and explanation survive reload'
+  );
+  await clickElementByPointer(cdp, '[data-action="clear-rejected-save"]');
+  await waitForPage(
+    cdp,
+    `!document.querySelector('[data-invalid-save-recovery]') &&
+      localStorage.getItem(${JSON.stringify(REJECTED_SAVE_BACKUP_KEY)}) === null &&
+      localStorage.getItem(${JSON.stringify(REJECTED_SAVE_REASON_KEY)}) === null &&
+      document.activeElement === document.querySelector('[data-action="new-run"]')`,
+    'incompatible-version backup cleanup restores the safe new-game focus'
+  );
+  console.log('[smoke] malformed and incompatible saves fall back visibly, retain exact exportable backups across reload, and clear only on request');
+}
+
+async function runSaveResilienceSmoke(cdp, appUrl) {
+  const malformedSettlementSave = makeExploreSave({
+    dungeonId: 'demon_tower_1',
+    nodeId: 'fog_lesser_demon',
+    rewardPoints: 1337,
+    log: ['isolated protocol settlement corruption fixture']
+  });
+  malformedSettlementSave.enteredDungeonIds = ['metro_abyss'];
+  malformedSettlementSave.run.protocol = { id: 'standard', rulesVersion: 1 };
+  malformedSettlementSave.run.lastProtocolSettlement = {
+    status: 'corrupt',
+    protocol: { id: 'deep', rulesVersion: 999 }
+  };
+  await injectGameState(cdp, malformedSettlementSave);
+  await cdp.send('Page.navigate', { url: appUrl });
+  await waitForPage(
+    cdp,
+    `(() => {
+      const raw = localStorage.getItem(${JSON.stringify(STORAGE_KEY)});
+      const saved = raw ? JSON.parse(raw).state : undefined;
+      return saved?.phase === 'explore' &&
+        saved.rewardPoints === 1337 &&
+        saved.run?.dungeonId === 'demon_tower_1' &&
+        !Object.prototype.hasOwnProperty.call(saved.run, 'lastProtocolSettlement') &&
+        saved.enteredDungeonIds?.includes('metro_abyss') &&
+        saved.enteredDungeonIds?.includes('demon_tower_1') &&
+        saved.log?.includes('isolated protocol settlement corruption fixture') &&
+        Boolean(document.querySelector('.explore-primary'));
+    })()`,
+    'invalid optional protocol settlement is isolated while active entry history is normalized'
+  );
+  const isolatedSave = await evaluate(
+    cdp,
+    `JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state`
+  );
+  if (
+    isolatedSave.phase !== 'explore' ||
+    isolatedSave.rewardPoints !== 1337 ||
+    isolatedSave.run?.dungeonId !== 'demon_tower_1' ||
+    Object.prototype.hasOwnProperty.call(isolatedSave.run ?? {}, 'lastProtocolSettlement') ||
+    JSON.stringify(isolatedSave.enteredDungeonIds) !== JSON.stringify(['metro_abyss', 'demon_tower_1'])
+  ) {
+    throw new Error(`Protocol settlement corruption should drop only that field and retain the active entry: ${JSON.stringify(isolatedSave)}`);
+  }
+
+  const replacedEncounterCases = [
+    {
+      label: 'lost shelter replaced encounter',
+      dungeonId: 'lost_shelter',
+      nodeId: 'north_rescue_patrol',
+      legacyMonsterId: 'mimic_survivor',
+      monsterId: 'rogue_sentry',
+      monsterName: '失控哨戒炮',
+      monsterHp: 321,
+      turn: 5,
+      playerHp: 73,
+      rewardPoints: 1616,
+      lootRewardPoints: 416,
+      damageTaken: 29
+    },
+    {
+      label: 'panopticon replaced encounter',
+      dungeonId: 'panopticon_city',
+      nodeId: 'sweep_sentinel_north',
+      legacyMonsterId: 'sweep_sentinel',
+      monsterId: 'phase_hunter_drone',
+      monsterName: '相位猎杀号',
+      monsterHp: 477,
+      turn: 8,
+      playerHp: 81,
+      rewardPoints: 1919,
+      lootRewardPoints: 719,
+      damageTaken: 37
+    }
+  ];
+  for (const encounter of replacedEncounterCases) {
+    const marker = `${encounter.label} same-version migration fixture`;
+    const legacySave = makeCombatSave({
+      dungeonId: encounter.dungeonId,
+      nodeId: encounter.nodeId,
+      monsterId: encounter.legacyMonsterId,
+      monsterHp: encounter.monsterHp,
+      turn: encounter.turn,
+      weaponFocus: 2,
+      player: { hp: encounter.playerHp },
+      rewardPoints: encounter.rewardPoints,
+      lootBag: makeLootBag({
+        rewardPoints: encounter.lootRewardPoints,
+        lingyun: 1,
+        items: { healing_pill: 2 }
+      }),
+      combatLog: [marker],
+      log: [marker]
+    });
+    legacySave.run.damageTaken = encounter.damageTaken;
+    legacySave.run.eventLog = [`${marker} event`];
+    legacySave.combat.guarding = true;
+    await evaluate(
+      cdp,
+      `(() => {
+        localStorage.removeItem(${JSON.stringify(REJECTED_SAVE_BACKUP_KEY)});
+        localStorage.removeItem(${JSON.stringify(REJECTED_SAVE_REASON_KEY)});
+      })()`
+    );
+    await injectGameState(cdp, legacySave);
+    await cdp.send('Page.navigate', { url: appUrl });
+    try {
+      await waitForPage(
+        cdp,
+        `(() => {
+          const raw = localStorage.getItem(${JSON.stringify(STORAGE_KEY)});
+          const payload = raw ? JSON.parse(raw) : undefined;
+          const saved = payload?.state;
+          return payload?.version === 1 &&
+            saved?.phase === 'combat' &&
+            saved.run?.dungeonId === ${JSON.stringify(encounter.dungeonId)} &&
+            saved.run?.currentNodeId === ${JSON.stringify(encounter.nodeId)} &&
+            saved.combat?.nodeId === ${JSON.stringify(encounter.nodeId)} &&
+            saved.combat?.monsterId === ${JSON.stringify(encounter.monsterId)} &&
+            document.querySelector('.combat-panel')?.textContent.includes(${JSON.stringify(encounter.monsterName)});
+        })()`,
+        `${encounter.label} same-version save migrates before validation`
+      );
+    } catch (error) {
+      const snapshot = await evaluate(
+        cdp,
+        `(() => ({
+          raw: localStorage.getItem(${JSON.stringify(STORAGE_KEY)}),
+          rejectedRaw: localStorage.getItem(${JSON.stringify(REJECTED_SAVE_BACKUP_KEY)}),
+          rejectedReason: localStorage.getItem(${JSON.stringify(REJECTED_SAVE_REASON_KEY)}),
+          body: document.body.textContent.replace(/\\s+/g, ' ').trim().slice(0, 1200)
+        }))()`
+      );
+      throw new Error(`${error instanceof Error ? error.message : String(error)}; snapshot=${JSON.stringify(snapshot)}; browser=${JSON.stringify(collectBrowserErrorEvents(cdp))}`);
+    }
+    const recovered = await evaluate(
+      cdp,
+      `(() => {
+        const payload = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)}));
+        return {
+          payload,
+          rejectedRaw: localStorage.getItem(${JSON.stringify(REJECTED_SAVE_BACKUP_KEY)}),
+          rejectedReason: localStorage.getItem(${JSON.stringify(REJECTED_SAVE_REASON_KEY)}),
+          combatText: document.querySelector('.combat-panel')?.textContent.replace(/\\s+/g, ' ').trim() ?? ''
+        };
+      })()`
+    );
+    const saved = recovered.payload?.state;
+    if (
+      recovered.payload?.version !== 1 ||
+      saved?.phase !== 'combat' ||
+      saved.run?.dungeonId !== encounter.dungeonId ||
+      saved.run?.currentNodeId !== encounter.nodeId ||
+      saved.run?.damageTaken !== encounter.damageTaken ||
+      JSON.stringify(saved.run?.eventLog) !== JSON.stringify([`${marker} event`]) ||
+      saved.run?.lootBag?.rewardPoints !== encounter.lootRewardPoints ||
+      saved.run?.lootBag?.lingyun !== 1 ||
+      saved.run?.lootBag?.items?.healing_pill !== 2 ||
+      saved.combat?.nodeId !== encounter.nodeId ||
+      saved.combat?.monsterId !== encounter.monsterId ||
+      saved.combat?.monsterHp !== encounter.monsterHp ||
+      saved.combat?.turn !== encounter.turn ||
+      saved.combat?.guarding !== true ||
+      saved.combat?.weaponFocus !== 2 ||
+      JSON.stringify(saved.combat?.log) !== JSON.stringify([marker]) ||
+      saved.player?.hp !== encounter.playerHp ||
+      saved.rewardPoints !== encounter.rewardPoints ||
+      JSON.stringify(saved.log) !== JSON.stringify([marker]) ||
+      recovered.rejectedRaw !== null ||
+      recovered.rejectedReason !== null ||
+      !recovered.combatText.includes(encounter.monsterName) ||
+      !recovered.combatText.includes(marker)
+    ) {
+      throw new Error(`${encounter.label} should replace only the encounter monster and preserve active combat state: ${JSON.stringify(recovered)}`);
+    }
+  }
+
+  const mismatchedLegacyEncounter = makeCombatSave({
+    dungeonId: 'lost_shelter',
+    nodeId: 'north_rescue_patrol',
+    monsterId: 'mimic_survivor',
+    monsterHp: 321,
+    log: ['mismatched replaced encounter fixture']
+  });
+  mismatchedLegacyEncounter.run.currentNodeId = 'mimic_survivor_alpha';
+  await assertInjectedSaveResets(
+    cdp,
+    appUrl,
+    mismatchedLegacyEncounter,
+    'mismatched replaced encounter fixture',
+    'mismatched replaced encounter'
+  );
+
+  for (const activePhase of ['explore', 'combat']) {
+    const marker = `zero hp ${activePhase} recovery fixture`;
+    const zeroHpSave = activePhase === 'combat'
+      ? makeCombatSave({
+          dungeonId: 'demon_tower_1',
+          nodeId: 'fog_lesser_demon',
+          monsterHp: 900,
+          player: { hp: 0, maxHp: 220, base: { body: 30, spirit: 20, agility: 2, luck: 1 } },
+          combatLog: [marker],
+          log: [marker]
+        })
+      : makeExploreSave({
+          dungeonId: 'demon_tower_1',
+          nodeId: 'fog_lesser_demon',
+          player: { hp: 0, maxHp: 220, base: { body: 30, spirit: 20, agility: 2, luck: 1 } },
+          log: [marker]
+        });
+    zeroHpSave.enteredDungeonIds = [];
+    await injectGameState(cdp, zeroHpSave);
+    await cdp.send('Page.navigate', { url: appUrl });
+    await waitForPage(
+      cdp,
+      `document.readyState === 'complete' && document.querySelector('.shell')`,
+      `historical ${activePhase} zero-hp save reload shell`
+    );
+    const recoveredState = await evaluate(
+      cdp,
+      `(() => {
+        const raw = localStorage.getItem(${JSON.stringify(STORAGE_KEY)});
+        const saved = raw ? JSON.parse(raw).state : undefined;
+        return {
+          saved,
+          hasResultPanel: Boolean(document.querySelector('.result-panel')),
+          bodyText: document.body.textContent.replace(/\\s+/g, ' ').trim().slice(0, 600)
+        };
+      })()`
+    );
+    if (
+      recoveredState.saved?.phase !== 'result' ||
+      recoveredState.saved.player?.hp !== 0 ||
+      recoveredState.saved.run?.dungeonId !== 'demon_tower_1' ||
+      recoveredState.saved.combat !== undefined ||
+      !recoveredState.saved.lastOutcome?.includes('outcome=failed_recovered') ||
+      !recoveredState.saved.enteredDungeonIds?.includes('demon_tower_1') ||
+      !recoveredState.saved.log?.includes(marker) ||
+      !recoveredState.hasResultPanel
+    ) {
+      throw new Error(`Historical ${activePhase} zero-hp save should recover safely: ${JSON.stringify(recoveredState)}`);
+    }
+    await cdp.send('Page.navigate', { url: appUrl });
+    await waitForPage(
+      cdp,
+      `JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state.phase === 'result' &&
+        document.querySelector('.result-panel')`,
+      `recovered ${activePhase} save remains durable after reload`
+    );
+    const resultPlanning = await evaluate(
+      cdp,
+      `(() => {
+        const panel = document.querySelector('.next-action-panel');
+        const text = panel?.textContent.replace(/\\s+/g, ' ').trim() ?? '';
+        return {
+          exists: Boolean(panel),
+          actionCount: panel?.querySelectorAll('[data-action], button').length ?? -1,
+          planningCount: panel?.querySelectorAll('[data-recommendation-mode="planning"]').length ?? -1,
+          hasReturnStatus: text.includes('返回主神空间后可执行'),
+          hasImmediateStatus: text.includes('现在可执行'),
+          hasImmediateExchangeCopy: text.includes('立即兑换'),
+          resultText: document.querySelector('.result-panel')?.textContent.replace(/\\s+/g, ' ').trim() ?? ''
+        };
+      })()`
+    );
+    if (
+      !resultPlanning.exists ||
+      resultPlanning.actionCount !== 0 ||
+      resultPlanning.planningCount < 1 ||
+      !resultPlanning.hasReturnStatus ||
+      resultPlanning.hasImmediateStatus ||
+      resultPlanning.hasImmediateExchangeCopy ||
+      !resultPlanning.resultText.includes('返回主神空间后，可以兑换、升级装备或学习功法')
+    ) {
+      throw new Error(`Result recommendations should be planning-only until the player returns to the hub: ${JSON.stringify(resultPlanning)}`);
+    }
+    await clickButtonByPointer(cdp, '返回主神空间', '.result-panel');
+    await waitForPage(
+      cdp,
+      `(() => {
+        const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
+        return saved.phase === 'hub' &&
+          saved.run === undefined &&
+          saved.combat === undefined &&
+          saved.player.hp === saved.player.maxHp &&
+          document.querySelector('.hub-stage');
+      })()`,
+      `recovered ${activePhase} save can return to a healthy hub`
+    );
+  }
+
+  await evaluate(cdp, `localStorage.removeItem(${JSON.stringify(STORAGE_KEY)})`);
+  await cdp.send('Page.navigate', { url: appUrl });
+  await waitForPage(cdp, `document.querySelector('.hub-stage')`, 'save resilience cleanup');
+  await runRejectedSaveRecoverySmoke(cdp, appUrl);
+  console.log('[smoke] replaced encounters migrate at the same save version without state loss, malformed saves stay rejected, zero-hp saves recover durably, and rejected saves remain exportable');
 }
 
 async function runSmoke(cdp, appUrl) {
   await cdp.send('Page.enable');
   await cdp.send('Runtime.enable');
   await cdp.send('Page.navigate', { url: appUrl });
+  if (!process.env.SMOKE_SUITE || process.env.SMOKE_SUITE === 'core') {
+    await runHubSurfaceSmoke(cdp, appUrl);
+    await runPermanentCapturePreparationSmoke(cdp, appUrl);
+    await runLegacyRunMigrationSmoke(cdp, appUrl);
+    await runTacticalLoadoutSaveValidationSmoke(cdp, appUrl);
+    await runCombatActivationDedupSmoke(cdp, appUrl);
+    await runSaveResilienceSmoke(cdp, appUrl);
+    await waitForPage(cdp, `document.querySelector('.shell')`, 'core natural first-run shell');
+    await runNaturalFirstDungeonSmoke(cdp, appUrl);
+    await waitForPage(cdp, `document.querySelector('.shell')`, 'core boss smoke shell');
+    await runBossFlowSmoke(cdp, appUrl);
+    console.log('[smoke] core suite: hub directories, legacy tactical migration, natural first clear, and focused boss growth settlement pass');
+    return;
+  }
   if (process.env.SMOKE_SUITE === 'hub') {
     await runHubSurfaceSmoke(cdp, appUrl);
     return;
   }
+  if (process.env.SMOKE_SUITE === 'boss') {
+    await waitForPage(cdp, `document.querySelector('.shell')`, 'boss-only smoke shell');
+    await runBossFlowSmoke(cdp, appUrl);
+    return;
+  }
+  if (process.env.SMOKE_SUITE === 'journey') {
+    await waitForPage(cdp, `document.querySelector('.shell')`, 'journey-only smoke shell');
+    await runNaturalFirstDungeonSmoke(cdp, appUrl);
+    return;
+  }
+  if (process.env.SMOKE_SUITE === 'relic-focus') {
+    await waitForPage(cdp, `document.querySelector('.shell')`, 'relic-focus smoke shell');
+    await runRelicArchiveSeedSmoke(cdp, appUrl);
+    console.log('[smoke:relic-focus] archive choice -> return-hub focus -> reload-persistent seed -> seeded next-run draft pass');
+    return;
+  }
   if (process.env.SMOKE_SUITE === 'deep') {
     await waitForPage(cdp, `document.querySelector('.shell')`, 'deep-only smoke shell');
-    await runDeepProtocolPointerSmoke(cdp, appUrl);
+    await runLayeredInfernoPresentationSmoke(cdp, appUrl);
+    await runLayeredInfernoSettlementSmoke(cdp, appUrl);
     return;
   }
   if (process.env.SMOKE_SUITE === 'entropy') {
@@ -16381,6 +20542,16 @@ async function runSmoke(cdp, appUrl) {
     await runPanopticonCityPointerSmoke(cdp, appUrl);
     return;
   }
+  if (process.env.SMOKE_SUITE === 'late5') {
+    await waitForPage(cdp, `document.querySelector('.shell')`, 'late5 smoke shell');
+    await runSilentBroadcastTowerPointerSmoke(cdp, appUrl);
+    await runLostShelterPointerSmoke(cdp, appUrl);
+    await runFalseTestimonyCourtPointerSmoke(cdp, appUrl);
+    await runCombatReplayStagePointerSmoke(cdp, appUrl);
+    await runPanopticonCityPointerSmoke(cdp, appUrl);
+    console.log('[smoke] late5 suite: Tier 15-19 maps, laws, portals, and collapsed-detail status rails pass');
+    return;
+  }
   if (process.env.SMOKE_SUITE === 'causal') {
     await waitForPage(cdp, `document.querySelector('.shell')`, 'causal-only smoke shell');
     await runCausalClearinghousePointerSmoke(cdp, appUrl);
@@ -16389,6 +20560,20 @@ async function runSmoke(cdp, appUrl) {
   if (process.env.SMOKE_SUITE === 'dungeon-law') {
     await waitForPage(cdp, `document.querySelector('.shell')`, 'dungeon-law-only smoke shell');
     await runDungeonLawPointerSmoke(cdp, appUrl);
+    return;
+  }
+  if (process.env.SMOKE_SUITE === 'save-resilience') {
+    await waitForPage(cdp, `document.querySelector('.shell')`, 'save-resilience-only smoke shell');
+    await runSaveResilienceSmoke(cdp, appUrl);
+    return;
+  }
+  if (process.env.SMOKE_SUITE === 'combat-ui') {
+    await waitForPage(cdp, `document.querySelector('.shell')`, 'combat-ui-only smoke shell');
+    await runLegacyRunMigrationSmoke(cdp, appUrl);
+    await runTacticalLoadoutSaveValidationSmoke(cdp, appUrl);
+    await runCombatIntentPointerSmoke(cdp, appUrl);
+    await runCombatActivationDedupSmoke(cdp, appUrl);
+    await runSaveResilienceSmoke(cdp, appUrl);
     return;
   }
   if (process.env.SMOKE_SUITE === 'route-gate') {
@@ -16490,6 +20675,13 @@ async function runSmoke(cdp, appUrl) {
     throw new Error(`Initial character sheet should show an empty backpack and compact empty set states, got ${JSON.stringify(initialCharacterSheet)}`);
   }
   await assertCharacterBackdropCloses(cdp, 'first screen');
+  await setViewport(cdp, 390, 844);
+  for (let cycle = 1; cycle <= 3; cycle += 1) {
+    await openCharacterSheet(cdp, `equipment roll help Escape cycle ${cycle}`);
+    await assertEquipmentRollHelpEscape(cdp, `equipment roll help Escape cycle ${cycle}`);
+    await closeCharacterSheet(cdp, `equipment roll help Escape cycle ${cycle}`);
+  }
+  await setViewport(cdp, 1440, 900);
   await openCharacterSheet(cdp, 'first screen Escape');
   await assertEscapeClosesCharacterSheet(cdp, 'first screen');
   console.log('[smoke] first screen keeps character stats, loadout, pet, and empty backpack inside a closeable sheet');
@@ -17109,10 +21301,37 @@ async function runSmoke(cdp, appUrl) {
     throw new Error('Mainline Boss should reach its half-health awakened phase during real pointer combat.');
   }
   await waitForPage(cdp, `document.querySelector('.equipment-loot-offer')`, 'mainline boss equipment offer');
-  await clickButtonByPointer(cdp, '放弃', '.node-action-panel');
+  const mainlineOffer = await evaluate(
+    cdp,
+    `(() => {
+      const compactText = (element) => element?.textContent?.replace(/\\s+/g, ' ').trim() ?? '';
+      const options = [...document.querySelectorAll('.loot-offer-option')];
+      const chosen = options.find((option) => {
+        const delta = Number(option.querySelector('.equipment-swap-preview')?.dataset.scoreDelta ?? 0);
+        return Number.isFinite(delta) && delta > 0;
+      });
+      const powerMatch = compactText(document.querySelector('.character-trigger')).match(/战力\\s*(\\d+)/);
+      return {
+        equipmentId: chosen?.dataset.lootEquipmentId,
+        name: compactText(chosen?.querySelector('h3')),
+        scoreDelta: Number(chosen?.querySelector('.equipment-swap-preview')?.dataset.scoreDelta ?? 0),
+        powerBefore: Number(powerMatch?.[1] ?? 0)
+      };
+    })()`
+  );
+  if (
+    !mainlineOffer.equipmentId ||
+    !mainlineOffer.name ||
+    mainlineOffer.scoreDelta <= 0 ||
+    mainlineOffer.powerBefore <= 0
+  ) {
+    throw new Error(`Modern first clear should offer at least one stronger equipment choice: ${JSON.stringify(mainlineOffer)}`);
+  }
+  await clickCardButtonByPointer(cdp, '.loot-offer-option', mainlineOffer.name, '选择');
   await waitForPage(
     cdp,
     `!document.querySelector('.equipment-loot-offer') &&
+      JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state.run?.lootBag?.equipmentIds?.includes(${JSON.stringify(mainlineOffer.equipmentId)}) &&
       document.querySelector('.boss-seal-progress[data-boss-seal="cleared"]')?.textContent.includes('出口封印 1/1')`,
     'mainline boss clears the exit seal after loot handling'
   );
@@ -17124,9 +21343,34 @@ async function runSmoke(cdp, appUrl) {
     cdp,
     `document.body.textContent.includes('结算') &&
       document.body.textContent.includes('奖励倍率') &&
+      document.querySelector('.settlement-growth')?.textContent.includes(${JSON.stringify(mainlineOffer.name)}) &&
       document.querySelector('.next-action-panel')?.textContent.includes('下一步行动')`,
     'first dungeon settlement'
   );
+  const mainlineGrowth = await evaluate(
+    cdp,
+    `(() => {
+      const saved = JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})).state;
+      const growthText = document.querySelector('.settlement-growth')?.textContent.replace(/\\s+/g, ' ').trim() ?? '';
+      const powerMatch = growthText.match(/当前战力\\s*(\\d+)/);
+      return {
+        owned: saved.ownedEquipment.includes(${JSON.stringify(mainlineOffer.equipmentId)}),
+        equipped: Object.values(saved.equipped).includes(${JSON.stringify(mainlineOffer.equipmentId)}),
+        retained: saved.run?.lastLootSettlement?.retained?.equipmentIds?.includes(${JSON.stringify(mainlineOffer.equipmentId)}),
+        growthText,
+        powerAfter: Number(powerMatch?.[1] ?? 0)
+      };
+    })()`
+  );
+  if (
+    !mainlineGrowth.owned ||
+    !mainlineGrowth.equipped ||
+    !mainlineGrowth.retained ||
+    !mainlineGrowth.growthText.includes('成长已生效') ||
+    mainlineGrowth.powerAfter <= mainlineOffer.powerBefore
+  ) {
+    throw new Error(`Modern first clear should bank, auto-equip, and surface a real power increase: ${JSON.stringify({ mainlineOffer, mainlineGrowth })}`);
+  }
   await clickButton(cdp, '返回主神空间');
   await waitForPage(
     cdp,
@@ -17147,11 +21391,17 @@ async function runSmoke(cdp, appUrl) {
   await clickCardButton(cdp, '.mainline-task-panel', '妖塔一层', '领取');
   await waitForPage(
     cdp,
-    `[...document.querySelectorAll('.dungeon-card')].some((card) =>
+    `(() => {
+      const taskDialog = document.querySelector('.task-sheet[role="dialog"][aria-modal="true"]');
+      const taskClose = taskDialog?.querySelector('.task-close:not(:disabled)');
+      return [...document.querySelectorAll('.dungeon-card')].some((card) =>
         card.textContent.includes('镜潮地铁') && card.textContent.includes('下一推荐')
       ) &&
-      document.querySelector('[role="dialog"][aria-modal="true"]')?.textContent.includes('镜潮地铁') &&
-      document.querySelector('[role="dialog"][aria-modal="true"]')?.textContent.includes('进行中')`,
+        taskDialog?.textContent.includes('镜潮地铁') &&
+        taskDialog?.textContent.includes('进行中') &&
+        taskDialog.contains(document.activeElement) &&
+        document.activeElement === taskClose;
+    })()`,
     'claiming first mainline unlocks second chapter recommendation'
   );
   const claimedTaskIds = await evaluate(
@@ -17204,6 +21454,29 @@ async function runSmoke(cdp, appUrl) {
   await runPanopticonCityPointerSmoke(cdp, appUrl);
   await resetEquipmentSoulSmokeState(cdp, appUrl);
   console.log('[smoke] final cleanup restores an empty localStorage and the 1440x900 new-game hub');
+}
+
+async function runAllSmokeSuites() {
+  const scriptPath = fileURLToPath(import.meta.url);
+  for (const [index, suite] of REPRODUCIBLE_SMOKE_SUITES.entries()) {
+    console.log(`[smoke:all] ${index + 1}/${REPRODUCIBLE_SMOKE_SUITES.length} starting ${suite}`);
+    const result = await new Promise((resolve, reject) => {
+      const child = spawn(process.execPath, [scriptPath], {
+        cwd: rootDir,
+        stdio: 'inherit',
+        env: { ...process.env, SMOKE_SUITE: suite }
+      });
+      child.once('error', reject);
+      child.once('exit', (code, signal) => resolve({ code, signal }));
+    });
+    if (result.code !== 0) {
+      throw new Error(
+        `Suite ${suite} failed ${result.signal ? `with signal ${result.signal}` : `with exit code ${result.code}`}`
+      );
+    }
+    console.log(`[smoke:all] ${index + 1}/${REPRODUCIBLE_SMOKE_SUITES.length} passed ${suite}`);
+  }
+  console.log(`[smoke:all] all ${REPRODUCIBLE_SMOKE_SUITES.length} suites passed in strict serial order`);
 }
 
 async function main() {
@@ -17284,7 +21557,8 @@ async function main() {
   }
 }
 
-main().catch((error) => {
+const entrypoint = process.env.SMOKE_SUITE === 'all' ? runAllSmokeSuites() : main();
+entrypoint.catch((error) => {
   console.error(`[smoke] failed: ${error instanceof Error ? error.message : String(error)}`);
   process.exitCode = 1;
 });

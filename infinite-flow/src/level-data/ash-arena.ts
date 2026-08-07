@@ -4,6 +4,7 @@ export const ashArenaDungeon: DungeonDefinition = {
   id: 'ash_arena',
   name: '灰烬竞技场',
   tier: 5,
+  genre: 'anomaly',
   recommendedPower: 305,
   theme: '竞技场把每一次行动都公开审判，玩家必须管理爆发、承伤和节奏。',
   recommended: '推荐一件 +1 装备和至少一只宠物。',

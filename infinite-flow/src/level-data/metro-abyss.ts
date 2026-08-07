@@ -4,6 +4,7 @@ export const metroAbyssDungeon: DungeonDefinition = {
   id: 'metro_abyss',
   name: '镜潮地铁',
   tier: 2,
+  genre: 'modern',
   recommendedPower: 185,
   theme: '退潮后的废站台映出另一个玩家，倒影会复制错误选择。',
   recommended: '建议学会吐纳诀，或至少有一件升级装备。',

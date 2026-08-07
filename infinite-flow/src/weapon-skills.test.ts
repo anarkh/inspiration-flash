@@ -14,7 +14,9 @@ const SKILL_WEAPON_IDS = [
   'bone_spear',
   'ember_staff',
   'starforged_edge',
-  'chronal_edge'
+  'chronal_edge',
+  'breach_shotgun',
+  'phase_coil_rifle'
 ] as const satisfies readonly WeaponSkillWeaponId[];
 
 const BASE_PLAYER = { attack: 32, artPower: 28, speed: 24 } as const;
@@ -53,7 +55,7 @@ describe('weapon skills', () => {
     expect(getWeaponSkillDefinition('guardian_plate')).toBeUndefined();
   });
 
-  it('gives all five skills distinct operational identities', () => {
+  it('gives all seven skills distinct operational identities', () => {
     const lowDefense = { defense: 0, speed: 10 };
     const highDefense = { defense: 60, speed: 10 };
     const armorLowDefense = resolveFor('armor_piercing_sword', 2, BASE_PLAYER, lowDefense);
@@ -68,6 +70,11 @@ describe('weapon skills', () => {
     const starWithArt = resolveFor('starforged_edge', 2, { attack: 20, artPower: 40, speed: 24 });
     const chronalMatched = resolveFor('chronal_edge', 2, BASE_PLAYER, { defense: 12, speed: 24 });
     const chronalOffset = resolveFor('chronal_edge', 2, BASE_PLAYER, { defense: 12, speed: 10 });
+    const breachLowDefense = resolveFor('breach_shotgun', 3, BASE_PLAYER, lowDefense);
+    const breachHighDefense = resolveFor('breach_shotgun', 3, BASE_PLAYER, highDefense);
+    const phaseBase = resolveFor('phase_coil_rifle', 2, { attack: 20, artPower: 20, speed: 24 });
+    const phaseWithAttack = resolveFor('phase_coil_rifle', 2, { attack: 40, artPower: 20, speed: 24 });
+    const phaseWithArt = resolveFor('phase_coil_rifle', 2, { attack: 20, artPower: 40, speed: 24 });
 
     expect(armorLowDefense.damage - armorHighDefense.damage).toBeLessThan(
       spearLowDefense.damage - spearHighDefense.damage
@@ -83,6 +90,13 @@ describe('weapon skills', () => {
     expect(chronalOffset.damage).toBeGreaterThan(chronalMatched.damage);
     expect(chronalOffset.damageKind).toBe('art');
     expect(chronalOffset.statusLines.join('')).toContain('时差');
+    expect(breachLowDefense.damage - breachHighDefense.damage).toBeLessThanOrEqual(6);
+    expect(breachHighDefense.damageKind).toBe('physical');
+    expect(breachHighDefense.statusLines.join('')).toContain('霰弹破障');
+    expect(phaseWithAttack.damage).toBeGreaterThan(phaseBase.damage);
+    expect(phaseWithArt.damage).toBeGreaterThan(phaseBase.damage);
+    expect(phaseBase.damageKind).toBe('art');
+    expect(phaseBase.statusLines.join('')).toContain('贯穿相位');
   });
 
   it('preserves the exact four legacy resolutions when resonance is omitted', () => {
@@ -149,7 +163,76 @@ describe('weapon skills', () => {
     expect(stasis.statusLines.join('')).toContain('时序停滞');
   });
 
-  it('applies distinct bounded offensive and utility resonance branches to all five weapons', () => {
+  it('defines bounded breach and phase-coil baselines with matching set resonance outcomes', () => {
+    const breach = resolveFor('breach_shotgun');
+    const breachOverdrive = resolveFor(
+      'breach_shotgun',
+      2,
+      BASE_PLAYER,
+      BASE_TARGET,
+      undefined,
+      ACTIVE_RESONANCES.forge_overdrive
+    );
+    const breachChanneling = resolveFor(
+      'breach_shotgun',
+      2,
+      BASE_PLAYER,
+      BASE_TARGET,
+      undefined,
+      ACTIVE_RESONANCES.forge_channeling
+    );
+    const phase = resolveFor('phase_coil_rifle');
+    const phaseAcceleration = resolveFor(
+      'phase_coil_rifle',
+      2,
+      BASE_PLAYER,
+      BASE_TARGET,
+      undefined,
+      ACTIVE_RESONANCES.chronal_acceleration
+    );
+    const phaseStasis = resolveFor(
+      'phase_coil_rifle',
+      2,
+      BASE_PLAYER,
+      BASE_TARGET,
+      undefined,
+      ACTIVE_RESONANCES.chronal_stasis
+    );
+
+    expect(getWeaponSkillDefinition('breach_shotgun')).toMatchObject({
+      id: 'breach_salvo',
+      name: '近距破门齐射'
+    });
+    expect(breach).toEqual({
+      damage: 51,
+      damageKind: 'physical',
+      healing: 0,
+      statusLines: ['【近距破门齐射】霰弹破障仅计入目标 16% 的防御，造成 51 点物理伤害。']
+    });
+    expect(breachOverdrive.damage).toBeGreaterThan(breach.damage);
+    expect(breachOverdrive.statusLines.join('')).toContain('压紧弹群');
+    expect(breachChanneling.damage).toBeGreaterThan(breach.damage);
+    expect(breachChanneling.statusLines.join('')).toContain('稳定弹道');
+
+    expect(getWeaponSkillDefinition('phase_coil_rifle')).toMatchObject({
+      id: 'phase_coil_acceleration',
+      name: '相位线圈加速'
+    });
+    expect(phase).toEqual({
+      damage: 62,
+      damageKind: 'art',
+      healing: 0,
+      statusLines: ['【相位线圈加速】攻术合流贯穿相位，仅计入目标 13% 的防御，造成 62 点术法伤害。']
+    });
+    expect(phaseAcceleration.damage).toBeGreaterThan(phase.damage);
+    expect(phaseAcceleration.healing).toBe(0);
+    expect(phaseAcceleration.statusLines.join('')).toContain('超前放电');
+    expect(phaseStasis.damage).toBe(phase.damage);
+    expect(phaseStasis.healing).toBeGreaterThan(0);
+    expect(phaseStasis.statusLines.join('')).toContain('回收逸散相位');
+  });
+
+  it('applies distinct bounded offensive and utility resonance branches to advanced weapons', () => {
     const spearBase = resolveFor('bone_spear');
     const spearVanguard = resolveFor('bone_spear', 2, BASE_PLAYER, BASE_TARGET, undefined, ACTIVE_RESONANCES.mist_vanguard);
     const spearVeilguard = resolveFor('bone_spear', 2, BASE_PLAYER, BASE_TARGET, undefined, ACTIVE_RESONANCES.mist_veilguard);
@@ -284,6 +367,18 @@ describe('weapon skills', () => {
         playerStats: { attack: 52, artPower: 38, speed: 24 },
         targetStats: { defense: 20, speed: 20 },
         bossHp: 320
+      },
+      {
+        weaponId: 'breach_shotgun',
+        playerStats: { attack: 85, artPower: 22, speed: 34 },
+        targetStats: { defense: 50, speed: 32 },
+        bossHp: 1_000
+      },
+      {
+        weaponId: 'phase_coil_rifle',
+        playerStats: { attack: 100, artPower: 60, speed: 45 },
+        targetStats: { defense: 56, speed: 44 },
+        bossHp: 810
       }
     ];
 
@@ -365,7 +460,11 @@ describe('weapon skills', () => {
       ['ember_staff', ACTIVE_RESONANCES.rift_resonance],
       ['ember_staff', ACTIVE_RESONANCES.rift_anchor],
       ['chronal_edge', ACTIVE_RESONANCES.chronal_acceleration],
-      ['chronal_edge', ACTIVE_RESONANCES.chronal_stasis]
+      ['chronal_edge', ACTIVE_RESONANCES.chronal_stasis],
+      ['breach_shotgun', ACTIVE_RESONANCES.forge_overdrive],
+      ['breach_shotgun', ACTIVE_RESONANCES.forge_channeling],
+      ['phase_coil_rifle', ACTIVE_RESONANCES.chronal_acceleration],
+      ['phase_coil_rifle', ACTIVE_RESONANCES.chronal_stasis]
     ] as const;
 
     for (const [weaponId, resonance] of resonantCases) {

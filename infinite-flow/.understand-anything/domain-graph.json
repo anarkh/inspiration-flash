@@ -1,0 +1,2167 @@
+{
+  "version": "1.0.0",
+  "project": {
+    "name": "Infinite Flow",
+    "languages": [
+      "TypeScript",
+      "JavaScript",
+      "CSS",
+      "HTML"
+    ],
+    "frameworks": [
+      "Vite",
+      "Vitest"
+    ],
+    "description": "一个浏览器端无限流游戏原型，围绕主神空间整备、十九章副本探索、回合战斗、角色养成经济以及跨局长期进度构成可持续游玩循环。该图用于流程导航，不是内容 manifest；sourceFingerprint=sha256:2c1bc66c16dcf57c393ee8d92318c4ff877e7287eb7486b9f65a5babe587b2fa",
+    "analyzedAt": "2026-07-31T10:47:02.000Z",
+    "gitCommitHash": "df21c71fc056bfa6d4f08f4df402017737f14d01"
+  },
+  "nodes": [
+    {
+      "id": "domain:main-god-space-preparation",
+      "type": "domain",
+      "name": "主神空间整备",
+      "summary": "负责玩家进入副本前的携行物、遗物框架、装备联动、功法与伙伴配置。关键配置会在入场时冻结为本局快照，保证局外变更不会影响已经开始的探索。",
+      "tags": [
+        "hub",
+        "preparation",
+        "loadout",
+        "snapshot"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entities": [
+          "战术携行栏",
+          "遗物框架",
+          "遗物种子",
+          "遗物导管",
+          "装备魂技",
+          "功法快照",
+          "宠物与伙伴"
+        ],
+        "businessRules": [
+          "战术物品必须满足三格通用槽与装备野战架提供的扩展容量",
+          "遗物框架、种子和导管来源在进入副本后冻结",
+          "装备魂技、功法、伙伴与血脉能力按入场状态生成本局快照；宠物没有本局快照，战斗读取顶层 activePet，局内捕获可立即改变出战宠物"
+        ],
+        "crossDomainInteractions": [
+          "向副本探索提供可用道具、路线能力和事件前置条件",
+          "向回合战斗提供冻结的属性、主动能力与遗物效果",
+          "消耗成长经济领域购买和升级的装备、物品与养成成果"
+        ]
+      }
+    },
+    {
+      "id": "domain:dungeon-exploration-and-laws",
+      "type": "domain",
+      "name": "十九章副本探索与规则",
+      "summary": "管理十九个分层章节的准入、独立场域法则、路线扇区、节点可见性、路线契约与探索事件。玩家在开放、部分开放或关闭的路径约束下推进，并用整备成果换取风险不同的事件结果。",
+      "tags": [
+        "dungeon",
+        "chapter",
+        "field-law",
+        "route",
+        "event"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entities": [
+          "十九章副本",
+          "章节门槛",
+          "场域法则",
+          "路线扇区",
+          "路线契约",
+          "探索节点",
+          "副本事件",
+          "实地调查"
+        ],
+        "businessRules": [
+          "章节可用性由主线任务、已完成章节、显式解锁和玩家战力共同决定",
+          "移动目标必须同时满足相邻关系、节点可见性、场域法则和路线门禁",
+          "五十七条路线契约按指定顺序、首通或隐藏条件推进并在离场时结算",
+          "十九章各自拥有独立法则状态和关键路线选择"
+        ],
+        "crossDomainInteractions": [
+          "从长期进度读取章节解锁与完成记录",
+          "从主神空间整备读取物品、装备、功法和宠物事件条件",
+          "把遭遇节点交给回合战斗，并把探索奖励交给成长经济"
+        ]
+      }
+    },
+    {
+      "id": "domain:turn-based-combat",
+      "type": "domain",
+      "name": "回合战斗",
+      "summary": "负责遭遇初始化、敌人意图提示、战意（代码内部状态名 CombatFocus）与玩家行动、伤害和状态效果、伙伴或血脉能力以及首领阶段转换。战斗结果会反向驱动场域法则、路线进度、掉落和副本成败。",
+      "tags": [
+        "combat",
+        "turn-based",
+        "intent",
+        "boss",
+        "effects"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entities": [
+          "战斗遭遇",
+          "敌人意图",
+          "战意（CombatFocus）",
+          "战斗行动",
+          "战斗效果",
+          "武器技能",
+          "功法技",
+          "首领封印与阶段"
+        ],
+        "businessRules": [
+          "普通行动、推荐行动和危险行动按敌人意图影响战意",
+          "每场战斗中冻结功法技、伙伴协助与血脉爆发均受使用次数限制",
+          "首领根据封印进度和生命阈值从封印阶段切换至觉醒阶段",
+          "胜利、撤退与失败分别触发不同的探索和长期结算"
+        ],
+        "crossDomainInteractions": [
+          "消费入场冻结的装备来源、遗物、魂技、功法与伙伴快照；宠物读取顶层 activePet，局内捕获可立即生效",
+          "向副本场域法则发送战斗开始和胜利信号",
+          "向成长经济产生装备、材料、捕获和局内战利品"
+        ]
+      }
+    },
+    {
+      "id": "domain:growth-economy",
+      "type": "domain",
+      "name": "成长与经济",
+      "summary": "管理奖励点、灵蕴、材料和装备等资源的获得与消费，以及装备购买、升级、淬炼、调谐、狩猎、委托和记忆激活。功法、宠物、伙伴与血脉构成并行的长期养成轨道，并最终转化为战力和局内能力。",
+      "tags": [
+        "economy",
+        "equipment",
+        "upgrade",
+        "cultivation",
+        "collection"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entities": [
+          "奖励点",
+          "灵蕴",
+          "章节材料",
+          "装备",
+          "装备委托",
+          "装备记忆",
+          "功法",
+          "宠物",
+          "伙伴",
+          "血脉"
+        ],
+        "businessRules": [
+          "装备购买、升级、淬炼和调谐分别校验配方、货币、等级和材料",
+          "装备委托封存两件空闲的满级高阶装备，并要求通关三个不同副本后结算",
+          "装备记忆以副本与装备组合形成狩猎目标，解锁后才可激活",
+          "功法、宠物、伙伴与血脉都有独立等级或品阶成本，并通过激活项参与战斗"
+        ],
+        "crossDomainInteractions": [
+          "消费任务、探索和战斗结算产出的资源",
+          "向主神空间提供可配置的物品、装备和养成能力",
+          "通过战力计算影响章节准备度和准入提示"
+        ]
+      }
+    },
+    {
+      "id": "domain:long-term-progression-and-save",
+      "type": "domain",
+      "name": "长期进度与存档",
+      "summary": "负责六十三项主神任务、章节解锁、通关记录、路线契约结算、遗物归档和回归主神空间等跨局进度。版本化本地存档会在加载时迁移、清洗和校验，损坏数据被隔离以尽量保留可玩的长期状态。",
+      "tags": [
+        "progression",
+        "tasks",
+        "archive",
+        "save",
+        "migration"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entities": [
+          "主线任务",
+          "支线任务",
+          "任务奖励",
+          "章节完成记录",
+          "路线契约结算",
+          "归档遗物",
+          "版本化存档",
+          "拒绝存档备份"
+        ],
+        "businessRules": [
+          "十九个主线和四十四个支线任务只有在达成条件且未领取时才发放奖励",
+          "主线任务决定正常章节解锁，显式解锁可形成越序挑战",
+          "局内战利品、路线契约和遗物只有在对应结算路径上才进入长期状态",
+          "不兼容或损坏存档必须备份并回退到安全初始状态，合法旧字段在加载时迁移"
+        ],
+        "crossDomainInteractions": [
+          "记录副本探索和战斗产生的通关、任务及归档结果",
+          "把解锁章节、库存和养成状态重新提供给主神空间",
+          "保存成长经济中的装备、货币、伙伴与血脉进度"
+        ]
+      }
+    },
+    {
+      "id": "flow:configure-tactical-loadout",
+      "type": "flow",
+      "name": "配置战术携行",
+      "summary": "根据通用槽和已装备野战架计算容量，校验九类战术物品，并生成不可变的入场携行快照。",
+      "tags": [
+        "preparation",
+        "tactical-items",
+        "field-rig"
+      ],
+      "complexity": "moderate",
+      "domainMeta": {
+        "entryPoint": "玩家在主神空间调整战术携行栏",
+        "entryType": "manual"
+      }
+    },
+    {
+      "id": "flow:prepare-run-relic-draft",
+      "type": "flow",
+      "name": "准备本局遗物构筑",
+      "summary": "选择突击、壁垒或寻路遗物框架，可选归档遗物作为种子，并由匹配的遗物导管扩展本局抽取。",
+      "tags": [
+        "relic",
+        "draft",
+        "conduit",
+        "snapshot"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entryPoint": "玩家确认遗物框架与归档种子",
+        "entryType": "manual"
+      }
+    },
+    {
+      "id": "flow:freeze-support-build",
+      "type": "flow",
+      "name": "冻结辅助构筑并读取当前宠物",
+      "summary": "汇总装备魂技、已学功法、伙伴和血脉的当前选择，并在进入副本时冻结为本局能力来源。宠物不写入 run 快照，战斗读取顶层 activePet，捕获后可在本局即时变更。",
+      "tags": [
+        "skills",
+        "methods",
+        "companions",
+        "snapshot"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entryPoint": "enterDungeon",
+        "entryType": "manual"
+      }
+    },
+    {
+      "id": "flow:select-and-enter-chapter",
+      "type": "flow",
+      "name": "选择并进入章节",
+      "summary": "将任务解锁、章节顺序、战力准备度和越序入口合并为十九章门禁，并为选择的副本建立运行状态。",
+      "tags": [
+        "campaign",
+        "chapter-gate",
+        "readiness",
+        "entry"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entryPoint": "enterDungeon",
+        "entryType": "manual"
+      }
+    },
+    {
+      "id": "flow:navigate-dungeon-route",
+      "type": "flow",
+      "name": "推进副本路线",
+      "summary": "根据节点可见性、扇区状态、相邻关系、场域法则和路线契约确定合法目标并推进探索位置。",
+      "tags": [
+        "navigation",
+        "route",
+        "visibility",
+        "contract"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entryPoint": "moveToNode",
+        "entryType": "manual"
+      }
+    },
+    {
+      "id": "flow:resolve-law-and-event",
+      "type": "flow",
+      "name": "处理场域规则与探索事件",
+      "summary": "读取当前章节法则，评估事件或实地调查选项的装备、功法、宠物和物品条件，并将选择写回运行状态。",
+      "tags": [
+        "field-law",
+        "event",
+        "survey",
+        "choice"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entryPoint": "resolveDungeonEvent / resolveFieldSurvey",
+        "entryType": "manual"
+      }
+    },
+    {
+      "id": "flow:start-combat-encounter",
+      "type": "flow",
+      "name": "开始战斗遭遇",
+      "summary": "从当前节点生成敌方属性和首领状态，初始化战斗效果，展示敌人意图并设定战意。",
+      "tags": [
+        "encounter",
+        "intent",
+        "focus",
+        "boss"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entryPoint": "selectNode / moveToNode 遭遇战斗节点",
+        "entryType": "event"
+      }
+    },
+    {
+      "id": "flow:execute-player-turn",
+      "type": "flow",
+      "name": "执行玩家回合",
+      "summary": "校验并执行攻击、术法、防御、道具与特殊能力，结算伤害、治疗、护盾、状态和战意变化。",
+      "tags": [
+        "player-turn",
+        "action",
+        "damage",
+        "ability"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entryPoint": "performCombatAction",
+        "entryType": "manual"
+      }
+    },
+    {
+      "id": "flow:resolve-enemy-and-combat-outcome",
+      "type": "flow",
+      "name": "结算敌方回合与战斗结果",
+      "summary": "应用怪物效果与首领阶段转换，处理胜利、撤退或失败，并把结果传给场域法则和战利品系统。",
+      "tags": [
+        "enemy-turn",
+        "boss-phase",
+        "victory",
+        "failure"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entryPoint": "performCombatAction 回合结算",
+        "entryType": "event"
+      }
+    },
+    {
+      "id": "flow:purchase-and-improve-equipment",
+      "type": "flow",
+      "name": "购买与强化装备",
+      "summary": "消费资源购买物品和装备，调整穿戴，并通过升级、淬炼和调谐提升属性与套装联动。",
+      "tags": [
+        "shop",
+        "equipment",
+        "upgrade",
+        "tempering"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entryPoint": "主神空间商店与装备面板",
+        "entryType": "manual"
+      }
+    },
+    {
+      "id": "flow:run-equipment-projects",
+      "type": "flow",
+      "name": "执行装备委托、记忆与旧追猎兼容",
+      "summary": "封存装备启动跨副本委托，并管理已解锁装备记忆。装备及记忆狩猎准备只保留给旧入口和旧档恢复；现行 entryFlowVersion=2 会清除准备字段，装备获取改走首领/精英三选一与材料兑换。",
+      "tags": [
+        "commission",
+        "hunt",
+        "equipment-memory",
+        "cross-run"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entryPoint": "装备委托、装备记忆管理或 legacy 追猎恢复",
+        "entryType": "manual"
+      }
+    },
+    {
+      "id": "flow:cultivate-allies-and-bloodlines",
+      "type": "flow",
+      "name": "培养功法、伙伴与血脉",
+      "summary": "学习精炼功法，购买或捕获宠物，招募升级伙伴，并解锁强化血脉以形成多条长期战力成长线。",
+      "tags": [
+        "method",
+        "pet",
+        "companion",
+        "bloodline"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entryPoint": "主神空间养成面板",
+        "entryType": "manual"
+      }
+    },
+    {
+      "id": "flow:claim-tasks-and-unlock-campaign",
+      "type": "flow",
+      "name": "领取任务并解锁主线",
+      "summary": "评估十九个主线和四十四个支线任务的可见性与完成度，防止重复领取，并用主线进度开放后续章节。",
+      "tags": [
+        "tasks",
+        "mainline",
+        "rewards",
+        "unlock"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entryPoint": "claimTaskReward",
+        "entryType": "manual"
+      }
+    },
+    {
+      "id": "flow:settle-run-and-archive-relics",
+      "type": "flow",
+      "name": "结算本局并归档遗物",
+      "summary": "在通关或离场路径上结算局内战利品、路线契约与遗物构筑，将允许保留的成果合并到长期角色状态。",
+      "tags": [
+        "settlement",
+        "loot",
+        "route-contract",
+        "relic-archive"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entryPoint": "resolveExit / returnToHub",
+        "entryType": "manual"
+      }
+    },
+    {
+      "id": "flow:load-migrate-and-save-progress",
+      "type": "flow",
+      "name": "加载迁移并保存进度",
+      "summary": "从版本化本地存储读取状态，迁移和清洗旧字段，隔离拒绝存档，并在有效操作后持久化安全状态。",
+      "tags": [
+        "local-storage",
+        "migration",
+        "validation",
+        "recovery"
+      ],
+      "complexity": "complex",
+      "domainMeta": {
+        "entryPoint": "应用启动与持久化状态变更",
+        "entryType": "event"
+      }
+    },
+    {
+      "id": "step:configure-tactical-loadout:derive-field-rig-capacity",
+      "type": "step",
+      "name": "计算野战架容量",
+      "summary": "从已装备且来源槽匹配的装备中收集激活野战架，并计算扩展携行槽。",
+      "tags": [
+        "field-rig",
+        "capacity"
+      ],
+      "complexity": "moderate",
+      "filePath": "src/equipment-field-rigs.ts",
+      "lineRange": [
+        112,
+        135
+      ]
+    },
+    {
+      "id": "step:configure-tactical-loadout:normalize-item-selection",
+      "type": "step",
+      "name": "规范化物品选择",
+      "summary": "去除无效或重复物品，输出规范化选择以及无效、重复 ID 列表。",
+      "tags": [
+        "loadout",
+        "normalization"
+      ],
+      "complexity": "simple",
+      "filePath": "src/tactical-loadout.ts",
+      "lineRange": [
+        67,
+        101
+      ]
+    },
+    {
+      "id": "step:configure-tactical-loadout:validate-slot-rules",
+      "type": "step",
+      "name": "校验携行槽规则",
+      "summary": "校验通用槽、装备槽和类别限制，返回可执行的配置结果。",
+      "tags": [
+        "validation",
+        "slots"
+      ],
+      "complexity": "moderate",
+      "filePath": "src/tactical-loadout.ts",
+      "lineRange": [
+        102,
+        164
+      ]
+    },
+    {
+      "id": "step:configure-tactical-loadout:create-entry-snapshot",
+      "type": "step",
+      "name": "生成携行快照",
+      "summary": "将调用方已经校验的物品列表固化为本次副本可查询的版本化携行快照。",
+      "tags": [
+        "snapshot",
+        "entry"
+      ],
+      "complexity": "simple",
+      "filePath": "src/tactical-loadout.ts",
+      "lineRange": [
+        165,
+        177
+      ]
+    },
+    {
+      "id": "step:prepare-run-relic-draft:inspect-frame-and-seed",
+      "type": "step",
+      "name": "检查框架与种子",
+      "summary": "读取当前遗物框架、归档种子可用性和构筑准备状态。",
+      "tags": [
+        "relic-frame",
+        "archive-seed"
+      ],
+      "complexity": "moderate",
+      "filePath": "src/game.ts",
+      "lineRange": [
+        4393,
+        4420
+      ]
+    },
+    {
+      "id": "step:prepare-run-relic-draft:match-relic-conduits",
+      "type": "step",
+      "name": "匹配遗物导管",
+      "summary": "查找满足等级和装备条件的导管，并判断其与所选遗物框架是否匹配。",
+      "tags": [
+        "conduit",
+        "equipment"
+      ],
+      "complexity": "moderate",
+      "filePath": "src/equipment-relic-conduits.ts",
+      "lineRange": [
+        67,
+        105
+      ]
+    },
+    {
+      "id": "step:prepare-run-relic-draft:create-relic-run-state",
+      "type": "step",
+      "name": "创建遗物运行状态",
+      "summary": "用框架和可选归档种子初始化空的本局遗物状态；此时不生成候选，pendingDraft 仍为空。",
+      "tags": [
+        "relic",
+        "run-state"
+      ],
+      "complexity": "moderate",
+      "filePath": "src/run-relics.ts",
+      "lineRange": [
+        289,
+        326
+      ]
+    },
+    {
+      "id": "step:prepare-run-relic-draft:generate-relic-draft",
+      "type": "step",
+      "name": "生成遗物候选",
+      "summary": "收到合法 draftId 与 nodeId 请求时，依据稳定种子、框架和导管容量生成二选或三选候选；归档 seed 只在首个 draft 中置顶。",
+      "tags": [
+        "draft",
+        "deterministic"
+      ],
+      "complexity": "complex",
+      "filePath": "src/run-relics.ts",
+      "lineRange": [
+        389,
+        429
+      ]
+    },
+    {
+      "id": "step:freeze-support-build:collect-active-soul-skills",
+      "type": "step",
+      "name": "收集激活魂技",
+      "summary": "从达到等级和淬炼条件的已装备非武器装备中收集可用魂技。",
+      "tags": [
+        "soul-skill",
+        "equipment"
+      ],
+      "complexity": "moderate",
+      "filePath": "src/equipment-soul-skills.ts",
+      "lineRange": [
+        200,
+        220
+      ]
+    },
+    {
+      "id": "step:freeze-support-build:snapshot-method-techniques",
+      "type": "step",
+      "name": "快照功法技",
+      "summary": "把所有已学习功法的当前品阶转换为每场战斗一次的本局功法技快照。",
+      "tags": [
+        "method",
+        "technique",
+        "snapshot"
+      ],
+      "complexity": "moderate",
+      "filePath": "src/method-cultivation.ts",
+      "lineRange": [
+        280,
+        325
+      ]
+    },
+    {
+      "id": "step:freeze-support-build:snapshot-companion",
+      "type": "step",
+      "name": "快照伙伴",
+      "summary": "将当前伙伴进度转换为本局协助与品阶快照。",
+      "tags": [
+        "companion",
+        "snapshot"
+      ],
+      "complexity": "moderate",
+      "filePath": "src/companion-system.ts",
+      "lineRange": [
+        253,
+        302
+      ]
+    },
+    {
+      "id": "step:freeze-support-build:snapshot-bloodline",
+      "type": "step",
+      "name": "快照血脉",
+      "summary": "将当前激活血脉及品阶转换为本局属性与爆发能力快照。",
+      "tags": [
+        "bloodline",
+        "snapshot"
+      ],
+      "complexity": "moderate",
+      "filePath": "src/bloodline-system.ts",
+      "lineRange": [
+        308,
+        323
+      ]
+    },
+    {
+      "id": "step:freeze-support-build:freeze-on-dungeon-entry",
+      "type": "step",
+      "name": "入场冻结构筑",
+      "summary": "进入副本时将魂技、功法、伙伴、血脉和遗物来源写入本局状态；生成的 run 不包含宠物快照。",
+      "tags": [
+        "entry",
+        "freeze",
+        "run"
+      ],
+      "complexity": "complex",
+      "filePath": "src/game.ts",
+      "lineRange": [
+        6431,
+        6736
+      ]
+    },
+    {
+      "id": "step:select-and-enter-chapter:derive-task-unlocks",
+      "type": "step",
+      "name": "推导主线解锁",
+      "summary": "根据已领取的主线任务计算允许进入的章节集合。",
+      "tags": [
+        "task",
+        "unlock"
+      ],
+      "complexity": "moderate",
+      "filePath": "src/task-system.ts",
+      "lineRange": [
+        447,
+        470
+      ]
+    },
+    {
+      "id": "step:select-and-enter-chapter:evaluate-campaign-gates",
+      "type": "step",
+      "name": "评估章节门禁",
+      "summary": "合并章节顺序、完成记录、显式解锁和战力，标记正常、锁定或已完成入口。",
+      "tags": [
+        "campaign",
+        "gate"
+      ],
+      "complexity": "complex",
+      "filePath": "src/campaign-progress.ts",
+      "lineRange": [
+        40,
+        102
+      ]
+    },
+    {
+      "id": "step:select-and-enter-chapter:calculate-readiness",
+      "type": "step",
+      "name": "计算战力准备度",
+      "summary": "根据装备和养成形成的玩家战力与章节推荐战力给出准备度。",
+      "tags": [
+        "power",
+        "readiness"
+      ],
+      "complexity": "moderate",
+      "filePath": "src/progression.ts",
+      "lineRange": [
+        48,
+        78
+      ]
+    },
+    {
+      "id": "step:select-and-enter-chapter:initialize-chapter-run",
+      "type": "step",
+      "name": "初始化章节运行",
+      "summary": "创建副本路线、场域法则、压力、追猎、契约与各类冻结快照后切换到探索阶段。",
+      "tags": [
+        "dungeon",
+        "initialization"
+      ],
+      "complexity": "complex",
+      "filePath": "src/game.ts",
+      "lineRange": [
+        6431,
+        6736
+      ]
+    },
+    {
+      "id": "step:navigate-dungeon-route:determine-node-visibility",
+      "type": "step",
+      "name": "判定节点可见性",
+      "summary": "依据已发现、已清理和相邻节点集合判断地图节点应隐藏、显露或完全展示。",
+      "tags": [
+        "visibility",
+        "map"
+      ],
+      "complexity": "simple",
+      "filePath": "src/exploration-visibility.ts",
+      "lineRange": [
+        19,
+        42
+      ]
+    },
+    {
+      "id": "step:navigate-dungeon-route:evaluate-route-sector",
+      "type": "step",
+      "name": "评估路线扇区",
+      "summary": "将章节法则的路线条件投影为开放、部分开放或关闭的扇区显示状态。",
+      "tags": [
+        "route-sector",
+        "field-law"
+      ],
+      "complexity": "complex",
+      "filePath": "src/dungeon-routes.ts",
+      "lineRange": [
+        1944,
+        2097
+      ]
+    },
+    {
+      "id": "step:navigate-dungeon-route:move-to-legal-target",
+      "type": "step",
+      "name": "移动到合法目标",
+      "summary": "检查相邻节点、离开阻断和路线门禁后更新当前节点与发现记录。",
+      "tags": [
+        "movement",
+        "route-gate"
+      ],
+      "complexity": "complex",
+      "filePath": "src/game.ts",
+      "lineRange": [
+        7134,
+        7184
+      ]
+    },
+    {
+      "id": "step:navigate-dungeon-route:advance-route-contract",
+      "type": "step",
+      "name": "推进路线契约",
+      "summary": "在首次按序清理目标时更新契约完成数量，并生成当前进度显示。",
+      "tags": [
+        "route-contract",
+        "progress"
+      ],
+      "complexity": "moderate",
+      "filePath": "src/route-contracts.ts",
+      "lineRange": [
+        437,
+        507
+      ]
+    },
+    {
+      "id": "step:resolve-law-and-event:signal-chapter-law",
+      "type": "step",
+      "name": "更新章节场域法则",
+      "summary": "将节点清理或事件信号写入当前章节的独立法则状态。",
+      "tags": [
+        "field-law",
+        "signal"
+      ],
+      "complexity": "complex",
+      "filePath": "src/dungeon-laws.ts",
+      "lineRange": [
+        2539,
+        2845
+      ]
+    },
+    {
+      "id": "step:resolve-law-and-event:evaluate-event-options",
+      "type": "step",
+      "name": "评估事件选项",
+      "summary": "用功法、装备、套装、宠物、属性和库存条件判定事件选项是否可用及其风险。",
+      "tags": [
+        "event",
+        "requirements"
+      ],
+      "complexity": "complex",
+      "filePath": "src/dungeon-events.ts",
+      "lineRange": [
+        1716,
+        1731
+      ]
+    },
+    {
+      "id": "step:resolve-law-and-event:apply-event-choice",
+      "type": "step",
+      "name": "应用事件选择",
+      "summary": "解析玩家选择，应用生命、库存、奖励点与章节事件结果。",
+      "tags": [
+        "event",
+        "outcome"
+      ],
+      "complexity": "complex",
+      "filePath": "src/game.ts",
+      "lineRange": [
+        5818,
+        5868
+      ]
+    },
+    {
+      "id": "step:resolve-law-and-event:resolve-field-survey",
+      "type": "step",
+      "name": "结算实地调查",
+      "summary": "校验调查选项，计算奖励与生命变化，并标记该调查在本局已完成。",
+      "tags": [
+        "survey",
+        "reward"
+      ],
+      "complexity": "moderate",
+      "filePath": "src/field-surveys.ts",
+      "lineRange": [
+        185,
+        218
+      ]
+    },
+    {
+      "id": "step:start-combat-encounter:build-encounter-profile",
+      "type": "step",
+      "name": "构建遭遇档案",
+      "summary": "从当前副本节点、协议和局内状态确定敌人、战斗开局与修正信息。",
+      "tags": [
+        "encounter",
+        "profile"
+      ],
+      "complexity": "complex",
+      "filePath": "src/game.ts",
+      "lineRange": [
+        4615,
+        4782
+      ]
+    },
+    {
+      "id": "step:start-combat-encounter:calculate-boss-state",
+      "type": "step",
+      "name": "计算首领状态",
+      "summary": "读取章节首领定义、封印进度和阶段奖励以生成实际战斗属性。",
+      "tags": [
+        "boss",
+        "seal"
+      ],
+      "complexity": "complex",
+      "filePath": "src/boss-system.ts",
+      "lineRange": [
+        340,
+        403
+      ]
+    },
+    {
+      "id": "step:start-combat-encounter:reveal-combat-intent",
+      "type": "step",
+      "name": "揭示敌人意图",
+      "summary": "根据敌人、回合和战斗情境生成推荐行动、危险行动与威胁说明。",
+      "tags": [
+        "intent",
+        "telegraph"
+      ],
+      "complexity": "moderate",
+      "filePath": "src/combat-intents.ts",
+      "lineRange": [
+        85,
+        233
+      ]
+    },
+    {
+      "id": "step:start-combat-encounter:initialize-focus-and-effects",
+      "type": "step",
+      "name": "初始化战意与效果",
+      "summary": "建立战斗效果容器，并把代码内部 CombatFocus（玩家术语“战意”）约束在零到三的合法范围。",
+      "tags": [
+        "focus",
+        "effects"
+      ],
+      "complexity": "moderate",
+      "filePath": "src/game.ts",
+      "lineRange": [
+        7263,
+        7301
+      ]
+    },
+    {
+      "id": "step:execute-player-turn:validate-selected-action",
+      "type": "step",
+      "name": "校验所选行动",
+      "summary": "确认常规战斗阶段、所选行动、携行消耗品、战意和武器技状态允许执行请求。",
+      "tags": [
+        "action",
+        "validation"
+      ],
+      "complexity": "complex",
+      "filePath": "src/game.ts",
+      "lineRange": [
+        9965,
+        10128
+      ]
+    },
+    {
+      "id": "step:execute-player-turn:resolve-regular-action",
+      "type": "step",
+      "name": "结算常规行动",
+      "summary": "处理攻击、术法、防御、治疗丹和雷符等常规行动的直接数值结果。",
+      "tags": [
+        "attack",
+        "utility"
+      ],
+      "complexity": "complex",
+      "filePath": "src/game.ts",
+      "lineRange": [
+        9965,
+        10265
+      ]
+    },
+    {
+      "id": "step:execute-player-turn:resolve-special-abilities",
+      "type": "step",
+      "name": "结算冻结养成能力",
+      "summary": "按本场使用限制校验并触发功法技、伙伴协助或血脉爆发。",
+      "tags": [
+        "method",
+        "companion",
+        "bloodline"
+      ],
+      "complexity": "complex",
+      "filePath": "src/game.ts",
+      "lineRange": [
+        9395,
+        9811
+      ]
+    },
+    {
+      "id": "step:execute-player-turn:update-focus-and-combat-state",
+      "type": "step",
+      "name": "更新战意与战斗状态",
+      "summary": "依据意图匹配结果更新战意，应用伤害、治疗、屏障和状态并推进回合。",
+      "tags": [
+        "focus",
+        "state-transition"
+      ],
+      "complexity": "complex",
+      "filePath": "src/game.ts",
+      "lineRange": [
+        9912,
+        10308
+      ]
+    },
+    {
+      "id": "step:resolve-enemy-and-combat-outcome:apply-monster-effects",
+      "type": "step",
+      "name": "应用怪物效果",
+      "summary": "根据怪物和玩家上下文结算物理、术法或符箓伤害以及持续状态。",
+      "tags": [
+        "monster",
+        "effects"
+      ],
+      "complexity": "complex",
+      "filePath": "src/combat-effects.ts",
+      "lineRange": [
+        171,
+        823
+      ]
+    },
+    {
+      "id": "step:resolve-enemy-and-combat-outcome:transition-boss-phase",
+      "type": "step",
+      "name": "切换首领阶段",
+      "summary": "在达到生命阈值时把首领从封印态切换至觉醒态并应用阶段增益。",
+      "tags": [
+        "boss",
+        "phase-transition"
+      ],
+      "complexity": "moderate",
+      "filePath": "src/boss-system.ts",
+      "lineRange": [
+        349,
+        391
+      ]
+    },
+    {
+      "id": "step:resolve-enemy-and-combat-outcome:signal-combat-result",
+      "type": "step",
+      "name": "发送战斗结果信号",
+      "summary": "把战斗开始与胜利结果写回场域法则，用于开放路线、改变规则或解封首领。",
+      "tags": [
+        "victory",
+        "field-law"
+      ],
+      "complexity": "complex",
+      "filePath": "src/dungeon-laws.ts",
+      "lineRange": [
+        4636,
+        5064
+      ]
+    },
+    {
+      "id": "step:resolve-enemy-and-combat-outcome:branch-victory-retreat-or-failure",
+      "type": "step",
+      "name": "分流胜利撤退或失败",
+      "summary": "根据生命、首领和玩家选择进入掉落、撤退或主神强制回收路径。",
+      "tags": [
+        "outcome",
+        "retreat",
+        "failure"
+      ],
+      "complexity": "complex",
+      "filePath": "src/game.ts",
+      "lineRange": [
+        10273,
+        10365
+      ]
+    },
+    {
+      "id": "step:purchase-and-improve-equipment:buy-item-or-equipment",
+      "type": "step",
+      "name": "购买物品或装备",
+      "summary": "校验配方、库存和奖励点后扣除成本并加入战术物品或装备。",
+      "tags": [
+        "purchase",
+        "currency"
+      ],
+      "complexity": "moderate",
+      "filePath": "src/game.ts",
+      "lineRange": [
+        6091,
+        6164
+      ]
+    },
+    {
+      "id": "step:purchase-and-improve-equipment:equip-owned-item",
+      "type": "step",
+      "name": "穿戴已拥有装备",
+      "summary": "按装备槽替换当前穿戴，并按新的派生生命上限归一化当前生命。",
+      "tags": [
+        "equipment",
+        "loadout"
+      ],
+      "complexity": "moderate",
+      "filePath": "src/game.ts",
+      "lineRange": [
+        6165,
+        6183
+      ]
+    },
+    {
+      "id": "step:purchase-and-improve-equipment:level-and-temper-equipment",
+      "type": "step",
+      "name": "升级并淬炼装备",
+      "summary": "消费对应货币和首领材料提高装备等级与两阶淬炼进度。",
+      "tags": [
+        "upgrade",
+        "tempering"
+      ],
+      "complexity": "complex",
+      "filePath": "src/game.ts",
+      "lineRange": [
+        6184,
+        6295
+      ]
+    },
+    {
+      "id": "step:purchase-and-improve-equipment:attune-and-recalculate-bonus",
+      "type": "step",
+      "name": "计算调谐与共鸣加成",
+      "summary": "读取既有调谐分支，计算装备评分、套装效果和同支武器共鸣等派生结果。",
+      "tags": [
+        "attunement",
+        "resonance"
+      ],
+      "complexity": "complex",
+      "filePath": "src/equipment-system.ts",
+      "lineRange": [
+        941,
+        1105
+      ]
+    },
+    {
+      "id": "step:run-equipment-projects:seal-equipment-commission",
+      "type": "step",
+      "name": "封存装备委托",
+      "summary": "选择两件空闲的满级高阶装备和目标淬炼材料，扣除费用并锁定委托。",
+      "tags": [
+        "commission",
+        "sealed-equipment"
+      ],
+      "complexity": "complex",
+      "filePath": "src/game.ts",
+      "lineRange": [
+        5568,
+        5658
+      ]
+    },
+    {
+      "id": "step:run-equipment-projects:advance-commission-across-clears",
+      "type": "step",
+      "name": "跨副本推进委托",
+      "summary": "记录不同副本的通关，达到三个唯一副本后结算委托奖励与指定材料。",
+      "tags": [
+        "commission",
+        "dungeon-clear"
+      ],
+      "complexity": "moderate",
+      "filePath": "src/game.ts",
+      "lineRange": [
+        10367,
+        10402
+      ]
+    },
+    {
+      "id": "step:run-equipment-projects:prepare-equipment-or-memory-hunt",
+      "type": "step",
+      "name": "恢复旧装备或记忆狩猎准备",
+      "summary": "旧入口和旧档可用这些准备 API 选择装备或装备记忆狩猎目标；它们只服务 legacy 恢复，不代表现代新局入口。",
+      "tags": [
+        "equipment-hunt",
+        "memory-hunt"
+      ],
+      "complexity": "complex",
+      "filePath": "src/game.ts",
+      "lineRange": [
+        4005,
+        4392
+      ]
+    },
+    {
+      "id": "step:run-equipment-projects:disable-preselected-hunts-in-current-entry",
+      "type": "step",
+      "name": "现行入场禁用预选追猎",
+      "summary": "entryFlowVersion=2 在入场时清除装备与记忆狩猎准备，不创建新局追猎；已经激活的装备记忆另行写入本局快照。",
+      "tags": [
+        "current-entry",
+        "legacy-boundary",
+        "equipment-hunt"
+      ],
+      "complexity": "moderate",
+      "filePath": "src/game.ts",
+      "lineRange": [
+        6431,
+        6576
+      ]
+    },
+    {
+      "id": "step:run-equipment-projects:unlock-and-activate-memory",
+      "type": "step",
+      "name": "解锁、激活并初始化装备记忆",
+      "summary": "更新装备的已解锁和 active 记忆映射，并为 legacy 预选目标创建初始 hunt state。",
+      "tags": [
+        "equipment-memory",
+        "activation"
+      ],
+      "complexity": "complex",
+      "filePath": "src/equipment-memory-hunts.ts",
+      "lineRange": [
+        634,
+        730
+      ]
+    },
+    {
+      "id": "step:run-equipment-projects:progress-and-settle-legacy-memory-hunt",
+      "type": "step",
+      "name": "推进并结算旧记忆狩猎",
+      "summary": "按目标节点和事件信号推进 legacy 记忆狩猎，并在通关、撤退、失败或跨副本时生成确定结算。",
+      "tags": [
+        "equipment-memory",
+        "legacy-hunt",
+        "settlement"
+      ],
+      "complexity": "complex",
+      "filePath": "src/equipment-memory-hunts.ts",
+      "lineRange": [
+        835,
+        1050
+      ]
+    },
+    {
+      "id": "step:run-equipment-projects:snapshot-active-equipment-memories",
+      "type": "step",
+      "name": "快照已激活装备记忆",
+      "summary": "只把当前已装备且已激活的记忆写入本局快照；这条现行效果独立于 legacy 追猎准备。",
+      "tags": [
+        "equipment-memory",
+        "snapshot",
+        "current-entry"
+      ],
+      "complexity": "moderate",
+      "filePath": "src/equipment-memory-hunts.ts",
+      "lineRange": [
+        1093,
+        1109
+      ]
+    },
+    {
+      "id": "step:run-equipment-projects:auto-unlock-memory-on-current-clear",
+      "type": "step",
+      "name": "现行通关自动收录记忆",
+      "summary": "entryFlowVersion=2 成功通关后，筛选本章所有可承载装备，并把对应记忆写入已解锁与 active 映射。",
+      "tags": [
+        "equipment-memory",
+        "current-clear",
+        "unlock"
+      ],
+      "complexity": "moderate",
+      "filePath": "src/game.ts",
+      "lineRange": [
+        2855,
+        2884
+      ]
+    },
+    {
+      "id": "step:cultivate-allies-and-bloodlines:learn-and-refine-methods",
+      "type": "step",
+      "name": "学习并精炼功法",
+      "summary": "消费资源学习七种功法、从一阶提升至三阶，并选择主显示功法。",
+      "tags": [
+        "method",
+        "rank"
+      ],
+      "complexity": "moderate",
+      "filePath": "src/game.ts",
+      "lineRange": [
+        6296,
+        6354
+      ]
+    },
+    {
+      "id": "step:cultivate-allies-and-bloodlines:purchase-upgrade-and-activate-pet",
+      "type": "step",
+      "name": "购买、培养并激活宠物",
+      "summary": "在长期成长中购买商店宠物、提升等级，并选择顶层 activePet。",
+      "tags": [
+        "pet",
+        "capture"
+      ],
+      "complexity": "moderate",
+      "filePath": "src/game.ts",
+      "lineRange": [
+        6355,
+        6430
+      ]
+    },
+    {
+      "id": "step:cultivate-allies-and-bloodlines:capture-pet-in-run",
+      "type": "step",
+      "name": "局内低血量捕获宠物",
+      "summary": "战斗中检查怪物、低血量阈值与捕获道具；成功后结束遭遇，把宠物写入长期拥有和等级，并立即切换 activePet。",
+      "tags": [
+        "pet",
+        "capture",
+        "combat"
+      ],
+      "complexity": "complex",
+      "filePath": "src/game.ts",
+      "lineRange": [
+        9225,
+        9350
+      ]
+    },
+    {
+      "id": "step:cultivate-allies-and-bloodlines:recruit-and-upgrade-companion",
+      "type": "step",
+      "name": "招募并升级伙伴",
+      "summary": "检查招募门槛和升级成本，提升伙伴品阶并设置供下一次入场冻结的活跃伙伴。",
+      "tags": [
+        "companion",
+        "upgrade"
+      ],
+      "complexity": "moderate",
+      "filePath": "src/game.ts",
+      "lineRange": [
+        6014,
+        6082
+      ]
+    },
+    {
+      "id": "step:cultivate-allies-and-bloodlines:unlock-and-upgrade-bloodline",
+      "type": "step",
+      "name": "解锁并强化血脉",
+      "summary": "消费章节材料解锁和提升血脉品阶，并选择活跃血脉提供属性与爆发效果。",
+      "tags": [
+        "bloodline",
+        "materials"
+      ],
+      "complexity": "complex",
+      "filePath": "src/game.ts",
+      "lineRange": [
+        5941,
+        6013
+      ]
+    },
+    {
+      "id": "step:claim-tasks-and-unlock-campaign:list-visible-tasks",
+      "type": "step",
+      "name": "列出可见任务",
+      "summary": "根据长期状态筛选当前可见的主线与支线任务并生成进度文本。",
+      "tags": [
+        "tasks",
+        "visibility"
+      ],
+      "complexity": "moderate",
+      "filePath": "src/task-system.ts",
+      "lineRange": [
+        412,
+        446
+      ]
+    },
+    {
+      "id": "step:claim-tasks-and-unlock-campaign:evaluate-completion-and-claim-state",
+      "type": "step",
+      "name": "评估完成与领取状态",
+      "summary": "检查任务条件是否满足以及任务奖励是否已领取，阻止未完成或重复领取。",
+      "tags": [
+        "task",
+        "evaluation"
+      ],
+      "complexity": "complex",
+      "filePath": "src/task-system.ts",
+      "lineRange": [
+        116,
+        436
+      ]
+    },
+    {
+      "id": "step:claim-tasks-and-unlock-campaign:grant-task-reward",
+      "type": "step",
+      "name": "发放任务奖励",
+      "summary": "把任务奖励点和其他奖励写入角色状态，并记录已领取任务标识。",
+      "tags": [
+        "reward",
+        "claim"
+      ],
+      "complexity": "moderate",
+      "filePath": "src/game.ts",
+      "lineRange": [
+        8365,
+        8415
+      ]
+    },
+    {
+      "id": "step:claim-tasks-and-unlock-campaign:refresh-campaign-access",
+      "type": "step",
+      "name": "刷新章节访问权",
+      "summary": "根据最新主线与完成记录重算十九章门禁和下一章推荐。",
+      "tags": [
+        "campaign",
+        "recommendation"
+      ],
+      "complexity": "moderate",
+      "filePath": "src/campaign-progress.ts",
+      "lineRange": [
+        40,
+        105
+      ]
+    },
+    {
+      "id": "step:settle-run-and-archive-relics:settle-secured-loot",
+      "type": "step",
+      "name": "结算可保留战利品",
+      "summary": "根据通关、撤退和安全规则把局内物品、装备与货币合并到长期库存。",
+      "tags": [
+        "loot",
+        "settlement"
+      ],
+      "complexity": "complex",
+      "filePath": "src/game.ts",
+      "lineRange": [
+        8939,
+        9056
+      ]
+    },
+    {
+      "id": "step:settle-run-and-archive-relics:settle-route-contract",
+      "type": "step",
+      "name": "结算路线契约",
+      "summary": "根据契约目标完成数、通关或提前离场状态确定奖励、保留或失效结果。",
+      "tags": [
+        "route-contract",
+        "settlement"
+      ],
+      "complexity": "moderate",
+      "filePath": "src/route-contracts.ts",
+      "lineRange": [
+        549,
+        594
+      ]
+    },
+    {
+      "id": "step:settle-run-and-archive-relics:archive-selected-relics",
+      "type": "step",
+      "name": "归档本局遗物",
+      "summary": "通关时把有已选遗物的 run 标记为待归档；玩家随后选择或跳过，选择会写入 archivedRelicIds、preparedRelicFrame 与下一局 preparedRelicSeedId。",
+      "tags": [
+        "relic",
+        "archive"
+      ],
+      "complexity": "moderate",
+      "filePath": "src/game.ts",
+      "lineRange": [
+        10660,
+        10777
+      ]
+    },
+    {
+      "id": "step:settle-run-and-archive-relics:return-to-main-god-space",
+      "type": "step",
+      "name": "返回主神空间",
+      "summary": "记录章节完成、清理局内状态并回到可继续整备和领取任务的长期阶段。",
+      "tags": [
+        "hub",
+        "completion"
+      ],
+      "complexity": "complex",
+      "filePath": "src/game.ts",
+      "lineRange": [
+        10405,
+        10806
+      ]
+    },
+    {
+      "id": "step:load-migrate-and-save-progress:read-versioned-payload",
+      "type": "step",
+      "name": "读取版本化存档",
+      "summary": "从 localStorage 读取当前版本键并解析带版本号的状态负载。",
+      "tags": [
+        "local-storage",
+        "version"
+      ],
+      "complexity": "moderate",
+      "filePath": "src/main.ts",
+      "lineRange": [
+        2947,
+        2976
+      ]
+    },
+    {
+      "id": "step:load-migrate-and-save-progress:migrate-and-normalize-state",
+      "type": "step",
+      "name": "迁移并规范化状态",
+      "summary": "修复旧遭遇和遗留字段，逐域清洗运行、战斗、装备、法则与养成数据。",
+      "tags": [
+        "migration",
+        "normalization"
+      ],
+      "complexity": "complex",
+      "filePath": "src/main.ts",
+      "lineRange": [
+        2093,
+        2911
+      ]
+    },
+    {
+      "id": "step:load-migrate-and-save-progress:isolate-rejected-save",
+      "type": "step",
+      "name": "隔离拒绝存档",
+      "summary": "对版本不兼容或校验失败的原始存档建立备份和原因记录，并恢复安全可玩状态。",
+      "tags": [
+        "recovery",
+        "backup"
+      ],
+      "complexity": "complex",
+      "filePath": "src/main.ts",
+      "lineRange": [
+        2912,
+        3059
+      ]
+    },
+    {
+      "id": "step:load-migrate-and-save-progress:persist-sanitized-state",
+      "type": "step",
+      "name": "持久化清洗状态",
+      "summary": "移除不应长期保存的瞬时字段，并以当前版本格式写回本地存储。",
+      "tags": [
+        "save",
+        "sanitization"
+      ],
+      "complexity": "moderate",
+      "filePath": "src/main.ts",
+      "lineRange": [
+        3060,
+        3067
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "domain:main-god-space-preparation",
+      "target": "flow:configure-tactical-loadout",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "domain:main-god-space-preparation",
+      "target": "flow:prepare-run-relic-draft",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "domain:main-god-space-preparation",
+      "target": "flow:freeze-support-build",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "domain:dungeon-exploration-and-laws",
+      "target": "flow:select-and-enter-chapter",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "domain:dungeon-exploration-and-laws",
+      "target": "flow:navigate-dungeon-route",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "domain:dungeon-exploration-and-laws",
+      "target": "flow:resolve-law-and-event",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "domain:turn-based-combat",
+      "target": "flow:start-combat-encounter",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "domain:turn-based-combat",
+      "target": "flow:execute-player-turn",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "domain:turn-based-combat",
+      "target": "flow:resolve-enemy-and-combat-outcome",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "domain:growth-economy",
+      "target": "flow:purchase-and-improve-equipment",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "domain:growth-economy",
+      "target": "flow:run-equipment-projects",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "domain:growth-economy",
+      "target": "flow:cultivate-allies-and-bloodlines",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "domain:long-term-progression-and-save",
+      "target": "flow:claim-tasks-and-unlock-campaign",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "domain:long-term-progression-and-save",
+      "target": "flow:settle-run-and-archive-relics",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "domain:long-term-progression-and-save",
+      "target": "flow:load-migrate-and-save-progress",
+      "type": "contains_flow",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "flow:configure-tactical-loadout",
+      "target": "step:configure-tactical-loadout:derive-field-rig-capacity",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.3
+    },
+    {
+      "source": "flow:configure-tactical-loadout",
+      "target": "step:configure-tactical-loadout:normalize-item-selection",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "flow:configure-tactical-loadout",
+      "target": "step:configure-tactical-loadout:validate-slot-rules",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:configure-tactical-loadout",
+      "target": "step:configure-tactical-loadout:create-entry-snapshot",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "flow:prepare-run-relic-draft",
+      "target": "step:prepare-run-relic-draft:inspect-frame-and-seed",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.3
+    },
+    {
+      "source": "flow:prepare-run-relic-draft",
+      "target": "step:prepare-run-relic-draft:match-relic-conduits",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "flow:prepare-run-relic-draft",
+      "target": "step:prepare-run-relic-draft:create-relic-run-state",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:prepare-run-relic-draft",
+      "target": "step:prepare-run-relic-draft:generate-relic-draft",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "flow:freeze-support-build",
+      "target": "step:freeze-support-build:collect-active-soul-skills",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.3
+    },
+    {
+      "source": "flow:freeze-support-build",
+      "target": "step:freeze-support-build:snapshot-method-techniques",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "flow:freeze-support-build",
+      "target": "step:freeze-support-build:snapshot-companion",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "flow:freeze-support-build",
+      "target": "step:freeze-support-build:snapshot-bloodline",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:freeze-support-build",
+      "target": "step:freeze-support-build:freeze-on-dungeon-entry",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "flow:select-and-enter-chapter",
+      "target": "step:select-and-enter-chapter:derive-task-unlocks",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.3
+    },
+    {
+      "source": "flow:select-and-enter-chapter",
+      "target": "step:select-and-enter-chapter:evaluate-campaign-gates",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "flow:select-and-enter-chapter",
+      "target": "step:select-and-enter-chapter:calculate-readiness",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:select-and-enter-chapter",
+      "target": "step:select-and-enter-chapter:initialize-chapter-run",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "flow:navigate-dungeon-route",
+      "target": "step:navigate-dungeon-route:determine-node-visibility",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.3
+    },
+    {
+      "source": "flow:navigate-dungeon-route",
+      "target": "step:navigate-dungeon-route:evaluate-route-sector",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "flow:navigate-dungeon-route",
+      "target": "step:navigate-dungeon-route:move-to-legal-target",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:navigate-dungeon-route",
+      "target": "step:navigate-dungeon-route:advance-route-contract",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "flow:resolve-law-and-event",
+      "target": "step:resolve-law-and-event:signal-chapter-law",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.3
+    },
+    {
+      "source": "flow:resolve-law-and-event",
+      "target": "step:resolve-law-and-event:evaluate-event-options",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "flow:resolve-law-and-event",
+      "target": "step:resolve-law-and-event:apply-event-choice",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:resolve-law-and-event",
+      "target": "step:resolve-law-and-event:resolve-field-survey",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "flow:start-combat-encounter",
+      "target": "step:start-combat-encounter:build-encounter-profile",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.3
+    },
+    {
+      "source": "flow:start-combat-encounter",
+      "target": "step:start-combat-encounter:calculate-boss-state",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "flow:start-combat-encounter",
+      "target": "step:start-combat-encounter:reveal-combat-intent",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:start-combat-encounter",
+      "target": "step:start-combat-encounter:initialize-focus-and-effects",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "flow:execute-player-turn",
+      "target": "step:execute-player-turn:validate-selected-action",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.3
+    },
+    {
+      "source": "flow:execute-player-turn",
+      "target": "step:execute-player-turn:resolve-regular-action",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "flow:execute-player-turn",
+      "target": "step:execute-player-turn:resolve-special-abilities",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:execute-player-turn",
+      "target": "step:execute-player-turn:update-focus-and-combat-state",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "flow:resolve-enemy-and-combat-outcome",
+      "target": "step:resolve-enemy-and-combat-outcome:apply-monster-effects",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.3
+    },
+    {
+      "source": "flow:resolve-enemy-and-combat-outcome",
+      "target": "step:resolve-enemy-and-combat-outcome:transition-boss-phase",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "flow:resolve-enemy-and-combat-outcome",
+      "target": "step:resolve-enemy-and-combat-outcome:signal-combat-result",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:resolve-enemy-and-combat-outcome",
+      "target": "step:resolve-enemy-and-combat-outcome:branch-victory-retreat-or-failure",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "flow:purchase-and-improve-equipment",
+      "target": "step:purchase-and-improve-equipment:buy-item-or-equipment",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.3
+    },
+    {
+      "source": "flow:purchase-and-improve-equipment",
+      "target": "step:purchase-and-improve-equipment:equip-owned-item",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "flow:purchase-and-improve-equipment",
+      "target": "step:purchase-and-improve-equipment:level-and-temper-equipment",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:purchase-and-improve-equipment",
+      "target": "step:purchase-and-improve-equipment:attune-and-recalculate-bonus",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "flow:run-equipment-projects",
+      "target": "step:run-equipment-projects:seal-equipment-commission",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.3
+    },
+    {
+      "source": "flow:run-equipment-projects",
+      "target": "step:run-equipment-projects:advance-commission-across-clears",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "flow:run-equipment-projects",
+      "target": "step:run-equipment-projects:prepare-equipment-or-memory-hunt",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "flow:run-equipment-projects",
+      "target": "step:run-equipment-projects:disable-preselected-hunts-in-current-entry",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "flow:run-equipment-projects",
+      "target": "step:run-equipment-projects:unlock-and-activate-memory",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:run-equipment-projects",
+      "target": "step:run-equipment-projects:progress-and-settle-legacy-memory-hunt",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:run-equipment-projects",
+      "target": "step:run-equipment-projects:snapshot-active-equipment-memories",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "flow:run-equipment-projects",
+      "target": "step:run-equipment-projects:auto-unlock-memory-on-current-clear",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "flow:cultivate-allies-and-bloodlines",
+      "target": "step:cultivate-allies-and-bloodlines:learn-and-refine-methods",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.3
+    },
+    {
+      "source": "flow:cultivate-allies-and-bloodlines",
+      "target": "step:cultivate-allies-and-bloodlines:purchase-upgrade-and-activate-pet",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "flow:cultivate-allies-and-bloodlines",
+      "target": "step:cultivate-allies-and-bloodlines:capture-pet-in-run",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "flow:cultivate-allies-and-bloodlines",
+      "target": "step:cultivate-allies-and-bloodlines:recruit-and-upgrade-companion",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:cultivate-allies-and-bloodlines",
+      "target": "step:cultivate-allies-and-bloodlines:unlock-and-upgrade-bloodline",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "flow:claim-tasks-and-unlock-campaign",
+      "target": "step:claim-tasks-and-unlock-campaign:list-visible-tasks",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.3
+    },
+    {
+      "source": "flow:claim-tasks-and-unlock-campaign",
+      "target": "step:claim-tasks-and-unlock-campaign:evaluate-completion-and-claim-state",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "flow:claim-tasks-and-unlock-campaign",
+      "target": "step:claim-tasks-and-unlock-campaign:grant-task-reward",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:claim-tasks-and-unlock-campaign",
+      "target": "step:claim-tasks-and-unlock-campaign:refresh-campaign-access",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "flow:settle-run-and-archive-relics",
+      "target": "step:settle-run-and-archive-relics:settle-secured-loot",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.3
+    },
+    {
+      "source": "flow:settle-run-and-archive-relics",
+      "target": "step:settle-run-and-archive-relics:settle-route-contract",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "flow:settle-run-and-archive-relics",
+      "target": "step:settle-run-and-archive-relics:archive-selected-relics",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:settle-run-and-archive-relics",
+      "target": "step:settle-run-and-archive-relics:return-to-main-god-space",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "flow:load-migrate-and-save-progress",
+      "target": "step:load-migrate-and-save-progress:read-versioned-payload",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.3
+    },
+    {
+      "source": "flow:load-migrate-and-save-progress",
+      "target": "step:load-migrate-and-save-progress:migrate-and-normalize-state",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "flow:load-migrate-and-save-progress",
+      "target": "step:load-migrate-and-save-progress:isolate-rejected-save",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "flow:load-migrate-and-save-progress",
+      "target": "step:load-migrate-and-save-progress:persist-sanitized-state",
+      "type": "flow_step",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "domain:main-god-space-preparation",
+      "target": "domain:dungeon-exploration-and-laws",
+      "type": "cross_domain",
+      "direction": "forward",
+      "description": "入场时把携行物、遗物与辅助构筑快照交给副本运行。",
+      "weight": 0.9
+    },
+    {
+      "source": "domain:growth-economy",
+      "target": "domain:main-god-space-preparation",
+      "type": "cross_domain",
+      "direction": "forward",
+      "description": "已购买和培养的装备、物品、功法、宠物、伙伴与血脉成为可选整备资源。",
+      "weight": 0.8
+    },
+    {
+      "source": "domain:long-term-progression-and-save",
+      "target": "domain:dungeon-exploration-and-laws",
+      "type": "cross_domain",
+      "direction": "forward",
+      "description": "主线任务与通关记录决定十九章的解锁、完成和越序状态。",
+      "weight": 0.9
+    },
+    {
+      "source": "domain:dungeon-exploration-and-laws",
+      "target": "domain:turn-based-combat",
+      "type": "cross_domain",
+      "direction": "forward",
+      "description": "探索抵达战斗节点时生成遭遇，场域法则同时提供开局和战斗修正。",
+      "weight": 1.0
+    },
+    {
+      "source": "domain:turn-based-combat",
+      "target": "domain:dungeon-exploration-and-laws",
+      "type": "cross_domain",
+      "direction": "forward",
+      "description": "战斗开始与胜利信号推进场域法则、首领封印和路线开放状态。",
+      "weight": 0.9
+    },
+    {
+      "source": "domain:dungeon-exploration-and-laws",
+      "target": "domain:growth-economy",
+      "type": "cross_domain",
+      "direction": "forward",
+      "description": "节点、事件、调查和通关产出装备、材料、货币与狩猎进度。",
+      "weight": 0.8
+    },
+    {
+      "source": "domain:turn-based-combat",
+      "target": "domain:growth-economy",
+      "type": "cross_domain",
+      "direction": "forward",
+      "description": "战斗胜利和捕获行为产出局内战利品、装备候选及宠物。",
+      "weight": 0.8
+    },
+    {
+      "source": "domain:growth-economy",
+      "target": "domain:long-term-progression-and-save",
+      "type": "cross_domain",
+      "direction": "forward",
+      "description": "货币、装备、记忆、功法、宠物、伙伴和血脉成长被写入长期存档。",
+      "weight": 0.9
+    },
+    {
+      "source": "domain:dungeon-exploration-and-laws",
+      "target": "domain:long-term-progression-and-save",
+      "type": "cross_domain",
+      "direction": "forward",
+      "description": "通关、路线契约、任务进度与遗物归档在离场结算后更新长期状态。",
+      "weight": 1.0
+    }
+  ],
+  "layers": [],
+  "tour": []
+}

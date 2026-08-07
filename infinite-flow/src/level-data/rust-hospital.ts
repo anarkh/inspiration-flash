@@ -4,6 +4,7 @@ export const rustHospitalDungeon: DungeonDefinition = {
   id: 'rust_hospital',
   name: '锈疫病院',
   tier: 4,
+  genre: 'modern',
   recommendedPower: 265,
   theme: '废弃病院把治疗流程变成试炼，补给、毒性和精神压力同时考验玩家。',
   recommended: '推荐防御 14 或学会铁衣诀。',

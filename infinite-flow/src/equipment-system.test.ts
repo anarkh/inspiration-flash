@@ -66,6 +66,7 @@ const ADVANCED_EQUIPMENT_BY_SET = {
     'helix_cleaver',
     'hushblade',
     'rescue_carbine',
+    'breach_shotgun',
     'cross_examiner_sabre',
     'frame_engraver',
     'blindline_cutter'
@@ -100,7 +101,8 @@ const ADVANCED_EQUIPMENT_BY_SET = {
     'blackbox_beacon',
     'appeal_seal',
     'thaw_metronome',
-    'inverse_prism'
+    'inverse_prism',
+    'phase_coil_rifle'
   ]
 } as const satisfies Record<EquipmentSetTag, readonly EquipmentId[]>;
 
@@ -278,6 +280,10 @@ const EXPECTED_TEMPER_DEFINITIONS = {
     materialId: 'rescue_badge',
     rankBonuses: { 1: { attack: 2, artPower: 1 }, 2: { attack: 2, defense: 1 } }
   },
+  breach_shotgun: {
+    materialId: 'rescue_badge',
+    rankBonuses: { 1: { attack: 2, defense: 1 }, 2: { attack: 2, speed: 1 } }
+  },
   triage_visor: {
     materialId: 'rescue_badge',
     rankBonuses: { 1: { artPower: 2, speed: 1, trapCheck: 2 }, 2: { speed: 2, trapCheck: 4 } }
@@ -325,6 +331,10 @@ const EXPECTED_TEMPER_DEFINITIONS = {
   blindline_cutter: {
     materialId: 'observation_shard',
     rankBonuses: { 1: { attack: 2, artPower: 1 }, 2: { attack: 2, defense: 1 } }
+  },
+  phase_coil_rifle: {
+    materialId: 'observation_shard',
+    rankBonuses: { 1: { attack: 1, artPower: 2 }, 2: { attack: 2, speed: 1 } }
   },
   predictive_visor: {
     materialId: 'observation_shard',
@@ -377,7 +387,7 @@ function combineStats(
 }
 
 describe('equipment system', () => {
-  it('defines all 56 mature items with fourteen pieces per set and weighted rank bonuses', () => {
+  it('defines all 58 mature items with balanced set distribution and weighted rank bonuses', () => {
     const advancedEquipmentIds = Object.values(ADVANCED_EQUIPMENT_BY_SET).flat();
     const setCounts = Object.fromEntries(
       Object.entries(ADVANCED_EQUIPMENT_BY_SET).map(([setTag, equipmentIds]) => [
@@ -387,9 +397,9 @@ describe('equipment system', () => {
     );
     const distribution = Object.values(setCounts);
 
-    expect(advancedEquipmentIds).toHaveLength(56);
-    expect(new Set(advancedEquipmentIds).size).toBe(56);
-    expect(setCounts).toEqual({ mist: 14, forge: 14, rift: 14, chronal: 14 });
+    expect(advancedEquipmentIds).toHaveLength(58);
+    expect(new Set(advancedEquipmentIds).size).toBe(58);
+    expect(setCounts).toEqual({ mist: 14, forge: 15, rift: 14, chronal: 15 });
     expect(Math.max(...distribution) - Math.min(...distribution)).toBeLessThanOrEqual(1);
     expect(new Set(Object.keys(EXPECTED_TEMPER_DEFINITIONS))).toEqual(new Set(advancedEquipmentIds));
 
@@ -478,13 +488,21 @@ describe('equipment system', () => {
     }
   });
 
-  it('integrates the four lost shelter items with two real inscriptions and two badge tempers', () => {
+  it('integrates the five lost shelter items with two real inscriptions and two badge tempers', () => {
     const cases = [
       ['rescue_carbine', 'forge', 'weapon'],
+      ['breach_shotgun', 'forge', 'weapon'],
       ['triage_visor', 'mist', 'head'],
       ['evacuation_plate', 'rift', 'armor'],
       ['blackbox_beacon', 'chronal', 'charm']
     ] as const satisfies ReadonlyArray<readonly [EquipmentId, EquipmentSetTag, EquipmentSlot]>;
+
+    expect(EQUIPMENT.breach_shotgun).toMatchObject({
+      name: '破门霰弹枪',
+      cost: { rewardPoints: 1820, lingyun: 7, items: { rescue_badge: 1, star_iron: 1 } },
+      base: { attack: 35, defense: 2 },
+      perLevel: { attack: 10, defense: 1 }
+    });
 
     for (const [equipmentId, setTag, slot] of cases) {
       expect(EQUIPMENT[equipmentId]).toMatchObject({ slot, maxLevel: 3 });
@@ -629,13 +647,24 @@ describe('equipment system', () => {
     expect(levelThree.equipmentLevels.frame_engraver).toBe(3);
   });
 
-  it('integrates the four Tier-19 items through the shared set, inscription, temper, and score contracts', () => {
+  it('integrates the five Tier-19 items through the shared set, inscription, temper, and score contracts', () => {
     const cases = [
       ['blindline_cutter', 'forge', 'weapon'],
+      ['phase_coil_rifle', 'chronal', 'weapon'],
       ['predictive_visor', 'mist', 'head'],
       ['matte_shell', 'rift', 'armor'],
       ['inverse_prism', 'chronal', 'charm']
     ] as const satisfies ReadonlyArray<readonly [EquipmentId, EquipmentSetTag, EquipmentSlot]>;
+
+    expect(EQUIPMENT.phase_coil_rifle).toMatchObject({
+      name: '相位线圈步枪',
+      cost: { rewardPoints: 2320, lingyun: 10, items: { observation_shard: 1, chronal_glass: 1 } },
+      base: { attack: 43, artPower: 12, speed: 2 },
+      perLevel: { attack: 13, artPower: 3, speed: 1 }
+    });
+    expect(getEquipmentScore('phase_coil_rifle', 3)).toBeGreaterThan(
+      getEquipmentScore('blindline_cutter', 3)
+    );
 
     for (const [equipmentId, setTag, slot] of cases) {
       expect(EQUIPMENT[equipmentId]).toMatchObject({ slot, maxLevel: 3 });

@@ -33,6 +33,7 @@ import {
   DUNGEON_ROUTE_GATES,
   getDungeonRouteGates,
   getLegalAdjacentTargetIds,
+  getProceduralBossAccessStatus,
   getRouteBlockReason,
   getRouteGateStatus,
   getRouteSectorDisplay,
@@ -1018,6 +1019,47 @@ function isDangerousNode(dungeonId: DungeonId, nodeId: string): boolean {
 }
 
 describe('dungeon route gates', () => {
+  it('evaluates procedural Boss readiness without depending on a random incoming edge', () => {
+    const closed = getProceduralBossAccessStatus(
+      'metro_abyss',
+      'mirror_thread_spider',
+      withLaw('metro_abyss', { kind: 'metro_abyss', tide: 'mirror' })
+    );
+    expect(closed).toMatchObject({
+      allowed: false,
+      eligibleSourceNodeIds: []
+    });
+    expect(closed.blockReason).toContain('信号箱暗格');
+
+    expect(getProceduralBossAccessStatus(
+      'metro_abyss',
+      'mirror_thread_spider',
+      withLaw('metro_abyss', { kind: 'metro_abyss', tide: 'ebb' })
+    )).toEqual({
+      allowed: true,
+      eligibleSourceNodeIds: ['boatman_echo']
+    });
+  });
+
+  it('accepts every authored Boss approach when any canonical inbound gate is open', () => {
+    for (const dungeonId of DUNGEON_ORDER) {
+      const bossNodeId = getBossDefinition(dungeonId).nodeId;
+      const bossGates = getDungeonRouteGates(dungeonId).filter(
+        (gate) => gate.toNodeId === bossNodeId
+      );
+      expect(bossGates.length, dungeonId).toBeGreaterThan(0);
+      for (const gate of bossGates) {
+        const state = getGateDecisionState(dungeonId, gate, true);
+        const access = getProceduralBossAccessStatus(dungeonId, bossNodeId, state);
+        expect(access.allowed, `${dungeonId}:${gate.id}`).toBe(true);
+        expect(
+          access.eligibleSourceNodeIds,
+          `${dungeonId}:${gate.id}:source`
+        ).toContain(gate.fromNodeId);
+      }
+    }
+  });
+
   it('preserves legacy gates and validates one representative gate per dungeon', () => {
     expect(DUNGEON_ORDER.length).toBe(19);
     expect(new Set(Object.keys(DUNGEON_ROUTE_GATES))).toEqual(new Set(DUNGEON_ORDER));
@@ -1053,6 +1095,20 @@ describe('dungeon route gates', () => {
       expect(closed.blockReason, gateCase.dungeonId).toContain(gateCase.reopenHint);
       expect(closed.blockReason.length, gateCase.dungeonId).toBeLessThanOrEqual(40);
     }
+  });
+
+  it('stops recommending spent fog relief landmarks after every recovery was consumed', () => {
+    const gate = getGate('demon_tower_1', 'demon_fog_bone_lane');
+    const base = withLaw('demon_tower_1', { kind: 'demon_tower', fogPressure: 3 });
+    const exhausted: DungeonLawState = {
+      ...base,
+      clearedNodeIds: [...DUNGEON_LAW_LANDMARKS.demon_tower_1.reliefNodeIds],
+      resolvedEventIds: [...DUNGEON_LAW_LANDMARKS.demon_tower_1.reliefEventIds]
+    };
+
+    expect(
+      getRouteBlockReason('demon_tower_1', gate.fromNodeId, gate.toNodeId, exhausted)
+    ).toBe('雾压需降至 1 或以下；减压地标均已结算，改走白光裂口侧路或撤回。');
   });
 
   it('keeps the original twelve chapter gate catalogs unchanged', () => {

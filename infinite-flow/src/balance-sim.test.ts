@@ -3,6 +3,7 @@ import {
   analyzeCampaignBalance,
   createSevenDungeonEquipmentHuntFixture,
   createSevenDungeonFieldSurveyFixture,
+  getBalanceVerdictFromWarnings,
   simulateLostShelterPortalRing,
   simulateBroadcastSpecializationRoutes,
   simulateCampaignBalance,
@@ -144,9 +145,9 @@ describe('full campaign catalog invariants', () => {
     expect(DUNGEONS.false_testimony_court).toMatchObject({ tier: 17, recommendedPower: 1140 });
     expect(DUNGEONS.false_testimony_court.nodes).toHaveLength(30);
     expect(DUNGEONS.false_testimony_court.grid).toMatchObject({ width: 6, height: 5 });
-    expect(EQUIPMENT_MEMORY_EQUIPMENT_CATALOG).toHaveLength(56);
+    expect(EQUIPMENT_MEMORY_EQUIPMENT_CATALOG).toHaveLength(58);
     expect(EQUIPMENT_MEMORY_CATALOG).toHaveLength(19);
-    expect(EQUIPMENT_MEMORY_EQUIPMENT_CATALOG.length * EQUIPMENT_MEMORY_CATALOG.length).toBe(1064);
+    expect(EQUIPMENT_MEMORY_EQUIPMENT_CATALOG.length * EQUIPMENT_MEMORY_CATALOG.length).toBe(1102);
     expect(DUNGEON_ORDER.flatMap((dungeonId) => listRouteContracts(dungeonId))).toHaveLength(57);
     const testimonyContracts = listRouteContracts('false_testimony_court');
     expect(testimonyContracts.map((contract) => ({
@@ -1628,6 +1629,12 @@ describe('campaign balance simulation', () => {
     const route = simulateSevenDungeonVictoryRoute();
 
     expect(analysis.stages.map((stage) => stage.afterPower)).toEqual(route.summaries.map((summary) => summary.afterPower));
+    expect(analysis.stages.slice(0, -1).map((stage) => stage.nextPreparedPower)).toEqual(
+      route.summaries.slice(1).map((summary) => summary.beforePower)
+    );
+    expect(analysis.stages.map((stage) => stage.growthSignals)).toEqual(
+      route.summaries.map((summary) => summary.growthSignals)
+    );
     expect(analysis.stages.map((stage) => stage.plannedMethods)).toEqual(route.summaries.map((summary) => summary.plannedMethods));
   });
 
@@ -1676,7 +1683,9 @@ describe('campaign balance simulation', () => {
 
   it('grows the normal player on most stages and reaches the observatory by endgame', () => {
     const result = simulateCampaignBalance();
-    const growthStages = result.stages.filter((stage) => stage.beforePower < stage.afterPower);
+    const growthStages = result.stages.filter(
+      (stage) => stage.beforePower < Math.max(stage.afterPower, stage.nextPreparedPower ?? stage.afterPower)
+    );
     const finalStage = result.stages.at(-1);
 
     expect(growthStages.length).toBeGreaterThanOrEqual(4);
@@ -1709,6 +1718,15 @@ describe('campaign balance simulation', () => {
 
     expect(result.verdict).toBe('needs-adjustment');
     expect(result.warnings.some((warning) => warning.includes('deadly'))).toBe(true);
+  });
+
+  it('treats a no-growth progression warning as a blocking balance verdict', () => {
+    expect(getBalanceVerdictFromWarnings([
+      'demon_tower_1 grants neither effective power nor bankable growth before the next entry.'
+    ])).toBe('needs-adjustment');
+    expect(getBalanceVerdictFromWarnings([
+      'demon_tower_1 may be an early stomp at 181% recommended power.'
+    ])).toBe('balanced');
   });
 
   it('keeps custom reward analysis behind real campaign gates', () => {
@@ -3379,9 +3397,9 @@ describe('campaign equipment-memory-hunt simulation', () => {
       eligibleDungeonIds: DUNGEON_ORDER
     });
     expect(DUNGEON_ORDER).toHaveLength(19);
-    expect(EQUIPMENT_MEMORY_EQUIPMENT_CATALOG).toHaveLength(56);
+    expect(EQUIPMENT_MEMORY_EQUIPMENT_CATALOG).toHaveLength(58);
     expect(EQUIPMENT_MEMORY_CATALOG).toHaveLength(19);
-    expect(EQUIPMENT_MEMORY_EQUIPMENT_CATALOG.length * EQUIPMENT_MEMORY_CATALOG.length).toBe(1064);
+    expect(EQUIPMENT_MEMORY_EQUIPMENT_CATALOG.length * EQUIPMENT_MEMORY_CATALOG.length).toBe(1102);
     expect(result.coverage).toEqual({
       dungeonIds: DUNGEON_ORDER,
       dungeonCount: DUNGEON_ORDER.length,

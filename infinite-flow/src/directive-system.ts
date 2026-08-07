@@ -53,6 +53,7 @@ export type DirectiveRunSummary = {
   totalNodes: number;
   damageTaken: number;
   captures: number | PetId[];
+  ownedPetIds?: PetId[];
   usedItems: ItemId[];
   learnedMethods: MethodId[];
   equippedIds: EquipmentId[];
@@ -81,10 +82,13 @@ export const MAIN_GOD_DIRECTIVES: MainGodDirective[] = [
     id: 'directive_demon_tower_1',
     dungeonId: 'demon_tower_1',
     name: '妖塔试炼令',
-    brief: '主神要求你用稳定路线压住妖雾，证明基础生存与捕获能力。',
+    brief: '本令提供可选额外奖励，不影响Boss、出口或主线通关；低承伤目标建议采用守势、护甲与其他减伤手段。',
     requiredClears: 3,
     optionalObjectives: [
-      lowDamage('demon_tower_1_low_damage', 20, '承伤不超过 20'),
+      {
+        ...lowDamage('demon_tower_1_low_damage', 20, '承伤不超过 20'),
+        description: '可选额外奖励，不影响Boss、出口或主线通关。保持守势并优先使用护甲、格挡等减伤手段；本轮实际承伤会持续累计到出口结算，治疗不会回退累计值，结算时不超过 20。'
+      },
       capturePet('demon_tower_1_capture_mist_kitten', 'mist_kitten', '捕获雾爪幼兽'),
       useMethod('demon_tower_1_mist_breathing', 'mist_breathing', '以吐纳诀读取雾后暗格')
     ],
@@ -400,7 +404,7 @@ export function evaluateDirective(directive: MainGodDirective, summary: Directiv
   if (summary.dungeonId !== directive.dungeonId) {
     return {
       status: 'locked',
-      progressText: `Locked until ${directive.name} run starts`,
+      progressText: `进入${directive.name}后开始记录`,
       rewardPreview: directive.reward.preview,
       objectiveResults: directive.optionalObjectives.map(getLockedObjectiveResult)
     };
@@ -409,7 +413,7 @@ export function evaluateDirective(directive: MainGodDirective, summary: Directiv
   const objectiveResults = directive.optionalObjectives.map((objective) => evaluateObjective(objective, summary));
 
   const clearedRequired = Math.min(summary.clearedNodeIds.length, directive.requiredClears);
-  const progressText = `${clearedRequired}/${directive.requiredClears} required nodes cleared`;
+  const progressText = `节点清理 ${clearedRequired}/${directive.requiredClears}`;
   const requiredComplete = summary.clearedNodeIds.length >= directive.requiredClears;
   const objectivesComplete = objectiveResults.every((objective) => objective.completed);
 
@@ -428,81 +432,87 @@ function getLockedObjectiveResult(objective: DirectiveObjective): DirectiveObjec
     label: objective.label,
     description: objective.description,
     completed: false,
-    progressText: 'Locked'
+    progressText: '尚未开始'
   };
 }
 
 function evaluateObjective(objective: DirectiveObjective, summary: DirectiveRunSummary): DirectiveObjectiveResult {
   let completed = false;
-  let progressText = 'Not complete';
+  let progressText = '尚未满足';
 
   if (objective.kind === 'low_damage' && objective.damageLimit !== undefined) {
     completed = summary.damageTaken <= objective.damageLimit;
-    progressText = `${summary.damageTaken}/${objective.damageLimit} damage taken`;
+    progressText = `承伤 ${summary.damageTaken}/${objective.damageLimit}`;
   } else if (objective.kind === 'capture') {
-    completed = hasCapturedPet(summary.captures, objective.petId);
-    progressText = completed ? 'Captured' : getCaptureProgress(summary.captures);
+    const capturedThisRun = hasCapturedPet(summary.captures, objective.petId);
+    const alreadyOwned = objective.petId !== undefined && summary.ownedPetIds?.includes(objective.petId) === true;
+    completed = capturedThisRun || alreadyOwned;
+    progressText = capturedThisRun
+      ? '本轮已捕获'
+      : alreadyOwned
+        ? '已永久拥有'
+        : getCaptureProgress(summary.captures);
   } else if (objective.kind === 'no_item') {
     completed = !objective.itemIds?.some((itemId) => summary.usedItems.includes(itemId));
-    progressText = completed ? 'No banned items used' : 'Banned item used';
+    progressText = completed ? '未使用禁用道具' : '已使用禁用道具';
   } else if (objective.kind === 'method' && objective.methodId) {
     completed = summary.learnedMethods.includes(objective.methodId);
-    progressText = completed ? 'Method learned' : 'Method missing';
+    progressText = completed ? '功法已掌握' : '缺少指定功法';
   } else if (objective.kind === 'equip' && objective.equipmentId) {
     completed = summary.equippedIds.includes(objective.equipmentId);
-    progressText = completed ? 'Equipment active' : 'Equipment missing';
+    progressText = completed ? '指定装备已生效' : '缺少指定装备';
   } else if (objective.kind === 'hidden_clear') {
     completed = summary.clearedNodeIds.length >= summary.totalNodes;
-    progressText = `${summary.clearedNodeIds.length}/${summary.totalNodes} nodes cleared`;
+    progressText = `全图清理 ${summary.clearedNodeIds.length}/${summary.totalNodes}`;
   } else if (objective.kind === 'active_pet' && objective.petId) {
     completed = summary.activePet === objective.petId;
-    progressText = completed ? 'Pet active' : 'Pet inactive';
+    progressText = completed ? '指定灵宠已出战' : '指定灵宠未出战';
   } else if (objective.kind === 'route' && objective.nodeIds) {
     const clearedAnchors = objective.nodeIds.filter((nodeId) => summary.clearedNodeIds.includes(nodeId)).length;
     completed = objective.nodeIds.length > 0 && clearedAnchors === objective.nodeIds.length;
-    progressText = `${clearedAnchors}/${objective.nodeIds.length} route anchors cleared`;
+    progressText = `路线锚点 ${clearedAnchors}/${objective.nodeIds.length}`;
   } else if (objective.kind === 'auction' && objective.nodeIds && objective.bidProofNodeIds && objective.minimumBidCount !== undefined) {
     const resolvedDecisions = objective.nodeIds.filter((nodeId) => summary.clearedNodeIds.includes(nodeId)).length;
     const bidCount = objective.bidProofNodeIds.filter((nodeId) => summary.clearedNodeIds.includes(nodeId)).length;
     completed = objective.nodeIds.length > 0 &&
       resolvedDecisions === objective.nodeIds.length &&
       bidCount >= objective.minimumBidCount;
-    progressText = `${resolvedDecisions}/${objective.nodeIds.length} auction decisions; ${Math.min(bidCount, objective.minimumBidCount)}/${objective.minimumBidCount} bids`;
+    progressText = `拍卖决策 ${resolvedDecisions}/${objective.nodeIds.length}；竞价 ${Math.min(bidCount, objective.minimumBidCount)}/${objective.minimumBidCount}`;
   } else if (objective.kind === 'genesis_splice' && objective.requiredSpliceCount !== undefined && objective.minimumUniqueGeneCount !== undefined) {
     const law = getValidGenesisLawSnapshot(summary.lawState);
     const spliceCount = law?.spliceSequence.length ?? 0;
     const uniqueGeneCount = law ? new Set(law.spliceSequence).size : 0;
     completed = spliceCount === objective.requiredSpliceCount && uniqueGeneCount >= objective.minimumUniqueGeneCount;
-    progressText = `${spliceCount}/${objective.requiredSpliceCount} splices; ${uniqueGeneCount}/${objective.minimumUniqueGeneCount} unique genes`;
+    progressText = `拼接 ${spliceCount}/${objective.requiredSpliceCount}；不同基因 ${uniqueGeneCount}/${objective.minimumUniqueGeneCount}`;
   } else if (objective.kind === 'active_bloodline') {
     const law = getValidGenesisLawSnapshot(summary.lawState);
     completed = law !== undefined;
-    progressText = completed ? 'Active bloodline snapshot valid' : 'Active bloodline snapshot missing or invalid';
+    progressText = completed ? '活性血脉快照有效' : '活性血脉快照缺失或无效';
   } else if (objective.kind === 'broadcast_relays' && objective.minimumMuteCount !== undefined && objective.minimumBroadcastCount !== undefined) {
     const status = getBroadcastDirectiveStatus(summary.lawState);
     completed = status.allRelaysResolved &&
       status.muteCount >= objective.minimumMuteCount &&
       status.broadcastCount >= objective.minimumBroadcastCount;
-    progressText = `${status.resolvedCount}/3 relays; ${status.muteCount}/${objective.minimumMuteCount} mute; ${status.broadcastCount}/${objective.minimumBroadcastCount} broadcast`;
+    progressText = `中继 ${status.resolvedCount}/3；静默 ${status.muteCount}/${objective.minimumMuteCount}；广播 ${status.broadcastCount}/${objective.minimumBroadcastCount}`;
   } else if (objective.kind === 'broadcast_snapshot' && objective.maximumBossNoiseSnapshot !== undefined) {
     const snapshot = getBroadcastDirectiveStatus(summary.lawState).bossNoiseSnapshot;
     completed = snapshot !== null && snapshot <= objective.maximumBossNoiseSnapshot;
     progressText = snapshot === null
-      ? `Boss noise snapshot missing (limit ${objective.maximumBossNoiseSnapshot})`
-      : `${snapshot}/${objective.maximumBossNoiseSnapshot} boss noise`;
+      ? `首领噪声快照缺失（上限 ${objective.maximumBossNoiseSnapshot}）`
+      : `首领噪声 ${snapshot}/${objective.maximumBossNoiseSnapshot}`;
   } else if (objective.kind === 'escort_checkpoints' && objective.minimumTreatCount !== undefined && objective.minimumPushCount !== undefined) {
     const status = getEscortDirectiveStatus(summary.lawState);
     completed = status.allCheckpointsResolved &&
       status.treatCount >= objective.minimumTreatCount &&
       status.pushCount >= objective.minimumPushCount &&
       (!objective.requireSurvivorAlive || status.survivorHp > 0);
-    progressText = `${status.resolvedCount}/3 checkpoints; ${status.treatCount}/${objective.minimumTreatCount} treat; ${status.pushCount}/${objective.minimumPushCount} push; survivor ${status.survivorHp}`;
+    progressText = `检查点 ${status.resolvedCount}/3；救治 ${status.treatCount}/${objective.minimumTreatCount}；推进 ${status.pushCount}/${objective.minimumPushCount}；幸存者生命 ${status.survivorHp}`;
   } else if (objective.kind === 'escort_snapshot' && objective.minimumBossSurvivorSnapshot !== undefined) {
     const snapshot = getEscortDirectiveStatus(summary.lawState).bossSurvivorSnapshot;
     completed = snapshot !== null && snapshot >= objective.minimumBossSurvivorSnapshot;
     progressText = snapshot === null
-      ? `Boss survivor snapshot missing (minimum ${objective.minimumBossSurvivorSnapshot})`
-      : `${snapshot}/${objective.minimumBossSurvivorSnapshot} boss survivor hp`;
+      ? `首领战幸存者快照缺失（下限 ${objective.minimumBossSurvivorSnapshot}）`
+      : `首领战幸存者生命 ${snapshot}/${objective.minimumBossSurvivorSnapshot}`;
   } else if (objective.kind === 'false_testimony_verdict' && objective.requiredEvidenceCount !== undefined && objective.minimumTrustedEvidenceCount !== undefined) {
     const status = getFalseTestimonyDirectiveStatus(summary.lawState);
     const revealedCount = status.evidence.filter(({ revealed }) => revealed).length;
@@ -510,7 +520,7 @@ function evaluateObjective(objective: DirectiveObjective, summary: DirectiveRunS
       status.currentTrustedCount >= objective.minimumTrustedEvidenceCount &&
       (!objective.requireCorrectAccusation || status.accusationCorrect === true) &&
       (!objective.requireNoAppeal || !status.appealUsed);
-    progressText = `${revealedCount}/${objective.requiredEvidenceCount} evidence; ${status.currentTrustedCount}/${objective.minimumTrustedEvidenceCount} trusted; accusation ${status.accusationCorrect === true ? 'correct' : 'incorrect'}; appeal ${status.appealUsed ? 'used' : 'unused'}`;
+    progressText = `证据 ${revealedCount}/${objective.requiredEvidenceCount}；可信 ${status.currentTrustedCount}/${objective.minimumTrustedEvidenceCount}；指控${status.accusationCorrect === true ? '正确' : '错误'}；${status.appealUsed ? '已申诉' : '未申诉'}`;
   } else if (objective.kind === 'false_testimony_snapshot' && objective.minimumTrustedEvidenceCount !== undefined) {
     const status = getFalseTestimonyDirectiveStatus(summary.lawState);
     const snapshot = status.bossVerdictSnapshot;
@@ -520,18 +530,18 @@ function evaluateObjective(objective: DirectiveObjective, summary: DirectiveRunS
       !snapshot.appealed &&
       snapshot.suspect === status.accusedSuspect;
     progressText = snapshot === null
-      ? 'Boss verdict snapshot missing'
-      : `${snapshot.trustedCount}/${objective.minimumTrustedEvidenceCount} trusted at boss; verdict ${snapshot.correct ? 'correct' : 'incorrect'}; appeal ${snapshot.appealed ? 'used' : 'unused'}`;
+      ? '首领裁决快照缺失'
+      : `首领战可信证据 ${snapshot.trustedCount}/${objective.minimumTrustedEvidenceCount}；裁决${snapshot.correct ? '正确' : '错误'}；${snapshot.appealed ? '已申诉' : '未申诉'}`;
   } else if (objective.kind === 'combat_replay_complete') {
     const status = getCombatReplayDirectiveStatus(summary.lawState);
     const bossCompleted = status.bossSnapshot !== null && summary.clearedNodeIds.includes('final_cut_director');
     completed = status.completedTakeCount === 3 && status.route !== null && bossCompleted;
-    progressText = `${status.completedTakeCount}/3 takes; route ${status.route ?? 'missing'}; boss ${bossCompleted ? 'completed' : 'missing'}`;
+    progressText = `镜次 ${status.completedTakeCount}/3；路线 ${status.route ?? '缺失'}；首领${bossCompleted ? '已完成' : '未完成'}`;
   } else if (objective.kind === 'panopticon_complete') {
     const status = getPanopticonDirectiveStatus(summary.lawState);
     const bossCompleted = status.bossSnapshotPresent && summary.clearedNodeIds.includes('all_sight_warden');
     completed = status.completedRelayCount === 3 && status.route !== null && bossCompleted;
-    progressText = `${status.completedRelayCount}/3 relays; route ${status.route ?? 'missing'}; boss ${bossCompleted ? 'completed' : 'missing'}`;
+    progressText = `中继 ${status.completedRelayCount}/3；路线 ${status.route ?? '缺失'}；首领${bossCompleted ? '已完成' : '未完成'}`;
   }
 
   return {
@@ -576,7 +586,7 @@ function lowDamage(id: string, damageLimit: number, label: string): DirectiveObj
     id,
     kind: 'low_damage',
     label,
-    description: `完成本轮时总承伤不超过 ${damageLimit}。`,
+    description: `本轮实际承伤会持续累计到出口结算；治疗不会回退累计值，结算时不超过 ${damageLimit}。`,
     damageLimit
   };
 }
@@ -849,7 +859,7 @@ function hasCapturedPet(captures: DirectiveRunSummary['captures'], petId?: PetId
 }
 
 function getCaptureProgress(captures: DirectiveRunSummary['captures']): string {
-  return Array.isArray(captures) ? 'Pet not captured' : `${captures}/1 captures`;
+  return Array.isArray(captures) ? '尚未捕获指定灵宠' : `捕获 ${captures}/1`;
 }
 
 // Keep the catalog aligned with level content without making UI callers import level data.

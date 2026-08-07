@@ -365,6 +365,16 @@ export function applyMonsterCombatEffects(input: CombatEffectInput): CombatEffec
     statusLines.push('跳火小鬼在第三回合爆出火星。');
   }
 
+  if (input.monsterId === 'rogue_sentry' && input.turn > 0 && input.turn % 3 === 0) {
+    const volleyDamage = input.player.action === 'guard' ? 4 : 15;
+    damageToPlayer += volleyDamage;
+    statusLines.push(
+      input.player.action === 'guard'
+        ? '失控哨戒炮的压制齐射命中守御，仅追加 4 点物理余波伤害。'
+        : '失控哨戒炮完成压制齐射，追加 15 点物理伤害；每第三回合守御可显著削弱。'
+    );
+  }
+
   if (input.monsterId === 'pulse_doctor' && input.turn % 3 === 0) {
     const highArtReduction = input.player.stats.artPower >= 30 ? 4 : 0;
     const voidReduction = (hasEquipment(input, 'void_lantern') ? 4 : 0) + (hasMethod(input, 'void_heart') ? 4 : 0);
@@ -513,6 +523,24 @@ export function applyMonsterCombatEffects(input: CombatEffectInput): CombatEffec
       );
     } else if (damageToMonster > 0) {
       statusLines.push(`变异守库体的${shellName}无法适应当前伤害类型。`);
+    }
+  }
+
+  if (input.monsterId === 'phase_hunter_drone' && input.turn > 0 && damageToMonster > 0) {
+    const shieldedDamageKind: Exclude<CombatDamageKind, 'talisman'> =
+      input.turn % 2 === 1 ? 'physical' : 'art';
+    const shieldName = input.turn % 2 === 1 ? '奇数轮物理相位盾' : '偶数轮术法相位盾';
+
+    if (input.damageKind === 'talisman') {
+      statusLines.push(`雷火符绕过${shieldName}，完整命中无人机核心。`);
+    } else if (input.damageKind === shieldedDamageKind) {
+      const originalDamage = damageToMonster;
+      damageToMonster = scaleDamage(damageToMonster, 0.5);
+      statusLines.push(
+        `相位猎杀无人机展开${shieldName}，本次伤害由 ${originalDamage} 降至 ${damageToMonster}。`
+      );
+    } else {
+      statusLines.push(`你切换伤害类型，穿透了相位猎杀无人机的${shieldName}。`);
     }
   }
 

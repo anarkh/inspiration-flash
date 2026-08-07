@@ -4,8 +4,9 @@ export const panopticonCityDungeon: DungeonDefinition = {
   id: 'panopticon_city',
   name: '天幕监察城',
   tier: 19,
+  genre: 'science_fiction',
   recommendedPower: 1350,
-  theme: '天幕监察城以三相扫描覆盖每一条街巷，探索者必须在移动中校准三座盲区中继，并在被观测的代价中锁定唯一潜入路线。',
+  theme: '轨道监察天幕、巡猎无人机与自动机甲以三相扫描覆盖未来城每一条街巷；探索者必须校准三座盲区中继，在被观测的代价中锁定唯一潜入路线。',
   recommended: '推荐战力 1350、完整终盘套装、稳定传送物资，以及能承受多次最大生命比例扫描伤害的恢复储备。',
   rewardPreview: '观测棱片、终局材料、奖励点 2000-4800',
   grid: { width: 6, height: 5, startNodeId: 'panopticon_gate' },
@@ -31,9 +32,9 @@ export const panopticonCityDungeon: DungeonDefinition = {
       reward: { rewardPoints: 450, items: { focus_incense: 1, healing_pill: 1, gate_sigil: 1 } }
     },
     {
-      id: 'sweep_sentinel_north', type: 'monster', title: '北廊扫视哨兵', position: { x: 4, y: 0 },
-      description: '扫视哨兵沿北廊反复转动视锥，把所有试图停留在相位边缘的身影标成异常目标。',
-      monsterId: 'sweep_sentinel'
+      id: 'sweep_sentinel_north', type: 'monster', title: '北廊相位猎杀号', position: { x: 4, y: 0 },
+      description: '猎杀号无人机在物理与术法相位盾间逐轮切换，沿北廊追踪无法及时变招的目标。',
+      monsterId: 'phase_hunter_drone'
     },
     {
       id: 'upper_return_portal', type: 'portal', title: '上层归返门', position: { x: 5, y: 0 },

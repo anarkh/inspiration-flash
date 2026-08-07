@@ -91,7 +91,7 @@ export const RUN_RELIC_DEFINITIONS = {
     id: 'mending_thread',
     frame: 'bulwark',
     name: '缝生线',
-    description: '领取奖励节点后回复 12 生命。',
+    description: '选择后，后续每次领取奖励节点回复 12 生命。',
     effects: { rewardNodeHealing: 12 }
   },
   iron_echo: {

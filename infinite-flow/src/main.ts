@@ -1,8 +1,15 @@
 import './styles.css';
 import * as gameApi from './game';
 import * as dungeonLawApi from './dungeon-laws';
+import {
+  hasPointerMovedBeyondRepeatRadius,
+  shouldAllowActionActivation,
+  shouldSuppressRepeatedPointerPress,
+  type PointerPress
+} from './action-input-guard';
 import { getExplorationGuide } from './exploration-guide';
 import { getNodeVisibility, type VisibilityState } from './exploration-visibility';
+import { formatPlayerLogLine } from './player-log';
 import {
   DUNGEON_FEATURE_HELP,
   isDungeonFeatureHelpId,
@@ -34,10 +41,14 @@ import {
   EQUIPMENT_ATTUNEMENT_COST,
   EQUIPMENT_SLOTS,
   equipEquipment,
+  evaluateEquipmentRollCandidate,
   getEquipmentCommissionStatus,
   getCampaignGates,
   getBossSealStatus,
   getCombatEncounterProfile,
+  getCombatActionDamagePreview,
+  getRunEconomyPreview,
+  getRunDiscoveredNodeIds,
   getCurrentCompanionAssistStatus,
   getCurrentMethodTechniqueStatus,
   getCurrentCombatIntent,
@@ -60,6 +71,11 @@ import {
   getCurrentRunMethodSnapshots,
   getCurrentRunRelicEffects,
   getCurrentRunProtocol,
+  getRunLootSettlementPreview,
+  getRunLootSecurityStatus,
+  getCurrentDungeonDefinition,
+  getCurrentInfernoTier,
+  getInfernoUnlockedTier,
   getCurrentWeaponResonanceProgress,
   getCurrentBloodlineSurgeStatus,
   getCurrentBroadcastRelayStatus,
@@ -76,6 +92,8 @@ import {
   getNodeDepartureBlock,
   getNodeDepartureBlockReason,
   getPlayerPower,
+  getPlayerPowerBreakdown,
+  getPriorityFittedTacticalItemIds,
   getRunRelicPreparationStatus,
   getTacticalLoadoutStatus,
   getWeaponSkillStatus,
@@ -108,7 +126,9 @@ import {
   resolveExit,
   resolveRunRelicArchive,
   resolveRunRelicDraft,
+  resolveRunFailure,
   resolveRetreat,
+  recoverAtHub,
   recallEquipmentCommission,
   returnToHub,
   selectCombatReplayRoute,
@@ -128,6 +148,7 @@ import {
   unlockBloodline,
   upgradeBloodline,
   type CombatAction,
+  type CombatActionDamagePreview,
   type CombatReplayCombatState,
   type CombatReplayRoute,
   type CombatReplayRunState,
@@ -136,11 +157,13 @@ import {
   type CausalLedgerStatus,
   type Cost,
   type DerivedStats,
+  type DungeonGenre,
   type DungeonId,
   type DungeonNode,
   type DungeonReadiness,
   type DungeonRun,
   type EquipmentId,
+  type EquipmentRollSettlement,
   type EquipmentCommissionSettlement,
   type EquipmentSoulSkillActionStatus,
   type EquipmentSlot,
@@ -148,6 +171,7 @@ import {
   type ItemId,
   type MethodId,
   type MirrorCityPhase,
+  type MonsterDefinition,
   type RedactionChoice,
   type RedactionClauseStatus,
   type PetId,
@@ -202,6 +226,7 @@ import {
   type RunLootBag,
   type RunLootSettlement
 } from './run-economy';
+import { EXPLORATION_REWARD_VERSION } from './exploration-rewards';
 import {
   DUNGEON_ELITE_MONSTERS,
   DUNGEON_MATERIAL_REWARDS,
@@ -252,6 +277,24 @@ import {
   type DeepRunProtocolDefinition,
   type RunProtocolId
 } from './run-protocols';
+import {
+  getEquipmentRolledBaseStats,
+  getEquipmentRollScore,
+  isEquipmentRoll,
+  sanitizeEquipmentRollMap,
+  type EquipmentRoll,
+  type EquipmentRollMap,
+  type EquipmentRollQuality
+} from './equipment-rolls';
+import {
+  getInfernoConnectionIds,
+  getInfernoTierModifiers,
+  isInfernoMapSnapshot,
+  repairInfernoMapSnapshot,
+  sanitizeInfernoProgress,
+  type InfernoProgress
+} from './inferno-system';
+import { getBossDefinition } from './boss-system';
 import {
   getEquipmentFieldRigDescription,
   getEquipmentFieldRigLabel
@@ -339,7 +382,9 @@ import {
 } from './run-pressure';
 import {
   getRouteContractDisplayStatus,
+  getRouteContractById,
   getRouteContractProgress,
+  isOrderedRouteContractReachable,
   listRouteContracts,
   normalizeRouteContractRunState,
   type RouteContractProgress,
@@ -389,10 +434,43 @@ type ViewAction = {
   onSelect: () => void;
   disabled?: boolean;
   hint?: string;
+  ariaLabel?: string;
   persist?: boolean;
+};
+type ProtocolRerenderActionId =
+  | 'inferno-tier-down'
+  | 'inferno-tier-up'
+  | 'protocol-recover-at-hub';
+type PersistentDialogLabelId =
+  | 'character-sheet-title'
+  | 'task-sheet-title'
+  | 'companion-sheet-title'
+  | 'method-sheet-title'
+  | 'bloodline-sheet-title'
+  | 'protocol-sheet-title'
+  | 'hub-directory-title'
+  | 'equipment-commission-title';
+type PersistentDialogScopeAttribute =
+  | 'data-method-id'
+  | 'data-companion-id'
+  | 'data-bloodline-id'
+  | 'data-equipment-id'
+  | 'data-pet-id';
+type PersistentDialogActionFocus = {
+  labelledBy: PersistentDialogLabelId;
+  actionId: string;
+  actionIds: string[];
+  actionIndex: number;
+  scope?: {
+    attribute: PersistentDialogScopeAttribute;
+    value: string;
+  };
 };
 type RenderFocusTarget =
   | 'causal-ledger-dialog'
+  | 'combat-dialog'
+  | 'combat-action'
+  | 'result-panel'
   | 'entropy-heading'
   | 'entropy-heading-move'
   | 'mirror-phase'
@@ -417,9 +495,15 @@ type RenderFocusTarget =
   | 'hub-directory-dialog'
   | 'hub-directory-trigger'
   | 'hub-codex-search'
+  | 'hub-preparation-archive'
   | 'equipment-commission-dialog'
   | 'equipment-commission-trigger'
+  | 'node-action-panel'
+  | 'run-details-summary'
   | { actionId: string }
+  | { protocolActionId: ProtocolRerenderActionId }
+  | { persistentDialogAction: PersistentDialogActionFocus }
+  | { combatActionId: string }
   | { equipmentMemorySelect: EquipmentMemoryEquipmentId };
 type EquipmentMemoryDungeonRun = DungeonRun & {
   equipmentMemorySnapshot?: EquipmentMemoryRunSnapshot;
@@ -612,6 +696,7 @@ type SavedGameState = Omit<
 type ProtocolSelection = {
   dungeonId: DungeonId;
   protocolId: RunProtocolId;
+  infernoTier?: number;
   routeContractId?: string;
 };
 
@@ -632,6 +717,22 @@ const root = app;
 
 const STORAGE_VERSION = 1;
 const STORAGE_KEY = `infinite-flow:save:v${STORAGE_VERSION}`;
+const REJECTED_SAVE_BACKUP_KEY = `${STORAGE_KEY}:rejected`;
+const REJECTED_SAVE_REASON_KEY = `${REJECTED_SAVE_BACKUP_KEY}:reason`;
+const REPLACED_COMBAT_ENCOUNTER_MIGRATIONS = [
+  {
+    dungeonId: 'lost_shelter',
+    nodeId: 'north_rescue_patrol',
+    legacyMonsterId: 'mimic_survivor',
+    monsterId: 'rogue_sentry'
+  },
+  {
+    dungeonId: 'panopticon_city',
+    nodeId: 'sweep_sentinel_north',
+    legacyMonsterId: 'sweep_sentinel',
+    monsterId: 'phase_hunter_drone'
+  }
+] as const;
 const LEGACY_PROTOCOL_PREPARATION_VISIBLE = false;
 const CAMPAIGN_DUNGEON_COUNT = DUNGEON_ORDER.length;
 const equipmentAttunementIds: readonly EquipmentAttunementId[] = [
@@ -650,6 +751,14 @@ const equipmentCommissionValidators: EquipmentCommissionValidators<EquipmentId, 
   isDungeonId: (value): value is DungeonId => hasOwnKey(DUNGEONS, value)
 };
 
+type RejectedSaveRecovery = {
+  raw: string;
+  reason: string;
+};
+
+let rejectedSaveRecovery: RejectedSaveRecovery | undefined = loadRejectedSaveRecovery();
+let rejectedSaveExportNotice: string | undefined;
+let restoredRunNotice: string | undefined;
 let state: EquipmentMemoryGameState = loadSavedState();
 let isCharacterPanelOpen = false;
 let isTaskPanelOpen = false;
@@ -658,14 +767,19 @@ let isMethodPanelOpen = false;
 let isBloodlinePanelOpen = false;
 let isEquipmentCommissionModalOpen = false;
 let modalFocusRequest = 0;
+let combatDetailsOpen = false;
+let combatHistoryOpen = false;
 let selectedCommissionEquipmentIds: EquipmentId[] = [];
 let selectedCommissionMaterialId: ItemId | undefined;
 let protocolSelection: ProtocolSelection | undefined;
 let protocolTriggerDungeonId: DungeonId | undefined;
+let protocolReturnHubPanel: HubPanel | undefined;
 let hubPanel: HubPanel | undefined;
 let hubPanelTriggerActionId: string | undefined;
 let codexCategory: CodexCategory = 'all';
 let codexSearch = '';
+let isHubFirstRouteHintDismissed = false;
+let isHubPreparationArchiveOpen = false;
 let featureHelpTrigger: HTMLButtonElement | undefined;
 let featureHelpHideTimer: number | undefined;
 let suppressFeatureHelpFocus = false;
@@ -720,6 +834,12 @@ const nodeTypeLabels: Record<DungeonNode['type'], string> = {
   reward: '奖励',
   exit: '出口'
 };
+const dungeonGenreMeta: Record<DungeonGenre, { label: string }> = {
+  cultivation: { label: '修真异境' },
+  modern: { label: '现代危机' },
+  anomaly: { label: '规则异闻' },
+  science_fiction: { label: '未来科技' }
+};
 const readinessMeta: Record<DungeonReadiness, { label: string; hint: string }> = {
   ready: { label: '战力充足', hint: '可稳定进入' },
   hard: { label: '较为吃力', hint: '建议补强' },
@@ -753,6 +873,12 @@ const statLabels: Partial<Record<keyof DerivedStats, string>> = {
   defense: '防',
   speed: '速',
   trapCheck: '察'
+};
+const equipmentRollQualityLabels: Record<EquipmentRollQuality, string> = {
+  magic: '魔法',
+  rare: '稀有',
+  legendary: '传奇',
+  ancestral: '远古'
 };
 const eventRiskLabels: Record<DungeonEventRisk, string> = {
   low: '低风险',
@@ -963,6 +1089,20 @@ function isSavedRunLootBag(value: unknown): value is RunLootBag<ItemId, Equipmen
   );
 }
 
+function isSavedEquipmentRollMap(
+  value: unknown,
+  allowedEquipmentIds?: readonly EquipmentId[]
+): value is EquipmentRollMap {
+  if (!isRecord(value)) return false;
+  const allowed = allowedEquipmentIds ? new Set(allowedEquipmentIds) : undefined;
+  return Object.entries(value).every(
+    ([equipmentId, roll]) =>
+      hasOwnKey(EQUIPMENT, equipmentId) &&
+      (!allowed || allowed.has(equipmentId as EquipmentId)) &&
+      isEquipmentRoll(roll)
+  );
+}
+
 function isSavedPendingEquipmentOffer(value: unknown): value is NonNullable<DungeonRun['pendingEquipmentOffer']> {
   if (!isRecord(value) || !isKnownStringArray(value.equipmentIds, EQUIPMENT)) return false;
 
@@ -972,6 +1112,8 @@ function isSavedPendingEquipmentOffer(value: unknown): value is NonNullable<Dung
     value.equipmentIds.length > 0 &&
     value.equipmentIds.length <= 3 &&
     new Set(value.equipmentIds).size === value.equipmentIds.length &&
+    (value.equipmentRolls === undefined ||
+      isSavedEquipmentRollMap(value.equipmentRolls, value.equipmentIds as EquipmentId[])) &&
     (value.guaranteedEquipmentId === undefined ||
       (typeof value.guaranteedEquipmentId === 'string' &&
         hasOwnKey(EQUIPMENT, value.guaranteedEquipmentId) &&
@@ -989,6 +1131,21 @@ function isSavedEquipmentLevels(value: unknown): value is Partial<Record<Equipme
   return Object.entries(value).every(
     ([equipmentId, level]) =>
       hasOwnKey(EQUIPMENT, equipmentId) && isPositiveInteger(level) && level <= EQUIPMENT[equipmentId as EquipmentId].maxLevel
+  );
+}
+
+function isSavedInfernoProgress(
+  value: unknown,
+  completedDungeonIds: readonly DungeonId[]
+): value is InfernoProgress {
+  if (!isRecord(value)) return false;
+  const completed = new Set(completedDungeonIds);
+  return Object.entries(value).every(
+    ([dungeonId, tier]) =>
+      hasOwnKey(DUNGEONS, dungeonId) &&
+      completed.has(dungeonId as DungeonId) &&
+      Number.isSafeInteger(tier) &&
+      Number(tier) >= 1
   );
 }
 
@@ -1142,7 +1299,26 @@ function isSavedRunProtocolSnapshot(value: unknown): value is RunProtocolSnapsho
   return (
     isRecord(value) &&
     (value.id === 'standard' || value.id === 'imprint' || value.id === 'deep') &&
-    value.rulesVersion === 1
+    value.rulesVersion === 1 &&
+    (
+      value.id === 'deep'
+        ? value.infernoTier === undefined ||
+          (Number.isSafeInteger(value.infernoTier) && Number(value.infernoTier) >= 1)
+        : value.infernoTier === undefined
+    )
+  );
+}
+
+function isSavedEquipmentRollSettlement(value: unknown): value is EquipmentRollSettlement {
+  return (
+    isRecord(value) &&
+    typeof value.equipmentId === 'string' &&
+    hasOwnKey(EQUIPMENT, value.equipmentId) &&
+    isEquipmentRoll(value.roll) &&
+    (value.outcome === 'acquired' || value.outcome === 'upgraded' || value.outcome === 'salvaged') &&
+    (value.previousItemPower === undefined ||
+      (Number.isSafeInteger(value.previousItemPower) && Number(value.previousItemPower) >= 1)) &&
+    isNonNegativeInteger(value.salvageRewardPoints)
   );
 }
 
@@ -1163,6 +1339,24 @@ function isSavedRunProtocolSettlement(value: unknown, dungeonId: DungeonId): val
   }
 
   const isDeepSettlement = value.protocol.id === 'deep';
+  const isLayeredInfernoSettlement =
+    isDeepSettlement && value.protocol.infernoTier !== undefined;
+  if (
+    isLayeredInfernoSettlement &&
+    (
+      value.infernoTier !== value.protocol.infernoTier ||
+      !Number.isSafeInteger(value.unlockedInfernoTier) ||
+      Number(value.unlockedInfernoTier) < Number(value.infernoTier)
+    )
+  ) {
+    return false;
+  }
+  if (
+    !isLayeredInfernoSettlement &&
+    (value.infernoTier !== undefined || value.unlockedInfernoTier !== undefined)
+  ) {
+    return false;
+  }
   const deepDefinition = isDeepSettlement
     ? getRunProtocolDefinition(dungeonId, 'deep') as DeepRunProtocolDefinition | undefined
     : undefined;
@@ -1174,7 +1368,9 @@ function isSavedRunProtocolSettlement(value: unknown, dungeonId: DungeonId): val
     value.materialReward.amount === deepDefinition.materialReward.amount
   );
   const materialRewardIsConsistent = isDeepSettlement && value.status === 'succeeded'
-    ? hasExpectedDeepMaterialReward
+    ? isLayeredInfernoSettlement
+      ? value.materialReward === undefined
+      : hasExpectedDeepMaterialReward
     : value.materialReward === undefined;
   if (!materialRewardIsConsistent) return false;
 
@@ -1894,6 +2090,35 @@ function sanitizeSavedShelterCombatFields(value: unknown): unknown {
   return sanitized;
 }
 
+function migrateSavedReplacedCombatEncounter(value: unknown): unknown {
+  if (
+    !isRecord(value) ||
+    value.phase !== 'combat' ||
+    !isRecord(value.run) ||
+    !isRecord(value.combat)
+  ) {
+    return value;
+  }
+
+  const run = value.run;
+  const combat = value.combat;
+  const migration = REPLACED_COMBAT_ENCOUNTER_MIGRATIONS.find((candidate) =>
+    run.dungeonId === candidate.dungeonId &&
+    run.currentNodeId === candidate.nodeId &&
+    combat.nodeId === candidate.nodeId &&
+    combat.monsterId === candidate.legacyMonsterId
+  );
+  if (!migration) return value;
+
+  return {
+    ...value,
+    combat: {
+      ...combat,
+      monsterId: migration.monsterId
+    }
+  };
+}
+
 function isSavedFalseTestimonyEntryGear(value: unknown): boolean {
   const gearKeys = ['crossExaminerSabre', 'forensicVisor', 'custodyShell', 'appealSeal'] as const;
   return isRecord(value) &&
@@ -2055,6 +2280,25 @@ function sanitizeSavedRelicFields(value: unknown): unknown {
   return sanitized;
 }
 
+function sanitizeSavedProtocolSettlementField(value: unknown): unknown {
+  if (!isRecord(value) || !isRecord(value.run)) return value;
+
+  const sanitized: Record<string, unknown> = { ...value };
+  const run: Record<string, unknown> = { ...value.run };
+  const dungeonId = run.dungeonId;
+  const settlementIsValid =
+    typeof dungeonId === 'string' &&
+    hasOwnKey(DUNGEONS, dungeonId) &&
+    isSavedRunProtocolSettlement(run.lastProtocolSettlement, dungeonId as DungeonId) &&
+    isSavedRunProtocolSnapshot(run.protocol) &&
+    run.protocol.id === run.lastProtocolSettlement.protocol.id &&
+    run.protocol.rulesVersion === run.lastProtocolSettlement.protocol.rulesVersion;
+
+  if (!settlementIsValid) delete run.lastProtocolSettlement;
+  sanitized.run = run;
+  return sanitized;
+}
+
 function isSavedDungeonRun(value: unknown): value is SavedDungeonRun {
   if (!isRecord(value) || !hasOwnKey(DUNGEONS, value.dungeonId)) return false;
 
@@ -2088,6 +2332,10 @@ function isSavedDungeonRun(value: unknown): value is SavedDungeonRun {
     nodeIds.has(value.currentNodeId) &&
     isStringArray(value.clearedNodeIds) &&
     value.clearedNodeIds.every((nodeId) => nodeIds.has(nodeId)) &&
+    (value.discoveredNodeIds === undefined || (
+      isStringArray(value.discoveredNodeIds) &&
+      value.discoveredNodeIds.every((nodeId) => nodeIds.has(nodeId))
+    )) &&
     isFiniteNumber(value.captures) &&
     isKnownStringArray(value.capturedPetIds, PETS) &&
     isKnownStringArray(value.usedItems, ITEMS) &&
@@ -2098,7 +2346,16 @@ function isSavedDungeonRun(value: unknown): value is SavedDungeonRun {
     (value.lootOffersMade === undefined || isNonNegativeInteger(value.lootOffersMade)) &&
     (value.tacticalLoadout === undefined || isSavedTacticalLoadoutSnapshot(value.tacticalLoadout)) &&
     (value.protocol === undefined || isSavedRunProtocolSnapshot(value.protocol)) &&
+    (value.infernoMap === undefined || (
+      isSavedRunProtocolSnapshot(value.protocol) &&
+      value.protocol.id === 'deep' &&
+      isInfernoMapSnapshot(value.infernoMap, dungeon)
+    )) &&
+    (value.carriedEquipmentRolls === undefined ||
+      isSavedEquipmentRollMap(value.carriedEquipmentRolls)) &&
     (value.entryFlowVersion === undefined || value.entryFlowVersion === 2) &&
+    (value.explorationRewardVersion === undefined ||
+      value.explorationRewardVersion === EXPLORATION_REWARD_VERSION) &&
     (value.entryFlowVersion === 2
       ? isIntegerInRange(value.hiddenTaskSeed, 1, 0xffff_ffff)
       : value.hiddenTaskSeed === undefined) &&
@@ -2128,6 +2385,8 @@ function isSavedDungeonRun(value: unknown): value is SavedDungeonRun {
     (value.pressureState === undefined || isRunPressureState(value.pressureState)) &&
     (value.pendingEquipmentOffer === undefined || isSavedPendingEquipmentOffer(value.pendingEquipmentOffer)) &&
     (value.lastLootSettlement === undefined || isSavedRunLootSettlement(value.lastLootSettlement)) &&
+    (value.lastAutoEquippedEquipmentIds === undefined ||
+      isKnownStringArray(value.lastAutoEquippedEquipmentIds, EQUIPMENT)) &&
     (value.lastProtocolSettlement === undefined ||
       (isSavedRunProtocolSettlement(value.lastProtocolSettlement, value.dungeonId as DungeonId) &&
         isSavedRunProtocolSnapshot(value.protocol) &&
@@ -2141,7 +2400,9 @@ function isSavedDungeonRun(value: unknown): value is SavedDungeonRun {
         isRunRelicState(value.relicState) ? value.relicState : undefined
       )) &&
     (value.lastEquipmentCommissionSettlement === undefined ||
-      normalizeSavedEquipmentCommissionSettlement(value.lastEquipmentCommissionSettlement) !== undefined)
+      normalizeSavedEquipmentCommissionSettlement(value.lastEquipmentCommissionSettlement) !== undefined) &&
+    (value.lastEquipmentRollSettlement === undefined ||
+      isSavedEquipmentRollSettlement(value.lastEquipmentRollSettlement))
   );
 }
 
@@ -2235,6 +2496,11 @@ function isSavedGameState(value: unknown): value is SavedGameState {
       normalizePreparedEquipmentMemoryHunt(value.preparedEquipmentMemoryHunt) !== undefined) &&
     isKnownStringArray(value.ownedEquipment, EQUIPMENT) &&
     isSavedEquipmentLevels(value.equipmentLevels) &&
+    (value.equipmentRolls === undefined ||
+      isSavedEquipmentRollMap(
+        value.equipmentRolls,
+        value.ownedEquipment as EquipmentId[]
+      )) &&
     (value.equipmentAttunements === undefined ||
       isSavedEquipmentAttunements(
         value.equipmentAttunements,
@@ -2256,6 +2522,12 @@ function isSavedGameState(value: unknown): value is SavedGameState {
     isSavedMethodProgress(value) &&
     isSavedBloodlineProgress(value) &&
     isKnownStringArray(value.completedDungeonIds, DUNGEONS) &&
+    (value.infernoProgress === undefined ||
+      isSavedInfernoProgress(
+        value.infernoProgress,
+        value.completedDungeonIds as DungeonId[]
+      )) &&
+    (value.enteredDungeonIds === undefined || isKnownStringArray(value.enteredDungeonIds, DUNGEONS)) &&
     isStringArray(value.claimedDirectiveIds) &&
     (value.claimedTaskIds === undefined || isStringArray(value.claimedTaskIds)) &&
     isKnownStringArray(value.ownedPets, PETS) &&
@@ -2320,106 +2592,188 @@ function normalizeSavedState(savedState: SavedGameState): EquipmentMemoryGameSta
   const requiredEquipmentIds = Object.values(equipped);
   const ownedEquipment = [...new Set([...savedState.ownedEquipment, ...requiredEquipmentIds])];
   const equipmentLevels: Partial<Record<EquipmentId, number>> = { ...savedState.equipmentLevels };
+  const savedEquipmentRolls = sanitizeEquipmentRollMap(savedState.equipmentRolls);
+  const equipmentRolls: Partial<Record<EquipmentId, EquipmentRoll>> = Object.fromEntries(
+    Object.entries(savedEquipmentRolls).filter(([equipmentId]) =>
+      ownedEquipment.includes(equipmentId as EquipmentId)
+    )
+  );
+  const infernoProgress = sanitizeInfernoProgress(
+    savedState.infernoProgress,
+    savedState.completedDungeonIds
+  );
+  let normalizedInfernoMap = savedState.run?.infernoMap;
+  let infernoMapWasRepaired = false;
+  if (
+    savedState.run?.protocol?.id === 'deep' &&
+    savedState.run.infernoMap
+  ) {
+    const dungeon = DUNGEONS[savedState.run.dungeonId];
+    const protocolDefinition = getRunProtocolDefinition(savedState.run.dungeonId, 'deep');
+    normalizedInfernoMap = repairInfernoMapSnapshot(
+      savedState.run.infernoMap,
+      {
+        dungeon,
+        bossNodeId: getBossDefinition(savedState.run.dungeonId).nodeId,
+        entryNodeId: savedState.run.currentNodeId,
+        priorityNodeIds: protocolDefinition
+          ? getRunProtocolRequiredNodeIds(protocolDefinition)
+          : []
+      }
+    );
+    infernoMapWasRepaired = normalizedInfernoMap !== savedState.run.infernoMap;
+  }
+  const normalizedRunSource = savedState.run
+    ? {
+        ...savedState.run,
+        infernoMap: normalizedInfernoMap
+      }
+    : undefined;
+  let normalizedRouteContractState =
+    savedState.run && Object.prototype.hasOwnProperty.call(savedState.run, 'routeContractState')
+      ? normalizeRouteContractRunState(
+          savedState.run.routeContractState,
+          savedState.run.dungeonId
+        )
+      : undefined;
+  let routeContractDroppedAfterRepair = false;
+  if (
+    infernoMapWasRepaired &&
+    normalizedRunSource?.infernoMap &&
+    normalizedRouteContractState?.status === 'active' &&
+    normalizedRouteContractState.completedTargetCount === 0
+  ) {
+    const definition = getRouteContractById(
+      normalizedRouteContractState.contractId,
+      normalizedRouteContractState.dungeonId
+    );
+    const connections = getInfernoConnectionIds(normalizedRunSource.infernoMap);
+    if (
+      definition &&
+      connections &&
+      !isOrderedRouteContractReachable(
+        connections,
+        normalizedRunSource.currentNodeId,
+        definition.targetNodeIds
+      )
+    ) {
+      normalizedRouteContractState = undefined;
+      routeContractDroppedAfterRepair = true;
+    }
+  }
 
   for (const equipmentId of requiredEquipmentIds) {
     equipmentLevels[equipmentId] ??= initialState.equipmentLevels[equipmentId] ?? 1;
   }
 
   // An absent legacy tactical snapshot intentionally remains unrestricted after normalization and re-save.
-  const run: EquipmentMemoryDungeonRun | undefined = savedState.run
+  const run: EquipmentMemoryDungeonRun | undefined = normalizedRunSource
     ? {
-        ...savedState.run,
-        lootBag: savedState.run.lootBag ?? createEmptyRunLootBag<ItemId, EquipmentId>(),
-        lootOffersMade: savedState.run.lootOffersMade ?? 0,
-        tacticalLoadout: savedState.run.tacticalLoadout,
-        pressureState: normalizeRunPressureState(savedState.run.pressureState),
-        ...(Object.prototype.hasOwnProperty.call(savedState.run, 'combatReplayState')
-          ? { combatReplayState: normalizeCombatReplayRunState(savedState.run.combatReplayState) }
+        ...normalizedRunSource,
+        discoveredNodeIds: getRunDiscoveredNodeIds(
+          normalizedRunSource,
+          DUNGEONS[normalizedRunSource.dungeonId]
+        ),
+        lootBag: normalizedRunSource.lootBag ?? createEmptyRunLootBag<ItemId, EquipmentId>(),
+        lootOffersMade: normalizedRunSource.lootOffersMade ?? 0,
+        tacticalLoadout: normalizedRunSource.tacticalLoadout,
+        pressureState: normalizeRunPressureState(normalizedRunSource.pressureState),
+        ...(Object.prototype.hasOwnProperty.call(normalizedRunSource, 'combatReplayState')
+          ? { combatReplayState: normalizeCombatReplayRunState(normalizedRunSource.combatReplayState) }
           : {}),
-        ...(Object.prototype.hasOwnProperty.call(savedState.run, 'routeContractState')
+        ...(Object.prototype.hasOwnProperty.call(normalizedRunSource, 'routeContractState')
           ? {
-              routeContractState: normalizeRouteContractRunState(
-                savedState.run.routeContractState,
-                savedState.run.dungeonId
-              )
+              routeContractState: normalizedRouteContractState
             }
           : {}),
-        ...(Object.prototype.hasOwnProperty.call(savedState.run, 'lastRouteContractSettlement')
+        ...(Object.prototype.hasOwnProperty.call(normalizedRunSource, 'lastRouteContractSettlement')
           ? {
               lastRouteContractSettlement: normalizeSavedRouteContractSettlement(
-                savedState.run.lastRouteContractSettlement
+                normalizedRunSource.lastRouteContractSettlement
               )
             }
           : {}),
-        ...(Object.prototype.hasOwnProperty.call(savedState.run, 'equipmentMemorySnapshot')
+        ...(Object.prototype.hasOwnProperty.call(normalizedRunSource, 'equipmentMemorySnapshot')
           ? {
               equipmentMemorySnapshot: normalizeEquipmentMemoryRunSnapshot(
-                savedState.run.equipmentMemorySnapshot
+                normalizedRunSource.equipmentMemorySnapshot
               )
             }
           : {}),
-        ...(Object.prototype.hasOwnProperty.call(savedState.run, 'equipmentMemoryHunt')
+        ...(Object.prototype.hasOwnProperty.call(normalizedRunSource, 'equipmentMemoryHunt')
           ? {
               equipmentMemoryHunt: normalizeEquipmentMemoryHuntRunState(
-                savedState.run.equipmentMemoryHunt
+                normalizedRunSource.equipmentMemoryHunt
               )
             }
           : {}),
-        ...(Object.prototype.hasOwnProperty.call(savedState.run, 'pursuitState')
+        ...(Object.prototype.hasOwnProperty.call(normalizedRunSource, 'pursuitState')
           ? {
               pursuitState: normalizeSavedCurrentRunPursuitState(
-                savedState.run.pursuitState,
-                savedState.run.dungeonId
+                normalizedRunSource.pursuitState,
+                normalizedRunSource.dungeonId
               )
             }
           : {}),
-        ...(Object.prototype.hasOwnProperty.call(savedState.run, 'lastPursuitSettlement')
+        ...(Object.prototype.hasOwnProperty.call(normalizedRunSource, 'lastPursuitSettlement')
           ? {
               lastPursuitSettlement: normalizeSavedRunPursuitSettlement(
-                savedState.run.lastPursuitSettlement
+                normalizedRunSource.lastPursuitSettlement
               )
             }
           : {}),
-        ...(Object.prototype.hasOwnProperty.call(savedState.run, 'companionSnapshot')
+        ...(Object.prototype.hasOwnProperty.call(normalizedRunSource, 'companionSnapshot')
           ? {
               companionSnapshot: normalizeCompanionRunSnapshot(
-                savedState.run.companionSnapshot
+                normalizedRunSource.companionSnapshot
               )
             }
           : {}),
-        ...(Object.prototype.hasOwnProperty.call(savedState.run, 'methodSnapshots')
-          ? { methodSnapshots: normalizeMethodRunSnapshots(savedState.run.methodSnapshots) }
+        ...(Object.prototype.hasOwnProperty.call(normalizedRunSource, 'methodSnapshots')
+          ? { methodSnapshots: normalizeMethodRunSnapshots(normalizedRunSource.methodSnapshots) }
           : {}),
-        ...(Object.prototype.hasOwnProperty.call(savedState.run, 'methodSnapshot')
-          ? { methodSnapshot: normalizeMethodRunSnapshot(savedState.run.methodSnapshot) }
+        ...(Object.prototype.hasOwnProperty.call(normalizedRunSource, 'methodSnapshot')
+          ? { methodSnapshot: normalizeMethodRunSnapshot(normalizedRunSource.methodSnapshot) }
           : {}),
-        ...(Object.prototype.hasOwnProperty.call(savedState.run, 'bloodlineSnapshot')
-          ? { bloodlineSnapshot: normalizeBloodlineRunSnapshot(savedState.run.bloodlineSnapshot) }
+        ...(Object.prototype.hasOwnProperty.call(normalizedRunSource, 'bloodlineSnapshot')
+          ? { bloodlineSnapshot: normalizeBloodlineRunSnapshot(normalizedRunSource.bloodlineSnapshot) }
           : {}),
         lastEquipmentMemoryHuntSettlement: normalizeSavedEquipmentMemoryHuntSettlement(
-          savedState.run.lastEquipmentMemoryHuntSettlement
+          normalizedRunSource.lastEquipmentMemoryHuntSettlement
         ),
-        equipmentHunt: savedState.run.equipmentHunt === undefined
+        equipmentHunt: normalizedRunSource.equipmentHunt === undefined
           ? undefined
-          : normalizeEquipmentHuntRunState(savedState.run.equipmentHunt),
-        pendingEquipmentOffer: savedState.run.pendingEquipmentOffer
+          : normalizeEquipmentHuntRunState(normalizedRunSource.equipmentHunt),
+        pendingEquipmentOffer: normalizedRunSource.pendingEquipmentOffer
           ? {
-              ...savedState.run.pendingEquipmentOffer,
-              equipmentIds: [...savedState.run.pendingEquipmentOffer.equipmentIds]
+              ...normalizedRunSource.pendingEquipmentOffer,
+              equipmentIds: [...normalizedRunSource.pendingEquipmentOffer.equipmentIds],
+              equipmentRolls: normalizedRunSource.pendingEquipmentOffer.equipmentRolls
+                ? { ...normalizedRunSource.pendingEquipmentOffer.equipmentRolls }
+                : undefined
             }
           : undefined,
-        lastEquipmentCommissionSettlement: savedState.run.lastEquipmentCommissionSettlement
+        lastAutoEquippedEquipmentIds:
+          normalizedRunSource.lastAutoEquippedEquipmentIds === undefined
+            ? undefined
+            : [...normalizedRunSource.lastAutoEquippedEquipmentIds],
+        lastEquipmentCommissionSettlement: normalizedRunSource.lastEquipmentCommissionSettlement
           ? {
-              ...savedState.run.lastEquipmentCommissionSettlement,
+              ...normalizedRunSource.lastEquipmentCommissionSettlement,
               equipmentIds: [
-                savedState.run.lastEquipmentCommissionSettlement.equipmentIds[0],
-                savedState.run.lastEquipmentCommissionSettlement.equipmentIds[1]
+                normalizedRunSource.lastEquipmentCommissionSettlement.equipmentIds[0],
+                normalizedRunSource.lastEquipmentCommissionSettlement.equipmentIds[1]
               ],
-              completedDungeonIds: [...savedState.run.lastEquipmentCommissionSettlement.completedDungeonIds]
+              completedDungeonIds: [...normalizedRunSource.lastEquipmentCommissionSettlement.completedDungeonIds]
             }
           : undefined,
-        protocol: savedState.run.protocol ?? { id: 'standard', rulesVersion: 1 },
-        lawState: normalizeDungeonLawState(savedState.run.lawState, savedState.run.dungeonId)
+        protocol: normalizedRunSource.entryFlowVersion === 2 && normalizedRunSource.protocol?.id === 'deep'
+          ? {
+              ...normalizedRunSource.protocol,
+              infernoTier: normalizedRunSource.protocol.infernoTier ?? 1
+            }
+          : normalizedRunSource.protocol ?? { id: 'standard', rulesVersion: 1 },
+        lawState: normalizeDungeonLawState(normalizedRunSource.lawState, normalizedRunSource.dungeonId)
       }
     : undefined;
   let combat: EquipmentMemoryCombat | undefined;
@@ -2459,9 +2813,14 @@ function normalizeSavedState(savedState: SavedGameState): EquipmentMemoryGameSta
   const normalized: EquipmentMemoryGameState = {
     ...savedState,
     claimedTaskIds: savedState.claimedTaskIds ?? [],
+    enteredDungeonIds: [...new Set([
+      ...(savedState.enteredDungeonIds ?? []),
+      ...(run ? [run.dungeonId] : [])
+    ])],
     inventory,
     ownedEquipment,
     equipmentLevels,
+    equipmentRolls,
     equipmentAttunements: { ...(savedState.equipmentAttunements ?? {}) },
     equipmentTemperRanks: { ...(savedState.equipmentTemperRanks ?? {}) },
     equipmentCommission: savedState.equipmentCommission
@@ -2493,8 +2852,17 @@ function normalizeSavedState(savedState: SavedGameState): EquipmentMemoryGameSta
     activeMethod: savedState.activeMethod,
     bloodlineRanks: { ...(savedState.bloodlineRanks ?? {}) },
     activeBloodline: savedState.activeBloodline,
+    infernoProgress,
     run,
-    combat
+    combat,
+    log: infernoMapWasRepaired
+      ? [
+          routeContractDroppedAfterRepair
+            ? '已修复旧版炼狱随机地图；原隐藏任务在新拓扑中无法保证顺序完成，已安全取消。'
+            : '已修复旧版炼狱随机地图，保留当前进度、战利品与关卡法则。',
+          ...savedState.log
+        ].slice(0, 20)
+      : savedState.log
   };
   const maxHp = getDerivedStats(normalized).maxHp;
   const maxHpDelta = maxHp - savedState.player.maxHp;
@@ -2509,17 +2877,87 @@ function normalizeSavedState(savedState: SavedGameState): EquipmentMemoryGameSta
   };
 }
 
-function loadSavedState(): EquipmentMemoryGameState {
+function discardInvalidSavedRun(
+  state: EquipmentMemoryGameState,
+  reason: string
+): EquipmentMemoryGameState {
+  const lootBag = state.run?.lootBag ?? createEmptyRunLootBag<ItemId, EquipmentId>();
+  const inventory = { ...state.inventory };
+  for (const [itemId, amount] of Object.entries(lootBag.items) as Array<[ItemId, number]>) {
+    if (itemId === 'legacy_scrip') continue;
+    inventory[itemId] = Math.max(0, (inventory[itemId] ?? 0) - amount);
+  }
+  const hubState: EquipmentMemoryGameState = {
+    ...state,
+    phase: 'hub',
+    rewardPoints: Math.max(0, state.rewardPoints - lootBag.rewardPoints),
+    lingyun: Math.max(0, state.lingyun - lootBag.lingyun),
+    inventory,
+    run: undefined,
+    combat: undefined,
+    lastOutcome: undefined,
+    log: [reason, ...state.log].slice(0, 20)
+  };
+  const maxHp = getDerivedStats(hubState).maxHp;
+  return {
+    ...hubState,
+    player: {
+      ...hubState.player,
+      hp: maxHp,
+      maxHp
+    }
+  };
+}
+
+function loadRejectedSaveRecovery(): RejectedSaveRecovery | undefined {
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return createInitialUiState();
+    const raw = window.localStorage.getItem(REJECTED_SAVE_BACKUP_KEY);
+    if (raw === null) return undefined;
+    return {
+      raw,
+      reason: window.localStorage.getItem(REJECTED_SAVE_REASON_KEY) ?? '存档未通过当前版本校验。'
+    };
+  } catch {
+    return undefined;
+  }
+}
+
+function preserveRejectedSave(raw: string, reason: string): RejectedSaveRecovery {
+  const recovery = { raw, reason };
+  try {
+    window.localStorage.setItem(REJECTED_SAVE_BACKUP_KEY, raw);
+    window.localStorage.setItem(REJECTED_SAVE_REASON_KEY, reason);
+  } catch {
+    // Keep the rejected value available in memory even if backup storage is unavailable.
+  }
+  return recovery;
+}
+
+function clearRejectedSaveRecovery(): void {
+  rejectedSaveRecovery = undefined;
+  rejectedSaveExportNotice = undefined;
+  try {
+    window.localStorage.removeItem(REJECTED_SAVE_BACKUP_KEY);
+    window.localStorage.removeItem(REJECTED_SAVE_REASON_KEY);
+  } catch {
+    // Clearing is best-effort when storage is unavailable.
+  }
+}
+
+function loadSavedState(): EquipmentMemoryGameState {
+  let raw: string | null = null;
+  try {
+    raw = window.localStorage.getItem(STORAGE_KEY);
+    if (raw === null) return createInitialUiState();
 
     const payload: unknown = JSON.parse(raw);
     const sanitizedState = isRecord(payload)
-      ? sanitizeSavedCombatReplayFields(
+      ? sanitizeSavedProtocolSettlementField(
+        sanitizeSavedCombatReplayFields(
         sanitizeSavedFalseTestimonyFields(
           sanitizeSavedShelterCombatFields(
-          sanitizeSavedEquipmentMemoryFields(
+          migrateSavedReplacedCombatEncounter(
+            sanitizeSavedEquipmentMemoryFields(
             sanitizeSavedBloodlineFields(
             sanitizeSavedMethodFields(
               sanitizeSavedCompanionFields(
@@ -2531,16 +2969,88 @@ function loadSavedState(): EquipmentMemoryGameState {
             )
           )
           )
+          )
         )
-        )
+        ))
       : undefined;
     if (isRecord(payload) && payload.version === STORAGE_VERSION && isSavedGameState(sanitizedState)) {
-      const normalized = normalizeSavedState(sanitizedState);
+      const shouldRecoverDepletedRun =
+        sanitizedState.player.hp <= 0 &&
+        Boolean(sanitizedState.run) &&
+        (sanitizedState.phase === 'explore' || sanitizedState.phase === 'combat');
+      let normalized = normalizeSavedState(sanitizedState);
+      const rawRun = sanitizedState.run;
+      const rawInfernoTierIsExplicit =
+        rawRun?.protocol?.id === 'deep' &&
+        Number.isSafeInteger(rawRun.protocol.infernoTier) &&
+        (rawRun.protocol.infernoTier ?? 0) >= 1;
+      const rawInfernoShapeIsInvalid =
+        rawRun?.protocol?.id === 'deep' &&
+        (
+          (
+            rawRun.entryFlowVersion === 2 &&
+            rawInfernoTierIsExplicit &&
+            (rawRun.protocol.infernoTier ?? 0) > 1 &&
+            rawRun.infernoMap === undefined
+          ) ||
+          (
+            rawRun.entryFlowVersion !== 2 &&
+            (rawInfernoTierIsExplicit || rawRun.infernoMap !== undefined)
+          )
+        );
+      const activeRun = normalized.run;
+      const activeInfernoTier =
+        activeRun?.protocol?.id === 'deep' &&
+        Number.isSafeInteger(activeRun.protocol.infernoTier) &&
+        (activeRun.protocol.infernoTier ?? 0) >= 1
+          ? activeRun.protocol.infernoTier!
+          : 1;
+      const shouldRecoverIllegalInfernoRun =
+        activeRun !== undefined &&
+        (normalized.phase === 'explore' || normalized.phase === 'combat') &&
+        activeRun.protocol?.id === 'deep' &&
+        (
+          rawInfernoShapeIsInvalid ||
+          getInfernoUnlockedTier(normalized, activeRun.dungeonId) < 1 ||
+          activeInfernoTier > getInfernoUnlockedTier(normalized, activeRun.dungeonId)
+        );
+      if (shouldRecoverIllegalInfernoRun) {
+        normalized = discardInvalidSavedRun(
+          normalized,
+          '恢复历史存档时检测到非法或未解锁的炼狱运行，本轮临时战利品已丢弃并安全返回主神空间；既有永久进度与仓库保持不变。'
+        );
+      } else if (shouldRecoverDepletedRun) {
+        normalized = resolveRunFailure(
+          {
+            ...normalized,
+            player: {
+              ...normalized.player,
+              hp: 0
+            }
+          },
+          '恢复历史存档时检测到生命已经归零，主神强制回收。'
+        ) as EquipmentMemoryGameState;
+      }
+      if (normalized.run && (normalized.phase === 'explore' || normalized.phase === 'combat')) {
+        const dungeon = getCurrentDungeonDefinition(normalized) ?? DUNGEONS[normalized.run.dungeonId];
+        const node = dungeon.nodes.find(({ id }) => id === normalized.run?.currentNodeId);
+        const bag = normalized.run.lootBag ?? createEmptyRunLootBag<ItemId, EquipmentId>();
+        restoredRunNotice = `已恢复：${dungeon.name} · ${node?.title ?? '未知节点'} · 战利品袋 ${bag.rewardPoints} 点`;
+      }
       saveState(normalized);
       return normalized;
     }
-  } catch {
-    // Corrupt or inaccessible local storage falls back to a fresh demo state.
+    const versionReason = isRecord(payload) && payload.version !== STORAGE_VERSION
+      ? `存档版本 ${String(payload.version)} 与当前版本 ${STORAGE_VERSION} 不兼容。`
+      : '存档结构、引用内容或数值未通过当前版本校验。';
+    rejectedSaveRecovery = preserveRejectedSave(raw, versionReason);
+  } catch (error) {
+    if (raw !== null) {
+      const reason = error instanceof SyntaxError
+        ? '存档文本不是有效的 JSON，无法安全读取。'
+        : '读取或校验存档时发生异常，已阻止不安全载入。';
+      rejectedSaveRecovery = preserveRejectedSave(raw, reason);
+    }
   }
 
   clearSavedState();
@@ -2560,7 +3070,7 @@ function saveState(nextState: EquipmentMemoryGameState): void {
 }
 
 function currentDungeon() {
-  return state.run ? DUNGEONS[state.run.dungeonId] : undefined;
+  return getCurrentDungeonDefinition(state);
 }
 
 function currentNode(): DungeonNode | undefined {
@@ -2631,14 +3141,6 @@ function renderEquipmentMemoryCompactLabel(equipmentId: EquipmentId): string {
     data-equipment-memory-collection="${memoryStatus.unlockedMemories.length}"
     data-equipment-memory-active="${memoryStatus.activeMemory?.id ?? 'none'}"
   ><small>装备记忆</small><strong>${memoryStatus.activeMemory?.name ?? '未激活'}</strong><b>${memoryStatus.unlockedMemories.length}/${EQUIPMENT_MEMORY_CATALOG.length}</b></span>`;
-}
-
-function getDungeonBaseRewardPoints(dungeon: NonNullable<ReturnType<typeof currentDungeon>>): number {
-  return dungeon.nodes.reduce((total, node) => {
-    const monsterReward = node.monsterId ? MONSTERS[node.monsterId].rewardPoints : 0;
-    const nodeReward = node.reward?.rewardPoints ?? 0;
-    return total + monsterReward + nodeReward;
-  }, 0);
 }
 
 function formatCost(cost: Cost = {}): string {
@@ -2736,7 +3238,7 @@ function formatMethodTechnique(snapshot: MethodRunSnapshot): string {
   if (effect.clearsRustPoison) parts.push('清除锈毒');
   if (effect.clearsMirrorSlow) parts.push('清除镜慢');
   if (effect.focusGain) parts.push(`战意 +${effect.focusGain}`);
-  if (effect.breathGain) parts.push(`呼吸 +${effect.breathGain}`);
+  if (effect.breathGain) parts.push(`蓄息 +${effect.breathGain}`);
   if (effect.healPercent) parts.push(`回复 ${effect.healPercent}% 最大生命`);
   return `${definition.name} · ${parts.join(' / ')}`;
 }
@@ -2776,8 +3278,8 @@ function renderLootBag(): string {
       </div>
       <div class="loot-retention-tags" aria-label="战利品带回比例">
         <span>通关 100%</span>
-        <span>撤退 50%</span>
-        <span>濒死 20%点数</span>
+        <span>清 3 格后撤退 50%</span>
+        <span>清 3 格后濒死 20%点数</span>
       </div>
     </div>
     <div class="loot-bag-grid">
@@ -2811,6 +3313,31 @@ function renderSettlementGroup(
 function renderLootSettlement(): string {
   const settlement = state.run?.lastLootSettlement;
   if (!settlement) return '';
+  const autoEquipped = (state.run?.lastAutoEquippedEquipmentIds ?? []).filter(
+    (equipmentId) =>
+      settlement.retained.equipmentIds.includes(equipmentId) &&
+      state.equipped[EQUIPMENT[equipmentId].slot] === equipmentId
+  );
+  const rollSettlement = state.run?.lastEquipmentRollSettlement;
+  const equippedRollUpgrade =
+    rollSettlement?.outcome === 'upgraded' &&
+    state.equipped[EQUIPMENT[rollSettlement.equipmentId].slot] ===
+      rollSettlement.equipmentId
+      ? rollSettlement.equipmentId
+      : undefined;
+  const growthNotice = autoEquipped.length > 0
+    ? `<div class="settlement-growth" data-auto-equipped="${autoEquipped.join(',')}">
+        <span>成长已生效</span>
+        <strong>已自动装配 ${autoEquipped.map((equipmentId) => EQUIPMENT[equipmentId].name).join(' / ')}</strong>
+        <small>当前战力 ${getPlayerPower(state)}；可在角色面板查看构成并手动换装。</small>
+      </div>`
+    : equippedRollUpgrade
+      ? `<div class="settlement-growth" data-roll-upgraded="${equippedRollUpgrade}">
+          <span>成长已生效</span>
+          <strong>${EQUIPMENT[equippedRollUpgrade].name}的更强词条已替换</strong>
+          <small>当前战力 ${getPlayerPower(state)}；生命与战力已按新词条重新结算。</small>
+        </div>`
+      : '';
 
   return `<div class="loot-settlement" aria-label="战利品袋结算">
     <div class="loot-settlement-heading">
@@ -2821,6 +3348,7 @@ function renderLootSettlement(): string {
       ${renderSettlementGroup('已带回', 'retained', settlement.retained)}
       ${renderSettlementGroup('已遗失', 'lost', settlement.lost)}
     </div>
+    ${growthNotice}
   </div>`;
 }
 
@@ -2831,6 +3359,80 @@ function hasSpendableCost(cost: Cost = {}): boolean {
 function formatBonus(bonus: Partial<DerivedStats>): string {
   const parts = Object.entries(bonus).map(([key, value]) => `${statLabels[key as keyof DerivedStats] ?? key} +${value}`);
   return parts.length ? parts.join(' / ') : '成长型';
+}
+
+function formatEquipmentRollAffixes(roll: EquipmentRoll): string {
+  return roll.affixes
+    .map((affix) =>
+      `${affix.greater ? '★ ' : ''}${statLabels[affix.stat] ?? affix.stat} +${affix.value} [${affix.minimum}-${affix.maximum}]`
+    )
+    .join(' / ');
+}
+
+function renderEquipmentRollReadout(
+  equipmentId: EquipmentId,
+  roll = state.equipmentRolls?.[equipmentId],
+  candidate = false
+): string {
+  if (!roll) {
+    return `<div class="equipment-roll fixed" data-equipment-roll="${equipmentId}" data-roll-quality="fixed">
+      <span class="feature-help-label">定型底材${renderFeatureHelpTrigger('equipmentRoll')}</span>
+      <strong>固定 100%</strong>
+      <small>${formatBonus(EQUIPMENT[equipmentId].base)}</small>
+    </div>`;
+  }
+
+  const evaluation = candidate
+    ? evaluateEquipmentRollCandidate(state, equipmentId, roll)
+    : undefined;
+  const current = evaluation?.currentRoll;
+  const currentPower = evaluation?.currentPower;
+  const candidatePower = evaluation?.candidatePower;
+  const comparison = evaluation?.comparison ?? 0;
+  const rollScore = getEquipmentRollScore(roll);
+  const currentScore = getEquipmentRollScore(current);
+  const comparisonMetric =
+    currentPower !== undefined && candidatePower !== undefined
+      ? `真实战力 ${currentPower} → ${candidatePower}`
+      : `词条评分 ${currentScore} → ${rollScore}`;
+  const comparisonText = !candidate
+    ? `词条评分 ${rollScore}`
+    : evaluation?.alreadyOwned === false
+      ? '新底材 · 通关后收录'
+      : comparison > 0
+        ? `${comparisonMetric} · 综合裁决胜出，通关后替换`
+        : `${comparisonMetric} · 综合裁决未胜出，通关后分解`;
+
+  return `<div
+    class="equipment-roll quality-${roll.quality} ${candidate ? 'candidate' : 'owned'}"
+    data-equipment-roll="${equipmentId}"
+    data-roll-quality="${roll.quality}"
+    data-roll-tier="${roll.sourceTier}"
+    data-item-power="${roll.itemPower}"
+    data-roll-comparison="${candidate ? comparison : 0}"
+  >
+    <span class="feature-help-label">${equipmentRollQualityLabels[roll.quality]}词条${renderFeatureHelpTrigger('equipmentRoll')}</span>
+    <strong>词条评分 ${rollScore} · 炼狱 ${roll.sourceTier} 层</strong>
+    <small>${formatEquipmentRollAffixes(roll)}</small>
+    <b>${comparisonText}</b>
+  </div>`;
+}
+
+function renderCombatDetailTooltip(
+  id: string,
+  label: string,
+  detail: string,
+  className = ''
+): string {
+  return `<span class="combat-hover-detail ${className}">
+    <button
+      type="button"
+      class="combat-hover-detail-trigger"
+      aria-label="${escapeHtml(label)}"
+      aria-describedby="${escapeHtml(id)}"
+    >?</button>
+    <span id="${escapeHtml(id)}" class="combat-hover-detail-popover" role="tooltip">${escapeHtml(detail)}</span>
+  </span>`;
 }
 
 function renderWeaponResonance(
@@ -2848,8 +3450,12 @@ function renderWeaponResonance(
     data-resonance-progress="${progress}"
     data-resonance-active="${resonance.active}"
   >
-    <span>当前武器共鸣 <strong>${progress}</strong></span>
-    <small>${detail}</small>
+    <span>${placement === 'combat' ? '武器共鸣' : '当前武器共鸣'} <strong>${progress}</strong></span>
+    ${
+      placement === 'combat'
+        ? renderCombatDetailTooltip('combat-weapon-resonance-detail', '查看武器共鸣说明', detail)
+        : `<small>${detail}</small>`
+    }
   </div>`;
 }
 
@@ -2999,7 +3605,9 @@ function formatWeaponSkillGrowth(definition: WeaponSkillDefinition, level: numbe
     bone_pursuit: '升级提高追刺段数与伤害',
     ember_rekindle: '升级同步提高伤害与治疗',
     starforged_finale: '升级提高攻术伤害与觉醒增幅',
-    chronal_reversal: '升级提高时差折返与攻术合击'
+    chronal_reversal: '升级提高时差折返与攻术合击',
+    breach_salvo: '升级提高破障齐射伤害',
+    phase_coil_acceleration: '升级提高相位贯穿与攻术合流'
   };
   const levelText = level >= maxLevel ? `Lv.${level} 满级` : `Lv.${level} -> Lv.${level + 1}`;
   return `${levelText} · ${growthLabels[definition.id]}`;
@@ -3023,7 +3631,12 @@ function renderWeaponSkillSummary(equipmentId: EquipmentId): string {
   </div>`;
 }
 
-function renderEquipmentSwapPreview(equipmentId: EquipmentId, owned: boolean, actionNoteOverride?: string): string {
+function renderEquipmentSwapPreview(
+  equipmentId: EquipmentId,
+  owned: boolean,
+  actionNoteOverride?: string,
+  candidateRollOverride?: EquipmentRoll
+): string {
   const equipment = EQUIPMENT[equipmentId];
   const preview = getEquipmentSwapPreview(
     state.equipped,
@@ -3032,14 +3645,49 @@ function renderEquipmentSwapPreview(equipmentId: EquipmentId, owned: boolean, ac
     state.equipmentAttunements ?? {},
     state.equipmentTemperRanks ?? {}
   );
+  const replacedEquipment = EQUIPMENT[preview.replacedEquipmentId];
+  const currentRoll = state.equipmentRolls?.[preview.replacedEquipmentId];
+  const candidateRoll =
+    candidateRollOverride ?? state.equipmentRolls?.[equipmentId];
+  const currentRolledBase = getEquipmentRolledBaseStats(
+    replacedEquipment.base,
+    currentRoll
+  );
+  const candidateRolledBase = getEquipmentRolledBaseStats(
+    equipment.base,
+    candidateRoll
+  );
+  const statDelta = Object.fromEntries(
+    (Object.keys(preview.statDelta) as Array<keyof DerivedStats>).map((key) => [
+      key,
+      preview.statDelta[key] +
+        ((candidateRolledBase[key] ?? 0) - (equipment.base[key] ?? 0)) -
+        ((currentRolledBase[key] ?? 0) - (replacedEquipment.base[key] ?? 0))
+    ])
+  ) as Record<keyof DerivedStats, number>;
+  const candidateEquipped = {
+    ...state.equipped,
+    [equipment.slot]: equipmentId
+  };
+  const candidateEquipmentRolls = {
+    ...(state.equipmentRolls ?? {}),
+    ...(candidateRoll === undefined ? {} : { [equipmentId]: candidateRoll })
+  };
+  const beforePower = getPlayerPower(state);
+  const afterPower = getPlayerPower({
+    ...state,
+    equipped: candidateEquipped,
+    equipmentRolls: candidateEquipmentRolls
+  });
+  const powerDelta = afterPower - beforePower;
   const setCountText = getEquipmentSetTags(equipmentId)
     .map(
       (tag) =>
         `${equipmentSetLabels[tag]} ${preview.beforeSetCounts[tag]} -> ${preview.afterSetCounts[tag]}`
     )
     .join(' / ');
-  const scoreDeltaClass = preview.scoreDelta > 0 ? 'positive' : preview.scoreDelta < 0 ? 'negative' : 'neutral';
-  const scoreDeltaText = preview.scoreDelta === 0 ? '持平' : formatSignedDelta(preview.scoreDelta);
+  const scoreDeltaClass = powerDelta > 0 ? 'positive' : powerDelta < 0 ? 'negative' : 'neutral';
+  const scoreDeltaText = powerDelta === 0 ? '持平' : formatSignedDelta(powerDelta);
   const equipped = state.equipped[equipment.slot] === equipmentId;
   const actionNote = actionNoteOverride ??
     (equipped
@@ -3052,17 +3700,18 @@ function renderEquipmentSwapPreview(equipmentId: EquipmentId, owned: boolean, ac
     class="equipment-swap-preview"
     data-swap-preview="${equipmentId}"
     data-replaced-equipment-id="${preview.replacedEquipmentId}"
-    data-score-delta="${preview.scoreDelta}"
+    data-score-delta="${powerDelta}"
+    data-roll-aware="${candidateRoll !== undefined || currentRoll !== undefined}"
   >
     <div class="swap-route">
       <span>当前${slotLabels[equipment.slot]} -> 候选</span>
       <strong>${EQUIPMENT[preview.replacedEquipmentId].name} -> ${equipment.name}</strong>
     </div>
     <div class="swap-metrics">
-      <span class="swap-score ${scoreDeltaClass}">评分 ${preview.beforeScore} -> ${preview.afterScore} / 净 ${scoreDeltaText}</span>
+      <span class="swap-score ${scoreDeltaClass}">战力评分 ${beforePower} -> ${afterPower} / 净 ${scoreDeltaText}</span>
       <span>候选套装 ${setCountText || '基础件，无套装计数'}</span>
     </div>
-    <div class="swap-stat-deltas">${formatStatDelta(preview.statDelta)}</div>
+    <div class="swap-stat-deltas">${formatStatDelta(statDelta)}</div>
     <div class="swap-effect-changes">
       <span>${formatEquipmentEffectChanges(preview.activatedSets, preview.deactivatedSets, '2件套')}</span>
       <span>${formatEquipmentEffectChanges(preview.activatedMasteries, preview.deactivatedMasteries, '3件精通')}</span>
@@ -3597,18 +4246,38 @@ function buildShopRecommendations(actions?: ViewAction[]): ShopRecommendation[] 
     .filter((recommendation, index, list) => list.findIndex((candidate) => candidate.id === recommendation.id) === index);
 }
 
-function renderRecommendationRow(recommendation: ShopRecommendation, index: number, showButton: boolean): string {
-  return `<article class="recommendation-row ${recommendation.affordable ? 'is-affordable' : 'is-locked'}">
+function renderRecommendationRow(
+  recommendation: ShopRecommendation,
+  index: number,
+  mode: 'actionable' | 'planning'
+): string {
+  const showButton = mode === 'actionable';
+  const readinessStatus =
+    mode === 'planning'
+      ? recommendation.affordable
+        ? '返回主神空间后可执行'
+        : '返回主神空间后补足资源'
+      : recommendation.affordable
+        ? '现在可执行'
+        : '资源不足';
+  const paymentStatus =
+    mode === 'planning'
+      ? recommendation.affordable
+        ? '返回主神空间后可按所列资源执行。'
+        : `返回主神空间后仍需补足资源；${recommendation.affordability}`
+      : recommendation.affordability;
+
+  return `<article class="recommendation-row ${recommendation.affordable ? 'is-affordable' : 'is-locked'}" data-recommendation-mode="${mode}">
     <div class="recommendation-rank">Top ${index + 1}</div>
     <div class="recommendation-copy">
       <div class="card-topline">
         <span>${recommendation.target}</span>
-        <small>${recommendation.affordable ? '现在可执行' : '资源不足'}</small>
+        <small>${readinessStatus}</small>
       </div>
       <h3>${recommendation.title}</h3>
       <p>${recommendation.reason}</p>
       <small class="mechanic-line">影响：${recommendation.impact}</small>
-      <small class="mechanic-line">支付状态：${recommendation.affordability}</small>
+      <small class="mechanic-line">支付状态：${paymentStatus}</small>
     </div>
     ${showButton && recommendation.action ? actionButton(recommendation.action, recommendation.affordable ? 'button' : 'button ghost') : ''}
   </article>`;
@@ -3625,23 +4294,25 @@ function renderTopRecommendations(actions: ViewAction[]): string {
       <h2>现在最该做的 Top 3</h2>
     </div>
     <p class="lead-copy">下一推荐副本：${DUNGEONS[nextDungeonId].name}。主神按战力、readiness 和商店建议排序。</p>
-    <div class="recommendation-list">${recommendations.map((recommendation, index) => renderRecommendationRow(recommendation, index, true)).join('')}</div>
+    <div class="recommendation-list">${recommendations.map((recommendation, index) => renderRecommendationRow(recommendation, index, 'actionable')).join('')}</div>
   </section>`;
 }
 
-function renderNextActionPanel(actions: ViewAction[]): string {
-  const recommendations = buildShopRecommendations(actions).slice(0, 3);
+function renderNextActionPanel(): string {
+  const recommendations = buildShopRecommendations().slice(0, 3);
   const nextDungeonId = nextRecommendedDungeonId();
   const rows = recommendations.length
-    ? recommendations.map((recommendation, index) => renderRecommendationRow(recommendation, index, true)).join('')
-    : `<article class="recommendation-row is-affordable">
+    ? recommendations
+        .map((recommendation, index) => renderRecommendationRow(recommendation, index, 'planning'))
+        .join('')
+    : `<article class="recommendation-row is-affordable" data-recommendation-mode="planning">
         <div class="recommendation-rank">Next</div>
         <div class="recommendation-copy">
           <div class="card-topline"><span>${DUNGEONS[nextDungeonId].name}</span><small>继续推进</small></div>
           <h3>进入下一推荐副本</h3>
           <p>当前没有更高收益的商店动作，先推进章节获取下一轮材料。</p>
           <small class="mechanic-line">影响：打开后续兑换和成长路线。</small>
-          <small class="mechanic-line">支付状态：无需消耗资源。</small>
+          <small class="mechanic-line">支付状态：返回主神空间后无需额外消耗资源，可继续推进。</small>
         </div>
       </article>`;
 
@@ -3686,32 +4357,20 @@ function canPay(cost: Cost = {}): boolean {
 }
 
 function runEconomy(exitStatus: RunExitStatus, includeCurrentNode = false): ReturnType<typeof calculateRunEconomy> | undefined {
-  const dungeon = currentDungeon();
-  if (!dungeon || !state.run) return undefined;
-
-  const clearedNodeIds = new Set(state.run.clearedNodeIds);
-  const node = currentNode();
-  if (includeCurrentNode && node) clearedNodeIds.add(node.id);
-
-  return calculateRunEconomy({
-    baseRewardPoints: getDungeonBaseRewardPoints(dungeon),
-    clearedNodes: clearedNodeIds.size,
-    totalNodes: dungeon.nodes.length,
-    damageTaken: Math.max(0, getDerivedStats(state).maxHp - state.player.hp),
-    captures: state.run?.captures ?? 0,
-    readiness: getDungeonReadiness(state, dungeon.id),
-    dungeonTier: dungeon.tier,
-    exitStatus
-  });
+  return getRunEconomyPreview(state, exitStatus, includeCurrentNode);
 }
 
-function renderScoreStrip(label: string, economy: ReturnType<typeof calculateRunEconomy> | undefined): string {
+function renderScoreStrip(
+  label: string,
+  economy: ReturnType<typeof calculateRunEconomy> | undefined,
+  settled = false
+): string {
   if (!economy) return '';
 
   return `<div class="score-strip">
     <span>${label}</span>
     <strong>${economy.score}</strong>
-    <small>${outcomeLabels[economy.outcome]} / x${economy.rewardMultiplier} / 估算 ${economy.rewardPoints} 点</small>
+    <small>${outcomeLabels[economy.outcome]} / x${economy.rewardMultiplier} / ${settled ? '评分奖励' : '预计评分奖励'} +${economy.rewardPoints} 点</small>
   </div>`;
 }
 
@@ -3737,7 +4396,7 @@ function getAuctionLotStatus(): AuctionLotStatus | undefined {
 }
 
 function isAnyModalOpen(): boolean {
-  return Boolean(getPendingCausalLedgerStatus()) || isCharacterPanelOpen || isTaskPanelOpen || isCompanionPanelOpen || isMethodPanelOpen || isBloodlinePanelOpen || isEquipmentCommissionModalOpen || Boolean(protocolSelection) || Boolean(state.phase === 'hub' && hubPanel);
+  return state.phase === 'combat' || Boolean(getPendingCausalLedgerStatus()) || isCharacterPanelOpen || isTaskPanelOpen || isCompanionPanelOpen || isMethodPanelOpen || isBloodlinePanelOpen || isEquipmentCommissionModalOpen || Boolean(protocolSelection) || Boolean(state.phase === 'hub' && hubPanel);
 }
 
 function getModalFocusTarget(
@@ -3774,6 +4433,32 @@ function focusCausalLedgerDialog(): void {
   const dialog = root.querySelector<HTMLElement>('.causal-ledger-sheet[role="dialog"][aria-modal="true"]');
   const firstChoice = dialog?.querySelector<HTMLButtonElement>('[data-causal-ledger-choice]:not(:disabled)');
   (firstChoice ?? dialog)?.focus();
+}
+
+function getPreferredCombatAction(actionId?: string): HTMLButtonElement | undefined {
+  const dialog = root.querySelector<HTMLElement>('.combat-panel[role="dialog"][aria-modal="true"]');
+  if (!dialog) return undefined;
+  const requested = actionId
+    ? dialog.querySelector<HTMLButtonElement>(`[data-action="${actionId}"]:not(:disabled)`)
+    : undefined;
+  return requested ??
+    dialog.querySelector<HTMLButtonElement>('.combat-actions .intent-counter:not(:disabled)') ??
+    dialog.querySelector<HTMLButtonElement>('[data-action="combat-attack"]:not(:disabled)') ??
+    dialog.querySelector<HTMLButtonElement>('.combat-actions .combat-command-action:not(:disabled)') ??
+    undefined;
+}
+
+function focusCombatDialog(): void {
+  root.querySelector<HTMLElement>('.combat-panel[role="dialog"][aria-modal="true"]')?.focus();
+}
+
+function focusCombatAction(actionId?: string): void {
+  (getPreferredCombatAction(actionId) ??
+    root.querySelector<HTMLElement>('.combat-panel[role="dialog"][aria-modal="true"]'))?.focus();
+}
+
+function focusResultPanel(): void {
+  root.querySelector<HTMLElement>('.result-panel')?.focus();
 }
 
 function focusEntropyHeadingChoice(): void {
@@ -3876,9 +4561,128 @@ function focusProtocolMode(): void {
   root.querySelector<HTMLButtonElement>('[data-protocol-mode][aria-pressed="true"]')?.focus();
 }
 
+function focusProtocolRerenderAction(actionId: ProtocolRerenderActionId): void {
+  const dialog = root.querySelector<HTMLElement>('.protocol-sheet[role="dialog"][aria-modal="true"]');
+  const requested = dialog?.querySelector<HTMLButtonElement>(
+    `[data-action="${actionId}"]:not(:disabled)`
+  );
+  const tierFallbackId = actionId === 'inferno-tier-down'
+    ? 'inferno-tier-up'
+    : actionId === 'inferno-tier-up'
+      ? 'inferno-tier-down'
+      : undefined;
+  const tierFallback = tierFallbackId
+    ? dialog?.querySelector<HTMLButtonElement>(`[data-action="${tierFallbackId}"]:not(:disabled)`)
+    : undefined;
+  const recoveryFallback = actionId === 'protocol-recover-at-hub'
+    ? dialog?.querySelector<HTMLButtonElement>('[data-action="confirm-protocol-entry"]:not(:disabled)')
+    : undefined;
+  const selectedMode = dialog?.querySelector<HTMLButtonElement>(
+    '[data-protocol-mode][aria-pressed="true"]:not(:disabled)'
+  );
+  (requested ?? tierFallback ?? recoveryFallback ?? selectedMode ?? dialog)?.focus();
+}
+
+const persistentDialogLabelIds: readonly PersistentDialogLabelId[] = [
+  'character-sheet-title',
+  'task-sheet-title',
+  'companion-sheet-title',
+  'method-sheet-title',
+  'bloodline-sheet-title',
+  'protocol-sheet-title',
+  'hub-directory-title',
+  'equipment-commission-title'
+];
+
+const persistentDialogScopeAttributes: readonly PersistentDialogScopeAttribute[] = [
+  'data-method-id',
+  'data-companion-id',
+  'data-bloodline-id',
+  'data-equipment-id',
+  'data-pet-id'
+];
+
+function capturePersistentDialogActionFocus(
+  button: HTMLButtonElement
+): PersistentDialogActionFocus | undefined {
+  const dialog = button.closest<HTMLElement>('[role="dialog"][aria-modal="true"]');
+  const labelledBy = dialog?.getAttribute('aria-labelledby');
+  const actionId = button.dataset.action;
+  if (
+    !dialog ||
+    !actionId ||
+    !persistentDialogLabelIds.includes(labelledBy as PersistentDialogLabelId)
+  ) {
+    return undefined;
+  }
+  const enabledActions = [...dialog.querySelectorAll<HTMLButtonElement>('[data-action]:not(:disabled)')];
+  const actionIds = enabledActions
+    .map((candidate) => candidate.dataset.action)
+    .filter((candidate): candidate is string => Boolean(candidate));
+  const actionIndex = Math.max(0, enabledActions.indexOf(button));
+  const scopeAttribute = persistentDialogScopeAttributes.find((attribute) =>
+    button.closest(`[${attribute}]`)
+  );
+  const scopeElement = scopeAttribute
+    ? button.closest<HTMLElement>(`[${scopeAttribute}]`)
+    : undefined;
+  const scopeValue = scopeAttribute ? scopeElement?.getAttribute(scopeAttribute) : undefined;
+
+  return {
+    labelledBy: labelledBy as PersistentDialogLabelId,
+    actionId,
+    actionIds,
+    actionIndex,
+    ...(scopeAttribute && scopeValue
+      ? { scope: { attribute: scopeAttribute, value: scopeValue } }
+      : {})
+  };
+}
+
+function focusPersistentDialogAction(snapshot: PersistentDialogActionFocus): void {
+  const dialog = [...root.querySelectorAll<HTMLElement>('[role="dialog"][aria-modal="true"]')]
+    .find((candidate) => candidate.getAttribute('aria-labelledby') === snapshot.labelledBy);
+  if (!dialog) return;
+
+  const findAction = (scope: ParentNode, actionId: string) =>
+    [...scope.querySelectorAll<HTMLButtonElement>('[data-action]:not(:disabled)')]
+      .find((candidate) => candidate.dataset.action === actionId);
+  const scopeElements = snapshot.scope
+    ? [...dialog.querySelectorAll<HTMLElement>(`[${snapshot.scope.attribute}]`)]
+      .filter((candidate) => candidate.getAttribute(snapshot.scope!.attribute) === snapshot.scope!.value)
+    : [];
+  const requestedInScope = scopeElements
+    .map((scope) => findAction(scope, snapshot.actionId))
+    .find((candidate): candidate is HTMLButtonElement => Boolean(candidate));
+  const requested = requestedInScope ?? findAction(dialog, snapshot.actionId);
+  const nextInScope = scopeElements
+    .flatMap((scope) => [...scope.querySelectorAll<HTMLButtonElement>('[data-action]:not(:disabled)')])
+    .find((candidate) => candidate !== requested);
+  const neighborIds = snapshot.actionIds
+    .map((actionId, index) => ({
+      actionId,
+      distance: Math.abs(index - snapshot.actionIndex),
+      after: index >= snapshot.actionIndex
+    }))
+    .filter(({ actionId, distance }) => actionId !== snapshot.actionId && distance > 0)
+    .sort((left, right) =>
+      left.distance - right.distance || Number(right.after) - Number(left.after)
+    );
+  const neighbor = neighborIds
+    .map(({ actionId }) => findAction(dialog, actionId))
+    .find((candidate): candidate is HTMLButtonElement => Boolean(candidate));
+  const currentActions = [...dialog.querySelectorAll<HTMLButtonElement>('[data-action]:not(:disabled)')];
+  const positionalFallback = currentActions[
+    Math.min(snapshot.actionIndex, Math.max(0, currentActions.length - 1))
+  ];
+  (requested ?? nextInScope ?? neighbor ?? positionalFallback ?? dialog)?.focus();
+}
+
 function focusProtocolTrigger(): void {
-  if (!protocolTriggerDungeonId) return;
-  root.querySelector<HTMLButtonElement>(`[data-action="open-protocol-${protocolTriggerDungeonId}"]`)?.focus();
+  const trigger = protocolTriggerDungeonId
+    ? root.querySelector<HTMLButtonElement>(`[data-action="open-protocol-${protocolTriggerDungeonId}"]`)
+    : undefined;
+  (trigger ?? root.querySelector<HTMLButtonElement>('[data-action="open-hub-dungeons"]'))?.focus();
 }
 
 function focusHubDirectoryDialog(): void {
@@ -3899,6 +4703,20 @@ function focusHubCodexSearch(): void {
   search.setSelectionRange(search.value.length, search.value.length);
 }
 
+function focusHubPreparationArchive(): void {
+  const details = root.querySelector<HTMLDetailsElement>('.hub-archive[data-hub-archive="preparation"]');
+  if (!details) return;
+  details.open = true;
+  isHubPreparationArchiveOpen = true;
+  const summary = details.querySelector<HTMLElement>(':scope > summary');
+  summary?.scrollIntoView({
+    block: 'center',
+    inline: 'nearest',
+    behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
+  });
+  summary?.focus({ preventScroll: true });
+}
+
 function focusEquipmentCommissionDialog(): void {
   const closeButton = root.querySelector<HTMLButtonElement>('.equipment-commission-close');
   const dialog = root.querySelector<HTMLElement>('.equipment-commission-sheet[role="dialog"][aria-modal="true"]');
@@ -3909,13 +4727,61 @@ function focusEquipmentCommissionTrigger(): void {
   root.querySelector<HTMLButtonElement>('.equipment-commission-trigger')?.focus();
 }
 
+function focusRunDetailsSummary(): void {
+  const summary = root.querySelector<HTMLElement>('.run-details > summary');
+  if (!summary) return;
+  summary.scrollIntoView({
+    block: 'center',
+    inline: 'nearest',
+    behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
+  });
+  summary.focus({ preventScroll: true });
+}
+
+function focusNodeActionPanel(): void {
+  const panel = root.querySelector<HTMLElement>('.node-action-panel');
+  if (!panel) return;
+  panel.scrollIntoView({
+    block: 'center',
+    inline: 'nearest',
+    behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
+  });
+  panel.focus({ preventScroll: true });
+}
+
 function syncModalSideEffects(focusTarget?: RenderFocusTarget): void {
   document.body.classList.toggle('modal-open', isAnyModalOpen());
   const focusRequest = ++modalFocusRequest;
   queueMicrotask(() => {
     if (focusRequest !== modalFocusRequest) return;
-    if (!focusTarget && getPendingCausalLedgerStatus()) {
+    // A newly forced ledger always owns focus, even when the triggering node action
+    // also requested that focus return to the exploration panel.
+    if (getPendingCausalLedgerStatus()) {
       focusCausalLedgerDialog();
+      return;
+    }
+    if (!focusTarget && state.phase === 'combat') {
+      focusCombatDialog();
+      return;
+    }
+    // Route-blocking in-world choices take precedence over the generic
+    // "return to node panel" focus requested by the action that revealed them.
+    const shouldFocusBlockingNodeChoice =
+      focusTarget === undefined || focusTarget === 'node-action-panel';
+    if (shouldFocusBlockingNodeChoice && getEntropyHeadingStatus()?.pending) {
+      focusEntropyHeadingChoice();
+      return;
+    }
+    if (shouldFocusBlockingNodeChoice && getMirrorPhaseStatus()?.pending) {
+      focusMirrorPhaseChoice();
+      return;
+    }
+    if (shouldFocusBlockingNodeChoice && getRedactionClauseStatus()?.pending) {
+      focusRedactionClauseChoice();
+      return;
+    }
+    if (shouldFocusBlockingNodeChoice && getAuctionLotStatus()?.pending) {
+      focusAuctionLotChoice();
       return;
     }
     if (focusTarget && typeof focusTarget !== 'string') {
@@ -3923,12 +4789,21 @@ function syncModalSideEffects(focusTarget?: RenderFocusTarget): void {
         root.querySelector<HTMLSelectElement>(
           `[data-equipment-memory-select="${focusTarget.equipmentMemorySelect}"]`
         )?.focus();
+      } else if ('protocolActionId' in focusTarget) {
+        focusProtocolRerenderAction(focusTarget.protocolActionId);
+      } else if ('persistentDialogAction' in focusTarget) {
+        focusPersistentDialogAction(focusTarget.persistentDialogAction);
+      } else if ('combatActionId' in focusTarget) {
+        focusCombatAction(focusTarget.combatActionId);
       } else {
         root.querySelector<HTMLButtonElement>(`[data-action="${focusTarget.actionId}"]`)?.focus();
       }
       return;
     }
     if (focusTarget === 'causal-ledger-dialog') focusCausalLedgerDialog();
+    if (focusTarget === 'combat-dialog') focusCombatDialog();
+    if (focusTarget === 'combat-action') focusCombatAction();
+    if (focusTarget === 'result-panel') focusResultPanel();
     if (focusTarget === 'entropy-heading') focusEntropyHeadingChoice();
     if (focusTarget === 'entropy-heading-move') focusEntropyHeadingMove();
     if (focusTarget === 'mirror-phase') focusMirrorPhaseChoice();
@@ -3939,7 +4814,13 @@ function syncModalSideEffects(focusTarget?: RenderFocusTarget): void {
     if (focusTarget === 'auction-lot-move') focusAuctionLotMove();
     if (focusTarget === 'character-dialog') focusCharacterDialog();
     if (focusTarget === 'character-trigger') focusCharacterTrigger();
-    if (focusTarget === 'task-dialog') focusTaskDialog();
+    if (focusTarget === 'task-dialog') {
+      focusTaskDialog();
+      requestAnimationFrame(() => {
+        if (focusRequest !== modalFocusRequest || !isTaskPanelOpen) return;
+        focusTaskDialog();
+      });
+    }
     if (focusTarget === 'task-trigger') focusTaskTrigger();
     if (focusTarget === 'companion-dialog') focusCompanionDialog();
     if (focusTarget === 'companion-trigger') focusCompanionTrigger();
@@ -3953,8 +4834,11 @@ function syncModalSideEffects(focusTarget?: RenderFocusTarget): void {
     if (focusTarget === 'hub-directory-dialog') focusHubDirectoryDialog();
     if (focusTarget === 'hub-directory-trigger') focusHubDirectoryTrigger();
     if (focusTarget === 'hub-codex-search') focusHubCodexSearch();
+    if (focusTarget === 'hub-preparation-archive') focusHubPreparationArchive();
     if (focusTarget === 'equipment-commission-dialog') focusEquipmentCommissionDialog();
     if (focusTarget === 'equipment-commission-trigger') focusEquipmentCommissionTrigger();
+    if (focusTarget === 'node-action-panel') focusNodeActionPanel();
+    if (focusTarget === 'run-details-summary') focusRunDetailsSummary();
   });
 }
 
@@ -3962,7 +4846,10 @@ function bindActions(actions: ViewAction[]): void {
   const handlers = new Map(actions.map((action) => [action.id, action]));
 
   document.querySelectorAll<HTMLButtonElement>('[data-action]').forEach((button) => {
-    button.addEventListener('click', () => {
+    button.addEventListener('click', (event) => {
+      const hasPointerPress = hasPendingMousePress;
+      hasPendingMousePress = false;
+      if (!shouldAllowActionActivation(event.detail) && !hasPointerPress) return;
       const action = handlers.get(button.dataset.action ?? '');
       if (!action || action.disabled) return;
       const wasCharacterPanelOpen = isCharacterPanelOpen;
@@ -3975,10 +4862,20 @@ function bindActions(actions: ViewAction[]): void {
       const wasMirrorPhasePending = getMirrorPhaseStatus()?.pending === true;
       const wasRedactionClausePending = getRedactionClauseStatus()?.pending === true;
       const wasAuctionLotPending = getAuctionLotStatus()?.pending === true;
+      const wasInCombat = state.phase === 'combat';
       const previousProtocolSelection = protocolSelection ? { ...protocolSelection } : undefined;
+      const persistentDialogAction = capturePersistentDialogActionFocus(button);
       action.onSelect();
       if (state.phase !== 'hub' || protocolSelection) hubPanel = undefined;
       state = syncCombatReplayLawState(state);
+      const isInCombat = state.phase === 'combat';
+      if (!wasInCombat && isInCombat) {
+        combatDetailsOpen = false;
+        combatHistoryOpen = false;
+      } else if (wasInCombat && !isInCombat) {
+        combatDetailsOpen = false;
+        combatHistoryOpen = false;
+      }
       // Restart must discard durable progress instead of saving the freshly reset state.
       if (action.id === 'new-run') {
         clearSavedState();
@@ -3986,17 +4883,53 @@ function bindActions(actions: ViewAction[]): void {
         // UI-only sheet toggles should not create a durable save file.
         saveState(state);
       }
-      const focusTarget: RenderFocusTarget | undefined = action.id.startsWith('open-hub-')
+      const focusTarget: RenderFocusTarget | undefined = !wasInCombat && isInCombat
+        ? 'combat-dialog'
+        : wasInCombat && isInCombat
+          ? { combatActionId: action.id }
+          : wasInCombat && !isInCombat
+            ? state.phase === 'result'
+              ? 'result-panel'
+              : 'node-action-panel'
+      : action.id.startsWith('open-hub-')
         ? 'hub-directory-dialog'
         : action.id === 'close-hub-directory'
           ? 'hub-directory-trigger'
-          : action.id.startsWith('filter-codex-')
+        : action.id.startsWith('filter-codex-')
             ? { actionId: action.id }
-            : action.id.startsWith('prepare-equipment-hunt-') ||
+      : action.id === 'clear-empty-tactical-slots'
+          ? 'hub-preparation-archive'
+        : action.id.startsWith('open-tactical-preparation-')
+          ? 'hub-preparation-archive'
+        : action.id === 'export-rejected-save'
+          ? { actionId: 'export-rejected-save' }
+        : action.id === 'clear-rejected-save'
+          ? { actionId: 'new-run' }
+        : action.id === 'inferno-tier-down' ||
+          action.id === 'inferno-tier-up' ||
+          action.id === 'protocol-recover-at-hub'
+          ? { protocolActionId: action.id }
+        : action.id.startsWith('claim-mainline-task-') || action.id.startsWith('claim-side-task-')
+          ? 'task-dialog'
+        : action.id.startsWith('archive-run-relic-') || action.id === 'skip-run-relic-archive'
+          ? { actionId: 'return-hub' }
+        : action.id.startsWith('prepare-equipment-hunt-') ||
         action.id.startsWith('prepare-equipment-memory-hunt-') ||
         action.id.startsWith('select-route-contract-') ||
         action.id.startsWith('select-equipment-commission-')
         ? { actionId: action.id }
+        : action.id.startsWith('choose-run-relic-')
+          ? 'run-details-summary'
+        : action.id.startsWith('loot-select-') || action.id === 'loot-decline-equipment'
+          ? 'node-action-panel'
+        : action.id.startsWith('event-')
+          ? 'node-action-panel'
+        : action.id.startsWith('trap-counter-') ||
+          action.id.startsWith('trap-risk-') ||
+          action.id.startsWith('portal-stabilize-') ||
+          action.id.startsWith('portal-force-') ||
+          action.id.startsWith('reward-current-')
+          ? 'node-action-panel'
         : action.id === 'start-equipment-commission' || action.id === 'recall-equipment-commission'
           ? 'equipment-commission-dialog'
           : action.id.startsWith('entropy-heading-')
@@ -4023,7 +4956,7 @@ function bindActions(actions: ViewAction[]): void {
               wasBloodlinePanelOpen,
               wasEquipmentCommissionModalOpen,
               previousProtocolSelection
-            );
+            ) ?? (persistentDialogAction ? { persistentDialogAction } : undefined);
       render(focusTarget);
     });
   });
@@ -4061,11 +4994,27 @@ function bindActions(actions: ViewAction[]): void {
     render('hub-codex-search');
   });
 
+  root.querySelectorAll<HTMLDetailsElement>('details').forEach((details) => {
+    const summary = details.querySelector<HTMLElement>(':scope > summary[aria-controls]');
+    if (!summary) return;
+    const syncExpandedState = () => {
+      summary.setAttribute('aria-expanded', String(details.open));
+      if (details.classList.contains('combat-details')) combatDetailsOpen = details.open;
+      if (details.classList.contains('combat-history')) combatHistoryOpen = details.open;
+      if (details.dataset.hubArchive === 'preparation') isHubPreparationArchiveOpen = details.open;
+      const label = details.open ? summary.dataset.expandedLabel : summary.dataset.collapsedLabel;
+      if (label) summary.setAttribute('aria-label', label);
+    };
+    syncExpandedState();
+    details.addEventListener('toggle', syncExpandedState);
+  });
+
   bindFeatureHelp();
+  bindGameAssetStates();
 }
 
 function actionButton(action: ViewAction, className = 'button'): string {
-  return `<button class="${className}" data-action="${action.id}" ${action.disabled ? 'disabled' : ''}>
+  return `<button class="${className}" data-action="${action.id}"${action.ariaLabel ? ` aria-label="${escapeHtml(action.ariaLabel)}"` : ''} ${action.disabled ? 'disabled' : ''}>
     <span>${action.label}</span>
     ${action.hint ? `<small>${action.hint}</small>` : ''}
   </button>`;
@@ -4080,6 +5029,90 @@ function escapeHtml(value: string): string {
     .replace(/'/g, '&#39;');
 }
 
+function renderDungeonGenreBadge(genre: DungeonGenre): string {
+  const meta = dungeonGenreMeta[genre];
+  const description = `题材：${meta.label}。题材仅描述世界来源，不改变基础操作。`;
+  return `<span
+    class="dungeon-genre-badge genre-${genre.replace(/_/g, '-')}"
+    data-dungeon-genre="${genre}"
+    role="note"
+    title="${escapeHtml(description)}"
+    aria-label="${escapeHtml(description)}"
+  >${meta.label}</span>`;
+}
+
+const GAME_ASSET_RETRY_DELAYS = [800, 3000] as const;
+
+function resolveGameAssetSrc(src: string): string {
+  const baseUrl = (import.meta as ImportMeta & { readonly env?: { readonly BASE_URL?: string } }).env?.BASE_URL ?? '/';
+  const normalizedBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+  return `${normalizedBase}${src.replace(/^\/+/, '')}`;
+}
+
+function createGameAssetFallbackSrc(label: string, width: number, height: number): string {
+  const safeLabel = escapeHtml(label.trim().slice(0, 10) || '图像');
+  const safeWidth = Math.max(1, Math.round(width));
+  const safeHeight = Math.max(1, Math.round(height));
+  const fontSize = Math.max(18, Math.round(Math.min(safeWidth, safeHeight) * 0.1));
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${safeWidth}" height="${safeHeight}" viewBox="0 0 ${safeWidth} ${safeHeight}">
+    <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#182423"/><stop offset="1" stop-color="#090d10"/></linearGradient></defs>
+    <rect width="100%" height="100%" fill="url(#g)"/>
+    <path d="M0 ${safeHeight * 0.72} L${safeWidth * 0.34} ${safeHeight * 0.42} L${safeWidth * 0.55} ${safeHeight * 0.59} L${safeWidth} ${safeHeight * 0.25} V${safeHeight} H0Z" fill="#28413d" opacity=".78"/>
+    <text x="50%" y="47%" fill="#d7c27e" font-family="system-ui,sans-serif" font-size="${fontSize}" font-weight="700" text-anchor="middle">${safeLabel}</text>
+    <text x="50%" y="59%" fill="#91aaa5" font-family="system-ui,sans-serif" font-size="${Math.max(11, Math.round(fontSize * 0.46))}" text-anchor="middle">图像暂不可用</text>
+  </svg>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+
+function retryGameAsset(image: HTMLImageElement, originalSrc: string, retryIndex: number): void {
+  const delay = GAME_ASSET_RETRY_DELAYS[retryIndex];
+  if (delay === undefined) return;
+  window.setTimeout(() => {
+    if (!image.isConnected || image.dataset.assetOriginalSrc !== originalSrc) return;
+    const probe = new Image();
+    probe.decoding = 'async';
+    probe.addEventListener('load', () => {
+      if (!image.isConnected || image.dataset.assetOriginalSrc !== originalSrc) return;
+      image.classList.remove('is-fallback');
+      image.dataset.assetState = 'ready';
+      image.src = probe.src;
+    }, { once: true });
+    probe.addEventListener('error', () => {
+      retryGameAsset(image, originalSrc, retryIndex + 1);
+    }, { once: true });
+    const separator = originalSrc.includes('?') ? '&' : '?';
+    probe.src = `${originalSrc}${separator}asset-retry=${retryIndex + 1}`;
+  }, delay);
+}
+
+function bindGameAssetStates(): void {
+  root.querySelectorAll<HTMLImageElement>('img.game-art').forEach((image) => {
+    const originalSrc = image.src;
+    image.dataset.assetOriginalSrc = originalSrc;
+    const markReady = () => {
+      if (image.classList.contains('is-fallback')) return;
+      image.dataset.assetState = 'ready';
+    };
+    const showFallback = () => {
+      if (image.classList.contains('is-fallback')) return;
+      image.classList.add('is-fallback');
+      image.dataset.assetState = 'fallback';
+      image.src = createGameAssetFallbackSrc(
+        image.dataset.assetLabel ?? '图像',
+        image.width || 320,
+        image.height || 320
+      );
+      retryGameAsset(image, originalSrc, 0);
+    };
+    image.addEventListener('load', markReady);
+    image.addEventListener('error', showFallback, { once: true });
+    if (image.complete) {
+      if (image.naturalWidth > 0) markReady();
+      else showFallback();
+    }
+  });
+}
+
 function renderGameAsset(
   kind: GameAssetKind,
   entityId: string,
@@ -4090,13 +5123,17 @@ function renderGameAsset(
   if (!asset) return '';
 
   const decorative = options.decorative ?? false;
+  const src = resolveGameAssetSrc(asset.src);
   return `<img
     class="game-art ${className}"
-    src="${escapeHtml(asset.src)}"
+    src="${escapeHtml(src)}"
     alt="${decorative ? '' : escapeHtml(asset.alt)}"
     data-asset-key="${escapeHtml(asset.key)}"
+    data-asset-label="${escapeHtml(asset.alt)}"
+    data-asset-kind="${asset.kind}"
     data-asset-role="${asset.role}"
     data-asset-fit="${asset.fit}"
+    data-asset-state="loading"
     width="${asset.width}"
     height="${asset.height}"
     loading="${options.loading ?? 'lazy'}"
@@ -4159,6 +5196,8 @@ function renderFeatureHelpPopover(): string {
     aria-labelledby="dungeon-feature-help-title"
     aria-describedby="dungeon-feature-help-summary dungeon-feature-help-mechanic dungeon-feature-help-guidance dungeon-feature-help-readout"
     tabindex="-1"
+    aria-hidden="true"
+    inert
     hidden
   >
     <button type="button" class="feature-help-close" data-feature-help-close aria-label="关闭系统说明"></button>
@@ -4235,6 +5274,8 @@ function showFeatureHelp(trigger: HTMLButtonElement, pinned: boolean): void {
   popover.querySelector<HTMLElement>('[data-feature-help-readout] span')!.textContent = help.readout;
   popover.dataset.featureHelpId = id;
   popover.dataset.pinned = String(pinned);
+  popover.removeAttribute('aria-hidden');
+  popover.removeAttribute('inert');
   popover.hidden = false;
   featureHelpTrigger = trigger;
   root.querySelectorAll<HTMLButtonElement>('[data-feature-help]').forEach((candidate) => {
@@ -4251,6 +5292,8 @@ function hideFeatureHelp(force = false, restoreFocus = false): boolean {
   cancelFeatureHelpHide();
   const trigger = featureHelpTrigger;
   popover.hidden = true;
+  popover.setAttribute('aria-hidden', 'true');
+  popover.setAttribute('inert', '');
   delete popover.dataset.featureHelpId;
   delete popover.dataset.pinned;
   popover.removeAttribute('style');
@@ -4261,9 +5304,6 @@ function hideFeatureHelp(force = false, restoreFocus = false): boolean {
   if (restoreFocus && trigger?.isConnected) {
     suppressFeatureHelpFocus = true;
     trigger.focus();
-    window.requestAnimationFrame(() => {
-      suppressFeatureHelpFocus = false;
-    });
   }
   return true;
 }
@@ -4296,6 +5336,10 @@ function bindFeatureHelp(): void {
   root.querySelectorAll<HTMLButtonElement>('[data-feature-help]').forEach((trigger) => {
     if (canHover) {
       trigger.addEventListener('mouseenter', () => {
+        if (suppressFeatureHelpFocus) {
+          suppressFeatureHelpFocus = false;
+          return;
+        }
         if (getFeatureHelpPopover()?.dataset.pinned !== 'true') showFeatureHelp(trigger, false);
       });
       trigger.addEventListener('mouseleave', scheduleFeatureHelpHide);
@@ -4304,10 +5348,14 @@ function bindFeatureHelp(): void {
       if (suppressFeatureHelpFocus) return;
       if (getFeatureHelpPopover()?.dataset.pinned !== 'true') showFeatureHelp(trigger, false);
     });
-    trigger.addEventListener('blur', scheduleFeatureHelpHide);
+    trigger.addEventListener('blur', () => {
+      suppressFeatureHelpFocus = false;
+      scheduleFeatureHelpHide();
+    });
     trigger.addEventListener('click', (event) => {
       event.preventDefault();
       event.stopPropagation();
+      suppressFeatureHelpFocus = false;
       const popover = getFeatureHelpPopover();
       const isPinnedHere = featureHelpTrigger === trigger && popover?.dataset.pinned === 'true';
       if (isPinnedHere) {
@@ -4319,6 +5367,12 @@ function bindFeatureHelp(): void {
   });
 
   const popover = getFeatureHelpPopover();
+  popover?.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+    event.preventDefault();
+    event.stopPropagation();
+    hideFeatureHelp(true, true);
+  });
   popover?.addEventListener('mouseenter', cancelFeatureHelpHide);
   popover?.addEventListener('mouseleave', scheduleFeatureHelpHide);
   popover?.querySelector<HTMLButtonElement>('[data-feature-help-close]')?.addEventListener('click', (event) => {
@@ -4330,13 +5384,30 @@ function bindFeatureHelp(): void {
 function renderExplorationGuide(): string {
   const guide = getExplorationGuide(state);
   if (!guide) return '';
+  const node = currentNode();
+  const resolvedCurrentEvent = state.run && node && !state.run.clearedNodeIds.includes(node.id)
+    ? getDungeonEvents(state.run.dungeonId).find(
+        (event) => event.nodeId === node.id && state.run?.resolvedEventIds.includes(event.id)
+      )
+    : undefined;
+  const guideInstruction = resolvedCurrentEvent
+    ? '额外事件已结算，还需完成节点核心动作'
+    : guide.instruction;
+  const guideDetail = resolvedCurrentEvent
+    ? `「${resolvedCurrentEvent.title}」已经结算；现在执行“${guide.instruction}”才能解除当前路线封锁。`
+    : guide.detail;
 
   const marker = guide.kind === 'combat' || guide.kind === 'blocker'
     ? '!'
     : guide.kind === 'node'
       ? '>'
       : '?';
-  const targetActionId = guide.targetActionId ? escapeHtml(guide.targetActionId) : '';
+  const pendingRelicId = isRunRelicState(state.run?.relicState)
+    ? state.run.relicState.pendingDraft?.candidateIds[0]
+    : undefined;
+  const resolvedTargetActionId = guide.targetActionId ??
+    (pendingRelicId ? `choose-run-relic-${pendingRelicId}` : undefined);
+  const targetActionId = resolvedTargetActionId ? escapeHtml(resolvedTargetActionId) : '';
 
   return `<aside
     class="exploration-guide tone-${guide.tone} kind-${guide.kind}"
@@ -4348,8 +5419,8 @@ function renderExplorationGuide(): string {
     <span class="exploration-guide-marker" aria-hidden="true">${marker}</span>
     <div class="exploration-guide-copy">
       <span class="eyebrow">${escapeHtml(guide.eyebrow)}</span>
-      <strong>${escapeHtml(guide.instruction)}</strong>
-      ${guide.detail ? `<small>${escapeHtml(guide.detail)}</small>` : ''}
+      <strong>${escapeHtml(guideInstruction)}</strong>
+      ${guideDetail ? `<small>${escapeHtml(guideDetail)}</small>` : ''}
     </div>
     ${targetActionId
       ? `<button
@@ -4372,8 +5443,12 @@ function statCard(label: string, value: string | number, hint: string): string {
 }
 
 function objectiveRow(objective: DirectiveObjectiveResult): string {
+  const isProvisional = objective.kind === 'low_damage' || objective.kind === 'no_item';
+  const stateLabel = objective.completed
+    ? isProvisional ? '当前满足' : '已满足'
+    : '未满足';
   return `<li class="${objective.completed ? 'complete' : ''}">
-    <span>${objective.completed ? '完成' : '未完成'}</span>
+    <span>${stateLabel}</span>
     <div>
       <strong>${objective.label}</strong>
       <small>${objective.description} / ${objective.progressText}</small>
@@ -4382,23 +5457,27 @@ function objectiveRow(objective: DirectiveObjectiveResult): string {
 }
 
 function formatDirectiveProgress(progressText: string): string {
-  const match = progressText.match(/(\d+)\/(\d+)/);
-  return match ? `进度 ${match[1]}/${match[2]}` : progressText;
+  return progressText;
 }
 
 function renderDirectiveCard(dungeonId?: DungeonId, compact = false): string {
   const evaluation = getDirectiveForCurrentDungeon(dungeonId);
   const targetDungeonId = dungeonId ?? state.run?.dungeonId ?? DUNGEON_ORDER[0];
   const directive = getDirectiveForDungeon(targetDungeonId);
+  const satisfiedObjectives = evaluation.objectiveResults.filter(({ completed }) => completed).length;
+  const statusLabel =
+    evaluation.status === 'completed' && (state.phase === 'explore' || state.phase === 'combat')
+      ? '当前满足'
+      : directiveStatusLabels[evaluation.status];
 
   return `<section class="directive-card ${compact ? 'compact-directive' : 'panel wide-panel'}">
     <div class="panel-title">
-      <span class="eyebrow">主神指令</span>
-      <h2>${evaluation.objectiveResults.length ? directiveStatusLabels[evaluation.status] : '目标'}</h2>
+      <span class="eyebrow feature-help-label">主神指令${renderFeatureHelpTrigger('directive')}</span>
+      <h2>${evaluation.objectiveResults.length ? statusLabel : '目标'}</h2>
     </div>
     <h3>${directive.name}</h3>
     <p>${directive.brief}</p>
-    <small class="mechanic-line">${formatDirectiveProgress(evaluation.progressText)} / 奖励预览：${evaluation.rewardPreview}</small>
+    <small class="mechanic-line">${formatDirectiveProgress(evaluation.progressText)} / 指令条件 ${satisfiedObjectives}/${evaluation.objectiveResults.length} 当前满足 / 奖励预览：${evaluation.rewardPreview}</small>
     <ul class="directive-objectives">${evaluation.objectiveResults.map(objectiveRow).join('')}</ul>
   </section>`;
 }
@@ -4842,6 +5921,7 @@ function renderEquipmentMemoryLibrary(showEmpty = false): string {
 
 function renderCharacterPanel(closeAction: ViewAction, restartAction?: ViewAction): string {
   const stats = getDerivedStats(state);
+  const power = getPlayerPowerBreakdown(state);
   const activePet = state.activePet ? PETS[state.activePet] : undefined;
   const activePetLevel = state.activePet ? state.petLevels[state.activePet] ?? 1 : 0;
   const weaponResonance = getCurrentWeaponResonanceProgress(state);
@@ -4876,10 +5956,22 @@ function renderCharacterPanel(closeAction: ViewAction, restartAction?: ViewActio
       <div class="character-profile">
         ${renderGameAsset('character', 'reincarnator', 'character-portrait', { loading: 'eager' })}
         <div>
-          <span class="eyebrow">当前轮回者</span>
+          <span class="eyebrow">当前轮回者 · MVP 固定角色配置</span>
           <strong>无名幸存者</strong>
-          <p>从主神空间出发，在不同世界中带回装备、能力与仍可延续的记忆。</p>
-          <small>已完成 ${state.completedDungeonIds.length}/${CAMPAIGN_DUNGEON_COUNT} 个副本 · 战力 ${getPlayerPower(state)}</small>
+          <p>当前版本暂不提供姓名与流派创建；成长由装备、能力与副本记忆决定。</p>
+          <small>已完成 ${state.completedDungeonIds.length}/${CAMPAIGN_DUNGEON_COUNT} 个副本 · 战力 ${power.total}</small>
+        </div>
+      </div>
+      <div class="power-breakdown" data-player-power="${power.total}">
+        <div class="power-breakdown-heading">
+          <span class="feature-help-label">战力构成${renderFeatureHelpTrigger('playerPower')}</span>
+          <strong>${power.total}</strong>
+        </div>
+        <div class="power-breakdown-grid">
+          <span><small>输出</small><b>${power.offense}</b></span>
+          <span><small>生存</small><b>${power.survival}</b></span>
+          <span><small>机动</small><b>${power.mobility}</b></span>
+          <span><small>探索</small><b>${power.exploration}</b></span>
         </div>
       </div>
       <div class="stats-grid">
@@ -4925,6 +6017,7 @@ function renderCharacterPanel(closeAction: ViewAction, restartAction?: ViewActio
             <div>
               <strong>${EQUIPMENT[equipmentId].name}${sealed ? ' · 封存中' : ''}</strong>
               <small>${formatEquipmentSetTags(equipmentId)} / 评分 ${score}${attunementName ? ` / 铭刻 ${attunementName}` : ''} / ${temperText}</small>
+              ${renderEquipmentRollReadout(equipmentId)}
               ${renderEquipmentFieldRig(equipmentId, 'loadout')}
               ${renderEquipmentRelicConduit(equipmentId, 'loadout')}
               ${renderEquipmentSoulSkill(equipmentId, 'loadout')}
@@ -5022,7 +6115,7 @@ function renderPetHouse(actions: ViewAction[]): string {
       };
       actions.push(action);
 
-      return `<article class="pet-card">
+      return `<article class="pet-card" data-pet-id="${petId}">
         <div class="card-topline">
           <span>${isCapturePet ? '副本捕获' : '可购买'}</span>
           <small>${owned ? '已拥有' : isCapturePet ? formatCost({ items: { [pet.captureItem ?? 'capture_net']: 1 } }) : formatCost(pet.cost)}</small>
@@ -5068,7 +6161,7 @@ function renderPetHouse(actions: ViewAction[]): string {
           };
           actions.push(action, upgradeAction);
 
-          return `<article class="pet-card owned ${state.activePet === petId ? 'active' : ''}">
+          return `<article class="pet-card owned ${state.activePet === petId ? 'active' : ''}" data-pet-id="${petId}">
             <div class="card-topline">
               <span>${state.activePet === petId ? '出战宠物' : '已拥有'}</span>
               <small>Lv.${level}</small>
@@ -5109,7 +6202,8 @@ function shopCard(
   action: ViewAction,
   advice: ShopAdvice,
   routeLabel = '建议',
-  art = ''
+  art = '',
+  supplemental = ''
 ): string {
   return `<article class="shop-card">
     <div class="card-topline">
@@ -5120,6 +6214,7 @@ function shopCard(
     <h3>${title}</h3>
     <p>${description}</p>
     ${renderShopAdvice(advice, routeLabel)}
+    ${supplemental}
     ${actionButton(action)}
   </article>`;
 }
@@ -5134,16 +6229,48 @@ function renderShop(actions: ViewAction[], mode: ShopMode = 'all'): string {
         .map((itemId) => {
           const item = ITEMS[itemId];
           const disabled = !item.cost || !canPay(item.cost);
+          const stock = state.inventory[itemId];
+          const tacticalItemId = isTacticalItemId(itemId) ? itemId : undefined;
+          const prepared = tacticalItemId
+            ? getTacticalLoadoutStatus(state).preparedItemIds.includes(tacticalItemId)
+            : false;
           const action: ViewAction = {
             id: `buy-item-${itemId}`,
-            label: '兑换',
-            hint: item.kind,
+            label: `兑换${item.name}`,
+            hint: formatCost(item.cost),
             disabled,
             onSelect: () => {
               state = buyItem(state, itemId);
             }
           };
           actions.push(action);
+          const preparationAction: ViewAction | undefined = tacticalItemId && stock > 0 && !prepared
+            ? {
+                id: `open-tactical-preparation-${itemId}`,
+                label: '前往分配',
+                hint: '购买不会自动携行',
+                persist: false,
+                onSelect: () => {
+                  isHubPreparationArchiveOpen = true;
+                }
+              }
+            : undefined;
+          if (preparationAction) actions.push(preparationAction);
+          const preparationState = prepared
+            ? stock > 0
+              ? '已加入当前携行配置'
+              : '已预设携行 · 当前库存 0'
+            : stock > 0
+              ? '尚未携行 · 入场前需要分配'
+              : '兑换后不会自动携行';
+          const preparationStatus = tacticalItemId ? `<div
+            class="tactical-shop-status ${prepared ? 'is-prepared' : stock > 0 ? 'needs-preparation' : 'is-empty'}"
+            data-tactical-shop-item="${itemId}"
+            data-tactical-shop-state="${prepared ? 'prepared' : stock > 0 ? 'unprepared' : 'empty'}"
+          >
+            <div><strong>${preparationState}</strong><small>${prepared ? '入场时锁定为本局快照' : '在下方“出发准备 → 战术携行”确认'}</small></div>
+            ${preparationAction ? actionButton(preparationAction, 'button ghost tactical-shop-prepare') : ''}
+          </div>` : '';
           return shopCard(
             item.name,
             '道具',
@@ -5152,7 +6279,8 @@ function renderShop(actions: ViewAction[], mode: ShopMode = 'all'): string {
             action,
             getShopAdvice(state, 'item', itemId),
             itemId === 'capture_net' || itemId === 'spirit_bait' ? '捕获路线' : '建议',
-            renderGameAsset('item', itemId, 'card-art item-card-art', { decorative: true })
+            renderGameAsset('item', itemId, 'card-art item-card-art', { decorative: true }),
+            preparationStatus
           );
         })
         .join('')
@@ -5241,7 +6369,8 @@ function renderShop(actions: ViewAction[], mode: ShopMode = 'all'): string {
             ${recipe ? `<div class="equipment-recipe-source"><span>通关解锁</span><strong>${DUNGEONS[recipe.dungeonId].name}</strong><small>持有 ${ITEMS[recipe.materialId].name} x${state.inventory[recipe.materialId]}</small></div>` : ''}
             ${showForgeActions ? `${renderEquipmentFieldRig(equipmentId, 'card')}${renderEquipmentRelicConduit(equipmentId, 'card')}${renderEquipmentSoulSkill(equipmentId, 'card')}` : ''}
             ${showForgeActions || owned ? renderEquipmentMemoryCompactLabel(equipmentId) : ''}
-            <small class="mechanic-line" data-equipment-score="${equipmentScore}">${formatEquipmentSetTags(equipmentId)} / 评分 ${equipmentScore} / ${formatBonus(equipment.base)}${attunementName ? ` / 当前铭刻：${attunementName}` : ''}</small>
+            ${renderEquipmentRollReadout(equipmentId)}
+            <small class="mechanic-line" data-equipment-score="${equipmentScore}">${formatEquipmentSetTags(equipmentId)} / 评分 ${equipmentScore} / ${formatBonus(getEquipmentRolledBaseStats(equipment.base, state.equipmentRolls?.[equipmentId]))}${attunementName ? ` / 当前铭刻：${attunementName}` : ''}</small>
             ${showForgeActions && weaponResonance ? renderWeaponResonance(weaponResonance, 'equipment') : ''}
             ${showPurchaseActions ? renderEquipmentSwapPreview(equipmentId, owned) : ''}
             ${showForgeActions ? renderEquipmentAttunements(equipmentId, actions) : ''}
@@ -5299,12 +6428,82 @@ function getDungeonCriticalTacticalItemIds(dungeonId: DungeonId): TacticalItemId
     if (!node.monsterId) continue;
     for (const pet of Object.values(PETS)) {
       if (pet.source !== 'capture' || pet.captureFrom !== node.monsterId) continue;
+      // A permanent capture already satisfies both the directive and the route.
+      // Do not reserve a scarce tactical slot for recapturing the same target.
+      if (state.ownedPets.includes(pet.id)) continue;
       const captureItem = pet.captureItem ?? 'capture_net';
       if (isTacticalItemId(captureItem)) requiredItemIds.add(captureItem);
     }
   }
 
   return TACTICAL_ITEM_IDS.filter((itemId) => requiredItemIds.has(itemId));
+}
+
+function getDungeonDirectiveTacticalItemIds(dungeonId: DungeonId): TacticalItemId[] {
+  const itemIds = getDirectiveForDungeon(dungeonId).optionalObjectives.flatMap((objective) => {
+    if (objective.kind !== 'capture' || !objective.petId) return [];
+    if (state.ownedPets.includes(objective.petId)) return [];
+    const captureItem = PETS[objective.petId].captureItem ?? 'capture_net';
+    return isTacticalItemId(captureItem) ? [captureItem] : [];
+  });
+  return [...new Set(itemIds)];
+}
+
+function getPermanentlySatisfiedCaptureItemIds(dungeonId: DungeonId): TacticalItemId[] {
+  const itemIds = DUNGEONS[dungeonId].nodes.flatMap((node) => {
+    if (!node.monsterId) return [];
+    return Object.values(PETS).flatMap((pet) => {
+      if (
+        pet.source !== 'capture' ||
+        pet.captureFrom !== node.monsterId ||
+        !state.ownedPets.includes(pet.id)
+      ) return [];
+      const captureItem = pet.captureItem ?? 'capture_net';
+      return isTacticalItemId(captureItem) ? [captureItem] : [];
+    });
+  });
+  return [...new Set(itemIds)];
+}
+
+function getAutoPreparedCriticalItemIds(dungeonId: DungeonId): TacticalItemId[] {
+  // Directive requirements win scarce slots, followed by the baseline survival item and route tools.
+  const fulfilledCaptureItemIds = getPermanentlySatisfiedCaptureItemIds(dungeonId);
+  const preparationState = fulfilledCaptureItemIds.length
+    ? {
+        ...state,
+        preparedItemIds: getTacticalLoadoutStatus(state).preparedItemIds.filter(
+          (itemId) => !fulfilledCaptureItemIds.includes(itemId)
+        )
+      }
+    : state;
+  return getPriorityFittedTacticalItemIds(preparationState, [
+    ...getDungeonDirectiveTacticalItemIds(dungeonId),
+    'healing_pill',
+    ...getDungeonCriticalTacticalItemIds(dungeonId)
+  ]);
+}
+
+function getDirectivePreparationSummary(dungeonId: DungeonId): string {
+  const preparationKinds: DirectiveObjectiveResult['kind'][] = ['method', 'equip', 'active_pet'];
+  const evaluation = getDirectiveForCurrentDungeon(dungeonId);
+  const missing = evaluation.objectiveResults
+    .filter((objective) => preparationKinds.includes(objective.kind) && !objective.completed)
+    .map(({ label }) => label);
+  const permanentCaptureSatisfied = evaluation.objectiveResults.some(
+    (objective) => objective.kind === 'capture' && objective.completed && objective.progressText === '已永久拥有'
+  );
+  const preparedItemIds = getTacticalLoadoutStatus(state).preparedItemIds;
+  for (const itemId of getDungeonDirectiveTacticalItemIds(dungeonId)) {
+    if (state.inventory[itemId] <= 0) {
+      missing.push(`缺少${ITEMS[itemId].name}`);
+    } else if (!preparedItemIds.includes(itemId)) {
+      missing.push(`${ITEMS[itemId].name}未携行`);
+    }
+  }
+  if (missing.length) return `指令整备缺：${missing.join('、')}`;
+  return permanentCaptureSatisfied
+    ? '指令整备：捕获目标已永久拥有，入场条件已满足'
+    : '指令整备：入场条件已满足';
 }
 
 function formatTacticalValidationReasons(reasons: readonly string[]): string {
@@ -5459,7 +6658,7 @@ function renderTacticalItemToggle(
     : disabled
       ? formatTacticalValidationReasons(candidateStatus.reasons)
       : stock > 0
-        ? '可分配'
+        ? '尚未携行 · 点击分配'
         : '库存 0 · 可预设';
   const action: ViewAction = {
     id: `toggle-tactical-${itemId}`,
@@ -5493,6 +6692,22 @@ function renderTacticalItemToggle(
 
 function renderTacticalLoadoutPreparation(actions: ViewAction[]): string {
   const status = getTacticalLoadoutStatus(state);
+  const emptyPreparedItemIds = status.preparedItemIds.filter((itemId) => state.inventory[itemId] <= 0);
+  const clearEmptyAction: ViewAction | undefined = emptyPreparedItemIds.length
+    ? {
+        id: 'clear-empty-tactical-slots',
+        label: '一键清理零库存携行',
+        hint: `移除 ${emptyPreparedItemIds.map((itemId) => ITEMS[itemId].name).join('、')}`,
+        onSelect: () => {
+          isHubPreparationArchiveOpen = true;
+          state = configureTacticalLoadout(
+            state,
+            getTacticalLoadoutStatus(state).preparedItemIds.filter((itemId) => state.inventory[itemId] > 0)
+          );
+        }
+      }
+    : undefined;
+  if (clearEmptyAction) actions.push(clearEmptyAction);
   const generalSlots = Array.from({ length: status.generalSlotsAvailable }, (_, index) => {
     const itemId = status.generalSlotItemIds[index];
     return `<div
@@ -5529,6 +6744,12 @@ function renderTacticalLoadoutPreparation(actions: ViewAction[]): string {
       <div><span class="eyebrow">出发整备</span><h2>战术携行</h2></div>
       <div class="tactical-capacity"><strong>${status.preparedItemIds.length}</strong><span>已选类型</span><b>${status.generalSlotsUsed}/${status.generalSlotsAvailable}</b><span>通用槽</span></div>
     </div>
+    ${clearEmptyAction
+      ? `<div class="tactical-empty-stock-warning" role="alert">
+          <div><strong>零库存道具仍占用携行槽</strong><span>${emptyPreparedItemIds.map((itemId) => ITEMS[itemId].name).join('、')}当前无法带入副本。</span></div>
+          ${actionButton(clearEmptyAction, 'button warning tactical-clear-empty')}
+        </div>`
+      : ''}
     ${status.isValid ? '' : `<div class="tactical-loadout-warning" role="status">${formatTacticalValidationReasons(status.reasons)}</div>`}
     <div class="tactical-slot-grid" aria-label="战术携行槽位">
       ${generalSlots}
@@ -5548,23 +6769,82 @@ function renderTacticalLoadoutPreparation(actions: ViewAction[]): string {
 
 function renderDungeonTacticalFit(dungeonId: DungeonId): string {
   const requiredItemIds = getDungeonCriticalTacticalItemIds(dungeonId);
+  const directiveItemIds = getDungeonDirectiveTacticalItemIds(dungeonId);
+  const optionalRouteItemIds = requiredItemIds.filter((itemId) => !directiveItemIds.includes(itemId));
   const preparedItemIds = getTacticalLoadoutStatus(state).preparedItemIds;
-  const preparedCount = requiredItemIds.filter((itemId) => preparedItemIds.includes(itemId)).length;
-  const missingItemIds = requiredItemIds.filter((itemId) => !preparedItemIds.includes(itemId));
+  const availableItemIds = requiredItemIds.filter(
+    (itemId) => preparedItemIds.includes(itemId) && state.inventory[itemId] > 0
+  );
+  const ownedButNotCarried = requiredItemIds.filter(
+    (itemId) => !preparedItemIds.includes(itemId) && state.inventory[itemId] > 0
+  );
+  const missingStock = requiredItemIds.filter((itemId) => state.inventory[itemId] <= 0);
+  const itemStatus = (itemId: TacticalItemId) => {
+    if (state.inventory[itemId] <= 0) return `${ITEMS[itemId].name}缺货`;
+    if (!preparedItemIds.includes(itemId)) return `${ITEMS[itemId].name}未携行`;
+    return `${ITEMS[itemId].name}可用`;
+  };
   const detail = requiredItemIds.length === 0
     ? '无特定关键工具'
-    : missingItemIds.length === 0
-      ? '关键工具已覆盖'
-      : `缺：${missingItemIds.map((itemId) => ITEMS[itemId].name).join('、')}`;
+    : availableItemIds.length === requiredItemIds.length
+      ? '已有库存且已装入携行'
+      : [
+          directiveItemIds.length
+            ? `指令必需：${directiveItemIds.map(itemStatus).join('、')}`
+            : '',
+          optionalRouteItemIds.length
+            ? `路线可选：${optionalRouteItemIds.map(itemStatus).join('、')}`
+            : '',
+          ownedButNotCarried.length || missingStock.length ? '' : '当前无需额外整备'
+        ].filter(Boolean).join('；');
 
   return `<div
-    class="dungeon-tactical-fit ${preparedCount === requiredItemIds.length ? 'fit-complete' : 'fit-missing'}"
+    class="dungeon-tactical-fit ${availableItemIds.length === requiredItemIds.length ? 'fit-complete' : 'fit-missing'}"
     data-tactical-fit-dungeon="${dungeonId}"
-    data-prepared-count="${preparedCount}"
+    data-prepared-count="${availableItemIds.length}"
     data-required-count="${requiredItemIds.length}"
   >
-    <span>携行适配</span><strong>${preparedCount}/${requiredItemIds.length}</strong><small>${detail}</small>
+    <span>路线工具</span><strong>${availableItemIds.length}/${requiredItemIds.length}</strong><small>${detail}</small>
   </div>`;
+}
+
+function renderProtocolPreparationSummary(dungeonId: DungeonId, actions: ViewAction[]): string {
+  const currentItemIds = getTacticalLoadoutStatus(state).preparedItemIds;
+  const autoPreparedItemIds = getAutoPreparedCriticalItemIds(dungeonId);
+  const loadoutChanged =
+    autoPreparedItemIds.length !== currentItemIds.length ||
+    autoPreparedItemIds.some((itemId, index) => currentItemIds[index] !== itemId);
+  const carryAction: ViewAction = {
+    id: `protocol-carry-critical-${dungeonId}`,
+    label: loadoutChanged ? '按优先级自动携行' : '优先携行已就绪',
+    hint: autoPreparedItemIds.length
+      ? `指令必需 → 止血丹生存 → 路线工具；最终：${autoPreparedItemIds.map((itemId) => ITEMS[itemId].name).join('、')}`
+      : '没有可自动装入的已有工具',
+    disabled: !loadoutChanged,
+    onSelect: () => {
+      state = configureTacticalLoadout(state, autoPreparedItemIds);
+    }
+  };
+  actions.push(carryAction);
+
+  return `<section class="protocol-preparation-summary" aria-label="入场准备核对">
+    <div>
+      <span>通关准备</span>
+      ${renderDungeonTacticalFit(dungeonId)}
+      <small>${getDirectivePreparationSummary(dungeonId)}</small>
+    </div>
+    ${actionButton(carryAction, 'button secondary protocol-carry-action')}
+  </section>`;
+}
+
+function renderFirstClearDirectiveGuidance(dungeonId: DungeonId): string {
+  if (dungeonId !== 'demon_tower_1' || state.completedDungeonIds.includes(dungeonId)) return '';
+
+  return `<aside class="protocol-first-clear-guidance" data-first-clear-guidance="demon_tower_1" role="note">
+    <strong class="feature-help-label">首次首领准备 · 可选挑战不阻断通关${renderFeatureHelpTrigger('directive')}</strong>
+    <span>北路连续战斗较多：只带 1 枚止血丹时优先较短路线；走完整北路建议携带 3 枚。全图清理属于高压玩法，请预留撤退或成长后再挑战。若首次濒死，可用回收收益优先学习铁衣诀后再战。</span>
+    <small><b>可选额外奖励：</b>“承伤不超过 20”会持续累计到本局通关结算，治疗不会回退累计值；优先使用守势、护甲、格挡或其他减伤手段。未达成不会阻断首领、出口或主线推进。</small>
+  </aside>`;
 }
 
 function renderProtocolRelicLock(actions: ViewAction[]): string {
@@ -5632,7 +6912,10 @@ function renderRunTacticalLoadout(): string {
     <div><span class="feature-help-label">本轮携行快照${renderFeatureHelpTrigger('tacticalLoadout')}</span><strong>${snapshot.itemIds.length} 类</strong></div>
     <div class="run-tactical-items">
       ${snapshot.itemIds.length
-        ? snapshot.itemIds.map((itemId) => `<span data-run-tactical-item="${itemId}">${ITEMS[itemId].name}<b>x${state.inventory[itemId]}</b></span>`).join('')
+        ? snapshot.itemIds.map((itemId) => `<span data-run-tactical-item="${itemId}">
+            ${ITEMS[itemId].name}<b>x${state.inventory[itemId]}</b>
+            ${itemId === 'armor_patch' ? '<small>防御时自动消耗，降低本次反击伤害</small>' : ''}
+          </span>`).join('')
         : '<span class="empty">未携行战术道具</span>'}
     </div>
   </div>`;
@@ -5804,7 +7087,7 @@ function renderBossSealProgress(dungeonId: DungeonId, compact = false): string {
     data-boss-node-id="${seal.definition.nodeId}">
     <span class="boss-seal-count">${seal.cleared ? '1/1' : '0/1'}</span>
     <div class="boss-seal-copy">
-      <strong class="feature-help-label">${seal.definition.bossTitle}${renderFeatureHelpTrigger('bossSeal')}</strong>
+      <strong class="feature-help-label">出口封印 · ${seal.definition.bossTitle}${renderFeatureHelpTrigger('bossSeal')}</strong>
       <small>${seal.requirementText}</small>
     </div>
   </div>`;
@@ -5812,6 +7095,12 @@ function renderBossSealProgress(dungeonId: DungeonId, compact = false): string {
 
 function protocolPressureDelta(multiplierPercent: number): string {
   return `+${Math.max(0, multiplierPercent - 100)}%`;
+}
+
+function infernoProgressSummary(selectedTier: number, unlockedTier: number): string {
+  return selectedTier >= unlockedTier
+    ? `本层通关解锁第 ${unlockedTier + 1} 层`
+    : `低层复刷不推进层级 · 通关第 ${unlockedTier} 层后解锁第 ${unlockedTier + 1} 层`;
 }
 
 function renderProtocolEquipmentMemoryHuntPreparation(
@@ -6077,6 +7366,14 @@ function renderProtocolModal(actions: ViewAction[]): string {
   const dungeon = DUNGEONS[dungeonId];
   const selectedDefinition = getRunProtocolDefinition(dungeonId, protocolId);
   const advancedUnlocked = state.completedDungeonIds.includes(dungeonId);
+  const unlockedInfernoTier = getInfernoUnlockedTier(state, dungeonId);
+  const selectedInfernoTier = protocolId === 'deep'
+    ? Math.min(
+        unlockedInfernoTier,
+        Math.max(1, protocolSelection.infernoTier ?? unlockedInfernoTier)
+      )
+    : 1;
+  const infernoModifiers = getInfernoTierModifiers(selectedInfernoTier);
   const difficultyNames: Record<RunProtocolId, string> = {
     standard: '普通',
     imprint: '困难',
@@ -6085,14 +7382,14 @@ function renderProtocolModal(actions: ViewAction[]): string {
   const difficultyDescriptions: Record<RunProtocolId, string> = {
     standard: '标准敌人与陷阱，适合首次探索。',
     imprint: '敌人与陷阱更强，通关奖励更高。',
-    deep: '最高强度挑战，提供最高通关收益。'
+    deep: '无上限逐层挑战；每次入场重排地下城，通关当前最高层才会解锁下一层。'
   };
   const standardModeAction: ViewAction = {
     id: 'protocol-mode-standard',
     label: difficultyNames.standard,
     persist: false,
     onSelect: () => {
-      protocolSelection = { ...protocolSelection, dungeonId, protocolId: 'standard' };
+      protocolSelection = { ...protocolSelection, dungeonId, protocolId: 'standard', infernoTier: undefined };
     }
   };
   const imprintModeAction: ViewAction = {
@@ -6101,7 +7398,7 @@ function renderProtocolModal(actions: ViewAction[]): string {
     disabled: !advancedUnlocked,
     persist: false,
     onSelect: () => {
-      protocolSelection = { ...protocolSelection, dungeonId, protocolId: 'imprint' };
+      protocolSelection = { ...protocolSelection, dungeonId, protocolId: 'imprint', infernoTier: undefined };
     }
   };
   const deepModeAction: ViewAction = {
@@ -6110,7 +7407,44 @@ function renderProtocolModal(actions: ViewAction[]): string {
     disabled: !advancedUnlocked,
     persist: false,
     onSelect: () => {
-      protocolSelection = { ...protocolSelection, dungeonId, protocolId: 'deep' };
+      protocolSelection = {
+        ...protocolSelection,
+        dungeonId,
+        protocolId: 'deep',
+        infernoTier: Math.max(1, unlockedInfernoTier)
+      };
+    }
+  };
+  const infernoTierDownAction: ViewAction = {
+    id: 'inferno-tier-down',
+    label: '降低一层',
+    hint: selectedInfernoTier <= 1 ? '已是第一层' : `切换到第 ${selectedInfernoTier - 1} 层`,
+    disabled: protocolId !== 'deep' || selectedInfernoTier <= 1,
+    persist: false,
+    onSelect: () => {
+      protocolSelection = {
+        ...protocolSelection,
+        dungeonId,
+        protocolId: 'deep',
+        infernoTier: Math.max(1, selectedInfernoTier - 1)
+      };
+    }
+  };
+  const infernoTierUpAction: ViewAction = {
+    id: 'inferno-tier-up',
+    label: '提高一层',
+    hint: selectedInfernoTier >= unlockedInfernoTier
+      ? `通关第 ${unlockedInfernoTier} 层后解锁`
+      : `切换到第 ${selectedInfernoTier + 1} 层`,
+    disabled: protocolId !== 'deep' || selectedInfernoTier >= unlockedInfernoTier,
+    persist: false,
+    onSelect: () => {
+      protocolSelection = {
+        ...protocolSelection,
+        dungeonId,
+        protocolId: 'deep',
+        infernoTier: Math.min(unlockedInfernoTier, selectedInfernoTier + 1)
+      };
     }
   };
   const cancelAction: ViewAction = {
@@ -6119,6 +7453,8 @@ function renderProtocolModal(actions: ViewAction[]): string {
     persist: false,
     onSelect: () => {
       protocolSelection = undefined;
+      hubPanel = protocolReturnHubPanel;
+      protocolReturnHubPanel = undefined;
     }
   };
   const confirmAction: ViewAction = {
@@ -6135,12 +7471,24 @@ function renderProtocolModal(actions: ViewAction[]): string {
         dungeonId,
         protocolId,
         undefined,
-        { flowVersion: 2 }
+        {
+          flowVersion: 2,
+          ...(protocolId === 'deep' ? { infernoTier: selectedInfernoTier } : {})
+        }
       );
       protocolSelection = undefined;
+      protocolReturnHubPanel = undefined;
     }
   };
-  actions.push(standardModeAction, imprintModeAction, deepModeAction, cancelAction, confirmAction);
+  actions.push(
+    standardModeAction,
+    imprintModeAction,
+    deepModeAction,
+    infernoTierDownAction,
+    infernoTierUpAction,
+    cancelAction,
+    confirmAction
+  );
 
   const modeButton = (action: ViewAction, mode: RunProtocolId) => `<button
     class="protocol-segment ${protocolId === mode ? 'selected' : ''}"
@@ -6154,11 +7502,52 @@ function renderProtocolModal(actions: ViewAction[]): string {
     ${action.disabled ? 'disabled' : ''}
   ><strong>${action.label}</strong><small>${action.disabled ? '普通通关后解锁' : difficultyDescriptions[mode]}</small></button>`;
   const modifiers = selectedDefinition?.modifiers;
-  const materialAmount = protocolId === 'standard' ? 1 : protocolId === 'imprint' ? 2 : 3;
+  const enemyMultiplierPercent = protocolId === 'deep'
+    ? Math.ceil(
+        (modifiers?.enemyStatMultiplierPercent ?? 100) *
+        infernoModifiers.enemyStatMultiplierPercent /
+        100
+      )
+    : modifiers?.enemyStatMultiplierPercent ?? 100;
+  const trapMultiplierPercent = protocolId === 'deep'
+    ? Math.ceil(
+        (modifiers?.trapDamageMultiplierPercent ?? 100) *
+        infernoModifiers.trapDamageMultiplierPercent /
+        100
+      )
+    : modifiers?.trapDamageMultiplierPercent ?? 100;
+  const rewardMultiplierPercent = protocolId === 'deep'
+    ? Math.ceil(
+        (modifiers?.clearRewardPointMultiplierPercent ?? 100) *
+        infernoModifiers.rewardPointMultiplierPercent /
+        100
+      )
+    : modifiers?.clearRewardPointMultiplierPercent ?? 100;
+  const materialAmount = protocolId === 'standard'
+    ? 1
+    : protocolId === 'imprint'
+      ? 2
+      : infernoModifiers.materialAmount;
   const materialReward = DUNGEON_MATERIAL_REWARDS[dungeonId];
   const materialName = ITEMS[materialReward.itemId].name;
   const unlockedEquipmentCount = getDungeonEquipmentRecipes(dungeonId).length;
   const playerPower = getPlayerPower(state);
+  const playerStats = getDerivedStats(state);
+  const hpPercent = Math.max(0, Math.min(100, Math.round(state.player.hp / playerStats.maxHp * 100)));
+  const needsRecovery = state.player.hp < playerStats.maxHp;
+  const lowHealth = hpPercent < 50;
+  const recoverAction: ViewAction = {
+    id: 'protocol-recover-at-hub',
+    label: needsRecovery ? '主神修复 · 免费回满' : '生命已满',
+    hint: needsRecovery
+      ? `${state.player.hp}/${playerStats.maxHp} → ${playerStats.maxHp}/${playerStats.maxHp}`
+      : `${state.player.hp}/${playerStats.maxHp}`,
+    disabled: !needsRecovery,
+    onSelect: () => {
+      state = recoverAtHub(state);
+    }
+  };
+  actions.push(recoverAction);
 
   return `<div class="protocol-modal">
     <button class="protocol-backdrop" data-action="${cancelAction.id}" aria-label="取消副本准备"></button>
@@ -6174,8 +7563,15 @@ function renderProtocolModal(actions: ViewAction[]): string {
       <div class="protocol-entry-metrics">
         <span><small>当前战力</small><strong>${playerPower}</strong></span>
         <span><small>推荐战力</small><strong>${dungeon.recommendedPower}</strong></span>
-        <span><small>首次通关</small><strong>解锁 ${unlockedEquipmentCount} 件装备</strong></span>
+        <span class="${lowHealth ? 'health-risk' : ''}"><small>当前生命</small><strong>${state.player.hp}/${playerStats.maxHp} · ${hpPercent}%</strong></span>
+        <span><small>${state.completedDungeonIds.includes(dungeonId) ? '首通状态' : '首次通关'}</small><strong>${state.completedDungeonIds.includes(dungeonId) ? `首通奖励已解锁 · ${unlockedEquipmentCount} 件装备` : `解锁 ${unlockedEquipmentCount} 件装备`}</strong></span>
       </div>
+      ${needsRecovery
+        ? `<div class="protocol-health-warning ${lowHealth ? 'critical' : 'injured'}" role="${lowHealth ? 'alert' : 'status'}">
+            <div><strong>${lowHealth ? '低血入场风险极高' : '当前生命未满'}</strong><span>${lowHealth ? '敌方开局或陷阱可能直接触发濒死回收。' : '可在主神空间免费修复后再出发。'}</span></div>
+            ${actionButton(recoverAction, 'button hub-recover-button')}
+          </div>`
+        : ''}
       <div class="protocol-section-heading"><span class="feature-help-label">难度${renderFeatureHelpTrigger('difficulty')}</span><strong>${difficultyNames[protocolId]}</strong></div>
       <div class="protocol-segments simplified" role="radiogroup" aria-label="副本难度">
         ${modeButton(standardModeAction, 'standard')}
@@ -6183,15 +7579,31 @@ function renderProtocolModal(actions: ViewAction[]): string {
         ${modeButton(deepModeAction, 'deep')}
       </div>
       <div class="protocol-selected-summary" data-selected-protocol="${protocolId}">
-        <strong>${difficultyNames[protocolId]}难度</strong>
+        <strong>${difficultyNames[protocolId]}${protocolId === 'deep' ? `第 ${selectedInfernoTier} 层` : '难度'}</strong>
         <span>${difficultyDescriptions[protocolId]}</span>
       </div>
+      ${protocolId === 'deep'
+        ? `<div class="inferno-tier-picker" data-inferno-tier="${selectedInfernoTier}" data-inferno-unlocked="${unlockedInfernoTier}">
+            <div>
+              <small class="feature-help-label">炼狱层级${renderFeatureHelpTrigger('infernoTier')}</small>
+              <strong>第 ${selectedInfernoTier} 层</strong>
+              <span>最高已解锁第 ${unlockedInfernoTier} 层 · ${infernoProgressSummary(selectedInfernoTier, unlockedInfernoTier)}</span>
+            </div>
+            <div class="inferno-tier-actions">
+              ${actionButton(infernoTierDownAction, 'button ghost')}
+              ${actionButton(infernoTierUpAction, 'button ghost')}
+            </div>
+            <p><span class="feature-help-label">随机地下城${renderFeatureHelpTrigger('proceduralMap')}</span> 每次确认入场都会生成新种子；刷新页面只恢复本轮冻结布局，不会重掷。</p>
+          </div>`
+        : ''}
       <div class="protocol-pressure-grid simplified">
-        <span><small>敌人强度</small><strong>${modifiers ? protocolPressureDelta(modifiers.enemyStatMultiplierPercent) : '+0%'}</strong></span>
-        <span><small>陷阱伤害</small><strong>${modifiers ? protocolPressureDelta(modifiers.trapDamageMultiplierPercent) : '+0%'}</strong></span>
-        <span><small>奖励点</small><strong>x${((modifiers?.clearRewardPointMultiplierPercent ?? 100) / 100).toFixed(2)}</strong></span>
+        <span><small>敌人强度</small><strong>${protocolPressureDelta(enemyMultiplierPercent)}</strong></span>
+        <span><small>陷阱伤害</small><strong>${protocolPressureDelta(trapMultiplierPercent)}</strong></span>
+        <span><small>奖励点</small><strong>x${(rewardMultiplierPercent / 100).toFixed(2)}</strong></span>
         <span><small>${materialName}</small><strong>x${materialAmount}</strong></span>
       </div>
+      ${renderProtocolPreparationSummary(dungeonId, actions)}
+      ${renderFirstClearDirectiveGuidance(dungeonId)}
       ${renderProtocolRelicLock(actions)}
       ${LEGACY_PROTOCOL_PREPARATION_VISIBLE
         ? `${renderProtocolEquipmentMemoryHuntPreparation(dungeonId, actions)}${renderProtocolEquipmentHuntPreparation(dungeonId, actions)}${renderRouteContractPreparation(dungeonId, actions)}`
@@ -6218,21 +7630,27 @@ function renderDungeonEntrances(actions: ViewAction[]): string {
       const gateClass = gate ? `gate-${gate.status}` : 'gate-available';
       const gateLabel = gate ? campaignStatusLabels[gate.status] : '已解锁';
       const protocolUnlocked = state.completedDungeonIds.includes(dungeonId);
+      const infernoUnlockedTier = getInfernoUnlockedTier(state, dungeonId);
       const materialReward = DUNGEON_MATERIAL_REWARDS[dungeonId];
       const materialName = ITEMS[materialReward.itemId].name;
       const gateNote = gate?.isNextRecommended
-        ? '下一推荐'
+        ? '通关推荐'
         : gate?.availabilityKind === 'sequence_break'
           ? '越级挑战'
           : gateLabel;
       const action: ViewAction = {
         id: `open-protocol-${dungeonId}`,
         label: '准备进入',
-        hint: locked ? '完成前置章节' : protocolUnlocked ? '普通 / 困难 / 炼狱' : '首次仅开放普通难度',
+        hint: locked
+          ? '完成前置章节'
+          : protocolUnlocked
+            ? `普通 / 困难 / 炼狱第 ${infernoUnlockedTier} 层`
+            : '首次仅开放普通难度',
         disabled: locked,
         persist: false,
         onSelect: () => {
           protocolTriggerDungeonId = dungeonId;
+          protocolReturnHubPanel = hubPanel;
           protocolSelection = { dungeonId, protocolId: 'standard' };
           isCharacterPanelOpen = false;
           isTaskPanelOpen = false;
@@ -6244,28 +7662,47 @@ function renderDungeonEntrances(actions: ViewAction[]): string {
       };
       actions.push(action);
       const dungeonBanner = renderDungeonBanner(dungeonId);
-      return `<article class="dungeon-card risk-${readiness} ${gateClass}" data-dungeon-id="${dungeonId}">
-        <div class="card-topline">
-          <span>Tier ${dungeon.tier}</span>
-          <small class="risk-pill">${risk.label} / ${gateNote}</small>
+      return `<article class="dungeon-card risk-${readiness} ${gateClass} ${gate?.isNextRecommended ? 'is-next-recommended' : ''}" data-dungeon-id="${dungeonId}">
+        <div class="dungeon-card-overview">
+          <div class="card-topline">
+            <span>Tier ${dungeon.tier}</span>
+            <small class="risk-pill">${risk.label} / ${gateNote}</small>
+          </div>
+          ${dungeonBanner}
+          <div class="dungeon-title-row">
+            <h3>${dungeon.name}</h3>
+            ${renderDungeonGenreBadge(dungeon.genre)}
+          </div>
+          <p>${dungeon.theme}</p>
+          ${actionButton(action)}
         </div>
-        ${dungeonBanner}
-        <h3>${dungeon.name}</h3>
-        <p>${dungeon.theme}</p>
-        <div class="dungeon-metrics">
-          <span><strong>${dungeon.recommendedPower}</strong> 推荐战力</span>
-          <span><strong>${playerPower}</strong> 当前战力</span>
-          <span><strong>${materialName}</strong> 通关材料</span>
-        </div>
-        <small class="mechanic-line">${gate?.requirementText ?? dungeon.recommended}</small>
-        <small class="mechanic-line">${gate?.isNextRecommended ? '下一推荐：主神建议优先推进这里。' : risk.hint}</small>
-        ${renderDungeonTacticalFit(dungeonId)}
-        ${renderBossSealProgress(dungeonId, true)}
-        ${renderDirectiveCard(dungeonId, true)}
-        <div class="node-tags">
-          ${dungeon.nodes.map((node) => `<span>${nodeTypeLabels[node.type]}</span>`).join('')}
-        </div>
-        ${actionButton(action)}
+        <details class="dungeon-card-details">
+          <summary
+            role="button"
+            aria-controls="dungeon-details-${dungeonId}"
+            aria-expanded="false"
+            aria-label="展开${dungeon.name}完整准备信息"
+            data-collapsed-label="展开${dungeon.name}完整准备信息"
+            data-expanded-label="收起${dungeon.name}完整准备信息"
+          >查看完整准备信息</summary>
+          <div id="dungeon-details-${dungeonId}" class="dungeon-card-details-content">
+            <div class="dungeon-metrics">
+              <span><strong>${dungeon.recommendedPower}</strong> 推荐战力</span>
+              <span><strong>${playerPower}</strong> 当前战力</span>
+              <span><strong>${materialName}</strong> 通关材料</span>
+              ${protocolUnlocked ? `<span><strong>第 ${infernoUnlockedTier} 层</strong> 炼狱进度</span>` : ''}
+            </div>
+            <small class="mechanic-line">${gate?.requirementText ?? dungeon.recommended}</small>
+            <small class="mechanic-line">${gate?.isNextRecommended ? '通关推荐：主神建议优先推进这段章节。' : risk.hint}</small>
+            <small class="mechanic-line">${getDirectivePreparationSummary(dungeonId)}</small>
+            ${renderDungeonTacticalFit(dungeonId)}
+            ${renderBossSealProgress(dungeonId, true)}
+            ${renderDirectiveCard(dungeonId, true)}
+            <div class="node-tags">
+              ${dungeon.nodes.map((node) => `<span>${nodeTypeLabels[node.type]}</span>`).join('')}
+            </div>
+          </div>
+        </details>
       </article>`;
     })
     .join('');
@@ -6281,8 +7718,30 @@ function renderDungeonEntrances(actions: ViewAction[]): string {
 
 function isAdjacentGridNode(source: DungeonNode | undefined, target: DungeonNode): boolean {
   if (!source) return false;
+  const infernoConnections = getInfernoConnectionIds(state.run?.infernoMap);
+  if (infernoConnections) {
+    return infernoConnections[source.id]?.includes(target.id) ?? false;
+  }
 
   return Math.abs(source.position.x - target.position.x) + Math.abs(source.position.y - target.position.y) === 1;
+}
+
+function getRelativeNodeDirection(source: DungeonNode | undefined, target: DungeonNode): string {
+  if (!source) return '未知方向';
+  const horizontal = target.position.x - source.position.x;
+  const vertical = target.position.y - source.position.y;
+  if (Math.abs(horizontal) > Math.abs(vertical)) return horizontal > 0 ? '右侧' : '左侧';
+  if (vertical !== 0) return vertical > 0 ? '下方' : '上方';
+  return '当前位置';
+}
+
+function getRelativeNodeDirectionSymbol(source: DungeonNode | undefined, target: DungeonNode): string {
+  if (!source) return '·';
+  const horizontal = target.position.x - source.position.x;
+  const vertical = target.position.y - source.position.y;
+  if (Math.abs(horizontal) > Math.abs(vertical)) return horizontal > 0 ? '→' : '←';
+  if (vertical !== 0) return vertical > 0 ? '↓' : '↑';
+  return '·';
 }
 
 type CurrentRouteContractProgress = {
@@ -6343,17 +7802,22 @@ function renderRouteContractStatus(): string {
     lost: '已错过',
     banked: '已入账'
   };
+  const routeDungeon = state.run?.dungeonId === dungeonId
+    ? currentDungeon() ?? DUNGEONS[dungeonId]
+    : DUNGEONS[dungeonId];
   const nextTarget = progress.nextTargetNodeId
-    ? DUNGEONS[dungeonId].nodes.find((node) => node.id === progress.nextTargetNodeId)
+    ? routeDungeon.nodes.find((node) => node.id === progress.nextTargetNodeId)
     : undefined;
   const nextTargetVisibility = nextTarget && state.run
-    ? getNodeVisibility(nextTarget, {
+      ? getNodeVisibility(nextTarget, {
         currentNodeId: state.run.currentNodeId,
         clearedNodeIds: state.run.clearedNodeIds,
-        nodes: DUNGEONS[dungeonId].nodes
+        discoveredNodeIds: getRunDiscoveredNodeIds(state.run, routeDungeon),
+        nodes: routeDungeon.nodes,
+        connectionIdsByNodeId: getInfernoConnectionIds(state.run.infernoMap)
       })
     : undefined;
-  const nextObjective = nextTarget && nextTargetVisibility === 'explored'
+  const nextObjective = nextTarget && nextTargetVisibility !== undefined && nextTargetVisibility !== 'hidden'
     ? `${progress.completedTargetCount + 1} · ${nextTarget.title}`
     : nextTarget
       ? '继续探索任务线索'
@@ -6392,12 +7856,45 @@ function renderRunProtocolStatus(): string {
 
   if (state.run?.entryFlowVersion === 2) {
     const difficultyName = definition.id === 'standard' ? '普通' : definition.id === 'imprint' ? '困难' : '炼狱';
-    const materialAmount = definition.id === 'standard' ? 1 : definition.id === 'imprint' ? 2 : 3;
+    const infernoTier = getCurrentInfernoTier(state);
+    const infernoModifiers = getInfernoTierModifiers(infernoTier ?? 1);
+    const enemyMultiplier = definition.id === 'deep'
+      ? Math.ceil(
+          definition.modifiers.enemyStatMultiplierPercent *
+          infernoModifiers.enemyStatMultiplierPercent /
+          100
+        )
+      : definition.modifiers.enemyStatMultiplierPercent;
+    const trapMultiplier = definition.id === 'deep'
+      ? Math.ceil(
+          definition.modifiers.trapDamageMultiplierPercent *
+          infernoModifiers.trapDamageMultiplierPercent /
+          100
+        )
+      : definition.modifiers.trapDamageMultiplierPercent;
+    const rewardMultiplier = definition.id === 'deep'
+      ? Math.ceil(
+          definition.modifiers.clearRewardPointMultiplierPercent *
+          infernoModifiers.rewardPointMultiplierPercent /
+          100
+        )
+      : definition.modifiers.clearRewardPointMultiplierPercent;
+    const materialAmount = definition.id === 'standard'
+      ? 1
+      : definition.id === 'imprint'
+        ? 2
+        : infernoModifiers.materialAmount;
     const materialName = ITEMS[DUNGEON_MATERIAL_REWARDS[state.run.dungeonId].itemId].name;
+    const unlockedInfernoTier = infernoTier
+      ? getInfernoUnlockedTier(state, state.run.dungeonId)
+      : undefined;
     return `<div class="run-protocol-status difficulty-${definition.id}" data-run-protocol="${definition.id}">
-      <span><small class="feature-help-label">当前难度${renderFeatureHelpTrigger('difficulty')}</small><strong>${difficultyName}</strong></span>
-      <span><small>敌人 / 陷阱</small><strong>${protocolPressureDelta(definition.modifiers.enemyStatMultiplierPercent)} / ${protocolPressureDelta(definition.modifiers.trapDamageMultiplierPercent)}</strong></span>
-      <span><small>通关收益</small><strong>奖励 x${(definition.modifiers.clearRewardPointMultiplierPercent / 100).toFixed(2)} · ${materialName} x${materialAmount}</strong></span>
+      <span><small class="feature-help-label">当前难度${renderFeatureHelpTrigger(definition.id === 'deep' ? 'infernoTier' : 'difficulty')}</small><strong>${difficultyName}${infernoTier ? `第 ${infernoTier} 层` : ''}</strong></span>
+      <span><small>敌人 / 陷阱</small><strong>${protocolPressureDelta(enemyMultiplier)} / ${protocolPressureDelta(trapMultiplier)}</strong></span>
+      <span><small>通关收益</small><strong>奖励 x${(rewardMultiplier / 100).toFixed(2)} · ${materialName} x${materialAmount}</strong></span>
+      ${infernoTier && unlockedInfernoTier
+        ? `<span><small class="feature-help-label">随机地图${renderFeatureHelpTrigger('proceduralMap')}</small><strong>种子 ${state.run.infernoMap?.seed ?? '旧档固定图'} · ${infernoProgressSummary(infernoTier, unlockedInfernoTier)}</strong></span>`
+        : ''}
     </div>`;
   }
 
@@ -6752,8 +8249,18 @@ function formatDungeonLawModifiers(modifiers: DungeonLawModifiers): string {
 
 function getDungeonLawTarget(law: NonNullable<ReturnType<typeof getCurrentDungeonLaw>>): string {
   switch (law.state.law.kind) {
-    case 'demon_tower':
-      return '维持雾压 0/3，恢复地标可降压';
+    case 'demon_tower': {
+      const recoveryExhausted =
+        DUNGEON_LAW_LANDMARKS.demon_tower_1.reliefNodeIds.every((nodeId) =>
+          law.state.clearedNodeIds.includes(nodeId)
+        ) &&
+        DUNGEON_LAW_LANDMARKS.demon_tower_1.reliefEventIds.every((eventId) =>
+          law.state.resolvedEventIds.includes(eventId)
+        );
+      return recoveryExhausted
+        ? '恢复地标已耗尽，改走白光裂口侧路或撤回'
+        : '维持雾压 0/3，恢复地标可降压';
+    }
     case 'metro_abyss':
       return '校时回到退潮';
     case 'starfall_mine':
@@ -7399,10 +8906,32 @@ function renderPanopticonLawStatus(): string {
   </div>`;
 }
 
+function renderDungeonMapHud(): string {
+  const statuses = [
+    renderDungeonLawStatus(),
+    renderMirrorCityMapStatus(),
+    renderRedactionMapStatus(),
+    renderAuctionMapStatus(),
+    renderGenesisMapStatus(),
+    renderBroadcastMapStatus(),
+    renderShelterMapStatus(),
+    renderVerdictMapStatus(),
+    renderCombatReplayMapStatus(),
+    renderPanopticonLawStatus()
+  ].filter(Boolean);
+  if (!statuses.length) return '';
+
+  return `<aside class="dungeon-map-hud" data-dungeon-map-hud aria-label="地图态势">
+    <div class="dungeon-map-hud-heading"><span>地图态势</span><small>关键状态常显 · 复杂机制见 ? 或本局详情</small></div>
+    ${statuses.join('')}
+  </aside>`;
+}
+
 function renderDungeonLawStatus(): string {
   const law = getCurrentDungeonLaw(state);
   if (!law) return '';
-  if (String(law.state.dungeonId) === 'panopticon_city') return renderPanopticonLawStatus();
+  // The panopticon readout is the chapter's map HUD and stays visible beside the map.
+  if (String(law.state.dungeonId) === 'panopticon_city') return '';
 
   const target = getDungeonLawTarget(law);
   const mirrorStatus = law.state.law.kind === 'mirror_cycle_city'
@@ -7473,6 +9002,26 @@ function isDungeonLawLandmark(dungeonId: DungeonId, nodeId: string): boolean {
   );
 }
 
+function getDungeonLawLandmarkDescription(node: DungeonNode, cleared: boolean): string {
+  const law = getCurrentDungeonLaw(state);
+  if (!law) {
+    return cleared
+      ? '法则地标：此地标已处理，效果已计入本局副本规则。'
+      : '法则地标：处理此节点会推进或改变本局副本规则。';
+  }
+
+  const isExhaustedDemonRecovery =
+    cleared &&
+    law.state.law.kind === 'demon_tower' &&
+    (DUNGEON_LAW_LANDMARKS.demon_tower_1.reliefNodeIds as readonly string[]).includes(node.id);
+  const effect = isExhaustedDemonRecovery
+    ? '此恢复地标已耗尽，本局不会再次降低雾压'
+    : cleared
+      ? '此地标已处理，效果已计入当前法则'
+    : `处理「${node.title}」会推进或改变当前法则`;
+  return `法则地标：${effect}「${law.display.title}」。当前目标：${getDungeonLawTarget(law)}。`;
+}
+
 function renderNearbyRouteGateStatus(dungeon: NonNullable<ReturnType<typeof currentDungeon>>): string {
   const statuses = dungeon.nodes.flatMap((node) => {
     if (!isAdjacentGridNode(currentNode(), node)) return [];
@@ -7510,25 +9059,50 @@ function getRouteContractTargetDisplayState(
   return 'pending';
 }
 
+function getRouteContractNodeDisplay(nodeId: string): {
+  order?: number;
+  status?: RouteContractTargetDisplayState;
+} {
+  const context = getCurrentRouteContractProgress();
+  const progress = context?.source === 'active' ? context.progress : undefined;
+  const targetIndex = progress?.definition?.targetNodeIds.indexOf(nodeId) ?? -1;
+  if (!progress || targetIndex < 0) return {};
+  return {
+    order: targetIndex + 1,
+    status: getRouteContractTargetDisplayState(progress, targetIndex)
+  };
+}
+
 function fogGridNodeButton(
   node: DungeonNode,
   visibility: Exclude<VisibilityState, 'explored'>,
   actions: ViewAction[],
-  departureBlockReason?: string
+  departureBlockReason?: string,
+  boss?: { nodeId: string; title: string }
 ): string {
   const frontier = visibility === 'frontier';
+  const discovered = visibility === 'discovered';
+  const revealed = frontier || discovered;
   const departureBlocked = frontier && Boolean(departureBlockReason);
   const routeGate = frontier ? getCurrentRouteGateStatus(state, node.id) : undefined;
+  const routeContractTarget = getRouteContractNodeDisplay(node.id);
+  const outOfOrderRisk = routeContractTarget.status === 'locked';
+  const isBoss = boss?.nodeId === node.id;
+  const visibleTitle = isBoss ? boss.title : node.title;
   const status = departureBlocked
     ? '当前位置待处理'
+    : outOfOrderRisk
+      ? '高风险 · 目标 1 未完成，处理后任务将不可逆失败'
     : routeGate?.status === 'closed'
       ? '门禁关闭 · 可查看'
       : frontier
         ? '可探索'
-        : '靠近后侦察';
+        : discovered
+          ? '已侦察'
+          : '靠近后侦察';
   const action: ViewAction = {
     id: `grid-${node.id}`,
-    label: '探索未知区域',
+    label: revealed ? visibleTitle : '探索未知区域',
     hint: status,
     disabled: !frontier || departureBlocked,
     onSelect: () => {
@@ -7539,26 +9113,41 @@ function fogGridNodeButton(
 
   const gridStatusClass = departureBlocked ? 'route-blocked' : frontier ? 'movable' : 'distant';
   const gateClass = routeGate ? `route-gate-node gate-${routeGate.status}` : '';
+  const direction = getRelativeNodeDirection(currentNode(), node);
+  const directionSymbol = getRelativeNodeDirectionSymbol(currentNode(), node);
+  const gridPosition = `第 ${node.position.x + 1} 列第 ${node.position.y + 1} 行`;
+  const nodeIdentity = isBoss
+    ? `首领「${boss.title}」，地点「${node.title}」`
+    : `${nodeTypeLabels[node.type]}「${node.title}」`;
+  const routeContractLabel = routeContractTarget.order
+    ? `，隐藏任务目标 ${routeContractTarget.order}${outOfOrderRisk ? '，目标 1 未完成，处理会使任务不可逆失败' : ''}`
+    : '';
   const ariaLabel = frontier
     ? routeGate?.status === 'closed'
-      ? '相邻未知区域，门禁尚未开启'
+      ? `${direction}${gridPosition}，${nodeIdentity}${routeContractLabel}，门禁尚未开启`
       : departureBlocked
-        ? '相邻未知区域，处理当前位置后可探索'
-        : '相邻未知区域，可探索'
-    : '未探索区域，靠近后可侦察';
+        ? `${direction}${gridPosition}，${nodeIdentity}${routeContractLabel}，处理当前位置后可探索`
+        : `${direction}${gridPosition}，${nodeIdentity}${routeContractLabel}，可探索`
+    : discovered
+      ? `${gridPosition}，${nodeIdentity}${routeContractLabel}，已侦察，当前不相邻`
+      : `${direction}${gridPosition}未探索区域，靠近后可侦察`;
 
-  return `<button class="grid-node fog-node fog-${visibility} ${gridStatusClass} ${gateClass}"
+  return `<button class="grid-node fog-node fog-${visibility} ${gridStatusClass} ${gateClass} ${isBoss ? 'boss-node' : ''} ${routeContractTarget.order ? `route-contract-target-node route-contract-target-${routeContractTarget.order} route-contract-target-${routeContractTarget.status}` : ''}"
     data-action="${action.id}"
     data-fog-state="${visibility}"
+    ${isBoss ? 'data-boss-node="true"' : ''}
+    ${routeContractTarget.order ? `data-route-contract-order="${routeContractTarget.order}" data-route-contract-status="${routeContractTarget.status}"` : ''}
     ${routeGate ? `data-route-gate-id="${routeGate.gate.id}" data-route-gate-status="${routeGate.status}"` : ''}
     aria-label="${ariaLabel}"
     ${departureBlocked ? 'aria-describedby="route-lock-reason"' : routeGate ? `aria-describedby="route-gate-${routeGate.gate.id}"` : ''}
     ${action.disabled ? 'disabled' : ''}>
-    <span class="fog-signal" aria-hidden="true">?</span>
-    ${frontier
-      ? `<span class="node-type-label">邻接区域</span>
-        <strong>迷雾边界</strong>
-        <small>${status}</small>`
+    ${discovered ? '' : `<span class="fog-signal" aria-hidden="true">${frontier ? directionSymbol : '?'}</span>`}
+    ${routeContractTarget.order ? `<span class="route-contract-order-mark state-${routeContractTarget.status}" aria-hidden="true">${routeContractTarget.order}</span>` : ''}
+    ${revealed
+      ? `<span class="node-type-label" aria-hidden="true">${isBoss ? '首领' : nodeTypeLabels[node.type]}</span>
+        <strong aria-hidden="true">${visibleTitle}</strong>
+        ${isBoss && node.title !== visibleTitle ? `<b class="node-subtitle" aria-hidden="true">${node.title}</b>` : ''}
+        <small aria-hidden="true">${status}</small>`
       : ''}
   </button>`;
 }
@@ -7571,7 +9160,7 @@ function gridNodeButton(
   boss?: { nodeId: string; title: string }
 ): string {
   if (visibility !== 'explored') {
-    return fogGridNodeButton(node, visibility, actions, departureBlockReason);
+    return fogGridNodeButton(node, visibility, actions, departureBlockReason, boss);
   }
 
   const cleared = state.run?.clearedNodeIds.includes(node.id) ?? false;
@@ -7613,15 +9202,9 @@ function gridNodeButton(
           ? 'completed'
           : 'pending'
     : undefined;
-  const routeContractContext = getCurrentRouteContractProgress();
-  const routeContract = routeContractContext?.source === 'active'
-    ? routeContractContext.progress
-    : undefined;
-  const routeContractTargetIndex = routeContract?.definition?.targetNodeIds.indexOf(node.id) ?? -1;
-  const routeContractOrder = routeContractTargetIndex >= 0 ? routeContractTargetIndex + 1 : undefined;
-  const routeContractTargetState = routeContract && routeContractTargetIndex >= 0
-    ? getRouteContractTargetDisplayState(routeContract, routeContractTargetIndex)
-    : undefined;
+  const routeContractTarget = getRouteContractNodeDisplay(node.id);
+  const routeContractOrder = routeContractTarget.order;
+  const routeContractTargetState = routeContractTarget.status;
   const pursuit = getCurrentRunPursuit(state);
   const pursuitState = state.run
     ? normalizeSavedCurrentRunPursuitState(state.run.pursuitState, state.run.dungeonId)
@@ -7665,12 +9248,20 @@ function gridNodeButton(
   const panopticonBossNode = Boolean(panopticonStatus && node.id === 'all_sight_warden');
   const panopticonBossState = panopticonBossNode ? panopticonStatus?.bossSnapshot ?? 'none' : undefined;
   const panopticonMarked = Boolean(panopticonZoneActive || panopticonRelayNode || panopticonRouteNode || panopticonBossNode);
+  const showsLawLandmarkMark = isLawLandmark && !panopticonStatus;
+  const lawLandmarkTooltipId = showsLawLandmarkMark ? `law-landmark-tooltip-${node.id}` : '';
+  const lawLandmarkDescription = showsLawLandmarkMark
+    ? getDungeonLawLandmarkDescription(node, cleared)
+    : '';
   const gateClass = routeGate ? `route-gate-node gate-${routeGate.status}` : '';
   const gridStatusClass = current ? 'current' : departureBlocked ? 'route-blocked' : movable ? 'movable' : 'distant';
+  const outOfOrderRisk = movable && routeContractTargetState === 'locked';
   const status = current
     ? '当前位置'
     : departureBlocked
       ? '封锁'
+      : outOfOrderRisk
+        ? '高风险 · 目标 1 未完成，处理后任务将不可逆失败'
       : routeGate?.status === 'closed'
         ? '门禁关闭 · 可查看'
         : routeGate?.status === 'open'
@@ -7682,7 +9273,7 @@ function gridNodeButton(
               : '未相邻';
   const action: ViewAction = {
     id: `grid-${node.id}`,
-    label: node.title,
+    label: isBoss ? boss.title : node.title,
     hint: status,
     disabled: !movable || departureBlocked,
     onSelect: () => {
@@ -7711,7 +9302,22 @@ function gridNodeButton(
         panopticonBossNode ? `万目监察者${panopticonBossState === 'defeated' ? '已击破' : panopticonBossState === 'frozen' ? '快照已冻结' : '未冻结'}` : ''
       ].filter(Boolean).join('，')
     : '';
-  const ariaLabel = [baseAriaLabel, pursuitAriaLabel, equipmentMemoryAriaLabel, panopticonAriaLabel].filter(Boolean).join('，');
+  const lawLandmarkAriaLabel = showsLawLandmarkMark ? '法则地标' : '';
+  const exhaustedDemonRecovery =
+    cleared &&
+    state.run?.dungeonId === 'demon_tower_1' &&
+    (DUNGEON_LAW_LANDMARKS.demon_tower_1.reliefNodeIds as readonly string[]).includes(node.id);
+  const ariaLabel = [
+    baseAriaLabel,
+    lawLandmarkAriaLabel,
+    pursuitAriaLabel,
+    equipmentMemoryAriaLabel,
+    panopticonAriaLabel
+  ].filter(Boolean).join('，');
+  const ariaDescribedBy = [
+    departureBlocked ? 'route-lock-reason' : routeGate ? `route-gate-${routeGate.gate.id}` : '',
+    lawLandmarkTooltipId
+  ].filter(Boolean).join(' ');
 
   return `<button class="grid-node type-${node.type} ${gridStatusClass} ${gateClass} ${cleared ? 'cleared' : ''} ${isBoss ? 'boss-node' : ''} ${isProtocolAnchor ? 'protocol-anchor-node' : ''} ${protocolAnchorClass} ${isLawLandmark ? 'law-landmark-node' : ''} ${equipmentHuntClue ? 'equipment-hunt-clue-node' : ''} ${equipmentHuntClue?.cleared ? 'equipment-hunt-clue-collected' : ''} ${routeContractOrder ? `route-contract-target-node route-contract-target-${routeContractOrder} route-contract-target-${routeContractTargetState}` : ''} ${isEquipmentMemoryTarget ? `equipment-memory-target-node status-${equipmentMemoryTargetStatus}` : ''} ${isPursuitPosition ? 'pursuit-position-node' : ''} ${isPursuitContainment ? 'pursuit-containment-node' : ''} ${isPursuitContainmentCompleted ? 'pursuit-containment-completed' : ''} ${isPursuitFusion ? 'pursuit-fusion-node' : ''} ${replayTakeIndex >= 0 ? `combat-replay-take-node ${replayTakeRecording ? 'recorded' : 'pending'}` : ''} ${replayRouteNode ? `combat-replay-route-node ${replayRouteSelected ? 'selected' : ''}` : ''} ${panopticonStatus ? 'panopticon-node' : ''} ${panopticonMarked ? 'panopticon-marked-node' : ''} ${panopticonZoneActive ? 'panopticon-zone-active' : ''} ${panopticonRelayNode ? `panopticon-relay-node ${panopticonRelayComplete ? 'completed' : 'pending'}` : ''} ${panopticonRouteNode ? `panopticon-route-node ${panopticonRouteSelected ? 'selected' : ''}` : ''} ${panopticonBossNode ? `panopticon-boss-node state-${panopticonBossState}` : ''}"
     data-action="${action.id}"
@@ -7733,10 +9339,13 @@ function gridNodeButton(
     ${panopticonBossState ? `data-panopticon-boss-state="${panopticonBossState}"` : ''}
     ${pursuitMapStatus ? `data-pursuit-status="${pursuitMapStatus}"` : ''}
     ${isBoss ? 'data-boss-node="true"' : ''} aria-label="${ariaLabel}"
-    ${departureBlocked ? 'aria-describedby="route-lock-reason"' : routeGate ? `aria-describedby="route-gate-${routeGate.gate.id}"` : ''}
+    ${ariaDescribedBy ? `aria-describedby="${ariaDescribedBy}"` : ''}
     ${action.disabled ? 'disabled' : ''}>
     ${isProtocolAnchor ? `<span class="protocol-anchor-mark" aria-hidden="true">${isDeepProtocolAnchor ? `深${protocolAnchorIndex + 1}` : '锚'}</span>` : ''}
-    ${isLawLandmark && !panopticonStatus ? '<span class="law-landmark-mark" aria-hidden="true">律</span>' : ''}
+    ${showsLawLandmarkMark
+      ? `<span class="law-landmark-mark" aria-hidden="true">律</span>
+        <span id="${lawLandmarkTooltipId}" class="law-landmark-tooltip" role="tooltip">${escapeHtml(lawLandmarkDescription)}</span>`
+      : ''}
     ${replayTakeIndex >= 0 ? `<span class="combat-replay-node-mark ${replayTakeRecording ? 'recorded' : ''}" aria-hidden="true">${replayTakeRecording ? '录' : replayTakeIndex + 1}</span>` : replayRouteNode ? `<span class="combat-replay-node-mark route ${replayRouteSelected ? 'selected' : ''}" aria-hidden="true">剪</span>` : ''}
     ${panopticonMarked ? `<span class="panopticon-node-marks" aria-hidden="true">${
       panopticonBossNode
@@ -7751,7 +9360,8 @@ function gridNodeButton(
     ${equipmentHuntClue ? `<span class="equipment-hunt-clue-mark" aria-hidden="true">${equipmentHuntClue.cleared ? '线索已取' : '追猎线索'}</span>` : ''}
     ${isEquipmentMemoryTarget ? `<span class="equipment-memory-mark state-${equipmentMemoryTargetStatus}" aria-hidden="true" title="装备记忆目标">忆</span>` : ''}
     <span class="node-type-label">${isBoss ? '首领' : nodeTypeLabels[node.type]}</span>
-    <strong>${node.title}</strong>
+    <strong>${isBoss ? boss.title : node.title}</strong>
+    ${isBoss && boss.title !== node.title ? `<b class="node-subtitle">${node.title}</b>` : ''}
     ${isPursuitPosition || isPursuitContainment || isPursuitFusion
       ? `<span class="pursuit-node-marks" aria-hidden="true">
           ${isPursuitPosition ? '<span class="pursuit-mark">追</span>' : ''}
@@ -7759,7 +9369,7 @@ function gridNodeButton(
           ${isPursuitFusion ? '<span class="pursuit-fusion-mark">融</span>' : ''}
         </span>`
       : ''}
-    <small${routeGateBlockReason ? ` title="${routeGateBlockReason}"` : ''}>${routeGate ? `<span class="route-gate-mark gate-${routeGate.status}" aria-hidden="true">门</span>` : ''}${status}</small>
+    <small${routeGateBlockReason ? ` title="${routeGateBlockReason}"` : ''}>${routeGate ? `<span class="route-gate-mark gate-${routeGate.status}" aria-hidden="true">门</span>` : ''}${exhaustedDemonRecovery ? '已清理 · 恢复地标已耗尽' : status}</small>
   </button>`;
 }
 
@@ -7775,7 +9385,11 @@ function renderDungeonMap(
   const visibilityInput = {
     currentNodeId: state.run?.currentNodeId ?? dungeon.grid.startNodeId,
     clearedNodeIds: state.run?.clearedNodeIds ?? [],
-    nodes: dungeon.nodes
+    discoveredNodeIds: state.run
+      ? getRunDiscoveredNodeIds(state.run, dungeon)
+      : [],
+    nodes: dungeon.nodes,
+    connectionIdsByNodeId: getInfernoConnectionIds(state.run?.infernoMap)
   };
 
   for (let y = 0; y < dungeon.grid.height; y += 1) {
@@ -7788,11 +9402,21 @@ function renderDungeonMap(
     }
   }
 
+  const scrollHintId = `dungeon-map-scroll-hint-${dungeon.id}`;
   return `<div class="dungeon-map-heading">
-    <span class="feature-help-label">探索地图${renderFeatureHelpTrigger('fogMap')}</span>
-    <small>处理当前区域，逐步揭开相邻迷雾</small>
+    <span class="feature-help-label">${state.run?.infernoMap ? '炼狱随机地下城' : '探索地图'}${renderFeatureHelpTrigger(state.run?.infernoMap ? 'proceduralMap' : 'fogMap')}</span>
+    <small>${state.run?.infernoMap ? `种子 ${state.run.infernoMap.seed} · 本轮布局已冻结` : '相邻区域可侦察，远处仍由迷雾遮蔽'}</small>
   </div>
-  <div class="dungeon-map" data-dungeon-id="${dungeon.id}" style="--dungeon-grid-columns: ${dungeon.grid.width}">
+  <small class="dungeon-map-scroll-hint" id="${scrollHintId}">小屏幕可左右滑动查看完整地图。</small>
+  <div
+    class="dungeon-map"
+    data-dungeon-id="${dungeon.id}"
+    style="--dungeon-grid-columns: ${dungeon.grid.width}"
+    role="region"
+    tabindex="0"
+    aria-label="${dungeon.name}探索地图"
+    aria-describedby="${scrollHintId}"
+  >
     ${cells.join('')}
   </div>`;
 }
@@ -7813,10 +9437,15 @@ function renderPendingEquipmentOffer(actions: ViewAction[]): string {
   const options = offer.equipmentIds.slice(0, 3).map((equipmentId) => {
     const equipment = EQUIPMENT[equipmentId];
     const guaranteed = offer.guaranteedEquipmentId === equipmentId;
+    const roll = offer.equipmentRolls?.[equipmentId];
+    const alreadyOwned = state.ownedEquipment.includes(equipmentId);
     const action: ViewAction = {
       id: `loot-select-${equipmentId}`,
       label: '选择',
-      hint: `${slotLabels[equipment.slot]} · 通关后入架`,
+      ariaLabel: `选择装备 ${equipment.name}`,
+      hint: roll
+        ? `${slotLabels[equipment.slot]} · ${alreadyOwned ? '与当前词条比较' : '通关后入架'}`
+        : `${slotLabels[equipment.slot]} · 通关后入架`,
       onSelect: () => {
         state = resolveEquipmentLoot(state, equipmentId);
       }
@@ -7836,8 +9465,16 @@ function renderPendingEquipmentOffer(actions: ViewAction[]): string {
         <small>${slotLabels[equipment.slot]}</small>
       </div>
       <p class="loot-equipment-core">${equipment.description}</p>
+      ${roll ? renderEquipmentRollReadout(equipmentId, roll, true) : ''}
       ${renderEquipmentRelicConduit(equipmentId, 'card')}
-      ${renderEquipmentSwapPreview(equipmentId, false, '仅作换装对比；选择后仍需通关才归入装备架。')}
+      ${renderEquipmentSwapPreview(
+        equipmentId,
+        false,
+        roll
+          ? '已计入候选与当前随机词条；选择后仍需通关，且只保留真实更强结果。'
+          : '仅作换装对比；选择后仍需通关才归入装备架。',
+        roll
+      )}
       ${actionButton(action, 'button loot-select-button')}
     </article>`;
   });
@@ -7851,13 +9488,13 @@ function renderPendingEquipmentOffer(actions: ViewAction[]): string {
   };
   actions.push(declineAction);
 
-  return `<div class="equipment-loot-offer" data-offer-id="${offer.offerId}" role="group" aria-label="精英装备三选一">
+  return `<div class="equipment-loot-offer" data-offer-id="${offer.offerId}" role="group" aria-label="首领或精英装备三选一">
     <div class="loot-offer-heading">
       <div>
-        <span class="eyebrow">精英战利品</span>
-        <h3>选择一件装备</h3>
+        <span class="eyebrow">首领 / 精英战利品</span>
+        <h3>${offer.equipmentRolls ? '选择一件炼狱词条装备' : '选择一件装备'}</h3>
       </div>
-      <small>选择后暂存袋中，出口结算后才归入装备架。</small>
+      <small>${offer.equipmentRolls ? '同名底材允许重复掉落；通关后按真实战力与综合词条裁决，层数只在价值持平时破同分，弱候选会分解为奖励点。' : '选择后暂存袋中，出口结算后才归入装备架。'}</small>
     </div>
     <div class="loot-offer-grid">${options.join('')}</div>
     <div class="loot-offer-footer">
@@ -8881,8 +10518,27 @@ function renderNodeAction(actions: ViewAction[]): string {
 
   const cleared = state.run?.clearedNodeIds.includes(node.id) ?? false;
   const hasPendingEquipmentOffer = Boolean(state.run?.pendingEquipmentOffer);
+  const currentBossSeal = getBossSealStatus(state);
+  const currentBoss = currentBossSeal?.definition.nodeId === node.id
+    ? currentBossSeal.definition
+    : undefined;
+  const currentNodeTitle = currentBoss?.bossTitle ?? node.title;
   const exitBossSeal = node.type === 'exit' ? getBossSealStatus(state) : undefined;
   const exitSealed = Boolean(exitBossSeal && !exitBossSeal.cleared);
+  const routeContract = getCurrentRouteContractProgress();
+  const routeTargetIndex =
+    routeContract?.source === 'active'
+      ? routeContract.progress.definition?.targetNodeIds.indexOf(node.id) ?? -1
+      : -1;
+  const routeTargetState =
+    routeTargetIndex >= 0
+      ? getRouteContractTargetDisplayState(routeContract!.progress, routeTargetIndex)
+      : undefined;
+  const outOfOrderWarning =
+    routeTargetState === 'locked'
+      ? '隐藏任务警告：目标 1 尚未完成；现在处理此节点会使隐藏任务不可逆失败。'
+      : undefined;
+  const actionHint = (hint: string) => outOfOrderWarning ? `${hint} · 提前完成将导致隐藏任务失败` : hint;
   const nodeActions: ViewAction[] = [];
   if (hasPendingEquipmentOffer) {
     // The loot choice below is the only unresolved action after an elite is defeated.
@@ -8895,10 +10551,17 @@ function renderNodeAction(actions: ViewAction[]): string {
       onSelect: () => {}
     });
   } else if (node.type === 'monster') {
+    const monsterName = node.monsterId ? MONSTERS[node.monsterId].name : '';
     nodeActions.push({
       id: `fight-current-${node.id}`,
-      label: '进入战斗',
-      hint: node.monsterId ? MONSTERS[node.monsterId].name : '',
+      label: currentBoss ? `进入战斗 · ${currentBoss.bossTitle}` : '进入战斗',
+      hint: actionHint(
+        currentBoss
+          ? [node.title, monsterName].filter((name, index, names) => name && names.indexOf(name) === index).join(' · ')
+          : monsterName && monsterName !== node.title
+            ? `${node.title}（${monsterName}）`
+            : monsterName
+      ),
       onSelect: () => {
         state = selectNode(state, node.id);
       }
@@ -8911,7 +10574,7 @@ function renderNodeAction(actions: ViewAction[]): string {
       {
         id: `trap-counter-${node.id}`,
         label: counterItem ? `使用 ${ITEMS[counterItem].name}` : '无反制工具',
-        hint: counterStatus.available ? `${counterStatus.hint} · 无伤通过` : counterStatus.hint,
+        hint: actionHint(counterStatus.available ? `${counterStatus.hint} · 无伤通过` : counterStatus.hint),
         disabled: !counterStatus.available,
         onSelect: () => {
           state = handleTrap(state, 'counter');
@@ -8920,7 +10583,7 @@ function renderNodeAction(actions: ViewAction[]): string {
       {
         id: `trap-risk-${node.id}`,
         label: '冒险检定',
-        hint: '无需道具 · 可能承受陷阱伤害',
+        hint: actionHint('无需道具 · 可能承受陷阱伤害'),
         onSelect: () => {
           state = handleTrap(state, 'risk');
         }
@@ -8930,20 +10593,28 @@ function renderNodeAction(actions: ViewAction[]): string {
   if (!hasPendingEquipmentOffer && !cleared && node.type === 'portal') {
     const stableItem = node.portal?.stableItem;
     const stableStatus = getNodeToolAvailability(stableItem);
+    const targetGate = getCampaignGates(state).find(
+      (gate) => gate.dungeonId === node.portal?.targetDungeonId
+    );
+    const mainlineLocked = targetGate?.status === 'locked';
+    const mainlineRequirement = targetGate?.requirementText ?? '先领取对应章节主线';
     nodeActions.push(
       {
         id: `portal-stabilize-${node.id}`,
-        label: '稳定传送',
-        hint: stableStatus.available ? `${stableStatus.hint} · 避免裂隙反噬` : stableStatus.hint,
-        disabled: !stableStatus.available,
+        label: mainlineLocked ? '稳定传送 · 主线未解锁' : '稳定传送',
+        hint: mainlineLocked
+          ? mainlineRequirement
+          : actionHint(stableStatus.available ? `${stableStatus.hint} · 避免裂隙反噬` : stableStatus.hint),
+        disabled: mainlineLocked || !stableStatus.available,
         onSelect: () => {
           state = usePortal(state, 'stabilize');
         }
       },
       {
         id: `portal-force-${node.id}`,
-        label: '强闯传送',
-        hint: '无需道具 · 会承受裂隙反噬',
+        label: mainlineLocked ? '强闯传送 · 主线未解锁' : '强闯传送',
+        hint: mainlineLocked ? mainlineRequirement : actionHint('无需道具 · 会承受裂隙反噬'),
+        disabled: mainlineLocked,
         onSelect: () => {
           state = usePortal(state, 'force');
         }
@@ -8954,7 +10625,7 @@ function renderNodeAction(actions: ViewAction[]): string {
     nodeActions.push({
       id: `reward-current-${node.id}`,
       label: '收取奖励',
-      hint: node.reward?.methodBonus ? `${METHODS[node.reward.methodBonus.methodId].name}有额外收益` : '结算',
+      hint: actionHint(node.reward?.methodBonus ? `${METHODS[node.reward.methodBonus.methodId].name}有额外收益` : '结算'),
       onSelect: () => {
         state = collectReward(state);
       }
@@ -8996,7 +10667,8 @@ function renderNodeAction(actions: ViewAction[]): string {
   >
     <div class="node-action-copy">
       <span class="eyebrow">当前节点</span>
-      <h2>${node.title}</h2>
+      <h2>${currentNodeTitle}</h2>
+      ${currentBoss && currentBoss.bossTitle !== node.title ? `<small class="boss-node-subtitle">${node.title}</small>` : ''}
       <p>${node.description}</p>
       ${
         exitSealed && exitBossSeal
@@ -9012,7 +10684,6 @@ function renderNodeAction(actions: ViewAction[]): string {
       ${entropyHeadingControl}
       ${mirrorPhaseControl}
       ${redactionClauseControl}
-      ${renderAuctionMapStatus()}
       ${auctionLotControl}
       ${genesisSpliceControl}
       ${broadcastRelayControl}
@@ -9023,6 +10694,8 @@ function renderNodeAction(actions: ViewAction[]): string {
       ${soulSkillControls}
       ${soulRechargeStation}
     </div>
+    ${outOfOrderWarning ? `<p class="route-contract-order-warning" role="alert">${outOfOrderWarning}</p>` : ''}
+    ${node.type === 'portal' ? '<p class="portal-optional-note">传送为可选路线；也可以直接在地图中继续探索。</p>' : ''}
     ${nodeActions.length ? `<div class="button-row">${nodeActions.map((action) => {
       const isRiskAction = action.id.startsWith('trap-risk-') || action.id.startsWith('portal-force-');
       return actionButton(action, `button node-action-button ${isRiskAction ? 'secondary risk-action' : 'tool-action'}`);
@@ -9101,59 +10774,118 @@ function renderDungeonEvents(actions: ViewAction[]): string {
   </section>`;
 }
 
+function formatRetreatPreview(): string {
+  const settlement = getRunLootSettlementPreview(state, 'retreated');
+  if (!settlement || !state.run) return '当前没有可结算的副本进度';
+  const economy = runEconomy('retreated');
+  const lootSecurity = getRunLootSecurityStatus(state);
+  const retainedAnything =
+    settlement.retained.rewardPoints > 0 ||
+    settlement.retained.lingyun > 0 ||
+    settlement.retained.equipmentIds.length > 0 ||
+    Object.values(settlement.retained.items).some((amount) => (amount ?? 0) > 0);
+  const securityNotice = lootSecurity.enabled
+    ? lootSecurity.secured
+      ? `累计清理 ${lootSecurity.clearedNodeCount} 个非出口节点：战利品袋已固化，按撤退比例带回`
+      : `累计清理 ${lootSecurity.clearedNodeCount}/${lootSecurity.requiredNodeCount} 个非出口节点：带回 0，袋中收益全部遗失`
+    : retainedAnything
+      ? `旧版探索存档已清理 ${lootSecurity.clearedNodeCount} 个非出口节点：按兼容规则结算，以右侧实际带回数为准`
+      : `旧版探索存档已清理 ${lootSecurity.clearedNodeCount} 个非出口节点：当前没有可带回的袋中收益`;
+  const retained = [
+    `奖励点 ${settlement.retained.rewardPoints}`,
+    `灵蕴 ${settlement.retained.lingyun}`,
+    `物品 ${formatRunLootItems(settlement.retained.items)}`
+  ].join(' / ');
+  const lost = [
+    `奖励点 ${settlement.lost.rewardPoints}`,
+    `灵蕴 ${settlement.lost.lingyun}`,
+    `物品 ${formatRunLootItems(settlement.lost.items)}`,
+    `装备 ${formatRunLootEquipment(settlement.lost.equipmentIds)}`
+  ].join(' / ');
+  const totalRewardPoints = settlement.retained.rewardPoints + (economy?.rewardPoints ?? 0);
+  const scorePreview = `；评分奖励 ${economy?.rewardPoints ?? 0} 点；本轮奖励点总入账 ${totalRewardPoints} 点`;
+  return `${securityNotice}；袋内带回：${retained}；遗失：${lost}${scorePreview}`;
+}
+
+function renderRecentRunProgress(): string {
+  const latest = state.log[0];
+  const node = currentNode();
+  const currentNodeJustCleared =
+    node !== undefined && state.run?.clearedNodeIds.includes(node.id) === true;
+  if (
+    !latest ||
+    (
+      !latest.includes('倒下') &&
+      !latest.includes('被捕获并进入出战位') &&
+      !latest.includes('你选择了回响遗物') &&
+      !latest.includes('传送门被主线门禁拦截') &&
+      !state.run?.eventLog.includes(latest) &&
+      !currentNodeJustCleared
+    )
+  ) return '';
+  return `<aside class="recent-run-progress" aria-live="polite">
+    <span class="eyebrow">最近进展</span>
+    <strong>${escapeHtml(formatPlayerLogLine(latest))}</strong>
+  </aside>`;
+}
+
 function renderExplore(actions: ViewAction[]): string {
   const dungeon = currentDungeon();
   if (!dungeon) return '';
   const departureBlock = getNodeDepartureBlock(state);
   const departureBlockReason = departureBlock?.message ?? getNodeDepartureBlockReason(state);
+  const hasPendingRelicDraft =
+    isRunRelicState(state.run?.relicState) && state.run.relicState.pendingDraft !== undefined;
 
   const returnAction: ViewAction = {
     id: 'abandon-run',
     label: '撤回主神空间',
-    hint: '袋中点数/物品/灵蕴保留50%，装备遗失',
+    hint: formatRetreatPreview(),
     onSelect: () => {
       state = resolveRetreat(state);
     }
   };
   actions.push(returnAction);
 
-  return `${renderDirectiveCard(dungeon.id)}
-  ${renderDungeonEvents(actions)}
-  <section class="panel wide-panel">
+  return `<section class="panel wide-panel explore-primary">
     <div class="panel-title">
       <span class="eyebrow">副本探索</span>
-      <h2>${dungeon.name}</h2>
+      <div class="dungeon-title-row explore-dungeon-title">
+        <h2>${dungeon.name}</h2>
+        ${renderDungeonGenreBadge(dungeon.genre)}
+      </div>
     </div>
-    ${renderRunProtocolStatus()}
-    ${renderRouteContractStatus()}
-    ${renderRunPressureStatus()}
-    ${renderRunCompanionStatus()}
-    ${renderRunMethodStatus()}
-    ${renderRunEquipmentHuntStatus()}
-    ${renderRunEquipmentMemoryHuntStatus()}
-    ${renderRunTacticalLoadout()}
-    ${renderRunFieldSurveyStatus()}
-    ${renderRunSoulSkillStatus()}
-    ${renderRunRelicStatus(actions)}
-    ${renderDungeonLawStatus()}
-    ${renderGenesisMapStatus()}
-    ${renderBroadcastMapStatus()}
-    ${renderShelterMapStatus()}
-    ${renderVerdictMapStatus()}
-    ${renderCombatReplayMapStatus()}
-    ${renderMirrorCityMapStatus()}
-    ${renderRedactionMapStatus()}
-    ${renderRouteSectorSummary()}
-    ${renderNearbyRouteGateStatus(dungeon)}
     <p class="lead-copy">${dungeon.theme}</p>
-    ${renderBossSealProgress(dungeon.id)}
-    ${renderLootBag()}
+    ${renderRecentRunProgress()}
     ${renderDepartureBlock(departureBlockReason, departureBlock?.kind)}
     ${renderExplorationGuide()}
-    ${renderDungeonMap(dungeon, actions, departureBlockReason)}
     ${renderNodeAction(actions)}
+    ${renderDungeonMap(dungeon, actions, departureBlockReason)}
+    ${state.phase === 'combat' ? '' : renderDungeonMapHud()}
+    ${renderLootBag()}
+    ${renderBossSealProgress(dungeon.id)}
+    <details class="run-details"${hasPendingRelicDraft ? ' open' : ''}>
+      <summary role="button" aria-controls="run-details-content" aria-expanded="${hasPendingRelicDraft}"><strong>${hasPendingRelicDraft ? '待选择：本局回响遗物' : '本局状态与复杂规则'}</strong><small>${hasPendingRelicDraft ? '路线已暂停，选择后继续探索' : '协议、侵蚀、队伍、携行、回响与场域法则'}</small></summary>
+      <div id="run-details-content" class="run-details-content">
+        ${renderRunProtocolStatus()}
+        ${renderRouteContractStatus()}
+        ${renderRunPressureStatus()}
+        ${renderRunCompanionStatus()}
+        ${renderRunMethodStatus()}
+        ${renderRunEquipmentHuntStatus()}
+        ${renderRunEquipmentMemoryHuntStatus()}
+        ${renderRunTacticalLoadout()}
+        ${renderRunFieldSurveyStatus()}
+        ${renderRunSoulSkillStatus()}
+        ${renderRunRelicStatus(actions)}
+        ${renderRouteSectorSummary()}
+        ${renderNearbyRouteGateStatus(dungeon)}
+      </div>
+    </details>
     ${actionButton(returnAction, 'button secondary')}
-  </section>`;
+  </section>
+  ${renderDungeonEvents(actions)}
+  ${renderDirectiveCard(dungeon.id)}`;
 }
 
 function getDungeonFeatureUnavailableReason(feature: ArchiveFeature): string | undefined {
@@ -9170,12 +10902,33 @@ function isCombatActionAvailableUnderCurrentLaw(action: CombatAction): boolean {
   return true;
 }
 
+function isCombatActionUsable(
+  action: CombatAction,
+  weaponSkillStatus: ReturnType<typeof getWeaponSkillStatus>
+): boolean {
+  if (!isCombatActionAvailableUnderCurrentLaw(action)) return false;
+  if (action === 'use_healing_pill') {
+    return isTacticalItemAvailable(state, 'healing_pill') && state.player.hp < getDerivedStats(state).maxHp;
+  }
+  if (action === 'use_thunder_talisman') return isTacticalItemAvailable(state, 'thunder_talisman');
+  if (action === 'weapon_skill') return weaponSkillStatus.available;
+  return true;
+}
+
 function formatCombatIntentActions(
   intentActions: readonly CombatAction[],
   weaponSkillStatus: ReturnType<typeof getWeaponSkillStatus>
 ): string {
-  const availableActions = intentActions.filter(isCombatActionAvailableUnderCurrentLaw);
-  const displayActions = availableActions.length ? availableActions : intentActions;
+  const availableActions = intentActions.filter((action) => isCombatActionUsable(action, weaponSkillStatus));
+  if (!availableActions.length) {
+    const unavailableNames = intentActions
+      .map((action) => action === 'weapon_skill'
+        ? weaponSkillStatus.definition?.name ?? combatActionLabels[action]
+        : combatActionLabels[action])
+      .join(' / ');
+    return `建议防御（${unavailableNames}当前不可用）`;
+  }
+  const displayActions = availableActions;
   return displayActions
     .map((action) => (action === 'weapon_skill' ? weaponSkillStatus.definition?.name ?? combatActionLabels[action] : combatActionLabels[action]))
     .join(' / ');
@@ -9202,9 +10955,20 @@ function renderCombatIntent(
 
 function getCombatIntentActionClass(
   intent: NonNullable<ReturnType<typeof getCurrentCombatIntent>>,
-  action: CombatAction
+  action: CombatAction,
+  weaponSkillStatus: ReturnType<typeof getWeaponSkillStatus>
 ): string {
-  if (intent.recommendedActions.includes(action) && isCombatActionAvailableUnderCurrentLaw(action)) return 'intent-counter';
+  const availableRecommendedActions = intent.recommendedActions.filter((candidate) =>
+    isCombatActionUsable(candidate, weaponSkillStatus)
+  );
+  if (availableRecommendedActions.includes(action)) return 'intent-counter';
+  if (
+    availableRecommendedActions.length === 0 &&
+    action === 'guard' &&
+    isCombatActionUsable('guard', weaponSkillStatus)
+  ) {
+    return 'intent-counter';
+  }
   if (intent.dangerousActions.includes(action)) return 'intent-risk';
   return '';
 }
@@ -9273,16 +11037,21 @@ function renderWeaponSkillState(status: ReturnType<typeof getWeaponSkillStatus>)
     ${status.definition ? `data-weapon-skill-name="${status.definition.name}"` : ''}
     aria-live="polite"
   >
-    <span class="weapon-skill-label">武器战技</span>
-    <strong class="weapon-skill-status">${stateLabel}</strong>
-    <div
-      class="weapon-focus-meter"
-      data-weapon-focus="true"
-      data-focus-current="${status.currentFocus}"
-      data-focus-max="${status.requiredFocus}"
-      aria-label="战意 ${status.currentFocus}/${status.requiredFocus}"
-    >${segments}<b>${status.currentFocus}/${status.requiredFocus}</b></div>
-    <small class="weapon-skill-detail">${detail}</small>
+    <div class="weapon-skill-heading">
+      <span class="weapon-skill-label">武器战技</span>
+      <strong class="weapon-skill-status">${stateLabel}</strong>
+      ${renderCombatDetailTooltip('combat-weapon-skill-detail', '查看武器战技说明', detail)}
+    </div>
+    <div class="weapon-focus-row">
+      <span>战意</span>
+      <div
+        class="weapon-focus-meter"
+        data-weapon-focus="true"
+        data-focus-current="${status.currentFocus}"
+        data-focus-max="${status.requiredFocus}"
+        aria-label="战意 ${status.currentFocus}/${status.requiredFocus}"
+      >${segments}<b>${status.currentFocus}/${status.requiredFocus}</b></div>
+    </div>
     ${renderWeaponResonance(resonance, 'combat')}
   </div>`;
 }
@@ -9306,16 +11075,25 @@ function renderCapturePanel(actions: ViewAction[]): string {
     .map((petId) => {
       const pet = PETS[petId];
       const captureItem = pet.captureItem ?? 'capture_net';
+      const tacticalCaptureItem = isTacticalItemId(captureItem) ? captureItem : undefined;
       const owned = state.ownedPets.includes(petId);
-      const hasItem = state.inventory[captureItem] > 0;
+      const hasStock = state.inventory[captureItem] > 0;
+      const carried = !tacticalCaptureItem ||
+        state.run?.tacticalLoadout === undefined ||
+        state.run.tacticalLoadout.itemIds.includes(tacticalCaptureItem);
+      const itemAvailable = tacticalCaptureItem
+        ? isTacticalItemAvailable(state, tacticalCaptureItem)
+        : consumableAvailable && hasStock;
       const isWeak = state.combat ? state.combat.monsterHp <= weakThreshold : false;
-      const disabled = owned || !consumableAvailable || !hasItem || !isWeak;
+      const disabled = owned || !itemAvailable || !isWeak;
       const status = owned
         ? '已拥有'
         : !consumableAvailable
           ? '场域封存'
-          : !hasItem
-          ? `缺少${ITEMS[captureItem].name}`
+          : !carried
+            ? `${ITEMS[captureItem].name}未携行`
+          : !hasStock
+          ? `背包缺少${ITEMS[captureItem].name}`
           : isWeak
             ? '可捕获'
             : `压低至 ${weakThreshold} 血`;
@@ -9330,7 +11108,7 @@ function renderCapturePanel(actions: ViewAction[]): string {
       };
       actions.push(action);
 
-      return `<div class="capture-row ${isWeak && hasItem && consumableAvailable && !owned ? 'capture-ready' : ''}">
+      return `<div class="capture-row ${isWeak && itemAvailable && !owned ? 'capture-ready' : ''}">
         <div>
           <span class="eyebrow">可捕获目标</span>
           <strong>${pet.name}</strong>
@@ -9466,13 +11244,63 @@ function renderBloodlineSurgeCommand(actions: ViewAction[]): string {
   </div>`;
 }
 
+function formatCombatDamagePreview(
+  preview: CombatActionDamagePreview | undefined,
+  monster: MonsterDefinition
+): string {
+  if (!preview) return '预计伤害暂不可用';
+
+  const base = `预计伤害 ${preview.damage} · 预计剩余 ${preview.monsterHpAfter}${preview.playerWillFall ? ' · 行动后将濒死' : ''}`;
+  const hasUnownedCaptureTarget = petIds.some((petId) => {
+    const pet = PETS[petId];
+    return pet.source === 'capture' &&
+      pet.captureFrom === monster.id &&
+      !state.ownedPets.includes(petId);
+  });
+  if (!hasUnownedCaptureTarget) return base;
+
+  const methodAvailable = isCurrentDungeonFeatureAvailable(state, 'method');
+  const thresholdRatio = methodAvailable && state.learnedMethods.includes('beast_taming') ? 0.5 : 0.35;
+  const captureThreshold = Math.floor(monster.maxHp * thresholdRatio);
+  if (preview.monsterHpAfter === 0) return `${base} · 将击杀，无法捕获`;
+  if (preview.monsterHpAfter <= captureThreshold) return `${base} · 行动后可捕获`;
+  return `${base} · 捕获线 ${captureThreshold}`;
+}
+
+function renderCombatHealthBar(
+  label: string,
+  current: number,
+  maximum: number,
+  tone: 'enemy' | 'player'
+): string {
+  const safeMaximum = Math.max(1, maximum);
+  const safeCurrent = Math.max(0, Math.min(current, safeMaximum));
+  const percent = Math.round((safeCurrent / safeMaximum) * 100);
+  return `<div
+    class="combat-health tone-${tone}"
+    role="progressbar"
+    aria-label="${escapeHtml(label)}"
+    aria-valuemin="0"
+    aria-valuemax="${safeMaximum}"
+    aria-valuenow="${safeCurrent}"
+    aria-valuetext="${safeCurrent}/${safeMaximum}"
+  >
+    <div class="combat-health-copy"><span>${escapeHtml(label)}</span><strong>${safeCurrent}/${safeMaximum}</strong></div>
+    <div class="combat-health-track" aria-hidden="true"><span style="width: ${percent}%"></span></div>
+  </div>`;
+}
+
 function renderCombat(actions: ViewAction[]): string {
   if (!state.combat) return '';
 
   const encounter = getCombatEncounterProfile(state);
   const monster = encounter?.monster ?? MONSTERS[state.combat.monsterId];
   const boss = encounter?.boss;
-  const encounterName = boss?.definition.bossTitle ?? monster.name;
+  const combatNode = currentNode();
+  const encounterName = boss?.definition.bossTitle ??
+    (combatNode && combatNode.title !== monster.name
+      ? `${combatNode.title}（${monster.name}）`
+      : monster.name);
   const bossPhaseLabel = boss
     ? boss.phase === 'awakened'
       ? boss.definition.awakenedPhaseName
@@ -9488,21 +11316,29 @@ function renderCombat(actions: ViewAction[]): string {
   const hasIronBody = !methodUnavailableReason && state.learnedMethods.includes('iron_body');
   const cloudStepAttackBonus =
     hasCloudStep && stats.speed > monster.speed ? Math.max(1, Math.floor((stats.speed - monster.speed) / 2)) : 0;
-  const attackHint = hasCloudStep
+  const attackPreview = getCombatActionDamagePreview(state, 'attack');
+  const artPreview = methodUnavailableReason ? undefined : getCombatActionDamagePreview(state, 'art');
+  const attackBaseHint = hasCloudStep
     ? cloudStepAttackBonus > 0
-      ? `${stats.attack} 攻击 / 云隙步游斗 +${cloudStepAttackBonus}`
-      : `${stats.attack} 攻击 / 云隙步需抢速`
-    : `${stats.attack} 攻击`;
+      ? `面板攻击 ${stats.attack} / 云隙步游斗 +${cloudStepAttackBonus}`
+      : `面板攻击 ${stats.attack} / 云隙步需抢速`
+    : `面板攻击 ${stats.attack} · 实际伤害受敌方防御与意图影响`;
+  const attackHint = `${attackBaseHint} · ${formatCombatDamagePreview(attackPreview, monster)}`;
+  const artHint = methodUnavailableReason ??
+    `${stats.artPower} 术强 · ${formatCombatDamagePreview(artPreview, monster)}`;
   const guardHint = hasIronBody ? '铁衣诀守反/减伤' : '本回合减伤';
   const escapeHint = hasCloudStep ? '成功后代价 2' : '速度检定';
   const weaponSkillStatus = getWeaponSkillStatus(state);
   const combatIntent = getCurrentCombatIntent(state);
+  const combatSceneId = state.run?.dungeonId ?? 'demon_tower_1';
+  const healingPillAtFullHealth = state.player.hp >= stats.maxHp;
+  const healingPillAvailable = isTacticalItemAvailable(state, 'healing_pill');
   const combatActions: ViewAction[] = [
     combatAction('attack', '攻击', attackHint, false, combatIntent, weaponSkillStatus.currentFocus),
     combatAction(
       'art',
       '功法',
-      methodUnavailableReason ?? `${stats.artPower} 术强`,
+      artHint,
       Boolean(methodUnavailableReason),
       combatIntent,
       weaponSkillStatus.currentFocus
@@ -9527,124 +11363,294 @@ function renderCombat(actions: ViewAction[]): string {
     combatAction(
       'use_healing_pill',
       '止血丹',
-      consumableUnavailableReason ?? `x${state.inventory.healing_pill}`,
-      Boolean(consumableUnavailableReason) || state.inventory.healing_pill <= 0,
+      consumableUnavailableReason ??
+        (healingPillAtFullHealth
+          ? '生命已满，止血丹不可使用'
+          : healingPillAvailable
+            ? `本局可用 x${state.inventory.healing_pill} · 使用后结束本回合，敌方会立即行动`
+          : state.inventory.healing_pill > 0 ? '背包有库存，但本局未携行' : '背包库存 0'),
+      healingPillAtFullHealth || !healingPillAvailable,
       combatIntent,
       weaponSkillStatus.currentFocus
     ),
     combatAction(
       'use_thunder_talisman',
       '雷火符',
-      consumableUnavailableReason ?? `x${state.inventory.thunder_talisman}`,
-      Boolean(consumableUnavailableReason) || state.inventory.thunder_talisman <= 0,
+      consumableUnavailableReason ??
+        (isTacticalItemAvailable(state, 'thunder_talisman')
+          ? `本局可用 x${state.inventory.thunder_talisman}`
+          : state.inventory.thunder_talisman > 0 ? '背包有库存，但本局未携行' : '背包库存 0'),
+      !isTacticalItemAvailable(state, 'thunder_talisman'),
       combatIntent,
       weaponSkillStatus.currentFocus
     ),
     combatAction('escape', '撤离', escapeHint, false, combatIntent, weaponSkillStatus.currentFocus)
   );
   actions.push(...combatActions);
+  const capturePanel = renderCapturePanel(actions);
+  const primaryActionIds = new Set(['combat-attack', 'combat-art', 'combat-weapon_skill', 'combat-guard']);
+  const primaryCombatActions = combatActions.filter((action) => primaryActionIds.has(action.id));
+  const tacticalCombatActions = combatActions.filter((action) => !primaryActionIds.has(action.id));
+  const compactDamageReadout = (preview: CombatActionDamagePreview | undefined) =>
+    preview ? `伤害 ${preview.damage} · 敌余 ${preview.monsterHpAfter}` : `伤害 — · 敌余 ${state.combat?.monsterHp ?? 0}`;
+  const combatActionReadouts: Partial<Record<CombatAction, string>> = {
+    attack: compactDamageReadout(attackPreview),
+    art: methodUnavailableReason ? '已封存' : compactDamageReadout(artPreview),
+    weapon_skill: `战意 ${weaponSkillStatus.currentFocus}/${weaponSkillStatus.requiredFocus}`,
+    guard: `防御 ${stats.defense} · 战意 ${weaponSkillStatus.currentFocus}/${weaponSkillStatus.requiredFocus}`,
+    use_healing_pill: consumableUnavailableReason
+      ? '已封存'
+      : healingPillAtFullHealth
+        ? `生命已满 ${state.player.hp}/${stats.maxHp}`
+        : healingPillAvailable
+          ? `库存 ${state.inventory.healing_pill} · 回复后敌方行动`
+        : state.inventory.healing_pill > 0
+          ? '未携行'
+          : '库存 0',
+    use_thunder_talisman: consumableUnavailableReason
+      ? '已封存'
+      : isTacticalItemAvailable(state, 'thunder_talisman')
+        ? `库存 ${state.inventory.thunder_talisman} · 战意 ${weaponSkillStatus.currentFocus}/${weaponSkillStatus.requiredFocus}`
+        : state.inventory.thunder_talisman > 0
+          ? '未携行'
+          : '库存 0',
+    escape: `速度 ${stats.speed}${hasCloudStep ? ' · 代价 2' : ''}`
+  };
+  const renderCombatActionButton = (action: ViewAction, secondary = false) => {
+    const actionType = action.id.slice('combat-'.length) as CombatAction;
+    const detailId = `combat-command-detail-${actionType.replace(/_/g, '-')}`;
+    const compactReadout = combatActionReadouts[actionType] ?? '查看详情';
+    const actionGlyphs: Partial<Record<CombatAction, string>> = {
+      attack: '攻',
+      art: '法',
+      weapon_skill: '技',
+      guard: '守',
+      use_healing_pill: '药',
+      use_thunder_talisman: '符',
+      escape: '退'
+    };
+    const className = [
+      'button',
+      'combat-command-action',
+      secondary ? 'combat-tactical-action' : 'combat-core-action',
+      `combat-command-${actionType.replace(/_/g, '-')}`,
+      actionType === 'weapon_skill' ? 'weapon-skill-button' : '',
+      actionType === 'escape' ? 'combat-escape-action' : '',
+      combatIntent ? getCombatIntentActionClass(combatIntent, actionType, weaponSkillStatus) : ''
+    ]
+      .filter(Boolean)
+      .join(' ');
+    return `<div class="combat-command-slot" data-command-slot="${escapeHtml(actionType)}">
+      <button
+        class="${className}"
+        data-action="${escapeHtml(action.id)}"
+        data-command-type="${escapeHtml(actionType)}"
+        aria-describedby="${detailId}"
+        ${action.disabled ? 'disabled' : ''}
+      >
+        <span class="combat-command-glyph" aria-hidden="true">${actionGlyphs[actionType] ?? '令'}</span>
+        <span class="combat-command-copy">
+          <strong>${escapeHtml(action.label)}</strong>
+          <small class="combat-command-values">${escapeHtml(compactReadout)}</small>
+        </span>
+      </button>
+      ${renderCombatDetailTooltip(detailId, `查看「${action.label}」完整说明`, action.hint ?? compactReadout, 'combat-command-help')}
+    </div>`;
+  };
+  const latestCombatLog = state.combat.log[0] ?? '战斗开始，等待你的指令。';
 
-  return `<section class="panel combat-panel wide-panel ${boss ? `boss-combat boss-phase-${boss.phase}` : ''}"
-    ${boss ? `data-boss-phase="${boss.phase}" data-boss-max-hp="${monster.maxHp}"` : ''}>
-    <div class="panel-title">
-      <span class="eyebrow">回合 ${state.combat.turn}${boss ? ' · 首领战' : ''}</span>
-      <h2>${encounterName}</h2>
-    </div>
-    ${renderRunProtocolStatus()}
-    ${renderRouteContractStatus()}
-    ${renderRunPressureStatus()}
-    ${renderRunCompanionStatus()}
-    ${renderRunMethodStatus()}
-    ${renderRunEquipmentMemoryHuntStatus()}
-    ${renderEquipmentMemoryCombatStatus()}
-    ${renderDungeonLawStatus()}
-    ${renderBroadcastMapStatus()}
-    ${renderShelterMapStatus()}
-    ${renderVerdictMapStatus()}
-    ${renderCombatReplayMapStatus()}
-    ${
-      boss
-        ? `<div class="boss-combat-status" aria-live="polite">
-            <span class="boss-phase-label">${bossPhaseLabel}</span>
-            <small>「${boss.definition.sealName}」镇守者</small>
-            <strong>强化生命 ${monster.maxHp}</strong>
-          </div>`
-        : ''
-    }
-    ${combatIntent ? renderCombatIntent(combatIntent, weaponSkillStatus) : ''}
-    ${renderExplorationGuide()}
-    <div class="battlefield">
-      <div class="side enemy-side">
-        <div class="slot empty"></div>
-        <div class="slot enemy-token">
-          ${renderGameAsset('monster', state.combat.monsterId, 'combat-portrait enemy-portrait', { decorative: true, loading: 'eager' })}
-          <strong>${encounterName}</strong>
-          <span>${state.combat.monsterHp}/${monster.maxHp}</span>
-          <small>${boss ? `${monster.name} · ${monster.ability}` : monster.ability}</small>
+  return `<div class="combat-modal">
+    <div class="combat-backdrop" aria-hidden="true"></div>
+    <section
+      class="panel combat-panel wide-panel ${boss ? `boss-combat boss-phase-${boss.phase}` : ''}"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="combat-dialog-title"
+      aria-describedby="combat-dialog-summary"
+      tabindex="-1"
+      ${boss ? `data-boss-phase="${boss.phase}" data-boss-max-hp="${monster.maxHp}"` : ''}
+    >
+      <header class="combat-dialog-header">
+        <div>
+          <span class="eyebrow">回合 ${state.combat.turn}${boss ? ' · 首领战' : ' · 遭遇战'}</span>
+          <h2 id="combat-dialog-title" class="feature-help-label">${encounterName}${renderFeatureHelpTrigger('combatFlow')}</h2>
         </div>
-        <div class="slot empty"></div>
+        <p id="combat-dialog-summary">观察敌方意图后选择本回合行动。战斗只能通过胜利、捕获、濒死或主动撤离结束。</p>
+      </header>
+
+      <div class="combat-vitals combat-context-strip" aria-label="战斗概览">
+        <span><small>敌方生命</small><strong>${state.combat.monsterHp}/${monster.maxHp}</strong></span>
+        <span><small>你的生命</small><strong>${state.player.hp}/${stats.maxHp}</strong></span>
+        <span><small>${boss ? '首领阶段' : '当前回合'}</small><strong>${boss ? bossPhaseLabel : state.combat.turn}</strong></span>
       </div>
-      <div class="battleline">战线</div>
-      <div class="side player-side">
-        <div class="slot player-token" data-player-hp="${state.player.hp}" data-player-max-hp="${stats.maxHp}">
-          ${renderGameAsset('character', 'reincarnator', 'combat-portrait player-portrait', { decorative: true, loading: 'eager' })}
-          <strong>你</strong>
-          <span>生命 ${state.player.hp}/${stats.maxHp}</span>
-          <small>防 ${stats.defense} / 速 ${stats.speed}${state.combat.bloodlineBarrier ? ` / 屏障 ${state.combat.bloodlineBarrier}` : ''}</small>
+
+      <div class="combat-scene-shell">
+        ${combatIntent ? renderCombatIntent(combatIntent, weaponSkillStatus) : ''}
+        <div
+          class="battlefield combat-stage"
+          data-combat-formation="enemy-left-player-right"
+          aria-label="敌方在左、轮回者在右的回合制战场"
+        >
+          ${renderGameAsset('dungeon', combatSceneId, 'combat-scene-art', { decorative: true, loading: 'eager' })}
+          <div class="combat-stage-atmosphere" aria-hidden="true"></div>
+
+          <div class="side enemy-side combat-formation" data-combat-side="enemy">
+            <span class="combat-formation-label"><b>敌阵</b><small>左侧</small></span>
+            <div class="enemy-token combatant-card">
+              <div class="combat-status-plate">
+                <div class="combatant-identity">
+                  <span>${boss ? bossPhaseLabel : '敌方单位'}</span>
+                  <strong>${encounterName}</strong>
+                  <small>${boss ? `${monster.name} · ${monster.ability}` : monster.ability}</small>
+                </div>
+                ${renderCombatHealthBar('敌方生命', state.combat.monsterHp, monster.maxHp, 'enemy')}
+              </div>
+              <div class="combat-fighter-visual">
+                ${renderGameAsset('monster', state.combat.monsterId, 'combat-sprite enemy-sprite', { decorative: true, loading: 'eager' })}
+                <span class="combat-ground-ring" aria-hidden="true"></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="battleline" aria-hidden="true">
+            <span>对</span>
+            <strong>${state.combat.turn}</strong>
+            <small>回合</small>
+          </div>
+
+          <div class="side player-side combat-formation" data-combat-side="player">
+            <span class="combat-formation-label"><b>我方</b><small>右侧</small></span>
+            <div class="player-token combatant-card" data-player-hp="${state.player.hp}" data-player-max-hp="${stats.maxHp}">
+              <div class="combat-status-plate">
+                <div class="combatant-identity">
+                  <span>轮回者</span>
+                  <strong>你</strong>
+                  <small>防 ${stats.defense} / 速 ${stats.speed}${state.combat.bloodlineBarrier ? ` / 屏障 ${state.combat.bloodlineBarrier}` : ''}</small>
+                </div>
+                ${renderCombatHealthBar('你的生命', state.player.hp, stats.maxHp, 'player')}
+              </div>
+              <div class="combat-fighter-visual">
+                ${renderGameAsset('character', 'reincarnator', 'combat-sprite player-sprite', { decorative: true, loading: 'eager' })}
+                <span class="combat-ground-ring" aria-hidden="true"></span>
+              </div>
+            </div>
+            <div class="combat-support-line" aria-label="我方灵宠与法器支援">
+              <div class="slot support-token">
+                ${renderGameAsset('equipment', state.equipped.charm, 'combat-portrait support-portrait', { decorative: true })}
+                <strong>${EQUIPMENT[state.equipped.charm].name}</strong>
+                <span>术强 ${stats.artPower}</span>
+                <small>法器支援</small>
+              </div>
+              ${
+                activePet
+                  ? petUnavailableReason
+                    ? `<div class="slot pet-token sealed" data-pet-availability="sealed">
+                        ${renderGameAsset('pet', activePet.id, 'combat-portrait pet-portrait', { decorative: true })}
+                        <strong>${activePet.name}</strong>
+                        <span>被封存</span>
+                        <small>${petUnavailableReason}，暂不助战</small>
+                      </div>`
+                    : `<div class="slot pet-token" data-pet-availability="available">
+                        ${renderGameAsset('pet', activePet.id, 'combat-portrait pet-portrait', { decorative: true })}
+                        <strong>${activePet.name}</strong>
+                        <span>Lv.${activePetLevel}</span>
+                        <small>${formatBonus(activePet.bonus)}</small>
+                      </div>`
+                  : '<div class="slot pet-token empty"><strong>灵宠位</strong><small>本局未携带</small></div>'
+              }
+            </div>
+          </div>
         </div>
-        <div class="slot support-token">
-          ${renderGameAsset('equipment', state.equipped.charm, 'combat-portrait support-portrait', { decorative: true })}
-          <strong>${EQUIPMENT[state.equipped.charm].name}</strong>
-          <span>术强 ${stats.artPower}</span>
-          <small>后排支援</small>
+      </div>
+
+      ${
+        boss
+          ? `<div class="boss-combat-status">
+              <span class="boss-phase-label">${bossPhaseLabel}</span>
+              <small>「${boss.definition.sealName}」镇守者</small>
+              <strong>强化生命 ${monster.maxHp}</strong>
+            </div>`
+          : ''
+      }
+
+      <section class="combat-action-dock" aria-label="本回合行动">
+        <div class="combat-command-readout">
+          <div class="combat-command-section-title">
+            <span class="eyebrow">战况</span>
+            <strong>先读意图，再下指令</strong>
+          </div>
+          <div class="combat-log" role="status" aria-live="polite" aria-atomic="true">
+            <span class="combat-log-label">最新战报</span>
+            <p class="latest">${escapeHtml(latestCombatLog)}</p>
+          </div>
+          <div class="combat-decision-context">
+            ${renderWeaponSkillState(weaponSkillStatus)}
+          </div>
+          ${capturePanel}
         </div>
-        ${
-          activePet
-            ? petUnavailableReason
-              ? `<div class="slot pet-token sealed" data-pet-availability="sealed">
-                  ${renderGameAsset('pet', activePet.id, 'combat-portrait pet-portrait', { decorative: true })}
-                  <strong>${activePet.name}</strong>
-                  <span>被封存</span>
-                  <small>${petUnavailableReason}，暂不助战</small>
-                </div>`
-              : `<div class="slot pet-token" data-pet-availability="available">
-                ${renderGameAsset('pet', activePet.id, 'combat-portrait pet-portrait', { decorative: true })}
-                <strong>${activePet.name}</strong>
-                <span>Lv.${activePetLevel}</span>
-                <small>${formatBonus(activePet.bonus)}</small>
-              </div>`
-            : '<div class="slot empty"></div>'
-        }
+
+        <div class="combat-command-board">
+          <div class="combat-action-heading">
+            <div>
+              <span class="eyebrow">角色指令</span>
+              <strong class="feature-help-label">技能盘${renderFeatureHelpTrigger('combatFlow')}</strong>
+            </div>
+            <div class="combat-action-legend" aria-label="绿色为推荐反制，红色表示风险较高">
+              <span class="recommended">推荐</span>
+              <span class="risky">高风险</span>
+            </div>
+          </div>
+          <div
+            class="button-row combat-actions combat-actions-primary"
+            data-command-count="${primaryCombatActions.length}"
+            aria-label="主要战斗技能"
+          >
+            ${primaryCombatActions.map((action) => renderCombatActionButton(action)).join('')}
+          </div>
+          <div class="combat-utility-label"><span>战术指令</span><small>道具与撤离</small></div>
+          <div class="button-row combat-actions combat-actions-tactical" aria-label="道具与撤离">
+            ${tacticalCombatActions.map((action) => renderCombatActionButton(action, true)).join('')}
+          </div>
+        </div>
+      </section>
+
+      <div class="combat-command-area combat-advanced-actions" aria-label="进阶战术指令">
+        ${renderCombatSoulSkillToolbar(actions)}
+        ${renderCompanionAssistCommand(actions)}
+        ${renderMethodTechniqueCommand(actions)}
+        ${renderBloodlineSurgeCommand(actions)}
       </div>
-    </div>
-    ${renderCapturePanel(actions)}
-    <div class="combat-command-area">
-      ${renderWeaponSkillState(weaponSkillStatus)}
-      ${renderCombatSoulSkillToolbar(actions)}
-      ${renderCompanionAssistCommand(actions)}
-      ${renderMethodTechniqueCommand(actions)}
-      ${renderBloodlineSurgeCommand(actions)}
-      <div class="button-row combat-actions">
-        ${combatActions
-          .map((action) => {
-            const actionType = action.id.slice('combat-'.length) as CombatAction;
-            const className = [
-              'button',
-              actionType === 'weapon_skill' ? 'weapon-skill-button' : '',
-              combatIntent ? getCombatIntentActionClass(combatIntent, actionType) : ''
-            ]
-              .filter(Boolean)
-              .join(' ');
-            return actionButton(action, className);
-          })
-          .join('')}
-      </div>
-    </div>
-    <div class="combat-log" aria-live="polite">
-      <span class="combat-log-label">战斗记录</span>
-      ${state.combat.log.map((line, index) => `<p${index === 0 ? ' class="latest"' : ''}>${line}</p>`).join('')}
-    </div>
-  </section>`;
+
+      ${renderDungeonMapHud()}
+
+      <details class="combat-details"${combatDetailsOpen ? ' open' : ''}>
+        <summary role="button" aria-controls="combat-details-content" aria-expanded="${combatDetailsOpen}">
+          <strong class="feature-help-label">战场规则详情${renderFeatureHelpTrigger('combatFlow')}</strong>
+          <small>协议、法则、路线与装备记忆等说明</small>
+        </summary>
+        <div id="combat-details-content" class="combat-details-content">
+          ${renderRunProtocolStatus()}
+          ${renderRouteContractStatus()}
+          ${renderRunPressureStatus()}
+          ${renderRunCompanionStatus()}
+          ${renderRunMethodStatus()}
+          ${renderRunEquipmentMemoryHuntStatus()}
+          ${renderEquipmentMemoryCombatStatus()}
+        </div>
+      </details>
+
+      <details class="combat-history"${combatHistoryOpen ? ' open' : ''}>
+        <summary role="button" aria-controls="combat-history-content" aria-expanded="${combatHistoryOpen}">
+          <strong>完整战斗记录</strong>
+          <small>${state.combat.log.length} 条 · 最新在前</small>
+        </summary>
+        <div id="combat-history-content" class="combat-history-content">
+          ${state.combat.log.map((line, index) => `<p${index === 0 ? ' class="latest"' : ''}>${escapeHtml(line)}</p>`).join('')}
+        </div>
+      </details>
+      ${renderFeatureHelpPopover()}
+    </section>
+  </div>`;
 }
 
 function formatLastOutcome(outcome: string | undefined): { title: string; detail: string } {
@@ -9655,7 +11661,7 @@ function formatLastOutcome(outcome: string | undefined): { title: string; detail
     const label = outcomeLabels[economy[1] as RunEconomyOutcome] ?? '稳定通关';
     return {
       title: `${label} / 评分 ${economy[2]} / 奖励倍率 x${economy[3]}`,
-      detail: `主神发放 ${economy[4]} 奖励点，资源和材料已经入账。`
+      detail: `评分与出口奖励 ${economy[4]} 点；带回战利品与本轮总入账见下方明细。`
     };
   }
 
@@ -9669,6 +11675,36 @@ function getResultExitStatus(outcome: string | undefined): RunExitStatus {
   return 'cleared';
 }
 
+function getOutcomePaidRewardPoints(outcome: string | undefined): number | undefined {
+  const matched = outcome?.match(/(?:^|;\s*)reward=(\d+)/);
+  if (!matched) return undefined;
+  const value = Number(matched[1]);
+  return Number.isFinite(value) ? value : undefined;
+}
+
+function renderResultRewardSummary(exitStatus: RunExitStatus): string {
+  const economy = runEconomy(exitStatus);
+  const settlement = state.run?.lastLootSettlement ??
+    getRunLootSettlementPreview(state, exitStatus);
+  const scoreRewardPoints = economy?.rewardPoints ?? 0;
+  const retainedLootRewardPoints = settlement?.retained.rewardPoints ?? 0;
+  const paidRewardPoints = getOutcomePaidRewardPoints(state.lastOutcome) ?? scoreRewardPoints;
+  const routeContractRewardPoints =
+    normalizeSavedRouteContractSettlement(state.run?.lastRouteContractSettlement)?.rewardPoints ?? 0;
+  const salvageRewardPoints = state.run?.lastEquipmentRollSettlement?.salvageRewardPoints ?? 0;
+  const totalRewardPoints =
+    paidRewardPoints +
+    routeContractRewardPoints +
+    retainedLootRewardPoints +
+    salvageRewardPoints;
+
+  return `<div class="result-reward-summary" aria-label="本轮奖励点入账拆分">
+    <div><span>评分奖励</span><strong>+${scoreRewardPoints}</strong><small>由结算评分与基础倍率产生</small></div>
+    <div><span>战利品带回</span><strong>+${retainedLootRewardPoints}</strong><small>仅统计战利品袋内成功带回的奖励点</small></div>
+    <div class="total"><span>本轮奖励点总入账</span><strong>+${totalRewardPoints}</strong><small>已含难度、侵蚀、指令、隐藏任务与装备分解等实际入账</small></div>
+  </div>`;
+}
+
 function renderProtocolSettlement(): string {
   const protocol = getCurrentRunProtocol(state);
   if (!protocol) return '';
@@ -9679,19 +11715,37 @@ function renderProtocolSettlement(): string {
       : protocol.definition.id === 'imprint'
         ? '困难'
         : '炼狱';
-    const materialAmount = protocol.definition.id === 'standard' ? 1 : protocol.definition.id === 'imprint' ? 2 : 3;
+    const infernoTier = protocol.settlement?.infernoTier ?? getCurrentInfernoTier(state);
+    const materialAmount = protocol.definition.id === 'standard'
+      ? 1
+      : protocol.definition.id === 'imprint'
+        ? 2
+        : getInfernoTierModifiers(infernoTier ?? 1).materialAmount;
     const materialName = ITEMS[DUNGEON_MATERIAL_REWARDS[state.run.dungeonId].itemId].name;
-    const succeeded = protocol.definition.id === 'standard' || protocol.settlement?.status === 'succeeded';
+    const exitStatus = getResultExitStatus(state.lastOutcome);
+    const succeeded =
+      exitStatus === 'cleared' &&
+      (protocol.definition.id === 'standard' || protocol.settlement?.status === 'succeeded');
+    const statusLabel = succeeded
+      ? '挑战完成'
+      : exitStatus === 'retreated'
+        ? '本轮已结束（未通关）'
+        : exitStatus === 'failed'
+          ? '本轮失败（未通关）'
+          : '挑战未完成';
     return `<div
       class="protocol-settlement difficulty ${succeeded ? 'succeeded' : 'failed'}"
       data-protocol-settlement="${succeeded ? 'succeeded' : 'failed'}"
       data-run-protocol="${protocol.definition.id}"
       data-protocol-bonus="${protocol.settlement?.rewardPointBonus ?? 0}"
     >
-      <div><span>${difficultyName}难度</span><strong>${succeeded ? '挑战完成' : '挑战未完成'}</strong></div>
+      <div><span>${difficultyName}${infernoTier ? `第 ${infernoTier} 层` : '难度'}</span><strong>${statusLabel}</strong></div>
       <div class="protocol-settlement-rewards">
         <span>难度加成 <strong>+${protocol.settlement?.rewardPointBonus ?? 0} 奖励点</strong></span>
         <span>${materialName} <strong>+${succeeded ? materialAmount : 0}</strong></span>
+        ${infernoTier
+          ? `<span>层级解锁 <strong>${succeeded ? `第 ${protocol.settlement?.unlockedInfernoTier ?? infernoTier} 层已开放` : '未推进'}</strong></span>`
+          : ''}
       </div>
     </div>`;
   }
@@ -10034,6 +12088,36 @@ function renderEquipmentMemoryHuntSettlement(): string {
   </div>`;
 }
 
+function renderEquipmentRollSettlement(): string {
+  const settlement = state.run?.lastEquipmentRollSettlement;
+  if (!settlement || !isSavedEquipmentRollSettlement(settlement)) return '';
+  const equipment = EQUIPMENT[settlement.equipmentId];
+  const outcomeLabels: Record<EquipmentRollSettlement['outcome'], string> = {
+    acquired: '新底材已收录',
+    upgraded: '更强词条已替换',
+    salvaged: '旧词条更强，候选已分解'
+  };
+  const detail = settlement.outcome === 'salvaged'
+    ? `综合裁决未胜出，当前词条保留 · 分解 +${settlement.salvageRewardPoints} 奖励点`
+    : settlement.outcome === 'upgraded'
+      ? '综合裁决胜出，装备词条已替换'
+      : '随机词条装备已加入装备架';
+
+  return `<div
+    class="equipment-roll-settlement outcome-${settlement.outcome} quality-${settlement.roll.quality}"
+    data-equipment-roll-settlement="${settlement.outcome}"
+    data-equipment-id="${settlement.equipmentId}"
+    data-item-power="${settlement.roll.itemPower}"
+  >
+    <div>
+      <span class="feature-help-label">炼狱装备结算${renderFeatureHelpTrigger('equipmentRoll')}</span>
+      <strong>${equipment.name} · ${outcomeLabels[settlement.outcome]}</strong>
+      <small>${formatEquipmentRollAffixes(settlement.roll)}</small>
+    </div>
+    <div><span>${equipmentRollQualityLabels[settlement.roll.quality]} · 炼狱第 ${settlement.roll.sourceTier} 层</span><strong>${detail}</strong></div>
+  </div>`;
+}
+
 function renderResult(actions: ViewAction[]): string {
   if (state.phase !== 'result') return '';
   const status = getResultExitStatus(state.lastOutcome);
@@ -10050,20 +12134,22 @@ function renderResult(actions: ViewAction[]): string {
   };
   actions.push(action);
 
-  return `<section class="panel result-panel wide-panel">
+  return `<section class="panel result-panel wide-panel" tabindex="-1">
     <span class="eyebrow">结算</span>
     <h2>${outcome.title}</h2>
-    ${renderScoreStrip('结算评分', runEconomy(status))}
+    ${renderScoreStrip('结算评分', runEconomy(status), true)}
+    ${renderResultRewardSummary(status)}
     ${renderProtocolSettlement()}
     ${renderEquipmentMemoryHuntSettlement()}
     ${renderRouteContractSettlement()}
     ${renderRunPressureSettlement()}
     ${renderRunPursuitSettlement()}
     ${renderEquipmentCommissionSettlement()}
+    ${renderEquipmentRollSettlement()}
     ${renderLootSettlement()}
     ${renderRunRelicSettlement(actions)}
-    <p>${outcome.detail} 现在可以继续兑换、升级装备或学习功法，再进入更高风险的副本。</p>
-    ${renderNextActionPanel(actions)}
+    <p>${outcome.detail} 返回主神空间后，可以兑换、升级装备或学习功法，再进入更高风险的副本。</p>
+    ${renderNextActionPanel()}
     ${actionButton(action)}
   </section>`;
 }
@@ -10362,7 +12448,7 @@ function renderLog(): string {
       <span class="eyebrow">主神记录</span>
       <h2>最近事件</h2>
     </div>
-    <ul>${state.log.map((line) => `<li>${line}</li>`).join('')}</ul>
+    <ul>${state.log.map((line) => `<li>${escapeHtml(formatPlayerLogLine(line))}</li>`).join('')}</ul>
   </section>`;
 }
 
@@ -10818,7 +12904,11 @@ function getCodexEntries(): CodexEntry[] {
     category: 'equipment',
     name: EQUIPMENT[equipmentId].name,
     description: EQUIPMENT[equipmentId].description,
-    status: state.ownedEquipment.includes(equipmentId) ? `已拥有 · +${(state.equipmentLevels[equipmentId] ?? 1) - 1}` : '未拥有'
+    status: state.ownedEquipment.includes(equipmentId)
+      ? state.equipmentRolls?.[equipmentId]
+        ? `${equipmentRollQualityLabels[state.equipmentRolls[equipmentId]!.quality]} · 强度 ${state.equipmentRolls[equipmentId]!.itemPower} · +${(state.equipmentLevels[equipmentId] ?? 1) - 1}`
+        : `定型底材 · +${(state.equipmentLevels[equipmentId] ?? 1) - 1}`
+      : '未拥有'
   }));
   const itemEntries = (Object.keys(ITEMS) as ItemId[]).map((itemId): CodexEntry => ({
     id: itemId,
@@ -10915,6 +13005,42 @@ function renderHubCodex(actions: ViewAction[]): string {
   </div>`;
 }
 
+function renderHubFirstRouteHint(actions: ViewAction[]): string {
+  if (state.completedDungeonIds.length > 0 || isHubFirstRouteHintDismissed) return '';
+  const dismissAction: ViewAction = {
+    id: 'dismiss-hub-first-route-hint',
+    label: '暂不提示',
+    hint: '本次打开期间隐藏',
+    persist: false,
+    onSelect: () => {
+      isHubFirstRouteHintDismissed = true;
+    }
+  };
+  actions.push(dismissAction);
+  const steps = [
+    { label: '看任务', target: 'open-task-panel' },
+    { label: '买补给 / 工具', target: 'open-hub-supplies' },
+    { label: '打开功法', target: 'open-method-panel' },
+    { label: '副本门', target: 'open-hub-dungeons' }
+  ];
+
+  return `<aside class="hub-first-route-hint" data-hub-first-route-hint role="note" aria-label="首次路线提示">
+    <div class="hub-first-route-copy">
+      <span class="eyebrow">首次路线 · 可忽略</span>
+      <strong>先看目标，再完成最短出发整备</strong>
+      <small>主神空间仍可自由探索；点击步骤只定位现有真实站点，不会替你消费或进入副本。主神指令与承伤阈值请展开副本卡的“查看完整准备信息”后点 ?，入场后也可从探索界面的“主神指令 ?”查看。</small>
+    </div>
+    <ol class="hub-first-route-steps">
+      ${steps.map((step, index) => `<li>
+        <button type="button" data-guide-target="${step.target}" aria-label="定位：${step.label}">
+          <b>${index + 1}</b><span>${step.label}</span>
+        </button>
+      </li>`).join('')}
+    </ol>
+    ${actionButton(dismissAction, 'button ghost hub-first-route-dismiss')}
+  </aside>`;
+}
+
 function renderMainGodSpace(actions: ViewAction[]): string {
   const codexAction = createHubPanelAction('codex', '轮回图鉴', '查看已知世界');
   const dungeonAction = createHubPanelAction('dungeons', '副本门', `${CAMPAIGN_DUNGEON_COUNT} 章入口`);
@@ -10931,41 +13057,67 @@ function renderMainGodSpace(actions: ViewAction[]): string {
   const taskStationAction = taskAction
     ? { ...taskAction, label: '主神投影', hint: getTaskTriggerHint() }
     : undefined;
-  const compatibilityCatalog = hubPanel
-    ? ''
-    : `<div class="hub-compat-catalog" hidden aria-hidden="true">
-        ${renderDungeonEntrances(actions)}
-        ${renderPetHouse(actions)}
-        ${renderShop(actions)}
-      </div>`;
-
-  return `<section class="hub-stage">
-    <div class="hub-scene">
-      <div class="hub-scene-art" aria-hidden="true">
-        <span class="hub-scene-orbit"></span>
-        <span class="hub-scene-core"></span>
+  const playerStats = getDerivedStats(state);
+  const needsRecovery = state.player.hp < playerStats.maxHp;
+  const recoverAction: ViewAction | undefined = needsRecovery
+    ? {
+        id: 'hub-main-god-recover',
+        label: '主神修复',
+        hint: `免费回满 · ${state.player.hp}/${playerStats.maxHp} → ${playerStats.maxHp}/${playerStats.maxHp}`,
+        onSelect: () => {
+          state = recoverAtHub(state);
+        }
+      }
+    : undefined;
+  if (recoverAction) actions.push(recoverAction);
+  const firstRouteHint = renderHubFirstRouteHint(actions);
+  const recoveryAlert = recoverAction
+    ? `<aside class="hub-recovery-alert" role="alert">
+        <div><span class="eyebrow">生命未满</span><strong>主神空间可免费修复</strong><small>当前生命 ${state.player.hp}/${playerStats.maxHp}，修复不会消耗奖励点或道具。</small></div>
+        ${actionButton(recoverAction, 'button hub-recover-button')}
+      </aside>`
+    : '';
+  const notices = firstRouteHint || recoveryAlert
+    ? `<div
+        class="hub-stage-notices${firstRouteHint ? ' has-first-route' : ''}${recoveryAlert ? ' has-recovery' : ''}"
+        aria-label="主神空间提示"
+      >${firstRouteHint}${recoveryAlert}</div>`
+    : '';
+  return `<div class="hub-stage-shell">
+    ${notices}
+    <section class="hub-stage">
+      <div class="hub-scene">
+        <div class="hub-scene-art" aria-hidden="true">
+          <span class="hub-scene-orbit"></span>
+          <span class="hub-scene-core"></span>
+        </div>
+        <div class="hub-stations" aria-label="主神空间站点">
+          ${renderHubStationButton(petAction, 'hub-station hub-station-pets', 'pet_keeper')}
+          ${renderHubStationButton(suppliesAction, 'hub-station hub-station-supplies', 'supply_trader')}
+          ${renderHubStationButton(equipmentAction, 'hub-station hub-station-equipment', 'equipment_quartermaster')}
+          ${renderHubStationButton(forgeAction, 'hub-station hub-station-forge', 'forge_smith')}
+          ${methodStationAction ? renderHubStationButton(methodStationAction, 'hub-station hub-station-method', 'method_master') : ''}
+          ${taskStationAction ? renderHubStationButton(taskStationAction, 'hub-station hub-station-task', 'main_god_projection') : ''}
+        </div>
+        <div class="hub-scene-entrances">
+          ${actionButton(dungeonAction, 'hub-gate')}
+          ${actionButton(codexAction, 'hub-codex-trigger')}
+        </div>
       </div>
-      <div class="hub-stations" aria-label="主神空间站点">
-        ${renderHubStationButton(petAction, 'hub-station hub-station-pets', 'pet_keeper')}
-        ${renderHubStationButton(suppliesAction, 'hub-station hub-station-supplies', 'supply_trader')}
-        ${renderHubStationButton(equipmentAction, 'hub-station hub-station-equipment', 'equipment_quartermaster')}
-        ${renderHubStationButton(forgeAction, 'hub-station hub-station-forge', 'forge_smith')}
-        ${methodStationAction ? renderHubStationButton(methodStationAction, 'hub-station hub-station-method', 'method_master') : ''}
-        ${taskStationAction ? renderHubStationButton(taskStationAction, 'hub-station hub-station-task', 'main_god_projection') : ''}
-      </div>
-      <div class="hub-scene-entrances">
-        ${actionButton(dungeonAction, 'hub-gate')}
-        ${actionButton(codexAction, 'hub-codex-trigger')}
-      </div>
-    </div>
-    ${compatibilityCatalog}
-  </section>`;
+    </section>
+  </div>`;
 }
 
-function renderHubArchive(title: string, hint: string, content: string): string {
-  return `<details class="hub-archive">
-    <summary><span><strong>${title}</strong><small>${hint}</small></span></summary>
-    <div class="hub-archive-content">${content}</div>
+function renderHubArchive(
+  title: string,
+  hint: string,
+  content: string,
+  archiveId?: 'preparation'
+): string {
+  const open = archiveId === 'preparation' && isHubPreparationArchiveOpen;
+  return `<details class="hub-archive"${archiveId ? ` data-hub-archive="${archiveId}"` : ''}${open ? ' open' : ''}>
+    <summary${archiveId ? ` aria-controls="hub-archive-${archiveId}-content" aria-expanded="${open}"` : ''}><span><strong>${title}</strong><small>${hint}</small></span></summary>
+    <div class="hub-archive-content"${archiveId ? ` id="hub-archive-${archiveId}-content"` : ''}>${content}</div>
   </details>`;
 }
 
@@ -11004,7 +13156,7 @@ function renderHubDirectoryModal(actions: ViewAction[]): string {
       : panel === 'pets'
         ? renderPetHouse(actions)
         : panel === 'supplies'
-          ? `${renderShop(actions, panel)}${renderHubArchive('出发准备', '遗物构筑 / 战术携行', `${renderRunRelicPreparation(actions)}${renderTacticalLoadoutPreparation(actions)}`)}`
+          ? `${renderShop(actions, panel)}${renderHubArchive('出发准备', '遗物构筑 / 战术携行', `${renderRunRelicPreparation(actions)}${renderTacticalLoadoutPreparation(actions)}`, 'preparation')}`
           : renderShop(actions, panel);
 
   return `<div class="hub-directory-modal">
@@ -11023,7 +13175,7 @@ function renderHubDirectoryModal(actions: ViewAction[]): string {
 }
 
 function renderMain(actions: ViewAction[]): string {
-  if (state.phase === 'combat') return renderCombat(actions);
+  if (state.phase === 'combat') return renderExplore(actions);
   if (state.phase === 'result') return renderResult(actions);
 
   if (state.phase === 'explore') {
@@ -11031,6 +13183,78 @@ function renderMain(actions: ViewAction[]): string {
   }
 
   return renderMainGodSpace(actions);
+}
+
+function renderRestoredRunNotice(actions: ViewAction[]): string {
+  if (!restoredRunNotice) return '';
+  if (state.phase !== 'explore' && state.phase !== 'combat') {
+    restoredRunNotice = undefined;
+    return '';
+  }
+  const dismissAction: ViewAction = {
+    id: 'dismiss-restored-run-notice',
+    label: '知道了',
+    persist: false,
+    onSelect: () => {
+      restoredRunNotice = undefined;
+    }
+  };
+  actions.push(dismissAction);
+  return `<aside class="restored-run-notice" role="status">
+    <div><span class="eyebrow">进度已恢复</span><strong>${escapeHtml(restoredRunNotice)}</strong></div>
+    ${actionButton(dismissAction, 'button secondary')}
+  </aside>`;
+}
+
+function exportRejectedSave(raw: string): string {
+  const blob = new Blob([raw], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const filename = `infinite-flow-rejected-save-${timestamp}.txt`;
+  link.href = url;
+  link.download = filename;
+  link.hidden = true;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
+  return filename;
+}
+
+function renderRejectedSaveRecovery(actions: ViewAction[]): string {
+  if (!rejectedSaveRecovery) return '';
+  const recovery = rejectedSaveRecovery;
+  const exportAction: ViewAction = {
+    id: 'export-rejected-save',
+    label: '导出原始存档',
+    hint: 'TXT 备份',
+    persist: false,
+    onSelect: () => {
+      const filename = exportRejectedSave(recovery.raw);
+      rejectedSaveExportNotice = `已发起下载：${filename}`;
+    }
+  };
+  const clearAction: ViewAction = {
+    id: 'clear-rejected-save',
+    label: '清除坏档备份',
+    hint: '确认无需排查后',
+    persist: false,
+    onSelect: clearRejectedSaveRecovery
+  };
+  actions.push(exportAction, clearAction);
+  return `<aside class="restored-run-notice invalid-save-recovery" role="alert" data-invalid-save-recovery>
+    <div>
+      <span class="eyebrow">存档安全恢复</span>
+      <strong>存档校验失败，已启用安全新档；原始内容仍保留，可先导出再继续。</strong>
+      <small>${escapeHtml(recovery.reason)}</small>
+      <small data-invalid-save-export-status role="status" aria-live="polite" aria-atomic="true">${escapeHtml(rejectedSaveExportNotice ?? '')}</small>
+    </div>
+    <div class="invalid-save-actions">
+      ${actionButton(exportAction, 'button secondary')}
+      ${actionButton(clearAction, 'button ghost')}
+    </div>
+  </aside>`;
 }
 
 function render(focusTarget?: RenderFocusTarget): void {
@@ -11048,14 +13272,20 @@ function render(focusTarget?: RenderFocusTarget): void {
         isMethodPanelOpen = false;
         isBloodlinePanelOpen = false;
         isEquipmentCommissionModalOpen = false;
+        combatDetailsOpen = false;
+        combatHistoryOpen = false;
         selectedCommissionEquipmentIds = [];
         selectedCommissionMaterialId = undefined;
         protocolSelection = undefined;
+        protocolReturnHubPanel = undefined;
         hubPanel = undefined;
         hubPanelTriggerActionId = undefined;
         codexCategory = 'all';
         codexSearch = '';
+        isHubFirstRouteHintDismissed = false;
+        isHubPreparationArchiveOpen = false;
         lastShelterCheckpointResult = undefined;
+        restoredRunNotice = undefined;
       }
     }
   ];
@@ -11066,12 +13296,15 @@ function render(focusTarget?: RenderFocusTarget): void {
       <main class="layout">
         <section class="main-column">
           <div class="quick-actions">${actionButton(actions[0], 'button secondary')}</div>
+          ${renderRejectedSaveRecovery(actions)}
+          ${renderRestoredRunNotice(actions)}
           ${renderMain(actions)}
           ${renderLog()}
         </section>
       </main>
     </div>
-    ${renderFeatureHelpPopover()}
+    ${renderCombat(actions)}
+    ${state.phase === 'combat' ? '' : renderFeatureHelpPopover()}
     ${renderHubDirectoryModal(actions)}
     ${renderProtocolModal(actions)}
     ${renderTaskModal(actions)}
@@ -11094,10 +13327,141 @@ document.addEventListener('pointerdown', (event) => {
   hideFeatureHelp(true);
 });
 
+let suppressNextRepeatedMouseClick = false;
+let previousMousePress: PointerPress | undefined;
+let pointerMovedSincePreviousPress = false;
+let hasPendingMousePress = false;
+const heldActivationKeys = new Set<string>();
+
+function getActivationKey(event: KeyboardEvent): string | undefined {
+  if (event.key === 'Enter') return 'Enter';
+  if (event.key === ' ' || event.key === 'Spacebar') return 'Space';
+  return undefined;
+}
+
+document.addEventListener('keydown', (event) => {
+  const key = getActivationKey(event);
+  if (!key) return;
+  const target = event.target;
+  const targetsActivationControl =
+    target instanceof Element &&
+    Boolean(target.closest('[data-action], [data-feature-help], summary[role="button"]'));
+  if (heldActivationKeys.has(key)) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    return;
+  }
+  if (!targetsActivationControl) return;
+  if (event.repeat) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    return;
+  }
+  heldActivationKeys.add(key);
+}, true);
+
+document.addEventListener('keyup', (event) => {
+  const key = getActivationKey(event);
+  if (key) heldActivationKeys.delete(key);
+}, true);
+
+window.addEventListener('blur', () => {
+  heldActivationKeys.clear();
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) heldActivationKeys.clear();
+});
+
+document.addEventListener('mousemove', (event) => {
+  if (hasPointerMovedBeyondRepeatRadius(event.clientX, event.clientY, previousMousePress)) {
+    pointerMovedSincePreviousPress = true;
+  }
+}, true);
+
+document.addEventListener('mousedown', (event) => {
+  const target = event.target;
+  const currentPress: PointerPress = {
+    actionId: target instanceof Element
+      ? target.closest<HTMLElement>('[data-action]')?.dataset.action
+      : undefined,
+    button: event.button,
+    clientX: event.clientX,
+    clientY: event.clientY,
+    timeStamp: event.timeStamp
+  };
+  suppressNextRepeatedMouseClick = shouldSuppressRepeatedPointerPress(
+    currentPress,
+    previousMousePress,
+    pointerMovedSincePreviousPress,
+    event.detail
+  );
+  previousMousePress = currentPress;
+  pointerMovedSincePreviousPress = false;
+  hasPendingMousePress = true;
+  if (suppressNextRepeatedMouseClick) event.preventDefault();
+}, true);
+
+document.addEventListener('click', (event) => {
+  if (suppressNextRepeatedMouseClick) {
+    suppressNextRepeatedMouseClick = false;
+    hasPendingMousePress = false;
+    event.preventDefault();
+    event.stopPropagation();
+    if (isTaskPanelOpen) queueMicrotask(focusTaskDialog);
+    return;
+  }
+  queueMicrotask(() => {
+    hasPendingMousePress = false;
+  });
+}, true);
+
+document.addEventListener('focusin', (event) => {
+  const target = event.target;
+  if (!isTaskPanelOpen || !(target instanceof HTMLElement) || !target.matches('.task-sheet')) return;
+  queueMicrotask(() => {
+    if (isTaskPanelOpen && document.activeElement === target) focusTaskDialog();
+  });
+});
+
 window.addEventListener('resize', refreshFeatureHelpPosition);
 window.addEventListener('scroll', refreshFeatureHelpPosition, true);
 
+function trapCombatDialogFocus(event: KeyboardEvent): boolean {
+  if (event.key !== 'Tab' || state.phase !== 'combat') return false;
+  const dialog = root.querySelector<HTMLElement>('.combat-panel[role="dialog"][aria-modal="true"]');
+  if (!dialog) return false;
+  const focusable = [...dialog.querySelectorAll<HTMLElement>(
+    'button:not(:disabled), summary, input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [href], [tabindex]:not([tabindex="-1"])'
+  )].filter((element) => !element.hasAttribute('hidden') && element.getClientRects().length > 0);
+  if (!focusable.length) {
+    event.preventDefault();
+    dialog.focus();
+    return true;
+  }
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  const active = document.activeElement;
+  if (!dialog.contains(active)) {
+    event.preventDefault();
+    (event.shiftKey ? last : first).focus();
+    return true;
+  }
+  if (event.shiftKey && (active === first || active === dialog)) {
+    event.preventDefault();
+    last.focus();
+    return true;
+  }
+  if (!event.shiftKey && active === last) {
+    event.preventDefault();
+    first.focus();
+    return true;
+  }
+  return false;
+}
+
 document.addEventListener('keydown', (event) => {
+  if (trapCombatDialogFocus(event)) return;
   if (event.key !== 'Escape') return;
   if (hideFeatureHelp(true, true)) {
     event.preventDefault();
@@ -11106,6 +13470,12 @@ document.addEventListener('keydown', (event) => {
   if (!isAnyModalOpen()) return;
   event.preventDefault();
   if (getPendingCausalLedgerStatus()) return;
+  if (state.phase === 'combat') {
+    if (document.activeElement instanceof HTMLElement && document.activeElement.matches('.combat-hover-detail-trigger')) {
+      document.activeElement.blur();
+    }
+    return;
+  }
   if (isEquipmentCommissionModalOpen) {
     isEquipmentCommissionModalOpen = false;
     render('equipment-commission-trigger');
@@ -11113,6 +13483,8 @@ document.addEventListener('keydown', (event) => {
   }
   if (protocolSelection) {
     protocolSelection = undefined;
+    hubPanel = protocolReturnHubPanel;
+    protocolReturnHubPanel = undefined;
     render('protocol-trigger');
     return;
   }

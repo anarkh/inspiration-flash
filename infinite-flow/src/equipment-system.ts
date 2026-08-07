@@ -298,6 +298,10 @@ const EQUIPMENT_SYSTEM: Record<EquipmentId, EquipmentSystemDefinition> = {
     setTags: ['forge'],
     affixes: [{ name: '救援点射', bonus: { attack: 3, artPower: 1 } }]
   },
+  breach_shotgun: {
+    setTags: ['forge'],
+    affixes: [{ name: '破门震击', bonus: { attack: 3, defense: 1 } }]
+  },
   triage_visor: {
     setTags: ['mist'],
     affixes: [{ name: '分诊寻生', bonus: { artPower: 2, speed: 1, trapCheck: 2 } }]
@@ -345,6 +349,10 @@ const EQUIPMENT_SYSTEM: Record<EquipmentId, EquipmentSystemDefinition> = {
   blindline_cutter: {
     setTags: ['forge'],
     affixes: [{ name: '盲线断视', bonus: { attack: 3, artPower: 1 } }]
+  },
+  phase_coil_rifle: {
+    setTags: ['chronal'],
+    affixes: [{ name: '线圈超前', bonus: { attack: 2, artPower: 2, speed: 1 } }]
   },
   predictive_visor: {
     setTags: ['mist'],
@@ -537,6 +545,10 @@ const EQUIPMENT_TEMPER_DEFINITIONS = {
     materialId: 'rescue_badge',
     rankBonuses: { 1: { attack: 2, artPower: 1 }, 2: { attack: 2, defense: 1 } }
   },
+  breach_shotgun: {
+    materialId: 'rescue_badge',
+    rankBonuses: { 1: { attack: 2, defense: 1 }, 2: { attack: 2, speed: 1 } }
+  },
   triage_visor: {
     materialId: 'rescue_badge',
     rankBonuses: { 1: { artPower: 2, speed: 1, trapCheck: 2 }, 2: { speed: 2, trapCheck: 4 } }
@@ -584,6 +596,10 @@ const EQUIPMENT_TEMPER_DEFINITIONS = {
   blindline_cutter: {
     materialId: 'observation_shard',
     rankBonuses: { 1: { attack: 2, artPower: 1 }, 2: { attack: 2, defense: 1 } }
+  },
+  phase_coil_rifle: {
+    materialId: 'observation_shard',
+    rankBonuses: { 1: { attack: 1, artPower: 2 }, 2: { attack: 2, speed: 1 } }
   },
   predictive_visor: {
     materialId: 'observation_shard',

@@ -183,30 +183,30 @@ describe('equipment memory catalogs', () => {
     }
   });
 
-  it('explicitly lists all fifty-six non-starter temperable equipment ids', () => {
+  it('explicitly lists all fifty-eight non-starter temperable equipment ids', () => {
     const temperableEquipmentIds = Object.values(EQUIPMENT)
       .filter(({ maxLevel }) => maxLevel > 1)
       .map(({ id }) => id);
 
-    expect(EQUIPMENT_MEMORY_EQUIPMENT_CATALOG).toHaveLength(56);
+    expect(EQUIPMENT_MEMORY_EQUIPMENT_CATALOG).toHaveLength(58);
     expect(listEquipmentMemoryEquipmentIds()).toBe(EQUIPMENT_MEMORY_EQUIPMENT_CATALOG);
     expect([...EQUIPMENT_MEMORY_EQUIPMENT_CATALOG]).toEqual(temperableEquipmentIds);
-    expect(new Set(EQUIPMENT_MEMORY_EQUIPMENT_CATALOG).size).toBe(56);
+    expect(new Set(EQUIPMENT_MEMORY_EQUIPMENT_CATALOG).size).toBe(58);
     expect(Object.isFrozen(EQUIPMENT_MEMORY_EQUIPMENT_CATALOG)).toBe(true);
   });
 
-  it('exposes exactly 1064 immutable, strict dungeon-equipment combinations', () => {
-    expect(EQUIPMENT_MEMORY_HUNT_COMBINATION_COUNT).toBe(19 * 56);
+  it('exposes exactly 1102 immutable, strict dungeon-equipment combinations', () => {
+    expect(EQUIPMENT_MEMORY_HUNT_COMBINATION_COUNT).toBe(19 * 58);
     expect(EQUIPMENT_MEMORY_HUNT_CATALOG).toHaveLength(EQUIPMENT_MEMORY_HUNT_COMBINATION_COUNT);
     expect(Object.isFrozen(EQUIPMENT_MEMORY_HUNT_CATALOG)).toBe(true);
     expect(new Set(EQUIPMENT_MEMORY_HUNT_CATALOG.map(({ dungeonId, equipmentId }) => {
       return `${dungeonId}:${equipmentId}`;
-    })).size).toBe(1064);
+    })).size).toBe(1102);
 
     for (const dungeonId of DUNGEON_ORDER) {
       const options = listPreparedEquipmentMemoryHunts(dungeonId);
       const memory = getEquipmentMemoryForDungeon(dungeonId);
-      expect(options).toHaveLength(56);
+      expect(options).toHaveLength(58);
       expect(Object.isFrozen(options)).toBe(true);
       expect(options.every((option) => option.memoryId === memory?.id)).toBe(true);
       expect(options.every(Object.isFrozen)).toBe(true);
@@ -219,7 +219,7 @@ describe('equipment memory catalogs', () => {
     }
   });
 
-  it('binds 仍有人回应 to the last roll call and all four Tier-16 pieces', () => {
+  it('binds 仍有人回应 to the last roll call and all five Tier-16 pieces', () => {
     const definition = getEquipmentMemoryForDungeon('lost_shelter');
     const event = getDungeonEvents('lost_shelter').find(({ id }) => id === 'last_roll_call');
 
@@ -236,6 +236,7 @@ describe('equipment memory catalogs', () => {
 
     for (const equipmentId of [
       'rescue_carbine',
+      'breach_shotgun',
       'triage_visor',
       'evacuation_plate',
       'blackbox_beacon'
@@ -320,7 +321,7 @@ describe('equipment memory catalogs', () => {
     }
   });
 
-  it('binds 视界之外 to the blindspot event plus inverse-observation node and all four Tier-19 pieces', () => {
+  it('binds 视界之外 to the blindspot event plus inverse-observation node and all five Tier-19 pieces', () => {
     const definition = getEquipmentMemoryForDungeon('panopticon_city');
     const event = getDungeonEvents('panopticon_city').find(({ id }) => id === 'blindspot_theater');
 
@@ -337,6 +338,7 @@ describe('equipment memory catalogs', () => {
     expect(DUNGEONS.panopticon_city.nodes.some(({ id }) => id === 'inverse_observation_stage')).toBe(true);
     for (const equipmentId of [
       'blindline_cutter',
+      'phase_coil_rifle',
       'predictive_visor',
       'matte_shell',
       'inverse_prism'
@@ -351,7 +353,7 @@ describe('equipment memory catalogs', () => {
         memoryId: 'equipment_memory_panopticon_city'
       });
     }
-    expect(EQUIPMENT_MEMORY_HUNT_COMBINATION_COUNT).toBe(1064);
+    expect(EQUIPMENT_MEMORY_HUNT_COMBINATION_COUNT).toBe(1102);
   });
 
   it('binds the clearinghouse memory to all three mature Tier-9 pieces without new attunements', () => {

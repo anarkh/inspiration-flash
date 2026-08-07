@@ -28,8 +28,8 @@ describe('game asset manifest', () => {
     expect(listGameAssets('character')).toHaveLength(1);
     expect(listGameAssets('npc')).toHaveLength(6);
     expect(listGameAssets('pet')).toHaveLength(6);
-    expect(listGameAssets('monster')).toHaveLength(57);
-    expect(listGameAssets('equipment')).toHaveLength(63);
+    expect(listGameAssets('monster')).toHaveLength(59);
+    expect(listGameAssets('equipment')).toHaveLength(65);
     expect(listGameAssets('item')).toHaveLength(30);
     expect(listGameAssets('dungeon')).toHaveLength(19);
     expect(new Set(listGameAssets().map(({ src }) => src)).size).toBe(listGameAssets().length);
@@ -42,13 +42,13 @@ describe('game asset manifest', () => {
       missingIds: []
     });
     expect(getGameAssetCoverage('monster', Object.keys(MONSTERS))).toEqual({
-      covered: 57,
-      total: 57,
+      covered: 59,
+      total: 59,
       missingIds: []
     });
     expect(getGameAssetCoverage('equipment', Object.keys(EQUIPMENT))).toEqual({
-      covered: 63,
-      total: 63,
+      covered: 65,
+      total: 65,
       missingIds: []
     });
     expect(getGameAssetCoverage('item', Object.keys(ITEMS))).toEqual({
@@ -63,5 +63,27 @@ describe('game asset manifest', () => {
     });
     expect(getGameAsset('npc', 'forge_smith')?.source).toBe('project-original-generated');
     expect(getGameAsset('dungeon', 'entropy_ark')?.source).toBe('project-original-generated');
+    expect(getGameAsset('equipment', 'breach_shotgun')?.src).toBe('/assets/equipment/breach-shotgun-v1.png');
+    expect(getGameAsset('equipment', 'phase_coil_rifle')?.src).toBe('/assets/equipment/phase-coil-rifle-v1.png');
+    expect(getGameAsset('monster', 'rogue_sentry')?.src).toBe('/assets/monsters/rogue-sentry-v1.png');
+    expect(getGameAsset('monster', 'phase_hunter_drone')?.src).toBe('/assets/monsters/phase-hunter-drone-v1.png');
+    const lateDungeonFiles = {
+      redaction_scriptorium: 'redaction-scriptorium',
+      legacy_auction_court: 'legacy-auction-court',
+      genesis_vault: 'genesis-vault',
+      silent_broadcast_tower: 'silent-broadcast-tower',
+      lost_shelter: 'lost-shelter',
+      false_testimony_court: 'false-testimony-court',
+      combat_replay_stage: 'combat-replay-stage',
+      panopticon_city: 'panopticon-city'
+    };
+    for (const [dungeonId, fileName] of Object.entries(lateDungeonFiles)) {
+      expect(getGameAsset('dungeon', dungeonId)).toMatchObject({
+        src: `/assets/dungeons/${fileName}-v2.png`,
+        source: 'project-original-generated',
+        width: 720,
+        height: 180
+      });
+    }
   });
 });

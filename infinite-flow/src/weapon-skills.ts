@@ -7,7 +7,13 @@ import type {
 
 export type WeaponSkillWeaponId = Extract<
   EquipmentId,
-  'armor_piercing_sword' | 'bone_spear' | 'ember_staff' | 'starforged_edge' | 'chronal_edge'
+  | 'armor_piercing_sword'
+  | 'bone_spear'
+  | 'ember_staff'
+  | 'starforged_edge'
+  | 'chronal_edge'
+  | 'breach_shotgun'
+  | 'phase_coil_rifle'
 >;
 
 export type WeaponSkillId =
@@ -15,7 +21,9 @@ export type WeaponSkillId =
   | 'bone_pursuit'
   | 'ember_rekindle'
   | 'starforged_finale'
-  | 'chronal_reversal';
+  | 'chronal_reversal'
+  | 'breach_salvo'
+  | 'phase_coil_acceleration';
 export type WeaponSkillDamageKind = 'physical' | 'art';
 
 export type WeaponSkillDefinition = Readonly<{
@@ -88,6 +96,18 @@ const WEAPON_SKILL_DEFINITIONS: Readonly<Record<WeaponSkillWeaponId, WeaponSkill
     name: '时序逆转',
     description: '折返双方行动时差造成攻术合击；同源共鸣可将其导向加速或停滞。',
     weaponId: 'chronal_edge'
+  }),
+  breach_shotgun: Object.freeze({
+    id: 'breach_salvo',
+    name: '近距破门齐射',
+    description: '在近距离集中霰弹破障，仅计入少量目标防御；破甲收益与共鸣增幅均有上限。',
+    weaponId: 'breach_shotgun'
+  }),
+  phase_coil_rifle: Object.freeze({
+    id: 'phase_coil_acceleration',
+    name: '相位线圈加速',
+    description: '将武力与术法注入交替线圈，以有界时差增幅贯穿目标相位护盾。',
+    weaponId: 'phase_coil_rifle'
   })
 });
 
@@ -303,6 +323,73 @@ export function resolveWeaponSkill(context: WeaponSkillContext): WeaponSkillReso
     } else if (resonanceBranch === 'chronal_stasis') {
       healing = 6 + level * 3 + Math.min(10, Math.floor((artPower + targetDefense) / 18));
       statusLines.push(`时序停滞冻结受创瞬间，回复 ${healing} 点生命。`);
+    }
+
+    return createResolution(damage, 'art', healing, statusLines);
+  }
+
+  if (context.weaponId === 'breach_shotgun') {
+    // The tight spread ignores most armor, while both armor scaling and resonance bonuses stay explicitly capped.
+    const defensePercentByLevel = [22, 16, 10] as const;
+    const defensePercent = defensePercentByLevel[level - 1];
+    const baseDamage = Math.max(
+      16 + level * 3,
+      attack + 10 + level * 5 - Math.floor((targetDefense * defensePercent) / 100)
+    );
+    const resonanceBranch = getActiveResonanceBranch(context, 'forge');
+    let damage = baseDamage;
+    const statusLines = [
+      `【近距破门齐射】霰弹破障仅计入目标 ${defensePercent}% 的防御，造成 ${damage} 点物理伤害。`
+    ];
+
+    if (resonanceBranch === 'forge_overdrive') {
+      const overdriveBonus = 5 + level * 2 + Math.min(18, Math.floor(targetDefense * 0.1));
+      damage += overdriveBonus;
+      statusLines[0] = `【近距破门齐射】霰弹破障仅计入目标 ${defensePercent}% 的防御，造成 ${damage} 点物理伤害。`;
+      statusLines.push(`星炉重铸压紧弹群，追加 ${overdriveBonus} 点破障伤害。`);
+    } else if (resonanceBranch === 'forge_channeling') {
+      const channelingBonus = Math.min(
+        16 + level * 2,
+        Math.max(0, Math.floor(artPower * 0.35))
+      );
+      damage += channelingBonus;
+      statusLines[0] = `【近距破门齐射】霰弹破障仅计入目标 ${defensePercent}% 的防御，造成 ${damage} 点物理伤害。`;
+      statusLines.push(`余热导流稳定弹道，追加 ${channelingBonus} 点破障伤害。`);
+    }
+
+    return createResolution(damage, 'physical', 0, statusLines);
+  }
+
+  if (context.weaponId === 'phase_coil_rifle') {
+    // Hybrid scaling sells the phase-tech identity without double-dipping into two full combat stats.
+    const defensePercentByLevel = [18, 13, 8] as const;
+    const defensePercent = defensePercentByLevel[level - 1];
+    const hybridPower = Math.floor(attack * 0.58 + artPower * 0.82);
+    const timingGap = Math.abs(playerSpeed - targetSpeed);
+    const phaseBonus = Math.min(8 + level * 3, Math.floor(timingGap / 3));
+    const baseDamage = Math.max(
+      17 + level * 4,
+      hybridPower + 10 + level * 4 + phaseBonus -
+        Math.floor((targetDefense * defensePercent) / 100)
+    );
+    const resonanceBranch = getActiveResonanceBranch(context, 'chronal');
+    let damage = baseDamage;
+    let healing = 0;
+    const statusLines = [
+      `【相位线圈加速】攻术合流贯穿相位，仅计入目标 ${defensePercent}% 的防御，造成 ${damage} 点术法伤害。`
+    ];
+
+    if (resonanceBranch === 'chronal_acceleration') {
+      const speedAdvantage = Math.max(0, playerSpeed - targetSpeed);
+      const accelerationBonus =
+        5 + level * 2 +
+        Math.min(16, Math.floor(playerSpeed * 0.12) + Math.floor(speedAdvantage * 0.2));
+      damage += accelerationBonus;
+      statusLines[0] = `【相位线圈加速】攻术合流贯穿相位，仅计入目标 ${defensePercent}% 的防御，造成 ${damage} 点术法伤害。`;
+      statusLines.push(`时序加速令线圈超前放电，追加 ${accelerationBonus} 点贯穿伤害。`);
+    } else if (resonanceBranch === 'chronal_stasis') {
+      healing = 5 + level * 2 + Math.min(8, Math.floor((artPower + targetDefense) / 24));
+      statusLines.push(`时序停滞回收逸散相位，回复 ${healing} 点生命。`);
     }
 
     return createResolution(damage, 'art', healing, statusLines);

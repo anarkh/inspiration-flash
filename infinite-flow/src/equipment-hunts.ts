@@ -148,6 +148,7 @@ export const EQUIPMENT_HUNT_DEFINITIONS = Object.freeze({
     clueNodeIds: Object.freeze(['north_supply_cache', 'south_supply_cache'] as const),
     equipmentPool: Object.freeze([
       'rescue_carbine',
+      'breach_shotgun',
       'triage_visor',
       'evacuation_plate',
       'blackbox_beacon'
@@ -187,6 +188,7 @@ export const EQUIPMENT_HUNT_DEFINITIONS = Object.freeze({
     clueNodeIds: Object.freeze(['watchglass_cache', 'matte_supply'] as const),
     equipmentPool: Object.freeze([
       'blindline_cutter',
+      'phase_coil_rifle',
       'predictive_visor',
       'matte_shell',
       'inverse_prism'

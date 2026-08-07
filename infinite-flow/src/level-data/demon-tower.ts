@@ -4,6 +4,7 @@ export const demonTowerDungeon: DungeonDefinition = {
   id: 'demon_tower_1',
   name: '妖塔一层',
   tier: 1,
+  genre: 'cultivation',
   recommendedPower: 150,
   theme: '妖雾封住石阶，塔内每一层都在测试准备是否足够。',
   recommended: '入门副本，无硬门槛。',

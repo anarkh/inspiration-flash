@@ -4,6 +4,7 @@ import { getBossDefinition } from './boss-system';
 import { createDungeonLawState, recordCombatReplayTake, resolveAuctionLotChoice, resolveBroadcastRelayChoice, resolveEscortCheckpointChoice, resolveGenesisSpliceChoice, resolveMirrorCityPhaseChoice, resolveRedactionClauseChoice, signalFirstNodeClear } from './dungeon-laws';
 import { getRouteBlockReason } from './dungeon-routes';
 import type { DungeonId, DungeonNode } from './game';
+import { createInfernoMapSnapshot, getInfernoConnectionIds } from './inferno-system';
 import { DUNGEONS, DUNGEON_ORDER } from './level-content';
 import {
   ROUTE_CONTRACT_CATALOG,
@@ -14,6 +15,7 @@ import {
   getRouteContractById,
   getRouteContractDisplayStatus,
   getRouteContractProgress,
+  isOrderedRouteContractReachable,
   isRouteContractDefinition,
   isRouteContractRunState,
   listRouteContracts,
@@ -245,7 +247,7 @@ describe('route contracts catalog', () => {
       expect.objectContaining({
         id: 'shelter_patrol_recharge',
         name: '北巡续援',
-        description: '先识破北区拟声巡救者，再抵达器魂救援充能舱切断接管回路，让救援装备保持真实回应。',
+        description: '先摧毁北区失控哨戒炮，再抵达器魂救援充能舱切断接管回路，让救援装备保持真实回应。',
         targetNodeIds: ['north_rescue_patrol', 'soul_recharge_shelter'],
         rewardPoints: 700
       }),
@@ -590,6 +592,94 @@ describe('hidden route contract discovery', () => {
     });
     expect(Object.isFrozen(state)).toBe(true);
     expect(isRouteContractRunState(state, dungeonId)).toBe(true);
+  });
+
+  it('filters the seed-6 map/task-15 contract that reaches its first target only through its second', () => {
+    const clearedNodeIds = ['fog_lesser_demon', 'broken_sigil_reward'];
+    const legacySeedSixConnections = {
+      broken_sigil_reward: ['upper_fog_patrol', 'tower_butcher_patrol', 'blood_rune_trap'],
+      upper_fog_patrol: ['broken_sigil_reward', 'risky_font_trap'],
+      risky_font_trap: ['upper_fog_patrol'],
+      tower_butcher_patrol: ['broken_sigil_reward', 'loose_tile_trap'],
+      loose_tile_trap: ['tower_butcher_patrol'],
+      blood_rune_trap: ['broken_sigil_reward', 'butcher_turn'],
+      butcher_turn: ['blood_rune_trap', 'ash_pit_trap'],
+      ash_pit_trap: ['butcher_turn']
+    } as const;
+
+    expect(discoverHiddenRouteContract({
+      dungeonId,
+      seed: 15,
+      clearedNodeIds
+    })?.contractId).toBe('tower_ash_blade');
+    expect(isOrderedRouteContractReachable(
+      legacySeedSixConnections,
+      'broken_sigil_reward',
+      ['ash_pit_trap', 'butcher_turn']
+    )).toBe(false);
+
+    const filtered = discoverHiddenRouteContract({
+      dungeonId,
+      seed: 15,
+      clearedNodeIds,
+      currentNodeId: 'broken_sigil_reward',
+      connectionIdsByNodeId: legacySeedSixConnections
+    });
+    expect(filtered).toBeDefined();
+    expect(filtered?.contractId).not.toBe('tower_ash_blade');
+    if (filtered) {
+      const definition = getRouteContractById(filtered.contractId, dungeonId);
+      expect(definition).toBeDefined();
+      expect(isOrderedRouteContractReachable(
+        legacySeedSixConnections,
+        'broken_sigil_reward',
+        definition!.targetNodeIds
+      )).toBe(true);
+    }
+  });
+
+  it('only discovers ordered-reachable contracts on every procedural chapter and seed sample', () => {
+    for (const candidateDungeonId of DUNGEON_ORDER) {
+      const dungeon = DUNGEONS[candidateDungeonId];
+      const targetNodeIds = new Set(
+        listRouteContracts(candidateDungeonId)
+          .flatMap((definition) => definition.targetNodeIds)
+      );
+      const clearedNodeIds = dungeon.nodes
+        .filter((node) => node.type !== 'exit' && !targetNodeIds.has(node.id))
+        .slice(0, 2)
+        .map((node) => node.id);
+      expect(clearedNodeIds, candidateDungeonId).toHaveLength(2);
+
+      for (const mapSeed of [1, 4, 6, 11]) {
+        const snapshot = createInfernoMapSnapshot({
+          dungeon,
+          bossNodeId: getBossDefinition(candidateDungeonId).nodeId,
+          seed: mapSeed
+        });
+        const connectionIdsByNodeId = getInfernoConnectionIds(snapshot)!;
+        for (let taskSeed = 1; taskSeed <= 64; taskSeed += 1) {
+          const state = discoverHiddenRouteContract({
+            dungeonId: candidateDungeonId,
+            seed: taskSeed,
+            clearedNodeIds,
+            currentNodeId: clearedNodeIds[1],
+            connectionIdsByNodeId
+          });
+          if (!state) continue;
+          const definition = getRouteContractById(state.contractId, candidateDungeonId);
+          expect(
+            definition,
+            `${candidateDungeonId}:${mapSeed}:${taskSeed}`
+          ).toBeDefined();
+          expect(isOrderedRouteContractReachable(
+            connectionIdsByNodeId,
+            clearedNodeIds[1],
+            definition!.targetNodeIds
+          ), `${candidateDungeonId}:${mapSeed}:${taskSeed}:${state.contractId}`).toBe(true);
+        }
+      }
+    }
   });
 });
 

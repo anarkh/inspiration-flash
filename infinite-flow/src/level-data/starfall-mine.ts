@@ -4,6 +4,7 @@ export const starfallMineDungeon: DungeonDefinition = {
   id: 'starfall_mine',
   name: '星坠矿井',
   tier: 3,
+  genre: 'science_fiction',
   recommendedPower: 230,
   theme: '陨星砸穿旧矿井，矿壳怪物在错乱重力里巡逻。',
   recommended: '推荐破甲剑或灵力 4。',
