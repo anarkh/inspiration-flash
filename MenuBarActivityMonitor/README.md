@@ -7,7 +7,7 @@ MenuBar Activity Monitor 是一个运行在 macOS 菜单栏中的原生系统监
 ## 环境要求
 
 - macOS 13 Ventura 或更高版本
-- Swift 5.9 或兼容工具链，可通过 Xcode 或 Xcode Command Line Tools 安装
+- Swift 5.9 或兼容工具链，可通过 Xcode 或 Xcode Command Line Tools 安装；运行 Swift Testing 单元测试需要 Swift 6 / Xcode 16 或更高版本
 
 项目仅使用 SwiftUI、AppKit、Darwin/Mach 和 ServiceManagement 等系统框架，没有第三方依赖。
 
