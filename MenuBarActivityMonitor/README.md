@@ -22,6 +22,10 @@ swift run
 
 构建完成后，菜单栏会出现 CPU 图标和当前 CPU 使用率。点击图标即可打开监控面板。使用 `Control-C` 结束从终端启动的进程；也可以点击面板右下角的电源按钮退出。
 
+应用为每个 macOS 用户只保留一个实例。重复打开、使用 `open -n` 或再次执行 `swift run` 时，后启动的进程会立即退出，不会创建重复的菜单栏组件。
+
+从不含单实例保护的旧版本升级时，先退出所有已经运行的旧进程，再启动新版本。旧进程没有持有新锁，无法由新版本自动识别或关闭。
+
 ## 构建 macOS 应用
 
 打包脚本会先执行 release 构建，再生成本地 `.app`：
@@ -41,7 +45,7 @@ cp -R "build/MenuBar Activity Monitor.app" /Applications/
 open "/Applications/MenuBar Activity Monitor.app"
 ```
 
-如果 `/Applications/MenuBar Activity Monitor.app` 已存在，先从菜单栏退出旧版本，再通过 Finder 用新构建的应用替换旧应用。不要同时启动构建目录和 `/Applications` 中的两个副本：它们共享 bundle ID `com.menubar.activitymonitor`，macOS 会把它们视为同一个登录项应用，并可能终止后启动的副本。保留该 bundle ID 可以延续已有的偏好设置和登录启动身份。
+如果 `/Applications/MenuBar Activity Monitor.app` 已存在，先从菜单栏退出旧版本，再通过 Finder 用新构建的应用替换旧应用。构建目录、`swift run` 和 `/Applications` 中的副本共享同一个单实例锁；并行启动时只会保留最先启动的进程。bundle ID `com.menubar.activitymonitor` 保持不变，以延续已有的偏好设置和登录启动身份。
 
 ## 使用方法
 
@@ -51,7 +55,7 @@ open "/Applications/MenuBar Activity Monitor.app"
 - 搜索：输入应用名、进程名或 PID 过滤当前列表。
 - 刷新：选择 1 秒、1.5 秒、3 秒、5 秒或暂停，也可以手动刷新。
 - 系统工具：点击“活动监视器”打开 macOS 自带的 Activity Monitor。
-- 登录启动：使用齿轮菜单中的“开机自动启动”。该能力依赖应用包身份，建议从已安装的 `.app` 中设置；使用 `swift run` 时注册可能失败。
+- 登录启动：使用齿轮菜单中的“开机自动启动”。该能力依赖应用包身份，建议从已安装的 `.app` 中设置；使用 `swift run` 时注册可能失败。如果开发副本先持有单实例锁，登录项副本会退出；结束调试后需要手动重新打开安装版。
 
 ### 终止进程前先确认目标
 
@@ -65,12 +69,13 @@ open "/Applications/MenuBar Activity Monitor.app"
 cd MenuBarActivityMonitor
 swift build
 swift build -c release
+./Tests/test_single_instance.sh
 ./build_app.sh
 plutil -lint "build/MenuBar Activity Monitor.app/Contents/Info.plist"
 codesign --verify --deep --strict "build/MenuBar Activity Monitor.app"
 ```
 
-上述命令应全部以状态码 `0` 结束，并生成可执行文件 `build/MenuBar Activity Monitor.app/Contents/MacOS/MenuBarActivityMonitor`。当前项目没有自动化测试 target，编译、打包和本机菜单栏冒烟检查是主要验证方式。
+上述命令应全部以状态码 `0` 结束，并生成可执行文件 `build/MenuBar Activity Monitor.app/Contents/MacOS/MenuBarActivityMonitor`。运行单实例集成测试前，需要先退出正在运行的正式版或开发版；测试会覆盖顺序双开、正常退出与强制退出后的重启，以及并发启动。菜单栏交互仍需本机冒烟检查。
 
 常用清理命令：
 
@@ -83,9 +88,13 @@ swift package clean
 - `Sources/App.swift`：菜单栏应用入口和展示模式。
 - `Sources/ProcessMonitor.swift`：系统指标、进程、网络采集以及进程控制。
 - `Sources/ProcessModel.swift`：进程和系统指标模型。
+- `Sources/SingleInstanceLock.swift`：每用户单实例进程锁。
 - `Sources/Views/`：监控面板、进程行和趋势图等 SwiftUI 视图。
+- `Tests/test_single_instance.sh`：单实例进程级集成测试。
 - `build_app.sh`：release 编译和 `.app` 目录结构生成。
 
 ## 数据与权限说明
 
 应用通过 macOS 本地系统接口读取运行中的进程和资源统计，不配置网络服务，也不上传采集数据。部分系统或其他用户的进程可能只返回有限信息；这是 macOS 权限边界，不代表采集失败。
+
+单实例锁文件保存在 `~/Library/Application Support/MenuBarActivityMonitor/instance.lock`。文件长期存在是正常状态；实际锁由内核随进程退出自动释放，不要通过删除该文件处理启动问题。

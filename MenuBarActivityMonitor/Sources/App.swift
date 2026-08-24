@@ -1,10 +1,29 @@
 import SwiftUI
 import AppKit
+import Darwin
 
 @main
 struct MenuBarActivityMonitorApp: App {
-    @StateObject private var monitor = ProcessMonitor()
+    private static let singleInstanceLock: SingleInstanceLock = {
+        do {
+            return try SingleInstanceLock.acquire()
+        } catch SingleInstanceLockError.alreadyRunning {
+            Darwin.exit(EXIT_SUCCESS)
+        } catch {
+            let message = "MenuBarActivityMonitor failed to acquire its single-instance lock: \(error.localizedDescription)\n"
+            FileHandle.standardError.write(Data(message.utf8))
+            NSLog("%@", message.trimmingCharacters(in: .whitespacesAndNewlines))
+            Darwin.exit(EX_OSERR)
+        }
+    }()
+
+    @StateObject private var monitor: ProcessMonitor
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+
+    init() {
+        _ = Self.singleInstanceLock
+        _monitor = StateObject(wrappedValue: ProcessMonitor())
+    }
 
     var body: some Scene {
         MenuBarExtra {
