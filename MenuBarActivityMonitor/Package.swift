@@ -16,6 +16,11 @@ let package = Package(
         .executableTarget(
             name: "MenuBarActivityMonitor",
             path: "Sources"
+        ),
+        .testTarget(
+            name: "MenuBarActivityMonitorTests",
+            dependencies: ["MenuBarActivityMonitor"],
+            path: "Tests/Unit"
         )
     ]
 )

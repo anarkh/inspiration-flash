@@ -2,7 +2,8 @@ import Foundation
 import AppKit
 
 public struct ProcessItem: Identifiable, Hashable {
-    public var id: Int32 { pid }
+    public var id: String { stableID }
+    public let stableID: String
     public let pid: pid_t
     public let name: String
     public let executablePath: String
@@ -24,8 +25,10 @@ public struct ProcessItem: Identifiable, Hashable {
         threads: Int32,
         subprocessCount: Int = 1,
         isGroup: Bool = false,
-        groupPids: [pid_t] = []
+        groupPids: [pid_t] = [],
+        stableID: String? = nil
     ) {
+        self.stableID = stableID ?? (isGroup ? "group:\(name)" : "process:\(pid)")
         self.pid = pid
         self.name = name
         self.executablePath = executablePath
@@ -60,12 +63,11 @@ public struct ProcessItem: Identifiable, Hashable {
     }
 
     public func hash(into hasher: inout Hasher) {
-        hasher.combine(pid)
-        hasher.combine(isGroup)
+        hasher.combine(stableID)
     }
 
     public static func == (lhs: ProcessItem, rhs: ProcessItem) -> Bool {
-        return lhs.pid == rhs.pid && lhs.isGroup == rhs.isGroup
+        return lhs.stableID == rhs.stableID
     }
 }
 

@@ -55,7 +55,7 @@ open "/Applications/MenuBar Activity Monitor.app"
 - 系统概览：查看 CPU 用户态/系统态占比、内存使用量、进程数和实时网络速率。
 - 进程视图：在“应用聚合”和“全量进程”之间切换，并按名称、PID、CPU 或内存排序。
 - 搜索：输入应用名、进程名或 PID 过滤当前列表。
-- 刷新：选择 1 秒、1.5 秒、3 秒、5 秒或暂停，也可以手动刷新。
+- 刷新：首次运行默认每 5 秒刷新；也可以选择 1 秒、1.5 秒、3 秒、5 秒或暂停，并支持手动刷新。
 - 系统工具：点击“活动监视器”打开 macOS 自带的 Activity Monitor。
 - 登录启动：使用齿轮菜单中的“开机自动启动”。该能力依赖应用包身份，建议从已安装的 `.app` 中设置；使用 `swift run` 时注册可能失败。如果开发副本先持有单实例锁，登录项副本会退出；结束调试后需要手动重新打开安装版。
 
@@ -71,13 +71,14 @@ open "/Applications/MenuBar Activity Monitor.app"
 cd MenuBarActivityMonitor
 swift build
 swift build -c release
+./Tests/test_unit.sh
 ./Tests/test_single_instance.sh
 ./build_app.sh
 plutil -lint "build/MenuBar Activity Monitor.app/Contents/Info.plist"
 codesign --verify --deep --strict "build/MenuBar Activity Monitor.app"
 ```
 
-上述命令应全部以状态码 `0` 结束，并生成可执行文件 `build/MenuBar Activity Monitor.app/Contents/MacOS/MenuBarActivityMonitor`。运行单实例集成测试前，需要先退出正在运行的正式版或开发版；测试会覆盖顺序双开、正常退出与强制退出后的重启，以及并发启动。菜单栏交互仍需本机冒烟检查。
+上述命令应全部以状态码 `0` 结束，并生成可执行文件 `build/MenuBar Activity Monitor.app/Contents/MacOS/MenuBarActivityMonitor`。单元测试覆盖进程计数、聚合与稳定排序等纯逻辑。运行单实例集成测试前，需要先退出正在运行的正式版或开发版；测试会覆盖顺序双开、正常退出与强制退出后的重启，以及并发启动。菜单栏交互仍需本机冒烟检查。
 
 常用清理命令：
 
@@ -92,6 +93,8 @@ swift package clean
 - `Sources/ProcessModel.swift`：进程和系统指标模型。
 - `Sources/SingleInstanceLock.swift`：每用户单实例进程锁。
 - `Sources/Views/`：监控面板、进程行和趋势图等 SwiftUI 视图。
+- `Tests/Unit/`：采集与排序逻辑的 Swift Testing 单元测试。
+- `Tests/test_unit.sh`：运行单元测试，并兼容仅安装 Command Line Tools 的环境。
 - `Tests/test_single_instance.sh`：单实例进程级集成测试。
 - `build_app.sh`：release 编译和 `.app` 目录结构生成。
 

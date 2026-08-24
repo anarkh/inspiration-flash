@@ -1,6 +1,41 @@
 import SwiftUI
 import AppKit
 
+enum ProcessOrdering {
+    static func precedes(
+        _ lhs: ProcessItem,
+        _ rhs: ProcessItem,
+        by key: ProcessSortKey,
+        ascending: Bool
+    ) -> Bool {
+        let comparison: ComparisonResult
+        switch key {
+        case .cpu:
+            comparison = compare(lhs.cpuPercent, rhs.cpuPercent)
+        case .memory:
+            comparison = compare(lhs.memoryBytes, rhs.memoryBytes)
+        case .name:
+            comparison = lhs.name.localizedCaseInsensitiveCompare(rhs.name)
+        case .pid:
+            comparison = compare(lhs.pid, rhs.pid)
+        }
+
+        if comparison == .orderedSame {
+            return lhs.pid < rhs.pid
+        }
+
+        return ascending
+            ? comparison == .orderedAscending
+            : comparison == .orderedDescending
+    }
+
+    private static func compare<T: Comparable>(_ lhs: T, _ rhs: T) -> ComparisonResult {
+        if lhs < rhs { return .orderedAscending }
+        if lhs > rhs { return .orderedDescending }
+        return .orderedSame
+    }
+}
+
 public struct ContentView: View {
     @ObservedObject public var monitor: ProcessMonitor
 
@@ -32,18 +67,7 @@ public struct ContentView: View {
 
         // Sort
         list.sort { a, b in
-            let result: Bool
-            switch sortKey {
-            case .cpu:
-                result = a.cpuPercent < b.cpuPercent
-            case .memory:
-                result = a.memoryBytes < b.memoryBytes
-            case .name:
-                result = a.name.localizedCaseInsensitiveCompare(b.name) == .orderedAscending
-            case .pid:
-                result = a.pid < b.pid
-            }
-            return isAscending ? result : !result
+            ProcessOrdering.precedes(a, b, by: sortKey, ascending: isAscending)
         }
 
         return Array(list.prefix(maxDisplayCount))
@@ -60,6 +84,8 @@ public struct ContentView: View {
     }
 
     public var body: some View {
+        let displayedProcesses = filteredAndSortedProcesses
+
         VStack(spacing: 0) {
             // 1. System Overview Section
             SystemSummaryView(stats: monitor.systemStats)
@@ -169,7 +195,7 @@ public struct ContentView: View {
             Divider()
 
             // 4. Process List
-            if filteredAndSortedProcesses.isEmpty {
+            if displayedProcesses.isEmpty {
                 VStack(spacing: 8) {
                     Spacer()
                     Image(systemName: "doc.text.magnifyingglass")
@@ -184,7 +210,7 @@ public struct ContentView: View {
             } else {
                 ScrollView {
                     LazyVStack(spacing: 2) {
-                        ForEach(filteredAndSortedProcesses) { item in
+                        ForEach(displayedProcesses) { item in
                             ProcessRowView(item: item) { targetItem, force in
                                 monitor.killProcess(item: targetItem, force: force)
                             }
@@ -307,9 +333,9 @@ public struct ContentView: View {
     private var refreshIntervalOptions: some View {
         let intervals: [(Double, String)] = [
             (1.0, "1.0 秒 (高频)"),
-            (1.5, "1.5 秒 (推荐)"),
+            (1.5, "1.5 秒"),
             (3.0, "3.0 秒 (节能)"),
-            (5.0, "5.0 秒 (极度节能)"),
+            (5.0, "5.0 秒 (推荐)"),
             (0.0, "暂停自动刷新")
         ]
 

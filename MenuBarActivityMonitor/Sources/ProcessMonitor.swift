@@ -5,11 +5,64 @@ import MachO
 import Combine
 import ServiceManagement
 
+@inline(__always)
+func normalizedPIDCount(reportedCount: Int32, capacity: Int) -> Int {
+    guard reportedCount > 0, capacity > 0 else { return 0 }
+    return min(Int(reportedCount), capacity)
+}
+
+final class ProcessGroupAccumulator {
+    let groupKey: String
+    let appName: String
+    let executablePath: String
+    private(set) var icon: NSImage?
+    private(set) var cpuPercent: Double = 0
+    private(set) var memoryBytes: UInt64 = 0
+    private(set) var threads: Int32 = 0
+    private(set) var pids: [pid_t] = []
+
+    init(groupKey: String, appName: String, executablePath: String, icon: NSImage?) {
+        self.groupKey = groupKey
+        self.appName = appName
+        self.executablePath = executablePath
+        self.icon = icon
+        pids.reserveCapacity(4)
+    }
+
+    func add(pid: pid_t, icon: NSImage?, cpuPercent: Double, memoryBytes: UInt64, threads: Int32) {
+        self.cpuPercent += max(0, cpuPercent)
+        self.memoryBytes += memoryBytes
+        self.threads += threads
+        pids.append(pid)
+        if self.icon == nil, let icon {
+            self.icon = icon
+        }
+    }
+
+    func makeProcessItem() -> ProcessItem {
+        ProcessItem(
+            pid: pids.first ?? 0,
+            name: appName,
+            executablePath: executablePath,
+            icon: icon,
+            cpuPercent: cpuPercent,
+            memoryBytes: memoryBytes,
+            threads: threads,
+            subprocessCount: pids.count,
+            isGroup: pids.count > 1,
+            groupPids: pids,
+            stableID: "group:\(groupKey)"
+        )
+    }
+}
+
 public final class ProcessMonitor: ObservableObject {
+    static let defaultRefreshInterval = 5.0
+
     @Published public var processes: [ProcessItem] = []
     @Published public var groupedProcesses: [ProcessItem] = []
     @Published public var systemStats: SystemStats = SystemStats()
-    @Published public var isUpdating: Bool = false
+    public private(set) var isUpdating: Bool = false
     @Published public var isGroupedByApp: Bool = true
 
     @Published public var menuBarDisplayMode: MenuBarDisplayMode = .cpuOnly {
@@ -20,8 +73,9 @@ public final class ProcessMonitor: ObservableObject {
 
     @Published public var isLaunchAtLogin: Bool = false
 
-    @Published public var isPopoverVisible: Bool = false {
+    public var isPopoverVisible: Bool = false {
         didSet {
+            guard isPopoverVisible != oldValue else { return }
             resetTimer()
             if isPopoverVisible {
                 refresh()
@@ -29,8 +83,9 @@ public final class ProcessMonitor: ObservableObject {
         }
     }
 
-    @Published public var refreshInterval: Double = 1.5 {
+    @Published public var refreshInterval: Double = ProcessMonitor.defaultRefreshInterval {
         didSet {
+            guard refreshInterval != oldValue else { return }
             UserDefaults.standard.set(refreshInterval, forKey: "refreshInterval")
             resetTimer()
             if refreshInterval > 0 && isPopoverVisible {
@@ -58,6 +113,8 @@ public final class ProcessMonitor: ObservableObject {
     private var timer: AnyCancellable?
     private var sleepObservers: [NSObjectProtocol] = []
     private var isSleeping: Bool = false
+    private var isStarted: Bool = false
+    private var lifecycleGeneration: UInt = 0
 
     private let queue = DispatchQueue(label: "com.activitymonitor.collector", qos: .utility)
 
@@ -65,6 +122,7 @@ public final class ProcessMonitor: ObservableObject {
     private var prevProcessTimes: [pid_t: UInt64] = [:]
     private var prevMachTime: UInt64 = 0
     private var prevHostCpu: (user: UInt32, sys: UInt32, idle: UInt32, nice: UInt32)?
+    private var lastTotalProcessCount: Int = 0
 
     // Network delta tracking
     private var prevNetIn: UInt64 = 0
@@ -80,10 +138,29 @@ public final class ProcessMonitor: ObservableObject {
         let name: String
         let appName: String
         let execPath: String
+        let appBundlePath: String?
         let icon: NSImage?
     }
+
+    private struct ExecutableMetadata {
+        let appBundlePath: String?
+        let standaloneIcon: NSImage?
+    }
+
+    private struct AppBundleMetadata {
+        let appName: String
+        let icon: NSImage
+    }
+
     private var metaCache: [pid_t: ProcessMetadata] = [:]
+    private var executableMetadataCache: [String: ExecutableMetadata] = [:]
+    private var appBundleMetadataCache: [String: AppBundleMetadata] = [:]
     private let defaultIcon: NSImage
+
+    private static let helperNameRegex = try! NSRegularExpression(
+        pattern: "\\s+Helper.*$",
+        options: .caseInsensitive
+    )
 
     public init() {
         self.defaultIcon = NSWorkspace.shared.icon(for: .application)
@@ -103,21 +180,46 @@ public final class ProcessMonitor: ObservableObject {
     }
 
     deinit {
-        sleepObservers.forEach { NotificationCenter.default.removeObserver($0) }
+        let center = NSWorkspace.shared.notificationCenter
+        sleepObservers.forEach { center.removeObserver($0) }
     }
 
     public func start() {
+        guard Thread.isMainThread else {
+            DispatchQueue.main.async { [weak self] in self?.start() }
+            return
+        }
+        guard !isSleeping, !isStarted else { return }
+
+        isStarted = true
+        lifecycleGeneration &+= 1
+        let generation = lifecycleGeneration
         resetTimer()
-        // Baseline warmup
+
+        // Establish CPU/network deltas without building process metadata or UI models.
         queue.async { [weak self] in
             guard let self = self else { return }
-            _ = self.collectData()
+            self.primeBaselines()
             Thread.sleep(forTimeInterval: 0.2)
-            self.refresh()
+            DispatchQueue.main.async { [weak self] in
+                guard let self,
+                      self.isStarted,
+                      !self.isSleeping,
+                      self.lifecycleGeneration == generation else { return }
+                self.refresh()
+            }
         }
     }
 
     public func stop() {
+        guard Thread.isMainThread else {
+            DispatchQueue.main.async { [weak self] in self?.stop() }
+            return
+        }
+
+        isStarted = false
+        lifecycleGeneration &+= 1
+        isUpdating = false
         timer?.cancel()
         timer = nil
     }
@@ -148,18 +250,21 @@ public final class ProcessMonitor: ObservableObject {
     }
 
     private func handleSystemSleep() {
+        guard !isSleeping else { return }
         isSleeping = true
         stop()
     }
 
     private func handleSystemWake() {
+        guard isSleeping else { return }
         isSleeping = false
         start()
     }
 
     private func resetTimer() {
         timer?.cancel()
-        guard !isSleeping, refreshInterval > 0 else { return }
+        timer = nil
+        guard isStarted, !isSleeping, refreshInterval > 0 else { return }
 
         // When closed, update at 2.5s interval to minimize CPU; when open, use refreshInterval
         let interval = isPopoverVisible ? refreshInterval : max(2.5, refreshInterval)
@@ -171,28 +276,96 @@ public final class ProcessMonitor: ObservableObject {
     }
 
     public func refresh() {
-        guard !isUpdating, !isSleeping else { return }
+        guard Thread.isMainThread else {
+            DispatchQueue.main.async { [weak self] in self?.refresh() }
+            return
+        }
+        guard isStarted, !isUpdating, !isSleeping else { return }
+
         isUpdating = true
+        let generation = lifecycleGeneration
+        let shouldCollectProcesses = isPopoverVisible || processes.isEmpty
 
         queue.async { [weak self] in
             guard let self = self else { return }
-            let (newProcesses, newGrouped, newSystemStats) = self.collectData()
+            let snapshot = self.collectData(includeProcesses: shouldCollectProcesses)
 
-            DispatchQueue.main.async {
-                if self.isPopoverVisible || self.processes.isEmpty {
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
+                guard self.isStarted,
+                      !self.isSleeping,
+                      self.lifecycleGeneration == generation else { return }
+
+                if (self.isPopoverVisible || self.processes.isEmpty),
+                   let newProcesses = snapshot.processes,
+                   let newGrouped = snapshot.groupedProcesses {
                     self.processes = newProcesses
                     self.groupedProcesses = newGrouped
                 }
-                self.systemStats = newSystemStats
+                self.systemStats = snapshot.systemStats
                 self.isUpdating = false
             }
         }
     }
 
-    private func collectData() -> ([ProcessItem], [ProcessItem], SystemStats) {
+    private struct CollectionSnapshot {
+        let processes: [ProcessItem]?
+        let groupedProcesses: [ProcessItem]?
+        let systemStats: SystemStats
+    }
+
+    static func listAllPIDs() -> [pid_t] {
+        let estimatedCount = max(0, Int(proc_listallpids(nil, 0)))
+        var capacity = max(256, estimatedCount + 64)
+
+        for attempt in 0..<3 {
+            var pids = [pid_t](repeating: 0, count: capacity)
+            let reportedCount = pids.withUnsafeMutableBytes { buffer in
+                proc_listallpids(buffer.baseAddress, Int32(buffer.count))
+            }
+            let count = normalizedPIDCount(reportedCount: reportedCount, capacity: capacity)
+
+            if reportedCount < Int32(capacity) || attempt == 2 {
+                pids.removeLast(capacity - count)
+                pids.removeAll { $0 <= 0 }
+                return pids
+            }
+            capacity *= 2
+        }
+
+        return []
+    }
+
+    // Warm only the delta state. In particular, this must not resolve names,
+    // bundle paths, or icons, since the first visible snapshot will do that once.
+    func primeBaselines() {
+        let nowMach = mach_absolute_time()
+        let pids = Self.listAllPIDs()
+        lastTotalProcessCount = pids.count
+        var currentTimes: [pid_t: UInt64] = [:]
+        currentTimes.reserveCapacity(pids.count)
+
+        for pid in pids where pid > 0 {
+            var procInfo = proc_taskinfo()
+            let infoSize = Int32(MemoryLayout<proc_taskinfo>.size)
+            guard proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &procInfo, infoSize) == infoSize else {
+                continue
+            }
+            currentTimes[pid] = procInfo.pti_total_user + procInfo.pti_total_system
+        }
+
+        prevProcessTimes = currentTimes
+        prevMachTime = nowMach
+
+        var ignoredStats = collectHostSystemStats()
+        collectNetworkStats(into: &ignoredStats)
+    }
+
+    private func collectData(includeProcesses: Bool) -> CollectionSnapshot {
         let nowMach = mach_absolute_time()
         var newSystemStats = collectHostSystemStats()
         collectNetworkStats(into: &newSystemStats)
+        newSystemStats.totalProcesses = lastTotalProcessCount
 
         // Update history buffers
         cpuHistoryBuffer.append(newSystemStats.totalCpuPercent)
@@ -204,30 +377,36 @@ public final class ProcessMonitor: ObservableObject {
         newSystemStats.cpuHistory = cpuHistoryBuffer
         newSystemStats.memHistory = memHistoryBuffer
 
-        // If popover is closed and baseline exists, skip process scanning for near-zero idle CPU
-        if !isPopoverVisible && prevMachTime > 0 && !processes.isEmpty {
-            return (self.processes, self.groupedProcesses, newSystemStats)
+        // When the popover is closed, keep only low-cost system stats current.
+        if !includeProcesses && prevMachTime > 0 {
+            return CollectionSnapshot(processes: nil, groupedProcesses: nil, systemStats: newSystemStats)
         }
 
         // Collect all running PIDs
-        var pids = [pid_t](repeating: 0, count: 4096)
-        let bytes = proc_listallpids(&pids, Int32(MemoryLayout<pid_t>.size * pids.count))
-        let count = max(0, Int(bytes) / MemoryLayout<pid_t>.size)
+        let pids = Self.listAllPIDs()
+        let count = pids.count
 
         newSystemStats.totalProcesses = count
+        lastTotalProcessCount = count
 
         var rawItems: [ProcessItem] = []
+        rawItems.reserveCapacity(count)
         var currentTimes: [pid_t: UInt64] = [:]
+        currentTimes.reserveCapacity(count)
         var activePids = Set<pid_t>()
         activePids.reserveCapacity(count)
+        var activeExecutablePaths = Set<String>()
+        activeExecutablePaths.reserveCapacity(count)
+        var activeAppBundlePaths = Set<String>()
+        activeAppBundlePaths.reserveCapacity(min(count, 128))
 
         let dMach = Double(prevMachTime > 0 && nowMach > prevMachTime ? (nowMach - prevMachTime) : 0)
 
         // App Grouping helper
-        var groupsMap: [String: (appName: String, icon: NSImage?, cpu: Double, mem: UInt64, threads: Int32, pids: [pid_t], path: String)] = [:]
+        var groupsMap: [String: ProcessGroupAccumulator] = [:]
+        groupsMap.reserveCapacity(min(count, 256))
 
-        for i in 0..<count {
-            let pid = pids[i]
+        for pid in pids {
             guard pid > 0 else { continue }
             activePids.insert(pid)
 
@@ -242,6 +421,12 @@ public final class ProcessMonitor: ObservableObject {
             } else {
                 metadata = fetchProcessMetadata(pid: pid)
                 metaCache[pid] = metadata
+            }
+            if !metadata.execPath.isEmpty {
+                activeExecutablePaths.insert(metadata.execPath)
+            }
+            if let appBundlePath = metadata.appBundlePath {
+                activeAppBundlePaths.insert(appBundlePath)
             }
 
             let totalCpuTime = procInfo.pti_total_user + procInfo.pti_total_system
@@ -270,58 +455,55 @@ public final class ProcessMonitor: ObservableObject {
             rawItems.append(item)
 
             // Aggregate into groups
-            let groupKey = metadata.appName
-            if var existing = groupsMap[groupKey] {
-                existing.cpu += max(0.0, cpuPercent)
-                existing.mem += memBytes
-                existing.threads += procInfo.pti_threadnum
-                existing.pids.append(pid)
-                if existing.icon == nil && metadata.icon != nil {
-                    existing.icon = metadata.icon
-                }
-                groupsMap[groupKey] = existing
+            let groupKey = metadata.appBundlePath.map { "app:\($0)" } ?? "name:\(metadata.appName)"
+            let group: ProcessGroupAccumulator
+            if let existing = groupsMap[groupKey] {
+                group = existing
             } else {
-                groupsMap[groupKey] = (
+                let newGroup = ProcessGroupAccumulator(
+                    groupKey: groupKey,
                     appName: metadata.appName,
-                    icon: metadata.icon,
-                    cpu: max(0.0, cpuPercent),
-                    mem: memBytes,
-                    threads: procInfo.pti_threadnum,
-                    pids: [pid],
-                    path: metadata.execPath
+                    executablePath: metadata.execPath,
+                    icon: metadata.icon
                 )
+                groupsMap[groupKey] = newGroup
+                group = newGroup
             }
+            group.add(
+                pid: pid,
+                icon: metadata.icon,
+                cpuPercent: cpuPercent,
+                memoryBytes: memBytes,
+                threads: procInfo.pti_threadnum
+            )
         }
 
         // Build grouped items list
         var groupedItems: [ProcessItem] = []
-        for (_, val) in groupsMap {
-            let primaryPid = val.pids.first ?? 0
-            let isGroup = val.pids.count > 1
-            let item = ProcessItem(
-                pid: primaryPid,
-                name: val.appName,
-                executablePath: val.path,
-                icon: val.icon,
-                cpuPercent: val.cpu,
-                memoryBytes: val.mem,
-                threads: val.threads,
-                subprocessCount: val.pids.count,
-                isGroup: isGroup,
-                groupPids: val.pids
-            )
-            groupedItems.append(item)
+        groupedItems.reserveCapacity(groupsMap.count)
+        for group in groupsMap.values {
+            groupedItems.append(group.makeProcessItem())
         }
 
-        // Clean dead PIDs from cache periodically
+        // Clean stale cache entries periodically while retaining normal reuse.
         if metaCache.count > activePids.count + 50 {
             metaCache = metaCache.filter { activePids.contains($0.key) }
+        }
+        if executableMetadataCache.count > activeExecutablePaths.count + 128 {
+            executableMetadataCache = executableMetadataCache.filter { activeExecutablePaths.contains($0.key) }
+        }
+        if appBundleMetadataCache.count > activeAppBundlePaths.count + 32 {
+            appBundleMetadataCache = appBundleMetadataCache.filter { activeAppBundlePaths.contains($0.key) }
         }
 
         prevProcessTimes = currentTimes
         prevMachTime = nowMach
 
-        return (rawItems, groupedItems, newSystemStats)
+        return CollectionSnapshot(
+            processes: rawItems,
+            groupedProcesses: groupedItems,
+            systemStats: newSystemStats
+        )
     }
 
     private func fetchProcessMetadata(pid: pid_t) -> ProcessMetadata {
@@ -340,37 +522,82 @@ public final class ProcessMonitor: ObservableObject {
             name = "PID \(pid)"
         }
 
-        let (appName, icon) = resolveAppInfo(for: execPath, fallbackName: name)
-        return ProcessMetadata(name: name, appName: appName, execPath: execPath, icon: icon)
+        let appInfo = resolveAppInfo(for: execPath, fallbackName: name)
+        return ProcessMetadata(
+            name: name,
+            appName: appInfo.appName,
+            execPath: execPath,
+            appBundlePath: appInfo.appBundlePath,
+            icon: appInfo.icon
+        )
     }
 
-    private func resolveAppInfo(for execPath: String, fallbackName: String) -> (appName: String, icon: NSImage?) {
+    private func resolveAppInfo(
+        for execPath: String,
+        fallbackName: String
+    ) -> (appName: String, appBundlePath: String?, icon: NSImage?) {
         guard !execPath.isEmpty else {
-            return (cleanProcessName(fallbackName), defaultIcon)
+            return (cleanProcessName(fallbackName), nil, defaultIcon)
         }
 
-        var currentPath = execPath
-        while currentPath != "/" && !currentPath.isEmpty {
-            if currentPath.hasSuffix(".app") {
-                let bundleUrl = URL(fileURLWithPath: currentPath)
-                let bundleName = bundleUrl.deletingPathExtension().lastPathComponent
-                let icon = NSWorkspace.shared.icon(forFile: currentPath)
-                return (bundleName, icon)
+        let executableMetadata: ExecutableMetadata
+        if let cached = executableMetadataCache[execPath] {
+            executableMetadata = cached
+        } else {
+            var appBundlePath: String?
+            var currentPath = execPath
+            while currentPath != "/" && !currentPath.isEmpty {
+                if currentPath.hasSuffix(".app") {
+                    appBundlePath = currentPath
+                    break
+                }
+                currentPath = (currentPath as NSString).deletingLastPathComponent
             }
-            currentPath = (currentPath as NSString).deletingLastPathComponent
+
+            let standaloneIcon: NSImage?
+            if appBundlePath == nil {
+                standaloneIcon = FileManager.default.fileExists(atPath: execPath)
+                    ? NSWorkspace.shared.icon(forFile: execPath)
+                    : defaultIcon
+            } else {
+                standaloneIcon = nil
+            }
+
+            let resolved = ExecutableMetadata(
+                appBundlePath: appBundlePath,
+                standaloneIcon: standaloneIcon
+            )
+            executableMetadataCache[execPath] = resolved
+            executableMetadata = resolved
         }
 
-        let cleaned = cleanProcessName(fallbackName)
-        let icon = FileManager.default.fileExists(atPath: execPath) ? NSWorkspace.shared.icon(forFile: execPath) : defaultIcon
-        return (cleaned, icon)
+        if let appBundlePath = executableMetadata.appBundlePath {
+            let appMetadata: AppBundleMetadata
+            if let cached = appBundleMetadataCache[appBundlePath] {
+                appMetadata = cached
+            } else {
+                let bundleUrl = URL(fileURLWithPath: appBundlePath)
+                let resolved = AppBundleMetadata(
+                    appName: bundleUrl.deletingPathExtension().lastPathComponent,
+                    icon: NSWorkspace.shared.icon(forFile: appBundlePath)
+                )
+                appBundleMetadataCache[appBundlePath] = resolved
+                appMetadata = resolved
+            }
+            return (appMetadata.appName, appBundlePath, appMetadata.icon)
+        }
+
+        return (cleanProcessName(fallbackName), nil, executableMetadata.standaloneIcon)
     }
 
     private func cleanProcessName(_ raw: String) -> String {
-        var name = raw
         // Simplify common helper patterns: "Google Chrome Helper (Renderer)" -> "Google Chrome"
-        if let regex = try? NSRegularExpression(pattern: "\\s+Helper.*$", options: .caseInsensitive) {
-            name = regex.stringByReplacingMatches(in: name, options: [], range: NSRange(location: 0, length: name.utf16.count), withTemplate: "")
-        }
+        let name = Self.helperNameRegex.stringByReplacingMatches(
+            in: raw,
+            options: [],
+            range: NSRange(location: 0, length: raw.utf16.count),
+            withTemplate: ""
+        )
         return name.isEmpty ? raw : name
     }
 
