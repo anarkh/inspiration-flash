@@ -30,7 +30,7 @@ cat << 'EOF' > "$CONTENTS/Info.plist"
     <key>CFBundleExecutable</key>
     <string>MenuBarActivityMonitor</string>
     <key>CFBundleIdentifier</key>
-    <string>com.menubar.activitymonitor</string>
+    <string>io.github.anarkh.menubaractivitymonitor</string>
     <key>CFBundleName</key>
     <string>MenuBar Activity Monitor</string>
     <key>CFBundleDisplayName</key>

@@ -45,7 +45,9 @@ cp -R "build/MenuBar Activity Monitor.app" /Applications/
 open "/Applications/MenuBar Activity Monitor.app"
 ```
 
-如果 `/Applications/MenuBar Activity Monitor.app` 已存在，先从菜单栏退出旧版本，再通过 Finder 用新构建的应用替换旧应用。构建目录、`swift run` 和 `/Applications` 中的副本共享同一个单实例锁；并行启动时只会保留最先启动的进程。bundle ID `com.menubar.activitymonitor` 保持不变，以延续已有的偏好设置和登录启动身份。
+如果 `/Applications/MenuBar Activity Monitor.app` 已存在，先从菜单栏退出旧版本，再通过 Finder 用新构建的应用替换旧应用。构建目录、`swift run` 和 `/Applications` 中的副本共享同一个单实例锁；并行启动时只会保留最先启动的进程。
+
+仓库版使用 bundle ID `io.github.anarkh.menubaractivitymonitor`。它与迁移前独立版本的 `com.menubar.activitymonitor` 分离，避免 macOS 将旧构建、旧签名和新版菜单栏状态混在同一个应用身份下。首次从旧版升级时，需要重新选择刷新间隔，并在齿轮菜单中重新启用“开机自动启动”。
 
 ## 使用方法
 
