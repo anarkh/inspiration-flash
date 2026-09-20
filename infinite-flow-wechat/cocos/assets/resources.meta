@@ -1,0 +1,14 @@
+{
+  "ver": "1.2.0",
+  "importer": "directory",
+  "imported": true,
+  "uuid": "fb6cd6ef-57d2-4cf7-8286-327137b480cc",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "isBundle": true,
+    "bundleConfigID": "resources-remote-wechat-v1",
+    "bundleName": "resources",
+    "priority": 8
+  }
+}

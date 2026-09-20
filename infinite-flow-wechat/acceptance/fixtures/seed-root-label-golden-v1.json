@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "seed-root-label-golden-v1",
+  "rulesVersion": 1,
+  "scenarioIds": [
+    "hidden-task-dungeon-01",
+    "inferno-map-dungeon-01-tier-3",
+    "portal-dungeon-01-to-02-hop-1",
+    "unicode-label-uint32-max-root"
+  ],
+  "scenarios": [
+    {
+      "id": "hidden-task-dungeon-01",
+      "rootSeed": 305419896,
+      "label": "entry:hidden-task:dungeon-01",
+      "expected": 928397947
+    },
+    {
+      "id": "inferno-map-dungeon-01-tier-3",
+      "rootSeed": 305419896,
+      "label": "entry:inferno-map:dungeon-01:tier:3",
+      "expected": 2445745190
+    },
+    {
+      "id": "portal-dungeon-01-to-02-hop-1",
+      "rootSeed": 305419896,
+      "label": "portal:inferno-map:dungeon-01:node-x:dungeon-02:hop:1",
+      "expected": 2252274541
+    },
+    {
+      "id": "unicode-label-uint32-max-root",
+      "rootSeed": 4294967295,
+      "label": "固定标签:镜城/😀",
+      "expected": 907218272
+    }
+  ]
+}

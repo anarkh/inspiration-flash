@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 3,
+  "local": {
+    "nodeVersion": "26.7.0",
+    "npmVersion": "11.19.0",
+    "typescriptVersion": "5.9.3"
+  },
+  "production": {
+    "creatorVersion": "3.8.8",
+    "platform": "wechatgame",
+    "creatorExecutableEnv": "COCOS_CREATOR_BIN",
+    "wechatBuildConfigEnv": "COCOS_WECHAT_BUILD_CONFIG",
+    "macosBoundLauncherSourceSha256": "8d306f8bf2785899a6e7c43833866caac442687033fc4fa273c9bad06b312896",
+    "successExitCode": 36,
+    "invalidArgumentsExitCode": 32,
+    "buildFailureExitCode": 34
+  },
+  "probeCli": {
+    "repository": "https://github.com/cocos/cocos-cli.git",
+    "commit": "0a29db2afb3b21e22cc7e614d9e99d4fe215131b",
+    "version": "0.0.1-alpha.38",
+    "defaultInstallPath": "~/.local/share/cocos-cli",
+    "productionWechatBuildSupported": false
+  }
+}

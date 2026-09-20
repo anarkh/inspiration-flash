@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-08-10T07:54:20Z",
+  "source": {
+    "directory": "../infinite-flow",
+    "gitHead": "2645f0232542684d27de1abc321bb26913320420",
+    "packageVersion": "0.1.2",
+    "worktreeClean": true
+  },
+  "checks": {
+    "test": {
+      "command": "npm test -- --run",
+      "exitCode": 0,
+      "testFilesPassed": 48,
+      "testsPassed": 1403
+    },
+    "typecheck": {
+      "command": "npm run typecheck",
+      "exitCode": 0
+    },
+    "build": {
+      "command": "npm run build",
+      "exitCode": 0,
+      "modulesTransformed": 69,
+      "warning": "Main JavaScript chunk exceeds Vite's 500 kB advisory threshold."
+    },
+    "assetAudit": {
+      "command": "npm run assets:audit",
+      "exitCode": 0,
+      "runtimeAssetsExpected": 187,
+      "runtimeAssetsMissing": 0
+    },
+    "knowledgeVerify": {
+      "command": "npm run knowledge:verify",
+      "exitCode": 0,
+      "markdownFiles": 8,
+      "acceptance": {
+        "total": 103,
+        "leaf": 94,
+        "releaseEvidence": 6,
+        "attestation": 2,
+        "derived": 1
+      }
+    },
+    "uiSmoke": {
+      "command": "npm run smoke:ui:all",
+      "exitCode": 0,
+      "suitesPassed": 19,
+      "serialOrderEnforced": true
+    }
+  }
+}

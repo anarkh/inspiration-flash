@@ -1,0 +1,679 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "law-12-redaction",
+  "provenance": {
+    "oracle": {
+      "project": "infinite-flow-web",
+      "commit": "2645f0232542684d27de1abc321bb26913320420",
+      "path": "infinite-flow/src/dungeon-laws.ts",
+      "sha256": "6deffb2bbbde6a9f4110603fb71f948e6543f5bc3985659cab81a82b7ca292ca"
+    },
+    "goldenManifest": {
+      "path": "packages/save-codec/tests/fixtures/manifest.json",
+      "sha256": "36fcff8420e9aefbb8fe8c472b42fd5dbf6835025beee05b567a8481d6ca6bf1"
+    },
+    "expectedRule": "Redaction Scriptorium tracks three clause desks (body_clause_desk 肉身, memory_clause_desk 记忆, return_clause_desk 归返). Clearing a clause desk opens a pending clause choice that blocks departure (终稿条款尚未裁定，请先选择认证或删改。) until the player resolves law/resolve-redaction-clause; certify costs no HP and logs 终稿条款·认证：认证当前正文，不支付生命。, while redact costs 8% of max HP (floor, min 1) and logs 终稿条款·删改：支付最大生命 8%（N 点）并删除当前条款。. Redact is unavailable when current HP is not above the cost (当前生命不足以支付删改代价。) and resolving without a pending choice is rejected 当前没有待裁定的终稿条款。; re-selecting a cleared desk is rejected already-resolved. Route gates: redaction_clause_certified gates (redaction_memory_north_entry, redaction_memory_upper_entry, redaction_body_censor_entry, redaction_body_upper_entry, redaction_return_south_entry, redaction_return_lower_entry) open only when the matching clause was certified; redacting the clause closes the sector permanently with block reason 对应条款必须选择认证；删改后该选区永久关闭。 and removes the edge from legal adjacent targets so run/move through it is rejected illegal-move. The four last_redactor approaches (redaction_final_proof_boss_gate, redaction_north_boss_gate, redaction_side_boss_gate, redaction_south_boss_gate) need all three clauses resolved (肉身、记忆与归返三份条款全部裁定后开放。), redact counting as resolved. Starting the last_redactor boss combat snapshots the resolved clause choices into bossClauseSnapshot, clears the pending clause, and freezes further changes (首领终稿已经冻结，不能再改写条款。); the display shows 冻结条款 N/3. Boss modifiers derive only from the snapshot during boss encounters: body certify grants the boss +10% defense (sealed) / +20% (awakened), memory certify grants +10% / +20% artPower, return certify applies -10% / -20% healing and guardEffect to the player; redacted clauses contribute 0. The redlineEdge, palimpsestMantle, and finalProofSeal entry passives halve the respective percents. Healing pill heals 36 base, scaled by healingPercent (29 at -20% awakened, 36 at 0%). Display severity is danger while a clause is pending, warning with unresolved desks, resolved when all three are resolved or the boss snapshot is frozen. Law state persists through a save-codec round-trip. All expected values are frozen here, never read from candidate code."
+  },
+  "baseInput": {
+    "path": "packages/save-codec/tests/fixtures/new-hub-v1.json",
+    "sha256": "a1de1f1b33b59c91dea46caf55f21b6eee0b7104c2cbe4d68ac5d7a430709e0b"
+  },
+  "inputMutations": [
+    {
+      "op": "replace",
+      "path": ["state", "completedDungeonIds"],
+      "value": [
+        "demon_tower_1",
+        "metro_abyss",
+        "starfall_mine",
+        "rust_hospital",
+        "ash_arena",
+        "dream_archive",
+        "void_citadel",
+        "temporal_observatory",
+        "causal_clearinghouse",
+        "entropy_ark",
+        "mirror_cycle_city"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "claimedTaskIds"],
+      "value": [
+        "clear_demon_tower",
+        "clear_metro_abyss",
+        "mainline_clear_starfall_mine",
+        "mainline_clear_rust_hospital",
+        "mainline_clear_ash_arena",
+        "mainline_clear_dream_archive",
+        "mainline_clear_void_citadel",
+        "mainline_clear_temporal_observatory",
+        "mainline_clear_causal_clearinghouse",
+        "mainline_clear_entropy_ark",
+        "mainline_clear_mirror_cycle_city"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "preparedItemIds"],
+      "value": ["healing_pill", "focus_incense", "armor_patch"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "inventory", "healing_pill"],
+      "value": 60
+    },
+    {
+      "op": "replace",
+      "path": ["state", "inventory", "focus_incense"],
+      "value": 3
+    },
+    {
+      "op": "replace",
+      "path": ["state", "inventory", "armor_patch"],
+      "value": 3
+    },
+    {
+      "op": "replace",
+      "path": ["state", "learnedMethods"],
+      "value": ["iron_body"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "methodRanks"],
+      "value": { "iron_body": 1 }
+    },
+    {
+      "op": "add",
+      "path": ["state", "activeMethod"],
+      "value": "iron_body"
+    },
+    {
+      "op": "replace",
+      "path": ["state", "ownedEquipment"],
+      "value": [
+        "training_blade",
+        "patched_headwrap",
+        "patched_coat",
+        "patched_gloves",
+        "patched_boots",
+        "patched_belt",
+        "plain_charm",
+        "ember_staff",
+        "mist_hood",
+        "spirit_robe",
+        "guardian_gauntlets",
+        "cloudstep_boots",
+        "rift_belt",
+        "rift_charm"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "equipped"],
+      "value": {
+        "weapon": "ember_staff",
+        "head": "mist_hood",
+        "armor": "spirit_robe",
+        "hands": "guardian_gauntlets",
+        "feet": "cloudstep_boots",
+        "waist": "rift_belt",
+        "charm": "rift_charm"
+      }
+    },
+    {
+      "op": "replace",
+      "path": ["state", "equipmentLevels"],
+      "value": {
+        "training_blade": 1,
+        "patched_headwrap": 1,
+        "patched_coat": 1,
+        "patched_gloves": 1,
+        "patched_boots": 1,
+        "patched_belt": 1,
+        "plain_charm": 1,
+        "ember_staff": 3,
+        "mist_hood": 1,
+        "spirit_robe": 1,
+        "guardian_gauntlets": 1,
+        "cloudstep_boots": 1,
+        "rift_belt": 1,
+        "rift_charm": 1
+      }
+    },
+    {
+      "op": "replace",
+      "path": ["state", "ownedPets"],
+      "value": ["contract_sprite"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "petLevels"],
+      "value": { "contract_sprite": 1 }
+    },
+    {
+      "op": "add",
+      "path": ["state", "activePet"],
+      "value": "contract_sprite"
+    },
+    {
+      "op": "replace",
+      "path": ["state", "player", "base", "spirit"],
+      "value": 25
+    },
+    {
+      "op": "replace",
+      "path": ["state", "player", "base", "body"],
+      "value": 30
+    },
+    {
+      "op": "replace",
+      "path": ["state", "player", "base", "agility"],
+      "value": 15
+    }
+  ],
+  "entrySeed": 121212121,
+  "scenarioIds": [
+    "redaction-clause-certify-redact",
+    "redaction-sector-gates",
+    "redaction-boss-snapshot-certified",
+    "redaction-boss-snapshot-redacted"
+  ],
+  "scenarios": [
+    {
+      "id": "redaction-clause-certify-redact",
+      "expected": {
+        "entryDisplay": {
+          "status": "抉择 0/3，认证 0，删改 0，预估条款 0/3",
+          "severity": "warning",
+          "meter": { "value": 0, "max": 3 },
+          "targetReached": false
+        },
+        "entryModifiers": {
+          "encounter": { "allStatsPercent": 0, "defensePercent": 0, "artPowerPercent": 0 },
+          "trap": { "damagePercent": 0, "dcPercent": 0 },
+          "healingPercent": 0,
+          "outgoingDamage": { "forcePercent": 0, "artPercent": 0 },
+          "guardEffectPercent": 0
+        },
+        "entryLawData": {
+          "kind": "redaction_scriptorium",
+          "pendingClauseNodeId": null,
+          "resolvedClauseChoices": {},
+          "bossClauseSnapshot": null,
+          "entryPassives": {
+            "redlineEdge": false,
+            "palimpsestMantle": false,
+            "finalProofSeal": false
+          }
+        },
+        "entryRedaction": {
+          "totalClauseCount": 3,
+          "resolvedCount": 0,
+          "certifiedCount": 0,
+          "redactedCount": 0,
+          "pendingClauseNodeId": null,
+          "projectedClauseChoices": {},
+          "frozenClauseChoices": null
+        },
+        "clears": [
+          {
+            "kind": "monster",
+            "nodeId": "margin_scribe_spine",
+            "rounds": 4,
+            "hpAfter": 487
+          },
+          {
+            "kind": "desk",
+            "nodeId": "memory_clause_desk",
+            "hpAfter": 487,
+            "pending": "memory_clause_desk",
+            "display": {
+              "status": "抉择 0/3，认证 0，删改 0，待裁定 记忆，预估条款 0/3",
+              "severity": "danger",
+              "meter": { "value": 0, "max": 3 },
+              "targetReached": false
+            }
+          },
+          {
+            "kind": "desk",
+            "nodeId": "body_clause_desk",
+            "hpAfter": 487,
+            "pending": "body_clause_desk",
+            "display": {
+              "status": "抉择 1/3，认证 1，删改 0，待裁定 肉身，预估条款 1/3",
+              "severity": "danger",
+              "meter": { "value": 1, "max": 3 },
+              "targetReached": false
+            }
+          },
+          {
+            "kind": "desk",
+            "nodeId": "return_clause_desk",
+            "hpAfter": 447,
+            "pending": "return_clause_desk",
+            "display": {
+              "status": "抉择 2/3，认证 1，删改 1，待裁定 归返，预估条款 2/3",
+              "severity": "danger",
+              "meter": { "value": 2, "max": 3 },
+              "targetReached": false
+            }
+          }
+        ],
+        "departureBlock": {
+          "status": "rejected",
+          "code": "departure-blocked",
+          "message": "终稿条款尚未裁定，请先选择认证或删改。",
+          "target": "final_proof_nexus"
+        },
+        "resolves": [
+          {
+            "desk": "memory_clause_desk",
+            "choice": "certify",
+            "status": "committed",
+            "log": "终稿条款·认证：认证当前正文，不支付生命。",
+            "hpBefore": 487,
+            "hpAfter": 487,
+            "display": {
+              "status": "抉择 1/3，认证 1，删改 0，预估条款 1/3",
+              "severity": "warning",
+              "meter": { "value": 1, "max": 3 },
+              "targetReached": false
+            },
+            "redaction": {
+              "totalClauseCount": 3,
+              "resolvedCount": 1,
+              "certifiedCount": 1,
+              "redactedCount": 0,
+              "pendingClauseNodeId": null,
+              "projectedClauseChoices": { "memory_clause_desk": "certify" },
+              "frozenClauseChoices": null
+            }
+          },
+          {
+            "desk": "body_clause_desk",
+            "choice": "redact",
+            "status": "committed",
+            "log": "终稿条款·删改：支付最大生命 8%（40 点）并删除当前条款。",
+            "hpBefore": 487,
+            "hpAfter": 447,
+            "display": {
+              "status": "抉择 2/3，认证 1，删改 1，预估条款 2/3",
+              "severity": "warning",
+              "meter": { "value": 2, "max": 3 },
+              "targetReached": false
+            },
+            "redaction": {
+              "totalClauseCount": 3,
+              "resolvedCount": 2,
+              "certifiedCount": 1,
+              "redactedCount": 1,
+              "pendingClauseNodeId": null,
+              "projectedClauseChoices": {
+                "body_clause_desk": "redact",
+                "memory_clause_desk": "certify"
+              },
+              "frozenClauseChoices": null
+            }
+          },
+          {
+            "desk": "return_clause_desk",
+            "choice": "certify",
+            "status": "committed",
+            "log": "终稿条款·认证：认证当前正文，不支付生命。",
+            "hpBefore": 447,
+            "hpAfter": 447,
+            "display": {
+              "status": "抉择 3/3，认证 2，删改 1，预估条款 3/3",
+              "severity": "resolved",
+              "meter": { "value": 3, "max": 3 },
+              "targetReached": true
+            },
+            "redaction": {
+              "totalClauseCount": 3,
+              "resolvedCount": 3,
+              "certifiedCount": 2,
+              "redactedCount": 1,
+              "pendingClauseNodeId": null,
+              "projectedClauseChoices": {
+                "body_clause_desk": "redact",
+                "memory_clause_desk": "certify",
+                "return_clause_desk": "certify"
+              },
+              "frozenClauseChoices": null
+            }
+          }
+        ],
+        "finalDisplay": {
+          "status": "抉择 3/3，认证 2，删改 1，预估条款 3/3",
+          "severity": "resolved",
+          "meter": { "value": 3, "max": 3 },
+          "targetReached": true
+        },
+        "finalLawData": {
+          "kind": "redaction_scriptorium",
+          "pendingClauseNodeId": null,
+          "resolvedClauseChoices": {
+            "body_clause_desk": "redact",
+            "memory_clause_desk": "certify",
+            "return_clause_desk": "certify"
+          },
+          "bossClauseSnapshot": null,
+          "entryPassives": {
+            "redlineEdge": false,
+            "palimpsestMantle": false,
+            "finalProofSeal": false
+          }
+        },
+        "noPendingResolve": {
+          "status": "rejected",
+          "code": "domain-rejected",
+          "message": "当前没有待裁定的终稿条款。"
+        },
+        "reselectCleared": {
+          "status": "rejected",
+          "code": "already-resolved",
+          "message": "The current node is already cleared."
+        },
+        "roundtrip": {
+          "status": "decoded",
+          "lawData": {
+            "kind": "redaction_scriptorium",
+            "pendingClauseNodeId": null,
+            "resolvedClauseChoices": {
+              "body_clause_desk": "redact",
+              "memory_clause_desk": "certify",
+              "return_clause_desk": "certify"
+            },
+            "bossClauseSnapshot": null,
+            "entryPassives": {
+              "redlineEdge": false,
+              "palimpsestMantle": false,
+              "finalProofSeal": false
+            }
+          },
+          "displayStatus": "抉择 3/3，认证 2，删改 1，预估条款 3/3"
+        }
+      }
+    },
+    {
+      "id": "redaction-sector-gates",
+      "expected": {
+        "spine": { "rounds": 4, "hpAfter": 487 },
+        "gates": [
+          {
+            "when": "memory-before-certify",
+            "at": "north_clue_cache",
+            "target": "memory_survey_archive",
+            "gateId": "redaction_memory_north_entry",
+            "status": "closed",
+            "isOpen": false,
+            "blockReason": "对应条款必须选择认证；删改后该选区永久关闭。"
+          },
+          {
+            "when": "memory-after-certify",
+            "at": "north_clue_cache",
+            "target": "memory_survey_archive",
+            "gateId": "redaction_memory_north_entry",
+            "status": "open",
+            "isOpen": true,
+            "blockReason": null
+          },
+          {
+            "when": "return-after-redact",
+            "at": "south_clue_cache",
+            "target": "return_revision_portal",
+            "gateId": "redaction_return_south_entry",
+            "status": "closed",
+            "isOpen": false,
+            "blockReason": "对应条款必须选择认证；删改后该选区永久关闭。"
+          }
+        ],
+        "illegalMoves": [
+          {
+            "target": "memory_survey_archive",
+            "status": "rejected",
+            "code": "illegal-move",
+            "message": "memory_survey_archive is not a legal adjacent destination from north_clue_cache."
+          },
+          {
+            "target": "return_revision_portal",
+            "status": "rejected",
+            "code": "illegal-move",
+            "message": "return_revision_portal is not a legal adjacent destination from south_clue_cache."
+          }
+        ],
+        "traversal": {
+          "target": "memory_survey_archive",
+          "status": "committed",
+          "hpAfter": 487
+        },
+        "bossGate": {
+          "when": "all-resolved",
+          "at": "final_proof_nexus",
+          "target": "last_redactor",
+          "gateId": "redaction_final_proof_boss_gate",
+          "status": "open",
+          "isOpen": true,
+          "blockReason": null
+        }
+      }
+    },
+    {
+      "id": "redaction-boss-snapshot-certified",
+      "expected": {
+        "spine": { "rounds": 4, "hpAfter": 487 },
+        "bossLawAtStart": {
+          "kind": "redaction_scriptorium",
+          "pendingClauseNodeId": null,
+          "resolvedClauseChoices": {
+            "body_clause_desk": "certify",
+            "memory_clause_desk": "certify",
+            "return_clause_desk": "certify"
+          },
+          "bossClauseSnapshot": {
+            "body_clause_desk": "certify",
+            "memory_clause_desk": "certify",
+            "return_clause_desk": "certify"
+          },
+          "entryPassives": {
+            "redlineEdge": false,
+            "palimpsestMantle": false,
+            "finalProofSeal": false
+          }
+        },
+        "bossDisplayAtStart": {
+          "status": "抉择 3/3，认证 3，删改 0，冻结条款 3/3",
+          "severity": "resolved",
+          "meter": { "value": 3, "max": 3 },
+          "targetReached": true
+        },
+        "bossModifiersAtStart": {
+          "encounter": { "allStatsPercent": 0, "defensePercent": 10, "artPowerPercent": 10 },
+          "trap": { "damagePercent": 0, "dcPercent": 0 },
+          "healingPercent": -10,
+          "outgoingDamage": { "forcePercent": 0, "artPercent": 0 },
+          "guardEffectPercent": -10
+        },
+        "bossModifiersAfterAwaken": {
+          "encounter": { "allStatsPercent": 0, "defensePercent": 20, "artPowerPercent": 20 },
+          "trap": { "damagePercent": 0, "dcPercent": 0 },
+          "healingPercent": -20,
+          "outgoingDamage": { "forcePercent": 0, "artPercent": 0 },
+          "guardEffectPercent": -20
+        },
+        "healEvents": [
+          {
+            "round": 8,
+            "hpBefore": 343,
+            "hpAfter": 352,
+            "healLine": "你吞下止血丹，生命回复 29 点。",
+            "pillsBefore": 61,
+            "pillsAfter": 60
+          }
+        ],
+        "bossFight": { "rounds": 10, "hpAfter": 352, "cleared": true },
+        "resolveAfterBoss": {
+          "status": "rejected",
+          "code": "domain-rejected",
+          "message": "首领终稿已经冻结，不能再改写条款。"
+        },
+        "roundtrip": {
+          "status": "decoded",
+          "lawData": {
+            "kind": "redaction_scriptorium",
+            "pendingClauseNodeId": null,
+            "resolvedClauseChoices": {
+              "body_clause_desk": "certify",
+              "memory_clause_desk": "certify",
+              "return_clause_desk": "certify"
+            },
+            "bossClauseSnapshot": {
+              "body_clause_desk": "certify",
+              "memory_clause_desk": "certify",
+              "return_clause_desk": "certify"
+            },
+            "entryPassives": {
+              "redlineEdge": false,
+              "palimpsestMantle": false,
+              "finalProofSeal": false
+            }
+          },
+          "displayStatus": "抉择 3/3，认证 3，删改 0，冻结条款 3/3"
+        }
+      }
+    },
+    {
+      "id": "redaction-boss-snapshot-redacted",
+      "expected": {
+        "spine": { "rounds": 4, "hpAfter": 487 },
+        "redacts": [
+          {
+            "desk": "memory_clause_desk",
+            "hpBefore": 487,
+            "hpAfter": 447,
+            "log": "终稿条款·删改：支付最大生命 8%（40 点）并删除当前条款。"
+          },
+          {
+            "desk": "body_clause_desk",
+            "hpBefore": 447,
+            "hpAfter": 407,
+            "log": "终稿条款·删改：支付最大生命 8%（40 点）并删除当前条款。"
+          },
+          {
+            "desk": "return_clause_desk",
+            "hpBefore": 407,
+            "hpAfter": 367,
+            "log": "终稿条款·删改：支付最大生命 8%（40 点）并删除当前条款。"
+          }
+        ],
+        "bossLawAtStart": {
+          "kind": "redaction_scriptorium",
+          "pendingClauseNodeId": null,
+          "resolvedClauseChoices": {
+            "body_clause_desk": "redact",
+            "memory_clause_desk": "redact",
+            "return_clause_desk": "redact"
+          },
+          "bossClauseSnapshot": {
+            "body_clause_desk": "redact",
+            "memory_clause_desk": "redact",
+            "return_clause_desk": "redact"
+          },
+          "entryPassives": {
+            "redlineEdge": false,
+            "palimpsestMantle": false,
+            "finalProofSeal": false
+          }
+        },
+        "bossDisplayAtStart": {
+          "status": "抉择 3/3，认证 0，删改 3，冻结条款 3/3",
+          "severity": "resolved",
+          "meter": { "value": 3, "max": 3 },
+          "targetReached": true
+        },
+        "bossModifiersAtStart": {
+          "encounter": { "allStatsPercent": 0, "defensePercent": 0, "artPowerPercent": 0 },
+          "trap": { "damagePercent": 0, "dcPercent": 0 },
+          "healingPercent": 0,
+          "outgoingDamage": { "forcePercent": 0, "artPercent": 0 },
+          "guardEffectPercent": 0
+        },
+        "bossModifiersAfterAwaken": {
+          "encounter": { "allStatsPercent": 0, "defensePercent": 0, "artPowerPercent": 0 },
+          "trap": { "damagePercent": 0, "dcPercent": 0 },
+          "healingPercent": 0,
+          "outgoingDamage": { "forcePercent": 0, "artPercent": 0 },
+          "guardEffectPercent": 0
+        },
+        "healEvents": [
+          {
+            "round": 2,
+            "hpBefore": 335,
+            "hpAfter": 355,
+            "healLine": "你吞下止血丹，生命回复 36 点。",
+            "pillsBefore": 61,
+            "pillsAfter": 60
+          },
+          {
+            "round": 4,
+            "hpBefore": 339,
+            "hpAfter": 359,
+            "healLine": "你吞下止血丹，生命回复 36 点。",
+            "pillsBefore": 60,
+            "pillsAfter": 59
+          },
+          {
+            "round": 6,
+            "hpBefore": 343,
+            "hpAfter": 363,
+            "healLine": "你吞下止血丹，生命回复 36 点。",
+            "pillsBefore": 59,
+            "pillsAfter": 58
+          },
+          {
+            "round": 8,
+            "hpBefore": 343,
+            "hpAfter": 359,
+            "healLine": "你吞下止血丹，生命回复 36 点。",
+            "pillsBefore": 58,
+            "pillsAfter": 57
+          },
+          {
+            "round": 10,
+            "hpBefore": 339,
+            "hpAfter": 355,
+            "healLine": "你吞下止血丹，生命回复 36 点。",
+            "pillsBefore": 57,
+            "pillsAfter": 56
+          },
+          {
+            "round": 12,
+            "hpBefore": 335,
+            "hpAfter": 351,
+            "healLine": "你吞下止血丹，生命回复 36 点。",
+            "pillsBefore": 56,
+            "pillsAfter": 55
+          },
+          {
+            "round": 14,
+            "hpBefore": 331,
+            "hpAfter": 347,
+            "healLine": "你吞下止血丹，生命回复 36 点。",
+            "pillsBefore": 55,
+            "pillsAfter": 54
+          },
+          {
+            "round": 15,
+            "hpBefore": 347,
+            "hpAfter": 363,
+            "healLine": "你吞下止血丹，生命回复 36 点。",
+            "pillsBefore": 54,
+            "pillsAfter": 53
+          }
+        ],
+        "bossFight": { "rounds": 17, "hpAfter": 363, "cleared": true }
+      }
+    }
+  ]
+}

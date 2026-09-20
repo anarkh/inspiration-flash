@@ -1,0 +1,382 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "law-01-demon-tower",
+  "provenance": {
+    "oracle": {
+      "project": "infinite-flow-web",
+      "commit": "2645f0232542684d27de1abc321bb26913320420",
+      "path": "infinite-flow/src/dungeon-laws.ts",
+      "sha256": "6deffb2bbbde6a9f4110603fb71f948e6543f5bc3985659cab81a82b7ca292ca"
+    },
+    "goldenManifest": {
+      "path": "packages/save-codec/tests/fixtures/manifest.json",
+      "sha256": "36fcff8420e9aefbb8fe8c472b42fd5dbf6835025beee05b567a8481d6ca6bf1"
+    },
+    "expectedRule": "Demon Tower (demon_tower_1) tracks fogPressure 0-3. On the first clear of a monster or trap node that dealt positive damage, fogPressure rises by 1; on the first clear of a relief landmark node (sealed_cache, quiet_prayer_reward) or a successful relief dungeon event (blood_rune_stair, mist_sealed_cache), fogPressure drops by 1; a dungeon event failure that deals damage (blood_rune_stair send_pet_first with no trap-scout pet) also raises fogPressure by 1. fogPressure is clamped to [0,3]. The law display is `雾压 ${fogPressure}/3` with severity stable (0), warning (1-2), danger (3), meter {value: fogPressure, max: 3}, targetReached fogPressure === 0. When fogPressure >= 2 the encounter modifier allStatsPercent is +20 (fog 3) or +10 (fog 2); at fog 0-1 it is 0. Four route gates use fog_pressure_at_most: demon_clear_blood_stair (blood_rune_trap→left_watch_trap, max 0), demon_fog_bone_lane (mist_herb_cache→bone_lane_monster, max 1), demon_clear_portal_stair (lower_fog_lesser→cracked_portal, max 0), demon_hushed_herb_stair (north_supply_niche→mist_herb_cache, max 1). A closed gate rejects run/move with illegal-move and does not change fogPressure. When all four relief landmarks are resolved (2 nodes collected + 2 events resolved) and fogPressure still exceeds a gate's max, the blockReason switches to the exhausted form `雾压需降至 X 或以下；减压地标均已结算，改走白光裂口侧路或撤回。`. Relief landmark rewards are idempotent: a second node/collect-reward is domain-rejected (`雾后暗格已经领取过奖励。` / `静默香案已经领取过奖励。` / `断符石盘已经领取过奖励。`) and a second node/resolve-event is domain-rejected (`这个关卡事件已经结算过，主神不会重复发放奖励。`); re-selecting an already-cleared node is rejected already-resolved. The boss bone_lane_monster (tower_butcher, bossTitle 雾塔剔骨监斩官, sealName 白骨闭门阵, maxHpMultiplier 1.25 → HP 83) starts in sealed phase (attackBonus 1, defenseBonus 1) and awakens to awakened phase (attackBonus 3) at ≤50% HP (血骨开铡); clearing it sets the exit seal 0/1→1/1. Chapter 1 law state is only {kind, fogPressure} and has no law bossSnapshot field (unlike panopticon/combat_replay); the equivalent dynamic evidence frozen here is the boss entry snapshot (HP 83, sealed phase, attack 15, defense 7), the mid-fight awakening (round 3, monsterHp 31, awakened phase), the visible combat consequences (44 damage over 6 rounds), the exit seal transition, and the already-resolved repeat-boss rejection. After the boss fight a pendingEquipmentOffer blocks departure until node/resolve-equipment-loot (no equipmentId = abandon). Law state (fogPressure), display status, clearedNodeIds, resolvedEventIds, and reward points persist through a save-codec round-trip. All expected values are frozen here, never read from candidate code."
+  },
+  "baseInput": {
+    "path": "packages/save-codec/tests/fixtures/new-hub-v1.json",
+    "sha256": "a1de1f1b33b59c91dea46caf55f21b6eee0b7104c2cbe4d68ac5d7a430709e0b"
+  },
+  "inputMutations": [
+    {
+      "op": "replace",
+      "path": ["state", "player", "hp"],
+      "value": 300
+    },
+    {
+      "op": "replace",
+      "path": ["state", "player", "maxHp"],
+      "value": 300
+    },
+    {
+      "op": "replace",
+      "path": ["state", "player", "base"],
+      "value": { "body": 5, "spirit": 3, "agility": 3, "luck": 2 }
+    },
+    {
+      "op": "replace",
+      "path": ["state", "learnedMethods"],
+      "value": ["mist_breathing"]
+    }
+  ],
+  "entrySeed": 101010101,
+  "scenarioIds": [
+    "demon-fog-rise-display-clamp",
+    "demon-recovery-landmark-relief",
+    "demon-high-fog-side-route-gates",
+    "demon-boss-gate-seal-exit",
+    "demon-reward-idempotency-roundtrip"
+  ],
+  "scenarios": [
+    {
+      "id": "demon-fog-rise-display-clamp",
+      "expected": {
+        "entryDisplay": {
+          "status": "雾压 0/3",
+          "severity": "stable",
+          "meter": { "value": 0, "max": 3 },
+          "targetReached": true
+        },
+        "entryModifiers": {
+          "encounter": { "allStatsPercent": 0, "defensePercent": 0, "artPowerPercent": 0 },
+          "trap": { "damagePercent": 0, "dcPercent": 0 },
+          "healingPercent": 0,
+          "outgoingDamage": { "forcePercent": 0, "artPercent": 0 },
+          "guardEffectPercent": 0
+        },
+        "entryLawData": { "kind": "demon_tower", "fogPressure": 0 },
+        "entryRewardPoints": 850,
+        "monsterRise": {
+          "nodeId": "fog_lesser_demon",
+          "damageTaken": 8,
+          "rounds": 2,
+          "fogBefore": 0,
+          "fogAfter": 1
+        },
+        "afterMonsterDisplay": {
+          "status": "雾压 1/3",
+          "severity": "warning",
+          "meter": { "value": 1, "max": 3 },
+          "targetReached": false
+        },
+        "trapRise": {
+          "nodeId": "blood_rune_trap",
+          "damageTaken": 10,
+          "fogBefore": 1,
+          "fogAfter": 2
+        },
+        "eventFailureRise": {
+          "eventId": "blood_rune_stair",
+          "optionId": "send_pet_first",
+          "damageTaken": 20,
+          "fogBefore": 2,
+          "fogAfter": 3,
+          "log": "没有陷阱侦测的灵宠，血字阶梯误判为安全路线。"
+        },
+        "afterThreeDisplay": {
+          "status": "雾压 3/3",
+          "severity": "danger",
+          "meter": { "value": 3, "max": 3 },
+          "targetReached": false
+        },
+        "afterThreeModifiers": {
+          "encounter": { "allStatsPercent": 20, "defensePercent": 0, "artPowerPercent": 0 },
+          "trap": { "damagePercent": 0, "dcPercent": 0 },
+          "healingPercent": 0,
+          "outgoingDamage": { "forcePercent": 0, "artPercent": 0 },
+          "guardEffectPercent": 0
+        },
+        "clampTrap": {
+          "nodeId": "ash_pit_trap",
+          "damageTaken": 8,
+          "fogBefore": 3,
+          "fogAfter": 3
+        },
+        "idempotentReselect": {
+          "status": "rejected",
+          "code": "already-resolved",
+          "message": "The current node is already cleared.",
+          "fogAfter": 3
+        },
+        "roundtrip": {
+          "status": "decoded",
+          "lawData": { "kind": "demon_tower", "fogPressure": 3 },
+          "displayStatus": "雾压 3/3",
+          "rewardPoints": 1070,
+          "clearedNodeIds": ["fog_lesser_demon", "blood_rune_trap", "ash_pit_trap"],
+          "resolvedEventIds": ["blood_rune_stair"]
+        }
+      }
+    },
+    {
+      "id": "demon-recovery-landmark-relief",
+      "expected": {
+        "eventRelief": {
+          "eventId": "blood_rune_stair",
+          "fogBefore": 2,
+          "fogAfter": 1,
+          "rewardPointsBefore": 1040,
+          "rewardPointsAfter": 1220,
+          "lingyunBefore": 1,
+          "lingyunAfter": 2,
+          "hiddenStone": 1,
+          "log": "吐纳诀压住血字阶梯，雾后石从暗格里松动。"
+        },
+        "eventRepeat": {
+          "status": "rejected",
+          "code": "domain-rejected",
+          "message": "这个关卡事件已经结算过，主神不会重复发放奖励。",
+          "fogAfter": 1
+        },
+        "sealedCacheCollect": {
+          "nodeId": "sealed_cache",
+          "fogBefore": 1,
+          "fogAfter": 0,
+          "rewardPointsBefore": 1220,
+          "rewardPointsAfter": 1460,
+          "lingyunBefore": 2,
+          "lingyunAfter": 3,
+          "medicineAsh": 1,
+          "hiddenStone": 2
+        },
+        "sealedCacheRepeat": {
+          "status": "rejected",
+          "code": "domain-rejected",
+          "message": "雾后暗格已经领取过奖励。",
+          "fogAfter": 0,
+          "rewardPointsAfter": 1460
+        },
+        "mistEventClamp": {
+          "eventId": "mist_sealed_cache",
+          "fogBefore": 0,
+          "fogAfter": 0,
+          "log": "吐纳节奏与石缝重合，你稳稳取出一包未受潮的药灰。"
+        },
+        "mistEventRepeat": {
+          "status": "rejected",
+          "code": "domain-rejected",
+          "message": "这个关卡事件已经结算过，主神不会重复发放奖励。",
+          "fogAfter": 0
+        },
+        "quietPrayerCollect": {
+          "nodeId": "quiet_prayer_reward",
+          "fogBefore": 0,
+          "fogAfter": 0,
+          "rewardPointsBefore": 1610,
+          "rewardPointsAfter": 1705,
+          "lingyunBefore": 3,
+          "lingyunAfter": 4,
+          "spiritBait": 1
+        },
+        "quietPrayerRepeat": {
+          "status": "rejected",
+          "code": "domain-rejected",
+          "message": "静默香案已经领取过奖励。",
+          "fogAfter": 0
+        },
+        "roundtrip": {
+          "status": "decoded",
+          "lawData": { "kind": "demon_tower", "fogPressure": 0 },
+          "displayStatus": "雾压 0/3",
+          "rewardPoints": 1705,
+          "clearedNodeIds": ["fog_lesser_demon", "blood_rune_trap", "sealed_cache", "quiet_prayer_reward"],
+          "resolvedEventIds": ["blood_rune_stair", "mist_sealed_cache"]
+        }
+      }
+    },
+    {
+      "id": "demon-high-fog-side-route-gates",
+      "expected": {
+        "gates": [
+          {
+            "at": "blood_rune_trap",
+            "target": "left_watch_trap",
+            "fogWhenChecked": 1,
+            "gateId": "demon_clear_blood_stair",
+            "status": "closed",
+            "isOpen": false,
+            "blockReason": "雾压需降至 0 或以下；先去雾后暗格或静默香案减压。"
+          },
+          {
+            "at": "mist_herb_cache",
+            "target": "bone_lane_monster",
+            "fogWhenChecked": 2,
+            "gateId": "demon_fog_bone_lane",
+            "status": "closed",
+            "isOpen": false,
+            "blockReason": "雾压需降至 1 或以下；先去雾后暗格或静默香案减压。"
+          },
+          {
+            "at": "mist_herb_cache",
+            "target": "bone_lane_monster",
+            "fogWhenChecked": 1,
+            "gateId": "demon_fog_bone_lane",
+            "status": "open",
+            "isOpen": true,
+            "blockReason": null
+          }
+        ],
+        "moves": [
+          {
+            "kind": "illegal",
+            "target": "bone_lane_monster",
+            "status": "rejected",
+            "code": "illegal-move",
+            "message": "bone_lane_monster is not a legal adjacent destination from mist_herb_cache.",
+            "fogAfter": 2
+          },
+          {
+            "kind": "legal",
+            "target": "bone_lane_monster",
+            "status": "committed",
+            "fogAfter": 1
+          }
+        ],
+        "bossCleared": true,
+        "fogAfterBoss": 2,
+        "hadLootOffer": true,
+        "fogAfterAllRelief": 0,
+        "allReliefResolved": {
+          "sealedCache": true,
+          "quietPrayer": true,
+          "bloodRuneEvent": true,
+          "mistEvent": true
+        },
+        "fogAfterRaise": 1,
+        "exhaustedGate": {
+          "at": "blood_rune_trap",
+          "target": "left_watch_trap",
+          "fogWhenChecked": 1,
+          "gateId": "demon_clear_blood_stair",
+          "status": "closed",
+          "isOpen": false,
+          "blockReason": "雾压需降至 0 或以下；减压地标均已结算，改走白光裂口侧路或撤回。"
+        },
+        "roundtrip": {
+          "status": "decoded",
+          "lawData": { "kind": "demon_tower", "fogPressure": 1 },
+          "displayStatus": "雾压 1/3",
+          "rewardPoints": 2105,
+          "clearedNodeIds": ["fog_lesser_demon", "blood_rune_trap", "sealed_cache", "bone_lane_monster", "quiet_prayer_reward", "ash_pit_trap"],
+          "resolvedEventIds": ["mist_sealed_cache", "blood_rune_stair"]
+        }
+      }
+    },
+    {
+      "id": "demon-boss-gate-seal-exit",
+      "expected": {
+        "bossGateClosed": {
+          "at": "mist_herb_cache",
+          "target": "bone_lane_monster",
+          "fogWhenChecked": 2,
+          "gateId": "demon_fog_bone_lane",
+          "status": "closed",
+          "isOpen": false,
+          "blockReason": "雾压需降至 1 或以下；先去雾后暗格或静默香案减压。"
+        },
+        "illegalBossMove": {
+          "status": "rejected",
+          "code": "illegal-move",
+          "message": "bone_lane_monster is not a legal adjacent destination from mist_herb_cache.",
+          "fogAfter": 2
+        },
+        "bossGateOpen": {
+          "at": "mist_herb_cache",
+          "target": "bone_lane_monster",
+          "fogWhenChecked": 1,
+          "gateId": "demon_fog_bone_lane",
+          "status": "open",
+          "isOpen": true,
+          "blockReason": null
+        },
+        "bossEntry": {
+          "monsterHp": 83,
+          "bossPhase": "sealed",
+          "turn": 1,
+          "attack": 15,
+          "defense": 7,
+          "bossTitle": "雾塔剔骨监斩官",
+          "sealName": "白骨闭门阵",
+          "openingLine": "【首领·雾塔剔骨监斩官】骨巷尽头，剔骨塔卒拖刀立在白骨闸前；只有它倒下，归路才会显形。"
+        },
+        "bossFight": {
+          "rounds": 6,
+          "damageTaken": 44,
+          "hpAfter": 68,
+          "cleared": true,
+          "fogBefore": 1,
+          "fogAfter": 2,
+          "awakened": { "round": 3, "monsterHp": 31, "bossPhase": "awakened" },
+          "awakeningLine": "【血骨开铡】塔卒折断胸前骨锁，血雾灌入屠刀，白骨闸开始向内合拢。"
+        },
+        "sealAfter": "出口封印 1/1：「白骨闭门阵」已解除。",
+        "repeatBossSelect": {
+          "status": "rejected",
+          "code": "already-resolved",
+          "message": "The current node is already cleared."
+        },
+        "roundtrip": {
+          "status": "decoded",
+          "lawData": { "kind": "demon_tower", "fogPressure": 2 },
+          "displayStatus": "雾压 2/3",
+          "rewardPoints": 1650,
+          "clearedNodeIds": ["fog_lesser_demon", "blood_rune_trap", "sealed_cache", "bone_lane_monster"],
+          "resolvedEventIds": []
+        }
+      }
+    },
+    {
+      "id": "demon-reward-idempotency-roundtrip",
+      "expected": {
+        "fogAfterStart": 1,
+        "brokenSigilCollect": {
+          "nodeId": "broken_sigil_reward",
+          "rewardPointsBefore": 1010,
+          "rewardPointsAfter": 1085,
+          "thunderTalisman": 1
+        },
+        "brokenSigilRepeat": {
+          "status": "rejected",
+          "code": "domain-rejected",
+          "message": "断符石盘已经领取过奖励。",
+          "rewardPointsAfter": 1085
+        },
+        "watchPostCollect": {
+          "nodeId": "watch_post_cache",
+          "rewardPointsBefore": 1085,
+          "rewardPointsAfter": 1155,
+          "medicineAsh": 1
+        },
+        "roundtrip": {
+          "status": "decoded",
+          "lawData": { "kind": "demon_tower", "fogPressure": 1 },
+          "displayStatus": "雾压 1/3",
+          "rewardPoints": 1155,
+          "clearedNodeIds": ["fog_lesser_demon", "broken_sigil_reward", "watch_post_cache"],
+          "resolvedEventIds": []
+        }
+      }
+    }
+  ]
+}

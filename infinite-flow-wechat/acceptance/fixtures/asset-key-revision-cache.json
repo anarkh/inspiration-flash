@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "asset-key-revision-cache",
+  "scenarioIds": [
+    "manifest-revision-and-physical-files",
+    "stable-key-is-explicit",
+    "extensionless-resource-loader",
+    "handle-cache-report-revision",
+    "reject-entry-revision-mix",
+    "cocos-resources-callback-bridge"
+  ],
+  "expected": {
+    "assetManifestSchemaVersion": 2,
+    "assetCount": 187,
+    "manifestRevision": "sha256:91b2f75d946411a2ac16d0a313336ba97bd395f652e55aa625fa940c396525b2",
+    "sample": {
+      "key": "npc:main_god_projection",
+      "kind": "npc",
+      "entityId": "main_god_projection",
+      "resourcePath": "npc/main-god-projection-v1",
+      "resourceFile": "npc/main-god-projection-v1.png"
+    }
+  }
+}

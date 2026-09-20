@@ -1,0 +1,30 @@
+{
+  "name": "@infinite-flow/save-codec",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "files": [
+    "dist",
+    "README.md",
+    "SOURCE-PARITY.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --config vitest.config.mjs"
+  },
+  "dependencies": {
+    "@infinite-flow/core": "0.1.0",
+    "@infinite-flow/runtime": "0.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3",
+    "vitest": "^2.1.1"
+  }
+}

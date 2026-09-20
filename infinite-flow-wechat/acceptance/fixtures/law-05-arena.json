@@ -1,0 +1,268 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "law-05-arena",
+  "provenance": {
+    "oracle": {
+      "project": "infinite-flow-web",
+      "commit": "2645f0232542684d27de1abc321bb26913320420",
+      "path": "infinite-flow/src/main.ts",
+      "sha256": "d07ff9d4562ecc618caf3341e5f83cb2b43a733c19506c14c362d1cd07bfb8bb"
+    },
+    "goldenManifest": {
+      "path": "packages/save-codec/tests/fixtures/manifest.json",
+      "sha256": "36fcff8420e9aefbb8fe8c472b42fd5dbf6835025beee05b567a8481d6ca6bf1"
+    },
+    "expectedRule": "Arena combat openings record the style of the first attack/art/guard action of each non-boss combat victory: force (attack), art, or guard. Two consecutive victories with the same opening style apply a -20% penalty to that style's outgoing damage or guard effect. Once all three styles have at least one victory, the ruling is rewritten to +10% force/art outgoing damage and +10% guard effect. Route gates arena_force_champion_lane, arena_art_bench_lane, and arena_guard_oath_lane open after at least one victory with their respective style; arena_three_style_judge_lane opens only after all three styles have won. All expected values are frozen here, never read from candidate code."
+  },
+  "baseInput": {
+    "path": "packages/save-codec/tests/fixtures/new-hub-v1.json",
+    "sha256": "a1de1f1b33b59c91dea46caf55f21b6eee0b7104c2cbe4d68ac5d7a430709e0b"
+  },
+  "inputMutations": [
+    {
+      "op": "replace",
+      "path": ["state", "completedDungeonIds"],
+      "value": ["demon_tower_1", "metro_abyss", "starfall_mine", "rust_hospital"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "claimedTaskIds"],
+      "value": ["clear_demon_tower", "clear_metro_abyss", "mainline_clear_starfall_mine", "mainline_clear_rust_hospital"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "preparedItemIds"],
+      "value": ["healing_pill", "focus_incense", "armor_patch"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "inventory", "healing_pill"],
+      "value": 20
+    },
+    {
+      "op": "replace",
+      "path": ["state", "inventory", "focus_incense"],
+      "value": 3
+    },
+    {
+      "op": "replace",
+      "path": ["state", "inventory", "armor_patch"],
+      "value": 3
+    },
+    {
+      "op": "replace",
+      "path": ["state", "learnedMethods"],
+      "value": ["iron_body"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "methodRanks"],
+      "value": { "iron_body": 1 }
+    },
+    {
+      "op": "add",
+      "path": ["state", "activeMethod"],
+      "value": "iron_body"
+    },
+    {
+      "op": "replace",
+      "path": ["state", "ownedEquipment"],
+      "value": [
+        "training_blade",
+        "patched_headwrap",
+        "patched_coat",
+        "patched_gloves",
+        "patched_boots",
+        "patched_belt",
+        "plain_charm",
+        "ember_staff",
+        "mist_hood",
+        "spirit_robe",
+        "guardian_gauntlets",
+        "cloudstep_boots",
+        "rift_belt",
+        "rift_charm"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "equipped"],
+      "value": {
+        "weapon": "ember_staff",
+        "head": "mist_hood",
+        "armor": "spirit_robe",
+        "hands": "guardian_gauntlets",
+        "feet": "cloudstep_boots",
+        "waist": "rift_belt",
+        "charm": "rift_charm"
+      }
+    },
+    {
+      "op": "replace",
+      "path": ["state", "equipmentLevels"],
+      "value": {
+        "training_blade": 1,
+        "patched_headwrap": 1,
+        "patched_coat": 1,
+        "patched_gloves": 1,
+        "patched_boots": 1,
+        "patched_belt": 1,
+        "plain_charm": 1,
+        "ember_staff": 3,
+        "mist_hood": 1,
+        "spirit_robe": 1,
+        "guardian_gauntlets": 1,
+        "cloudstep_boots": 1,
+        "rift_belt": 1,
+        "rift_charm": 1
+      }
+    }
+  ],
+  "entrySeed": 505050505,
+  "scenarioIds": [
+    "arena-style-records",
+    "arena-repeat-penalty",
+    "arena-three-style-rewrite",
+    "arena-route-gates",
+    "arena-repeat-clear-boundary"
+  ],
+  "scenarios": [
+    {
+      "id": "arena-style-records",
+      "expected": {
+        "initialDisplay": {
+          "title": "熔炉判词",
+          "status": "已记录 0/3",
+          "severity": "stable",
+          "meter": { "value": 0, "max": 3 },
+          "targetReached": false
+        },
+        "clears": [
+          { "nodeId": "ash_duelist", "kind": "combat", "opening": "force", "combatRounds": 6, "hpAfter": 93 },
+          { "nodeId": "ember_pit_duelist", "kind": "combat", "opening": "force", "combatRounds": 8, "hpAfter": 95 },
+          { "nodeId": "cinder_lancer", "kind": "combat", "opening": "guard", "combatRounds": 11, "hpAfter": 85 },
+          { "nodeId": "ringbreaker_duelist", "kind": "combat", "opening": "art", "combatRounds": 6, "hpAfter": 88 }
+        ],
+        "finalCombatOpenings": {
+          "ash_duelist": { "isBoss": false, "style": "force" },
+          "ember_pit_duelist": { "isBoss": false, "style": "force" },
+          "cinder_lancer": { "isBoss": false, "style": "guard" },
+          "ringbreaker_duelist": { "isBoss": false, "style": "art" }
+        },
+        "finalVictoryOrder": ["ash_duelist", "ember_pit_duelist", "cinder_lancer", "ringbreaker_duelist"],
+        "finalHp": 88
+      }
+    },
+    {
+      "id": "arena-repeat-penalty",
+      "expected": {
+        "afterFirstForce": {
+          "status": "已记录 1/3",
+          "severity": "stable",
+          "meter": { "value": 1, "max": 3 },
+          "targetReached": false,
+          "forcePercent": 0,
+          "artPercent": 0,
+          "guardEffectPercent": 0
+        },
+        "afterRepeatForce": {
+          "status": "连续复招：力",
+          "severity": "danger",
+          "meter": { "value": 1, "max": 3 },
+          "targetReached": false,
+          "forcePercent": -20,
+          "artPercent": 0,
+          "guardEffectPercent": 0
+        },
+        "afterGuardBreak": {
+          "status": "已记录 2/3",
+          "severity": "stable",
+          "meter": { "value": 2, "max": 3 },
+          "targetReached": false,
+          "forcePercent": 0,
+          "artPercent": 0,
+          "guardEffectPercent": 0
+        }
+      }
+    },
+    {
+      "id": "arena-three-style-rewrite",
+      "expected": {
+        "display": {
+          "title": "熔炉判词",
+          "status": "三式齐全，裁决改判",
+          "severity": "resolved",
+          "meter": { "value": 3, "max": 3 },
+          "targetReached": true
+        },
+        "modifiers": {
+          "forcePercent": 10,
+          "artPercent": 10,
+          "guardEffectPercent": 10
+        },
+        "distribution": { "force": 2, "art": 1, "guard": 1 }
+      }
+    },
+    {
+      "id": "arena-route-gates",
+      "expected": {
+        "gates": [
+          {
+            "gateId": "arena_force_champion_lane",
+            "checkedFromNodeId": "ash_duelist",
+            "targetNodeId": "judgement_flame",
+            "recordedAt": "after-first-force",
+            "status": "open",
+            "isOpen": true,
+            "blockReason": null
+          },
+          {
+            "gateId": "arena_art_bench_lane",
+            "checkedFromNodeId": "ember_pit_duelist",
+            "targetNodeId": "side_bench_supplies",
+            "recordedAt": "after-repeat-force",
+            "status": "closed",
+            "isOpen": false,
+            "blockReason": "先用术式开局获胜 1 场。"
+          },
+          {
+            "gateId": "arena_guard_oath_lane",
+            "checkedFromNodeId": "cinder_lancer",
+            "targetNodeId": "oath_cinders",
+            "recordedAt": "after-guard",
+            "status": "open",
+            "isOpen": true,
+            "blockReason": null
+          },
+          {
+            "gateId": "arena_three_style_judge_lane",
+            "checkedFromNodeId": "oath_cinders",
+            "targetNodeId": "furnace_judge",
+            "recordedAt": "before-rewrite",
+            "status": "closed",
+            "isOpen": false,
+            "blockReason": "用力、术、守三种开局各获胜一次后开放。"
+          },
+          {
+            "gateId": "arena_three_style_judge_lane",
+            "checkedFromNodeId": "oath_cinders",
+            "targetNodeId": "furnace_judge",
+            "recordedAt": "after-rewrite",
+            "status": "open",
+            "isOpen": true,
+            "blockReason": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "arena-repeat-clear-boundary",
+      "expected": {
+        "reselectedNodeId": "ringbreaker_duelist",
+        "rejectionCode": "already-resolved",
+        "lawStateUnchanged": true,
+        "hpUnchanged": true
+      }
+    }
+  ]
+}

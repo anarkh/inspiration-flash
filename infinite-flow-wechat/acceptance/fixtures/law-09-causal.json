@@ -1,0 +1,425 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "law-09-causal",
+  "provenance": {
+    "oracle": {
+      "project": "infinite-flow-web",
+      "commit": "2645f0232542684d27de1abc321bb26913320420",
+      "path": "infinite-flow/src/dungeon-laws.ts",
+      "sha256": "6deffb2bbbde6a9f4110603fb71f948e6543f5bc3985659cab81a82b7ca292ca"
+    },
+    "goldenManifest": {
+      "path": "packages/save-codec/tests/fixtures/manifest.json",
+      "sha256": "36fcff8420e9aefbb8fe8c472b42fd5dbf6835025beee05b567a8481d6ca6bf1"
+    },
+    "expectedRule": "Causal Clearinghouse tracks a causal ledger with debt 0-4. Clearing a monster or trap node (except the zero_sum_auditor boss) opens a pending ledger for that node; while pending, departure is blocked and the player must choose balance (no effect), overdraw (debt +1, heal 10% maxHp, +108 run reward points) or repay (debt -1, damage 15% maxHp, 8% with return_anchor_belt). The law display '因果账本' shows 因果债 N/4 with 账目已结/待平账/追缴印 N states. Route gates causal_cause_bailiff_lane, causal_effect_bailiff_lane and causal_verdict_bridge open with debt at most 2; causal_north_verdict_lock at most 1; causal_east_verdict_lock at most 3; closed gates expose their real block reason '因果债需降至 N 或以下；在待平账中选择偿还以降债。' and remove the edge from legal adjacent targets, so run/move through a closed gate is rejected illegal-move. Starting the zero_sum_auditor boss combat locks the debt and mints collection seals equal to outstanding debt (minus echo_breaker_gauntlets); each damaging attack against the boss consumes one seal, halving final damage, with log '追缴印抵消本次攻势，最终伤害减半，剩余 N 枚。'; after the lock the ledger can no longer be rewritten. Ledger state persists through a save-codec round-trip. Re-selecting a cleared node is rejected already-resolved without changing law state or HP; resolving a ledger choice with no pending is rejected domain-rejected. All expected values are frozen here, never read from candidate code."
+  },
+  "baseInput": {
+    "path": "packages/save-codec/tests/fixtures/new-hub-v1.json",
+    "sha256": "a1de1f1b33b59c91dea46caf55f21b6eee0b7104c2cbe4d68ac5d7a430709e0b"
+  },
+  "inputMutations": [
+    {
+      "op": "replace",
+      "path": ["state", "completedDungeonIds"],
+      "value": ["demon_tower_1", "metro_abyss", "starfall_mine", "rust_hospital", "ash_arena", "dream_archive", "void_citadel", "temporal_observatory"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "claimedTaskIds"],
+      "value": ["clear_demon_tower", "clear_metro_abyss", "mainline_clear_starfall_mine", "mainline_clear_rust_hospital", "mainline_clear_ash_arena", "mainline_clear_dream_archive", "mainline_clear_void_citadel", "mainline_clear_temporal_observatory"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "preparedItemIds"],
+      "value": ["healing_pill", "focus_incense", "armor_patch"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "inventory", "healing_pill"],
+      "value": 20
+    },
+    {
+      "op": "replace",
+      "path": ["state", "inventory", "focus_incense"],
+      "value": 3
+    },
+    {
+      "op": "replace",
+      "path": ["state", "inventory", "armor_patch"],
+      "value": 3
+    },
+    {
+      "op": "replace",
+      "path": ["state", "learnedMethods"],
+      "value": ["iron_body"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "methodRanks"],
+      "value": { "iron_body": 1 }
+    },
+    {
+      "op": "add",
+      "path": ["state", "activeMethod"],
+      "value": "iron_body"
+    },
+    {
+      "op": "replace",
+      "path": ["state", "ownedEquipment"],
+      "value": [
+        "training_blade",
+        "patched_headwrap",
+        "patched_coat",
+        "patched_gloves",
+        "patched_boots",
+        "patched_belt",
+        "plain_charm",
+        "ember_staff",
+        "mist_hood",
+        "spirit_robe",
+        "guardian_gauntlets",
+        "cloudstep_boots",
+        "rift_belt",
+        "rift_charm"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "equipped"],
+      "value": {
+        "weapon": "ember_staff",
+        "head": "mist_hood",
+        "armor": "spirit_robe",
+        "hands": "guardian_gauntlets",
+        "feet": "cloudstep_boots",
+        "waist": "rift_belt",
+        "charm": "rift_charm"
+      }
+    },
+    {
+      "op": "replace",
+      "path": ["state", "equipmentLevels"],
+      "value": {
+        "training_blade": 1,
+        "patched_headwrap": 1,
+        "patched_coat": 1,
+        "patched_gloves": 1,
+        "patched_boots": 1,
+        "patched_belt": 1,
+        "plain_charm": 1,
+        "ember_staff": 3,
+        "mist_hood": 1,
+        "spirit_robe": 1,
+        "guardian_gauntlets": 1,
+        "cloudstep_boots": 1,
+        "rift_belt": 1,
+        "rift_charm": 1
+      }
+    },
+    {
+      "op": "replace",
+      "path": ["state", "ownedPets"],
+      "value": ["contract_sprite"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "petLevels"],
+      "value": { "contract_sprite": 1 }
+    },
+    {
+      "op": "add",
+      "path": ["state", "activePet"],
+      "value": "contract_sprite"
+    },
+    {
+      "op": "replace",
+      "path": ["state", "player", "base", "spirit"],
+      "value": 7
+    },
+    {
+      "op": "replace",
+      "path": ["state", "player", "base", "body"],
+      "value": 10
+    },
+    {
+      "op": "replace",
+      "path": ["state", "player", "base", "agility"],
+      "value": 4
+    }
+  ],
+  "entrySeed": 909090909,
+  "scenarioIds": [
+    "causal-ledger-balance-overdraw-repay",
+    "causal-debt-route-gates",
+    "causal-boss-collection-seals",
+    "causal-repeat-boundary"
+  ],
+  "scenarios": [
+    {
+      "id": "causal-ledger-balance-overdraw-repay",
+      "expected": {
+        "entryDisplay": {
+          "status": "因果债 0/4，账目已结",
+          "severity": "resolved",
+          "meter": { "value": 0, "max": 4 },
+          "targetReached": true
+        },
+        "entryModifiers": {
+          "encounter": { "allStatsPercent": 0, "defensePercent": 0, "artPowerPercent": 0 },
+          "trap": { "damagePercent": 0, "dcPercent": 0 },
+          "healingPercent": 0,
+          "outgoingDamage": { "forcePercent": 0, "artPercent": 0 },
+          "guardEffectPercent": 0
+        },
+        "entryLawData": {
+          "kind": "causal_clearinghouse",
+          "debt": 0,
+          "pendingLedgerNodeId": null,
+          "settledLedgerNodeIds": [],
+          "bossDebtLocked": false,
+          "collectionSeals": 0,
+          "entryPassives": {
+            "causalVisor": false,
+            "echoBreakerGauntlets": false,
+            "returnAnchorBelt": false
+          },
+          "visorCreditUsed": false
+        },
+        "pathCombat": { "nodeId": "verdict_usher", "rounds": 4, "hpAfter": 211 },
+        "pendingAfterFight": {
+          "display": {
+            "status": "因果债 0/4，待平账",
+            "severity": "warning",
+            "meter": { "value": 0, "max": 4 },
+            "targetReached": false
+          },
+          "pendingLedgerNodeId": "verdict_usher"
+        },
+        "departureBlock": {
+          "status": "rejected",
+          "code": "departure-blocked",
+          "message": "因果账本尚未结算，请先选择平衡、透支或偿还。",
+          "target": "contradiction_line"
+        },
+        "balance": {
+          "log": "因果账本·平衡：账目原样归档，当前因果债 0/4。",
+          "hpBefore": 211,
+          "hpAfter": 211,
+          "debtBefore": 0,
+          "debtAfter": 0,
+          "settledLedgerNodeIds": ["verdict_usher"]
+        },
+        "trap": { "nodeId": "contradiction_line", "hpBefore": 211, "hpAfter": 183 },
+        "soulTrap": { "nodeId": "soul_recharge_chamber", "hpBefore": 206, "hpAfter": 178 },
+        "overdraws": [
+          {
+            "log": "因果账本·透支：本局奖励点 +108，生命回复 23，当前因果债 1/4。",
+            "hpBefore": 183,
+            "hpAfter": 206,
+            "debtBefore": 0,
+            "debtAfter": 1,
+            "rewardPointsBefore": 1620,
+            "rewardPointsAfter": 1728
+          },
+          {
+            "log": "因果账本·透支：本局奖励点 +108，生命回复 23，当前因果债 2/4。",
+            "hpBefore": 178,
+            "hpAfter": 201,
+            "debtBefore": 1,
+            "debtAfter": 2,
+            "rewardPointsBefore": 2043,
+            "rewardPointsAfter": 2151
+          }
+        ],
+        "bridgeAtDebtTwo": {
+          "at": "verdict_bridge",
+          "target": "zero_sum_auditor",
+          "gateId": "causal_verdict_bridge",
+          "status": "open",
+          "isOpen": true,
+          "blockReason": null
+        },
+        "effectBailiff": { "nodeId": "effect_bailiff", "rounds": 4, "hpAfter": 180 },
+        "repays": [
+          {
+            "log": "因果账本·偿还：支付最大生命 15%（34 点），当前因果债 1/4。",
+            "hpBefore": 180,
+            "hpAfter": 146,
+            "debtBefore": 2,
+            "debtAfter": 1
+          },
+          {
+            "log": "因果账本·偿还：支付最大生命 15%（34 点），当前因果债 0/4。",
+            "hpBefore": 81,
+            "hpAfter": 47,
+            "debtBefore": 1,
+            "debtAfter": 0
+          }
+        ],
+        "paradoxOmega": { "nodeId": "paradox_bailiff_omega", "rounds": 6, "hpAfter": 81 },
+        "finalDisplay": {
+          "status": "因果债 0/4，账目已结",
+          "severity": "resolved",
+          "meter": { "value": 0, "max": 4 },
+          "targetReached": true
+        },
+        "roundtrip": {
+          "status": "decoded",
+          "lawData": {
+            "kind": "causal_clearinghouse",
+            "debt": 0,
+            "pendingLedgerNodeId": null,
+            "settledLedgerNodeIds": [
+              "verdict_usher",
+              "contradiction_line",
+              "soul_recharge_chamber",
+              "effect_bailiff",
+              "paradox_bailiff_omega"
+            ],
+            "bossDebtLocked": false,
+            "collectionSeals": 0,
+            "entryPassives": {
+              "causalVisor": false,
+              "echoBreakerGauntlets": false,
+              "returnAnchorBelt": false
+            },
+            "visorCreditUsed": false
+          }
+        }
+      }
+    },
+    {
+      "id": "causal-debt-route-gates",
+      "expected": {
+        "debtAfterTwoOverdraws": 2,
+        "bridgeAtDebtTwo": {
+          "at": "verdict_bridge",
+          "target": "zero_sum_auditor",
+          "gateId": "causal_verdict_bridge",
+          "status": "open",
+          "isOpen": true,
+          "blockReason": null
+        },
+        "debtAfterThreeOverdraws": 3,
+        "bridgeAtDebtThree": {
+          "at": "verdict_bridge",
+          "target": "zero_sum_auditor",
+          "gateId": "causal_verdict_bridge",
+          "status": "closed",
+          "isOpen": false,
+          "blockReason": "因果债需降至 2 或以下；在待平账中选择偿还以降债。"
+        },
+        "closedMove": {
+          "status": "rejected",
+          "code": "illegal-move",
+          "message": "zero_sum_auditor is not a legal adjacent destination from verdict_bridge.",
+          "target": "zero_sum_auditor"
+        },
+        "repay": {
+          "log": "因果账本·偿还：支付最大生命 15%（34 点），当前因果债 2/4。",
+          "debtBefore": 3,
+          "debtAfter": 2
+        },
+        "bridgeAfterRepay": {
+          "at": "verdict_bridge",
+          "target": "zero_sum_auditor",
+          "gateId": "causal_verdict_bridge",
+          "status": "open",
+          "isOpen": true,
+          "blockReason": null
+        }
+      }
+    },
+    {
+      "id": "causal-boss-collection-seals",
+      "expected": {
+        "bossLawAtStart": {
+          "kind": "causal_clearinghouse",
+          "debt": 2,
+          "pendingLedgerNodeId": null,
+          "settledLedgerNodeIds": ["verdict_usher", "contradiction_line"],
+          "bossDebtLocked": true,
+          "collectionSeals": 2,
+          "entryPassives": {
+            "causalVisor": false,
+            "echoBreakerGauntlets": false,
+            "returnAnchorBelt": false
+          },
+          "visorCreditUsed": false
+        },
+        "bossDisplayAtStart": {
+          "status": "因果债 2/4，追缴印 2",
+          "severity": "danger",
+          "meter": { "value": 2, "max": 4 },
+          "targetReached": false
+        },
+        "bossFight": { "rounds": 24, "hpAfter": 66, "cleared": true },
+        "sealedAttacks": [
+          {
+            "sealsBefore": 2,
+            "sealsAfter": 1,
+            "sealLine": "追缴印抵消本次攻势，最终伤害减半，剩余 1 枚。",
+            "atkLine": "你发动攻击，造成 19 点伤害。",
+            "damage": 19
+          },
+          {
+            "sealsBefore": 1,
+            "sealsAfter": 0,
+            "sealLine": "追缴印抵消本次攻势，最终伤害减半，剩余 0 枚。",
+            "atkLine": "你发动攻击，造成 19 点伤害。",
+            "damage": 19
+          }
+        ],
+        "firstUnsealedAttack": {
+          "damage": 38,
+          "sealLine": null,
+          "atkLine": "你发动攻击，造成 38 点伤害。"
+        },
+        "sealedDamageIsHalf": true,
+        "lawAfterBoss": {
+          "kind": "causal_clearinghouse",
+          "debt": 2,
+          "pendingLedgerNodeId": null,
+          "settledLedgerNodeIds": ["verdict_usher", "contradiction_line"],
+          "bossDebtLocked": true,
+          "collectionSeals": 0,
+          "entryPassives": {
+            "causalVisor": false,
+            "echoBreakerGauntlets": false,
+            "returnAnchorBelt": false
+          },
+          "visorCreditUsed": false
+        },
+        "displayAfterBoss": {
+          "status": "因果债 2/4，账目已结",
+          "severity": "warning",
+          "meter": { "value": 2, "max": 4 },
+          "targetReached": false
+        },
+        "ledgerAfterLock": {
+          "status": "rejected",
+          "code": "domain-rejected",
+          "message": "当前没有待平账的因果账本。",
+          "debtUnchanged": true,
+          "debt": 2
+        }
+      }
+    },
+    {
+      "id": "causal-repeat-boundary",
+      "expected": {
+        "reselectedNodeId": "verdict_usher",
+        "rejectionCode": "already-resolved",
+        "rejectionMessage": "The current node is already cleared.",
+        "lawStateUnchanged": true,
+        "hpUnchanged": true,
+        "noPendingResolve": {
+          "status": "rejected",
+          "code": "domain-rejected",
+          "message": "当前没有待平账的因果账本。"
+        }
+      }
+    }
+  ]
+}

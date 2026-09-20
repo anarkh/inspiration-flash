@@ -1,0 +1,1046 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "law-17-verdict",
+  "provenance": {
+    "oracle": {
+      "project": "infinite-flow-web",
+      "commit": "2645f0232542684d27de1abc321bb26913320420",
+      "path": "infinite-flow/src/dungeon-laws.ts",
+      "sha256": "6deffb2bbbde6a9f4110603fb71f948e6543f5bc3985659cab81a82b7ca292ca"
+    },
+    "goldenManifest": {
+      "path": "packages/save-codec/tests/fixtures/manifest.json",
+      "sha256": "36fcff8420e9aefbb8fe8c472b42fd5dbf6835025beee05b567a8481d6ca6bf1"
+    },
+    "expectedRule": "False Testimony Court tracks three evidence nodes (voice_evidence, timeline_evidence, residue_evidence), each paired with a counter-item trap (voice_filter_trap/focus_incense, timeline_checksum_trap/dispel_talisman, residue_sterility_trap/armor_patch). Entering the dungeon freezes entry gear {crossExaminerSabre, forensicVisor, custodyShell, appealSeal} from the equipped loadout into law.entryGear; forensic_visor equipped eliminates field_medic from the suspect pool at entry. Handling a trap with 'counter' consumes its counter item and deals no damage; handling with 'risk' deals damage. When a trap damages the player before its paired evidence is revealed, that evidence becomes contaminated (contaminatedEvidenceIds) unless custody_shell is equipped and unspent, in which case custodyProtectionUsed flips true and the first contamination is prevented. Collecting an evidence node reveals it: a clean revealed evidence is trusted (trusted count +1) and eliminates its paired suspect (voice→field_medic, timeline→security_chief, residue→records_keeper); a contaminated revealed evidence is not trusted and does not eliminate its suspect. Collecting verdict_chamber sets pendingVerdictNodeId='verdict_chamber'; law/resolve-verdict {suspect} at the pending node freezes the original verdict (accusedSuspect, accusationCorrect = suspect === 'route_surveyor', accusationTrustedCount = trusted count at freeze). A correct verdict pays 480 reward points plus a 120 cross_examiner_sabre bonus when the sabre is equipped (trusted count 1 → +600 on both state.rewardPoints and run loot; trusted count 0 → 0); a wrong verdict pays 0. A wrong verdict with appeal_seal equipped and appealUsed false is appeal-eligible (display 翻案：可); collecting appeal_desk sets pendingVerdictNodeId='appeal_desk' and a second resolve-verdict there performs the appeal: the accused suspect and correctness are replaced, the trusted count is inherited from the original verdict, appealUsed flips true, and no reward is paid. After a successful appeal the appeal-entry gates close (错判、携带翻案印玺且未取伪判封存后开放。) and the false_verdict_vault gate closes (当前裁决错误时开放。). The false_verdict_vault gate opens only while the current verdict is wrong; collecting the vault pays its wrong-verdict reward and permanently seals the verdict so appeal is no longer possible (display 翻案：不可， appeal-entry gates closed). The boss gate false_testimony_verdict_chamber_to_false_testimony_judge opens only after the verdict is resolved with no pending verdict (完成裁决且无待处理裁定后开放。); before the verdict, moving onto false_testimony_judge is departure-blocked (原始裁决尚未完成，请先选择指控对象。). Starting the false_testimony_judge boss combat freezes bossVerdictSnapshot {suspect, correct, trustedCount, appealed, eliminatedSuspects} and makes the law immutable: further resolve-verdict commands produce no domain transition, trap damage no longer contaminates evidence, and evidence collects no longer reveal (verified post-boss: a risked voice_filter_trap and a voice_evidence collect leave contaminatedEvidenceIds empty and revealedEvidenceIds unchanged). Boss modifiers during the encounter derive from the frozen verdict; the verified band is a correct verdict with trusted count 1 → encounter.allStatsPercent -4 and outgoingDamage force/art +8. The boss is a real multi-round combat (monsterHp 1479, bossPhase sealed, 7 rounds). The law display status is 声纹：X，时序：X，残留：X（未揭示|净|污染），排除：X，裁刃：有/无，目镜：有/无，护甲：有/无/已用，印玺：有/无，裁决：X，待处理：X，预计奖励：N，翻案：可/不可，Boss快照：X with severity stable/warning/resolved and meter {value: revealed evidence count, max: 3}; the verdict-correct API is core.getCurrentVerdictStatus and the law API is core.getCurrentDungeonLaw. Route gates remove edges from legal adjacent targets when closed, so run/move through them is rejected illegal-move. The truth_archive gate (records_stacks → truth_archive, 原始裁决正确且冻结三份净证后开放。) is unreachable in a normal run because only residue_evidence is reachable before the first verdict while voice_evidence and timeline_evidence sit in the post-boss sealed pocket, so the original verdict can never freeze three trusted evidence; the closed gate plus its illegal-move rejection are the dynamic equivalent evidence. Likewise voice/timeline contamination before the freeze is unreachable; the post-boss risked trap dynamically proves the frozen law can no longer be contaminated. Law state, entry gear, verdict, boss snapshot, and reward points persist through a save-codec round-trip. All expected values are frozen here, never read from candidate code."
+  },
+  "baseInput": {
+    "path": "packages/save-codec/tests/fixtures/new-hub-v1.json",
+    "sha256": "a1de1f1b33b59c91dea46caf55f21b6eee0b7104c2cbe4d68ac5d7a430709e0b"
+  },
+  "inputMutations": [
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "completedDungeonIds"
+      ],
+      "value": [
+        "demon_tower_1",
+        "metro_abyss",
+        "starfall_mine",
+        "rust_hospital",
+        "ash_arena",
+        "dream_archive",
+        "void_citadel",
+        "temporal_observatory",
+        "causal_clearinghouse",
+        "entropy_ark",
+        "mirror_cycle_city",
+        "redaction_scriptorium",
+        "legacy_auction_court",
+        "genesis_vault",
+        "silent_broadcast_tower",
+        "lost_shelter"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "claimedTaskIds"
+      ],
+      "value": [
+        "clear_demon_tower",
+        "clear_metro_abyss",
+        "mainline_clear_starfall_mine",
+        "mainline_clear_rust_hospital",
+        "mainline_clear_ash_arena",
+        "mainline_clear_dream_archive",
+        "mainline_clear_void_citadel",
+        "mainline_clear_temporal_observatory",
+        "mainline_clear_causal_clearinghouse",
+        "mainline_clear_entropy_ark",
+        "mainline_clear_mirror_cycle_city",
+        "mainline_clear_redaction_scriptorium",
+        "mainline_clear_legacy_auction_court",
+        "mainline_clear_genesis_vault",
+        "mainline_clear_silent_broadcast_tower",
+        "mainline_clear_lost_shelter"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "preparedItemIds"
+      ],
+      "value": [
+        "focus_incense",
+        "dispel_talisman",
+        "armor_patch"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "inventory",
+        "healing_pill"
+      ],
+      "value": 60
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "inventory",
+        "focus_incense"
+      ],
+      "value": 3
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "inventory",
+        "dispel_talisman"
+      ],
+      "value": 3
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "inventory",
+        "armor_patch"
+      ],
+      "value": 3
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "learnedMethods"
+      ],
+      "value": [
+        "iron_body"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "methodRanks"
+      ],
+      "value": {
+        "iron_body": 1
+      }
+    },
+    {
+      "op": "add",
+      "path": [
+        "state",
+        "activeMethod"
+      ],
+      "value": "iron_body"
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "ownedEquipment"
+      ],
+      "value": [
+        "training_blade",
+        "patched_headwrap",
+        "patched_coat",
+        "patched_gloves",
+        "patched_boots",
+        "patched_belt",
+        "plain_charm",
+        "guardian_gauntlets",
+        "cloudstep_boots",
+        "rift_belt",
+        "rift_charm",
+        "cross_examiner_sabre",
+        "forensic_visor",
+        "appeal_seal"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "equipped"
+      ],
+      "value": {
+        "weapon": "cross_examiner_sabre",
+        "head": "forensic_visor",
+        "armor": "patched_coat",
+        "hands": "guardian_gauntlets",
+        "feet": "cloudstep_boots",
+        "waist": "rift_belt",
+        "charm": "appeal_seal"
+      }
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "equipmentLevels"
+      ],
+      "value": {
+        "training_blade": 1,
+        "patched_headwrap": 1,
+        "patched_coat": 1,
+        "patched_gloves": 1,
+        "patched_boots": 1,
+        "patched_belt": 1,
+        "plain_charm": 1,
+        "guardian_gauntlets": 1,
+        "cloudstep_boots": 1,
+        "rift_belt": 1,
+        "rift_charm": 1,
+        "cross_examiner_sabre": 1,
+        "forensic_visor": 1,
+        "appeal_seal": 1
+      }
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "ownedPets"
+      ],
+      "value": [
+        "contract_sprite"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "petLevels"
+      ],
+      "value": {
+        "contract_sprite": 1
+      }
+    },
+    {
+      "op": "add",
+      "path": [
+        "state",
+        "activePet"
+      ],
+      "value": "contract_sprite"
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "ownedCompanions"
+      ],
+      "value": [
+        "qin_che"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "companionRanks"
+      ],
+      "value": {
+        "qin_che": 2
+      }
+    },
+    {
+      "op": "add",
+      "path": [
+        "state",
+        "activeCompanion"
+      ],
+      "value": "qin_che"
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "player",
+        "base",
+        "spirit"
+      ],
+      "value": 25
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "player",
+        "base",
+        "body"
+      ],
+      "value": 60
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "player",
+        "base",
+        "agility"
+      ],
+      "value": 15
+    }
+  ],
+  "entrySeed": 171717171,
+  "scenarioIds": [
+    "verdict-contamination-and-display",
+    "verdict-accusation-and-reward",
+    "verdict-appeal-and-vault-mutex",
+    "verdict-vault-locks-appeal",
+    "verdict-boss-snapshot-and-freeze"
+  ],
+  "scenarios": [
+    {
+      "id": "verdict-contamination-and-display",
+      "expected": {
+        "entryDisplay": {
+          "status": "声纹:未揭示，时序:未揭示，残留:未揭示，排除:现场医师，裁刃:有，目镜:有，护甲:无，印玺:有，裁决:未裁决，待处理:无，预计奖励:0，翻案:不可，Boss快照:未冻结",
+          "severity": "stable",
+          "meter": {
+            "value": 0,
+            "max": 3
+          },
+          "targetReached": false
+        },
+        "entryModifiers": {
+          "encounter": {
+            "allStatsPercent": 0,
+            "defensePercent": 0,
+            "artPowerPercent": 0
+          },
+          "trap": {
+            "damagePercent": 0,
+            "dcPercent": 0
+          },
+          "healingPercent": 0,
+          "outgoingDamage": {
+            "forcePercent": 0,
+            "artPercent": 0
+          },
+          "guardEffectPercent": 0
+        },
+        "entryLawData": {
+          "kind": "false_testimony_court",
+          "revealedEvidenceIds": [],
+          "contaminatedEvidenceIds": [],
+          "pendingVerdictNodeId": null,
+          "accusedSuspect": null,
+          "accusationCorrect": null,
+          "accusationTrustedCount": 0,
+          "appealUsed": false,
+          "bossVerdictSnapshot": null,
+          "entryGear": {
+            "crossExaminerSabre": true,
+            "forensicVisor": true,
+            "custodyShell": false,
+            "appealSeal": true
+          },
+          "custodyProtectionUsed": false
+        },
+        "entryStatus": {
+          "evidence": [
+            {
+              "id": "voice_evidence",
+              "revealed": false,
+              "contaminated": false,
+              "trusted": false,
+              "eliminatedSuspect": "field_medic"
+            },
+            {
+              "id": "timeline_evidence",
+              "revealed": false,
+              "contaminated": false,
+              "trusted": false,
+              "eliminatedSuspect": "security_chief"
+            },
+            {
+              "id": "residue_evidence",
+              "revealed": false,
+              "contaminated": false,
+              "trusted": false,
+              "eliminatedSuspect": "records_keeper"
+            }
+          ],
+          "currentTrustedCount": 0,
+          "eliminatedSuspects": [
+            "field_medic"
+          ],
+          "pendingVerdictNodeId": null,
+          "accusedSuspect": null,
+          "accusationCorrect": null,
+          "accusationTrustedCount": 0,
+          "appealUsed": false,
+          "appealEligible": false,
+          "projectedAccusationRewardPoints": 0,
+          "bossVerdictSnapshot": null,
+          "entryGear": {
+            "crossExaminerSabre": true,
+            "forensicVisor": true,
+            "custodyShell": false,
+            "appealSeal": true
+          },
+          "custodyProtectionUsed": false
+        },
+        "entryRewardPoints": 850,
+        "gateCollect": {
+          "nodeId": "verdict_gate",
+          "rewardPoints": 1390,
+          "runLootRewardPoints": 540,
+          "focusIncense": 4,
+          "dispelTalisman": 4,
+          "armorPatch": 4,
+          "gateSigil": 1
+        },
+        "afterResidueTrap": {
+          "custodyProtectionUsed": false,
+          "contaminatedEvidenceIds": [
+            "residue_evidence"
+          ],
+          "revealedEvidenceIds": [],
+          "playerHp": 851
+        },
+        "afterResidueReveal": {
+          "revealedEvidenceIds": [
+            "residue_evidence"
+          ],
+          "contaminatedEvidenceIds": [
+            "residue_evidence"
+          ],
+          "currentTrustedCount": 0,
+          "eliminatedSuspects": [
+            "field_medic"
+          ],
+          "display": {
+            "status": "声纹:未揭示，时序:未揭示，残留:污染，排除:现场医师，裁刃:有，目镜:有，护甲:无，印玺:有，裁决:未裁决，待处理:无，预计奖励:0，翻案:不可，Boss快照:未冻结",
+            "severity": "warning",
+            "meter": {
+              "value": 1,
+              "max": 3
+            },
+            "targetReached": false
+          }
+        },
+        "houndFight": {
+          "rounds": 3,
+          "hpAfter": 827
+        },
+        "verdictChamberPending": {
+          "pendingVerdictNodeId": "verdict_chamber"
+        },
+        "resolveCorrect": {
+          "status": "committed",
+          "log": "原始裁决：指控路线测绘员，指控正确，裁决奖励为 0。",
+          "rewardPointsBefore": 4880,
+          "rewardPointsAfter": 4880,
+          "runLootBefore": 4030,
+          "runLootAfter": 4030,
+          "accusedSuspect": "route_surveyor",
+          "accusationCorrect": true,
+          "accusationTrustedCount": 0,
+          "appealUsed": false,
+          "pendingVerdictNodeId": null
+        },
+        "postVerdictDisplay": {
+          "status": "声纹:未揭示，时序:未揭示，残留:污染，排除:现场医师，裁刃:有，目镜:有，护甲:无，印玺:有，裁决:路线勘测员/正确/冻结可信0，待处理:无，预计奖励:0，翻案:不可，Boss快照:未冻结",
+          "severity": "resolved",
+          "meter": {
+            "value": 1,
+            "max": 3
+          },
+          "targetReached": true
+        },
+        "postVerdictStatus": {
+          "projectedAccusationRewardPoints": 0,
+          "eliminatedSuspects": [
+            "field_medic"
+          ],
+          "currentTrustedCount": 0
+        },
+        "truthArchiveClosed": {
+          "at": "records_stacks",
+          "target": "truth_archive",
+          "gateId": "false_testimony_records_stacks_to_truth_archive",
+          "status": "closed",
+          "isOpen": false,
+          "blockReason": "原始裁决正确且冻结三份净证后开放。"
+        },
+        "truthArchiveIllegalMove": {
+          "target": "truth_archive",
+          "status": "rejected",
+          "code": "illegal-move",
+          "message": "truth_archive is not a legal adjacent destination from records_stacks."
+        },
+        "roundtrip": {
+          "status": "decoded",
+          "lawData": {
+            "kind": "false_testimony_court",
+            "revealedEvidenceIds": [
+              "residue_evidence"
+            ],
+            "contaminatedEvidenceIds": [
+              "residue_evidence"
+            ],
+            "pendingVerdictNodeId": null,
+            "accusedSuspect": "route_surveyor",
+            "accusationCorrect": true,
+            "accusationTrustedCount": 0,
+            "appealUsed": false,
+            "bossVerdictSnapshot": null,
+            "entryGear": {
+              "crossExaminerSabre": true,
+              "forensicVisor": true,
+              "custodyShell": false,
+              "appealSeal": true
+            },
+            "custodyProtectionUsed": false
+          },
+          "displayStatus": "声纹:未揭示，时序:未揭示，残留:污染，排除:现场医师，裁刃:有，目镜:有，护甲:无，印玺:有，裁决:路线勘测员/正确/冻结可信0，待处理:无，预计奖励:0，翻案:不可，Boss快照:未冻结",
+          "accusedSuspect": "route_surveyor",
+          "rewardPoints": 4880
+        }
+      }
+    },
+    {
+      "id": "verdict-accusation-and-reward",
+      "expected": {
+        "truthArchiveClosed": {
+          "at": "records_stacks",
+          "target": "truth_archive",
+          "gateId": "false_testimony_records_stacks_to_truth_archive",
+          "status": "closed",
+          "isOpen": false,
+          "blockReason": "原始裁决正确且冻结三份净证后开放。"
+        },
+        "houndFight": {
+          "rounds": 3,
+          "hpAfter": 900
+        },
+        "bossGateClosed": {
+          "at": "verdict_chamber",
+          "target": "false_testimony_judge",
+          "gateId": "false_testimony_verdict_chamber_to_false_testimony_judge",
+          "status": "closed",
+          "isOpen": false,
+          "blockReason": "完成裁决且无待处理裁定后开放。"
+        },
+        "bossIllegalMove": {
+          "target": "false_testimony_judge",
+          "status": "rejected",
+          "code": "departure-blocked",
+          "message": "原始裁决尚未完成，请先选择指控对象。"
+        },
+        "resolveCorrect": {
+          "status": "committed",
+          "log": "原始裁决：指控路线测绘员，指控正确，本局奖励点 +600。",
+          "rewardPointsBefore": 4880,
+          "rewardPointsAfter": 5480,
+          "runLootBefore": 4030,
+          "runLootAfter": 4630,
+          "accusedSuspect": "route_surveyor",
+          "accusationCorrect": true,
+          "accusationTrustedCount": 1
+        },
+        "bossGateOpen": {
+          "at": "verdict_chamber",
+          "target": "false_testimony_judge",
+          "gateId": "false_testimony_verdict_chamber_to_false_testimony_judge",
+          "status": "open",
+          "isOpen": true,
+          "blockReason": null
+        },
+        "bossLegalMove": {
+          "target": "false_testimony_judge",
+          "status": "committed"
+        },
+        "bossFight": {
+          "rounds": 7,
+          "hpAfter": 770,
+          "cleared": true
+        },
+        "bossSnapshot": {
+          "suspect": "route_surveyor",
+          "correct": true,
+          "trustedCount": 1,
+          "appealed": false,
+          "eliminatedSuspects": [
+            "records_keeper",
+            "field_medic"
+          ]
+        },
+        "swiftOpen": {
+          "at": "verdict_exit",
+          "target": "swift_judgment_armory",
+          "gateId": "false_testimony_verdict_exit_to_swift_judgment_armory",
+          "status": "open",
+          "isOpen": true,
+          "blockReason": null
+        },
+        "swiftLegalMove": {
+          "target": "swift_judgment_armory",
+          "status": "committed"
+        },
+        "swiftCollect": {
+          "rewardPoints": 10060,
+          "runLootRewardPoints": 9210,
+          "truthFragment": 10,
+          "armorPatch": 6
+        },
+        "roundtrip": {
+          "status": "decoded",
+          "lawData": {
+            "kind": "false_testimony_court",
+            "revealedEvidenceIds": [
+              "residue_evidence"
+            ],
+            "contaminatedEvidenceIds": [],
+            "pendingVerdictNodeId": null,
+            "accusedSuspect": "route_surveyor",
+            "accusationCorrect": true,
+            "accusationTrustedCount": 1,
+            "appealUsed": false,
+            "bossVerdictSnapshot": {
+              "suspect": "route_surveyor",
+              "correct": true,
+              "trustedCount": 1,
+              "appealed": false,
+              "eliminatedSuspects": [
+                "records_keeper",
+                "field_medic"
+              ]
+            },
+            "entryGear": {
+              "crossExaminerSabre": true,
+              "forensicVisor": true,
+              "custodyShell": false,
+              "appealSeal": true
+            },
+            "custodyProtectionUsed": false
+          },
+          "displayStatus": "声纹:未揭示，时序:未揭示，残留:净，排除:档案保管员/现场医师，裁刃:有，目镜:有，护甲:无，印玺:有，裁决:路线勘测员/正确/冻结可信1，待处理:无，预计奖励:600，翻案:不可，Boss快照:路线勘测员/正确/可信1/原判/排除2",
+          "accusedSuspect": "route_surveyor",
+          "rewardPoints": 10060
+        }
+      }
+    },
+    {
+      "id": "verdict-appeal-and-vault-mutex",
+      "expected": {
+        "houndFight": {
+          "rounds": 3,
+          "hpAfter": 900
+        },
+        "resolveWrong": {
+          "status": "committed",
+          "log": "原始裁决：指控卷宗保管员，指控错误，裁决奖励为 0。",
+          "rewardPointsBefore": 4880,
+          "rewardPointsAfter": 4880,
+          "runLootBefore": 4030,
+          "runLootAfter": 4030,
+          "accusedSuspect": "records_keeper",
+          "accusationCorrect": false,
+          "accusationTrustedCount": 1,
+          "appealEligible": true
+        },
+        "wrongDisplay": {
+          "status": "声纹:未揭示，时序:未揭示，残留:净，排除:档案保管员/现场医师，裁刃:有，目镜:有，护甲:无，印玺:有，裁决:档案保管员/错误/冻结可信1，待处理:无，预计奖励:0，翻案:可，Boss快照:未冻结",
+          "severity": "resolved",
+          "meter": {
+            "value": 1,
+            "max": 3
+          },
+          "targetReached": true
+        },
+        "appealEntryOpen": {
+          "at": "perjury_hound_omega",
+          "target": "appeal_desk",
+          "gateId": "false_testimony_perjury_hound_omega_to_appeal_desk",
+          "status": "open",
+          "isOpen": true,
+          "blockReason": null
+        },
+        "appealLegalMove": {
+          "target": "appeal_desk",
+          "status": "committed"
+        },
+        "appealPending": {
+          "pendingVerdictNodeId": "appeal_desk"
+        },
+        "resolveAppeal": {
+          "status": "committed",
+          "log": "翻案裁决：指控路线测绘员，指控正确，裁决奖励为 0。",
+          "rewardPointsBefore": 5350,
+          "rewardPointsAfter": 5350,
+          "runLootBefore": 4500,
+          "runLootAfter": 4500,
+          "accusedSuspect": "route_surveyor",
+          "accusationCorrect": true,
+          "accusationTrustedCount": 1,
+          "appealUsed": true,
+          "appealEligible": false,
+          "pendingVerdictNodeId": null
+        },
+        "appealDisplay": {
+          "status": "声纹:未揭示，时序:未揭示，残留:净，排除:档案保管员/现场医师，裁刃:有，目镜:有，护甲:无，印玺:有，裁决:路线勘测员/正确/冻结可信1，待处理:无，预计奖励:0，翻案:不可，Boss快照:未冻结",
+          "severity": "resolved",
+          "meter": {
+            "value": 1,
+            "max": 3
+          },
+          "targetReached": true
+        },
+        "resolveAppealAgain": {
+          "status": "rejected",
+          "code": "domain-rejected",
+          "message": "The command did not produce a domain transition.",
+          "accusedSuspect": "route_surveyor",
+          "appealUsed": true
+        },
+        "appealEntryClosedAfterAppeal": {
+          "at": "evidence_supply_cache",
+          "target": "appeal_desk",
+          "gateId": "false_testimony_evidence_supply_cache_to_appeal_desk",
+          "status": "closed",
+          "isOpen": false,
+          "blockReason": "错判、携带翻案印玺且未取伪判封存后开放。"
+        },
+        "appealReentryIllegal": {
+          "target": "appeal_desk",
+          "status": "rejected",
+          "code": "illegal-move",
+          "message": "appeal_desk is not a legal adjacent destination from evidence_supply_cache."
+        },
+        "vaultClosedAfterAppeal": {
+          "at": "soul_recharge_verdict",
+          "target": "false_verdict_vault",
+          "gateId": "false_testimony_soul_recharge_verdict_to_false_verdict_vault",
+          "status": "closed",
+          "isOpen": false,
+          "blockReason": "当前裁决错误时开放。"
+        },
+        "roundtrip": {
+          "status": "decoded",
+          "lawData": {
+            "kind": "false_testimony_court",
+            "revealedEvidenceIds": [
+              "residue_evidence"
+            ],
+            "contaminatedEvidenceIds": [],
+            "pendingVerdictNodeId": null,
+            "accusedSuspect": "route_surveyor",
+            "accusationCorrect": true,
+            "accusationTrustedCount": 1,
+            "appealUsed": true,
+            "bossVerdictSnapshot": null,
+            "entryGear": {
+              "crossExaminerSabre": true,
+              "forensicVisor": true,
+              "custodyShell": false,
+              "appealSeal": true
+            },
+            "custodyProtectionUsed": false
+          },
+          "displayStatus": "声纹:未揭示，时序:未揭示，残留:净，排除:档案保管员/现场医师，裁刃:有，目镜:有，护甲:无，印玺:有，裁决:路线勘测员/正确/冻结可信1，待处理:无，预计奖励:0，翻案:不可，Boss快照:未冻结",
+          "accusedSuspect": "route_surveyor",
+          "rewardPoints": 5350
+        }
+      }
+    },
+    {
+      "id": "verdict-vault-locks-appeal",
+      "expected": {
+        "houndFight": {
+          "rounds": 3,
+          "hpAfter": 900
+        },
+        "resolveWrong": {
+          "status": "committed",
+          "log": "原始裁决：指控安保主管，指控错误，裁决奖励为 0。",
+          "accusedSuspect": "security_chief",
+          "accusationCorrect": false,
+          "accusationTrustedCount": 1,
+          "appealEligible": true
+        },
+        "vaultOpen": {
+          "at": "lower_return_portal",
+          "target": "false_verdict_vault",
+          "gateId": "false_testimony_lower_return_portal_to_false_verdict_vault",
+          "status": "open",
+          "isOpen": true,
+          "blockReason": null
+        },
+        "vaultLegalMove": {
+          "target": "false_verdict_vault",
+          "status": "committed"
+        },
+        "vaultCollected": {
+          "rewardPoints": 5400,
+          "runLootRewardPoints": 4550,
+          "truthFragment": 6,
+          "healingPill": 62
+        },
+        "appealEntryClosed": {
+          "at": "cross_exam_stage",
+          "target": "appeal_desk",
+          "gateId": "false_testimony_cross_exam_stage_to_appeal_desk",
+          "status": "closed",
+          "isOpen": false,
+          "blockReason": "错判、携带翻案印玺且未取伪判封存后开放。"
+        },
+        "appealIllegalMove": {
+          "target": "appeal_desk",
+          "status": "rejected",
+          "code": "illegal-move",
+          "message": "appeal_desk is not a legal adjacent destination from cross_exam_stage."
+        },
+        "wrongFinalDisplay": {
+          "status": "声纹:未揭示，时序:未揭示，残留:净，排除:档案保管员/现场医师，裁刃:有，目镜:有，护甲:无，印玺:有，裁决:安保主管/错误/冻结可信1，待处理:无，预计奖励:0，翻案:不可，Boss快照:未冻结",
+          "severity": "resolved",
+          "meter": {
+            "value": 1,
+            "max": 3
+          },
+          "targetReached": true
+        },
+        "roundtrip": {
+          "status": "decoded",
+          "lawData": {
+            "kind": "false_testimony_court",
+            "revealedEvidenceIds": [
+              "residue_evidence"
+            ],
+            "contaminatedEvidenceIds": [],
+            "pendingVerdictNodeId": null,
+            "accusedSuspect": "security_chief",
+            "accusationCorrect": false,
+            "accusationTrustedCount": 1,
+            "appealUsed": false,
+            "bossVerdictSnapshot": null,
+            "entryGear": {
+              "crossExaminerSabre": true,
+              "forensicVisor": true,
+              "custodyShell": false,
+              "appealSeal": true
+            },
+            "custodyProtectionUsed": false
+          },
+          "displayStatus": "声纹:未揭示，时序:未揭示，残留:净，排除:档案保管员/现场医师，裁刃:有，目镜:有，护甲:无，印玺:有，裁决:安保主管/错误/冻结可信1，待处理:无，预计奖励:0，翻案:不可，Boss快照:未冻结",
+          "accusedSuspect": "security_chief",
+          "rewardPoints": 5400
+        }
+      }
+    },
+    {
+      "id": "verdict-boss-snapshot-and-freeze",
+      "expected": {
+        "houndFight": {
+          "rounds": 3,
+          "hpAfter": 900
+        },
+        "resolveCorrect": {
+          "status": "committed",
+          "log": "原始裁决：指控路线测绘员，指控正确，本局奖励点 +600。",
+          "rewardPointsBefore": 4880,
+          "rewardPointsAfter": 5480,
+          "accusedSuspect": "route_surveyor",
+          "accusationCorrect": true,
+          "accusationTrustedCount": 1
+        },
+        "beforeBoss": {
+          "accusedSuspect": "route_surveyor",
+          "bossVerdictSnapshot": null,
+          "pendingVerdictNodeId": null
+        },
+        "bossEntry": {
+          "bossVerdictSnapshot": {
+            "suspect": "route_surveyor",
+            "correct": true,
+            "trustedCount": 1,
+            "appealed": false,
+            "eliminatedSuspects": [
+              "records_keeper",
+              "field_medic"
+            ]
+          },
+          "monsterHp": 1479,
+          "bossPhase": "sealed",
+          "turn": 1
+        },
+        "bossLawAtStart": {
+          "lawData": {
+            "kind": "false_testimony_court",
+            "revealedEvidenceIds": [
+              "residue_evidence"
+            ],
+            "contaminatedEvidenceIds": [],
+            "pendingVerdictNodeId": null,
+            "accusedSuspect": "route_surveyor",
+            "accusationCorrect": true,
+            "accusationTrustedCount": 1,
+            "appealUsed": false,
+            "bossVerdictSnapshot": {
+              "suspect": "route_surveyor",
+              "correct": true,
+              "trustedCount": 1,
+              "appealed": false,
+              "eliminatedSuspects": [
+                "records_keeper",
+                "field_medic"
+              ]
+            },
+            "entryGear": {
+              "crossExaminerSabre": true,
+              "forensicVisor": true,
+              "custodyShell": false,
+              "appealSeal": true
+            },
+            "custodyProtectionUsed": false
+          },
+          "display": {
+            "status": "声纹:未揭示，时序:未揭示，残留:净，排除:档案保管员/现场医师，裁刃:有，目镜:有，护甲:无，印玺:有，裁决:路线勘测员/正确/冻结可信1，待处理:无，预计奖励:600，翻案:不可，Boss快照:路线勘测员/正确/可信1/原判/排除2",
+            "severity": "resolved",
+            "meter": {
+              "value": 1,
+              "max": 3
+            },
+            "targetReached": true
+          },
+          "modifiers": {
+            "encounter": {
+              "allStatsPercent": -4,
+              "defensePercent": 0,
+              "artPowerPercent": 0
+            },
+            "trap": {
+              "damagePercent": 0,
+              "dcPercent": 0
+            },
+            "healingPercent": 0,
+            "outgoingDamage": {
+              "forcePercent": 8,
+              "artPercent": 8
+            },
+            "guardEffectPercent": 0
+          }
+        },
+        "bossFight": {
+          "rounds": 7,
+          "hpAfter": 770,
+          "cleared": true
+        },
+        "afterBoss": {
+          "bossVerdictSnapshot": {
+            "suspect": "route_surveyor",
+            "correct": true,
+            "trustedCount": 1,
+            "appealed": false,
+            "eliminatedSuspects": [
+              "records_keeper",
+              "field_medic"
+            ]
+          },
+          "accusedSuspect": "route_surveyor"
+        },
+        "resolveAfterBoss": {
+          "status": "rejected",
+          "code": "domain-rejected",
+          "message": "The command did not produce a domain transition.",
+          "accusedSuspect": "route_surveyor"
+        },
+        "frozenAfterJudgmentLock": {
+          "revealedEvidenceIds": [
+            "residue_evidence"
+          ],
+          "contaminatedEvidenceIds": [],
+          "bossVerdictSnapshot": {
+            "suspect": "route_surveyor",
+            "correct": true,
+            "trustedCount": 1,
+            "appealed": false,
+            "eliminatedSuspects": [
+              "records_keeper",
+              "field_medic"
+            ]
+          },
+          "lawUnchanged": true
+        },
+        "hostileWitnessFight": {
+          "rounds": 3,
+          "hpAfter": 764
+        },
+        "afterVoiceTrap": {
+          "custodyProtectionUsed": false,
+          "contaminatedEvidenceIds": [],
+          "playerHp": 689
+        },
+        "afterVoiceReveal": {
+          "revealedEvidenceIds": [
+            "residue_evidence"
+          ],
+          "contaminatedEvidenceIds": [],
+          "currentTrustedCount": 1,
+          "eliminatedSuspects": [
+            "records_keeper",
+            "field_medic"
+          ],
+          "display": {
+            "status": "声纹:未揭示，时序:未揭示，残留:净，排除:档案保管员/现场医师，裁刃:有，目镜:有，护甲:无，印玺:有，裁决:路线勘测员/正确/冻结可信1，待处理:无，预计奖励:600，翻案:不可，Boss快照:路线勘测员/正确/可信1/原判/排除2",
+            "severity": "resolved",
+            "meter": {
+              "value": 1,
+              "max": 3
+            },
+            "targetReached": true
+          }
+        },
+        "roundtrip": {
+          "status": "decoded",
+          "lawData": {
+            "kind": "false_testimony_court",
+            "revealedEvidenceIds": [
+              "residue_evidence"
+            ],
+            "contaminatedEvidenceIds": [],
+            "pendingVerdictNodeId": null,
+            "accusedSuspect": "route_surveyor",
+            "accusationCorrect": true,
+            "accusationTrustedCount": 1,
+            "appealUsed": false,
+            "bossVerdictSnapshot": {
+              "suspect": "route_surveyor",
+              "correct": true,
+              "trustedCount": 1,
+              "appealed": false,
+              "eliminatedSuspects": [
+                "records_keeper",
+                "field_medic"
+              ]
+            },
+            "entryGear": {
+              "crossExaminerSabre": true,
+              "forensicVisor": true,
+              "custodyShell": false,
+              "appealSeal": true
+            },
+            "custodyProtectionUsed": false
+          },
+          "displayStatus": "声纹:未揭示，时序:未揭示，残留:净，排除:档案保管员/现场医师，裁刃:有，目镜:有，护甲:无，印玺:有，裁决:路线勘测员/正确/冻结可信1，待处理:无，预计奖励:600，翻案:不可，Boss快照:路线勘测员/正确/可信1/原判/排除2",
+          "accusedSuspect": "route_surveyor",
+          "rewardPoints": 12780
+        }
+      }
+    }
+  ]
+}

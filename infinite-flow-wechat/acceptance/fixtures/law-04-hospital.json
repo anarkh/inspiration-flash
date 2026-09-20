@@ -1,0 +1,259 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "law-04-hospital",
+  "provenance": {
+    "oracle": {
+      "project": "infinite-flow-web",
+      "commit": "2645f0232542684d27de1abc321bb26913320420",
+      "path": "infinite-flow/src/main.ts",
+      "sha256": "d07ff9d4562ecc618caf3341e5f83cb2b43a733c19506c14c362d1cd07bfb8bb"
+    },
+    "goldenManifest": {
+      "path": "packages/save-codec/tests/fixtures/manifest.json",
+      "sha256": "36fcff8420e9aefbb8fe8c472b42fd5dbf6835025beee05b567a8481d6ca6bf1"
+    },
+    "expectedRule": "Hospital pollution starts at 0 and is clamped to 0..4; a first node clear with positive damage taken or a dungeon event with damage raises pollution by 1, clearing pharmacy_reward or resolving the triage_ward event successfully relieves it by 1. At pollution >= 3 healing is weakened by 10% (pollution 3) or 20% (pollution 4) and monster art power rises by the same amount; route gates hospital_pristine_isolation_corridor, hospital_clean_sterile_corridor, hospital_clean_roof_lane and hospital_emergency_antidote_corridor open only at pollution <= their maximum. All expected values are frozen here, never read from candidate code."
+  },
+  "baseInput": {
+    "path": "packages/save-codec/tests/fixtures/new-hub-v1.json",
+    "sha256": "a1de1f1b33b59c91dea46caf55f21b6eee0b7104c2cbe4d68ac5d7a430709e0b"
+  },
+  "inputMutations": [
+    {
+      "op": "replace",
+      "path": ["state", "completedDungeonIds"],
+      "value": ["demon_tower_1", "metro_abyss", "starfall_mine"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "claimedTaskIds"],
+      "value": ["clear_demon_tower", "clear_metro_abyss", "mainline_clear_starfall_mine"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "preparedItemIds"],
+      "value": ["healing_pill", "focus_incense", "armor_patch"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "inventory", "healing_pill"],
+      "value": 15
+    },
+    {
+      "op": "replace",
+      "path": ["state", "inventory", "focus_incense"],
+      "value": 1
+    },
+    {
+      "op": "replace",
+      "path": ["state", "inventory", "armor_patch"],
+      "value": 1
+    },
+    {
+      "op": "replace",
+      "path": ["state", "learnedMethods"],
+      "value": ["iron_body"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "methodRanks"],
+      "value": { "iron_body": 1 }
+    },
+    {
+      "op": "add",
+      "path": ["state", "activeMethod"],
+      "value": "iron_body"
+    }
+  ],
+  "entrySeed": 404040404,
+  "scenarioIds": [
+    "pollution-on-damaging-clear",
+    "pollution-treatment-weakening",
+    "pollution-route-gates",
+    "triage-purification-event",
+    "purification-opens-route",
+    "repeat-clear-no-pollution"
+  ],
+  "scenarios": [
+    {
+      "id": "pollution-on-damaging-clear",
+      "expected": {
+        "initialPollution": 0,
+        "clears": [
+          { "nodeId": "triage_reward", "kind": "reward", "pollutionAfter": 0, "hpAfter": 116 },
+          { "nodeId": "medicine_cabinet", "kind": "reward", "pollutionAfter": 0, "hpAfter": 116 },
+          { "nodeId": "plague_orderly", "kind": "combat", "pollutionAfter": 1, "combatRounds": 7, "hpAfter": 92 },
+          { "nodeId": "rust_gurney_trap", "kind": "trap-risk", "pollutionAfter": 2, "hpAfter": 65 },
+          { "nodeId": "sterile_corridor", "kind": "trap-risk", "pollutionAfter": 3, "hpAfter": 35 },
+          { "nodeId": "plague_orderly_rounds", "kind": "combat", "pollutionAfter": 4, "combatRounds": 11, "hpAfter": 75 },
+          { "nodeId": "pharmacy_reward", "kind": "reward", "pollutionAfter": 3, "hpAfter": 75 },
+          { "nodeId": "sterilizer_trap", "kind": "trap-counter", "pollutionAfter": 3, "hpAfter": 75 },
+          { "nodeId": "roof_access_trap", "kind": "trap-risk", "pollutionAfter": 4, "hpAfter": 40 }
+        ],
+        "finalPollution": 4,
+        "finalHp": 40
+      }
+    },
+    {
+      "id": "pollution-treatment-weakening",
+      "expected": {
+        "observations": [
+          {
+            "pollution": 0,
+            "healingPercent": 0,
+            "artPowerPercent": 0,
+            "display": {
+              "title": "锈疫污染",
+              "status": "污染 0/4",
+              "severity": "stable",
+              "meter": { "value": 0, "max": 4 },
+              "targetReached": true
+            }
+          },
+          {
+            "pollution": 1,
+            "healingPercent": 0,
+            "artPowerPercent": 0,
+            "display": {
+              "title": "锈疫污染",
+              "status": "污染 1/4",
+              "severity": "warning",
+              "meter": { "value": 1, "max": 4 },
+              "targetReached": false
+            }
+          },
+          {
+            "pollution": 2,
+            "healingPercent": 0,
+            "artPowerPercent": 0,
+            "display": {
+              "title": "锈疫污染",
+              "status": "污染 2/4",
+              "severity": "warning",
+              "meter": { "value": 2, "max": 4 },
+              "targetReached": false
+            }
+          },
+          {
+            "pollution": 3,
+            "healingPercent": -10,
+            "artPowerPercent": 10,
+            "display": {
+              "title": "锈疫污染",
+              "status": "污染 3/4",
+              "severity": "danger",
+              "meter": { "value": 3, "max": 4 },
+              "targetReached": false
+            }
+          },
+          {
+            "pollution": 4,
+            "healingPercent": -20,
+            "artPowerPercent": 20,
+            "display": {
+              "title": "锈疫污染",
+              "status": "污染 4/4",
+              "severity": "danger",
+              "meter": { "value": 4, "max": 4 },
+              "targetReached": false
+            }
+          }
+        ],
+        "pillHeals": [
+          { "nodeId": "plague_orderly", "pollution": 0, "heal": 36 },
+          { "nodeId": "plague_orderly_rounds", "pollution": 3, "heal": 33 }
+        ]
+      }
+    },
+    {
+      "id": "pollution-route-gates",
+      "expected": {
+        "gates": [
+          {
+            "gateId": "hospital_pristine_isolation_corridor",
+            "checkedFromNodeId": "rust_gurney_trap",
+            "targetNodeId": "isolation_chart_reward",
+            "pollutionWhenChecked": 2,
+            "status": "closed",
+            "isOpen": false,
+            "blockReason": "污染需降至 0 或以下；先去药房抽屉或完成分诊净化。"
+          },
+          {
+            "gateId": "hospital_clean_sterile_corridor",
+            "checkedFromNodeId": "sterile_corridor",
+            "targetNodeId": "disinfectant_mist_trap",
+            "pollutionWhenChecked": 3,
+            "status": "closed",
+            "isOpen": false,
+            "blockReason": "污染需降至 1 或以下；先去药房抽屉或完成分诊净化。"
+          },
+          {
+            "gateId": "hospital_emergency_antidote_corridor",
+            "checkedFromNodeId": "sterilizer_trap",
+            "targetNodeId": "antidote_cabinet",
+            "pollutionWhenChecked": 3,
+            "status": "open",
+            "isOpen": true,
+            "blockReason": null
+          },
+          {
+            "gateId": "hospital_clean_roof_lane",
+            "checkedFromNodeId": "roof_access_trap",
+            "targetNodeId": "chief_pulse_doctor",
+            "pollutionWhenChecked": 3,
+            "status": "closed",
+            "isOpen": false,
+            "blockReason": "污染需降至 2 或以下；先去药房抽屉或完成分诊净化。"
+          }
+        ]
+      }
+    },
+    {
+      "id": "triage-purification-event",
+      "expected": {
+        "combat": { "nodeId": "plague_orderly", "pollutionAfter": 1, "combatRounds": 7, "hpAfter": 92 },
+        "eventSuccess": {
+          "eventId": "triage_ward",
+          "optionId": "burn_focus_incense",
+          "pollutionBefore": 1,
+          "pollutionAfter": 0,
+          "log": "定神香盖过病历低语，空白页浮出一段功法残文。"
+        },
+        "eventRepeat": {
+          "eventId": "triage_ward",
+          "optionId": "burn_focus_incense",
+          "pollutionBefore": 0,
+          "pollutionAfter": 0,
+          "rejectionCode": "domain-rejected",
+          "log": "这个关卡事件已经结算过，主神不会重复发放奖励。"
+        }
+      }
+    },
+    {
+      "id": "purification-opens-route",
+      "expected": {
+        "gateAfterPurification": {
+          "gateId": "hospital_pristine_isolation_corridor",
+          "checkedFromNodeId": "rust_gurney_trap",
+          "targetNodeId": "isolation_chart_reward",
+          "pollutionWhenChecked": 0,
+          "status": "open",
+          "isOpen": true,
+          "blockReason": null
+        },
+        "trapAfterGate": { "nodeId": "rust_gurney_trap", "kind": "trap-risk", "pollutionAfter": 1, "hpAfter": 65 },
+        "finalPollution": 1,
+        "finalHp": 65
+      }
+    },
+    {
+      "id": "repeat-clear-no-pollution",
+      "expected": {
+        "reselectedNodeId": "pharmacy_reward",
+        "rejectionCode": "already-resolved",
+        "pollutionBefore": 4,
+        "pollutionAfter": 4
+      }
+    }
+  ]
+}

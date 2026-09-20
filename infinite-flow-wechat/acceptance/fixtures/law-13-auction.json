@@ -1,0 +1,671 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "law-13-auction",
+  "provenance": {
+    "oracle": {
+      "project": "infinite-flow-web",
+      "commit": "2645f0232542684d27de1abc321bb26913320420",
+      "path": "infinite-flow/src/dungeon-laws.ts",
+      "sha256": "6deffb2bbbde6a9f4110603fb71f948e6543f5bc3985659cab81a82b7ca292ca"
+    },
+    "goldenManifest": {
+      "path": "packages/save-codec/tests/fixtures/manifest.json",
+      "sha256": "36fcff8420e9aefbb8fe8c472b42fd5dbf6835025beee05b567a8481d6ca6bf1"
+    },
+    "expectedRule": "Legacy Auction Court tracks four lot dais (force_lot_dais 力, guard_lot_dais 守, art_lot_dais 术, return_lot_dais 归返). Clearing a lot dais grants 1 legacy_scrip and opens a pending lot choice that blocks departure (遗产拍品尚未裁定，请先选择竞得、焚毁或放弃。) until the player resolves law/resolve-auction-lot; bid costs max(1, 1 + priorBidCount - discounted) legacy_scrip where discounted is 1 only when the pending lot's entry passive (legacyGavel 力, anonymousVeil 守, escrowPlate 术, finalLotBell 归返) is equipped, burn costs 1, fold costs 0. The estate_gate start reward grants 2 legacy_scrip; scrip is run-only lootBag legacy_scrip. Resolve logs 遗产拍品·竞得：消耗遗产筹码 N，本轮剩余 M。 / 遗产拍品·焚毁：… / 遗产拍品·放弃：消耗遗产筹码 0，本轮剩余 M。; resolving without a pending choice is rejected 当前没有待裁定的遗产拍品。, an unaffordable bid is rejected 竞价需要 N 枚遗产筹码，当前仅有 M 枚。, and re-selecting a cleared dais is rejected already-resolved. Route gates: the auction_lot_bid claim-vault gates (auction_force_gallery_vault, auction_guard_gallery_vault, auction_art_gallery_vault, auction_return_gallery_vault) open only when the matching lot was bid; burn or fold closes the claim vault permanently with block reason 对应遗产拍品必须竞得；焚毁或放弃后该认领区永久关闭。 and removes the edge from legal adjacent targets so run/move through it is rejected illegal-move. The four auction_all_lots_resolved boss approaches (auction_testimony_boss_gate, auction_rostrum_boss_gate, auction_gallery_boss_gate, auction_archive_boss_gate) need all four lots resolved (力、守、术与归返四件遗产拍品全部裁定后开放。). Starting the estate_auctioneer boss combat with all four lots resolved snapshots the resolved lot choices into bossLotSnapshot and freezes further changes (首领拍品已经冻结，不能再改写归属。); the display appends 首领拍品已冻结. Boss modifiers derive only from the snapshot during boss encounters: bid force grants the player +8% / +14% outgoing force damage (sealed / awakened), bid art +8% / +14% outgoing art damage, bid guard +10% / +16% guardEffect, bid return +10% / +16% healing; fold force grants the boss +5% / +10% allStats, fold art +10% / +18% artPower, fold guard +10% / +18% defense, fold return -10% / -18% healing to the player. Healing pill heals 36 base scaled by healingPercent (30 at -10% sealed with this loadout). Display severity is danger while a lot is pending, warning with unresolved dais, resolved when all four are resolved or the boss snapshot is frozen; the display line is 遗产筹码 N，抉择 X/4，竞得 B，焚毁 U，放弃 F[，待裁定 力之遗产][，首领拍品已冻结]. The law display's auction.availableScrip intentionally reports 0 because the display projection only passes healing pills (identical in the Web v1 oracle); the scrip-correct API is core.getCurrentAuctionLotStatus. Law state and lootBag persist through a save-codec round-trip. All expected values are frozen here, never read from candidate code."
+  },
+  "baseInput": {
+    "path": "packages/save-codec/tests/fixtures/new-hub-v1.json",
+    "sha256": "a1de1f1b33b59c91dea46caf55f21b6eee0b7104c2cbe4d68ac5d7a430709e0b"
+  },
+  "inputMutations": [
+    {
+      "op": "replace",
+      "path": ["state", "completedDungeonIds"],
+      "value": [
+        "demon_tower_1",
+        "metro_abyss",
+        "starfall_mine",
+        "rust_hospital",
+        "ash_arena",
+        "dream_archive",
+        "void_citadel",
+        "temporal_observatory",
+        "causal_clearinghouse",
+        "entropy_ark",
+        "mirror_cycle_city",
+        "redaction_scriptorium"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "claimedTaskIds"],
+      "value": [
+        "clear_demon_tower",
+        "clear_metro_abyss",
+        "mainline_clear_starfall_mine",
+        "mainline_clear_rust_hospital",
+        "mainline_clear_ash_arena",
+        "mainline_clear_dream_archive",
+        "mainline_clear_void_citadel",
+        "mainline_clear_temporal_observatory",
+        "mainline_clear_causal_clearinghouse",
+        "mainline_clear_entropy_ark",
+        "mainline_clear_mirror_cycle_city",
+        "mainline_clear_redaction_scriptorium"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "preparedItemIds"],
+      "value": ["healing_pill", "focus_incense", "armor_patch"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "inventory", "healing_pill"],
+      "value": 60
+    },
+    {
+      "op": "replace",
+      "path": ["state", "inventory", "focus_incense"],
+      "value": 3
+    },
+    {
+      "op": "replace",
+      "path": ["state", "inventory", "armor_patch"],
+      "value": 3
+    },
+    {
+      "op": "replace",
+      "path": ["state", "learnedMethods"],
+      "value": ["iron_body"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "methodRanks"],
+      "value": { "iron_body": 1 }
+    },
+    {
+      "op": "add",
+      "path": ["state", "activeMethod"],
+      "value": "iron_body"
+    },
+    {
+      "op": "replace",
+      "path": ["state", "ownedEquipment"],
+      "value": [
+        "training_blade",
+        "patched_headwrap",
+        "patched_coat",
+        "patched_gloves",
+        "patched_boots",
+        "patched_belt",
+        "plain_charm",
+        "ember_staff",
+        "mist_hood",
+        "spirit_robe",
+        "guardian_gauntlets",
+        "cloudstep_boots",
+        "rift_belt",
+        "rift_charm"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "equipped"],
+      "value": {
+        "weapon": "ember_staff",
+        "head": "mist_hood",
+        "armor": "spirit_robe",
+        "hands": "guardian_gauntlets",
+        "feet": "cloudstep_boots",
+        "waist": "rift_belt",
+        "charm": "rift_charm"
+      }
+    },
+    {
+      "op": "replace",
+      "path": ["state", "equipmentLevels"],
+      "value": {
+        "training_blade": 1,
+        "patched_headwrap": 1,
+        "patched_coat": 1,
+        "patched_gloves": 1,
+        "patched_boots": 1,
+        "patched_belt": 1,
+        "plain_charm": 1,
+        "ember_staff": 3,
+        "mist_hood": 1,
+        "spirit_robe": 1,
+        "guardian_gauntlets": 1,
+        "cloudstep_boots": 1,
+        "rift_belt": 1,
+        "rift_charm": 1
+      }
+    },
+    {
+      "op": "replace",
+      "path": ["state", "ownedPets"],
+      "value": ["contract_sprite"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "petLevels"],
+      "value": { "contract_sprite": 1 }
+    },
+    {
+      "op": "add",
+      "path": ["state", "activePet"],
+      "value": "contract_sprite"
+    },
+    {
+      "op": "replace",
+      "path": ["state", "player", "base", "spirit"],
+      "value": 25
+    },
+    {
+      "op": "replace",
+      "path": ["state", "player", "base", "body"],
+      "value": 30
+    },
+    {
+      "op": "replace",
+      "path": ["state", "player", "base", "agility"],
+      "value": 15
+    }
+  ],
+  "entrySeed": 131313131,
+  "scenarioIds": [
+    "auction-lot-bid-burn-fold",
+    "auction-dynamic-pricing",
+    "auction-route-gates",
+    "auction-boss-snapshot"
+  ],
+  "scenarios": [
+    {
+      "id": "auction-lot-bid-burn-fold",
+      "expected": {
+        "entryDisplay": {
+          "status": "遗产筹码 0，抉择 0/4，竞得 0，焚毁 0，放弃 0",
+          "severity": "warning",
+          "meter": { "value": 0, "max": 4 },
+          "targetReached": false
+        },
+        "entryModifiers": {
+          "encounter": { "allStatsPercent": 0, "defensePercent": 0, "artPowerPercent": 0 },
+          "trap": { "damagePercent": 0, "dcPercent": 0 },
+          "healingPercent": 0,
+          "outgoingDamage": { "forcePercent": 0, "artPercent": 0 },
+          "guardEffectPercent": 0
+        },
+        "entryLawData": {
+          "kind": "legacy_auction_court",
+          "pendingLotNodeId": null,
+          "resolvedLotChoices": {},
+          "bossLotSnapshot": null,
+          "entryPassives": {
+            "legacyGavel": false,
+            "anonymousVeil": false,
+            "escrowPlate": false,
+            "finalLotBell": false
+          }
+        },
+        "entryAuction": {
+          "totalLotCount": 4,
+          "availableScrip": 0,
+          "resolvedCount": 0,
+          "bidCount": 0,
+          "burnCount": 0,
+          "foldCount": 0,
+          "pendingLotNodeId": null,
+          "currentCosts": { "bid": 1, "burn": 1, "fold": 0 },
+          "projectedLotChoices": {},
+          "frozenLotChoices": null
+        },
+        "entryScrip": 0,
+        "gateCollect": { "nodeId": "estate_gate", "scrip": 2 },
+        "clears": [
+          {
+            "nodeId": "force_lot_dais",
+            "scrip": 3,
+            "pending": "force_lot_dais",
+            "costs": { "bid": 1, "burn": 1, "fold": 0 },
+            "choices": {
+              "bid": { "available": true, "scripCost": 1 },
+              "burn": { "available": true, "scripCost": 1 },
+              "fold": { "available": true, "scripCost": 0 }
+            }
+          },
+          {
+            "nodeId": "art_lot_dais",
+            "scrip": 3,
+            "pending": "art_lot_dais",
+            "costs": { "bid": 2, "burn": 1, "fold": 0 },
+            "choices": {
+              "bid": { "available": true, "scripCost": 2 },
+              "burn": { "available": true, "scripCost": 1 },
+              "fold": { "available": true, "scripCost": 0 }
+            }
+          },
+          {
+            "nodeId": "return_lot_dais",
+            "scrip": 4,
+            "pending": "return_lot_dais",
+            "costs": { "bid": 2, "burn": 1, "fold": 0 },
+            "choices": {
+              "bid": { "available": true, "scripCost": 2 },
+              "burn": { "available": true, "scripCost": 1 },
+              "fold": { "available": true, "scripCost": 0 }
+            }
+          },
+          {
+            "nodeId": "guard_lot_dais",
+            "scrip": 5,
+            "pending": "guard_lot_dais",
+            "costs": { "bid": 2, "burn": 1, "fold": 0 },
+            "choices": {
+              "bid": { "available": true, "scripCost": 2 },
+              "burn": { "available": true, "scripCost": 1 },
+              "fold": { "available": true, "scripCost": 0 }
+            }
+          }
+        ],
+        "departureBlock": {
+          "status": "rejected",
+          "code": "departure-blocked",
+          "message": "遗产拍品尚未裁定，请先选择竞得、焚毁或放弃。",
+          "target": "archive_survey_gallery"
+        },
+        "resolves": [
+          {
+            "lot": "force_lot_dais",
+            "choice": "bid",
+            "status": "committed",
+            "log": "遗产拍品·竞得：消耗遗产筹码 1，本轮剩余 2。",
+            "scripBefore": 3,
+            "scripAfter": 2,
+            "resolvedCount": 1,
+            "bidCount": 1,
+            "burnCount": 0,
+            "foldCount": 0,
+            "allLotsResolved": false
+          },
+          {
+            "lot": "art_lot_dais",
+            "choice": "fold",
+            "status": "committed",
+            "log": "遗产拍品·放弃：消耗遗产筹码 0，本轮剩余 3。",
+            "scripBefore": 3,
+            "scripAfter": 3,
+            "resolvedCount": 2,
+            "bidCount": 1,
+            "burnCount": 0,
+            "foldCount": 1,
+            "allLotsResolved": false
+          },
+          {
+            "lot": "return_lot_dais",
+            "choice": "fold",
+            "status": "committed",
+            "log": "遗产拍品·放弃：消耗遗产筹码 0，本轮剩余 4。",
+            "scripBefore": 4,
+            "scripAfter": 4,
+            "resolvedCount": 3,
+            "bidCount": 1,
+            "burnCount": 0,
+            "foldCount": 2,
+            "allLotsResolved": false
+          },
+          {
+            "lot": "guard_lot_dais",
+            "choice": "burn",
+            "status": "committed",
+            "log": "遗产拍品·焚毁：消耗遗产筹码 1，本轮剩余 4。",
+            "scripBefore": 5,
+            "scripAfter": 4,
+            "resolvedCount": 4,
+            "bidCount": 1,
+            "burnCount": 1,
+            "foldCount": 2,
+            "allLotsResolved": true
+          }
+        ],
+        "finalDisplay": {
+          "status": "遗产筹码 0，抉择 4/4，竞得 1，焚毁 1，放弃 2",
+          "severity": "resolved",
+          "meter": { "value": 4, "max": 4 },
+          "targetReached": true
+        },
+        "finalLawData": {
+          "kind": "legacy_auction_court",
+          "pendingLotNodeId": null,
+          "resolvedLotChoices": {
+            "force_lot_dais": "bid",
+            "guard_lot_dais": "burn",
+            "art_lot_dais": "fold",
+            "return_lot_dais": "fold"
+          },
+          "bossLotSnapshot": null,
+          "entryPassives": {
+            "legacyGavel": false,
+            "anonymousVeil": false,
+            "escrowPlate": false,
+            "finalLotBell": false
+          }
+        },
+        "finalAuction": {
+          "availableScrip": 4,
+          "resolvedCount": 4,
+          "bidCount": 1,
+          "burnCount": 1,
+          "foldCount": 2,
+          "allLotsResolved": true,
+          "currentCosts": { "bid": 2, "burn": 1, "fold": 0 },
+          "projectedLotChoices": {
+            "force_lot_dais": "bid",
+            "guard_lot_dais": "burn",
+            "art_lot_dais": "fold",
+            "return_lot_dais": "fold"
+          }
+        },
+        "noPendingResolve": {
+          "status": "rejected",
+          "code": "domain-rejected",
+          "message": "当前没有待裁定的遗产拍品。"
+        },
+        "reselectCleared": {
+          "status": "rejected",
+          "code": "already-resolved",
+          "message": "The current node is already cleared."
+        },
+        "roundtrip": {
+          "status": "decoded",
+          "lawData": {
+            "kind": "legacy_auction_court",
+            "pendingLotNodeId": null,
+            "resolvedLotChoices": {
+              "force_lot_dais": "bid",
+              "guard_lot_dais": "burn",
+              "art_lot_dais": "fold",
+              "return_lot_dais": "fold"
+            },
+            "bossLotSnapshot": null,
+            "entryPassives": {
+              "legacyGavel": false,
+              "anonymousVeil": false,
+              "escrowPlate": false,
+              "finalLotBell": false
+            }
+          },
+          "displayStatus": "遗产筹码 0，抉择 4/4，竞得 1，焚毁 1，放弃 2",
+          "scrip": 4
+        }
+      }
+    },
+    {
+      "id": "auction-dynamic-pricing",
+      "expected": {
+        "entryCosts": { "bid": 1, "burn": 1, "fold": 0 },
+        "entryScrip": 0,
+        "gateScrip": 2,
+        "supplyScrip": 3,
+        "steps": [
+          {
+            "lot": "force_lot_dais",
+            "choice": "bid",
+            "costAtPending": 1,
+            "scripBefore": 4,
+            "scripAfter": 3,
+            "status": "committed",
+            "log": "遗产拍品·竞得：消耗遗产筹码 1，本轮剩余 3。"
+          },
+          {
+            "lot": "art_lot_dais",
+            "choice": "bid",
+            "costAtPending": 2,
+            "scripBefore": 4,
+            "scripAfter": 2,
+            "status": "committed",
+            "log": "遗产拍品·竞得：消耗遗产筹码 2，本轮剩余 2。"
+          },
+          {
+            "lot": "guard_lot_dais",
+            "choice": "bid",
+            "costAtPending": 3,
+            "scripBefore": 3,
+            "scripAfter": 0,
+            "status": "committed",
+            "log": "遗产拍品·竞得：消耗遗产筹码 3，本轮剩余 0。"
+          }
+        ],
+        "rejection": {
+          "costAtPending": { "bid": 4, "burn": 1, "fold": 0 },
+          "scrip": 1,
+          "bidStatus": {
+            "available": false,
+            "scripCost": 4,
+            "unavailableReason": "竞价需要 4 枚遗产筹码，当前仅有 1 枚。"
+          },
+          "burnStatus": { "available": true, "scripCost": 1 },
+          "foldStatus": { "available": true, "scripCost": 0 },
+          "attempt": {
+            "status": "rejected",
+            "code": "domain-rejected",
+            "message": "竞价需要 4 枚遗产筹码，当前仅有 1 枚。",
+            "scripAfter": 1
+          }
+        },
+        "final": {
+          "lot": "return_lot_dais",
+          "choice": "fold",
+          "status": "committed",
+          "log": "遗产拍品·放弃：消耗遗产筹码 0，本轮剩余 1。",
+          "scripAfter": 1,
+          "resolvedCount": 4,
+          "bidCount": 3,
+          "burnCount": 0,
+          "foldCount": 1,
+          "allLotsResolved": true
+        }
+      }
+    },
+    {
+      "id": "auction-route-gates",
+      "expected": {
+        "gates": [
+          {
+            "when": "force-before-bid",
+            "at": "force_relic_gallery",
+            "target": "force_claim_vault",
+            "gateId": "auction_force_gallery_vault",
+            "status": "closed",
+            "isOpen": false,
+            "blockReason": "对应遗产拍品必须竞得；焚毁或放弃后该认领区永久关闭。"
+          },
+          {
+            "when": "force-after-bid",
+            "at": "force_relic_gallery",
+            "target": "force_claim_vault",
+            "gateId": "auction_force_gallery_vault",
+            "status": "open",
+            "isOpen": true,
+            "blockReason": null
+          },
+          {
+            "when": "art-after-fold",
+            "at": "art_relic_gallery",
+            "target": "art_claim_vault",
+            "gateId": "auction_art_gallery_vault",
+            "status": "closed",
+            "isOpen": false,
+            "blockReason": "对应遗产拍品必须竞得；焚毁或放弃后该认领区永久关闭。"
+          },
+          {
+            "when": "boss-before-all-resolved",
+            "at": "dead_team_testimony_stage",
+            "target": "estate_auctioneer",
+            "gateId": "auction_testimony_boss_gate",
+            "status": "closed",
+            "isOpen": false,
+            "blockReason": "力、守、术与归返四件遗产拍品全部裁定后开放。"
+          }
+        ],
+        "illegalMoves": [
+          {
+            "target": "art_claim_vault",
+            "status": "rejected",
+            "code": "illegal-move",
+            "message": "art_claim_vault is not a legal adjacent destination from art_relic_gallery."
+          },
+          {
+            "target": "estate_auctioneer",
+            "status": "rejected",
+            "code": "illegal-move",
+            "message": "estate_auctioneer is not a legal adjacent destination from dead_team_testimony_stage."
+          }
+        ],
+        "traversal": {
+          "target": "estate_auctioneer",
+          "status": "committed",
+          "hpAfter": 512,
+          "at": "estate_auctioneer"
+        },
+        "bossGate": {
+          "when": "all-resolved",
+          "at": "dead_team_testimony_stage",
+          "target": "estate_auctioneer",
+          "gateId": "auction_testimony_boss_gate",
+          "status": "open",
+          "isOpen": true,
+          "blockReason": null
+        }
+      }
+    },
+    {
+      "id": "auction-boss-snapshot",
+      "expected": {
+        "spine": {
+          "hpEntry": 512,
+          "hpAfterResolves": 512,
+          "scrip": 5,
+          "resolvedCount": 4,
+          "bidCount": 1,
+          "burnCount": 0,
+          "foldCount": 3,
+          "allLotsResolved": true,
+          "projectedBossModifiers": {
+            "sealed": {
+              "encounter": { "allStatsPercent": 0, "defensePercent": 10, "artPowerPercent": 10 },
+              "trap": { "damagePercent": 0, "dcPercent": 0 },
+              "healingPercent": -10,
+              "outgoingDamage": { "forcePercent": 8, "artPercent": 0 },
+              "guardEffectPercent": 0
+            },
+            "awakened": {
+              "encounter": { "allStatsPercent": 0, "defensePercent": 18, "artPowerPercent": 18 },
+              "trap": { "damagePercent": 0, "dcPercent": 0 },
+              "healingPercent": -18,
+              "outgoingDamage": { "forcePercent": 14, "artPercent": 0 },
+              "guardEffectPercent": 0
+            }
+          }
+        },
+        "bossLawAtStart": {
+          "kind": "legacy_auction_court",
+          "pendingLotNodeId": null,
+          "resolvedLotChoices": {
+            "force_lot_dais": "bid",
+            "guard_lot_dais": "fold",
+            "art_lot_dais": "fold",
+            "return_lot_dais": "fold"
+          },
+          "bossLotSnapshot": {
+            "force_lot_dais": "bid",
+            "guard_lot_dais": "fold",
+            "art_lot_dais": "fold",
+            "return_lot_dais": "fold"
+          },
+          "entryPassives": {
+            "legacyGavel": false,
+            "anonymousVeil": false,
+            "escrowPlate": false,
+            "finalLotBell": false
+          }
+        },
+        "bossDisplayAtStart": {
+          "status": "遗产筹码 0，抉择 4/4，竞得 1，焚毁 0，放弃 3，首领拍品已冻结",
+          "severity": "resolved",
+          "meter": { "value": 4, "max": 4 },
+          "targetReached": true
+        },
+        "bossModifiersAtStart": {
+          "encounter": { "allStatsPercent": 0, "defensePercent": 10, "artPowerPercent": 10 },
+          "trap": { "damagePercent": 0, "dcPercent": 0 },
+          "healingPercent": -10,
+          "outgoingDamage": { "forcePercent": 8, "artPercent": 0 },
+          "guardEffectPercent": 0
+        },
+        "bossModifiersAfterAwaken": {
+          "encounter": { "allStatsPercent": 0, "defensePercent": 18, "artPowerPercent": 18 },
+          "trap": { "damagePercent": 0, "dcPercent": 0 },
+          "healingPercent": -18,
+          "outgoingDamage": { "forcePercent": 14, "artPercent": 0 },
+          "guardEffectPercent": 0
+        },
+        "healEvents": {
+          "count": 35,
+          "pillsConsumed": 35,
+          "first": {
+            "round": 7,
+            "hpBefore": 336,
+            "hpAfter": 338,
+            "healLine": "你吞下止血丹，生命回复 30 点。",
+            "pillsBefore": 61,
+            "pillsAfter": 60
+          },
+          "last": {
+            "round": 43,
+            "hpBefore": 348,
+            "hpAfter": 350,
+            "healLine": "你吞下止血丹，生命回复 30 点。",
+            "pillsBefore": 27,
+            "pillsAfter": 26
+          }
+        },
+        "bossFight": { "rounds": 45, "hpAfter": 350, "cleared": true },
+        "resolveAfterBoss": {
+          "status": "rejected",
+          "code": "domain-rejected",
+          "message": "首领拍品已经冻结，不能再改写归属。"
+        },
+        "roundtrip": {
+          "status": "decoded",
+          "lawData": {
+            "kind": "legacy_auction_court",
+            "pendingLotNodeId": null,
+            "resolvedLotChoices": {
+              "force_lot_dais": "bid",
+              "guard_lot_dais": "fold",
+              "art_lot_dais": "fold",
+              "return_lot_dais": "fold"
+            },
+            "bossLotSnapshot": {
+              "force_lot_dais": "bid",
+              "guard_lot_dais": "fold",
+              "art_lot_dais": "fold",
+              "return_lot_dais": "fold"
+            },
+            "entryPassives": {
+              "legacyGavel": false,
+              "anonymousVeil": false,
+              "escrowPlate": false,
+              "finalLotBell": false
+            }
+          },
+          "displayStatus": "遗产筹码 0，抉择 4/4，竞得 1，焚毁 0，放弃 3，首领拍品已冻结",
+          "scrip": 10
+        }
+      }
+    }
+  ]
+}

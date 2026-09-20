@@ -1,0 +1,583 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>弹窗原型 · 魔兽纸娃娃 / 背包</title>
+<style>
+  /* ============ 玄黑金箓 × 魔兽 UI ============ */
+  :root {
+    --gold:       #c8a25a;
+    --gold-hi:    #f0d89a;
+    --gold-dim:   #8a713c;
+    --text:       #f3ead4;
+    --text-dim:   #b3a483;
+    --q-poor:     #9d9d9d;  /* 粗糙 */
+    --q-common:   #ffffff;  /* 普通 */
+    --q-uncommon: #1eff00;  /* 优秀 */
+    --line:       #5b4c2c;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    background: #060504 radial-gradient(1000px 700px at 50% -160px, #1d1710 0%, #060504 70%);
+    color: var(--text);
+    font: 13px/1.45 -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    display: flex; flex-direction: column; align-items: center;
+    overflow: hidden;
+  }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+  img { display: block; -webkit-user-drag: none; }
+
+  .proto-bar { display: none; }
+  @media (min-width: 481px) {
+    .proto-bar {
+      display: flex; width: 100%; max-width: 560px; padding: 8px 14px;
+      align-items: center; gap: 10px; color: var(--text-dim); font-size: 12px;
+    }
+  }
+  .seg-demo { display: flex; border: 1px solid #4a3d22; border-radius: 5px; overflow: hidden; }
+  .seg-demo button { padding: 3px 10px; font-size: 12px; color: var(--text-dim); }
+  .seg-demo button.on { background: #33291a; color: var(--gold-hi); }
+
+  .stage { flex: 1; width: 100%; display: flex; justify-content: center; }
+  .phone {
+    position: relative;
+    width: var(--pw, 375px); height: 100vh;
+    background: #0b0a08
+      radial-gradient(260px 180px at 30% 10%, rgba(120,160,170,.08), transparent 70%)
+      radial-gradient(300px 240px at 80% 25%, rgba(201,163,92,.06), transparent 70%);
+    padding: 10px 8px 64px;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  @media (min-width: 481px) {
+    .stage { padding-top: 6px; }
+    .phone { height: 780px; border: 1px solid #33291a; border-radius: 14px; overflow: hidden; }
+  }
+
+  /* ============ 魔兽式窗框（通用；内容定高，不铺满屏幕） ============ */
+  .frame {
+    flex: 0 0 auto; width: 100%; align-self: center;
+    max-height: calc(100% - 60px);
+    display: none; flex-direction: column;
+    background: linear-gradient(180deg, #242019 0%, #17130e 55%, #120f0a 100%);
+    border: 2px solid #43371f;
+    border-radius: 8px;
+    box-shadow:
+      0 0 0 1px #0a0805,
+      inset 0 0 0 1px #6d5b32,
+      inset 0 0 30px rgba(0,0,0,.75),
+      0 16px 44px rgba(0,0,0,.6);
+    overflow: hidden;
+  }
+  .frame.on { display: flex; }
+  .titlebar {
+    position: relative; flex: none; height: 30px;
+    background: linear-gradient(180deg, #7a6129, #4a3919 55%, #332712);
+    border-bottom: 1px solid #8a713c;
+    box-shadow: inset 0 1px 0 rgba(255,230,170,.35), 0 1px 3px #000;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; letter-spacing: 3px; color: var(--gold-hi);
+    text-shadow: 0 1px 2px #000;
+  }
+  .titlebar::before, .titlebar::after {
+    content: ""; position: absolute; top: 50%; width: 26px; height: 2px; margin-top: -1px;
+    background: linear-gradient(90deg, transparent, rgba(240,216,154,.55));
+  }
+  .titlebar::before { left: 10px; }
+  .titlebar::after { right: 10px; transform: scaleX(-1); }
+  .win-close {
+    position: absolute; right: 4px; top: 3px;
+    width: 22px; height: 22px; border-radius: 4px;
+    color: #e8c9a0; font-size: 12px;
+  }
+  .win-close:hover { background: #8e2a1e; color: #fff; }
+  .frame-body { flex: 1; padding: 8px; overflow-y: auto; }
+  .frame-body::-webkit-scrollbar { width: 4px; }
+  .frame-body::-webkit-scrollbar-thumb { background: #6d5b32; border-radius: 2px; }
+
+  /* ============ 槽位/格子按钮（魔兽 item button） ============ */
+  .slot, .bag-cell, .micro-btn {
+    background:
+      radial-gradient(120% 120% at 35% 25%, #38332a 0%, #211d17 48%, #100e0a 100%);
+    border: 1px solid #5d4e2d;
+    border-radius: 4px;
+    box-shadow:
+      inset 0 0 7px rgba(0,0,0,.85),
+      inset 0 1px 0 rgba(190,160,100,.35),
+      0 1px 1px rgba(0,0,0,.6);
+    position: relative;
+  }
+  .slot { width: 52px; height: 52px; padding: 3px; }
+  .slot img, .bag-cell img { width: 100%; height: 100%; object-fit: contain; }
+  .slot:hover, .bag-cell:hover, .micro-btn:hover {
+    border-color: var(--gold-hi);
+    box-shadow:
+      inset 0 0 7px rgba(0,0,0,.7),
+      inset 0 1px 0 rgba(240,216,154,.5),
+      0 0 7px rgba(240,200,120,.55);
+  }
+  .slot:active, .bag-cell:active, .micro-btn:active { transform: translateY(1px); }
+
+  /* ============ 角色：纸娃娃 ============ */
+  .doll { position: relative; height: 252px; margin-bottom: 8px; }
+  .doll-portrait {
+    position: absolute; left: 50%; top: 4px; transform: translateX(-50%);
+    width: 158px; height: 244px; border-radius: 6px; overflow: hidden;
+    background: #0e0c09;
+    border: 2px solid #4a3d22;
+    box-shadow: inset 0 0 0 1px #8a713c, inset 0 -30px 50px rgba(0,0,0,.65), 0 2px 8px #000;
+  }
+  .doll-portrait img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; }
+  .doll-portrait .level-badge {
+    position: absolute; left: 50%; bottom: 6px; transform: translateX(-50%);
+    background: linear-gradient(#54401c,#2c200e); border: 1px solid #9a7f44;
+    font-size: 10px; color: var(--gold-hi); padding: 1px 9px; border-radius: 8px;
+    text-shadow: 0 1px 1px #000;
+  }
+  .doll .slot { position: absolute; }
+  .doll .slot .slot-name {
+    position: absolute; left: 50%; top: -13px; transform: translateX(-50%);
+    font-size: 9px; color: var(--text-dim); white-space: nowrap; text-shadow: 0 1px 2px #000;
+  }
+  .doll .L { left: 6px; }
+  .doll .R { right: 6px; }
+  .doll .r0 { top: 2px; } .doll .r1 { top: 66px; } .doll .r2 { top: 130px; } .doll .r3 { top: 194px; }
+
+  /* 属性面板 */
+  .stat-box {
+    background: rgba(8,7,5,.55); border: 1px solid #3a3019; border-radius: 5px;
+    padding: 7px 10px;
+  }
+  .stat-box h4 {
+    font-size: 11px; color: var(--gold); letter-spacing: 3px; font-weight: 700;
+    border-bottom: 1px solid #3a3019; padding-bottom: 4px; margin-bottom: 5px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .stat-box h4::after { content: ""; flex: 1; height: 1px;
+    background: linear-gradient(90deg, #5d4e2d, transparent); }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 14px; }
+  .stat-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-dim); padding: 2px 0; }
+  .stat-row b { font-weight: 700; color: var(--text); }
+  .stat-row b.power { color: #e0886a; }
+
+  /* ============ 背包 ============ */
+  .money {
+    flex: none; display: flex; align-items: center; justify-content: flex-end; gap: 8px;
+    padding: 0 4px 6px; font-size: 12px; color: var(--text);
+  }
+  .money .m { display: flex; align-items: center; gap: 3px; }
+  .coin { width: 12px; height: 12px; border-radius: 50%; border: 1px solid #5a4510;
+    box-shadow: inset 0 1px 1px rgba(255,255,255,.5); }
+  .coin.gold   { background: radial-gradient(circle at 35% 30%, #ffe9a0, #e0b53e 55%, #8a671a); }
+  .coin.shard  { border-radius: 2px; background: linear-gradient(135deg,#9fd8ff,#3d7fb0 60%,#1d3f5e); border-color: #2c5d85; }
+  .bag-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+  .bag-cell { aspect-ratio: 1 / 1; padding: 4px; }
+  .bag-cell.empty { opacity: .5; background: radial-gradient(120% 120% at 35% 25%, #211d17, #0e0c09); }
+  .bag-cell .cnt {
+    position: absolute; right: 3px; bottom: 1px;
+    font-size: 11px; font-weight: 700; color: #fff; text-shadow: 0 1px 2px #000, 1px 0 2px #000;
+  }
+  .bag-cell .cnt.zero { color: #7d725c; }
+  .bag-cell.carried::after, .slot.carried::after {
+    content: ""; position: absolute; right: 2px; top: 2px; width: 8px; height: 8px;
+    background: var(--gold-hi); transform: rotate(45deg);
+    box-shadow: 0 0 4px rgba(240,216,154,.8);
+  }
+  .bag-cell.q-poor    { border-color: #6a6a6a; }
+  .bag-cell.q-uncommon { border-color: #2f9e22; }
+  .bag-cell.q-uncommon:hover { box-shadow: inset 0 0 7px rgba(0,0,0,.7), 0 0 7px rgba(30,255,0,.5); }
+  #frame-inventory { max-height: min(432px, calc(100% - 40px)); }
+  .bag-hint { margin-top: 8px; font-size: 10px; color: var(--text-dim); text-align: center; }
+
+  /* ============ 主菜单（ESC 竖排） ============ */
+  .menu-panel { background: rgba(10,8,6,.55); border: 1px solid #3a3019; border-radius: 6px; padding: 14px 10px; }
+  .menu-panel h3 {
+    text-align: center; font-size: 15px; letter-spacing: 8px; color: var(--gold-hi);
+    margin-bottom: 12px; text-shadow: 0 1px 3px #000;
+  }
+  .menu-btn {
+    width: 100%; height: 40px; margin-bottom: 9px;
+    background: linear-gradient(180deg, #3a3326, #1d1911);
+    border: 1px solid #6d5b32; border-radius: 4px;
+    box-shadow: inset 0 1px 0 rgba(240,216,154,.25), inset 0 0 10px rgba(0,0,0,.5);
+    color: var(--gold-hi); font-size: 14px; letter-spacing: 4px; text-shadow: 0 1px 2px #000;
+  }
+  .menu-btn:hover {
+    background: linear-gradient(180deg, #57482c, #2a2315);
+    box-shadow: inset 0 1px 0 rgba(255,235,180,.4), 0 0 9px rgba(240,200,120,.45);
+  }
+  .menu-btn.danger { border-color: #8e4a3c; color: #e6a192; }
+  .menu-btn.danger:hover { background: linear-gradient(180deg, #5e3026, #2c1712); box-shadow: 0 0 9px rgba(199,90,74,.4); }
+
+  /* ============ 底部 micro 按钮条 ============ */
+  .microbar {
+    position: absolute; left: 0; right: 0; bottom: 10px;
+    display: flex; justify-content: center; gap: 8px;
+  }
+  .micro-btn { width: 46px; height: 38px; border-radius: 5px; color: var(--gold);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; }
+  .micro-btn svg { width: 16px; height: 16px; }
+  .micro-btn .mk { font-size: 8px; color: var(--text-dim); }
+  .micro-btn.on { border-color: var(--gold-hi); box-shadow: inset 0 0 8px rgba(0,0,0,.6), 0 0 8px rgba(240,200,120,.5); color: var(--gold-hi); }
+
+  /* ============ 魔兽式 Tooltip ============ */
+  .tt {
+    position: absolute; z-index: 200; display: none;
+    min-width: 196px; max-width: 250px;
+    background:
+      linear-gradient(180deg, rgba(28,24,18,.98), rgba(10,9,7,.98));
+    border: 1px solid #000;
+    border-radius: 4px;
+    box-shadow: 0 0 0 1px #6d5b32, 0 6px 22px rgba(0,0,0,.75);
+    padding: 8px 10px 9px;
+    pointer-events: auto;
+    font-size: 12px; line-height: 1.5;
+  }
+  .tt.on { display: block; }
+  .tt .tt-name { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+  .tt .tt-sub { color: #c9c2b2; }
+  .tt .tt-bind { color: #c9c2b2; }
+  .tt .tt-stat { color: var(--q-uncommon); }
+  .tt .tt-use { color: var(--q-uncommon); }
+  .tt .tt-flavor { color: #e6c36a; font-style: italic; }
+  .tt .tt-cost { color: #c9c2b2; padding-top: 3px; border-top: 1px dotted #4a4030; margin-top: 4px; }
+  .tt .tt-line { margin-top: 2px; }
+  .tt .tt-actions { display: flex; gap: 6px; margin-top: 8px; }
+  .tt .tt-btn {
+    flex: 1; height: 28px; border-radius: 3px; font-size: 12px; letter-spacing: 2px;
+    background: linear-gradient(#6e5526,#3c2e14); border: 1px solid var(--gold);
+    color: var(--gold-hi); text-shadow: 0 1px 1px #000;
+  }
+  .tt .tt-btn.ghost { background: #221d14; border-color: #5d4e2d; color: var(--text-dim); }
+  .tt .tt-btn:disabled { opacity: .45; }
+  .tt .tt-note { color: #d96666; font-size: 10px; margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<div class="proto-bar">
+  <b>弹窗原型 · 魔兽纸娃娃 / 背包</b>
+  <span>独立静态页；悬停看 tips，点格子钉住 tips</span>
+  <span style="flex:1"></span>
+  <div class="seg-demo" id="widthSeg">
+    <button data-w="375" class="on">375</button>
+    <button data-w="320">320</button>
+  </div>
+</div>
+
+<div class="stage">
+  <div class="phone" id="phone">
+
+    <!-- ===== 角色信息（纸娃娃） ===== -->
+    <section class="frame on" id="frame-character">
+      <div class="titlebar">角色信息<button class="win-close">✕</button></div>
+      <div class="frame-body">
+        <div class="doll">
+          <div class="doll-portrait">
+            <img src="assets/character/reincarnator-v1.png" alt="角色立绘" />
+            <span class="level-badge">转生者 Lv.1</span>
+          </div>
+          <!-- 左列：头/颈/胸/足 -->
+          <button class="slot L r0" data-kind="equip" data-id="patched_headwrap"><img src="assets/equipment/patched-headwrap-v1.png" alt=""></button>
+          <button class="slot L r1" data-kind="equip" data-id="plain_charm"><img src="assets/equipment/plain-charm-v1.png" alt=""></button>
+          <button class="slot L r2" data-kind="equip" data-id="patched_coat"><img src="assets/equipment/patched-coat-v1.png" alt=""></button>
+          <button class="slot L r3" data-kind="equip" data-id="patched_boots"><img src="assets/equipment/patched-boots-v1.png" alt=""></button>
+          <!-- 右列：主手/手/腰 -->
+          <button class="slot R r0" data-kind="equip" data-id="training_blade"><img src="assets/equipment/training-blade-v1.png" alt=""></button>
+          <button class="slot R r1" data-kind="equip" data-id="patched_gloves"><img src="assets/equipment/patched-gloves-v1.png" alt=""></button>
+          <button class="slot R r2" data-kind="equip" data-id="patched_belt"><img src="assets/equipment/patched-belt-v1.png" alt=""></button>
+        </div>
+        <div class="stat-box">
+          <h4>属性</h4>
+          <div class="stat-grid">
+            <div class="stat-row"><span>战力</span><b class="power">167</b></div>
+            <div class="stat-row"><span>生命</span><b>102 / 102</b></div>
+            <div class="stat-row"><span>攻击</span><b>19</b></div>
+            <div class="stat-row"><span>术法强度</span><b>13</b></div>
+            <div class="stat-row"><span>防御</span><b>8</b></div>
+            <div class="stat-row"><span>速度</span><b>—</b></div>
+          </div>
+          <h4 style="margin-top:8px">货币</h4>
+          <div class="stat-grid">
+            <div class="stat-row"><span>奖励点</span><b>30</b></div>
+            <div class="stat-row"><span>灵蕴</span><b>1</b></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 主菜单（ESC 竖排） ===== -->
+    <section class="frame" id="frame-menu">
+      <div class="titlebar">主菜单<button class="win-close">✕</button></div>
+      <div class="frame-body">
+        <div class="menu-panel">
+          <h3>随身菜单</h3>
+          <button class="menu-btn" data-go="character">角色信息</button>
+          <button class="menu-btn" data-go="inventory">行囊装备</button>
+          <button class="menu-btn">世界地图</button>
+          <button class="menu-btn">任务目标</button>
+          <button class="menu-btn">战斗记录</button>
+          <button class="menu-btn">帮助</button>
+          <button class="menu-btn">轮回之门</button>
+          <button class="menu-btn danger">进阶行动</button>
+          <button class="menu-btn" data-go="character" style="margin-bottom:0">收起</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 行囊（经典背包） ===== -->
+    <section class="frame" id="frame-inventory">
+      <div class="titlebar">行囊<button class="win-close">✕</button></div>
+      <div class="frame-body">
+        <div class="money">
+          <span class="m" style="margin-right:auto;color:var(--text-dim)">
+            <span style="width:8px;height:8px;background:var(--gold-hi);transform:rotate(45deg);display:inline-block;box-shadow:0 0 4px rgba(240,216,154,.8)"></span>
+            携行槽 <b id="carryCount" style="color:var(--text)">3 / 3</b>
+          </span>
+          <span class="m"><span class="coin gold"></span>30 奖励点</span>
+          <span class="m"><span class="coin shard"></span>1 灵蕴</span>
+        </div>
+        <div class="bag-hint" style="margin:0 0 6px">5 列 × 100 格 · 上下滑动浏览 · 悬停查看 / 点击钉住详情</div>
+        <div class="bag-grid" id="bagGrid"></div>
+      </div>
+      </div>
+    </section>
+
+    <!-- ===== micro 按钮条 ===== -->
+    <div class="microbar">
+      <button class="micro-btn on" data-go="character">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z"/></svg>
+        <span class="mk">角色 C</span>
+      </button>
+      <button class="micro-btn" data-go="inventory">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 8h16v11H4zM4 8l2-3h12l2 3M9 12h6"/></svg>
+        <span class="mk">行囊 B</span>
+      </button>
+      <button class="micro-btn" data-go="menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        <span class="mk">菜单 ESC</span>
+      </button>
+    </div>
+
+    <!-- ===== Tooltip ===== -->
+    <aside class="tt" id="tt"></aside>
+  </div>
+</div>
+
+<script>
+/* ============ 数据（文案取自 packages/core；视觉描述取自 game-assets） ============ */
+const Q_LABEL = { combat: '战术道具 · 战用', ward: '战术道具 · 防护', portal: '战术道具 · 门钥', capture: '战术道具 · 捕伏' };
+const SLOT_LABEL = { weapon: '武器', head: '头部', armor: '胸甲', hands: '护手', feet: '足部', waist: '腰部', charm: '颈部护符' };
+
+const GEAR = [
+  { id:'training_blade',   name:'训练短刃', slot:'weapon', quality:'poor',
+    img:'assets/equipment/training-blade-v1.png',
+    stats:['装备：攻击 +4'],
+    desc:'主神免费发放的基础武器。', look:'带有使用痕迹的训练短刃。' },
+  { id:'patched_headwrap', name:'拼缝头巾', slot:'head', quality:'poor',
+    img:'assets/equipment/patched-headwrap-v1.png',
+    stats:[],
+    desc:'最基础的头部防护，能挡住飞溅碎片。', look:'缝有金属额片的拼缝头巾。' },
+  { id:'patched_coat',     name:'拼缝护衣', slot:'armor', quality:'poor',
+    img:'assets/equipment/patched-coat-v1.png',
+    stats:['装备：+10 最大生命','装备：防御 +2'],
+    desc:'勉强能挡住第一波撕咬。', look:'经过多次修补的黑色外套。' },
+  { id:'patched_gloves',   name:'拼缝护手', slot:'hands', quality:'poor',
+    img:'assets/equipment/patched-gloves-v1.png',
+    stats:[],
+    desc:'粗布和旧皮缝成的护手，至少能握稳武器。', look:'带护片的拼缝手套。' },
+  { id:'patched_boots',    name:'拼缝短靴', slot:'feet', quality:'poor',
+    img:'assets/equipment/patched-boots-v1.png',
+    stats:[],
+    desc:'鞋底贴了薄铁片，跑过碎石地时不至于立刻见血。', look:'鞋底加装薄铁片的拼缝短靴。' },
+  { id:'patched_belt',     name:'拼缝束带', slot:'waist', quality:'poor',
+    img:'assets/equipment/patched-belt-v1.png',
+    stats:[],
+    desc:'把补给和护片束在腰间，提供一点稳定承伤。', look:'悬挂补给袋的拼缝束带。' },
+  { id:'plain_charm',      name:'空白护符', slot:'charm', quality:'common',
+    img:'assets/equipment/plain-charm-v1.png',
+    stats:['装备：术法强度 +1'],
+    desc:'没有刻纹，但能稳定心神。', look:'尚未刻纹的空白护符。' },
+];
+
+const ITEMS = [
+  { id:'healing_pill',     name:'止血丹',   category:'combat', quality:'common',   count:3, carried:true,  cost:120,
+    img:'assets/item/healing-pill-v1.png',
+    use:'使用：战斗中回复 36 点生命。', look:'装有红色止血丹的黑陶药瓶。' },
+  { id:'thunder_talisman', name:'雷火符',   category:'combat', quality:'common',   count:0, carried:false, cost:320,
+    img:'assets/item/thunder-talisman-v1.png',
+    use:'使用：造成一段稳定术法伤害。', look:'缠绕细小雷火的符箓束。' },
+  { id:'dispel_talisman',  name:'破禁符',   category:'ward',   quality:'common',   count:1, carried:true,  cost:240,
+    img:'assets/item/dispel-talisman-v1.png',
+    use:'使用：抵消一次符文或机关陷阱。', look:'置于破裂封印环上的破禁符。' },
+  { id:'gate_sigil',       name:'小界门符', category:'portal', quality:'uncommon', count:1, carried:true,  cost:220,
+    img:'assets/item/gate-sigil-v1.png',
+    use:'使用：稳定一次传送门，避免裂隙反噬。', look:'嵌有青色界石的小界门符。' },
+  { id:'echo_coin',        name:'回响铜币', category:'portal', quality:'common',   count:0, carried:false, cost:160,
+    img:'assets/item/echo-coin-v1.png',
+    use:'使用：传送后让主神额外结算少量奖励点。', look:'刻有同心回波的回响铜币。' },
+  { id:'capture_net',      name:'缚灵网',   category:'capture',quality:'uncommon', count:0, carried:false, cost:210,
+    img:'assets/item/capture-net-v1.png',
+    use:'使用：捕获低血量可驯化目标。', look:'折叠在符文握柄上的捕灵网。' },
+  { id:'spirit_bait',      name:'灵饵',     category:'capture',quality:'uncommon', count:0, carried:false, cost:180,
+    img:'assets/item/spirit-bait-v1.png',
+    use:'使用：提高宠物捕获成功率。', look:'封在玻璃诱饵瓶中的灵质。' },
+  { id:'armor_patch',      name:'护甲补片', category:'ward',   quality:'common',   count:0, carried:false, cost:140,
+    img:'assets/item/armor-patch-v1.png',
+    use:'使用：防御时自动消耗一枚，降低本次反击伤害。', look:'带铆钉的黑色护甲补片。' },
+  { id:'focus_incense',    name:'定神香',   category:'ward',   quality:'common',   count:0, carried:false, cost:150,
+    img:'assets/item/focus-incense-v1.png',
+    use:'使用：提高一次陷阱感知。', look:'置于金属香座中的定神香。' },
+];
+/* 补空格至 100 格背包（20 行 × 5 列） */
+const EMPTY_SLOTS = 91;
+const CARRY_CAP = 3;
+const Q_COLOR = { poor: 'var(--q-poor)', common: 'var(--q-common)', uncommon: 'var(--q-uncommon)' };
+const Q_NAME  = { poor: '粗糙', common: '普通', uncommon: '优秀' };
+
+/* ============ 切窗 ============ */
+function showFrame(name) {
+  document.querySelectorAll('.frame').forEach(f => f.classList.toggle('on', f.id === 'frame-' + name));
+  document.querySelectorAll('.micro-btn').forEach(b => b.classList.toggle('on', b.dataset.go === name));
+  hideTip();
+}
+document.querySelectorAll('[data-go]').forEach(btn =>
+  btn.addEventListener('click', () => showFrame(btn.dataset.go)));
+document.querySelectorAll('.win-close').forEach(btn =>
+  btn.addEventListener('click', hideTip));
+
+/* ============ 背包格渲染 ============ */
+const bagGrid = document.getElementById('bagGrid');
+function renderBag() {
+  const carried = ITEMS.filter(i => i.carried).length;
+  const cc = document.getElementById('carryCount');
+  if (cc) cc.textContent = carried + ' / ' + CARRY_CAP;
+  const cells = ITEMS.map(it => `
+    <button class="bag-cell q-${it.quality} ${it.carried ? 'carried' : ''}" data-kind="item" data-id="${it.id}">
+      <img src="${it.img}" alt="${it.name}">
+      <span class="cnt ${it.count === 0 ? 'zero' : ''}">${it.count}</span>
+    </button>`).join('');
+  const empties = Array.from({ length: EMPTY_SLOTS }, () =>
+    `<button class="bag-cell empty" tabindex="-1"></button>`).join('');
+  bagGrid.innerHTML = cells + empties;
+}
+renderBag();
+
+/* ============ Tooltip（魔兽式：hover 跟随，click 钉住） ============ */
+const tt = document.getElementById('tt');
+const phone = document.getElementById('phone');
+let pinned = false;
+let pinnedEl = null;
+
+function gearTip(g) {
+  return `
+    <div class="tt-name" style="color:${Q_COLOR[g.quality]}">${g.name}</div>
+    <div class="tt-line tt-sub">${SLOT_LABEL[g.slot]} &nbsp;·&nbsp; ${Q_NAME[g.quality]}</div>
+    <div class="tt-line tt-bind">已装备</div>
+    ${g.stats.map(s => `<div class="tt-line tt-stat">${s}</div>`).join('')}
+    <div class="tt-line tt-flavor">${g.desc}</div>
+    <div class="tt-line tt-flavor">${g.look}</div>
+    <div class="tt-cost">物品等阶 1 / 1 · 主神配给</div>
+    <div class="tt-actions"><button class="tt-btn ghost tt-close-btn">关闭</button></div>`;
+}
+function itemTip(it) {
+  const atCap = ITEMS.filter(i => i.carried).length >= CARRY_CAP;
+  const canToggle = it.carried || !atCap;
+  return `
+    <div class="tt-name" style="color:${Q_COLOR[it.quality]}">${it.name}</div>
+    <div class="tt-line tt-sub">${Q_LABEL[it.category]} · ${Q_NAME[it.quality]}</div>
+    <div class="tt-line tt-bind">库存 ${it.count} &nbsp;·&nbsp; 携行 ${it.carried ? '已配置' : '未配置'}</div>
+    <div class="tt-line tt-use">${it.use}</div>
+    <div class="tt-line tt-flavor">${it.look}</div>
+    <div class="tt-cost">兑换价：${it.cost} 奖励点</div>
+    <div class="tt-actions">
+      <button class="tt-btn ghost tt-close-btn">关闭</button>
+      <button class="tt-btn" id="ttCarry" ${canToggle ? '' : 'disabled'}>${it.carried ? '取消携行' : '设为携行'}</button>
+    </div>
+    ${canToggle ? '' : '<div class="tt-note">通用携行槽已满（3/3）</div>'}`;
+}
+function placeTip(x, y) {
+  tt.classList.add('on');
+  const rect = tt.getBoundingClientRect();
+  const host = phone.getBoundingClientRect();
+  const pad = 6;
+  let left = x + 14;
+  if (left + rect.width > host.right - pad) left = x - rect.width - 14;
+  if (left < host.left + pad) left = host.left + pad;
+  let top = y + 10;
+  if (top + rect.height > host.bottom - pad) top = host.bottom - rect.height - pad;
+  if (top < host.top + pad) top = host.top + pad;
+  tt.style.left = (left - host.left) + 'px';
+  tt.style.top = (top - host.top) + 'px';
+}
+function showTip(el, x, y) {
+  const kind = el.dataset.kind, id = el.dataset.id;
+  const data = kind === 'item' ? ITEMS.find(i => i.id === id) : GEAR.find(g => g.id === id);
+  if (!data) return;
+  tt.innerHTML = kind === 'item' ? itemTip(data) : gearTip(data);
+  const anchor = el.getBoundingClientRect();
+  const px = x !== undefined ? x : anchor.left + anchor.width / 2;
+  const py = y !== undefined ? y : anchor.top;
+  placeTip(px, py);
+  const carryBtn = document.getElementById('ttCarry');
+  if (carryBtn) carryBtn.onclick = (e) => {
+    e.stopPropagation();
+    const item = ITEMS.find(i => i.id === id);
+    item.carried = !item.carried;
+    renderBag();
+    hideTip();
+  };
+  tt.querySelector('.tt-close-btn').onclick = (e) => { e.stopPropagation(); hideTip(); };
+}
+function hideTip() { tt.classList.remove('on'); pinned = false; pinnedEl = null; }
+
+phone.addEventListener('pointerover', (e) => {
+  const el = e.target.closest('[data-kind]');
+  if (!el || pinned) return;
+  showTip(el);
+});
+phone.addEventListener('pointermove', (e) => {
+  if (pinned) return;
+  const el = e.target.closest('[data-kind]');
+  if (el) showTip(el, e.clientX, e.clientY);
+});
+phone.addEventListener('pointerout', (e) => {
+  if (pinned) return;
+  if (e.target.closest('[data-kind]')) hideTip();
+});
+phone.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-kind]');
+  if (el) {
+    e.stopPropagation();
+    if (pinned && pinnedEl === el) { hideTip(); return; }
+    pinned = true; pinnedEl = el;
+    showTip(el);
+    return;
+  }
+  if (e.target.closest('.tt')) return;
+  hideTip();
+});
+
+/* ============ 宽度切换 / hash ============ */
+document.getElementById('widthSeg').addEventListener('click', (e) => {
+  const btn = e.target.closest('button'); if (!btn) return;
+  document.querySelectorAll('#widthSeg button').forEach(b => b.classList.toggle('on', b === btn));
+  phone.style.setProperty('--pw', btn.dataset.w + 'px');
+});
+function applyHash() {
+  const [s, a] = location.hash.replace(/^#\/?/, '').split('/');
+  if (s === 'item') { showFrame('inventory'); const el = document.querySelector(`[data-id="${a}"][data-kind="item"]`); if (el) { pinned = true; pinnedEl = el; showTip(el); } }
+  else if (s === 'equip') { showFrame('character'); const el = document.querySelector(`[data-id="${a}"][data-kind="equip"]`); if (el) { pinned = true; pinnedEl = el; showTip(el); } }
+  else if (['character','menu','inventory'].includes(s)) showFrame(s);
+}
+const wParam = new URLSearchParams(location.search).get('w');
+if (wParam) {
+  phone.style.setProperty('--pw', wParam + 'px');
+  document.querySelectorAll('#widthSeg button').forEach(b => b.classList.toggle('on', b.dataset.w === wParam));
+}
+window.addEventListener('hashchange', applyHash);
+applyHash();
+</script>
+</body>
+</html>

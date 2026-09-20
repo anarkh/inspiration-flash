@@ -1,0 +1,333 @@
+{
+  "schemaVersion": 1,
+  "fixtures": [
+    {
+      "fixtureId": "asset-error-taxonomy",
+      "path": "asset-error-taxonomy.json",
+      "sha256": "b93540ee870b6eaf8c63607e3629cb1ea58342be88b35d25d4cf35d3817d1efd",
+      "scenarioIds": [
+        "error-unknown-key",
+        "error-revision-mismatch",
+        "error-offline",
+        "error-timeout",
+        "error-integrity",
+        "error-decode",
+        "error-quota",
+        "error-unsupported",
+        "error-cancelled"
+      ]
+    },
+    {
+      "fixtureId": "asset-key-revision-cache",
+      "path": "asset-key-revision-cache.json",
+      "sha256": "ee037f13f7216fd57aacb7b1977e6337afa8819b8f2bf3725e03bf59e42b13bb",
+      "scenarioIds": [
+        "manifest-revision-and-physical-files",
+        "stable-key-is-explicit",
+        "extensionless-resource-loader",
+        "handle-cache-report-revision",
+        "reject-entry-revision-mix",
+        "cocos-resources-callback-bridge"
+      ]
+    },
+    {
+      "fixtureId": "catalog-19-dungeons",
+      "path": "catalog-19-dungeons.json",
+      "sha256": "ea7fbee2087435ee7cfbc2056c46bb44f3ff4cdbd8e64e64bd6fbc7454770fbe",
+      "scenarioIds": [
+        "frozen-web-v1-dungeon-order",
+        "catalog-keys-and-definition-ids"
+      ]
+    },
+    {
+      "fixtureId": "hash-canonical-json-v1",
+      "path": "hash-canonical-json-v1.json",
+      "sha256": "5149bcdc1f057094ec32afe11c119af1b9493eff8a9a53ccbffe3a2e5cd94615",
+      "scenarioIds": [
+        "canonical-utf16-key-and-array-order",
+        "canonical-state-envelope-hash",
+        "reject-negative-zero",
+        "reject-fraction",
+        "reject-nan",
+        "reject-positive-infinity",
+        "reject-unsafe-integer",
+        "reject-array-hole",
+        "reject-array-property",
+        "reject-non-plain-object",
+        "reject-object-accessor",
+        "reject-symbol-key",
+        "reject-lone-high-surrogate",
+        "reject-lone-low-surrogate",
+        "reject-cycle"
+      ]
+    },
+    {
+      "fixtureId": "law-01-demon-tower",
+      "path": "law-01-demon-tower.json",
+      "sha256": "81c1fe70c15095de068ad0d329da13b91e6e6a150509cacd85db29d62f93218a",
+      "scenarioIds": [
+        "demon-fog-rise-display-clamp",
+        "demon-recovery-landmark-relief",
+        "demon-high-fog-side-route-gates",
+        "demon-boss-gate-seal-exit",
+        "demon-reward-idempotency-roundtrip"
+      ]
+    },
+    {
+      "fixtureId": "law-02-metro",
+      "path": "law-02-metro.json",
+      "sha256": "2269ec73fbd6d637bf1e212052f03cfb4831b72c39b780544afe3ee7ba1dcc98",
+      "scenarioIds": [
+        "tide-cycle-on-first-clear",
+        "signal-cache-calibration",
+        "route-gates-follow-tide",
+        "mirror-tide-modifiers",
+        "mirror-gate-follows-tide",
+        "repeat-clear-no-advance"
+      ]
+    },
+    {
+      "fixtureId": "law-03-mine",
+      "path": "law-03-mine.json",
+      "sha256": "e9749ffd1fe8e0b74410d6579b298a3421c7ceabbd8240852cbac250d0e16c9b",
+      "scenarioIds": [
+        "gravity-switch-on-clear",
+        "gravity-route-gates",
+        "gravity-trap-modifiers",
+        "gravity-defense-modifiers",
+        "repeat-clear-no-flip"
+      ]
+    },
+    {
+      "fixtureId": "law-04-hospital",
+      "path": "law-04-hospital.json",
+      "sha256": "8d4e064fe4e0312d4c0e9ae02e21812f491f4f14ec57e2e09330d8f558960123",
+      "scenarioIds": [
+        "pollution-on-damaging-clear",
+        "pollution-treatment-weakening",
+        "pollution-route-gates",
+        "triage-purification-event",
+        "purification-opens-route",
+        "repeat-clear-no-pollution"
+      ]
+    },
+    {
+      "fixtureId": "law-05-arena",
+      "path": "law-05-arena.json",
+      "sha256": "e6457d67c02bc471af033447e0379be2afd3e9af8643061434bcc314357ab9c3",
+      "scenarioIds": [
+        "arena-style-records",
+        "arena-repeat-penalty",
+        "arena-three-style-rewrite",
+        "arena-route-gates",
+        "arena-repeat-clear-boundary"
+      ]
+    },
+    {
+      "fixtureId": "law-06-dream",
+      "path": "law-06-dream.json",
+      "sha256": "8e095ece1e135ac26452fb78d85fcf03e11ca5678dc89e24ed738a703df5b7c4",
+      "scenarioIds": [
+        "archive-seal-on-dangerous-clear",
+        "archive-consumable-seal-effect",
+        "archive-method-seal-effect",
+        "archive-pet-seal-effect",
+        "archive-index-event-reset",
+        "archive-repeat-clear-boundary"
+      ]
+    },
+    {
+      "fixtureId": "law-07-virtual",
+      "path": "law-07-virtual.json",
+      "sha256": "26ad643cc3e22351a21cc9a6666f6363f7ae5e1a932b3e058c2cc91e01133e86",
+      "scenarioIds": [
+        "citadel-boss-assessment-freeze",
+        "citadel-counter-targets-bias",
+        "citadel-style-route-gates",
+        "citadel-repeat-clear-boundary"
+      ]
+    },
+    {
+      "fixtureId": "law-08-chronal",
+      "path": "law-08-chronal.json",
+      "sha256": "b53ab6f3683930c36b6c5848e4149afbd9531011922ff8f4907e8f04da586a01",
+      "scenarioIds": [
+        "chronal-anchor-calibration-display",
+        "chronal-single-anchor-route-gates",
+        "chronal-dual-anchor-opens-bridge",
+        "chronal-repeat-clear-boundary"
+      ]
+    },
+    {
+      "fixtureId": "law-09-causal",
+      "path": "law-09-causal.json",
+      "sha256": "1d8897696ff6d4b7644e9fc3524e3e63147f74c80e8e0dd3f06bcb0a7522d0b8",
+      "scenarioIds": [
+        "causal-ledger-balance-overdraw-repay",
+        "causal-debt-route-gates",
+        "causal-boss-collection-seals",
+        "causal-repeat-boundary"
+      ]
+    },
+    {
+      "fixtureId": "law-10-entropy",
+      "path": "law-10-entropy.json",
+      "sha256": "1e81688e529bd71c496b3c077bc1e8144415f53cdfab081b38faf4f5774f29ea",
+      "scenarioIds": [
+        "entropy-heading-three-consoles",
+        "entropy-threshold-route-gates",
+        "entropy-boss-collapse-layers",
+        "entropy-repeat-boundary"
+      ]
+    },
+    {
+      "fixtureId": "law-11-mirror",
+      "path": "law-11-mirror.json",
+      "sha256": "0f3373bf48c6b559b6c77ffa232483ce8c7110ae9ebd1faf24eceb3b19624cb8",
+      "scenarioIds": [
+        "mirror-phase-three-mirrors",
+        "mirror-phase-switch-cost",
+        "mirror-anchor-gates",
+        "mirror-shell-boss",
+        "mirror-shell-anchor-count"
+      ]
+    },
+    {
+      "fixtureId": "law-12-redaction",
+      "path": "law-12-redaction.json",
+      "sha256": "2cb8bebfc5888159118cab66cf3b348374bcb099e0a999caff74fbfdd8b7bcd1",
+      "scenarioIds": [
+        "redaction-clause-certify-redact",
+        "redaction-sector-gates",
+        "redaction-boss-snapshot-certified",
+        "redaction-boss-snapshot-redacted"
+      ]
+    },
+    {
+      "fixtureId": "law-13-auction",
+      "path": "law-13-auction.json",
+      "sha256": "a93819bae56cf9bc5646ab1540c7e79224a633e48fb58f3649c82d1856822ec2",
+      "scenarioIds": [
+        "auction-lot-bid-burn-fold",
+        "auction-dynamic-pricing",
+        "auction-route-gates",
+        "auction-boss-snapshot"
+      ]
+    },
+    {
+      "fixtureId": "law-14-genesis",
+      "path": "law-14-genesis.json",
+      "sha256": "6ce763698bd0b8df9500d00416b7749eede9d4df62c0978971e506edcf6f8aba",
+      "scenarioIds": [
+        "genesis-ordered-splice-serum",
+        "genesis-duplicate-cost-rejection",
+        "genesis-specialization-myriad-gates",
+        "genesis-boss-snapshot"
+      ]
+    },
+    {
+      "fixtureId": "law-15-broadcast",
+      "path": "law-15-broadcast.json",
+      "sha256": "a3aeb8c3860540001f6fb325022b7214c5fb96c193bf60e1e336f0d4da8171cd",
+      "scenarioIds": [
+        "broadcast-ordered-relay-noise",
+        "broadcast-noise-passive-clamps",
+        "broadcast-region-gates",
+        "broadcast-boss-snapshot",
+        "broadcast-reward-inheritance"
+      ]
+    },
+    {
+      "fixtureId": "law-16-shelter",
+      "path": "law-16-shelter.json",
+      "sha256": "658ba8a74c351c7b7c70806a126955b8300669040c96e4ec844a5fb2a3000402",
+      "scenarioIds": [
+        "shelter-ordered-checkpoint-escort",
+        "shelter-hazard-guard-and-hp-clamps",
+        "shelter-companion-and-reward-split",
+        "shelter-boss-snapshot",
+        "shelter-reward-inheritance"
+      ]
+    },
+    {
+      "fixtureId": "law-17-verdict",
+      "path": "law-17-verdict.json",
+      "sha256": "597ea6e53caea972b5a14c914363bb35147f18eef068002d171637709bfeacd6",
+      "scenarioIds": [
+        "verdict-contamination-and-display",
+        "verdict-accusation-and-reward",
+        "verdict-appeal-and-vault-mutex",
+        "verdict-vault-locks-appeal",
+        "verdict-boss-snapshot-and-freeze"
+      ]
+    },
+    {
+      "fixtureId": "law-18-replay",
+      "path": "law-18-replay.json",
+      "sha256": "25dcee45bcb53d13d1bbc6d526055fa763c387976e27333216a776c9a91de05e",
+      "scenarioIds": [
+        "replay-takes-record-and-display",
+        "replay-route-select-and-gates",
+        "replay-boss-snapshot-and-freeze",
+        "replay-reward-idempotency-and-roundtrip",
+        "replay-burst-route-replay-consistency"
+      ]
+    },
+    {
+      "fixtureId": "law-19-panopticon",
+      "path": "law-19-panopticon.json",
+      "sha256": "219d81f1fdbdc1b2025fa43efbab04c273dd2c33c2cfa18b2170e94e020a957d",
+      "scenarioIds": [
+        "panopticon-scan-phases-exposure-display",
+        "panopticon-relays-route-select-gates",
+        "panopticon-boss-snapshot-and-freeze",
+        "panopticon-decoy-rewards-idempotency",
+        "panopticon-shadow-route-no-exposure"
+      ]
+    },
+    {
+      "fixtureId": "seed-root-label-golden-v1",
+      "path": "seed-root-label-golden-v1.json",
+      "sha256": "8f53e064c6788f8c4ec0fe383febfeb67e12fd915058570dff945a0178308b95",
+      "scenarioIds": [
+        "hidden-task-dungeon-01",
+        "inferno-map-dungeon-01-tier-3",
+        "portal-dungeon-01-to-02-hop-1",
+        "unicode-label-uint32-max-root"
+      ]
+    },
+    {
+      "fixtureId": "web-v1-missing-run-snapshots",
+      "path": "web-v1-missing-run-snapshots.json",
+      "sha256": "042128bbaceda5059574230aa0bd5587254170d8317e79ebe83a4395be1c61be",
+      "scenarioIds": [
+        "missing-snapshots-disable-only-dependent-systems"
+      ]
+    },
+    {
+      "fixtureId": "web-v1-equipment-hunt",
+      "path": "web-v1-equipment-hunt.json",
+      "sha256": "d9fb37242a6ff69cfff93f622a4520187c1500f7d9bb7fc326fb1ef80b071dc1",
+      "scenarioIds": [
+        "legacy-hunt-offer-restores-and-settles-once"
+      ]
+    },
+    {
+      "fixtureId": "web-v1-methodSnapshot",
+      "path": "web-v1-method-snapshot.json",
+      "sha256": "4648dd5888e4e443c2c8e9410a59579f1ca83ad5085d2e204b439aaa49fdbefd",
+      "scenarioIds": [
+        "legacy-single-snapshot-keeps-frozen-rank"
+      ]
+    },
+    {
+      "fixtureId": "web-v1-two-encounter-aliases",
+      "path": "web-v1-two-encounter-aliases.json",
+      "sha256": "8eb3cdeb777365ef8857e30d138a8fee87e76feb114af112afbaaf4722dd6a4c",
+      "scenarioIds": [
+        "lost-shelter-north-rescue-alias",
+        "panopticon-north-sweep-alias"
+      ]
+    }
+  ]
+}

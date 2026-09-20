@@ -1,0 +1,789 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "law-19-panopticon",
+  "provenance": {
+    "oracle": {
+      "project": "infinite-flow-web",
+      "commit": "2645f0232542684d27de1abc321bb26913320420",
+      "path": "infinite-flow/src/dungeon-laws.ts",
+      "sha256": "6deffb2bbbde6a9f4110603fb71f948e6543f5bc3985659cab81a82b7ca292ca"
+    },
+    "goldenManifest": {
+      "path": "packages/save-codec/tests/fixtures/manifest.json",
+      "sha256": "36fcff8420e9aefbb8fe8c472b42fd5dbf6835025beee05b567a8481d6ca6bf1"
+    },
+    "expectedRule": "Panopticon City freezes entry gear {blindlineCutter, predictiveVisor, matteShell, inversePrism} from the equipped loadout into law.entryGear at dungeon entry (weapon blindline_cutter, head predictive_visor, armor matte_shell, charm inverse_prism). A three-phase scan advances on every legal run/move: scanPhase cycles 0→1→2→0 and moveCount increments by one; the destination node's grid position (x+y)%3 is the targetPhase, and scanned = targetPhase === phaseBefore. Before a route is selected every scan exposes (route null is not shadow); after selecting shadow, scanned moves log 影路遮蔽 and never expose. Exposure deals maxHp*8% damage (matteShell halves to 4%, floored, min 1) and increments exposureCount; the decoy route additionally grants 120 run rewardPoints per exposure (decoyRewardsGranted, clamped at 3 so the 4th exposure grants nothing) and the refraction route deals 4% (matteShell 2%) and grants one refractionCharge per exposure (clamped at 3). predictiveVisor (not equipped in this fixture band) would evade the first exposure per phase; the equivalent boundary evidence here is the matteShell halving and the decoy/refraction clamps. Illegal moves (closed route gate, non-adjacent) do not advance the scan. The law display is `相位:${scanPhase}，移动:${moveCount}，曝光:${exposureCount}，中继:${completedRelayCount}/3，路线:${route label or 未选择}，折光:${refractionCharges}/3，诱饵奖励:${decoyRewardsGranted}/3，Boss快照:${snapshot ? route/exposure/charges : 未冻结}` with severity danger/warning/stable/resolved and meter {value: completedRelayCount, max: 3}. Three relay nodes (north_blind_relay, central_blind_relay, south_blind_relay) complete on first node/collect-reward (relays[nodeId]=true); after the third, pendingRouteNodeId is set to that relay and departure is blocked ('三座盲区中继已经闭环，请先选择影路、诱饵或折光路线再离开。') until law/select-panopticon-route {route} permanently selects one of shadow/decoy/refraction (log 监察城路线已永久冻结：影路潜行。); an early select, a select at a non-pending node, or a second select is a domain-rejected no-op. Route nodes carry selection gates: only the selected route's node opens ('完成三座盲区中继后选择影路路线；其余路线将永久关闭。' etc.), the others stay closed and run/move through them is rejected illegal-move. The boss gate to all_sight_warden is a panopticon_boss_ready gate ('完成三座盲区中继并选择潜入路线后，万目监察者入口开放。') that opens only with three relays plus a selected route; moving onto the boss before that is departure-blocked by the pending route node. Starting the all_sight_warden boss combat freezes bossSnapshot {route, exposureCount: max(0, exposureCount - inversePrism), refractionCharges: min(3, refractionCharges + (inversePrism && route==='refraction'))} and makes the law immutable: the route can no longer be re-selected (domain-rejected). With blindline_cutter equipped, the boss encounter gains outgoingDamage force/art +min(15, (snapshot.exposureCount + snapshot.refractionCharges) * 3) percent. The boss awakens mid-fight (万目齐睁). Node rewards are idempotent: collecting panopticon_gate pays once (rewardPoints 850→1470, run loot 620, focus_incense/dispel_talisman/armor_patch 3→4, gate_sigil 1) and a second collect is domain-rejected ('监察城正门已经领取过奖励。'). Law state (scanPhase, moveCount, exposureCount, relays, route, refractionCharges, decoyRewardsGranted, bossSnapshot, entryGear), display status, and reward points persist through a save-codec round-trip. All expected values are frozen here, never read from candidate code."
+  },
+  "baseInput": {
+    "path": "packages/save-codec/tests/fixtures/new-hub-v1.json",
+    "sha256": "a1de1f1b33b59c91dea46caf55f21b6eee0b7104c2cbe4d68ac5d7a430709e0b"
+  },
+  "inputMutations": [
+    {
+      "op": "replace",
+      "path": ["state", "completedDungeonIds"],
+      "value": [
+        "demon_tower_1",
+        "metro_abyss",
+        "starfall_mine",
+        "rust_hospital",
+        "ash_arena",
+        "dream_archive",
+        "void_citadel",
+        "temporal_observatory",
+        "causal_clearinghouse",
+        "entropy_ark",
+        "mirror_cycle_city",
+        "redaction_scriptorium",
+        "legacy_auction_court",
+        "genesis_vault",
+        "silent_broadcast_tower",
+        "lost_shelter",
+        "false_testimony_court",
+        "combat_replay_stage"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "claimedTaskIds"],
+      "value": [
+        "clear_demon_tower",
+        "mainline_clear_metro_abyss",
+        "mainline_clear_starfall_mine",
+        "mainline_clear_rust_hospital",
+        "mainline_clear_ash_arena",
+        "mainline_clear_dream_archive",
+        "mainline_clear_void_citadel",
+        "mainline_clear_temporal_observatory",
+        "mainline_clear_causal_clearinghouse",
+        "mainline_clear_entropy_ark",
+        "mainline_clear_mirror_cycle_city",
+        "mainline_clear_redaction_scriptorium",
+        "mainline_clear_legacy_auction_court",
+        "mainline_clear_genesis_vault",
+        "mainline_clear_silent_broadcast_tower",
+        "mainline_clear_lost_shelter",
+        "mainline_clear_false_testimony_court",
+        "mainline_clear_combat_replay_stage"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "preparedItemIds"],
+      "value": ["focus_incense", "dispel_talisman", "armor_patch"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "inventory", "healing_pill"],
+      "value": 60
+    },
+    {
+      "op": "replace",
+      "path": ["state", "inventory", "focus_incense"],
+      "value": 3
+    },
+    {
+      "op": "replace",
+      "path": ["state", "inventory", "dispel_talisman"],
+      "value": 3
+    },
+    {
+      "op": "replace",
+      "path": ["state", "inventory", "armor_patch"],
+      "value": 3
+    },
+    {
+      "op": "replace",
+      "path": ["state", "learnedMethods"],
+      "value": ["iron_body"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "methodRanks"],
+      "value": { "iron_body": 1 }
+    },
+    {
+      "op": "add",
+      "path": ["state", "activeMethod"],
+      "value": "iron_body"
+    },
+    {
+      "op": "replace",
+      "path": ["state", "ownedEquipment"],
+      "value": [
+        "training_blade",
+        "patched_headwrap",
+        "patched_coat",
+        "patched_gloves",
+        "patched_boots",
+        "patched_belt",
+        "plain_charm",
+        "guardian_gauntlets",
+        "cloudstep_boots",
+        "rift_belt",
+        "rift_charm",
+        "blindline_cutter",
+        "matte_shell",
+        "inverse_prism"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "equipped"],
+      "value": {
+        "weapon": "blindline_cutter",
+        "head": "patched_headwrap",
+        "armor": "matte_shell",
+        "hands": "guardian_gauntlets",
+        "feet": "cloudstep_boots",
+        "waist": "rift_belt",
+        "charm": "inverse_prism"
+      }
+    },
+    {
+      "op": "replace",
+      "path": ["state", "equipmentLevels"],
+      "value": {
+        "training_blade": 1,
+        "patched_headwrap": 1,
+        "patched_coat": 1,
+        "patched_gloves": 1,
+        "patched_boots": 1,
+        "patched_belt": 1,
+        "plain_charm": 1,
+        "guardian_gauntlets": 1,
+        "cloudstep_boots": 1,
+        "rift_belt": 1,
+        "rift_charm": 1,
+        "blindline_cutter": 1,
+        "matte_shell": 1,
+        "inverse_prism": 1
+      }
+    },
+    {
+      "op": "replace",
+      "path": ["state", "ownedPets"],
+      "value": ["contract_sprite"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "petLevels"],
+      "value": { "contract_sprite": 1 }
+    },
+    {
+      "op": "add",
+      "path": ["state", "activePet"],
+      "value": "contract_sprite"
+    },
+    {
+      "op": "replace",
+      "path": ["state", "ownedCompanions"],
+      "value": ["qin_che"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "companionRanks"],
+      "value": { "qin_che": 2 }
+    },
+    {
+      "op": "add",
+      "path": ["state", "activeCompanion"],
+      "value": "qin_che"
+    },
+    {
+      "op": "replace",
+      "path": ["state", "player", "base", "spirit"],
+      "value": 25
+    },
+    {
+      "op": "replace",
+      "path": ["state", "player", "base", "body"],
+      "value": 60
+    },
+    {
+      "op": "replace",
+      "path": ["state", "player", "base", "agility"],
+      "value": 15
+    }
+  ],
+  "entrySeed": 191919191,
+  "scenarioIds": [
+    "panopticon-scan-phases-exposure-display",
+    "panopticon-relays-route-select-gates",
+    "panopticon-boss-snapshot-and-freeze",
+    "panopticon-decoy-rewards-idempotency",
+    "panopticon-shadow-route-no-exposure"
+  ],
+  "scenarios": [
+    {
+      "id": "panopticon-scan-phases-exposure-display",
+      "expected": {
+        "entryDisplay": {
+          "status": "相位:0，移动:0，曝光:0，中继:0/3，路线:未选择，折光:0/3，诱饵奖励:0/3，Boss快照:未冻结",
+          "severity": "danger",
+          "meter": { "value": 0, "max": 3 },
+          "targetReached": false
+        },
+        "entryModifiers": {
+          "encounter": { "allStatsPercent": 0, "defensePercent": 0, "artPowerPercent": 0 },
+          "trap": { "damagePercent": 0, "dcPercent": 0 },
+          "healingPercent": 0,
+          "outgoingDamage": { "forcePercent": 0, "artPercent": 0 },
+          "guardEffectPercent": 0
+        },
+        "entryLawData": {
+          "kind": "panopticon_city",
+          "scanPhase": 0,
+          "moveCount": 0,
+          "exposureCount": 0,
+          "relays": {
+            "north_blind_relay": false,
+            "central_blind_relay": false,
+            "south_blind_relay": false
+          },
+          "pendingRouteNodeId": null,
+          "route": null,
+          "refractionCharges": 0,
+          "decoyRewardsGranted": 0,
+          "bossSnapshot": null,
+          "entryGear": {
+            "blindlineCutter": true,
+            "predictiveVisor": false,
+            "matteShell": true,
+            "inversePrism": true
+          },
+          "predictiveVisorProtectionUsed": [false, false, false]
+        },
+        "entryStatus": {
+          "scanPhase": 0,
+          "moveCount": 0,
+          "exposureCount": 0,
+          "relays": {
+            "north_blind_relay": false,
+            "central_blind_relay": false,
+            "south_blind_relay": false
+          },
+          "completedRelayCount": 0,
+          "pendingRouteNodeId": null,
+          "route": null,
+          "refractionCharges": 0,
+          "decoyRewardsGranted": 0,
+          "bossSnapshot": null,
+          "entryGear": {
+            "blindlineCutter": true,
+            "predictiveVisor": false,
+            "matteShell": true,
+            "inversePrism": true
+          },
+          "predictiveVisorProtectionUsed": [false, false, false],
+          "readyForRoute": false,
+          "readyForBoss": false
+        },
+        "entryRewardPoints": 850,
+        "scanMoves": [
+          { "target": "watchglass_cache", "phaseBefore": 0, "phaseAfter": 1, "hpAfter": 984, "scanLog": "三相扫描 0->1：曝光并承受最大生命 4%（40 点）伤害。" },
+          { "target": "matte_supply", "phaseBefore": 1, "phaseAfter": 2, "hpAfter": 944, "scanLog": "三相扫描 1->2：曝光并承受最大生命 4%（40 点）伤害。" },
+          { "target": "lower_entry", "phaseBefore": 2, "phaseAfter": 0, "hpAfter": 944, "scanLog": "三相扫描 2->0：目标坐标未与扫描相位重合。" },
+          { "target": "panopticon_gate", "phaseBefore": 0, "phaseAfter": 1, "hpAfter": 944, "scanLog": "三相扫描 0->1：目标坐标未与扫描相位重合。" },
+          { "target": "all_sight_lock", "phaseBefore": 1, "phaseAfter": 2, "hpAfter": 904, "scanLog": "三相扫描 1->2：曝光并承受最大生命 4%（40 点）伤害。" },
+          { "target": "blindspot_theater", "phaseBefore": 2, "phaseAfter": 0, "hpAfter": 864, "scanLog": "三相扫描 2->0：曝光并承受最大生命 4%（40 点）伤害。" },
+          { "target": "blindline_archive", "phaseBefore": 0, "phaseAfter": 1, "hpAfter": 864, "scanLog": "三相扫描 0->1：目标坐标未与扫描相位重合。" }
+        ],
+        "shadowGateClosed": {
+          "at": "blindline_archive",
+          "target": "shadow_route",
+          "gateId": "panopticon_blindline_archive_to_shadow_route",
+          "status": "closed",
+          "isOpen": false,
+          "blockReason": "完成三座盲区中继后选择影路路线；其余路线将永久关闭。"
+        },
+        "illegalAdvance": {
+          "target": "shadow_route",
+          "status": "rejected",
+          "code": "illegal-move",
+          "message": "shadow_route is not a legal adjacent destination from blindline_archive.",
+          "scanPhaseAfter": 1,
+          "moveCountAfter": 7,
+          "unchanged": true
+        },
+        "afterDisplay": {
+          "status": "相位:1，移动:7，曝光:4，中继:0/3，路线:未选择，折光:0/3，诱饵奖励:0/3，Boss快照:未冻结",
+          "severity": "danger",
+          "meter": { "value": 0, "max": 3 },
+          "targetReached": false
+        },
+        "afterStatus": {
+          "scanPhase": 1,
+          "moveCount": 7,
+          "exposureCount": 4,
+          "completedRelayCount": 0,
+          "route": null,
+          "refractionCharges": 0,
+          "decoyRewardsGranted": 0,
+          "readyForRoute": false,
+          "readyForBoss": false
+        },
+        "roundtrip": {
+          "status": "decoded",
+          "lawData": {
+            "kind": "panopticon_city",
+            "scanPhase": 1,
+            "moveCount": 7,
+            "exposureCount": 4,
+            "relays": {
+              "north_blind_relay": false,
+              "central_blind_relay": false,
+              "south_blind_relay": false
+            },
+            "pendingRouteNodeId": null,
+            "route": null,
+            "refractionCharges": 0,
+            "decoyRewardsGranted": 0,
+            "bossSnapshot": null,
+            "entryGear": {
+              "blindlineCutter": true,
+              "predictiveVisor": false,
+              "matteShell": true,
+              "inversePrism": true
+            },
+            "predictiveVisorProtectionUsed": [false, false, false]
+          },
+          "displayStatus": "相位:1，移动:7，曝光:4，中继:0/3，路线:未选择，折光:0/3，诱饵奖励:0/3，Boss快照:未冻结",
+          "rewardPoints": 850
+        }
+      }
+    },
+    {
+      "id": "panopticon-relays-route-select-gates",
+      "expected": {
+        "gateCollect": {
+          "nodeId": "panopticon_gate",
+          "rewardPointsBefore": 850,
+          "rewardPointsAfter": 1470,
+          "runLootRewardPoints": 620,
+          "focusIncense": 4,
+          "dispelTalisman": 4,
+          "armorPatch": 4,
+          "gateSigil": 1
+        },
+        "afterNorth": {
+          "completedRelayCount": 1,
+          "northRelay": true,
+          "pendingRouteNodeId": null,
+          "readyForRoute": false,
+          "exposureCount": 0
+        },
+        "routeSelectEarly": {
+          "status": "rejected",
+          "code": "domain-rejected",
+          "message": "The command did not produce a domain transition.",
+          "route": null
+        },
+        "afterCentral": {
+          "completedRelayCount": 2,
+          "centralRelay": true,
+          "pendingRouteNodeId": null,
+          "readyForRoute": false
+        },
+        "afterSouth": {
+          "completedRelayCount": 3,
+          "southRelay": true,
+          "pendingRouteNodeId": "south_blind_relay",
+          "readyForRoute": true,
+          "readyForBoss": false
+        },
+        "afterThreeRelaysDisplay": {
+          "status": "相位:1，移动:7，曝光:0，中继:3/3，路线:未选择，折光:0/3，诱饵奖励:0/3，Boss快照:未冻结",
+          "severity": "warning",
+          "meter": { "value": 3, "max": 3 },
+          "targetReached": false
+        },
+        "bossGateClosed": {
+          "at": "south_blind_relay",
+          "target": "all_sight_warden",
+          "gateId": "panopticon_south_blind_relay_to_all_sight_warden",
+          "status": "closed",
+          "isOpen": false,
+          "blockReason": "完成三座盲区中继并选择潜入路线后，万目监察者入口开放。"
+        },
+        "bossIllegalMove": {
+          "target": "all_sight_warden",
+          "status": "rejected",
+          "code": "departure-blocked",
+          "message": "三座盲区中继已经闭环，请先选择影路、诱饵或折光路线再离开。"
+        },
+        "departureBlocked": {
+          "target": "refraction_lab",
+          "status": "rejected",
+          "code": "departure-blocked",
+          "message": "三座盲区中继已经闭环，请先选择影路、诱饵或折光路线再离开。"
+        },
+        "routeSelect": {
+          "status": "committed",
+          "rewardPointsBefore": 2940,
+          "rewardPointsAfter": 2940,
+          "route": "shadow",
+          "pendingRouteNodeId": null,
+          "log": "监察城路线已永久冻结：影路潜行。"
+        },
+        "afterRouteDisplay": {
+          "status": "相位:1，移动:7，曝光:0，中继:3/3，路线:影路，折光:0/3，诱饵奖励:0/3，Boss快照:未冻结",
+          "severity": "stable",
+          "meter": { "value": 3, "max": 3 },
+          "targetReached": true
+        },
+        "afterRouteStatus": {
+          "readyForRoute": false,
+          "readyForBoss": true
+        },
+        "bossGateOpen": {
+          "at": "south_blind_relay",
+          "target": "all_sight_warden",
+          "gateId": "panopticon_south_blind_relay_to_all_sight_warden",
+          "status": "open",
+          "isOpen": true,
+          "blockReason": null
+        },
+        "shadowGateOpen": {
+          "at": "blindline_archive",
+          "target": "shadow_route",
+          "gateId": "panopticon_blindline_archive_to_shadow_route",
+          "status": "open",
+          "isOpen": true,
+          "blockReason": null
+        },
+        "shadowLegalMove": {
+          "target": "shadow_route",
+          "status": "committed"
+        },
+        "shadowCollect": {
+          "rewardPoints": 3500,
+          "runLootRewardPoints": 2650,
+          "observationShard": 4
+        },
+        "refractionGateClosed": {
+          "at": "lower_return_portal",
+          "target": "refraction_route",
+          "gateId": "panopticon_lower_return_portal_to_refraction_route",
+          "status": "closed",
+          "isOpen": false,
+          "blockReason": "完成三座盲区中继后选择折光路线；其余路线将永久关闭。"
+        },
+        "refractionIllegalMove": {
+          "target": "refraction_route",
+          "status": "rejected",
+          "code": "illegal-move",
+          "message": "refraction_route is not a legal adjacent destination from lower_return_portal."
+        },
+        "routeSelectAgain": {
+          "status": "rejected",
+          "code": "domain-rejected",
+          "message": "The command did not produce a domain transition.",
+          "route": "shadow"
+        },
+        "roundtrip": {
+          "status": "decoded",
+          "lawData": {
+            "kind": "panopticon_city",
+            "scanPhase": 2,
+            "moveCount": 20,
+            "exposureCount": 0,
+            "relays": {
+              "north_blind_relay": true,
+              "central_blind_relay": true,
+              "south_blind_relay": true
+            },
+            "pendingRouteNodeId": null,
+            "route": "shadow",
+            "refractionCharges": 0,
+            "decoyRewardsGranted": 0,
+            "bossSnapshot": null,
+            "entryGear": {
+              "blindlineCutter": true,
+              "predictiveVisor": false,
+              "matteShell": true,
+              "inversePrism": true
+            },
+            "predictiveVisorProtectionUsed": [false, false, false]
+          },
+          "displayStatus": "相位:2，移动:20，曝光:0，中继:3/3，路线:影路，折光:0/3，诱饵奖励:0/3，Boss快照:未冻结",
+          "rewardPoints": 3500
+        }
+      }
+    },
+    {
+      "id": "panopticon-boss-snapshot-and-freeze",
+      "expected": {
+        "chargeFarm": {
+          "moves": [
+            { "target": "refraction_lab", "phaseBefore": 1, "phaseAfter": 2, "hpAfter": 1024, "scanLog": "三相扫描 1->2：目标坐标未与扫描相位重合。" },
+            { "target": "south_blind_relay", "phaseBefore": 2, "phaseAfter": 0, "hpAfter": 1004, "scanLog": "三相扫描 2->0：曝光并承受最大生命 2%（20 点）伤害，折光充能 +1。" },
+            { "target": "refraction_lab", "phaseBefore": 0, "phaseAfter": 1, "hpAfter": 984, "scanLog": "三相扫描 0->1：曝光并承受最大生命 2%（20 点）伤害，折光充能 +1。" },
+            { "target": "spectrum_switchyard", "phaseBefore": 1, "phaseAfter": 2, "hpAfter": 964, "scanLog": "三相扫描 1->2：曝光并承受最大生命 2%（20 点）伤害，折光充能 +1。" },
+            { "target": "refraction_lab", "phaseBefore": 2, "phaseAfter": 0, "hpAfter": 964, "scanLog": "三相扫描 2->0：目标坐标未与扫描相位重合。" },
+            { "target": "south_blind_relay", "phaseBefore": 0, "phaseAfter": 1, "hpAfter": 964, "scanLog": "三相扫描 0->1：目标坐标未与扫描相位重合。" },
+            { "target": "refraction_lab", "phaseBefore": 1, "phaseAfter": 2, "hpAfter": 964, "scanLog": "三相扫描 1->2：目标坐标未与扫描相位重合。" },
+            { "target": "south_blind_relay", "phaseBefore": 2, "phaseAfter": 0, "hpAfter": 944, "scanLog": "三相扫描 2->0：曝光并承受最大生命 2%（20 点）伤害。" }
+          ],
+          "exposureCount": 4,
+          "refractionCharges": 3
+        },
+        "bossGateOpen": {
+          "at": "south_blind_relay",
+          "target": "all_sight_warden",
+          "gateId": "panopticon_south_blind_relay_to_all_sight_warden",
+          "status": "open",
+          "isOpen": true,
+          "blockReason": null
+        },
+        "bossMove": {
+          "target": "all_sight_warden",
+          "phaseBefore": 0,
+          "phaseAfter": 1,
+          "scanLog": "三相扫描 0->1：曝光并承受最大生命 2%（20 点）伤害。",
+          "exposureCount": 5,
+          "refractionCharges": 3
+        },
+        "beforeBoss": {
+          "bossSnapshot": null,
+          "route": "refraction",
+          "exposureCount": 5,
+          "refractionCharges": 3
+        },
+        "bossEntry": {
+          "bossSnapshot": {
+            "route": "refraction",
+            "exposureCount": 4,
+            "refractionCharges": 3
+          },
+          "monsterHp": 1944,
+          "bossPhase": "sealed",
+          "turn": 1,
+          "exposureCount": 5,
+          "refractionCharges": 3
+        },
+        "bossLawAtStart": {
+          "lawData": {
+            "kind": "panopticon_city",
+            "scanPhase": 1,
+            "moveCount": 16,
+            "exposureCount": 5,
+            "relays": {
+              "north_blind_relay": true,
+              "central_blind_relay": true,
+              "south_blind_relay": true
+            },
+            "pendingRouteNodeId": null,
+            "route": "refraction",
+            "refractionCharges": 3,
+            "decoyRewardsGranted": 0,
+            "bossSnapshot": {
+              "route": "refraction",
+              "exposureCount": 4,
+              "refractionCharges": 3
+            },
+            "entryGear": {
+              "blindlineCutter": true,
+              "predictiveVisor": false,
+              "matteShell": true,
+              "inversePrism": true
+            },
+            "predictiveVisorProtectionUsed": [false, false, false]
+          },
+          "display": {
+            "status": "相位:1，移动:16，曝光:5，中继:3/3，路线:折光，折光:3/3，诱饵奖励:0/3，Boss快照:折光/4/3",
+            "severity": "resolved",
+            "meter": { "value": 3, "max": 3 },
+            "targetReached": true
+          },
+          "modifiers": {
+            "encounter": { "allStatsPercent": 0, "defensePercent": 0, "artPowerPercent": 0 },
+            "trap": { "damagePercent": 0, "dcPercent": 0 },
+            "healingPercent": 0,
+            "outgoingDamage": { "forcePercent": 15, "artPercent": 15 },
+            "guardEffectPercent": 0
+          }
+        },
+        "bossFight": {
+          "rounds": 9,
+          "hpAfter": 748,
+          "cleared": true,
+          "awakenedLines": [
+            "【万目齐睁】监察者撕开天幕总锁，所有被遮蔽的镜头同时睁眼，三相扫描开始逆向追溯每一步移动。"
+          ]
+        },
+        "afterBoss": {
+          "bossSnapshot": {
+            "route": "refraction",
+            "exposureCount": 4,
+            "refractionCharges": 3
+          },
+          "route": "refraction",
+          "display": {
+            "status": "相位:1，移动:16，曝光:5，中继:3/3，路线:折光，折光:3/3，诱饵奖励:0/3，Boss快照:折光/4/3",
+            "severity": "resolved",
+            "meter": { "value": 3, "max": 3 },
+            "targetReached": true
+          }
+        },
+        "routeSelectAfterBoss": {
+          "status": "rejected",
+          "code": "domain-rejected",
+          "message": "The command did not produce a domain transition.",
+          "route": "refraction"
+        },
+        "roundtrip": {
+          "status": "decoded",
+          "lawData": {
+            "kind": "panopticon_city",
+            "scanPhase": 1,
+            "moveCount": 16,
+            "exposureCount": 5,
+            "relays": {
+              "north_blind_relay": true,
+              "central_blind_relay": true,
+              "south_blind_relay": true
+            },
+            "pendingRouteNodeId": null,
+            "route": "refraction",
+            "refractionCharges": 3,
+            "decoyRewardsGranted": 0,
+            "bossSnapshot": {
+              "route": "refraction",
+              "exposureCount": 4,
+              "refractionCharges": 3
+            },
+            "entryGear": {
+              "blindlineCutter": true,
+              "predictiveVisor": false,
+              "matteShell": true,
+              "inversePrism": true
+            },
+            "predictiveVisorProtectionUsed": [false, false, false]
+          },
+          "displayStatus": "相位:1，移动:16，曝光:5，中继:3/3，路线:折光，折光:3/3，诱饵奖励:0/3，Boss快照:折光/4/3",
+          "rewardPoints": 7220
+        }
+      }
+    },
+    {
+      "id": "panopticon-decoy-rewards-idempotency",
+      "expected": {
+        "gateFirst": {
+          "rewardPointsBefore": 850,
+          "rewardPointsAfter": 1470,
+          "runLootRewardPoints": 620,
+          "focusIncense": 4,
+          "dispelTalisman": 4,
+          "armorPatch": 4,
+          "gateSigil": 1
+        },
+        "gateSecond": {
+          "status": "rejected",
+          "code": "domain-rejected",
+          "message": "监察城正门已经领取过奖励。",
+          "rewardPoints": 1470
+        },
+        "decoyFarm": {
+          "moves": [
+            { "target": "refraction_lab", "phaseBefore": 1, "phaseAfter": 2, "hpAfter": 1024, "scanLog": "三相扫描 1->2：目标坐标未与扫描相位重合。" },
+            { "target": "south_blind_relay", "phaseBefore": 2, "phaseAfter": 0, "hpAfter": 984, "scanLog": "三相扫描 2->0：曝光并承受最大生命 4%（40 点）伤害，诱饵奖励 +120 本局RP。" },
+            { "target": "refraction_lab", "phaseBefore": 0, "phaseAfter": 1, "hpAfter": 944, "scanLog": "三相扫描 0->1：曝光并承受最大生命 4%（40 点）伤害，诱饵奖励 +120 本局RP。" },
+            { "target": "spectrum_switchyard", "phaseBefore": 1, "phaseAfter": 2, "hpAfter": 904, "scanLog": "三相扫描 1->2：曝光并承受最大生命 4%（40 点）伤害，诱饵奖励 +120 本局RP。" },
+            { "target": "refraction_lab", "phaseBefore": 2, "phaseAfter": 0, "hpAfter": 904, "scanLog": "三相扫描 2->0：目标坐标未与扫描相位重合。" },
+            { "target": "south_blind_relay", "phaseBefore": 0, "phaseAfter": 1, "hpAfter": 904, "scanLog": "三相扫描 0->1：目标坐标未与扫描相位重合。" },
+            { "target": "refraction_lab", "phaseBefore": 1, "phaseAfter": 2, "hpAfter": 904, "scanLog": "三相扫描 1->2：目标坐标未与扫描相位重合。" },
+            { "target": "south_blind_relay", "phaseBefore": 2, "phaseAfter": 0, "hpAfter": 864, "scanLog": "三相扫描 2->0：曝光并承受最大生命 4%（40 点）伤害。" }
+          ],
+          "exposureCount": 4,
+          "decoyRewardsGranted": 3,
+          "runLootRewardPoints": 2450,
+          "rewardPoints": 3300
+        },
+        "afterDecoyDisplay": {
+          "status": "相位:0，移动:15，曝光:4，中继:3/3，路线:诱饵，折光:0/3，诱饵奖励:3/3，Boss快照:未冻结",
+          "severity": "stable",
+          "meter": { "value": 3, "max": 3 },
+          "targetReached": true
+        },
+        "roundtrip": {
+          "status": "decoded",
+          "lawData": {
+            "kind": "panopticon_city",
+            "scanPhase": 0,
+            "moveCount": 15,
+            "exposureCount": 4,
+            "relays": {
+              "north_blind_relay": true,
+              "central_blind_relay": true,
+              "south_blind_relay": true
+            },
+            "pendingRouteNodeId": null,
+            "route": "decoy",
+            "refractionCharges": 0,
+            "decoyRewardsGranted": 3,
+            "bossSnapshot": null,
+            "entryGear": {
+              "blindlineCutter": true,
+              "predictiveVisor": false,
+              "matteShell": true,
+              "inversePrism": true
+            },
+            "predictiveVisorProtectionUsed": [false, false, false]
+          },
+          "displayStatus": "相位:0，移动:15，曝光:4，中继:3/3，路线:诱饵，折光:0/3，诱饵奖励:3/3，Boss快照:未冻结",
+          "rewardPoints": 3300
+        }
+      }
+    },
+    {
+      "id": "panopticon-shadow-route-no-exposure",
+      "expected": {
+        "shadowFarm": {
+          "moves": [
+            { "target": "refraction_lab", "phaseBefore": 1, "phaseAfter": 2, "hpAfter": 1024, "scanLog": "三相扫描 1->2：目标坐标未与扫描相位重合。" },
+            { "target": "south_blind_relay", "phaseBefore": 2, "phaseAfter": 0, "hpAfter": 1024, "scanLog": "三相扫描 2->0：影路遮蔽，本次不新增曝光且免疫扫描伤害。" },
+            { "target": "refraction_lab", "phaseBefore": 0, "phaseAfter": 1, "hpAfter": 1024, "scanLog": "三相扫描 0->1：影路遮蔽，本次不新增曝光且免疫扫描伤害。" }
+          ],
+          "exposureCount": 0,
+          "refractionCharges": 0,
+          "decoyRewardsGranted": 0
+        },
+        "afterShadowDisplay": {
+          "status": "相位:1，移动:10，曝光:0，中继:3/3，路线:影路，折光:0/3，诱饵奖励:0/3，Boss快照:未冻结",
+          "severity": "stable",
+          "meter": { "value": 3, "max": 3 },
+          "targetReached": true
+        },
+        "roundtrip": {
+          "status": "decoded",
+          "lawData": {
+            "kind": "panopticon_city",
+            "scanPhase": 1,
+            "moveCount": 10,
+            "exposureCount": 0,
+            "relays": {
+              "north_blind_relay": true,
+              "central_blind_relay": true,
+              "south_blind_relay": true
+            },
+            "pendingRouteNodeId": null,
+            "route": "shadow",
+            "refractionCharges": 0,
+            "decoyRewardsGranted": 0,
+            "bossSnapshot": null,
+            "entryGear": {
+              "blindlineCutter": true,
+              "predictiveVisor": false,
+              "matteShell": true,
+              "inversePrism": true
+            },
+            "predictiveVisorProtectionUsed": [false, false, false]
+          },
+          "displayStatus": "相位:1，移动:10，曝光:0，中继:3/3，路线:影路，折光:0/3，诱饵奖励:0/3，Boss快照:未冻结",
+          "rewardPoints": 2320
+        }
+      }
+    }
+  ]
+}

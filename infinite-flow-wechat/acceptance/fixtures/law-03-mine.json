@@ -1,0 +1,188 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "law-03-mine",
+  "provenance": {
+    "oracle": {
+      "project": "infinite-flow-web",
+      "commit": "2645f0232542684d27de1abc321bb26913320420",
+      "path": "infinite-flow/src/main.ts",
+      "sha256": "d07ff9d4562ecc618caf3341e5f83cb2b43a733c19506c14c362d1cd07bfb8bb"
+    },
+    "goldenManifest": {
+      "path": "packages/save-codec/tests/fixtures/manifest.json",
+      "sha256": "36fcff8420e9aefbb8fe8c472b42fd5dbf6835025beee05b567a8481d6ca6bf1"
+    },
+    "expectedRule": "Mine gravity starts upward; clearing tilted_gravity_switch or backup_gravity_well flips gravity upward<->downward, and no other node clear changes it. Upward gravity scales trap damage/dc by -20% and encounter defense by +20%; downward gravity scales trap damage/dc by +20% and encounter defense by -20%. Route gates mine_upward_coil_lift and mine_upward_beast_lane require upward gravity; mine_downward_branch_lift and mine_downward_dust_lift require downward gravity. All expected values are frozen here, never read from candidate code."
+  },
+  "baseInput": {
+    "path": "packages/save-codec/tests/fixtures/new-hub-v1.json",
+    "sha256": "a1de1f1b33b59c91dea46caf55f21b6eee0b7104c2cbe4d68ac5d7a430709e0b"
+  },
+  "inputMutations": [
+    {
+      "op": "replace",
+      "path": ["state", "completedDungeonIds"],
+      "value": ["demon_tower_1", "metro_abyss"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "claimedTaskIds"],
+      "value": ["clear_demon_tower", "clear_metro_abyss"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "inventory", "armor_patch"],
+      "value": 1
+    },
+    {
+      "op": "replace",
+      "path": ["state", "preparedItemIds"],
+      "value": ["armor_patch"]
+    }
+  ],
+  "entrySeed": 240000007,
+  "scenarioIds": [
+    "gravity-switch-on-clear",
+    "gravity-route-gates",
+    "gravity-trap-modifiers",
+    "gravity-defense-modifiers",
+    "repeat-clear-no-flip"
+  ],
+  "scenarios": [
+    {
+      "id": "gravity-switch-on-clear",
+      "expected": {
+        "initialGravity": "upward",
+        "clears": [
+          { "nodeId": "mine_arrival", "gravityAfter": "upward" },
+          { "nodeId": "inverted_shaft_trap", "gravityAfter": "upward", "hpAfter": 77 },
+          { "nodeId": "star_core_reward", "gravityAfter": "upward" },
+          { "nodeId": "spark_imp_switchback", "gravityAfter": "upward", "combatRounds": 2, "hpAfter": 72 },
+          { "nodeId": "magnetic_rail_trap", "gravityAfter": "upward", "hpAfter": 44 },
+          { "nodeId": "coil_burst_trap", "gravityAfter": "upward", "hpAfter": 44 },
+          { "nodeId": "gravity_branch_reward", "gravityAfter": "upward" },
+          { "nodeId": "tilted_gravity_switch", "gravityAfter": "downward", "hpAfter": 18 },
+          { "nodeId": "spark_imp_roost", "gravityAfter": "downward", "combatRounds": 3, "hpAfter": 6 },
+          { "nodeId": "rift_dust_reward", "gravityAfter": "downward" }
+        ],
+        "finalClearedNodeIds": [
+          "mine_arrival",
+          "inverted_shaft_trap",
+          "star_core_reward",
+          "spark_imp_switchback",
+          "magnetic_rail_trap",
+          "coil_burst_trap",
+          "gravity_branch_reward",
+          "tilted_gravity_switch",
+          "spark_imp_roost",
+          "rift_dust_reward"
+        ],
+        "finalGravity": "downward",
+        "finalHp": 6
+      }
+    },
+    {
+      "id": "gravity-route-gates",
+      "expected": {
+        "gates": [
+          {
+            "gateId": "mine_upward_coil_lift",
+            "checkedFromNodeId": "magnetic_rail_trap",
+            "targetNodeId": "coil_burst_trap",
+            "requiredGravity": "upward",
+            "openAtGravity": "upward",
+            "closedAtGravity": "downward",
+            "closedReason": "仅上浮重力时通行；触发重力岔路闸或备用重力井换向。"
+          },
+          {
+            "gateId": "mine_downward_branch_lift",
+            "checkedFromNodeId": "tilted_gravity_switch",
+            "targetNodeId": "gravity_branch_reward",
+            "requiredGravity": "downward",
+            "closedAtGravity": "upward",
+            "closedReason": "仅下沉重力时通行；触发重力岔路闸或备用重力井换向。",
+            "openAtGravity": "downward"
+          },
+          {
+            "gateId": "mine_downward_dust_lift",
+            "checkedFromNodeId": "spark_imp_switchback",
+            "targetNodeId": "rift_dust_reward",
+            "requiredGravity": "downward",
+            "closedAtGravity": "upward",
+            "closedReason": "仅下沉重力时通行；触发重力岔路闸或备用重力井换向。",
+            "openAtGravity": "downward"
+          },
+          {
+            "gateId": "mine_upward_beast_lane",
+            "checkedFromNodeId": "rift_dust_reward",
+            "targetNodeId": "molt_beast_den",
+            "requiredGravity": "upward",
+            "closedAtGravity": "downward",
+            "closedReason": "仅上浮重力时通行；触发重力岔路闸或备用重力井换向。"
+          }
+        ]
+      }
+    },
+    {
+      "id": "gravity-trap-modifiers",
+      "expected": {
+        "observations": [
+          {
+            "gravity": "upward",
+            "trap": { "damagePercent": -20, "dcPercent": -20 },
+            "display": {
+              "title": "重力极向",
+              "status": "上浮",
+              "severity": "warning",
+              "meter": null,
+              "targetReached": false
+            }
+          },
+          {
+            "gravity": "downward",
+            "trap": { "damagePercent": 20, "dcPercent": 20 },
+            "display": {
+              "title": "重力极向",
+              "status": "下沉",
+              "severity": "warning",
+              "meter": null,
+              "targetReached": false
+            }
+          }
+        ],
+        "upwardTrapDamage": [
+          { "nodeId": "inverted_shaft_trap", "hpLost": 25 },
+          { "nodeId": "magnetic_rail_trap", "hpLost": 28 }
+        ],
+        "switchTrapDamage": {
+          "nodeId": "tilted_gravity_switch",
+          "hpLost": 26,
+          "gravityBefore": "upward",
+          "gravityAfter": "downward"
+        }
+      }
+    },
+    {
+      "id": "gravity-defense-modifiers",
+      "expected": {
+        "upward": {
+          "encounterDefensePercent": 20,
+          "combat": { "nodeId": "spark_imp_switchback", "rounds": 2, "hpLost": 5 }
+        },
+        "downward": {
+          "encounterDefensePercent": -20,
+          "combat": { "nodeId": "spark_imp_roost", "rounds": 3, "hpLost": 12 }
+        }
+      }
+    },
+    {
+      "id": "repeat-clear-no-flip",
+      "expected": {
+        "reselectedNodeId": "tilted_gravity_switch",
+        "rejectionCode": "already-resolved",
+        "gravityBefore": "downward",
+        "gravityAfter": "downward"
+      }
+    }
+  ]
+}

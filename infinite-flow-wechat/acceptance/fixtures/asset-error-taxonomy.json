@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "asset-error-taxonomy",
+  "provenance": {
+    "authoritativeSpec": {
+      "path": "infinite-flow/docs/knowledge-base/05-mini-game-migration-plan.md",
+      "sha256": "9fc1f15f96d36605ff2d2370dd9594a2e37dc859005221c2f6d4e9bbcd147299",
+      "contract": "lines 136-158 define all nine codes, retryability groups, and caller-selected cancelled retryability"
+    },
+    "protocol": {
+      "path": "packages/runtime/src/ports.ts",
+      "sha256": "2d2a4408213d0e04ead8937b89d54562cdc5f8e63d8a04660fe684f616b75ab4",
+      "export": "AssetErrorCode"
+    },
+    "candidateAdapter": {
+      "path": "cocos/assets/scripts/platform/cocos-asset-port.ts",
+      "sha256AtFixtureFreeze": "f3104f9442f0bb3f539ca42f4487e0eb3cd6021936f0cb4a98943b8d7e82c872",
+      "exports": [
+        "classifyCocosAssetError",
+        "ManifestCocosAssetPort"
+      ]
+    },
+    "expectedRule": "retryability is frozen independently in this fixture; candidate exports only produce actual values"
+  },
+  "scenarioIds": [
+    "error-unknown-key",
+    "error-revision-mismatch",
+    "error-offline",
+    "error-timeout",
+    "error-integrity",
+    "error-decode",
+    "error-quota",
+    "error-unsupported",
+    "error-cancelled"
+  ],
+  "expected": {
+    "manifestRevision": "sha256:91b2f75d946411a2ac16d0a313336ba97bd395f652e55aa625fa940c396525b2",
+    "group": "acceptance-error-taxonomy",
+    "asset": {
+      "key": "npc:main_god_projection",
+      "kind": "npc",
+      "resourcePath": "npc/main-god-projection-v1"
+    }
+  },
+  "scenarios": [
+    {
+      "id": "error-unknown-key",
+      "thrown": { "code": "unknown-key" },
+      "expected": { "code": "unknown-key", "retryable": false }
+    },
+    {
+      "id": "error-revision-mismatch",
+      "thrown": { "code": "revision-mismatch" },
+      "expected": { "code": "revision-mismatch", "retryable": false }
+    },
+    {
+      "id": "error-offline",
+      "thrown": { "code": "offline" },
+      "expected": { "code": "offline", "retryable": true }
+    },
+    {
+      "id": "error-timeout",
+      "thrown": { "code": "timeout" },
+      "expected": { "code": "timeout", "retryable": true }
+    },
+    {
+      "id": "error-integrity",
+      "thrown": { "code": "integrity" },
+      "expected": { "code": "integrity", "retryable": false }
+    },
+    {
+      "id": "error-decode",
+      "thrown": { "code": "decode" },
+      "expected": { "code": "decode", "retryable": false }
+    },
+    {
+      "id": "error-quota",
+      "thrown": { "code": "quota" },
+      "expected": { "code": "quota", "retryable": true }
+    },
+    {
+      "id": "error-unsupported",
+      "thrown": { "code": "unsupported" },
+      "expected": { "code": "unsupported", "retryable": false }
+    },
+    {
+      "id": "error-cancelled",
+      "thrown": { "code": "cancelled", "retryable": true },
+      "expected": { "code": "cancelled", "retryable": true }
+    }
+  ]
+}

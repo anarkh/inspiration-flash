@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "rootDir": "src",
+    "outDir": "dist",
+    "paths": {
+      "@infinite-flow/core": ["../core/dist/index.d.ts"],
+      "@infinite-flow/core/*": ["../core/dist/*.d.ts"],
+      "@infinite-flow/runtime": ["../runtime/dist/index.d.ts"]
+    }
+  }
+}

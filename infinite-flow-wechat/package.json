@@ -1,0 +1,70 @@
+{
+  "name": "infinite-flow-wechat",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "npm@11.19.0",
+  "engines": {
+    "node": "26.7.0",
+    "npm": "11.19.0"
+  },
+  "workspaces": [
+    "packages/*",
+    "cocos"
+  ],
+  "scripts": {
+    "toolchain:check": "node scripts/check-toolchain.mjs",
+    "toolchain:test": "node scripts/verify-toolchain-contract.mjs",
+    "toolchain:verify": "npm run toolchain:check && npm run toolchain:test",
+    "toolchain:require": "node scripts/check-toolchain.mjs --require-production",
+    "build:wechat": "node scripts/build-wechat.mjs",
+    "build:wechat:template": "node scripts/build-wechat-template.mjs",
+    "build:wechat:template:self-check": "node scripts/build-wechat-template.self-check.mjs",
+    "wechat:editor-config:compose": "node scripts/compose-wechat-editor-build-config.mjs",
+    "wechat:editor-config:compose:self-check": "node scripts/compose-wechat-editor-build-config.self-check.mjs",
+    "wechat:config:render": "node scripts/render-wechat-build-config.mjs",
+    "wechat:config:verify": "node scripts/verify-wechat-build-config.mjs",
+    "wechat:output:verify": "node scripts/verify-wechat-build-output.mjs",
+    "wechat:bundle:self-check": "node scripts/wechat-bundle-contract.self-check.mjs",
+    "wechat:output:snapshot:self-check": "node scripts/output-snapshot.self-check.mjs",
+    "wechat:build:freshness:self-check": "node scripts/build-freshness.self-check.mjs",
+    "wechat:devtools-smoke:derive": "node scripts/derive-devtools-smoke.mjs",
+    "wechat:devtools-smoke:serve": "node scripts/loopback-static-server.mjs --root cocos/build/wechatgame-devtools-smoke/remote --port 8947",
+    "wechat:devtools-smoke:self-check": "node scripts/devtools-smoke.self-check.mjs",
+    "wechat:devtools-smoke:check": "npm run wechat:devtools-smoke:derive && npm run wechat:devtools-smoke:self-check",
+    "source:verify": "node scripts/verify-source-boundaries.mjs",
+    "dist:es2020:verify": "node scripts/verify-es2020-dist.mjs",
+    "assets:verify": "node scripts/verify-assets.mjs",
+    "scene:verify": "node scripts/verify-cocos-scene.mjs",
+    "cocos:race:test": "node cocos/headless/bootstrap-race.self-check.mjs",
+    "cocos:walk:test": "node cocos/headless/walk-world.self-check.mjs",
+    "cocos:sheet:test": "node cocos/headless/mobile-sheet-actions.self-check.mjs",
+    "cocos:web-mobile:smoke": "node scripts/web-mobile-canvas.smoke.mjs",
+    "cocos:devtools-boot:test": "node cocos/headless/devtools-boot-diagnostic.self-check.mjs",
+    "cocos:gallery:test": "node cocos/headless/sheet-theme-gallery.self-check.mjs",
+    "cocos:layout-gallery:test": "node cocos/headless/sheet-layout-gallery.self-check.mjs",
+    "sheet-gallery-guard:self-check": "node scripts/verify-sheet-gallery-guard.mjs",
+    "acceptance:verify": "node --experimental-strip-types scripts/verify-acceptance-manifest.ts",
+    "acceptance:list": "node --experimental-strip-types scripts/verify-acceptance-manifest.ts --list",
+    "test:migration": "node scripts/test-migration.mjs",
+    "test:migration:self-check": "node scripts/test-migration-self-check.mjs",
+    "platform:typecheck": "tsc -p cocos/headless/tsconfig.platform-self-check.json",
+    "platform:test": "node scripts/run-platform-self-check.mjs",
+    "platform:verify": "npm run platform:typecheck && npm run platform:test",
+    "build": "npm run build -w @infinite-flow/core && npm run build -w @infinite-flow/runtime && npm run build -w @infinite-flow/application && npm run build -w @infinite-flow/save-codec && npm run build -w @infinite-flow/client && npm run build -w @infinite-flow/presentation",
+    "typecheck:packages": "npm run typecheck --workspaces --if-present",
+    "typecheck": "npm run build && npm run typecheck:packages",
+    "test:packages": "npm run test --workspaces --if-present",
+    "test": "npm run build && npm run test:packages",
+    "verify": "npm run toolchain:verify && npm run wechat:editor-config:compose:self-check && npm run wechat:bundle:self-check && npm run build:wechat:template:self-check && npm run wechat:output:snapshot:self-check && npm run wechat:build:freshness:self-check && npm run build && npm run dist:es2020:verify && npm run source:verify && npm run assets:verify && npm run scene:verify && npm run cocos:race:test && npm run cocos:walk:test && npm run cocos:sheet:test && npm run cocos:devtools-boot:test && npm run acceptance:verify && npm run test:migration:self-check && npm run typecheck:packages && npm run platform:verify && npm run test:packages && npm run dist:es2020:verify && npm run source:verify"
+  },
+  "devDependencies": {
+    "esbuild": "^0.21.5",
+    "typescript": "5.9.3",
+    "vitest": "^2.1.1"
+  },
+  "allowScripts": {
+    "esbuild@0.21.5": true,
+    "fsevents@2.3.3": true
+  }
+}

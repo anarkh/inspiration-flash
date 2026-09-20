@@ -1,0 +1,127 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "hash-canonical-json-v1",
+  "scenarioIds": [
+    "canonical-utf16-key-and-array-order",
+    "canonical-state-envelope-hash",
+    "reject-negative-zero",
+    "reject-fraction",
+    "reject-nan",
+    "reject-positive-infinity",
+    "reject-unsafe-integer",
+    "reject-array-hole",
+    "reject-array-property",
+    "reject-non-plain-object",
+    "reject-object-accessor",
+    "reject-symbol-key",
+    "reject-lone-high-surrogate",
+    "reject-lone-low-surrogate",
+    "reject-cycle"
+  ],
+  "scenarios": [
+    {
+      "id": "canonical-utf16-key-and-array-order",
+      "kind": "canonical",
+      "value": {
+        "z": 1,
+        "a": [true, null, "x"],
+        "😀": 2,
+        "": 3
+      },
+      "expectedCanonical": "{\"a\":[true,null,\"x\"],\"z\":1,\"😀\":2,\"\":3}",
+      "expectedUtf8Hex": "7b2261223a5b747275652c6e756c6c2c2278225d2c227a223a312c22f09f9880223a322c22ee8080223a337d",
+      "expectedSha256": "2f930410269c9d0c0818f041cf466bc5c9aedb192805baed8adfb4714ce93c8d"
+    },
+    {
+      "id": "canonical-state-envelope-hash",
+      "kind": "stateHash",
+      "input": {
+        "schemaVersion": 2,
+        "contentVersion": "v1",
+        "state": {
+          "b": [2, 3],
+          "a": 1
+        }
+      },
+      "expectedSha256": "d7c230e389e411e45a87d631eff56459e7c94c756d478c0827c15680abf65610"
+    },
+    {
+      "id": "reject-negative-zero",
+      "kind": "reject",
+      "factory": "negative-zero",
+      "expectedCode": "negative-zero"
+    },
+    {
+      "id": "reject-fraction",
+      "kind": "reject",
+      "factory": "fraction",
+      "expectedCode": "unsafe-integer"
+    },
+    {
+      "id": "reject-nan",
+      "kind": "reject",
+      "factory": "nan",
+      "expectedCode": "non-finite-number"
+    },
+    {
+      "id": "reject-positive-infinity",
+      "kind": "reject",
+      "factory": "positive-infinity",
+      "expectedCode": "non-finite-number"
+    },
+    {
+      "id": "reject-unsafe-integer",
+      "kind": "reject",
+      "factory": "unsafe-integer",
+      "expectedCode": "unsafe-integer"
+    },
+    {
+      "id": "reject-array-hole",
+      "kind": "reject",
+      "factory": "array-hole",
+      "expectedCode": "array-hole"
+    },
+    {
+      "id": "reject-array-property",
+      "kind": "reject",
+      "factory": "array-property",
+      "expectedCode": "array-property"
+    },
+    {
+      "id": "reject-non-plain-object",
+      "kind": "reject",
+      "factory": "non-plain-object",
+      "expectedCode": "non-plain-object"
+    },
+    {
+      "id": "reject-object-accessor",
+      "kind": "reject",
+      "factory": "object-accessor",
+      "expectedCode": "accessor-property"
+    },
+    {
+      "id": "reject-symbol-key",
+      "kind": "reject",
+      "factory": "symbol-key",
+      "expectedCode": "symbol-key"
+    },
+    {
+      "id": "reject-lone-high-surrogate",
+      "kind": "reject",
+      "factory": "lone-high-surrogate",
+      "expectedCode": "lone-surrogate"
+    },
+    {
+      "id": "reject-lone-low-surrogate",
+      "kind": "reject",
+      "factory": "lone-low-surrogate",
+      "expectedCode": "lone-surrogate"
+    },
+    {
+      "id": "reject-cycle",
+      "kind": "reject",
+      "factory": "cycle",
+      "expectedCode": "cycle"
+    }
+  ]
+}

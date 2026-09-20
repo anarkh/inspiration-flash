@@ -1,0 +1,751 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "law-18-replay",
+  "provenance": {
+    "oracle": {
+      "project": "infinite-flow-web",
+      "commit": "2645f0232542684d27de1abc321bb26913320420",
+      "path": "infinite-flow/src/dungeon-laws.ts",
+      "sha256": "6deffb2bbbde6a9f4110603fb71f948e6543f5bc3985659cab81a82b7ca292ca"
+    },
+    "goldenManifest": {
+      "path": "packages/save-codec/tests/fixtures/manifest.json",
+      "sha256": "36fcff8420e9aefbb8fe8c472b42fd5dbf6835025beee05b567a8481d6ca6bf1"
+    },
+    "expectedRule": "Combat Replay Stage freezes entry gear {frameEngraver, cueVisor, bufferPlate, thawMetronome} from the equipped loadout into law.entryGear at dungeon entry (weapon frame_engraver, head cue_visor, armor buffer_plate, charm thaw_metronome). Three take nodes (take_alpha, take_beta, take_gamma) each record the first direct combat action fought there: attack/art/guard records a take {action, observedValue, replayValue} where observedValue is the real combat event value (actual damage dealt to the monster for attack/art, pure guard reduction for guard) and replayValue = frameEngraver ? min(9999, ceil(observedValue * 1.15)) : observedValue. Takes must be recorded in order alpha→beta→gamma: take-entry gates close take_beta/take_gamma until the earlier takes are recorded ('先完成第 1 段母带，再进入第 2 段录制。') and take-exit gates block leaving a take node until its take is recorded ('录制当前战斗母带后才能离开。'; the move itself is departure-blocked by the uncleared monster). The law display is `1:攻击 X->Y，2:战技 Z->W，3:防御 U->V，路线:未选择，Boss快照:未冻结` with severity danger/warning/stable/resolved and meter {value: completedTakeCount, max: 3}. After three takes, law/select-combat-replay-route {route} permanently selects one of sequence/burst/afterbeat (log 复演路线已冻结：顺序剪辑。); a second selection is a domain-rejected no-op. Route nodes carry selection gates: only the selected route's node opens ('三段母带完成后选择顺序路线；其余路线将永久关闭。' etc.), the others stay closed and run/move through them is rejected illegal-move. The boss gate to final_cut_director is a composite all-conditions gate ('需同时满足这条战痕复演门的全部条件。') that opens only with three takes plus a selected route ('完成三段母带并选择复演路线后，最终剪辑师入口开放。'); moving onto the boss before that is illegal-move. Starting the final_cut_director boss combat freezes bossSnapshot {takes, route} and makes the law immutable: the route can no longer be re-selected (domain-rejected). With thaw_metronome equipped, the boss opening releases take_alpha's replay at 75% route percent plus the cue_visor first-boost (+25%, once per combat) — for the sequence route that is 100% of replayValue 248 = 248 fixed damage (log take_alpha复演「攻」，造成 248 点固定伤害。). During the boss fight a sealed-phase direct action matching the cursor's recorded take releases its replayValue at the sequence route's 100% (take_beta art → 271 fixed damage) and advances the cursor; the boss awakens (删镜杀青) mid-fight, and in the awakened phase matching actions no longer release, so the take_gamma guard replay never fires in this band — the frozen cursor/buffer after the guard turn is the dynamic equivalent evidence that awakened matching actions do not release. In normal (non-boss) combats after a route is selected, the recorded takes replay as fixed damage/buffer at the route percent: sequence releases the cursor take at 100% before each direct action (cue_visor first-boost makes the first release 125% → replayValue 248 → 310 fixed damage); burst releases all three takes at 60% at the combat opening (248→210 with the first-boost, 271→162, guard 3→1 buffer) and the buffer_plate makes the guard buffer absorb two counter-hits (复演缓冲抵消 1 点反击伤害，剩余承伤次数 1。). Route percents are sequence 100, burst 60, afterbeat 125. Node rewards are idempotent: collecting stage_gate pays once (rewardPoints 850→1430, run loot 580, focus_incense/dispel_talisman/armor_patch 3→4, gate_sigil 1) and a second collect is domain-rejected ('复演场正门已经领取过奖励。'). Law state (takes, route, bossSnapshot, entryGear), display status, and reward points persist through a save-codec round-trip. All expected values are frozen here, never read from candidate code."
+  },
+  "baseInput": {
+    "path": "packages/save-codec/tests/fixtures/new-hub-v1.json",
+    "sha256": "a1de1f1b33b59c91dea46caf55f21b6eee0b7104c2cbe4d68ac5d7a430709e0b"
+  },
+  "inputMutations": [
+    {
+      "op": "replace",
+      "path": ["state", "completedDungeonIds"],
+      "value": [
+        "demon_tower_1",
+        "metro_abyss",
+        "starfall_mine",
+        "rust_hospital",
+        "ash_arena",
+        "dream_archive",
+        "void_citadel",
+        "temporal_observatory",
+        "causal_clearinghouse",
+        "entropy_ark",
+        "mirror_cycle_city",
+        "redaction_scriptorium",
+        "legacy_auction_court",
+        "genesis_vault",
+        "silent_broadcast_tower",
+        "lost_shelter",
+        "false_testimony_court"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "claimedTaskIds"],
+      "value": [
+        "clear_demon_tower",
+        "mainline_clear_metro_abyss",
+        "mainline_clear_starfall_mine",
+        "mainline_clear_rust_hospital",
+        "mainline_clear_ash_arena",
+        "mainline_clear_dream_archive",
+        "mainline_clear_void_citadel",
+        "mainline_clear_temporal_observatory",
+        "mainline_clear_causal_clearinghouse",
+        "mainline_clear_entropy_ark",
+        "mainline_clear_mirror_cycle_city",
+        "mainline_clear_redaction_scriptorium",
+        "mainline_clear_legacy_auction_court",
+        "mainline_clear_genesis_vault",
+        "mainline_clear_silent_broadcast_tower",
+        "mainline_clear_lost_shelter",
+        "mainline_clear_false_testimony_court"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "preparedItemIds"],
+      "value": ["focus_incense", "dispel_talisman", "armor_patch"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "inventory", "healing_pill"],
+      "value": 60
+    },
+    {
+      "op": "replace",
+      "path": ["state", "inventory", "focus_incense"],
+      "value": 3
+    },
+    {
+      "op": "replace",
+      "path": ["state", "inventory", "dispel_talisman"],
+      "value": 3
+    },
+    {
+      "op": "replace",
+      "path": ["state", "inventory", "armor_patch"],
+      "value": 3
+    },
+    {
+      "op": "replace",
+      "path": ["state", "learnedMethods"],
+      "value": ["iron_body"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "methodRanks"],
+      "value": { "iron_body": 1 }
+    },
+    {
+      "op": "add",
+      "path": ["state", "activeMethod"],
+      "value": "iron_body"
+    },
+    {
+      "op": "replace",
+      "path": ["state", "ownedEquipment"],
+      "value": [
+        "training_blade",
+        "patched_headwrap",
+        "patched_coat",
+        "patched_gloves",
+        "patched_boots",
+        "patched_belt",
+        "plain_charm",
+        "guardian_gauntlets",
+        "cloudstep_boots",
+        "rift_belt",
+        "rift_charm",
+        "frame_engraver",
+        "cue_visor",
+        "buffer_plate",
+        "thaw_metronome"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "equipped"],
+      "value": {
+        "weapon": "frame_engraver",
+        "head": "cue_visor",
+        "armor": "buffer_plate",
+        "hands": "guardian_gauntlets",
+        "feet": "cloudstep_boots",
+        "waist": "rift_belt",
+        "charm": "thaw_metronome"
+      }
+    },
+    {
+      "op": "replace",
+      "path": ["state", "equipmentLevels"],
+      "value": {
+        "training_blade": 1,
+        "patched_headwrap": 1,
+        "patched_coat": 1,
+        "patched_gloves": 1,
+        "patched_boots": 1,
+        "patched_belt": 1,
+        "plain_charm": 1,
+        "guardian_gauntlets": 1,
+        "cloudstep_boots": 1,
+        "rift_belt": 1,
+        "rift_charm": 1,
+        "frame_engraver": 1,
+        "cue_visor": 1,
+        "buffer_plate": 1,
+        "thaw_metronome": 1
+      }
+    },
+    {
+      "op": "replace",
+      "path": ["state", "ownedPets"],
+      "value": ["contract_sprite"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "petLevels"],
+      "value": { "contract_sprite": 1 }
+    },
+    {
+      "op": "add",
+      "path": ["state", "activePet"],
+      "value": "contract_sprite"
+    },
+    {
+      "op": "replace",
+      "path": ["state", "ownedCompanions"],
+      "value": ["qin_che"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "companionRanks"],
+      "value": { "qin_che": 2 }
+    },
+    {
+      "op": "add",
+      "path": ["state", "activeCompanion"],
+      "value": "qin_che"
+    },
+    {
+      "op": "replace",
+      "path": ["state", "player", "base", "spirit"],
+      "value": 25
+    },
+    {
+      "op": "replace",
+      "path": ["state", "player", "base", "body"],
+      "value": 60
+    },
+    {
+      "op": "replace",
+      "path": ["state", "player", "base", "agility"],
+      "value": 15
+    }
+  ],
+  "entrySeed": 181818181,
+  "scenarioIds": [
+    "replay-takes-record-and-display",
+    "replay-route-select-and-gates",
+    "replay-boss-snapshot-and-freeze",
+    "replay-reward-idempotency-and-roundtrip",
+    "replay-burst-route-replay-consistency"
+  ],
+  "scenarios": [
+    {
+      "id": "replay-takes-record-and-display",
+      "expected": {
+        "entryDisplay": {
+          "status": "1:未录制，2:未录制，3:未录制，路线:未选择，Boss快照:未冻结",
+          "severity": "danger",
+          "meter": { "value": 0, "max": 3 },
+          "targetReached": false
+        },
+        "entryModifiers": {
+          "encounter": { "allStatsPercent": 0, "defensePercent": 0, "artPowerPercent": 0 },
+          "trap": { "damagePercent": 0, "dcPercent": 0 },
+          "healingPercent": 0,
+          "outgoingDamage": { "forcePercent": 0, "artPercent": 0 },
+          "guardEffectPercent": 0
+        },
+        "entryLawData": {
+          "kind": "combat_replay_stage",
+          "takes": [null, null, null],
+          "route": null,
+          "bossSnapshot": null,
+          "entryGear": {
+            "frameEngraver": true,
+            "cueVisor": true,
+            "bufferPlate": true,
+            "thawMetronome": true
+          }
+        },
+        "entryStatus": {
+          "takes": [null, null, null],
+          "completedTakeCount": 0,
+          "nextTakeNodeId": "take_alpha",
+          "route": null,
+          "bossSnapshot": null,
+          "entryGear": {
+            "frameEngraver": true,
+            "cueVisor": true,
+            "bufferPlate": true,
+            "thawMetronome": true
+          },
+          "readyForRoute": false,
+          "readyForBoss": false
+        },
+        "entryRewardPoints": 850,
+        "gateCollect": {
+          "nodeId": "stage_gate",
+          "rewardPoints": 1430,
+          "runLootRewardPoints": 580,
+          "focusIncense": 4,
+          "dispelTalisman": 4,
+          "armorPatch": 4,
+          "gateSigil": 1
+        },
+        "alphaExitGateClosed": {
+          "at": "take_alpha",
+          "target": "script_stacks",
+          "gateId": "combat_replay_take_alpha_to_script_stacks",
+          "status": "closed",
+          "isOpen": false,
+          "blockReason": "录制当前战斗母带后才能离开。"
+        },
+        "alphaExitIllegal": {
+          "target": "script_stacks",
+          "status": "rejected",
+          "code": "departure-blocked",
+          "message": "先处理当前怪物「甲段录制战」，清理后才能离开。"
+        },
+        "alphaFight": {
+          "take": { "action": "attack", "observedValue": 215, "replayValue": 248 },
+          "recordLine": "take_alpha录制完成：attack/215。",
+          "rounds": 4,
+          "hpAfter": 1007
+        },
+        "afterAlphaDisplay": {
+          "status": "1:攻击 215->248，2:未录制，3:未录制，路线:未选择，Boss快照:未冻结",
+          "severity": "danger",
+          "meter": { "value": 1, "max": 3 },
+          "targetReached": false
+        },
+        "afterAlphaStatus": {
+          "completedTakeCount": 1,
+          "nextTakeNodeId": "take_beta",
+          "readyForRoute": false,
+          "readyForBoss": false
+        },
+        "betaFight": {
+          "take": { "action": "art", "observedValue": 235, "replayValue": 271 },
+          "recordLine": "take_beta录制完成：art/235。",
+          "rounds": 3,
+          "hpAfter": 1001
+        },
+        "gammaFight": {
+          "take": { "action": "guard", "observedValue": 2, "replayValue": 3 },
+          "recordLine": "take_gamma录制完成：guard/2。",
+          "rounds": 4,
+          "hpAfter": 994
+        },
+        "afterThreeDisplay": {
+          "status": "1:攻击 215->248，2:战技 235->271，3:防御 2->3，路线:未选择，Boss快照:未冻结",
+          "severity": "warning",
+          "meter": { "value": 3, "max": 3 },
+          "targetReached": false
+        },
+        "afterThreeStatus": {
+          "completedTakeCount": 3,
+          "nextTakeNodeId": null,
+          "route": null,
+          "readyForRoute": true,
+          "readyForBoss": false
+        },
+        "roundtrip": {
+          "status": "decoded",
+          "lawData": {
+            "kind": "combat_replay_stage",
+            "takes": [
+              { "action": "attack", "observedValue": 215, "replayValue": 248 },
+              { "action": "art", "observedValue": 235, "replayValue": 271 },
+              { "action": "guard", "observedValue": 2, "replayValue": 3 }
+            ],
+            "route": null,
+            "bossSnapshot": null,
+            "entryGear": {
+              "frameEngraver": true,
+              "cueVisor": true,
+              "bufferPlate": true,
+              "thawMetronome": true
+            }
+          },
+          "displayStatus": "1:攻击 215->248，2:战技 235->271，3:防御 2->3，路线:未选择，Boss快照:未冻结",
+          "rewardPoints": 9410
+        }
+      }
+    },
+    {
+      "id": "replay-route-select-and-gates",
+      "expected": {
+        "betaEntryGateClosed": {
+          "at": "continuity_break_trap",
+          "target": "take_beta",
+          "gateId": "combat_replay_continuity_break_trap_to_take_beta",
+          "status": "closed",
+          "isOpen": false,
+          "blockReason": "先完成第 1 段母带，再进入第 2 段录制。"
+        },
+        "betaEntryIllegal": {
+          "target": "take_beta",
+          "status": "rejected",
+          "code": "illegal-move",
+          "message": "take_beta is not a legal adjacent destination from continuity_break_trap."
+        },
+        "betaEntryGateOpen": {
+          "at": "continuity_break_trap",
+          "target": "take_beta",
+          "gateId": "combat_replay_continuity_break_trap_to_take_beta",
+          "status": "open",
+          "isOpen": true,
+          "blockReason": null
+        },
+        "threeTakes": [
+          { "action": "attack", "observedValue": 215, "replayValue": 248 },
+          { "action": "art", "observedValue": 235, "replayValue": 271 },
+          { "action": "guard", "observedValue": 2, "replayValue": 3 }
+        ],
+        "sequenceGateClosed": {
+          "at": "script_stacks",
+          "target": "sequence_route",
+          "gateId": "combat_replay_script_stacks_to_sequence_route",
+          "status": "closed",
+          "isOpen": false,
+          "blockReason": "三段母带完成后选择顺序路线；其余路线将永久关闭。"
+        },
+        "sequenceIllegal": {
+          "target": "sequence_route",
+          "status": "rejected",
+          "code": "illegal-move",
+          "message": "sequence_route is not a legal adjacent destination from script_stacks."
+        },
+        "routeSelect": {
+          "status": "committed",
+          "rewardPointsBefore": 9030,
+          "rewardPointsAfter": 9030,
+          "route": "sequence",
+          "log": "复演路线已冻结：顺序剪辑。"
+        },
+        "afterRouteDisplay": {
+          "status": "1:攻击 215->248，2:战技 235->271，3:防御 2->3，路线:顺序剪辑，Boss快照:未冻结",
+          "severity": "stable",
+          "meter": { "value": 3, "max": 3 },
+          "targetReached": true
+        },
+        "afterRouteStatus": {
+          "readyForRoute": true,
+          "readyForBoss": true
+        },
+        "sequenceGateOpen": {
+          "at": "script_stacks",
+          "target": "sequence_route",
+          "gateId": "combat_replay_script_stacks_to_sequence_route",
+          "status": "open",
+          "isOpen": true,
+          "blockReason": null
+        },
+        "sequenceLegalMove": {
+          "target": "sequence_route",
+          "status": "committed"
+        },
+        "sequenceCollect": {
+          "rewardPoints": 9550,
+          "runLootRewardPoints": 8700,
+          "combatReel": 6
+        },
+        "cueStalkerNorthFight": {
+          "rounds": 2,
+          "hpAfter": 991,
+          "replayLines": ["take_alpha复演「攻」，造成 310 点固定伤害。"]
+        },
+        "burstGateClosed": {
+          "at": "upper_return_portal",
+          "target": "burst_route",
+          "gateId": "combat_replay_upper_return_portal_to_burst_route",
+          "status": "closed",
+          "isOpen": false,
+          "blockReason": "三段母带完成后选择爆发路线；其余路线将永久关闭。"
+        },
+        "burstIllegal": {
+          "target": "burst_route",
+          "status": "rejected",
+          "code": "illegal-move",
+          "message": "burst_route is not a legal adjacent destination from upper_return_portal."
+        },
+        "omegaFight": {
+          "rounds": 2,
+          "hpAfter": 988,
+          "replayLines": ["take_alpha复演「攻」，造成 310 点固定伤害。"]
+        },
+        "soulRechargeFight": {
+          "rounds": 2,
+          "hpAfter": 985,
+          "replayLines": ["take_alpha复演「攻」，造成 310 点固定伤害。"]
+        },
+        "afterbeatGateClosed": {
+          "at": "film_supply_cache",
+          "target": "afterbeat_route",
+          "gateId": "combat_replay_film_supply_cache_to_afterbeat_route",
+          "status": "closed",
+          "isOpen": false,
+          "blockReason": "三段母带完成后选择余拍路线；其余路线将永久关闭。"
+        },
+        "afterbeatIllegal": {
+          "target": "afterbeat_route",
+          "status": "rejected",
+          "code": "illegal-move",
+          "message": "afterbeat_route is not a legal adjacent destination from film_supply_cache."
+        },
+        "routeSelectAgain": {
+          "status": "rejected",
+          "code": "domain-rejected",
+          "message": "The command did not produce a domain transition.",
+          "route": "sequence"
+        },
+        "roundtrip": {
+          "status": "decoded",
+          "lawData": {
+            "kind": "combat_replay_stage",
+            "takes": [
+              { "action": "attack", "observedValue": 215, "replayValue": 248 },
+              { "action": "art", "observedValue": 235, "replayValue": 271 },
+              { "action": "guard", "observedValue": 2, "replayValue": 3 }
+            ],
+            "route": "sequence",
+            "bossSnapshot": null,
+            "entryGear": {
+              "frameEngraver": true,
+              "cueVisor": true,
+              "bufferPlate": true,
+              "thawMetronome": true
+            }
+          },
+          "displayStatus": "1:攻击 215->248，2:战技 235->271，3:防御 2->3，路线:顺序剪辑，Boss快照:未冻结",
+          "rewardPoints": 16970
+        }
+      }
+    },
+    {
+      "id": "replay-boss-snapshot-and-freeze",
+      "expected": {
+        "threeTakes": [
+          { "action": "attack", "observedValue": 215, "replayValue": 248 },
+          { "action": "art", "observedValue": 235, "replayValue": 271 },
+          { "action": "guard", "observedValue": 2, "replayValue": 3 }
+        ],
+        "bossGateClosed": {
+          "at": "take_gamma",
+          "target": "final_cut_director",
+          "gateId": "combat_replay_take_gamma_to_final_cut_director",
+          "status": "closed",
+          "isOpen": false,
+          "blockReason": "需同时满足这条战痕复演门的全部条件。"
+        },
+        "bossIllegalMove": {
+          "target": "final_cut_director",
+          "status": "rejected",
+          "code": "illegal-move",
+          "message": "final_cut_director is not a legal adjacent destination from take_gamma."
+        },
+        "bossGateOpen": {
+          "at": "take_gamma",
+          "target": "final_cut_director",
+          "gateId": "combat_replay_take_gamma_to_final_cut_director",
+          "status": "open",
+          "isOpen": true,
+          "blockReason": null
+        },
+        "bossLegalMove": {
+          "target": "final_cut_director",
+          "status": "committed"
+        },
+        "beforeBoss": {
+          "bossSnapshot": null,
+          "route": "sequence"
+        },
+        "bossEntry": {
+          "bossSnapshot": {
+            "takes": [
+              { "action": "attack", "observedValue": 215, "replayValue": 248 },
+              { "action": "art", "observedValue": 235, "replayValue": 271 },
+              { "action": "guard", "observedValue": 2, "replayValue": 3 }
+            ],
+            "route": "sequence"
+          },
+          "monsterHp": 1477,
+          "bossPhase": "sealed",
+          "turn": 1,
+          "thawReleaseLine": "take_alpha复演「攻」，造成 248 点固定伤害。",
+          "replayCursor": 1,
+          "replayBuffer": 0
+        },
+        "bossLawAtStart": {
+          "lawData": {
+            "kind": "combat_replay_stage",
+            "takes": [
+              { "action": "attack", "observedValue": 215, "replayValue": 248 },
+              { "action": "art", "observedValue": 235, "replayValue": 271 },
+              { "action": "guard", "observedValue": 2, "replayValue": 3 }
+            ],
+            "route": "sequence",
+            "bossSnapshot": {
+              "takes": [
+                { "action": "attack", "observedValue": 215, "replayValue": 248 },
+                { "action": "art", "observedValue": 235, "replayValue": 271 },
+                { "action": "guard", "observedValue": 2, "replayValue": 3 }
+              ],
+              "route": "sequence"
+            },
+            "entryGear": {
+              "frameEngraver": true,
+              "cueVisor": true,
+              "bufferPlate": true,
+              "thawMetronome": true
+            }
+          },
+          "display": {
+            "status": "1:攻击 215->248，2:战技 235->271，3:防御 2->3，路线:顺序剪辑，Boss快照:已冻结",
+            "severity": "resolved",
+            "meter": { "value": 3, "max": 3 },
+            "targetReached": true
+          },
+          "modifiers": {
+            "encounter": { "allStatsPercent": 0, "defensePercent": 0, "artPowerPercent": 0 },
+            "trap": { "damagePercent": 0, "dcPercent": 0 },
+            "healingPercent": 0,
+            "outgoingDamage": { "forcePercent": 0, "artPercent": 0 },
+            "guardEffectPercent": 0
+          }
+        },
+        "bossReplay": [
+          { "act": "attack", "releaseLine": null, "awakened": false, "cursorAfter": 1, "bufferAfter": 0 },
+          { "act": "art", "releaseLine": "take_beta复演「术」，造成 271 点固定伤害。", "awakened": true, "cursorAfter": 2, "bufferAfter": 0 },
+          { "act": "guard", "releaseLine": null, "awakened": true, "cursorAfter": 2, "bufferAfter": 0 }
+        ],
+        "bossFight": {
+          "rounds": 7,
+          "hpAfter": 918,
+          "cleared": true
+        },
+        "afterBoss": {
+          "bossSnapshot": {
+            "takes": [
+              { "action": "attack", "observedValue": 215, "replayValue": 248 },
+              { "action": "art", "observedValue": 235, "replayValue": 271 },
+              { "action": "guard", "observedValue": 2, "replayValue": 3 }
+            ],
+            "route": "sequence"
+          },
+          "route": "sequence",
+          "display": {
+            "status": "1:攻击 215->248，2:战技 235->271，3:防御 2->3，路线:顺序剪辑，Boss快照:已冻结",
+            "severity": "resolved",
+            "meter": { "value": 3, "max": 3 },
+            "targetReached": true
+          }
+        },
+        "routeSelectAfterBoss": {
+          "status": "rejected",
+          "code": "domain-rejected",
+          "message": "The command did not produce a domain transition.",
+          "route": "sequence"
+        },
+        "roundtrip": {
+          "status": "decoded",
+          "lawData": {
+            "kind": "combat_replay_stage",
+            "takes": [
+              { "action": "attack", "observedValue": 215, "replayValue": 248 },
+              { "action": "art", "observedValue": 235, "replayValue": 271 },
+              { "action": "guard", "observedValue": 2, "replayValue": 3 }
+            ],
+            "route": "sequence",
+            "bossSnapshot": {
+              "takes": [
+                { "action": "attack", "observedValue": 215, "replayValue": 248 },
+                { "action": "art", "observedValue": 235, "replayValue": 271 },
+                { "action": "guard", "observedValue": 2, "replayValue": 3 }
+              ],
+              "route": "sequence"
+            },
+            "entryGear": {
+              "frameEngraver": true,
+              "cueVisor": true,
+              "bufferPlate": true,
+              "thawMetronome": true
+            }
+          },
+          "displayStatus": "1:攻击 215->248，2:战技 235->271，3:防御 2->3，路线:顺序剪辑，Boss快照:已冻结",
+          "rewardPoints": 13810
+        }
+      }
+    },
+    {
+      "id": "replay-reward-idempotency-and-roundtrip",
+      "expected": {
+        "stageGateFirst": {
+          "rewardPointsBefore": 850,
+          "rewardPointsAfter": 1430,
+          "runLootRewardPoints": 580,
+          "focusIncense": 4,
+          "dispelTalisman": 4,
+          "armorPatch": 4,
+          "gateSigil": 1
+        },
+        "stageGateSecond": {
+          "status": "rejected",
+          "code": "domain-rejected",
+          "message": "复演场正门已经领取过奖励。",
+          "rewardPoints": 1430
+        },
+        "afterRouteDisplay": {
+          "status": "1:攻击 215->248，2:战技 235->271，3:防御 2->3，路线:余拍剪辑，Boss快照:未冻结",
+          "severity": "stable",
+          "meter": { "value": 3, "max": 3 },
+          "targetReached": true
+        },
+        "roundtrip": {
+          "status": "decoded",
+          "lawData": {
+            "kind": "combat_replay_stage",
+            "takes": [
+              { "action": "attack", "observedValue": 215, "replayValue": 248 },
+              { "action": "art", "observedValue": 235, "replayValue": 271 },
+              { "action": "guard", "observedValue": 2, "replayValue": 3 }
+            ],
+            "route": "afterbeat",
+            "bossSnapshot": null,
+            "entryGear": {
+              "frameEngraver": true,
+              "cueVisor": true,
+              "bufferPlate": true,
+              "thawMetronome": true
+            }
+          },
+          "displayStatus": "1:攻击 215->248，2:战技 235->271，3:防御 2->3，路线:余拍剪辑，Boss快照:未冻结",
+          "rewardPoints": 9410
+        }
+      }
+    },
+    {
+      "id": "replay-burst-route-replay-consistency",
+      "expected": {
+        "threeTakes": [
+          { "action": "attack", "observedValue": 215, "replayValue": 248 },
+          { "action": "art", "observedValue": 235, "replayValue": 271 },
+          { "action": "guard", "observedValue": 2, "replayValue": 3 }
+        ],
+        "openingLog": [
+          "重拍替身出现：复刻最近两回合的动作顺序，若两次表达同类或连续使用道具，便会把废弃镜头重拍成高速反击。",
+          "take_alpha复演「攻」，造成 210 点固定伤害。",
+          "take_beta复演「术」，造成 162 点固定伤害。",
+          "take_gamma复演「守」，生成 1 点缓冲。"
+        ],
+        "openingReplay": {
+          "cursor": 3,
+          "buffer": 1,
+          "monsterHp": 258
+        },
+        "fight": {
+          "rounds": 2,
+          "hpAfter": 992,
+          "cleared": true,
+          "replayLines": ["复演缓冲抵消 1 点反击伤害，剩余承伤次数 1。"]
+        },
+        "roundtrip": {
+          "status": "decoded",
+          "lawData": {
+            "kind": "combat_replay_stage",
+            "takes": [
+              { "action": "attack", "observedValue": 215, "replayValue": 248 },
+              { "action": "art", "observedValue": 235, "replayValue": 271 },
+              { "action": "guard", "observedValue": 2, "replayValue": 3 }
+            ],
+            "route": "burst",
+            "bossSnapshot": null,
+            "entryGear": {
+              "frameEngraver": true,
+              "cueVisor": true,
+              "bufferPlate": true,
+              "thawMetronome": true
+            }
+          },
+          "displayStatus": "1:攻击 215->248，2:战技 235->271，3:防御 2->3，路线:爆发剪辑，Boss快照:未冻结"
+        }
+      }
+    }
+  ]
+}

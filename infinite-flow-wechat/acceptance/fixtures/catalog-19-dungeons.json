@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "catalog-19-dungeons",
+  "provenance": {
+    "oracle": {
+      "project": "infinite-flow-web",
+      "commit": "2645f0232542684d27de1abc321bb26913320420",
+      "path": "infinite-flow/src/level-content.ts",
+      "sha256": "56db660997abcdbd39b5f2abf077a6396126894ecd64ebeef05810f1e7cc7335"
+    },
+    "candidateContract": {
+      "package": "@infinite-flow/core",
+      "exports": [
+        "DUNGEON_ORDER",
+        "DUNGEONS"
+      ]
+    }
+  },
+  "scenarioIds": [
+    "frozen-web-v1-dungeon-order",
+    "catalog-keys-and-definition-ids"
+  ],
+  "scenarios": [
+    {
+      "id": "frozen-web-v1-dungeon-order",
+      "kind": "ordered-catalog",
+      "expectedCount": 19,
+      "expectedOrder": [
+        "demon_tower_1",
+        "metro_abyss",
+        "starfall_mine",
+        "rust_hospital",
+        "ash_arena",
+        "dream_archive",
+        "void_citadel",
+        "temporal_observatory",
+        "causal_clearinghouse",
+        "entropy_ark",
+        "mirror_cycle_city",
+        "redaction_scriptorium",
+        "legacy_auction_court",
+        "genesis_vault",
+        "silent_broadcast_tower",
+        "lost_shelter",
+        "false_testimony_court",
+        "combat_replay_stage",
+        "panopticon_city"
+      ]
+    },
+    {
+      "id": "catalog-keys-and-definition-ids",
+      "kind": "catalog-identity",
+      "expectedCount": 19,
+      "expectedKeys": [
+        "demon_tower_1",
+        "metro_abyss",
+        "starfall_mine",
+        "rust_hospital",
+        "ash_arena",
+        "dream_archive",
+        "void_citadel",
+        "temporal_observatory",
+        "causal_clearinghouse",
+        "entropy_ark",
+        "mirror_cycle_city",
+        "redaction_scriptorium",
+        "legacy_auction_court",
+        "genesis_vault",
+        "silent_broadcast_tower",
+        "lost_shelter",
+        "false_testimony_court",
+        "combat_replay_stage",
+        "panopticon_city"
+      ],
+      "expectedDefinitionIds": [
+        "demon_tower_1",
+        "metro_abyss",
+        "starfall_mine",
+        "rust_hospital",
+        "ash_arena",
+        "dream_archive",
+        "void_citadel",
+        "temporal_observatory",
+        "causal_clearinghouse",
+        "entropy_ark",
+        "mirror_cycle_city",
+        "redaction_scriptorium",
+        "legacy_auction_court",
+        "genesis_vault",
+        "silent_broadcast_tower",
+        "lost_shelter",
+        "false_testimony_court",
+        "combat_replay_stage",
+        "panopticon_city"
+      ]
+    }
+  ]
+}

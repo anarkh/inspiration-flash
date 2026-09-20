@@ -1,0 +1,24 @@
+{
+  "extends": "./temp/tsconfig.cocos.json",
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "skipLibCheck": true,
+    "lib": [
+      "ES2020",
+      "DOM"
+    ],
+    "moduleResolution": "Bundler",
+    "useDefineForClassFields": false,
+    "types": [
+      "./temp/declarations/cc",
+      "./temp/declarations/jsb",
+      "./temp/declarations/cc.custom-macro",
+      "./temp/declarations/cc.env",
+      "minigame-api-typings"
+    ]
+  },
+  "exclude": [
+    "headless"
+  ]
+}
