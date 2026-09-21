@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>魔兽世界全版本大地图 · World of Warcraft Interactive Map (1.0 - 11.0)</title>
+
+    <!-- Google Fonts Cinzel for authentic fantasy typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&display=swap" rel="stylesheet">
+
+    <!-- Leaflet CSS (local) -->
+    <link rel="stylesheet" href="lib/leaflet.css"/>
+
+    <!-- Application CSS -->
+    <link rel="stylesheet" href="css/style.css?v=dropdown">
+</head>
+<body>
+    <div id="app-container">
+        <!-- Interactive Leaflet Map Viewport -->
+        <div id="map-viewport"></div>
+
+        <!-- Top Header: Logo, Continent Navigation & Region Focus -->
+        <header class="top-header">
+            <div class="header-left-group">
+                <div class="logo-badge">
+                    <h1>
+                        <span>⚔️ 魔兽世界</span>
+                        <span class="sub">· 全版本大地图 (1.0 - 11.0)</span>
+                    </h1>
+                </div>
+            </div>
+
+            <!-- Continent Navigation Selector (Categorized by WoW Expansions) -->
+            <div class="continent-select-wrap">
+                <span class="select-icon">🗺️</span>
+                <select id="continent-select" aria-label="全版本大陆切换" title="选择魔兽世界大地图/版本大陆">
+                    <option value="azeroth">🌍 艾泽拉斯全图 (世界总览)</option>
+                    <optgroup label="1.0 经典旧世 (Classic)">
+                        <option value="eastern-kingdoms">🏰 东部王国 (1.0)</option>
+                        <option value="kalimdor">🌲 卡利姆多 (1.0)</option>
+                    </optgroup>
+                    <optgroup label="2.0 燃烧的远征 (TBC)">
+                        <option value="outland">🌌 外域 (2.0)</option>
+                    </optgroup>
+                    <optgroup label="3.0 巫妖王之怒 (WotLK)">
+                        <option value="northrend">❄️ 诺森德 (3.0)</option>
+                    </optgroup>
+                    <optgroup label="5.0 熊猫人之谜 (MoP)">
+                        <option value="pandaria">🎋 潘达利亚 (5.0)</option>
+                    </optgroup>
+                    <optgroup label="6.0 德拉诺之王 (WoD)">
+                        <option value="draenor">🔥 德拉诺 (6.0)</option>
+                    </optgroup>
+                    <optgroup label="7.0 军团再临 (Legion)">
+                        <option value="broken-isles">🏛️ 破碎群岛 (7.0)</option>
+                    </optgroup>
+                    <optgroup label="8.0 争霸艾泽拉斯 (BfA)">
+                        <option value="kul-tiras">⚓ 库尔提拉斯 (8.0)</option>
+                        <option value="zandalar">🗿 赞达拉 (8.0)</option>
+                    </optgroup>
+                    <optgroup label="9.0 暗影国度 (Shadowlands)">
+                        <option value="shadowlands">👁️ 暗影界 (9.0)</option>
+                    </optgroup>
+                    <optgroup label="10.0 巨龙时代 (Dragonflight)">
+                        <option value="dragon-isles">🐉 巨龙群岛 (10.0)</option>
+                    </optgroup>
+                    <optgroup label="11.0 地心之战 (The War Within)">
+                        <option value="khaz-algar" selected>💎 卡兹阿加 (11.0最新)</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <!-- Quick Region Jump & Window Controls -->
+            <div class="top-actions">
+                <div class="zone-selector-wrap">
+                    <select id="zone-quick-jump" title="平滑滑动聚焦到具体拼接区域">
+                        <option value="">🧭 聚焦全版本各区域 (1.0 - 11.0)...</option>
+
+                        <!-- 11.0 最新资料片 -->
+                        <optgroup label="11.0 地心之战 (最新资料片)">
+                            <option value="khaz-algar:dornogal">多恩诺嘉尔 (土灵主城)</option>
+                            <option value="khaz-algar:isle-of-dorn">多恩岛 (地表海岸与森林)</option>
+                            <option value="khaz-algar:ringing-deeps">鸣响深渊 (地心水利巨构)</option>
+                            <option value="khaz-algar:hallowfall">陨圣峪 (贝雷达尔圣光大空洞)</option>
+                            <option value="khaz-algar:azj-kahet">艾基-卡赫特 (蛛魔千丝之城/尼鲁巴尔王宫)</option>
+                        </optgroup>
+
+                        <!-- 10.0 巨龙时代 -->
+                        <optgroup label="10.0 巨龙时代 (巨龙群岛)">
+                            <option value="dragon-isles:valdrakken">瓦德拉肯 (五色守护巨龙主城)</option>
+                            <option value="dragon-isles:waking-shores">觉醒海岸 (红玉新生圣地/灭龙要塞)</option>
+                            <option value="dragon-isles:ohnahran-plains">欧恩哈拉平原 (半人马原野/诺库德)</option>
+                            <option value="dragon-isles:azure-span">碧蓝林海 (蓝龙魔枢松林)</option>
+                            <option value="dragon-isles:thaldraszus">索德拉苏斯 (时光合流要塞)</option>
+                            <option value="dragon-isles:forbidden-reach">禁忌离岛 (龙希尔唤魔师起源地)</option>
+                            <option value="dragon-isles:zaralek-cavern">查拉雷克洞窟 (地底暗影熔炉)</option>
+                            <option value="dragon-isles:emerald-dream-df">翡翠梦境 (新世界之树阿梅达希尔)</option>
+                        </optgroup>
+
+                        <!-- 9.0 暗影国度 -->
+                        <optgroup label="9.0 暗影国度 (暗影界)">
+                            <option value="shadowlands:oribos">奥利波斯 (永恒之城枢纽)</option>
+                            <option value="shadowlands:bastion">晋升堡垒 (格里恩圣所极乐净土)</option>
+                            <option value="shadowlands:maldraxxus">玛卓克萨斯 (通灵战勋领主密院)</option>
+                            <option value="shadowlands:ardenweald">炽蓝仙野 (法夜自然灵境冬之女王)</option>
+                            <option value="shadowlands:revendreth">雷文德斯 (温西尔纳斯利亚堡)</option>
+                            <option value="shadowlands:the-maw">噬渊 (典狱长惩戒炼狱罪魂之塔)</option>
+                            <option value="shadowlands:zereth-mortis">扎雷殁提斯 (初诞者圣墓造物圣殿)</option>
+                        </optgroup>
+
+                        <!-- 8.0 争霸艾泽拉斯 -->
+                        <optgroup label="8.0 争霸艾泽拉斯 (库尔提拉斯与赞达拉)">
+                            <option value="kul-tiras:boralus-city">伯拉勒斯 (联盟航海都城超级海港)</option>
+                            <option value="kul-tiras:tiragarde">提拉加德海峡 (自由镇海盗港)</option>
+                            <option value="kul-tiras:drustvar">德鲁斯瓦 (维克雷斯庄园女巫)</option>
+                            <option value="kul-tiras:stormsong">斯托颂谷地 (风暴神殿造船厂)</option>
+                            <option value="kul-tiras:mechagon">麦卡贡岛 (机械侏儒科技都城)</option>
+                            <option value="kul-tiras:nazjatar">纳沙塔尔 (艾萨拉女王海底王宫)</option>
+                            <option value="zandalar:zuldazar">祖达萨 / 达萨罗 (赞达拉黄金巨型金字塔)</option>
+                            <option value="zandalar:nazmir">纳兹米尔 (鲜血巨魔/奥迪尔泰坦监牢)</option>
+                            <option value="zandalar:voldun">沃顿 (狐人游牧沙漠/塞塔里斯神殿)</option>
+                        </optgroup>
+
+                        <!-- 7.0 军团再临 -->
+                        <optgroup label="7.0 军团再临 (破碎群岛)">
+                            <option value="broken-isles:dalaran-legion">达拉然 (军团再临飞天魔法主城)</option>
+                            <option value="broken-isles:suramar">苏拉玛 (大魔导师艾利桑德暗夜要塞古都)</option>
+                            <option value="broken-isles:broken-shore">破碎海滩 (萨格拉斯之墓恶魔之门)</option>
+                            <option value="broken-isles:valsharah">瓦尔莎拉 (萨维斯腐化翡翠梦魇)</option>
+                            <option value="broken-isles:highmountain">至高岭 (牛头人雷霆图腾峰顶)</option>
+                            <option value="broken-isles:stormheim">风暴峡湾 (英灵殿神殿与海拉噬魂之喉)</option>
+                            <option value="broken-isles:azsuna">阿苏纳 (纳萨拉斯魔法学院/守望者地窟)</option>
+                        </optgroup>
+
+                        <!-- 6.0 德拉诺之王 -->
+                        <optgroup label="6.0 德拉诺之王 (德拉诺)">
+                            <option value="draenor:frostfire-ridge">霜火岭 (霜狼氏族雪原大本营)</option>
+                            <option value="draenor:shadowmoon-draenor">影月谷 (宏伟卡拉波神殿/先知维纶)</option>
+                            <option value="draenor:gorgrond">戈尔隆德 (黑石铸造厂军工厂)</option>
+                            <option value="draenor:talador">塔拉多 (原生未破碎沙塔斯城/奥金顿)</option>
+                            <option value="draenor:spires-of-arak">阿兰卡峰林 (泰罗克利刃高塔)</option>
+                            <option value="draenor:nagrand-draenor">纳格兰 (悬槌堡食人魔帝国/元素王座)</option>
+                            <option value="draenor:tanaan-jungle">塔纳安丛林 (古尔丹地狱火堡垒危机)</option>
+                            <option value="draenor:ashran">阿什兰 (暴风之盾/战争之矛阵营战场)</option>
+                        </optgroup>
+
+                        <!-- 5.0 熊猫人之谜 -->
+                        <optgroup label="5.0 熊猫人之谜 (潘达利亚)">
+                            <option value="pandaria:vale-blossoms">锦绣谷 (双月殿/七星殿/魔古山宫殿)</option>
+                            <option value="pandaria:jade-forest">翡翠林 (至尊天神玉珑青龙寺院)</option>
+                            <option value="pandaria:valley-four-winds">四风谷 (金色稻谷/半山集市/风暴烈酒厂)</option>
+                            <option value="pandaria:krasarang-wilds">卡桑琅丛林 (至尊天神赤精朱鹤寺)</option>
+                            <option value="pandaria:kun-lai-summit">昆莱山 (白雪皑皑千佛绝顶/白虎寺)</option>
+                            <option value="pandaria:townlong-steppes">螳螂高原 (玄牛关长城防线/影踪要塞)</option>
+                            <option value="pandaria:dread-wastes">恐惧废土 (卡拉克西英杰唤醒圣殿)</option>
+                            <option value="pandaria:timeless-isle">永恒岛 (时光凝滞秘岛/四天神试炼)</option>
+                            <option value="pandaria:isle-of-thunder">雷神岛 (魔古皇帝雷神之都雷电王座)</option>
+                        </optgroup>
+
+                        <!-- 3.0 巫妖王之怒 -->
+                        <optgroup label="3.0 巫妖王之怒 (诺森德)">
+                            <option value="northrend:icecrown">冰冠冰川 (萨隆邪铁天灾冰冠堡垒ICC)</option>
+                            <option value="northrend:storm-peaks">风暴峭壁 (万米泰坦雪峰之城奥杜尔)</option>
+                            <option value="northrend:dragonblight">龙骨荒野 (龙眠神殿/天谴之门/纳克萨玛斯)</option>
+                            <option value="northrend:dalaran">达拉然 (晶歌森林上空飞天魔法浮空城)</option>
+                            <option value="northrend:borean-tundra">北风苔原 (战歌要塞/考达拉永恒之眼)</option>
+                            <option value="northrend:howling-fjord">嚎风峡湾 (瓦加德海湾/乌特加德城堡)</option>
+                            <option value="northrend:grizzly-hills">灰熊丘陵 (参天红杉林/琥珀松营地)</option>
+                            <option value="northrend:zul-drak">祖达克 (冰霜巨魔帝国要塞/古达克)</option>
+                            <option value="northrend:sholazar-basin">索拉查盆地 (奈辛瓦里狩猎营地温室绿洲)</option>
+                            <option value="northrend:wintergrasp">冬拥湖 (PVP攻城阵营战/泰坦巨人宝库)</option>
+                        </optgroup>
+
+                        <!-- 2.0 燃烧的远征 -->
+                        <optgroup label="2.0 燃烧的远征 (外域)">
+                            <option value="outland:hellfire">地狱火半岛 (黑暗之门/萨尔玛/荣耀堡)</option>
+                            <option value="outland:zangarmarsh">赞加沼泽 (巨大幽光孢子林/盘牙毒蛇神殿)</option>
+                            <option value="outland:terokkar-forest">泰罗卡森林 (奥金顿大墓地/裂石堡)</option>
+                            <option value="outland:shattrath">沙塔斯城 (纳鲁圣光庇护之城)</option>
+                            <option value="outland:nagrand">纳格兰 (清澈浮岛原野/加拉达尔/哈兰)</option>
+                            <option value="outland:blades-edge">刀锋山 (石刺尖峰峡谷/屠龙者格鲁尔巢穴)</option>
+                            <option value="outland:netherstorm">虚空风暴 (52区地精穹顶/风暴要塞)</option>
+                            <option value="outland:shadowmoon">影月谷 (邪火熔岩废土/伊利丹黑暗神殿)</option>
+                        </optgroup>
+
+                        <!-- 1.0 经典旧世：东部王国 -->
+                        <optgroup label="1.0 经典旧世：东部王国 (32 个区域)">
+                            <option value="eastern-kingdoms:elwynn">艾尔文森林 (闪金镇/北郡修道院)</option>
+                            <option value="eastern-kingdoms:stormwind">暴风城 (都城/暴风要塞/圣光大教堂)</option>
+                            <option value="eastern-kingdoms:westfall">西部荒野 (哨兵岭/月溪镇死亡矿井)</option>
+                            <option value="eastern-kingdoms:duskwood">暮色森林 (夜色镇/乌鸦岭墓园)</option>
+                            <option value="eastern-kingdoms:redridge">赤脊山 (湖畔镇石桥/止水湖)</option>
+                            <option value="eastern-kingdoms:cape-stranglethorn">荆棘谷海角 (藏宝海湾海盗港)</option>
+                            <option value="eastern-kingdoms:north-stranglethorn">北荆棘谷 (祖尔格拉布/古拉巴什竞技场)</option>
+                            <option value="eastern-kingdoms:deadwind-pass">逆风小径 (麦迪文最后的法师塔卡拉赞)</option>
+                            <option value="eastern-kingdoms:swamp-of-sorrows">悲伤沼泽 (斯通纳德/阿塔哈卡神庙)</option>
+                            <option value="eastern-kingdoms:blasted-lands">诅咒之地 (通往外域的黑暗之门)</option>
+                            <option value="eastern-kingdoms:blackrock-mountain">黑石山 (熔火之心/黑翼之巢/黑石深渊)</option>
+                            <option value="eastern-kingdoms:burning-steppes">燃烧平原 (摩根的岗哨/黑石要塞)</option>
+                            <option value="eastern-kingdoms:searing-gorge">灼热峡谷 (瑟银哨岗/黑铁矿井)</option>
+                            <option value="eastern-kingdoms:badlands">荒芜之地 (泰坦失落古城奥达曼)</option>
+                            <option value="eastern-kingdoms:dun-morogh">丹莫罗 (雪山王国/卡拉诺斯)</option>
+                            <option value="eastern-kingdoms:ironforge">铁炉堡 (铜须矮人地下大锻炉都城)</option>
+                            <option value="eastern-kingdoms:loch-modan">洛克莫丹 (塞尔萨玛/巨石水坝)</option>
+                            <option value="eastern-kingdoms:wetlands">湿地 (米奈希尔跨海大港口)</option>
+                            <option value="eastern-kingdoms:arathi">阿拉希高地 (激流堡遗址/落锤镇)</option>
+                            <option value="eastern-kingdoms:the-hinterlands">辛特兰 (蛮锤矮人鹰巢山/巨魔金字塔)</option>
+                            <option value="eastern-kingdoms:hillsbrad">希尔斯布莱德丘陵 (南海镇/塔伦米尔)</option>
+                            <option value="eastern-kingdoms:silverpine">银松森林 (阿鲁高高耸影牙城堡)</option>
+                            <option value="eastern-kingdoms:tirisfal">提瑞斯法林地 (丧钟镇/洛丹伦王座废墟)</option>
+                            <option value="eastern-kingdoms:undercity">幽暗城 (被遗忘者女妖之王都城)</option>
+                            <option value="eastern-kingdoms:eastern-plaguelands">东瘟疫之地 (圣光之愿礼拜堂/斯坦索姆)</option>
+                            <option value="eastern-kingdoms:silvermoon">银月城 (血精灵金红魔法都城)</option>
+                            <option value="eastern-kingdoms:isle-of-queldanas">奎尔丹纳斯岛 (基尔加丹太阳之井高地)</option>
+                        </optgroup>
+
+                        <!-- 1.0 经典旧世：卡利姆多 -->
+                        <optgroup label="1.0 经典旧世：卡利姆多 (24 个区域)">
+                            <option value="kalimdor:durotar">杜隆塔尔 (试炼谷/森金村/剃刀岭)</option>
+                            <option value="kalimdor:orgrimmar">奥格瑞玛 (部落钢铁石堡大酋长都城)</option>
+                            <option value="kalimdor:northern-barrens">北贫瘠之地 (十字路口/棘齿城地精港)</option>
+                            <option value="kalimdor:mulgore">莫高雷 (红云台地/血蹄村金色草原)</option>
+                            <option value="kalimdor:thunder-bluff">雷霆崖 (牛头人高耸风蚀台地都城)</option>
+                            <option value="kalimdor:ashenvale">灰谷 (神圣雨林/阿斯特兰纳/战歌伐木场)</option>
+                            <option value="kalimdor:darkshore">黑海岸 (奥伯丁古老码头海岸)</option>
+                            <option value="kalimdor:teldrassil">泰达希尔 (达纳苏斯月神殿世界之树)</option>
+                            <option value="kalimdor:azuremyst">秘蓝岛 (德莱尼纳鲁水晶飞船埃索达)</option>
+                            <option value="kalimdor:winterspring">冬泉谷 (永望镇地精站/蓝龙冰川)</option>
+                            <option value="kalimdor:dustwallow-marsh">尘泥沼泽 (塞拉摩岛/黑龙奥妮克希亚)</option>
+                            <option value="kalimdor:thousand-needles">千针石林 (乱风岗/闪光平原赛车场)</option>
+                            <option value="kalimdor:feralas">菲拉斯 (羽月要塞/厄运之槌古城)</option>
+                            <option value="kalimdor:tanaris">塔纳利斯 (加基森蒸汽城/时光之穴)</option>
+                            <option value="kalimdor:silithus">希利苏斯 (塞纳里奥/甲虫之墙/安其拉)</option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <button class="icon-btn" id="reset-view-btn" title="重置地图视角">↺</button>
+                <button class="icon-btn" id="fullscreen-btn" title="全屏查看">⛶</button>
+            </div>
+        </header>
+
+        <!-- Floating Sidebar: Search & Category Filters -->
+        <aside class="map-sidebar">
+            <!-- Search Box -->
+            <div class="search-box-wrap">
+                <div class="search-input-group">
+                    <span class="icon">🔍</span>
+                    <input type="text" id="search-input" placeholder="搜索任意版本区域 (如: 瓦德拉肯, 纳斯利亚堡, 伯拉勒斯, 多恩诺嘉尔)..." autocomplete="off">
+                </div>
+                <div class="search-results-dropdown" id="search-results"></div>
+            </div>
+
+            <!-- Filter Chips Toolbar -->
+            <div class="filter-toolbar">
+                <button class="filter-chip active" data-type="all">🌐 全部</button>
+                <button class="filter-chip" data-type="capital">🏰 城镇/都城</button>
+                <button class="filter-chip" data-type="raid">💀 团队副本</button>
+                <button class="filter-chip" data-type="dungeon">🛡️ 地下城</button>
+                <button class="filter-chip" data-type="flight">🦅 交通/港口</button>
+            </div>
+        </aside>
+
+        <!-- Hint Overlay: Seamless Zooming -->
+        <div class="map-interaction-hint" id="interaction-hint">
+            <span>💡 提示：现已支持魔兽世界 1.0 经典旧世 至 11.0 地心之战全部资料片大地图！使用上方导航栏可任意穿梭版本</span>
+        </div>
+
+        <!-- Bottom Information HUD -->
+        <footer class="bottom-hud">
+            <div class="hud-left">
+                <div class="coord-display">
+                    <span class="continent-name" id="current-continent-name">东部王国 (Eastern Kingdoms)</span>
+                    <span class="level-tag" id="current-level-tag">1.0 经典旧世</span>
+                    <span>坐标:</span>
+                    <span class="coords" id="cursor-coords">X: --, Y: --</span>
+                </div>
+            </div>
+
+            <div class="hud-right">
+                <button class="map-style-toggle active" id="mosaic-toggle-btn" title="切换超高清大地图模式">🧩 模式: 超清大地图</button>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Leaflet JS (local) -->
+    <script src="lib/leaflet.js"></script>
+
+    <!-- Application Scripts -->
+    <script src="js/map-data.js?v=4"></script>
+    <script src="js/app.js?v=dropdown"></script>
+</body>
+</html>
