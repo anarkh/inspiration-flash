@@ -1,0 +1,773 @@
+/* ==========================================================================
+   World of Warcraft Interactive Map - Authentic UI Stylesheet
+   Seamless Stitched Mosaic Composite (无缝裁剪拼接大地图)
+   ========================================================================== */
+
+:root {
+    --wow-gold: #f8b700;
+    --wow-gold-light: #ffd100;
+    --wow-gold-dark: #8c6b28;
+    --wow-border: #c89b3c;
+    --wow-border-glow: rgba(248, 183, 0, 0.4);
+    --wow-bg-dark: #0a0d12;
+    --wow-bg-panel: rgba(14, 18, 26, 0.94);
+    --wow-bg-card: rgba(22, 28, 38, 0.96);
+    --alliance-blue: #0078ff;
+    --alliance-glow: rgba(0, 120, 255, 0.6);
+    --horde-red: #c41e3a;
+    --horde-glow: rgba(196, 30, 58, 0.6);
+    --raid-red: #ff3b30;
+    --dungeon-gold: #e5a93b;
+    --font-serif: 'Cinzel', 'Georgia', 'Songti SC', 'Source Han Serif', serif;
+    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: var(--wow-bg-dark);
+    font-family: var(--font-sans);
+    color: #e2d6b5;
+}
+
+#app-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ==========================================================================
+   1. Leaflet Map Container
+   ========================================================================== */
+#map-viewport {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #080c10;
+    z-index: 1;
+}
+
+.leaflet-container {
+    background-color: #080c10 !important;
+    font-family: var(--font-sans);
+    cursor: grab;
+}
+
+.leaflet-container:active {
+    cursor: grabbing;
+}
+
+/* Custom Leaflet Zoom Control Styling */
+.leaflet-bar {
+    border: 2px solid var(--wow-border) !important;
+    border-radius: 4px !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.85) !important;
+    overflow: hidden;
+}
+
+.leaflet-bar a {
+    background-color: var(--wow-bg-panel) !important;
+    color: var(--wow-gold) !important;
+    border-bottom: 1px solid var(--wow-gold-dark) !important;
+    font-size: 18px !important;
+    font-weight: bold;
+    transition: all 0.2s ease;
+}
+
+.leaflet-bar a:hover {
+    background-color: #1e2633 !important;
+    color: var(--wow-gold-light) !important;
+    text-shadow: 0 0 8px var(--wow-gold);
+}
+
+/* ==========================================================================
+   2. Seamless Stitched Zone Mosaic Overlays (裁剪拼接关键样式)
+   ========================================================================== */
+.stitched-zone-tile {
+    /* 采用多重平滑径向羽化蒙版，有效裁剪边缘硬边羊皮框，使各区域交界处自然融合 */
+    -webkit-mask-image: radial-gradient(ellipse 92% 90% at 50% 50%, black 72%, rgba(0, 0, 0, 0.6) 85%, transparent 100%);
+    mask-image: radial-gradient(ellipse 92% 90% at 50% 50%, black 72%, rgba(0, 0, 0, 0.6) 85%, transparent 100%);
+    filter: saturate(1.08) contrast(1.04) brightness(0.98);
+    transition: opacity 0.35s ease, filter 0.25s ease, transform 0.25s ease;
+    pointer-events: auto;
+    opacity: 0.94;
+}
+
+.stitched-zone-tile:hover {
+    opacity: 1 !important;
+    filter: saturate(1.22) contrast(1.1) brightness(1.08) drop-shadow(0 0 16px rgba(255, 209, 0, 0.85)) !important;
+    z-index: 500 !important;
+}
+
+/* 主城圆形高光贴图 */
+.stitched-city-tile {
+    border-radius: 50%;
+    -webkit-mask-image: radial-gradient(circle at 50% 50%, black 72%, transparent 100%);
+    mask-image: radial-gradient(circle at 50% 50%, black 72%, transparent 100%);
+    border: 2px solid #ffd100;
+    box-shadow: 0 0 18px rgba(255, 209, 0, 0.9);
+    z-index: 600 !important;
+    transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.stitched-city-tile:hover {
+    filter: brightness(1.15) drop-shadow(0 0 20px rgba(255, 209, 0, 1)) !important;
+    transform: scale(1.03);
+}
+
+/* ==========================================================================
+   3. Top Header & Navigation
+   ========================================================================== */
+.top-header {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    right: 16px;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    pointer-events: none;
+    gap: 12px;
+}
+
+.header-left-group {
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo-badge {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--wow-bg-panel);
+    border: 2px solid var(--wow-border);
+    padding: 7px 16px;
+    border-radius: 6px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+}
+
+.logo-badge h1 {
+    font-family: var(--font-serif);
+    font-size: 1.1rem;
+    color: var(--wow-gold);
+    letter-spacing: 1px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+.logo-badge h1 span.sub {
+    font-size: 0.8rem;
+    color: #a09070;
+    font-weight: normal;
+}
+
+/* Continent Navigation Selector */
+.continent-select-wrap {
+    pointer-events: auto;
+    display: inline-flex;
+    align-items: center;
+    background: var(--wow-bg-panel);
+    border: 2px solid var(--wow-gold);
+    border-radius: 6px;
+    padding: 0 8px 0 12px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.85), 0 0 10px rgba(200, 155, 60, 0.25);
+    backdrop-filter: blur(8px);
+    transition: all 0.25s ease;
+}
+
+.continent-select-wrap:hover {
+    border-color: var(--wow-gold-light);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.85), 0 0 14px rgba(248, 183, 0, 0.45);
+}
+
+.continent-select-wrap .select-icon {
+    font-size: 1.15rem;
+    margin-right: 6px;
+    filter: drop-shadow(0 0 4px rgba(248, 183, 0, 0.5));
+    user-select: none;
+}
+
+.continent-select-wrap select {
+    background: transparent;
+    border: none;
+    color: var(--wow-gold-light);
+    padding: 8px 24px 8px 4px;
+    font-family: var(--font-serif);
+    font-size: 0.95rem;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    outline: none;
+    cursor: pointer;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23f8b700' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 4px center;
+    background-size: 10px 7px;
+}
+
+.continent-select-wrap select optgroup {
+    background: #141922;
+    color: var(--wow-gold);
+    font-weight: bold;
+}
+
+.continent-select-wrap select option {
+    background: #0d121a;
+    color: #f0e6d2;
+    padding: 6px 10px;
+    font-weight: normal;
+}
+
+/* Actions & Zone Selector */
+.top-actions {
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.zone-selector-wrap select {
+    background: var(--wow-bg-panel);
+    border: 2px solid var(--wow-border);
+    color: var(--wow-gold-light);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-family: var(--font-serif);
+    font-size: 0.88rem;
+    outline: none;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    transition: all 0.2s ease;
+}
+
+.zone-selector-wrap select:hover {
+    border-color: var(--wow-gold-light);
+    box-shadow: 0 0 10px rgba(248, 183, 0, 0.35);
+}
+
+.zone-selector-wrap select optgroup {
+    background: #141922;
+    color: var(--wow-gold);
+    font-weight: bold;
+}
+
+.zone-selector-wrap select option {
+    background: #0f141c;
+    color: #e2d6b5;
+    padding: 6px;
+}
+
+.icon-btn {
+    background: var(--wow-bg-panel);
+    border: 2px solid var(--wow-border);
+    color: var(--wow-gold);
+    width: 38px;
+    height: 38px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.1rem;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.8);
+    transition: all 0.2s ease;
+    backdrop-filter: blur(8px);
+}
+
+.icon-btn:hover {
+    background: #252014;
+    color: var(--wow-gold-light);
+    border-color: var(--wow-gold-light);
+    box-shadow: 0 0 12px rgba(248, 183, 0, 0.5);
+    transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   4. Floating Search & Filter Toolbar
+   ========================================================================== */
+.map-sidebar {
+    position: absolute;
+    top: 76px;
+    left: 16px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 330px;
+    pointer-events: none;
+}
+
+.search-box-wrap {
+    pointer-events: auto;
+    position: relative;
+    width: 100%;
+}
+
+.search-input-group {
+    display: flex;
+    align-items: center;
+    background: var(--wow-bg-panel);
+    border: 2px solid var(--wow-border);
+    border-radius: 6px;
+    padding: 0 12px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+}
+
+.search-input-group span.icon {
+    font-size: 1rem;
+    margin-right: 8px;
+    opacity: 0.7;
+}
+
+.search-input-group input {
+    width: 100%;
+    padding: 10px 0;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #f0e6d2;
+    font-size: 0.92rem;
+    font-family: var(--font-sans);
+}
+
+.search-input-group input::placeholder {
+    color: #8c7b64;
+}
+
+.search-results-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    background: var(--wow-bg-card);
+    border: 2px solid var(--wow-border);
+    border-radius: 6px;
+    max-height: 320px;
+    overflow-y: auto;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.95);
+    display: none;
+}
+
+.search-result-item {
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(200, 155, 60, 0.15);
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.search-result-item:hover {
+    background: rgba(200, 155, 60, 0.2);
+}
+
+.search-result-item .name {
+    font-weight: 500;
+    color: var(--wow-gold-light);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.search-result-item .zone-sub {
+    font-size: 0.75rem;
+    color: #9e8e78;
+}
+
+/* Filter Badges Bar */
+.filter-toolbar {
+    pointer-events: auto;
+    background: var(--wow-bg-panel);
+    border: 2px solid var(--wow-border);
+    border-radius: 6px;
+    padding: 8px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.filter-chip {
+    background: rgba(30, 36, 48, 0.8);
+    border: 1px solid rgba(200, 155, 60, 0.3);
+    color: #bfa882;
+    padding: 5px 9px;
+    font-size: 0.8rem;
+    border-radius: 4px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s ease;
+}
+
+.filter-chip:hover {
+    border-color: var(--wow-gold);
+    color: var(--wow-gold-light);
+}
+
+.filter-chip.active {
+    background: rgba(200, 155, 60, 0.25);
+    border-color: var(--wow-gold-light);
+    color: var(--wow-gold-light);
+    font-weight: 600;
+}
+
+/* Hint overlay */
+.map-interaction-hint {
+    position: absolute;
+    top: 76px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 999;
+    background: rgba(14, 18, 26, 0.9);
+    border: 1px solid var(--wow-border);
+    padding: 7px 18px;
+    border-radius: 20px;
+    color: #ffd100;
+    font-size: 0.85rem;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.8);
+    pointer-events: none;
+    transition: opacity 0.8s ease;
+}
+
+/* ==========================================================================
+   5. Bottom Info HUD & Controls
+   ========================================================================== */
+.bottom-hud {
+    position: absolute;
+    bottom: 16px;
+    left: 16px;
+    right: 16px;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    pointer-events: none;
+}
+
+.hud-left {
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.coord-display {
+    background: var(--wow-bg-panel);
+    border: 2px solid var(--wow-border);
+    border-radius: 6px;
+    padding: 8px 16px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--font-serif);
+    font-size: 0.9rem;
+}
+
+.coord-display .continent-name {
+    color: var(--wow-gold);
+    font-weight: bold;
+}
+
+.coord-display .level-tag {
+    font-size: 0.75rem;
+    background: rgba(200, 155, 60, 0.2);
+    border: 1px solid var(--wow-border);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: #ffd100;
+}
+
+.coord-display .coords {
+    color: #00ffcc;
+    font-family: monospace;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    border-left: 1px solid rgba(200, 155, 60, 0.3);
+    padding-left: 12px;
+}
+
+.hud-right {
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.map-style-toggle {
+    background: var(--wow-bg-panel);
+    border: 2px solid var(--wow-border);
+    border-radius: 6px;
+    padding: 6px 12px;
+    color: var(--wow-gold);
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-family: var(--font-serif);
+    transition: all 0.2s ease;
+}
+
+.map-style-toggle:hover {
+    background: #252014;
+    border-color: var(--wow-gold-light);
+}
+
+.map-style-toggle.active {
+    background: rgba(200, 155, 60, 0.25);
+    border-color: var(--wow-gold-light);
+    color: var(--wow-gold-light);
+    box-shadow: 0 0 10px rgba(248, 183, 0, 0.4);
+}
+
+/* ==========================================================================
+   6. Custom WoW Markers & Tooltips
+   ========================================================================== */
+.wow-marker-wrapper {
+    background: transparent !important;
+    border: none !important;
+}
+
+.wow-pin {
+    position: relative;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.85);
+}
+
+.wow-pin:hover {
+    transform: scale(1.3) translateY(-4px);
+    z-index: 9999 !important;
+}
+
+.wow-pin .pin-icon {
+    font-size: 16px;
+    line-height: 1;
+}
+
+/* Pin styles */
+.wow-pin.capital-alliance {
+    background: radial-gradient(circle, #0078ff 40%, #002244 100%);
+    border: 2px solid #5ac8fa;
+    box-shadow: 0 0 14px var(--alliance-glow);
+}
+
+.wow-pin.capital-horde {
+    background: radial-gradient(circle, #c41e3a 40%, #3a0000 100%);
+    border: 2px solid #ff453a;
+    box-shadow: 0 0 14px var(--horde-glow);
+}
+
+.wow-pin.capital-neutral {
+    background: radial-gradient(circle, #f8b700 40%, #44300a 100%);
+    border: 2px solid #ffd100;
+    box-shadow: 0 0 14px rgba(248, 183, 0, 0.6);
+}
+
+.wow-pin.raid {
+    background: radial-gradient(circle, #e63946 40%, #200000 100%);
+    border: 2px solid #ff3b30;
+    box-shadow: 0 0 16px rgba(255, 59, 48, 0.7);
+    animation: raidPulse 2.4s infinite ease-in-out;
+}
+
+.wow-pin.dungeon {
+    background: radial-gradient(circle, #555 40%, #151515 100%);
+    border: 2px solid #c89b3c;
+    box-shadow: 0 0 10px rgba(200, 155, 60, 0.5);
+}
+
+.wow-pin.flight {
+    background: radial-gradient(circle, #2a9d8f 40%, #082924 100%);
+    border: 2px solid #48cae4;
+}
+
+.wow-pin.continent-portal {
+    background: radial-gradient(circle, #9b5de5 40%, #2e0854 100%);
+    border: 2px solid #c77dff;
+    animation: portalSpin 8s infinite linear;
+}
+
+@keyframes raidPulse {
+    0%, 100% { box-shadow: 0 0 8px rgba(255, 59, 48, 0.6); }
+    50% { box-shadow: 0 0 20px rgba(255, 59, 48, 0.95); }
+}
+
+@keyframes portalSpin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Leaflet Popup Card */
+.leaflet-popup-content-wrapper {
+    background: var(--wow-bg-card) !important;
+    border: 2px solid var(--wow-border) !important;
+    border-radius: 8px !important;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.95) !important;
+    color: #e2d6b5 !important;
+    padding: 0 !important;
+    overflow: hidden;
+}
+
+.leaflet-popup-tip {
+    background: var(--wow-bg-card) !important;
+    border: 2px solid var(--wow-border) !important;
+    border-top: none;
+    border-left: none;
+}
+
+.wow-popup-card {
+    min-width: 260px;
+    max-width: 320px;
+    padding: 14px 16px;
+}
+
+.wow-popup-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(200, 155, 60, 0.3);
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+}
+
+.wow-popup-header h3 {
+    font-family: var(--font-serif);
+    font-size: 1.1rem;
+    color: var(--wow-gold-light);
+    margin: 0;
+}
+
+.wow-popup-badge {
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.wow-popup-badge.alliance {
+    background: rgba(0, 120, 255, 0.3);
+    color: #5ac8fa;
+    border: 1px solid #0078ff;
+}
+
+.wow-popup-badge.horde {
+    background: rgba(196, 30, 58, 0.3);
+    color: #ff6961;
+    border: 1px solid #c41e3a;
+}
+
+.wow-popup-badge.raid {
+    background: rgba(255, 59, 48, 0.3);
+    color: #ff453a;
+    border: 1px solid #ff3b30;
+}
+
+.wow-popup-badge.neutral {
+    background: rgba(248, 183, 0, 0.25);
+    color: #ffd100;
+    border: 1px solid #f8b700;
+}
+
+.wow-popup-body {
+    font-size: 0.88rem;
+    line-height: 1.5;
+    color: #d8ceb8;
+    margin-bottom: 12px;
+}
+
+.wow-popup-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: #9e8e78;
+    border-top: 1px dashed rgba(200, 155, 60, 0.2);
+    padding-top: 8px;
+    gap: 8px;
+}
+
+.wow-popup-footer .level-info {
+    color: #ffd100;
+    font-weight: 500;
+}
+
+.wow-popup-action-btn {
+    background: linear-gradient(180deg, #382c16 0%, #20180a 100%);
+    border: 1px solid var(--wow-gold);
+    color: var(--wow-gold-light);
+    padding: 5px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-family: var(--font-serif);
+    font-weight: bold;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.wow-popup-action-btn:hover {
+    background: var(--wow-gold);
+    color: #101010;
+    box-shadow: 0 0 10px rgba(248, 183, 0, 0.6);
+}
+
+/* ==========================================================================
+   7. Responsive Layout
+   ========================================================================== */
+@media (max-width: 1024px) {
+    .top-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    .header-left-group {
+        justify-content: space-between;
+    }
+    .continent-select-wrap {
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .continent-select-wrap select {
+        width: 100%;
+    }
+    .map-sidebar {
+        top: 155px;
+        width: calc(100% - 32px);
+    }
+}
