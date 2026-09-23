@@ -1,0 +1,343 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "law-06-dream",
+  "provenance": {
+    "oracle": {
+      "project": "infinite-flow-web",
+      "commit": "2645f0232542684d27de1abc321bb26913320420",
+      "path": "infinite-flow/src/main.ts",
+      "sha256": "d07ff9d4562ecc618caf3341e5f83cb2b43a733c19506c14c362d1cd07bfb8bb"
+    },
+    "goldenManifest": {
+      "path": "packages/save-codec/tests/fixtures/manifest.json",
+      "sha256": "36fcff8420e9aefbb8fe8c472b42fd5dbf6835025beee05b567a8481d6ca6bf1"
+    },
+    "expectedRule": "Dream Archive sealing starts empty; the first dangerous (monster or trap) node clear seals consumables, the second seals methods, the third seals pets, in the fixed order consumable->method->pet, and no fourth feature is ever sealed. Clearing an index node (index_reward or cracked_core_index_reward) or resolving the failure_index dungeon event successfully resets sealedFeatures to empty. While a feature is sealed, combat use of that feature is refused (healing pill: '梦档案馆已封存消耗品，止血丹暂时无法使用。'; art: '梦档案馆已封存功法，本场暂时无法运转术法。') without advancing the turn, the active pet stops assisting in combat, and route gates archive_consumable_librarian_spine, archive_method_ink_spine, and archive_pet_portal_spine close with '先到索引柜或裂核索引解除封存。' until the corresponding reset. All expected values are frozen here, never read from candidate code."
+  },
+  "baseInput": {
+    "path": "packages/save-codec/tests/fixtures/new-hub-v1.json",
+    "sha256": "a1de1f1b33b59c91dea46caf55f21b6eee0b7104c2cbe4d68ac5d7a430709e0b"
+  },
+  "inputMutations": [
+    {
+      "op": "replace",
+      "path": ["state", "completedDungeonIds"],
+      "value": ["demon_tower_1", "metro_abyss", "starfall_mine", "rust_hospital", "ash_arena"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "claimedTaskIds"],
+      "value": ["clear_demon_tower", "clear_metro_abyss", "mainline_clear_starfall_mine", "mainline_clear_rust_hospital", "mainline_clear_ash_arena"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "preparedItemIds"],
+      "value": ["healing_pill", "focus_incense", "armor_patch"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "inventory", "healing_pill"],
+      "value": 20
+    },
+    {
+      "op": "replace",
+      "path": ["state", "inventory", "focus_incense"],
+      "value": 3
+    },
+    {
+      "op": "replace",
+      "path": ["state", "inventory", "armor_patch"],
+      "value": 3
+    },
+    {
+      "op": "replace",
+      "path": ["state", "ownedEquipment"],
+      "value": [
+        "training_blade",
+        "patched_headwrap",
+        "patched_coat",
+        "patched_gloves",
+        "patched_boots",
+        "patched_belt",
+        "plain_charm",
+        "ember_staff",
+        "mist_hood",
+        "spirit_robe",
+        "guardian_gauntlets",
+        "cloudstep_boots",
+        "rift_belt",
+        "rift_charm"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "equipped"],
+      "value": {
+        "weapon": "ember_staff",
+        "head": "mist_hood",
+        "armor": "spirit_robe",
+        "hands": "guardian_gauntlets",
+        "feet": "cloudstep_boots",
+        "waist": "rift_belt",
+        "charm": "rift_charm"
+      }
+    },
+    {
+      "op": "replace",
+      "path": ["state", "equipmentLevels"],
+      "value": {
+        "training_blade": 1,
+        "patched_headwrap": 1,
+        "patched_coat": 1,
+        "patched_gloves": 1,
+        "patched_boots": 1,
+        "patched_belt": 1,
+        "plain_charm": 1,
+        "ember_staff": 3,
+        "mist_hood": 1,
+        "spirit_robe": 1,
+        "guardian_gauntlets": 1,
+        "cloudstep_boots": 1,
+        "rift_belt": 1,
+        "rift_charm": 1
+      }
+    },
+    {
+      "op": "replace",
+      "path": ["state", "ownedPets"],
+      "value": ["contract_sprite"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "petLevels"],
+      "value": { "contract_sprite": 1 }
+    },
+    {
+      "op": "add",
+      "path": ["state", "activePet"],
+      "value": "contract_sprite"
+    },
+    {
+      "op": "replace",
+      "path": ["state", "player", "base", "spirit"],
+      "value": 7
+    },
+    {
+      "op": "replace",
+      "path": ["state", "player", "base", "body"],
+      "value": 10
+    },
+    {
+      "op": "replace",
+      "path": ["state", "player", "base", "agility"],
+      "value": 4
+    }
+  ],
+  "entrySeed": 606060606,
+  "scenarioIds": [
+    "archive-seal-on-dangerous-clear",
+    "archive-consumable-seal-effect",
+    "archive-method-seal-effect",
+    "archive-pet-seal-effect",
+    "archive-index-event-reset",
+    "archive-repeat-clear-boundary"
+  ],
+  "scenarios": [
+    {
+      "id": "archive-seal-on-dangerous-clear",
+      "expected": {
+        "initialDisplay": {
+          "title": "失败封存",
+          "status": "已封存 0/3",
+          "severity": "stable",
+          "meter": { "value": 0, "max": 3 },
+          "targetReached": true
+        },
+        "clears": [
+          { "nodeId": "index_reward", "kind": "reward", "sealsAfter": [] },
+          { "nodeId": "failed_file_reward", "kind": "reward", "sealsAfter": [] },
+          { "nodeId": "paper_librarian", "kind": "combat", "sealsAfter": ["consumable"], "combatRounds": 3, "hpAfter": 205 },
+          { "nodeId": "hallucination_patrol", "kind": "combat", "sealsAfter": ["consumable", "method"], "combatRounds": 3, "hpAfter": 192 },
+          { "nodeId": "footnote_cache_reward", "kind": "reward", "sealsAfter": ["consumable", "method"] },
+          { "nodeId": "paper_librarian_echo", "kind": "combat", "sealsAfter": ["consumable", "method", "pet"], "combatRounds": 3, "hpAfter": 179 },
+          { "nodeId": "memory_loop_trap", "kind": "trap-risk", "sealsAfter": ["consumable", "method", "pet"], "hpAfter": 157 },
+          { "nodeId": "dream_jailer", "kind": "combat", "sealsAfter": ["consumable", "method", "pet"], "combatRounds": 4, "hpAfter": 145 },
+          { "nodeId": "incense_reward", "kind": "reward", "sealsAfter": ["consumable", "method", "pet"] },
+          { "nodeId": "hallucination_patrol_two", "kind": "combat", "sealsAfter": ["consumable", "method", "pet"], "combatRounds": 3, "hpAfter": 132 },
+          { "nodeId": "cracked_core_index_reward", "kind": "reward", "sealsAfter": [] },
+          { "nodeId": "dream_jailer_second", "kind": "combat", "sealsAfter": ["consumable"], "combatRounds": 5, "hpAfter": 115 }
+        ],
+        "displaySequence": [
+          { "at": "entry", "status": "已封存 0/3", "severity": "stable", "meter": { "value": 0, "max": 3 }, "targetReached": true, "seals": [] },
+          { "at": "after-paper_librarian", "status": "已封存 1/3", "severity": "warning", "meter": { "value": 1, "max": 3 }, "targetReached": false, "seals": ["consumable"] },
+          { "at": "after-hallucination_patrol", "status": "已封存 2/3", "severity": "danger", "meter": { "value": 2, "max": 3 }, "targetReached": false, "seals": ["consumable", "method"] },
+          { "at": "after-paper_librarian_echo", "status": "已封存 3/3", "severity": "danger", "meter": { "value": 3, "max": 3 }, "targetReached": false, "seals": ["consumable", "method", "pet"] },
+          { "at": "after-index-reset", "status": "已封存 0/3", "severity": "stable", "meter": { "value": 0, "max": 3 }, "targetReached": true, "seals": [] },
+          { "at": "after-dream_jailer_second-reseal", "status": "已封存 1/3", "severity": "warning", "meter": { "value": 1, "max": 3 }, "targetReached": false, "seals": ["consumable"] }
+        ],
+        "finalClearedNodeIds": [
+          "index_reward",
+          "failed_file_reward",
+          "paper_librarian",
+          "hallucination_patrol",
+          "footnote_cache_reward",
+          "paper_librarian_echo",
+          "memory_loop_trap",
+          "dream_jailer",
+          "incense_reward",
+          "hallucination_patrol_two",
+          "cracked_core_index_reward",
+          "dream_jailer_second"
+        ],
+        "finalSeals": ["consumable"],
+        "finalHp": 115
+      }
+    },
+    {
+      "id": "archive-consumable-seal-effect",
+      "expected": {
+        "gateBeforeSeal": {
+          "gateId": "archive_consumable_librarian_spine",
+          "checkedFromNodeId": "failed_file_reward",
+          "targetNodeId": "paper_librarian",
+          "status": "open",
+          "isOpen": true,
+          "blockReason": null
+        },
+        "gateAfterSeal": {
+          "gateId": "archive_consumable_librarian_spine",
+          "checkedFromNodeId": "failed_file_reward",
+          "targetNodeId": "paper_librarian",
+          "status": "closed",
+          "isOpen": false,
+          "blockReason": "道具已封存；先到索引柜或裂核索引解除封存。"
+        },
+        "blockedCombatAction": {
+          "nodeId": "hallucination_patrol",
+          "action": "use_healing_pill",
+          "rejectionCode": "domain-rejected",
+          "message": "梦档案馆已封存消耗品，止血丹暂时无法使用。",
+          "hpUnchanged": true,
+          "turnUnchanged": true,
+          "monsterHpUnchanged": true,
+          "sealsUnchanged": true
+        },
+        "recovery": {
+          "nodeId": "dream_jailer_second",
+          "pillUsed": true,
+          "pillHeal": 36,
+          "pillBlocked": false
+        }
+      }
+    },
+    {
+      "id": "archive-method-seal-effect",
+      "expected": {
+        "gateAfterSeal": {
+          "gateId": "archive_method_ink_spine",
+          "checkedFromNodeId": "paper_librarian_echo",
+          "targetNodeId": "ink_sleep_trap",
+          "status": "closed",
+          "isOpen": false,
+          "blockReason": "功法已封存；先到索引柜或裂核索引解除封存。"
+        },
+        "gateStillClosedAfterThirdSeal": {
+          "gateId": "archive_method_ink_spine",
+          "checkedFromNodeId": "paper_librarian_echo",
+          "targetNodeId": "ink_sleep_trap",
+          "status": "closed",
+          "isOpen": false,
+          "blockReason": "功法已封存；先到索引柜或裂核索引解除封存。"
+        },
+        "blockedCombatAction": {
+          "nodeId": "paper_librarian_echo",
+          "action": "art",
+          "rejectionCode": "domain-rejected",
+          "message": "梦档案馆已封存功法，本场暂时无法运转术法。",
+          "hpUnchanged": true,
+          "turnUnchanged": true,
+          "monsterHpUnchanged": true,
+          "sealsUnchanged": true
+        },
+        "recovery": {
+          "nodeId": "dream_jailer_second",
+          "artUsed": true,
+          "artBlocked": false
+        }
+      }
+    },
+    {
+      "id": "archive-pet-seal-effect",
+      "expected": {
+        "assistBeforeSeal": {
+          "fights": [
+            { "nodeId": "paper_librarian", "petAssist": true },
+            { "nodeId": "hallucination_patrol", "petAssist": true },
+            { "nodeId": "paper_librarian_echo", "petAssist": true }
+          ]
+        },
+        "assistWhileSealed": {
+          "fights": [
+            { "nodeId": "dream_jailer", "petAssist": false },
+            { "nodeId": "hallucination_patrol_two", "petAssist": false }
+          ]
+        },
+        "gateAfterSeal": {
+          "gateId": "archive_pet_portal_spine",
+          "checkedFromNodeId": "method_fragment_reward",
+          "targetNodeId": "archive_portal",
+          "status": "closed",
+          "isOpen": false,
+          "blockReason": "灵宠已封存；先到索引柜或裂核索引解除封存。"
+        },
+        "recovery": {
+          "nodeId": "dream_jailer_second",
+          "petAssist": true
+        }
+      }
+    },
+    {
+      "id": "archive-index-event-reset",
+      "expected": {
+        "eventAvailable": {
+          "eventId": "failure_index",
+          "nodeId": "index_reward",
+          "spiritOption": { "optionId": "decode_with_spirit", "available": true },
+          "voidHeartOption": { "optionId": "empty_self_with_void_heart", "available": false, "unmet": "学会虚心诀" }
+        },
+        "fightBeforeEvent": {
+          "nodeId": "paper_librarian",
+          "sealsAfter": ["consumable"],
+          "combatRounds": 3,
+          "hpAfter": 205
+        },
+        "eventReset": {
+          "eventId": "failure_index",
+          "optionId": "decode_with_spirit",
+          "sealsBefore": ["consumable"],
+          "sealsAfter": [],
+          "rewardPointsDelta": 360,
+          "methodPageDelta": 1,
+          "log": "灵识重排档案页码，功法残页从未来失败里滑出。"
+        },
+        "repeatEvent": {
+          "rejectionCode": "domain-rejected",
+          "message": "这个关卡事件已经结算过，主神不会重复发放奖励。",
+          "sealsUnchanged": true
+        },
+        "finalSeals": [],
+        "resolvedEventIds": ["failure_index"]
+      }
+    },
+    {
+      "id": "archive-repeat-clear-boundary",
+      "expected": {
+        "reselectedNodeId": "paper_librarian",
+        "rejectionCode": "already-resolved",
+        "message": "The current node is already cleared.",
+        "sealsUnchanged": true,
+        "sealsAfter": []
+      }
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "name": "@infinite-flow/application",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vite-node test/reducer.test.ts"
+  },
+  "dependencies": {
+    "@infinite-flow/core": "0.1.0"
+  },
+  "devDependencies": {
+    "vite-node": "^2.1.1"
+  }
+}

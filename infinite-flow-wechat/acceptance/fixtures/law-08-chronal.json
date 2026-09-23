@@ -1,0 +1,374 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "law-08-chronal",
+  "provenance": {
+    "oracle": {
+      "project": "infinite-flow-web",
+      "commit": "2645f0232542684d27de1abc321bb26913320420",
+      "path": "infinite-flow/src/dungeon-laws.ts",
+      "sha256": "6deffb2bbbde6a9f4110603fb71f948e6543f5bc3985659cab81a82b7ca292ca"
+    },
+    "goldenManifest": {
+      "path": "packages/save-codec/tests/fixtures/manifest.json",
+      "sha256": "36fcff8420e9aefbb8fe8c472b42fd5dbf6835025beee05b567a8481d6ca6bf1"
+    },
+    "expectedRule": "Temporal Observatory tracks two calibration anchors. Clearing past_calibration_anchor sets law.pastCalibrated=true; clearing future_calibration_anchor sets law.futureCalibrated=true; both start false on entry. The law display '时间校准' shows 0/2 时序漂移 (danger), 1/2 单锚锁定 (warning), 2/2 双锚同步 (resolved, targetReached). While the past anchor is uncalibrated, encounters gain +20% defense; while the future anchor is uncalibrated, traps gain +20% damage and +20% dc; the boss gains +10% all stats per missing anchor (capped at 20%). Route gates: temporal_past_shortcut (past_shortcut_foyer to erased_patrol) opens with past_calibrated; temporal_future_shortcut (future_shortcut_foyer to accelerated_patrol) opens with future_calibrated; temporal_calibration_bridge (calibration_bridge to zero_hour_regent), temporal_boss_south_lock and temporal_east_time_lock open only with dual_calibrated. Closed gates expose their real block reasons and remove the edge from legal adjacent targets, so run/move through a closed gate is rejected illegal-move. Anchor calibration persists through a save-codec round-trip. Re-selecting a cleared anchor node is rejected already-resolved without changing law state or HP. All expected values are frozen here, never read from candidate code."
+  },
+  "baseInput": {
+    "path": "packages/save-codec/tests/fixtures/new-hub-v1.json",
+    "sha256": "a1de1f1b33b59c91dea46caf55f21b6eee0b7104c2cbe4d68ac5d7a430709e0b"
+  },
+  "inputMutations": [
+    {
+      "op": "replace",
+      "path": ["state", "completedDungeonIds"],
+      "value": ["demon_tower_1", "metro_abyss", "starfall_mine", "rust_hospital", "ash_arena", "dream_archive", "void_citadel"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "claimedTaskIds"],
+      "value": ["clear_demon_tower", "clear_metro_abyss", "mainline_clear_starfall_mine", "mainline_clear_rust_hospital", "mainline_clear_ash_arena", "mainline_clear_dream_archive", "mainline_clear_void_citadel"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "preparedItemIds"],
+      "value": ["healing_pill", "focus_incense", "armor_patch"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "inventory", "healing_pill"],
+      "value": 20
+    },
+    {
+      "op": "replace",
+      "path": ["state", "inventory", "focus_incense"],
+      "value": 3
+    },
+    {
+      "op": "replace",
+      "path": ["state", "inventory", "armor_patch"],
+      "value": 3
+    },
+    {
+      "op": "replace",
+      "path": ["state", "learnedMethods"],
+      "value": ["iron_body"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "methodRanks"],
+      "value": { "iron_body": 1 }
+    },
+    {
+      "op": "add",
+      "path": ["state", "activeMethod"],
+      "value": "iron_body"
+    },
+    {
+      "op": "replace",
+      "path": ["state", "ownedEquipment"],
+      "value": [
+        "training_blade",
+        "patched_headwrap",
+        "patched_coat",
+        "patched_gloves",
+        "patched_boots",
+        "patched_belt",
+        "plain_charm",
+        "ember_staff",
+        "mist_hood",
+        "spirit_robe",
+        "guardian_gauntlets",
+        "cloudstep_boots",
+        "rift_belt",
+        "rift_charm"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "equipped"],
+      "value": {
+        "weapon": "ember_staff",
+        "head": "mist_hood",
+        "armor": "spirit_robe",
+        "hands": "guardian_gauntlets",
+        "feet": "cloudstep_boots",
+        "waist": "rift_belt",
+        "charm": "rift_charm"
+      }
+    },
+    {
+      "op": "replace",
+      "path": ["state", "equipmentLevels"],
+      "value": {
+        "training_blade": 1,
+        "patched_headwrap": 1,
+        "patched_coat": 1,
+        "patched_gloves": 1,
+        "patched_boots": 1,
+        "patched_belt": 1,
+        "plain_charm": 1,
+        "ember_staff": 3,
+        "mist_hood": 1,
+        "spirit_robe": 1,
+        "guardian_gauntlets": 1,
+        "cloudstep_boots": 1,
+        "rift_belt": 1,
+        "rift_charm": 1
+      }
+    },
+    {
+      "op": "replace",
+      "path": ["state", "ownedPets"],
+      "value": ["contract_sprite"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "petLevels"],
+      "value": { "contract_sprite": 1 }
+    },
+    {
+      "op": "add",
+      "path": ["state", "activePet"],
+      "value": "contract_sprite"
+    },
+    {
+      "op": "replace",
+      "path": ["state", "player", "base", "spirit"],
+      "value": 7
+    },
+    {
+      "op": "replace",
+      "path": ["state", "player", "base", "body"],
+      "value": 10
+    },
+    {
+      "op": "replace",
+      "path": ["state", "player", "base", "agility"],
+      "value": 4
+    }
+  ],
+  "entrySeed": 808080808,
+  "scenarioIds": [
+    "chronal-anchor-calibration-display",
+    "chronal-single-anchor-route-gates",
+    "chronal-dual-anchor-opens-bridge",
+    "chronal-repeat-clear-boundary"
+  ],
+  "scenarios": [
+    {
+      "id": "chronal-anchor-calibration-display",
+      "expected": {
+        "entryDisplay": {
+          "status": "0/2 时序漂移",
+          "severity": "danger",
+          "meter": { "value": 0, "max": 2 },
+          "targetReached": false
+        },
+        "entryModifiers": {
+          "encounter": { "allStatsPercent": 0, "defensePercent": 20, "artPowerPercent": 0 },
+          "trap": { "damagePercent": 20, "dcPercent": 20 },
+          "healingPercent": 0,
+          "outgoingDamage": { "forcePercent": 0, "artPercent": 0 },
+          "guardEffectPercent": 0
+        },
+        "pathCombat": { "nodeId": "epoch_sentinel_alpha", "rounds": 4, "hpAfter": 214 },
+        "pathTrap": { "nodeId": "zero_meridian", "hpBefore": 202, "hpAfter": 175 },
+        "pastAnchor": {
+          "nodeId": "past_calibration_anchor",
+          "log": "过去校准锚结算完成，主神记录新增奖励。 本次获得175 点奖励、灵蕴 x1、轮回刻印 x1。 战利品尚未结算。",
+          "lawBefore": { "kind": "temporal_observatory", "pastCalibrated": false, "futureCalibrated": false },
+          "lawAfter": { "kind": "temporal_observatory", "pastCalibrated": true, "futureCalibrated": false },
+          "display": {
+            "status": "1/2 单锚锁定",
+            "severity": "warning",
+            "meter": { "value": 1, "max": 2 },
+            "targetReached": false
+          },
+          "modifiers": {
+            "encounter": { "allStatsPercent": 0, "defensePercent": 0, "artPowerPercent": 0 },
+            "trap": { "damagePercent": 20, "dcPercent": 20 },
+            "healingPercent": 0,
+            "outgoingDamage": { "forcePercent": 0, "artPercent": 0 },
+            "guardEffectPercent": 0
+          }
+        },
+        "futureAnchor": {
+          "nodeId": "future_calibration_anchor",
+          "log": "未来校准锚结算完成，主神记录新增奖励。 本次获得175 点奖励、灵蕴 x1、轮回刻印 x1。 战利品尚未结算。",
+          "lawBefore": { "kind": "temporal_observatory", "pastCalibrated": true, "futureCalibrated": false },
+          "lawAfter": { "kind": "temporal_observatory", "pastCalibrated": true, "futureCalibrated": true },
+          "display": {
+            "status": "2/2 双锚同步",
+            "severity": "resolved",
+            "meter": { "value": 2, "max": 2 },
+            "targetReached": true
+          },
+          "modifiers": {
+            "encounter": { "allStatsPercent": 0, "defensePercent": 0, "artPowerPercent": 0 },
+            "trap": { "damagePercent": 0, "dcPercent": 0 },
+            "healingPercent": 0,
+            "outgoingDamage": { "forcePercent": 0, "artPercent": 0 },
+            "guardEffectPercent": 0
+          }
+        },
+        "roundtrip": {
+          "status": "decoded",
+          "lawData": { "kind": "temporal_observatory", "pastCalibrated": true, "futureCalibrated": true },
+          "displayStatus": "2/2 双锚同步"
+        }
+      }
+    },
+    {
+      "id": "chronal-single-anchor-route-gates",
+      "expected": {
+        "pastOnly": {
+          "anchor": {
+            "log": "过去校准锚结算完成，主神记录新增奖励。 本次获得175 点奖励、灵蕴 x1、轮回刻印 x1。 战利品尚未结算。",
+            "lawData": { "kind": "temporal_observatory", "pastCalibrated": true, "futureCalibrated": false },
+            "display": {
+              "status": "1/2 单锚锁定",
+              "severity": "warning",
+              "meter": { "value": 1, "max": 2 },
+              "targetReached": false
+            },
+            "modifiers": {
+              "encounter": { "allStatsPercent": 0, "defensePercent": 0, "artPowerPercent": 0 },
+              "trap": { "damagePercent": 20, "dcPercent": 20 },
+              "healingPercent": 0,
+              "outgoingDamage": { "forcePercent": 0, "artPercent": 0 },
+              "guardEffectPercent": 0
+            }
+          },
+          "gates": [
+            {
+              "at": "past_shortcut_foyer",
+              "target": "erased_patrol",
+              "gateId": "temporal_past_shortcut",
+              "status": "open",
+              "isOpen": true,
+              "blockReason": null
+            },
+            {
+              "at": "calibration_bridge",
+              "target": "zero_hour_regent",
+              "gateId": "temporal_calibration_bridge",
+              "status": "closed",
+              "isOpen": false,
+              "blockReason": "过去与未来锚点均校准后开放。"
+            },
+            {
+              "at": "future_shortcut_foyer",
+              "target": "accelerated_patrol",
+              "gateId": "temporal_future_shortcut",
+              "status": "closed",
+              "isOpen": false,
+              "blockReason": "先校准未来锚点后开放。"
+            }
+          ],
+          "openShortcutTraversal": "erased_patrol"
+        },
+        "futureOnly": {
+          "anchor": {
+            "log": "未来校准锚结算完成，主神记录新增奖励。 本次获得175 点奖励、灵蕴 x1、轮回刻印 x1。 战利品尚未结算。",
+            "lawData": { "kind": "temporal_observatory", "pastCalibrated": false, "futureCalibrated": true },
+            "display": {
+              "status": "1/2 单锚锁定",
+              "severity": "warning",
+              "meter": { "value": 1, "max": 2 },
+              "targetReached": false
+            },
+            "modifiers": {
+              "encounter": { "allStatsPercent": 0, "defensePercent": 20, "artPowerPercent": 0 },
+              "trap": { "damagePercent": 0, "dcPercent": 0 },
+              "healingPercent": 0,
+              "outgoingDamage": { "forcePercent": 0, "artPercent": 0 },
+              "guardEffectPercent": 0
+            }
+          },
+          "gates": [
+            {
+              "at": "future_shortcut_foyer",
+              "target": "accelerated_patrol",
+              "gateId": "temporal_future_shortcut",
+              "status": "open",
+              "isOpen": true,
+              "blockReason": null
+            },
+            {
+              "at": "calibration_bridge",
+              "target": "zero_hour_regent",
+              "gateId": "temporal_calibration_bridge",
+              "status": "closed",
+              "isOpen": false,
+              "blockReason": "过去与未来锚点均校准后开放。"
+            },
+            {
+              "at": "past_shortcut_foyer",
+              "target": "erased_patrol",
+              "gateId": "temporal_past_shortcut",
+              "status": "closed",
+              "isOpen": false,
+              "blockReason": "先校准过去锚点后开放。"
+            }
+          ],
+          "openShortcutTraversal": "accelerated_patrol"
+        }
+      }
+    },
+    {
+      "id": "chronal-dual-anchor-opens-bridge",
+      "expected": {
+        "bridgeBeforeDual": {
+          "gate": {
+            "at": "calibration_bridge",
+            "target": "zero_hour_regent",
+            "gateId": "temporal_calibration_bridge",
+            "status": "closed",
+            "isOpen": false,
+            "blockReason": "过去与未来锚点均校准后开放。"
+          },
+          "rejectedMove": {
+            "status": "rejected",
+            "code": "illegal-move",
+            "lawUnchanged": true,
+            "hpUnchanged": true
+          }
+        },
+        "bridgeAfterDual": {
+          "gate": {
+            "at": "calibration_bridge",
+            "target": "zero_hour_regent",
+            "gateId": "temporal_calibration_bridge",
+            "status": "open",
+            "isOpen": true,
+            "blockReason": null
+          },
+          "traversal": { "nodeId": "zero_hour_regent", "phase": "explore" }
+        },
+        "boss": {
+          "nodeId": "zero_hour_regent",
+          "rounds": 26,
+          "hpAfter": 61,
+          "cleared": true,
+          "modifiers": {
+            "encounter": { "allStatsPercent": 0, "defensePercent": 0, "artPowerPercent": 0 },
+            "trap": { "damagePercent": 0, "dcPercent": 0 },
+            "healingPercent": 0,
+            "outgoingDamage": { "forcePercent": 0, "artPercent": 0 },
+            "guardEffectPercent": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "chronal-repeat-clear-boundary",
+      "expected": {
+        "reselectedNodeId": "past_calibration_anchor",
+        "rejectionCode": "already-resolved",
+        "lawStateUnchanged": true,
+        "hpUnchanged": true
+      }
+    }
+  ]
+}

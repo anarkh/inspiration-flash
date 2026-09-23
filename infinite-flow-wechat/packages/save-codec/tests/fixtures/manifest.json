@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "oracle": {
+    "implementation": "infinite-flow/src/main.ts",
+    "commit": "2645f0232542684d27de1abc321bb26913320420",
+    "saveVersion": 1
+  },
+  "cases": [
+    {
+      "file": "new-hub-v1.json",
+      "sha256": "a1de1f1b33b59c91dea46caf55f21b6eee0b7104c2cbe4d68ac5d7a430709e0b",
+      "expected": { "status": "decoded", "phase": "hub" }
+    },
+    {
+      "file": "active-combat-v1.json",
+      "sha256": "dda0eb64454305b8c85877678dec51069e1da3204342dd5c854b0a200b88fac2",
+      "expected": { "status": "decoded", "phase": "combat" }
+    },
+    {
+      "file": "legacy-missing-run-snapshots-v1.json",
+      "sha256": "ae6531bdb55a61dff19dcb08a1fb2ea8cde886f30f70ca08a6bdf0c6d618574b",
+      "expected": { "status": "decoded", "phase": "explore" }
+    },
+    {
+      "file": "repairable-local-fields-v1.json",
+      "sha256": "109fc7708fa45a914c4b8af3296478add84dd69746ca2df1f3d7ca01cda078b1",
+      "expected": { "status": "decoded", "phase": "hub" }
+    },
+    {
+      "file": "invalid-json.txt",
+      "sha256": "ccfec77e25b2a6539eaeb6d5fb62c7bb7ab175218b0db000f4d3c06781d5fff8",
+      "expected": { "status": "rejected", "code": "invalid-json" }
+    },
+    {
+      "file": "future-version.json",
+      "sha256": "1b03df7aa07c81b182c5bc51243e87cfd21d7e495d80f951d128a9e5a6059d90",
+      "expected": { "status": "rejected", "code": "future-version" }
+    }
+  ]
+}

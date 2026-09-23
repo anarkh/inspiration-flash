@@ -1,0 +1,225 @@
+{
+  "version": 1,
+  "state": {
+    "phase": "combat",
+    "rewardPoints": 850,
+    "lingyun": 1,
+    "player": {
+      "hp": 102,
+      "maxHp": 102,
+      "base": {
+        "body": 3,
+        "spirit": 2,
+        "agility": 2,
+        "luck": 1
+      }
+    },
+    "inventory": {
+      "healing_pill": 0,
+      "thunder_talisman": 0,
+      "dispel_talisman": 0,
+      "gate_sigil": 0,
+      "echo_coin": 0,
+      "capture_net": 0,
+      "spirit_bait": 0,
+      "armor_patch": 0,
+      "focus_incense": 0,
+      "demon_bone": 0,
+      "hidden_stone": 0,
+      "medicine_ash": 0,
+      "mirror_shell": 0,
+      "star_iron": 0,
+      "method_page": 0,
+      "cracked_core": 0,
+      "rift_dust": 0,
+      "chronal_glass": 0,
+      "cycle_imprint": 0,
+      "causal_seal": 0,
+      "entropy_crystal": 0,
+      "phase_glass": 0,
+      "redaction_ink": 0,
+      "legacy_scrip": 0,
+      "genesis_serum": 0,
+      "silence_core": 0,
+      "rescue_badge": 0,
+      "truth_fragment": 0,
+      "combat_reel": 0,
+      "observation_shard": 0
+    },
+    "ownedEquipment": [
+      "training_blade",
+      "patched_headwrap",
+      "patched_coat",
+      "patched_gloves",
+      "patched_boots",
+      "patched_belt",
+      "plain_charm"
+    ],
+    "equipmentLevels": {
+      "training_blade": 1,
+      "patched_headwrap": 1,
+      "patched_coat": 1,
+      "patched_gloves": 1,
+      "patched_boots": 1,
+      "patched_belt": 1,
+      "plain_charm": 1
+    },
+    "equipmentAttunements": {},
+    "equipmentTemperRanks": {},
+    "equipmentRolls": {},
+    "equipmentMemories": {},
+    "equipped": {
+      "weapon": "training_blade",
+      "head": "patched_headwrap",
+      "armor": "patched_coat",
+      "hands": "patched_gloves",
+      "feet": "patched_boots",
+      "waist": "patched_belt",
+      "charm": "plain_charm"
+    },
+    "preparedItemIds": [],
+    "preparedRelicFrame": "assault",
+    "archivedRelicIds": [],
+    "learnedMethods": [],
+    "methodRanks": {},
+    "bloodlineRanks": {},
+    "completedDungeonIds": [],
+    "infernoProgress": {},
+    "enteredDungeonIds": [
+      "demon_tower_1"
+    ],
+    "claimedDirectiveIds": [],
+    "claimedTaskIds": [],
+    "ownedPets": [],
+    "petLevels": {},
+    "ownedCompanions": [],
+    "companionRanks": {},
+    "log": [
+      "遭遇雾中妖鬼，进入回合战斗。",
+      "副本开启：妖塔一层。妖雾封住石阶，塔内每一层都在测试准备是否足够。 当前难度：普通。 本轮回响偏向：强攻。",
+      "白光散去，你站在主神空间。兑换碑、功法碑和三道副本门同时亮起。"
+    ],
+    "run": {
+      "entryFlowVersion": 2,
+      "explorationRewardVersion": 1,
+      "hiddenTaskSeed": 305419896,
+      "dungeonId": "demon_tower_1",
+      "currentNodeId": "fog_lesser_demon",
+      "clearedNodeIds": [],
+      "captures": 0,
+      "capturedPetIds": [],
+      "usedItems": [],
+      "damageTaken": 0,
+      "resolvedEventIds": [],
+      "eventLog": [],
+      "lootBag": {
+        "rewardPoints": 0,
+        "lingyun": 0,
+        "items": {},
+        "equipmentIds": []
+      },
+      "lootOffersMade": 0,
+      "tacticalLoadout": {
+        "rulesVersion": 1,
+        "itemIds": []
+      },
+      "fieldSurveyState": {
+        "rulesVersion": 1,
+        "frozenSources": [],
+        "resolvedSurveys": []
+      },
+      "equipmentMemorySnapshot": {
+        "rulesVersion": 1,
+        "activeEntries": []
+      },
+      "protocol": {
+        "id": "standard",
+        "rulesVersion": 1
+      },
+      "carriedEquipmentRolls": {},
+      "pressureState": {
+        "rulesVersion": 1,
+        "clearedNodeCount": 0
+      },
+      "relicState": {
+        "rulesVersion": 1,
+        "frame": "assault",
+        "acquiredIds": [],
+        "processedDraftIds": []
+      },
+      "soulSkillState": {
+        "rulesVersion": 1,
+        "frozenSkillIds": [],
+        "readySkillIds": [],
+        "chargesRemaining": 0,
+        "usedRechargeIds": []
+      },
+      "relicConduitSourceEquipmentIds": [],
+      "lawState": {
+        "rulesVersion": 1,
+        "dungeonId": "demon_tower_1",
+        "clearedNodeIds": [],
+        "resolvedEventIds": [],
+        "combatOpenings": {},
+        "combatVictoryNodeIds": [],
+        "law": {
+          "kind": "demon_tower",
+          "fogPressure": 0
+        }
+      },
+      "broadcastEntryPassives": {
+        "hushblade": false,
+        "deadAirHeadset": false,
+        "anechoicMantle": false,
+        "lastChannelBeacon": false
+      },
+      "escortEntryGear": {
+        "rescueCarbine": false,
+        "triageVisor": false,
+        "evacuationPlate": false,
+        "blackboxBeacon": false
+      },
+      "falseTestimonyEntryGear": {
+        "crossExaminerSabre": false,
+        "forensicVisor": false,
+        "custodyShell": false,
+        "appealSeal": false
+      },
+      "methodSnapshots": [],
+      "pursuitState": {
+        "rulesVersion": 1,
+        "dungeonId": "demon_tower_1",
+        "status": "disabled",
+        "nodeId": null,
+        "contacts": 0,
+        "graceMoves": 0,
+        "rewardGranted": false,
+        "repelledReason": null
+      },
+      "discoveredNodeIds": [
+        "broken_sigil_reward",
+        "fog_lesser_demon",
+        "blood_rune_trap",
+        "ash_pit_trap"
+      ]
+    },
+    "combat": {
+      "nodeId": "fog_lesser_demon",
+      "monsterId": "fog_lesser_demon",
+      "monsterHp": 42,
+      "turn": 1,
+      "guarding": false,
+      "companionAssistUsed": false,
+      "methodTechniqueUsedIds": [],
+      "methodTechniqueUsed": false,
+      "bloodlineSurgeUsed": false,
+      "bloodlineBarrier": 0,
+      "damageTakenAtStart": 0,
+      "weaponFocus": 0,
+      "effects": {},
+      "log": [
+        "雾中妖鬼出现：第一回合试图撕裂玩家护甲。"
+      ]
+    }
+  }
+}

@@ -1,0 +1,123 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "web-v1-equipment-hunt",
+  "provenance": {
+    "oracle": {
+      "project": "infinite-flow-web",
+      "commit": "2645f0232542684d27de1abc321bb26913320420",
+      "path": "infinite-flow/src/main.ts",
+      "sha256": "d07ff9d4562ecc618caf3341e5f83cb2b43a733c19506c14c362d1cd07bfb8bb"
+    },
+    "oracleRules": [
+      {
+        "path": "infinite-flow/src/game.ts",
+        "sha256": "bb885c467a23fd5b815b93224b3fa9992b055b901142be0878389c21138a02ed"
+      },
+      {
+        "path": "infinite-flow/src/equipment-hunts.ts",
+        "sha256": "8a4c65b2b256a1e74ecd505ad5dc1e652b135621773860f0c856ac1a0694d87f"
+      }
+    ],
+    "baseGolden": {
+      "manifestPath": "packages/save-codec/tests/fixtures/manifest.json",
+      "manifestSha256": "36fcff8420e9aefbb8fe8c472b42fd5dbf6835025beee05b567a8481d6ca6bf1",
+      "caseFile": "legacy-missing-run-snapshots-v1.json"
+    },
+    "candidateContracts": [
+      "@infinite-flow/save-codec/decodeWebV1",
+      "@infinite-flow/core/getCurrentEquipmentHuntStatus",
+      "@infinite-flow/core/resolveEquipmentLoot"
+    ],
+    "expectedRule": "legacy hunt input, restored interpretation, and one-shot settlement are all statically pinned"
+  },
+  "baseInput": {
+    "path": "packages/save-codec/tests/fixtures/legacy-missing-run-snapshots-v1.json",
+    "sha256": "ae6531bdb55a61dff19dcb08a1fb2ea8cde886f30f70ca08a6bdf0c6d618574b"
+  },
+  "scenarioIds": [
+    "legacy-hunt-offer-restores-and-settles-once"
+  ],
+  "scenarios": [
+    {
+      "id": "legacy-hunt-offer-restores-and-settles-once",
+      "inputMutations": [
+        { "op": "replace", "path": ["state", "run", "clearedNodeIds"], "value": ["broken_sigil_reward"] },
+        {
+          "op": "add",
+          "path": ["state", "run", "equipmentHunt"],
+          "value": {
+            "rulesVersion": 1,
+            "dungeonId": "demon_tower_1",
+            "targetEquipmentId": "spirit_robe",
+            "clueNodeIds": ["broken_sigil_reward", "fallen_pack_reward"],
+            "crossedDungeonPortal": false
+          }
+        },
+        {
+          "op": "add",
+          "path": ["state", "run", "pendingEquipmentOffer"],
+          "value": {
+            "offerId": "acceptance-legacy-hunt-offer",
+            "equipmentIds": ["spirit_robe", "bone_spear"],
+            "guaranteedEquipmentId": "spirit_robe"
+          }
+        },
+        { "op": "add", "path": ["state", "run", "lootOffersMade"], "value": 1 }
+      ],
+      "expected": {
+        "restoredSnapshot": {
+          "rulesVersion": 1,
+          "dungeonId": "demon_tower_1",
+          "targetEquipmentId": "spirit_robe",
+          "clueNodeIds": ["broken_sigil_reward", "fallen_pack_reward"],
+          "crossedDungeonPortal": false
+        },
+        "pendingOffer": {
+          "offerId": "acceptance-legacy-hunt-offer",
+          "equipmentIds": ["spirit_robe", "bone_spear"],
+          "guaranteedEquipmentId": "spirit_robe"
+        },
+        "restoredStatus": {
+          "enabled": true,
+          "dungeonId": "demon_tower_1",
+          "targetEquipmentId": "spirit_robe",
+          "cleared": true,
+          "qualified": false,
+          "crossed": false,
+          "offer": true,
+          "selected": false,
+          "passed": false
+        },
+        "selectedEquipmentId": "spirit_robe",
+        "settledLootBag": {
+          "rewardPoints": 0,
+          "lingyun": 0,
+          "items": {},
+          "equipmentIds": ["spirit_robe"]
+        },
+        "settledStatus": {
+          "enabled": true,
+          "dungeonId": "demon_tower_1",
+          "targetEquipmentId": "spirit_robe",
+          "cleared": true,
+          "qualified": false,
+          "crossed": false,
+          "offer": false,
+          "selected": true,
+          "passed": false
+        },
+        "permanentStateAfterSettlement": {
+          "rewardPoints": 850,
+          "lingyun": 1,
+          "ownsSelectedEquipment": false
+        },
+        "warningCodes": [
+          "legacy-run-without-tactical-snapshot",
+          "legacy-run-without-companion-snapshot",
+          "legacy-run-without-method-snapshot",
+          "legacy-run-without-bloodline-snapshot"
+        ]
+      }
+    }
+  ]
+}

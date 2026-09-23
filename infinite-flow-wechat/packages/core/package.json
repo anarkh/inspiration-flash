@@ -1,0 +1,105 @@
+{
+  "name": "@infinite-flow/core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./boss-system": {
+      "types": "./dist/boss-system.d.ts",
+      "default": "./dist/boss-system.js"
+    },
+    "./combat-focus": {
+      "types": "./dist/combat-focus.d.ts",
+      "default": "./dist/combat-focus.js"
+    },
+    "./dungeon-laws": {
+      "types": "./dist/dungeon-laws.d.ts",
+      "default": "./dist/dungeon-laws.js"
+    },
+    "./equipment-commissions": {
+      "types": "./dist/equipment-commissions.d.ts",
+      "default": "./dist/equipment-commissions.js"
+    },
+    "./equipment-hunts": {
+      "types": "./dist/equipment-hunts.d.ts",
+      "default": "./dist/equipment-hunts.js"
+    },
+    "./equipment-memory-hunts": {
+      "types": "./dist/equipment-memory-hunts.d.ts",
+      "default": "./dist/equipment-memory-hunts.js"
+    },
+    "./equipment-relic-conduits": {
+      "types": "./dist/equipment-relic-conduits.d.ts",
+      "default": "./dist/equipment-relic-conduits.js"
+    },
+    "./equipment-rolls": {
+      "types": "./dist/equipment-rolls.d.ts",
+      "default": "./dist/equipment-rolls.js"
+    },
+    "./equipment-soul-skills": {
+      "types": "./dist/equipment-soul-skills.d.ts",
+      "default": "./dist/equipment-soul-skills.js"
+    },
+    "./equipment-system": {
+      "types": "./dist/equipment-system.d.ts",
+      "default": "./dist/equipment-system.js"
+    },
+    "./exploration-guide": {
+      "types": "./dist/exploration-guide.d.ts",
+      "default": "./dist/exploration-guide.js"
+    },
+    "./exploration-rewards": {
+      "types": "./dist/exploration-rewards.d.ts",
+      "default": "./dist/exploration-rewards.js"
+    },
+    "./field-surveys": {
+      "types": "./dist/field-surveys.d.ts",
+      "default": "./dist/field-surveys.js"
+    },
+    "./inferno-system": {
+      "types": "./dist/inferno-system.d.ts",
+      "default": "./dist/inferno-system.js"
+    },
+    "./method-cultivation": {
+      "types": "./dist/method-cultivation.d.ts",
+      "default": "./dist/method-cultivation.js"
+    },
+    "./route-contracts": {
+      "types": "./dist/route-contracts.d.ts",
+      "default": "./dist/route-contracts.js"
+    },
+    "./run-economy": {
+      "types": "./dist/run-economy.d.ts",
+      "default": "./dist/run-economy.js"
+    },
+    "./run-pressure": {
+      "types": "./dist/run-pressure.d.ts",
+      "default": "./dist/run-pressure.js"
+    },
+    "./run-protocols": {
+      "types": "./dist/run-protocols.d.ts",
+      "default": "./dist/run-protocols.js"
+    },
+    "./run-relics": {
+      "types": "./dist/run-relics.d.ts",
+      "default": "./dist/run-relics.js"
+    },
+    "./task-system": {
+      "types": "./dist/task-system.d.ts",
+      "default": "./dist/task-system.js"
+    },
+    "./tactical-loadout": {
+      "types": "./dist/tactical-loadout.d.ts",
+      "default": "./dist/tactical-loadout.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node scripts/rewrite-esm-imports.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "npm run build && node scripts/verify-dist.mjs"
+  }
+}

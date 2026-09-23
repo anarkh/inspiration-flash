@@ -1,0 +1,923 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "law-11-mirror",
+  "provenance": {
+    "oracle": {
+      "project": "infinite-flow-web",
+      "commit": "2645f0232542684d27de1abc321bb26913320420",
+      "path": "infinite-flow/src/dungeon-laws.ts",
+      "sha256": "6deffb2bbbde6a9f4110603fb71f948e6543f5bc3985659cab81a82b7ca292ca"
+    },
+    "goldenManifest": {
+      "path": "packages/save-codec/tests/fixtures/manifest.json",
+      "sha256": "36fcff8420e9aefbb8fe8c472b42fd5dbf6835025beee05b567a8481d6ca6bf1"
+    },
+    "expectedRule": "Mirror Cycle City tracks a real/mirror phase with three phase mirrors (first_phase_mirror, second_phase_mirror, third_phase_mirror). Clearing a phase mirror opens a pending phase choice that blocks departure (镜城相位尚未指定，请先选择现实或镜像。) until the player resolves law/resolve-mirror-city-phase; choosing the other phase costs 10% of max HP (5% with phaseweaveMantle), logged 镜城相位·现实/镜像：支付最大生命 10%（N 点），相位选择已落定。, while keeping the current phase costs nothing (相位保持不变). A switching choice is unavailable when current HP is not above the cost (当前生命不足以支付相位切换代价。) and resolving without a pending choice is rejected 当前没有待指定的镜城相位。. Real phase grants outgoing force +12% and art -6% (art 0% with parallaxVisor); mirror phase inverts this. real_anchor lights anchors.real only while in real phase; mirror_anchor lights anchors.mirror only while in mirror phase; lighting the wrong phase leaves the anchor dark. Route gates: mirror_city_real_relic_phase_lane opens only in real phase, mirror_city_mirror_relic_phase_lane only in mirror phase, mirror_city_real_anchor_survey_lane needs the real anchor, mirror_city_mirror_anchor_recharge_lane needs the mirror anchor, mirror_city_dual_anchor_survey_lane needs both anchors, and the four nameless_reflection approaches need all three phase choices (完成三处相位抉择后，镜王门才会显形。); closed gates remove the edge from legal adjacent targets so run/move through them is rejected illegal-move. Starting the nameless_reflection boss combat snapshots the lit anchors into bossAnchorSnapshot and mints totalShells = max(0, 2 - anchoredPhaseCount - homecomingPrism) mirror shells (2 with no anchors, 1 with one anchor); the display shows 现实相位，镜壳 R/T. Each damaging hit against the boss while shells remain consumes one shell, halves the final damage (min 1) and logs 镜壳抵消本次攻势，最终伤害减半，剩余 N 枚。; after the snapshot phase choices can no longer be specified. Display severity is danger while a phase choice is pending or at least 2 shells remain, warning with one shell or unresolved mirrors, resolved only when both anchors are lit or the boss has started. Law state persists through a save-codec round-trip. Re-selecting a cleared phase mirror is rejected already-resolved without changing law state or HP. All expected values are frozen here, never read from candidate code."
+  },
+  "baseInput": {
+    "path": "packages/save-codec/tests/fixtures/new-hub-v1.json",
+    "sha256": "a1de1f1b33b59c91dea46caf55f21b6eee0b7104c2cbe4d68ac5d7a430709e0b"
+  },
+  "inputMutations": [
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "completedDungeonIds"
+      ],
+      "value": [
+        "demon_tower_1",
+        "metro_abyss",
+        "starfall_mine",
+        "rust_hospital",
+        "ash_arena",
+        "dream_archive",
+        "void_citadel",
+        "temporal_observatory",
+        "causal_clearinghouse",
+        "entropy_ark"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "claimedTaskIds"
+      ],
+      "value": [
+        "clear_demon_tower",
+        "clear_metro_abyss",
+        "mainline_clear_starfall_mine",
+        "mainline_clear_rust_hospital",
+        "mainline_clear_ash_arena",
+        "mainline_clear_dream_archive",
+        "mainline_clear_void_citadel",
+        "mainline_clear_temporal_observatory",
+        "mainline_clear_causal_clearinghouse",
+        "mainline_clear_entropy_ark"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "preparedItemIds"
+      ],
+      "value": [
+        "healing_pill",
+        "focus_incense",
+        "armor_patch"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "inventory",
+        "healing_pill"
+      ],
+      "value": 40
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "inventory",
+        "focus_incense"
+      ],
+      "value": 3
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "inventory",
+        "armor_patch"
+      ],
+      "value": 3
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "learnedMethods"
+      ],
+      "value": [
+        "iron_body"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "methodRanks"
+      ],
+      "value": {
+        "iron_body": 1
+      }
+    },
+    {
+      "op": "add",
+      "path": [
+        "state",
+        "activeMethod"
+      ],
+      "value": "iron_body"
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "ownedEquipment"
+      ],
+      "value": [
+        "training_blade",
+        "patched_headwrap",
+        "patched_coat",
+        "patched_gloves",
+        "patched_boots",
+        "patched_belt",
+        "plain_charm",
+        "ember_staff",
+        "mist_hood",
+        "spirit_robe",
+        "guardian_gauntlets",
+        "cloudstep_boots",
+        "rift_belt",
+        "rift_charm"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "equipped"
+      ],
+      "value": {
+        "weapon": "ember_staff",
+        "head": "mist_hood",
+        "armor": "spirit_robe",
+        "hands": "guardian_gauntlets",
+        "feet": "cloudstep_boots",
+        "waist": "rift_belt",
+        "charm": "rift_charm"
+      }
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "equipmentLevels"
+      ],
+      "value": {
+        "training_blade": 1,
+        "patched_headwrap": 1,
+        "patched_coat": 1,
+        "patched_gloves": 1,
+        "patched_boots": 1,
+        "patched_belt": 1,
+        "plain_charm": 1,
+        "ember_staff": 3,
+        "mist_hood": 1,
+        "spirit_robe": 1,
+        "guardian_gauntlets": 1,
+        "cloudstep_boots": 1,
+        "rift_belt": 1,
+        "rift_charm": 1
+      }
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "ownedPets"
+      ],
+      "value": [
+        "contract_sprite"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "petLevels"
+      ],
+      "value": {
+        "contract_sprite": 1
+      }
+    },
+    {
+      "op": "add",
+      "path": [
+        "state",
+        "activePet"
+      ],
+      "value": "contract_sprite"
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "player",
+        "base",
+        "spirit"
+      ],
+      "value": 15
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "player",
+        "base",
+        "body"
+      ],
+      "value": 20
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "player",
+        "base",
+        "agility"
+      ],
+      "value": 10
+    }
+  ],
+  "entrySeed": 101010101,
+  "scenarioIds": [
+    "mirror-phase-three-mirrors",
+    "mirror-phase-switch-cost",
+    "mirror-anchor-gates",
+    "mirror-shell-boss",
+    "mirror-shell-anchor-count"
+  ],
+  "scenarios": [
+    {
+      "id": "mirror-phase-three-mirrors",
+      "expected": {
+        "entryDisplay": {
+          "status": "现实相位，抉择 0/3，锚点 0/2",
+          "severity": "warning",
+          "meter": {
+            "value": 0,
+            "max": 3
+          },
+          "targetReached": false
+        },
+        "entryModifiers": {
+          "encounter": {
+            "allStatsPercent": 0,
+            "defensePercent": 0,
+            "artPowerPercent": 0
+          },
+          "trap": {
+            "damagePercent": 0,
+            "dcPercent": 0
+          },
+          "healingPercent": 0,
+          "outgoingDamage": {
+            "forcePercent": 12,
+            "artPercent": -6
+          },
+          "guardEffectPercent": 0
+        },
+        "entryLawData": {
+          "kind": "mirror_cycle_city",
+          "currentPhase": "real",
+          "pendingPhaseNodeId": null,
+          "resolvedPhaseChoices": {},
+          "anchors": {
+            "real": false,
+            "mirror": false
+          },
+          "bossAnchorSnapshot": null,
+          "brokenMirrorShells": 0,
+          "entryPassives": {
+            "parallaxVisor": false,
+            "phaseweaveMantle": false,
+            "homecomingPrism": false
+          }
+        },
+        "clears": [
+          {
+            "kind": "monster",
+            "nodeId": "parallax_hunter_spine",
+            "rounds": 3,
+            "hpAfter": 366
+          },
+          {
+            "kind": "mirror",
+            "nodeId": "first_phase_mirror",
+            "hpAfter": 366,
+            "pending": "first_phase_mirror",
+            "display": {
+              "status": "现实相位，待定相位，锚点 0/2",
+              "severity": "danger",
+              "meter": {
+                "value": 0,
+                "max": 3
+              },
+              "targetReached": false
+            }
+          },
+          {
+            "kind": "resolve",
+            "console": "first_phase_mirror",
+            "phase": "mirror",
+            "hpBefore": 366,
+            "hpAfter": 329,
+            "log": "镜城相位·镜像：支付最大生命 10%（37 点），相位选择已落定。",
+            "status": "committed",
+            "outgoingDamage": {
+              "forcePercent": -6,
+              "artPercent": 12
+            }
+          },
+          {
+            "kind": "mirror",
+            "nodeId": "second_phase_mirror",
+            "hpAfter": 329,
+            "pending": "second_phase_mirror",
+            "display": {
+              "status": "镜像相位，待定相位，锚点 0/2",
+              "severity": "danger",
+              "meter": {
+                "value": 1,
+                "max": 3
+              },
+              "targetReached": false
+            }
+          },
+          {
+            "kind": "resolve",
+            "console": "second_phase_mirror",
+            "phase": "real",
+            "hpBefore": 329,
+            "hpAfter": 292,
+            "log": "镜城相位·现实：支付最大生命 10%（37 点），相位选择已落定。",
+            "status": "committed",
+            "outgoingDamage": {
+              "forcePercent": 12,
+              "artPercent": -6
+            }
+          },
+          {
+            "kind": "monster",
+            "nodeId": "soul_recharge_mirror",
+            "rounds": 4,
+            "hpAfter": 274
+          },
+          {
+            "kind": "mirror",
+            "nodeId": "third_phase_mirror",
+            "hpAfter": 274,
+            "pending": "third_phase_mirror",
+            "display": {
+              "status": "现实相位，待定相位，锚点 0/2",
+              "severity": "danger",
+              "meter": {
+                "value": 2,
+                "max": 3
+              },
+              "targetReached": false
+            }
+          },
+          {
+            "kind": "resolve",
+            "console": "third_phase_mirror",
+            "phase": "real",
+            "hpBefore": 274,
+            "hpAfter": 274,
+            "log": "镜城相位·现实：相位保持不变，相位选择已落定。",
+            "status": "committed",
+            "outgoingDamage": {
+              "forcePercent": 12,
+              "artPercent": -6
+            }
+          }
+        ],
+        "departureBlock": {
+          "status": "rejected",
+          "code": "departure-blocked",
+          "message": "镜城相位尚未指定，请先选择现实或镜像。",
+          "target": "real_anchor"
+        },
+        "gates": [
+          {
+            "when": "first-mirror-real-phase",
+            "at": "first_phase_mirror",
+            "target": "real_relic_gallery",
+            "gateId": "mirror_city_real_relic_phase_lane",
+            "status": "open",
+            "isOpen": true,
+            "blockReason": null
+          },
+          {
+            "when": "first-mirror-mirror-phase",
+            "at": "first_phase_mirror",
+            "target": "real_relic_gallery",
+            "gateId": "mirror_city_real_relic_phase_lane",
+            "status": "closed",
+            "isOpen": false,
+            "blockReason": "仅现实相位可开启这条支路。"
+          }
+        ],
+        "closedMove": {
+          "target": "real_relic_gallery",
+          "status": "rejected",
+          "code": "illegal-move",
+          "message": "real_relic_gallery is not a legal adjacent destination from first_phase_mirror."
+        },
+        "finalDisplay": {
+          "status": "现实相位，抉择 3/3，锚点 0/2",
+          "severity": "stable",
+          "meter": {
+            "value": 3,
+            "max": 3
+          },
+          "targetReached": true
+        },
+        "bossGateOpen": {
+          "at": "third_phase_mirror",
+          "target": "nameless_reflection",
+          "gateId": "mirror_city_lower_boss_approach",
+          "status": "open",
+          "isOpen": true,
+          "blockReason": null
+        },
+        "roundtrip": {
+          "status": "decoded",
+          "lawData": {
+            "kind": "mirror_cycle_city",
+            "currentPhase": "real",
+            "pendingPhaseNodeId": null,
+            "resolvedPhaseChoices": {
+              "first_phase_mirror": "mirror",
+              "second_phase_mirror": "real",
+              "third_phase_mirror": "real"
+            },
+            "anchors": {
+              "real": false,
+              "mirror": false
+            },
+            "bossAnchorSnapshot": null,
+            "brokenMirrorShells": 0,
+            "entryPassives": {
+              "parallaxVisor": false,
+              "phaseweaveMantle": false,
+              "homecomingPrism": false
+            }
+          }
+        },
+        "reselect": {
+          "nodeId": "third_phase_mirror",
+          "status": "rejected",
+          "code": "already-resolved",
+          "message": "The current node is already cleared."
+        },
+        "noPendingResolve": {
+          "status": "rejected",
+          "code": "domain-rejected",
+          "message": "当前没有待指定的镜城相位。"
+        }
+      }
+    },
+    {
+      "id": "mirror-phase-switch-cost",
+      "expected": {
+        "entryMaxHp": 372,
+        "switchCost": 37,
+        "steps": [
+          {
+            "fight": "parallax_hunter_spine",
+            "rounds": 3,
+            "hpAfter": 366
+          },
+          {
+            "resolve": "real",
+            "hpBefore": 366,
+            "hpAfter": 366,
+            "log": "镜城相位·现实：相位保持不变，相位选择已落定。"
+          },
+          {
+            "anchor": "real",
+            "anchors": {
+              "real": true,
+              "mirror": false
+            }
+          },
+          {
+            "fight": "parallax_hunter_real",
+            "rounds": 3,
+            "hpAfter": 360
+          },
+          {
+            "fight": "mirror_chorus_real",
+            "rounds": 4,
+            "hpAfter": 342
+          },
+          {
+            "trap": "shard_rain_trap",
+            "hpBefore": 342,
+            "hpAfter": 304,
+            "log": "镜晶骤雨阵被你提前看破，但仍擦出 38 点伤害。 探索结算追加 130 点奖励、护甲补片 x1。"
+          },
+          {
+            "fight": "mirror_chorus_upper",
+            "rounds": 5,
+            "hpAfter": 264
+          },
+          {
+            "trap": "boss_side_trap",
+            "hpBefore": 264,
+            "hpAfter": 218,
+            "log": "镜王侧殿折光阵被你提前看破，但仍擦出 46 点伤害。 探索结算追加 130 点奖励。"
+          },
+          {
+            "resolve": "mirror",
+            "hpBefore": 218,
+            "hpAfter": 181,
+            "log": "镜城相位·镜像：支付最大生命 10%（37 点），相位选择已落定。"
+          },
+          {
+            "anchor": "mirror",
+            "anchors": {
+              "real": true,
+              "mirror": true
+            },
+            "display": "镜像相位，抉择 2/3，锚点 2/2"
+          },
+          {
+            "fight": "mirror_chorus_mirror",
+            "rounds": 5,
+            "hpAfter": 141
+          },
+          {
+            "fight": "parallax_hunter_mirror",
+            "rounds": 4,
+            "hpAfter": 120
+          },
+          {
+            "trap": "parallax_corridor_trap",
+            "hpBefore": 120,
+            "hpAfter": 73,
+            "log": "视差回廊被你提前看破，但仍擦出 47 点伤害。 探索结算追加 130 点奖励。"
+          },
+          {
+            "trap": "identity_fracture_trap",
+            "hpBefore": 73,
+            "hpAfter": 21,
+            "log": "身份碎裂阵被你提前看破，但仍擦出 52 点伤害。 探索结算追加 130 点奖励。"
+          }
+        ],
+        "dualAnchorGate": {
+          "at": "cycle_manifest",
+          "target": "mirror_city_survey",
+          "gateId": "mirror_city_dual_anchor_survey_lane",
+          "status": "open",
+          "isOpen": true,
+          "blockReason": null
+        },
+        "lowHpPending": {
+          "nodeId": "third_phase_mirror",
+          "hp": 21,
+          "choices": {
+            "real": {
+              "available": false,
+              "phaseChanged": true,
+              "damagePercent": 10,
+              "unavailableReason": "当前生命不足以支付相位切换代价。"
+            },
+            "mirror": {
+              "available": true,
+              "phaseChanged": false,
+              "damagePercent": 0
+            }
+          }
+        },
+        "lowHpSwitchRejected": {
+          "status": "rejected",
+          "code": "domain-rejected",
+          "message": "当前生命不足以支付相位切换代价。"
+        },
+        "lowHpSamePhaseResolved": {
+          "status": "committed",
+          "hpBefore": 21,
+          "hpAfter": 21,
+          "log": "镜城相位·镜像：相位保持不变，相位选择已落定。"
+        }
+      }
+    },
+    {
+      "id": "mirror-anchor-gates",
+      "expected": {
+        "steps": [
+          {
+            "fight": "parallax_hunter_spine",
+            "rounds": 3,
+            "hpAfter": 366
+          },
+          {
+            "anchor": "mirror_anchor",
+            "phase": "real",
+            "anchors": {
+              "real": false,
+              "mirror": false
+            },
+            "display": "现实相位，抉择 0/3，锚点 0/2"
+          },
+          {
+            "resolve": "mirror",
+            "hpBefore": 366,
+            "hpAfter": 329,
+            "log": "镜城相位·镜像：支付最大生命 10%（37 点），相位选择已落定。"
+          },
+          {
+            "resolve": "real",
+            "hpBefore": 329,
+            "hpAfter": 292,
+            "log": "镜城相位·现实：支付最大生命 10%（37 点），相位选择已落定。"
+          },
+          {
+            "anchor": "real_anchor",
+            "phase": "real",
+            "anchors": {
+              "real": true,
+              "mirror": false
+            },
+            "display": "现实相位，抉择 2/3，锚点 1/2"
+          },
+          {
+            "fight": "soul_recharge_mirror",
+            "rounds": 4,
+            "hpAfter": 274
+          },
+          {
+            "resolve": "real",
+            "hpBefore": 274,
+            "hpAfter": 274,
+            "log": "镜城相位·现实：相位保持不变，相位选择已落定。"
+          }
+        ],
+        "gates": [
+          {
+            "when": "mirror-anchor-dark",
+            "at": "mirror_anchor",
+            "target": "soul_recharge_mirror",
+            "gateId": "mirror_city_mirror_anchor_recharge_lane",
+            "status": "closed",
+            "isOpen": false,
+            "blockReason": "需在镜像相位点亮镜像锚点。"
+          },
+          {
+            "when": "real-anchor-lit",
+            "at": "real_anchor",
+            "target": "mirror_city_survey",
+            "gateId": "mirror_city_real_anchor_survey_lane",
+            "status": "open",
+            "isOpen": true,
+            "blockReason": null
+          },
+          {
+            "when": "dual-anchor-single-lit",
+            "at": "cycle_manifest",
+            "target": "mirror_city_survey",
+            "gateId": "mirror_city_dual_anchor_survey_lane",
+            "status": "closed",
+            "isOpen": false,
+            "blockReason": "现实与镜像锚点均点亮后开放。"
+          },
+          {
+            "when": "boss-two-choices",
+            "at": "cycle_manifest",
+            "target": "nameless_reflection",
+            "gateId": "mirror_city_manifest_boss_approach",
+            "status": "closed",
+            "isOpen": false,
+            "blockReason": "完成三处相位抉择后，镜王门才会显形。"
+          },
+          {
+            "when": "boss-three-choices",
+            "at": "cycle_manifest",
+            "target": "nameless_reflection",
+            "gateId": "mirror_city_manifest_boss_approach",
+            "status": "open",
+            "isOpen": true,
+            "blockReason": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "mirror-shell-boss",
+      "expected": {
+        "steps": [
+          {
+            "fight": "parallax_hunter_spine",
+            "rounds": 3,
+            "hpAfter": 366
+          },
+          {
+            "resolve": "mirror",
+            "hpBefore": 366,
+            "hpAfter": 329,
+            "log": "镜城相位·镜像：支付最大生命 10%（37 点），相位选择已落定。"
+          },
+          {
+            "resolve": "real",
+            "hpBefore": 329,
+            "hpAfter": 292,
+            "log": "镜城相位·现实：支付最大生命 10%（37 点），相位选择已落定。"
+          },
+          {
+            "fight": "soul_recharge_mirror",
+            "rounds": 4,
+            "hpAfter": 274
+          },
+          {
+            "resolve": "real",
+            "hpBefore": 274,
+            "hpAfter": 274,
+            "log": "镜城相位·现实：相位保持不变，相位选择已落定。"
+          }
+        ],
+        "bossLawAtStart": {
+          "kind": "mirror_cycle_city",
+          "currentPhase": "real",
+          "pendingPhaseNodeId": null,
+          "resolvedPhaseChoices": {
+            "first_phase_mirror": "mirror",
+            "second_phase_mirror": "real",
+            "third_phase_mirror": "real"
+          },
+          "anchors": {
+            "real": false,
+            "mirror": false
+          },
+          "bossAnchorSnapshot": {
+            "real": false,
+            "mirror": false
+          },
+          "brokenMirrorShells": 0,
+          "entryPassives": {
+            "parallaxVisor": false,
+            "phaseweaveMantle": false,
+            "homecomingPrism": false
+          }
+        },
+        "bossDisplayAtStart": {
+          "status": "现实相位，镜壳 2/2",
+          "severity": "danger",
+          "meter": {
+            "value": 3,
+            "max": 3
+          },
+          "targetReached": true
+        },
+        "shellConsumption": [
+          {
+            "round": 0,
+            "log": "镜壳抵消本次攻势，最终伤害减半，剩余 1 枚。",
+            "monsterHpBefore": 655,
+            "monsterHpAfter": 620
+          },
+          {
+            "round": 1,
+            "log": "镜壳抵消本次攻势，最终伤害减半，剩余 0 枚。",
+            "monsterHpBefore": 620,
+            "monsterHpAfter": 585
+          }
+        ],
+        "halvedDamage": 35,
+        "fullDamage": 71,
+        "bossFight": {
+          "rounds": 14,
+          "hpAfter": 72,
+          "cleared": true
+        },
+        "lawAfterBoss": {
+          "kind": "mirror_cycle_city",
+          "bossAnchorSnapshot": {
+            "real": false,
+            "mirror": false
+          },
+          "brokenMirrorShells": 2
+        },
+        "displayAfterBoss": {
+          "status": "现实相位，镜壳 0/2",
+          "severity": "resolved",
+          "meter": {
+            "value": 3,
+            "max": 3
+          },
+          "targetReached": true
+        },
+        "resolveAfterBoss": {
+          "status": "rejected",
+          "code": "domain-rejected",
+          "message": "当前没有待指定的镜城相位。"
+        },
+        "roundtrip": {
+          "status": "decoded",
+          "bossAnchorSnapshot": {
+            "real": false,
+            "mirror": false
+          },
+          "brokenMirrorShells": 2
+        }
+      }
+    },
+    {
+      "id": "mirror-shell-anchor-count",
+      "expected": {
+        "steps": [
+          {
+            "fight": "parallax_hunter_spine",
+            "rounds": 3,
+            "hpAfter": 366
+          },
+          {
+            "resolve": "real",
+            "hpBefore": 366,
+            "hpAfter": 366,
+            "log": "镜城相位·现实：相位保持不变，相位选择已落定。"
+          },
+          {
+            "anchor": "real_anchor",
+            "anchors": {
+              "real": true,
+              "mirror": false
+            }
+          },
+          {
+            "resolve": "real",
+            "hpBefore": 366,
+            "hpAfter": 366,
+            "log": "镜城相位·现实：相位保持不变，相位选择已落定。"
+          },
+          {
+            "fight": "soul_recharge_mirror",
+            "rounds": 4,
+            "hpAfter": 348
+          },
+          {
+            "resolve": "real",
+            "hpBefore": 348,
+            "hpAfter": 348,
+            "log": "镜城相位·现实：相位保持不变，相位选择已落定。"
+          }
+        ],
+        "displayBeforeBoss": "现实相位，抉择 3/3，锚点 1/2",
+        "bossLawAtStart": {
+          "bossAnchorSnapshot": {
+            "real": true,
+            "mirror": false
+          },
+          "brokenMirrorShells": 0
+        },
+        "bossDisplayAtStart": {
+          "status": "现实相位，镜壳 1/1",
+          "severity": "warning",
+          "meter": {
+            "value": 3,
+            "max": 3
+          },
+          "targetReached": true
+        },
+        "shellConsumption": [
+          {
+            "round": 0,
+            "log": "镜壳抵消本次攻势，最终伤害减半，剩余 0 枚。",
+            "monsterHpBefore": 721,
+            "monsterHpAfter": 688
+          }
+        ],
+        "halvedDamage": 33,
+        "fullDamage": 67,
+        "bossFight": {
+          "rounds": 22,
+          "hpAfter": 72,
+          "cleared": true
+        },
+        "lawAfterBoss": {
+          "bossAnchorSnapshot": {
+            "real": true,
+            "mirror": false
+          },
+          "brokenMirrorShells": 1
+        },
+        "displayAfterBoss": {
+          "status": "现实相位，镜壳 0/1",
+          "severity": "resolved",
+          "meter": {
+            "value": 3,
+            "max": 3
+          },
+          "targetReached": true
+        }
+      }
+    }
+  ]
+}

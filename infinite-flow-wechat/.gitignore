@@ -1,0 +1,16 @@
+node_modules/
+coverage/
+dist/
+
+# Cocos Creator generated state and build output.
+cocos/build/
+cocos/library/
+cocos/local/
+cocos/profiles/
+cocos/temp/
+
+# Local platform credentials and exported build settings may contain AppIDs.
+*.local.json
+.env
+.env.*
+!.env.example

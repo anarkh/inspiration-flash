@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "creator": {
+    "version": "3.8.8",
+    "builderConfigVersion": "1.3.9",
+    "platform": "wechatgame"
+  },
+  "source": {
+    "manifestPath": "cocos/assets/config/asset-manifest.json",
+    "manifestRevision": "sha256:18dd6c94a24afa4ec7c0a44b9f6facf4af6ea6f0ef04e60c47ea56aeee468125",
+    "assetCount": 223,
+    "resourceBytes": 78614634
+  },
+  "bundle": {
+    "name": "resources",
+    "uuid": "fb6cd6ef-57d2-4cf7-8286-327137b480cc",
+    "metadataPath": "cocos/assets/resources.meta",
+    "metadataVersion": "1.2.0",
+    "bundleConfigID": "resources-remote-wechat-v1",
+    "builderSettingsPath": "cocos/settings/v2/packages/builder.json",
+    "priority": 8,
+    "rootPolicy": "preserve-editor-generated"
+  },
+  "configBundle": {
+    "name": "config",
+    "uuid": "fd882dc1-24c1-4b13-aac4-76960c1783ee",
+    "metadataPath": "cocos/assets/config.meta",
+    "metadataVersion": "1.2.0",
+    "bundleConfigID": "default",
+    "priority": 9,
+    "rootPolicy": "preserve-editor-generated",
+    "manifestPath": "asset-manifest",
+    "manifestUuid": "3d0842ec-43f7-4b5f-961f-39edb535ccd7",
+    "manifestMetadataPath": "cocos/assets/config/asset-manifest.json.meta",
+    "manifestMetadataVersion": "2.0.1",
+    "bundleConfig": {
+      "isRemote": false,
+      "compressionType": "merge_dep",
+      "output": true
+    }
+  },
+  "wechat": {
+    "appIdEnv": "COCOS_WECHAT_APPID",
+    "remoteBaseUrlEnv": "COCOS_WECHAT_REMOTE_BASE_URL",
+    "templateAppId": "wx0000000000000000",
+    "templateRemoteBaseUrl": "https://assets.invalid/",
+    "creatorDefaultAppIdSha256": "f7d04fb3a80b08dedbbc8c5129f468e320615941c98bfd187a445342c853eae7",
+    "remotePathPrefix": "infinite-flow/resources",
+    "repositorySourceByteEvidenceBoundaryBytes": 4194304,
+    "requiredPackageFields": [
+      "appid",
+      "buildOpenDataContextTemplate",
+      "orientation",
+      "separateEngine",
+      "highPerformanceMode",
+      "wasmSubpackage"
+    ]
+  },
+  "modes": {
+    "remote": {
+      "releaseEligible": true,
+      "label": "REMOTE_RELEASE",
+      "bundleConfig": {
+        "isRemote": true,
+        "compressionType": "merge_dep",
+        "output": true
+      },
+      "buildOverrides": {
+        "mainBundleIsRemote": false,
+        "useBuiltinServer": false,
+        "startSceneAssetBundle": false,
+        "moveRemoteBundleScript": true,
+        "md5Cache": true
+      }
+    },
+    "subpackage-smoke": {
+      "releaseEligible": false,
+      "projectPolicyCompatible": false,
+      "label": "NON_RELEASE_SUBPACKAGE_SMOKE",
+      "reason": "The resources directory is statically bound to the remote-only resources-remote-wechat-v1 Creator preset. A single directory meta cannot safely switch to subpackage packaging, so this legacy registry entry is documentation-only and every config verification gate rejects it.",
+      "bundleConfig": {
+        "isRemote": false,
+        "compressionType": "subpackage",
+        "output": true
+      },
+      "buildOverrides": {
+        "mainBundleIsRemote": false,
+        "useBuiltinServer": false,
+        "startSceneAssetBundle": false,
+        "moveRemoteBundleScript": true,
+        "md5Cache": true,
+        "server": ""
+      }
+    }
+  }
+}

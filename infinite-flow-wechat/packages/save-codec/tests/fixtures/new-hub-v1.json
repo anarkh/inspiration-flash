@@ -1,0 +1,99 @@
+{
+  "version": 1,
+  "state": {
+    "phase": "hub",
+    "rewardPoints": 850,
+    "lingyun": 1,
+    "player": {
+      "hp": 102,
+      "maxHp": 102,
+      "base": {
+        "body": 3,
+        "spirit": 2,
+        "agility": 2,
+        "luck": 1
+      }
+    },
+    "inventory": {
+      "healing_pill": 0,
+      "thunder_talisman": 0,
+      "dispel_talisman": 0,
+      "gate_sigil": 0,
+      "echo_coin": 0,
+      "capture_net": 0,
+      "spirit_bait": 0,
+      "armor_patch": 0,
+      "focus_incense": 0,
+      "demon_bone": 0,
+      "hidden_stone": 0,
+      "medicine_ash": 0,
+      "mirror_shell": 0,
+      "star_iron": 0,
+      "method_page": 0,
+      "cracked_core": 0,
+      "rift_dust": 0,
+      "chronal_glass": 0,
+      "cycle_imprint": 0,
+      "causal_seal": 0,
+      "entropy_crystal": 0,
+      "phase_glass": 0,
+      "redaction_ink": 0,
+      "legacy_scrip": 0,
+      "genesis_serum": 0,
+      "silence_core": 0,
+      "rescue_badge": 0,
+      "truth_fragment": 0,
+      "combat_reel": 0,
+      "observation_shard": 0
+    },
+    "ownedEquipment": [
+      "training_blade",
+      "patched_headwrap",
+      "patched_coat",
+      "patched_gloves",
+      "patched_boots",
+      "patched_belt",
+      "plain_charm"
+    ],
+    "equipmentLevels": {
+      "training_blade": 1,
+      "patched_headwrap": 1,
+      "patched_coat": 1,
+      "patched_gloves": 1,
+      "patched_boots": 1,
+      "patched_belt": 1,
+      "plain_charm": 1
+    },
+    "equipmentAttunements": {},
+    "equipmentTemperRanks": {},
+    "equipmentRolls": {},
+    "equipmentMemories": {},
+    "equipped": {
+      "weapon": "training_blade",
+      "head": "patched_headwrap",
+      "armor": "patched_coat",
+      "hands": "patched_gloves",
+      "feet": "patched_boots",
+      "waist": "patched_belt",
+      "charm": "plain_charm"
+    },
+    "preparedItemIds": [],
+    "preparedRelicFrame": "assault",
+    "archivedRelicIds": [],
+    "learnedMethods": [],
+    "methodRanks": {},
+    "bloodlineRanks": {},
+    "completedDungeonIds": [],
+    "infernoProgress": {},
+    "enteredDungeonIds": [],
+    "claimedDirectiveIds": [],
+    "claimedTaskIds": [],
+    "ownedPets": [],
+    "petLevels": {},
+    "ownedCompanions": [],
+    "companionRanks": {},
+    "log": [
+      "白光散去，你站在主神空间。兑换碑、功法碑和三道副本门同时亮起。"
+    ]
+  }
+}

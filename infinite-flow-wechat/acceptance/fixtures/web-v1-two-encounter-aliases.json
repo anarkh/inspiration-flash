@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "web-v1-two-encounter-aliases",
+  "provenance": {
+    "oracle": {
+      "project": "infinite-flow-web",
+      "commit": "2645f0232542684d27de1abc321bb26913320420",
+      "path": "infinite-flow/src/main.ts",
+      "sha256": "d07ff9d4562ecc618caf3341e5f83cb2b43a733c19506c14c362d1cd07bfb8bb"
+    },
+    "goldenManifest": {
+      "path": "packages/save-codec/tests/fixtures/manifest.json",
+      "sha256": "36fcff8420e9aefbb8fe8c472b42fd5dbf6835025beee05b567a8481d6ca6bf1"
+    },
+    "expectedRule": "the two alias rows and all expected post-migration fields are frozen here, never read from candidate code"
+  },
+  "baseInput": {
+    "path": "packages/save-codec/tests/fixtures/active-combat-v1.json",
+    "sha256": "dda0eb64454305b8c85877678dec51069e1da3204342dd5c854b0a200b88fac2"
+  },
+  "scenarioIds": [
+    "lost-shelter-north-rescue-alias",
+    "panopticon-north-sweep-alias"
+  ],
+  "scenarios": [
+    {
+      "id": "lost-shelter-north-rescue-alias",
+      "legacyMonsterId": "mimic_survivor",
+      "inputMutations": [
+        { "op": "replace", "path": ["state", "enteredDungeonIds"], "value": ["lost_shelter"] },
+        { "op": "replace", "path": ["state", "run", "dungeonId"], "value": "lost_shelter" },
+        { "op": "replace", "path": ["state", "run", "currentNodeId"], "value": "north_rescue_patrol" },
+        { "op": "replace", "path": ["state", "run", "discoveredNodeIds"], "value": ["north_rescue_patrol"] },
+        { "op": "remove", "path": ["state", "run", "lawState"] },
+        { "op": "replace", "path": ["state", "run", "pursuitState", "dungeonId"], "value": "lost_shelter" },
+        { "op": "replace", "path": ["state", "combat", "nodeId"], "value": "north_rescue_patrol" },
+        { "op": "replace", "path": ["state", "combat", "monsterId"], "value": "mimic_survivor" }
+      ],
+      "expected": {
+        "repairCodes": [
+          "web-v1-fields-sanitized",
+          "web-v1-state-normalized"
+        ],
+        "state": {
+          "phase": "combat",
+          "rewardPoints": 850,
+          "lingyun": 1,
+          "run": {
+            "dungeonId": "lost_shelter",
+            "currentNodeId": "north_rescue_patrol",
+            "clearedNodeIds": [],
+            "resolvedEventIds": [],
+            "eventLog": [],
+            "lootBag": {
+              "rewardPoints": 0,
+              "lingyun": 0,
+              "items": {},
+              "equipmentIds": []
+            },
+            "lootOffersMade": 0
+          },
+          "combat": {
+            "nodeId": "north_rescue_patrol",
+            "monsterId": "rogue_sentry",
+            "monsterHp": 42,
+            "turn": 1,
+            "guarding": false
+          }
+        }
+      }
+    },
+    {
+      "id": "panopticon-north-sweep-alias",
+      "legacyMonsterId": "sweep_sentinel",
+      "inputMutations": [
+        { "op": "replace", "path": ["state", "enteredDungeonIds"], "value": ["panopticon_city"] },
+        { "op": "replace", "path": ["state", "run", "dungeonId"], "value": "panopticon_city" },
+        { "op": "replace", "path": ["state", "run", "currentNodeId"], "value": "sweep_sentinel_north" },
+        { "op": "replace", "path": ["state", "run", "discoveredNodeIds"], "value": ["sweep_sentinel_north"] },
+        { "op": "remove", "path": ["state", "run", "lawState"] },
+        { "op": "replace", "path": ["state", "run", "pursuitState", "dungeonId"], "value": "panopticon_city" },
+        { "op": "replace", "path": ["state", "combat", "nodeId"], "value": "sweep_sentinel_north" },
+        { "op": "replace", "path": ["state", "combat", "monsterId"], "value": "sweep_sentinel" }
+      ],
+      "expected": {
+        "repairCodes": [
+          "web-v1-fields-sanitized",
+          "web-v1-state-normalized"
+        ],
+        "state": {
+          "phase": "combat",
+          "rewardPoints": 850,
+          "lingyun": 1,
+          "run": {
+            "dungeonId": "panopticon_city",
+            "currentNodeId": "sweep_sentinel_north",
+            "clearedNodeIds": [],
+            "resolvedEventIds": [],
+            "eventLog": [],
+            "lootBag": {
+              "rewardPoints": 0,
+              "lingyun": 0,
+              "items": {},
+              "equipmentIds": []
+            },
+            "lootOffersMade": 0
+          },
+          "combat": {
+            "nodeId": "sweep_sentinel_north",
+            "monsterId": "phase_hunter_drone",
+            "monsterHp": 42,
+            "turn": 1,
+            "guarding": false
+          }
+        }
+      }
+    }
+  ]
+}

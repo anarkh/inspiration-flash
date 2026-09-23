@@ -1,0 +1,173 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "law-02-metro",
+  "provenance": {
+    "oracle": {
+      "project": "infinite-flow-web",
+      "commit": "2645f0232542684d27de1abc321bb26913320420",
+      "path": "infinite-flow/src/main.ts",
+      "sha256": "d07ff9d4562ecc618caf3341e5f83cb2b43a733c19506c14c362d1cd07bfb8bb"
+    },
+    "goldenManifest": {
+      "path": "packages/save-codec/tests/fixtures/manifest.json",
+      "sha256": "36fcff8420e9aefbb8fe8c472b42fd5dbf6835025beee05b567a8481d6ca6bf1"
+    },
+    "expectedRule": "Metro tide cycles ebb→flood→mirror on every first node clear; clearing the signal_cache calibration node resets the tide to ebb instead of advancing; tide gates open only at their required tide and mirror tide raises trap pressure. All expected values are frozen here, never read from candidate code."
+  },
+  "baseInput": {
+    "path": "packages/save-codec/tests/fixtures/new-hub-v1.json",
+    "sha256": "a1de1f1b33b59c91dea46caf55f21b6eee0b7104c2cbe4d68ac5d7a430709e0b"
+  },
+  "inputMutations": [
+    {
+      "op": "replace",
+      "path": ["state", "completedDungeonIds"],
+      "value": ["demon_tower_1"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "claimedTaskIds"],
+      "value": ["clear_demon_tower"]
+    }
+  ],
+  "entrySeed": 305419896,
+  "scenarioIds": [
+    "tide-cycle-on-first-clear",
+    "signal-cache-calibration",
+    "route-gates-follow-tide",
+    "mirror-tide-modifiers",
+    "mirror-gate-follows-tide",
+    "repeat-clear-no-advance"
+  ],
+  "scenarios": [
+    {
+      "id": "tide-cycle-on-first-clear",
+      "expected": {
+        "initialTide": "ebb",
+        "clears": [
+          { "nodeId": "platform_arrival", "tideAfter": "flood" },
+          { "nodeId": "tide_boatman", "tideAfter": "mirror", "combatRounds": 3, "hpAfter": 74 },
+          { "nodeId": "drainage_cache", "tideAfter": "ebb" },
+          { "nodeId": "mirror_tide_trap", "tideAfter": "flood", "hpAfter": 46 },
+          { "nodeId": "rail_patrol_wraith", "tideAfter": "mirror", "combatRounds": 3, "hpAfter": 32 },
+          { "nodeId": "coin_turnstile", "tideAfter": "ebb" },
+          { "nodeId": "wet_ticket_hall", "tideAfter": "flood" },
+          { "nodeId": "signal_cache", "tideAfter": "ebb" }
+        ],
+        "finalClearedNodeIds": [
+          "platform_arrival",
+          "tide_boatman",
+          "drainage_cache",
+          "mirror_tide_trap",
+          "rail_patrol_wraith",
+          "coin_turnstile",
+          "wet_ticket_hall",
+          "signal_cache"
+        ],
+        "finalTide": "ebb",
+        "finalHp": 32
+      }
+    },
+    {
+      "id": "signal-cache-calibration",
+      "expected": {
+        "calibrationNodeId": "signal_cache",
+        "tideBefore": "flood",
+        "tideAfter": "ebb",
+        "cycleWouldHaveAdvancedTo": "mirror"
+      }
+    },
+    {
+      "id": "route-gates-follow-tide",
+      "expected": {
+        "gates": [
+          {
+            "gateId": "metro_ebb_platform_track",
+            "checkedFromNodeId": "tide_boatman",
+            "targetNodeId": "mirror_tide_trap",
+            "requiredTide": "ebb",
+            "closedAtTide": "flood",
+            "closedReason": "仅退潮时通行；先到信号箱暗格复位潮序。",
+            "openAtTide": "ebb"
+          },
+          {
+            "gateId": "metro_flood_north_track",
+            "checkedFromNodeId": "coin_turnstile",
+            "targetNodeId": "north_floodgate_trap",
+            "requiredTide": "flood",
+            "closedAtTide": "ebb",
+            "closedReason": "仅涨潮时通行；先到信号箱暗格复位潮序。"
+          }
+        ]
+      }
+    },
+    {
+      "id": "mirror-tide-modifiers",
+      "expected": {
+        "observations": [
+          {
+            "tide": "mirror",
+            "trap": { "damagePercent": 20, "dcPercent": 20 },
+            "display": {
+              "title": "末班潮序",
+              "status": "镜潮",
+              "severity": "danger",
+              "meter": { "value": 2, "max": 2 },
+              "targetReached": false
+            }
+          },
+          {
+            "tide": "ebb",
+            "trap": { "damagePercent": 0, "dcPercent": 0 },
+            "display": {
+              "title": "末班潮序",
+              "status": "退潮",
+              "severity": "stable",
+              "meter": { "value": 0, "max": 2 },
+              "targetReached": true
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "mirror-gate-follows-tide",
+      "expected": {
+        "gateId": "metro_mirror_web_track",
+        "checkedFromNodeId": "mirror_web_cache",
+        "targetNodeId": "thread_snare_trap",
+        "requiredTide": "mirror",
+        "openAtTide": "mirror",
+        "closedAtTide": "ebb",
+        "closedReason": "仅镜潮时通行；先到信号箱暗格复位潮序。",
+        "clears": [
+          { "nodeId": "platform_arrival", "tideAfter": "flood" },
+          { "nodeId": "drainage_cache", "tideAfter": "mirror" },
+          { "nodeId": "lampbox_supply", "tideAfter": "ebb" },
+          { "nodeId": "rail_wraith", "tideAfter": "flood", "combatRounds": 3, "hpAfter": 88 },
+          { "nodeId": "mirror_web_cache", "tideAfter": "mirror" },
+          { "nodeId": "thread_snare_trap", "tideAfter": "ebb", "hpAfter": 49 }
+        ],
+        "finalClearedNodeIds": [
+          "platform_arrival",
+          "drainage_cache",
+          "lampbox_supply",
+          "rail_wraith",
+          "mirror_web_cache",
+          "thread_snare_trap"
+        ],
+        "finalTide": "ebb",
+        "finalHp": 49
+      }
+    },
+    {
+      "id": "repeat-clear-no-advance",
+      "expected": {
+        "reselectedNodeId": "mirror_web_cache",
+        "rejectionCode": "already-resolved",
+        "tideBefore": "ebb",
+        "tideAfter": "ebb"
+      }
+    }
+  ]
+}

@@ -1,0 +1,678 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "law-14-genesis",
+  "provenance": {
+    "oracle": {
+      "project": "infinite-flow-web",
+      "commit": "2645f0232542684d27de1abc321bb26913320420",
+      "path": "infinite-flow/src/dungeon-laws.ts",
+      "sha256": "6deffb2bbbde6a9f4110603fb71f948e6543f5bc3985659cab81a82b7ca292ca"
+    },
+    "goldenManifest": {
+      "path": "packages/save-codec/tests/fixtures/manifest.json",
+      "sha256": "36fcff8420e9aefbb8fe8c472b42fd5dbf6835025beee05b567a8481d6ca6bf1"
+    },
+    "expectedRule": "Genesis Vault tracks three splice consoles (first_splice_console, second_splice_console, third_splice_console). Clearing a console grants 1 genesis_serum and opens a pending splice choice that blocks departure (原型拼接尚未完成，请先选择武力、术法、守御或复生基因。) until the player resolves law/resolve-genesis-splice; serum cost is max(0, countGeneInSequence(gene) - entryGearFlag) where entryGearFlag is 1 only when the matching entry gear (helixCleaver 力, symbioteCowl 术, carapaceHarness 守, rebirthAmulet 复) is equipped, so the first copy is free, the second costs 1, the third costs 2. The genesis_gate start reward grants 2 genesis_serum; serum is dual-track in both state.run.lootBag.items.genesis_serum and state.inventory.genesis_serum, availability is min(run, durable), and node rewards grant to both tracks. Resolve logs 原型拼接·武力：消耗原型血清 N 支，本轮剩余 M 支。 (gene labels: force=武力, art=术法, guard=守御, renewal=复生); resolving without a pending choice or after all three are resolved is rejected as domain-rejected (The command did not produce a domain transition.), and re-selecting a cleared console is rejected already-resolved. Route gates: the specialization gate genesis_force_gallery_vault opens only when force was spliced at least 2 times (力之原型需专精至少2次后开放。), the myriad gate genesis_mosaic_corridor_vault opens only when all three splices are unique (完成三次拼接且选择三种互异原型后开放。), and the boss gate genesis_stalker_boss_gate needs all three splices resolved (完成三次拼接后，原型馆长入口才会开放。); closed gates remove edges from legal adjacent targets so run/move through them is rejected illegal-move. Starting the primal_curator boss combat with all three splices resolved snapshots the splice sequence into bossGenomeSnapshot and freezes further changes (首领基因组已经冻结，不能再进行拼接。); the display appends Boss快照 force/force/force. Boss modifiers derive from the snapshot during boss encounters: each force gene grants the player +4% / +6% outgoing force damage (sealed / awakened), each art +4% / +6% outgoing art damage, each guard +4% / +6% guardEffect, each renewal +4% / +6% healing; a dominant gene (≥2 of same) grants the boss an adaptation: force→defense +8% / +14%, art→artPower +8% / +14%, guard→allStats +5% / +10%, renewal→player healing -8% / -14% (halved if entry bloodline matches dominant). Display severity is warning while splices are unresolved, resolved when all three are resolved or the boss snapshot is frozen; the display line is 原型血清 N，拼接 X/3，多样性 U[，待拼接 nodeId][，Boss快照 seq|未冻结]. The law display's genesis.availableGenesisSerum intentionally reports 0 because the display projection only passes healing pills (identical in the Web v1 oracle); the serum-correct API is core.getCurrentGenesisSpliceStatus. Law state and dual-track serum persist through a save-codec round-trip. All expected values are frozen here, never read from candidate code."
+  },
+  "baseInput": {
+    "path": "packages/save-codec/tests/fixtures/new-hub-v1.json",
+    "sha256": "a1de1f1b33b59c91dea46caf55f21b6eee0b7104c2cbe4d68ac5d7a430709e0b"
+  },
+  "inputMutations": [
+    {
+      "op": "replace",
+      "path": ["state", "completedDungeonIds"],
+      "value": [
+        "demon_tower_1",
+        "metro_abyss",
+        "starfall_mine",
+        "rust_hospital",
+        "ash_arena",
+        "dream_archive",
+        "void_citadel",
+        "temporal_observatory",
+        "causal_clearinghouse",
+        "entropy_ark",
+        "mirror_cycle_city",
+        "redaction_scriptorium",
+        "legacy_auction_court"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "claimedTaskIds"],
+      "value": [
+        "clear_demon_tower",
+        "clear_metro_abyss",
+        "mainline_clear_starfall_mine",
+        "mainline_clear_rust_hospital",
+        "mainline_clear_ash_arena",
+        "mainline_clear_dream_archive",
+        "mainline_clear_void_citadel",
+        "mainline_clear_temporal_observatory",
+        "mainline_clear_causal_clearinghouse",
+        "mainline_clear_entropy_ark",
+        "mainline_clear_mirror_cycle_city",
+        "mainline_clear_redaction_scriptorium",
+        "mainline_clear_legacy_auction_court"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "preparedItemIds"],
+      "value": ["healing_pill", "focus_incense", "armor_patch"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "inventory", "healing_pill"],
+      "value": 60
+    },
+    {
+      "op": "replace",
+      "path": ["state", "inventory", "focus_incense"],
+      "value": 3
+    },
+    {
+      "op": "replace",
+      "path": ["state", "inventory", "armor_patch"],
+      "value": 3
+    },
+    {
+      "op": "replace",
+      "path": ["state", "learnedMethods"],
+      "value": ["iron_body"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "methodRanks"],
+      "value": { "iron_body": 1 }
+    },
+    {
+      "op": "add",
+      "path": ["state", "activeMethod"],
+      "value": "iron_body"
+    },
+    {
+      "op": "replace",
+      "path": ["state", "ownedEquipment"],
+      "value": [
+        "training_blade",
+        "patched_headwrap",
+        "patched_coat",
+        "patched_gloves",
+        "patched_boots",
+        "patched_belt",
+        "plain_charm",
+        "ember_staff",
+        "mist_hood",
+        "spirit_robe",
+        "guardian_gauntlets",
+        "cloudstep_boots",
+        "rift_belt",
+        "rift_charm"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "equipped"],
+      "value": {
+        "weapon": "ember_staff",
+        "head": "mist_hood",
+        "armor": "spirit_robe",
+        "hands": "guardian_gauntlets",
+        "feet": "cloudstep_boots",
+        "waist": "rift_belt",
+        "charm": "rift_charm"
+      }
+    },
+    {
+      "op": "replace",
+      "path": ["state", "equipmentLevels"],
+      "value": {
+        "training_blade": 1,
+        "patched_headwrap": 1,
+        "patched_coat": 1,
+        "patched_gloves": 1,
+        "patched_boots": 1,
+        "patched_belt": 1,
+        "plain_charm": 1,
+        "ember_staff": 3,
+        "mist_hood": 1,
+        "spirit_robe": 1,
+        "guardian_gauntlets": 1,
+        "cloudstep_boots": 1,
+        "rift_belt": 1,
+        "rift_charm": 1
+      }
+    },
+    {
+      "op": "replace",
+      "path": ["state", "ownedPets"],
+      "value": ["contract_sprite"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "petLevels"],
+      "value": { "contract_sprite": 1 }
+    },
+    {
+      "op": "add",
+      "path": ["state", "activePet"],
+      "value": "contract_sprite"
+    },
+    {
+      "op": "replace",
+      "path": ["state", "player", "base", "spirit"],
+      "value": 25
+    },
+    {
+      "op": "replace",
+      "path": ["state", "player", "base", "body"],
+      "value": 30
+    },
+    {
+      "op": "replace",
+      "path": ["state", "player", "base", "agility"],
+      "value": 15
+    }
+  ],
+  "entrySeed": 141414141,
+  "scenarioIds": [
+    "genesis-ordered-splice-serum",
+    "genesis-duplicate-cost-rejection",
+    "genesis-specialization-myriad-gates",
+    "genesis-boss-snapshot"
+  ],
+  "scenarios": [
+    {
+      "id": "genesis-ordered-splice-serum",
+      "expected": {
+        "entryDisplay": {
+          "status": "原型血清 0，拼接 0/3，多样性 0，Boss快照 未冻结",
+          "severity": "warning",
+          "meter": { "value": 0, "max": 3 },
+          "targetReached": false
+        },
+        "entryModifiers": {
+          "encounter": { "allStatsPercent": 0, "defensePercent": 0, "artPowerPercent": 0 },
+          "trap": { "damagePercent": 0, "dcPercent": 0 },
+          "healingPercent": 0,
+          "outgoingDamage": { "forcePercent": 0, "artPercent": 0 },
+          "guardEffectPercent": 0
+        },
+        "entryLawData": {
+          "kind": "genesis_vault",
+          "pendingSpliceNodeId": null,
+          "spliceSequence": [],
+          "bossGenomeSnapshot": null,
+          "entryGear": {
+            "helixCleaver": false,
+            "symbioteCowl": false,
+            "carapaceHarness": false,
+            "rebirthAmulet": false
+          },
+          "entryBloodline": { "aspect": null, "rank": 0 }
+        },
+        "entryGenesis": {
+          "availableGenesisSerum": 0,
+          "pendingSpliceNodeId": null,
+          "spliceSequence": [],
+          "uniqueCount": 0,
+          "bossGenomeSnapshot": null,
+          "projectedModifiers": {
+            "sealed": {
+              "encounter": { "allStatsPercent": 0, "defensePercent": 0, "artPowerPercent": 0 },
+              "trap": { "damagePercent": 0, "dcPercent": 0 },
+              "healingPercent": 0,
+              "outgoingDamage": { "forcePercent": 0, "artPercent": 0 },
+              "guardEffectPercent": 0
+            },
+            "awakened": {
+              "encounter": { "allStatsPercent": 0, "defensePercent": 0, "artPowerPercent": 0 },
+              "trap": { "damagePercent": 0, "dcPercent": 0 },
+              "healingPercent": 0,
+              "outgoingDamage": { "forcePercent": 0, "artPercent": 0 },
+              "guardEffectPercent": 0
+            }
+          }
+        },
+        "entryRunSerum": 0,
+        "entryDurableSerum": 0,
+        "gateCollect": { "nodeId": "genesis_gate", "runSerum": 2, "durableSerum": 2 },
+        "clears": [
+          {
+            "nodeId": "first_splice_console",
+            "runSerum": 4,
+            "durableSerum": 4,
+            "pending": "first_splice_console",
+            "choices": {
+              "force": { "available": true, "serumCost": 0 },
+              "art": { "available": true, "serumCost": 0 },
+              "guard": { "available": true, "serumCost": 0 },
+              "renewal": { "available": true, "serumCost": 0 }
+            }
+          },
+          {
+            "nodeId": "second_splice_console",
+            "runSerum": 6,
+            "durableSerum": 6,
+            "pending": "second_splice_console",
+            "choices": {
+              "force": { "available": true, "serumCost": 1 },
+              "art": { "available": true, "serumCost": 0 },
+              "guard": { "available": true, "serumCost": 0 },
+              "renewal": { "available": true, "serumCost": 0 }
+            }
+          },
+          {
+            "nodeId": "third_splice_console",
+            "runSerum": 7,
+            "durableSerum": 7,
+            "pending": "third_splice_console",
+            "choices": {
+              "force": { "available": true, "serumCost": 1 },
+              "art": { "available": true, "serumCost": 1 },
+              "guard": { "available": true, "serumCost": 0 },
+              "renewal": { "available": true, "serumCost": 0 }
+            }
+          }
+        ],
+        "departureBlock": {
+          "status": "rejected",
+          "code": "departure-blocked",
+          "message": "原型拼接尚未完成，请先选择武力、术法、守御或复生基因。",
+          "target": "helix_collapse_trap"
+        },
+        "resolves": [
+          {
+            "console": "first_splice_console",
+            "gene": "force",
+            "status": "committed",
+            "log": "原型拼接·武力：消耗原型血清 0 支，本轮剩余 4 支。",
+            "serumBefore": 4,
+            "serumAfter": 4,
+            "durableAfter": 4,
+            "sequence": ["force"],
+            "uniqueCount": 1,
+            "allResolved": false
+          },
+          {
+            "console": "second_splice_console",
+            "gene": "art",
+            "status": "committed",
+            "log": "原型拼接·术法：消耗原型血清 0 支，本轮剩余 6 支。",
+            "serumBefore": 6,
+            "serumAfter": 6,
+            "durableAfter": 6,
+            "sequence": ["force", "art"],
+            "uniqueCount": 2,
+            "allResolved": false
+          },
+          {
+            "console": "third_splice_console",
+            "gene": "guard",
+            "status": "committed",
+            "log": "原型拼接·守御：消耗原型血清 0 支，本轮剩余 7 支。",
+            "serumBefore": 7,
+            "serumAfter": 7,
+            "durableAfter": 7,
+            "sequence": ["force", "art", "guard"],
+            "uniqueCount": 3,
+            "allResolved": true
+          }
+        ],
+        "finalDisplay": {
+          "status": "原型血清 0，拼接 3/3，多样性 3，Boss快照 未冻结",
+          "severity": "resolved",
+          "meter": { "value": 3, "max": 3 },
+          "targetReached": true
+        },
+        "finalModifiers": {
+          "encounter": { "allStatsPercent": 0, "defensePercent": 0, "artPowerPercent": 0 },
+          "trap": { "damagePercent": 0, "dcPercent": 0 },
+          "healingPercent": 0,
+          "outgoingDamage": { "forcePercent": 4, "artPercent": 4 },
+          "guardEffectPercent": 4
+        },
+        "finalLawData": {
+          "kind": "genesis_vault",
+          "pendingSpliceNodeId": null,
+          "spliceSequence": ["force", "art", "guard"],
+          "bossGenomeSnapshot": null,
+          "entryGear": {
+            "helixCleaver": false,
+            "symbioteCowl": false,
+            "carapaceHarness": false,
+            "rebirthAmulet": false
+          },
+          "entryBloodline": { "aspect": null, "rank": 0 }
+        },
+        "finalGenesis": {
+          "availableGenesisSerum": 7,
+          "pendingSpliceNodeId": null,
+          "spliceSequence": ["force", "art", "guard"],
+          "uniqueCount": 3,
+          "allResolved": true,
+          "bossGenomeSnapshot": null,
+          "choices": {
+            "force": { "available": false, "serumCost": 1, "unavailableReason": "三次原型拼接已经完成。" },
+            "art": { "available": false, "serumCost": 1, "unavailableReason": "三次原型拼接已经完成。" },
+            "guard": { "available": false, "serumCost": 1, "unavailableReason": "三次原型拼接已经完成。" },
+            "renewal": { "available": false, "serumCost": 0, "unavailableReason": "三次原型拼接已经完成。" }
+          },
+          "projectedModifiers": {
+            "sealed": {
+              "encounter": { "allStatsPercent": 0, "defensePercent": 0, "artPowerPercent": 0 },
+              "trap": { "damagePercent": 0, "dcPercent": 0 },
+              "healingPercent": 0,
+              "outgoingDamage": { "forcePercent": 4, "artPercent": 4 },
+              "guardEffectPercent": 4
+            },
+            "awakened": {
+              "encounter": { "allStatsPercent": 0, "defensePercent": 0, "artPowerPercent": 0 },
+              "trap": { "damagePercent": 0, "dcPercent": 0 },
+              "healingPercent": 0,
+              "outgoingDamage": { "forcePercent": 6, "artPercent": 6 },
+              "guardEffectPercent": 6
+            }
+          }
+        },
+        "noPendingResolve": {
+          "status": "rejected",
+          "code": "domain-rejected",
+          "message": "The command did not produce a domain transition.",
+          "serumAfter": 7,
+          "sequence": ["force", "art", "guard"]
+        },
+        "reselectCleared": {
+          "status": "rejected",
+          "code": "already-resolved",
+          "message": "The current node is already cleared."
+        },
+        "roundtrip": {
+          "status": "decoded",
+          "lawData": {
+            "kind": "genesis_vault",
+            "pendingSpliceNodeId": null,
+            "spliceSequence": ["force", "art", "guard"],
+            "bossGenomeSnapshot": null,
+            "entryGear": {
+              "helixCleaver": false,
+              "symbioteCowl": false,
+              "carapaceHarness": false,
+              "rebirthAmulet": false
+            },
+            "entryBloodline": { "aspect": null, "rank": 0 }
+          },
+          "displayStatus": "原型血清 0，拼接 3/3，多样性 3，Boss快照 未冻结",
+          "runSerum": 7,
+          "durableSerum": 7
+        },
+        "alphaFight": { "rounds": 6, "hpAfter": 368 }
+      }
+    },
+    {
+      "id": "genesis-duplicate-cost-rejection",
+      "expected": {
+        "entryChoices": {
+          "availableGenesisSerum": 0,
+          "costs": { "force": 0, "art": 0, "guard": 0, "renewal": 0 }
+        },
+        "gateSerum": { "run": 2, "durable": 2 },
+        "steps": [
+          {
+            "console": "first_splice_console",
+            "gene": "force",
+            "costAtPending": 0,
+            "serumBefore": 4,
+            "serumAfter": 4,
+            "durableAfter": 4,
+            "status": "committed",
+            "log": "原型拼接·武力：消耗原型血清 0 支，本轮剩余 4 支。"
+          },
+          {
+            "console": "second_splice_console",
+            "gene": "force",
+            "costAtPending": 1,
+            "serumBefore": 6,
+            "serumAfter": 5,
+            "durableAfter": 5,
+            "status": "committed",
+            "log": "原型拼接·武力：消耗原型血清 1 支，本轮剩余 5 支。"
+          },
+          {
+            "console": "third_splice_console",
+            "gene": "force",
+            "costAtPending": 2,
+            "serumBefore": 6,
+            "serumAfter": 4,
+            "durableAfter": 4,
+            "status": "committed",
+            "log": "原型拼接·武力：消耗原型血清 2 支，本轮剩余 4 支。"
+          }
+        ],
+        "rejection": {
+          "attempt": {
+            "status": "rejected",
+            "code": "domain-rejected",
+            "message": "The command did not produce a domain transition.",
+            "serumAfter": 4,
+            "sequence": ["force", "force", "force"]
+          },
+          "choiceStatus": {
+            "available": false,
+            "serumCost": 0,
+            "unavailableReason": "三次原型拼接已经完成。"
+          },
+          "stateUnchanged": true
+        },
+        "final": {
+          "sequence": ["force", "force", "force"],
+          "uniqueCount": 1,
+          "allResolved": true,
+          "runSerum": 4,
+          "durableSerum": 4
+        }
+      }
+    },
+    {
+      "id": "genesis-specialization-myriad-gates",
+      "expected": {
+        "entryGates": {
+          "forceVault": {
+            "at": "force_sample_gallery",
+            "target": "force_gene_vault",
+            "gateId": "genesis_force_gallery_vault",
+            "status": "closed",
+            "isOpen": false,
+            "blockReason": "力之原型需专精至少2次后开放。"
+          },
+          "mosaicVault": {
+            "at": "sample_corridor_guard",
+            "target": "mosaic_gene_vault",
+            "gateId": "genesis_mosaic_corridor_vault",
+            "status": "closed",
+            "isOpen": false,
+            "blockReason": "完成三次拼接且选择三种互异原型后开放。"
+          },
+          "boss": {
+            "at": "gene_stalker_alpha",
+            "target": "primal_curator",
+            "gateId": "genesis_stalker_boss_gate",
+            "status": "closed",
+            "isOpen": false,
+            "blockReason": "完成三次拼接后，原型馆长入口才会开放。"
+          },
+          "alphaRounds": 6
+        },
+        "specGates": {
+          "forceVault": {
+            "at": "force_sample_gallery",
+            "target": "force_gene_vault",
+            "gateId": "genesis_force_gallery_vault",
+            "status": "open",
+            "isOpen": true,
+            "blockReason": null
+          },
+          "mosaicVault": {
+            "at": "sample_corridor_guard",
+            "target": "mosaic_gene_vault",
+            "gateId": "genesis_mosaic_corridor_vault",
+            "status": "closed",
+            "isOpen": false,
+            "blockReason": "完成三次拼接且选择三种互异原型后开放。"
+          },
+          "sequence": ["force", "force", "force"],
+          "uniqueCount": 1
+        },
+        "specIllegalMoves": [
+          {
+            "target": "mosaic_gene_vault",
+            "status": "rejected",
+            "code": "illegal-move",
+            "message": "mosaic_gene_vault is not a legal adjacent destination from sample_corridor_guard."
+          }
+        ],
+        "specBossGate": {
+          "at": "gene_stalker_alpha",
+          "target": "primal_curator",
+          "gateId": "genesis_stalker_boss_gate",
+          "status": "open",
+          "isOpen": true,
+          "blockReason": null
+        },
+        "myriadGates": {
+          "forceVault": {
+            "at": "force_sample_gallery",
+            "target": "force_gene_vault",
+            "gateId": "genesis_force_gallery_vault",
+            "status": "closed",
+            "isOpen": false,
+            "blockReason": "力之原型需专精至少2次后开放。"
+          },
+          "mosaicVault": {
+            "at": "sample_corridor_guard",
+            "target": "mosaic_gene_vault",
+            "gateId": "genesis_mosaic_corridor_vault",
+            "status": "open",
+            "isOpen": true,
+            "blockReason": null
+          },
+          "sequence": ["force", "art", "guard"],
+          "uniqueCount": 3
+        },
+        "myriadIllegalMoves": [
+          {
+            "target": "force_gene_vault",
+            "status": "rejected",
+            "code": "illegal-move",
+            "message": "force_gene_vault is not a legal adjacent destination from force_sample_gallery."
+          }
+        ],
+        "myriadBossGate": {
+          "at": "gene_stalker_alpha",
+          "target": "primal_curator",
+          "gateId": "genesis_stalker_boss_gate",
+          "status": "open",
+          "isOpen": true,
+          "blockReason": null
+        }
+      }
+    },
+    {
+      "id": "genesis-boss-snapshot",
+      "expected": {
+        "spine": {
+          "hpEntry": 512,
+          "hpAfterResolves": 368,
+          "runSerum": 4,
+          "durableSerum": 4,
+          "spliceSequence": ["force", "force", "force"],
+          "uniqueCount": 1,
+          "allResolved": true,
+          "projectedModifiers": {
+            "sealed": {
+              "encounter": { "allStatsPercent": 0, "defensePercent": 8, "artPowerPercent": 0 },
+              "trap": { "damagePercent": 0, "dcPercent": 0 },
+              "healingPercent": 0,
+              "outgoingDamage": { "forcePercent": 12, "artPercent": 0 },
+              "guardEffectPercent": 0
+            },
+            "awakened": {
+              "encounter": { "allStatsPercent": 0, "defensePercent": 14, "artPowerPercent": 0 },
+              "trap": { "damagePercent": 0, "dcPercent": 0 },
+              "healingPercent": 0,
+              "outgoingDamage": { "forcePercent": 18, "artPercent": 0 },
+              "guardEffectPercent": 0
+            }
+          }
+        },
+        "bossLawAtStart": {
+          "kind": "genesis_vault",
+          "pendingSpliceNodeId": null,
+          "spliceSequence": ["force", "force", "force"],
+          "bossGenomeSnapshot": ["force", "force", "force"],
+          "entryGear": {
+            "helixCleaver": false,
+            "symbioteCowl": false,
+            "carapaceHarness": false,
+            "rebirthAmulet": false
+          },
+          "entryBloodline": { "aspect": null, "rank": 0 }
+        },
+        "bossDisplayAtStart": {
+          "status": "原型血清 0，拼接 3/3，多样性 1，Boss快照 force/force/force",
+          "severity": "resolved",
+          "meter": { "value": 3, "max": 3 },
+          "targetReached": true
+        },
+        "bossModifiersAtStart": {
+          "encounter": { "allStatsPercent": 0, "defensePercent": 8, "artPowerPercent": 0 },
+          "trap": { "damagePercent": 0, "dcPercent": 0 },
+          "healingPercent": 0,
+          "outgoingDamage": { "forcePercent": 12, "artPercent": 0 },
+          "guardEffectPercent": 0
+        },
+        "bossModifiersAfterAwaken": {
+          "encounter": { "allStatsPercent": 0, "defensePercent": 14, "artPowerPercent": 0 },
+          "trap": { "damagePercent": 0, "dcPercent": 0 },
+          "healingPercent": 0,
+          "outgoingDamage": { "forcePercent": 18, "artPercent": 0 },
+          "guardEffectPercent": 0
+        },
+        "bossFight": { "rounds": 8, "hpAfter": 75, "cleared": true },
+        "resolveAfterBoss": {
+          "status": "rejected",
+          "code": "domain-rejected",
+          "message": "The command did not produce a domain transition.",
+          "choiceStatus": {
+            "available": false,
+            "serumCost": 3,
+            "unavailableReason": "首领基因组已经冻结，不能再进行拼接。"
+          },
+          "serumAfter": 9,
+          "sequence": ["force", "force", "force"]
+        },
+        "roundtrip": {
+          "status": "decoded",
+          "lawData": {
+            "kind": "genesis_vault",
+            "pendingSpliceNodeId": null,
+            "spliceSequence": ["force", "force", "force"],
+            "bossGenomeSnapshot": ["force", "force", "force"],
+            "entryGear": {
+              "helixCleaver": false,
+              "symbioteCowl": false,
+              "carapaceHarness": false,
+              "rebirthAmulet": false
+            },
+            "entryBloodline": { "aspect": null, "rank": 0 }
+          },
+          "displayStatus": "原型血清 0，拼接 3/3，多样性 1，Boss快照 force/force/force",
+          "runSerum": 9,
+          "durableSerum": 9
+        }
+      }
+    }
+  ]
+}

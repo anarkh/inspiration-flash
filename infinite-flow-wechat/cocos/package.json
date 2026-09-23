@@ -1,0 +1,24 @@
+{
+  "name": "infinite-flow-wechat-cocos",
+  "uuid": "a8b4335e-4890-42b6-998d-fe0ff0ed40b8",
+  "version": "3.8.8",
+  "description": "Infinite Flow Cocos Creator 3.8.8 target for WeChat Mini Game.",
+  "private": true,
+  "creator": {
+    "version": "3.8.8"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.headless.json --noEmit",
+    "typecheck:creator": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@infinite-flow/client": "0.1.0",
+    "@infinite-flow/core": "0.1.0",
+    "@infinite-flow/presentation": "0.1.0",
+    "@infinite-flow/runtime": "0.1.0"
+  },
+  "devDependencies": {
+    "minigame-api-typings": "3.8.21",
+    "typescript": "5.9.3"
+  }
+}

@@ -1,0 +1,1159 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "law-16-shelter",
+  "provenance": {
+    "oracle": {
+      "project": "infinite-flow-web",
+      "commit": "2645f0232542684d27de1abc321bb26913320420",
+      "path": "infinite-flow/src/dungeon-laws.ts",
+      "sha256": "6deffb2bbbde6a9f4110603fb71f948e6543f5bc3985659cab81a82b7ca292ca"
+    },
+    "goldenManifest": {
+      "path": "packages/save-codec/tests/fixtures/manifest.json",
+      "sha256": "36fcff8420e9aefbb8fe8c472b42fd5dbf6835025beee05b567a8481d6ca6bf1"
+    },
+    "expectedRule": "Lost Shelter tracks a survivor HP integer clamped to 0-100, starting at 100, and three escort checkpoints (north_checkpoint, central_checkpoint, south_checkpoint) each resolved once via law/resolve-escort-checkpoint with treat or push. Entering an unresolved checkpoint sets it pending; a pending checkpoint blocks departure (护送检查点尚未处理，请先选择救治或强推。) until resolved. Treat costs 1 run healing pill (0 with lu_guanlan rank 2 triage) and heals 25 HP plus 10 per triage rank and 10 with triage_visor equipped, clamped at 100; treat is unavailable when HP is already full (幸存者生命已经全满。). Push lowers survivor HP by 10 (0 with zhou_yingxue rank 2 analysis) and pays 200 reward points via applyRunReward to both state.rewardPoints (durable) and state.run.lootBag.rewardPoints (run track). Resolve logs 护送检查点已救治：消耗本轮止血丹 N，幸存者生命 X/100。 or 护送检查点已强推：本局奖励点 +200，幸存者生命 X/100。. Clearing a dangerous node (monster or trap) lowers survivor HP by 10 for a monster or 15 for a trap, reduced by 4 with rescue_carbine equipped and by 5 with evacuation_plate equipped, clamped at 0; the first hazard of the run is fully guarded when qin_che rank at least 2 is the active companion (firstHazardGuardUsed flips true and the role shows 秦彻：首次险情护卫). Resolving without a pending checkpoint, after all three are resolved, or after the boss snapshot is frozen is rejected as domain-rejected (The command did not produce a domain transition.); re-selecting a cleared checkpoint is rejected already-resolved. Entry gear (rescueCarbine, triageVisor, evacuationPlate, blackboxBeacon) and the active companion snapshot are frozen at run/enter into law.entryGear and law.entryCompanion and persist across the run and save-codec round-trip. Route gates: shelter_evacuation_cache_south_in (north_entry to evacuation_cache) opens only when all three checkpoints are resolved and survivor HP is at least 75 (完成三处检查点且幸存者HP至少75。); shelter_desperate_armory_west_in (mimic_survivor_alpha to desperate_armory) opens only when all three are resolved and HP is at most 40 (完成三处检查点且幸存者HP不高于40。); shelter_balanced_medbay_north_in (lower_return_portal to balanced_medbay) opens only when all three are resolved and HP is between 41 and 74 (完成三处检查点且幸存者HP为41-74。); shelter_memory_boss_gate (survivor_memory_stage to shelter_overseer) opens only when all three are resolved. The three HP-band gates are mutually exclusive, so only one reward cache can open per run. Closed gates remove edges from legal adjacent targets so run/move through them is rejected illegal-move. Starting the shelter_overseer boss combat (run/select-node) with all checkpoints resolved freezes bossSurvivorSnapshot = clamp(survivorHp + blackboxBeacon*10, 0, 100) and freezes further checkpoint choices (首领战幸存者状态已冻结。); the display appends Boss快照 N. Boss modifiers during the boss encounter derive from survivor HP: at HP at least 75 the player gains encounter.allStatsPercent -6 and outgoingDamage force/art +6; at HP 1-40 encounter.allStatsPercent +6 and outgoing +4; at HP 0 encounter.allStatsPercent +12 and outgoing +8. The boss is a real multi-round combat (monsterHp 1413, bossPhase sealed). The law display status is 幸存者HP X/100，北:Y，中:Y，南:Y，救治 T，强推 P，run止血丹 N，救治 HP+0/耗药0，强推 HP+0/奖励0，卡宾枪:有/无，目镜:有/无，护甲:有/无，信标:有/无，<companion role>，护卫:未用/已用，研判:未用/已用，分诊:未用/已用，Boss快照 未冻结|N with severity stable/warning/danger/resolved and meter {value: survivorHp, max: 100}; the escort-correct API is core.getCurrentEscortCheckpointStatus. Law state, checkpoint choices, survivor HP, entry gear, companion snapshot, boss snapshot, and reward points persist through a save-codec round-trip. All expected values are frozen here, never read from candidate code."
+  },
+  "baseInput": {
+    "path": "packages/save-codec/tests/fixtures/new-hub-v1.json",
+    "sha256": "a1de1f1b33b59c91dea46caf55f21b6eee0b7104c2cbe4d68ac5d7a430709e0b"
+  },
+  "inputMutations": [
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "completedDungeonIds"
+      ],
+      "value": [
+        "demon_tower_1",
+        "metro_abyss",
+        "starfall_mine",
+        "rust_hospital",
+        "ash_arena",
+        "dream_archive",
+        "void_citadel",
+        "temporal_observatory",
+        "causal_clearinghouse",
+        "entropy_ark",
+        "mirror_cycle_city",
+        "redaction_scriptorium",
+        "legacy_auction_court",
+        "genesis_vault",
+        "silent_broadcast_tower"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "claimedTaskIds"
+      ],
+      "value": [
+        "clear_demon_tower",
+        "clear_metro_abyss",
+        "mainline_clear_starfall_mine",
+        "mainline_clear_rust_hospital",
+        "mainline_clear_ash_arena",
+        "mainline_clear_dream_archive",
+        "mainline_clear_void_citadel",
+        "mainline_clear_temporal_observatory",
+        "mainline_clear_causal_clearinghouse",
+        "mainline_clear_entropy_ark",
+        "mainline_clear_mirror_cycle_city",
+        "mainline_clear_redaction_scriptorium",
+        "mainline_clear_legacy_auction_court",
+        "mainline_clear_genesis_vault",
+        "mainline_clear_silent_broadcast_tower"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "preparedItemIds"
+      ],
+      "value": [
+        "healing_pill",
+        "focus_incense",
+        "armor_patch"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "inventory",
+        "healing_pill"
+      ],
+      "value": 60
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "inventory",
+        "focus_incense"
+      ],
+      "value": 3
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "inventory",
+        "armor_patch"
+      ],
+      "value": 3
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "learnedMethods"
+      ],
+      "value": [
+        "iron_body"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "methodRanks"
+      ],
+      "value": {
+        "iron_body": 1
+      }
+    },
+    {
+      "op": "add",
+      "path": [
+        "state",
+        "activeMethod"
+      ],
+      "value": "iron_body"
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "ownedEquipment"
+      ],
+      "value": [
+        "training_blade",
+        "patched_headwrap",
+        "patched_coat",
+        "patched_gloves",
+        "patched_boots",
+        "patched_belt",
+        "plain_charm",
+        "guardian_gauntlets",
+        "cloudstep_boots",
+        "rift_belt",
+        "rift_charm",
+        "rescue_carbine",
+        "triage_visor",
+        "evacuation_plate",
+        "blackbox_beacon"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "equipped"
+      ],
+      "value": {
+        "weapon": "rescue_carbine",
+        "head": "triage_visor",
+        "armor": "evacuation_plate",
+        "hands": "guardian_gauntlets",
+        "feet": "cloudstep_boots",
+        "waist": "rift_belt",
+        "charm": "blackbox_beacon"
+      }
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "equipmentLevels"
+      ],
+      "value": {
+        "training_blade": 1,
+        "patched_headwrap": 1,
+        "patched_coat": 1,
+        "patched_gloves": 1,
+        "patched_boots": 1,
+        "patched_belt": 1,
+        "plain_charm": 1,
+        "guardian_gauntlets": 1,
+        "cloudstep_boots": 1,
+        "rift_belt": 1,
+        "rift_charm": 1,
+        "rescue_carbine": 1,
+        "triage_visor": 1,
+        "evacuation_plate": 1,
+        "blackbox_beacon": 1
+      }
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "ownedPets"
+      ],
+      "value": [
+        "contract_sprite"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "petLevels"
+      ],
+      "value": {
+        "contract_sprite": 1
+      }
+    },
+    {
+      "op": "add",
+      "path": [
+        "state",
+        "activePet"
+      ],
+      "value": "contract_sprite"
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "ownedCompanions"
+      ],
+      "value": [
+        "qin_che"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "companionRanks"
+      ],
+      "value": {
+        "qin_che": 2
+      }
+    },
+    {
+      "op": "add",
+      "path": [
+        "state",
+        "activeCompanion"
+      ],
+      "value": "qin_che"
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "player",
+        "base",
+        "spirit"
+      ],
+      "value": 25
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "player",
+        "base",
+        "body"
+      ],
+      "value": 60
+    },
+    {
+      "op": "replace",
+      "path": [
+        "state",
+        "player",
+        "base",
+        "agility"
+      ],
+      "value": 15
+    }
+  ],
+  "entrySeed": 161616161,
+  "scenarioIds": [
+    "shelter-ordered-checkpoint-escort",
+    "shelter-hazard-guard-and-hp-clamps",
+    "shelter-companion-and-reward-split",
+    "shelter-boss-snapshot",
+    "shelter-reward-inheritance"
+  ],
+  "scenarios": [
+    {
+      "id": "shelter-ordered-checkpoint-escort",
+      "expected": {
+        "entryDisplay": {
+          "status": "幸存者HP 100/100，北:未定，中:未定，南:未定，救治 0，强推 0，run止血丹 0，救治 HP+0/耗药0，强推 HP+0/奖励0，卡宾枪:有，目镜:有，护甲:有，信标:有，秦彻：首次险情护卫，护卫:未用，研判:未用，分诊:未用，Boss快照 未冻结",
+          "severity": "stable",
+          "meter": {
+            "value": 100,
+            "max": 100
+          },
+          "targetReached": false
+        },
+        "entryModifiers": {
+          "encounter": {
+            "allStatsPercent": -6,
+            "defensePercent": 0,
+            "artPowerPercent": 0
+          },
+          "trap": {
+            "damagePercent": 0,
+            "dcPercent": 0
+          },
+          "healingPercent": 0,
+          "outgoingDamage": {
+            "forcePercent": 6,
+            "artPercent": 6
+          },
+          "guardEffectPercent": 0
+        },
+        "entryLawData": {
+          "kind": "lost_shelter",
+          "survivorHp": 100,
+          "pendingCheckpointNodeId": null,
+          "resolvedCheckpointChoices": {},
+          "bossSurvivorSnapshot": null,
+          "entryGear": {
+            "rescueCarbine": true,
+            "triageVisor": true,
+            "evacuationPlate": true,
+            "blackboxBeacon": true
+          },
+          "entryCompanion": {
+            "id": "qin_che",
+            "rank": 2
+          },
+          "firstHazardGuardUsed": false,
+          "companionAnalysisUsed": false,
+          "companionTriageUsed": false
+        },
+        "entryEscort": {
+          "available": false,
+          "pending": false,
+          "survivorHp": 100,
+          "availableHealingPills": 0,
+          "pendingCheckpointNodeId": null,
+          "resolvedCheckpointChoices": {},
+          "resolvedCount": 0,
+          "treatCount": 0,
+          "pushCount": 0,
+          "allCheckpointsResolved": false,
+          "bossSurvivorSnapshot": null,
+          "entryGear": {
+            "rescueCarbine": true,
+            "triageVisor": true,
+            "evacuationPlate": true,
+            "blackboxBeacon": true
+          },
+          "entryCompanion": {
+            "id": "qin_che",
+            "rank": 2
+          },
+          "firstHazardGuardUsed": false,
+          "companionAnalysisUsed": false,
+          "companionTriageUsed": false,
+          "companionRole": "秦彻：首次险情护卫",
+          "choices": {
+            "treat": {
+              "available": false,
+              "survivorHpDelta": 0,
+              "healingPillCost": 0,
+              "bonusRewardPoints": 0,
+              "unavailableReason": "当前没有待处理的护送检查点。"
+            },
+            "push": {
+              "available": false,
+              "survivorHpDelta": 0,
+              "healingPillCost": 0,
+              "bonusRewardPoints": 0,
+              "unavailableReason": "当前没有待处理的护送检查点。"
+            }
+          }
+        },
+        "entryRewardPoints": 850,
+        "gateCollect": {
+          "nodeId": "shelter_gate",
+          "rewardPoints": 1350,
+          "runLootRewardPoints": 500,
+          "healingPill": 61,
+          "runHealingPill": 1,
+          "armorPatch": 4,
+          "gateSigil": 1
+        },
+        "northEntryCollect": {
+          "rewardPoints": 1730,
+          "runLootRewardPoints": 880
+        },
+        "afterCollapsed": {
+          "survivorHp": 100,
+          "firstHazardGuardUsed": true,
+          "playerHp": 1000
+        },
+        "patrolFight": {
+          "rounds": 3,
+          "hpAfter": 994,
+          "survivorHp": 94
+        },
+        "northPending": {
+          "pendingCheckpointNodeId": "north_checkpoint",
+          "survivorHp": 94,
+          "choices": {
+            "treat": {
+              "available": true,
+              "survivorHpDelta": 6,
+              "healingPillCost": 1,
+              "bonusRewardPoints": 0,
+              "unavailableReason": null
+            },
+            "push": {
+              "available": true,
+              "survivorHpDelta": -10,
+              "healingPillCost": 0,
+              "bonusRewardPoints": 200,
+              "unavailableReason": null
+            }
+          }
+        },
+        "pendingDepartureBlock": {
+          "target": "shelter_enforcer_north",
+          "status": "rejected",
+          "code": "departure-blocked",
+          "message": "护送检查点尚未处理，请先选择救治或强推。"
+        },
+        "northResolve": {
+          "choice": "treat",
+          "status": "committed",
+          "log": "护送检查点已救治：消耗本轮止血丹 1，幸存者生命 100/100。",
+          "survivorHpBefore": 94,
+          "survivorHpAfter": 100,
+          "availablePillsAfter": 3,
+          "resolvedCheckpointChoices": {
+            "north_checkpoint": "treat"
+          },
+          "treatCount": 1
+        },
+        "centralPending": {
+          "pendingCheckpointNodeId": "central_checkpoint",
+          "survivorHp": 100,
+          "choices": {
+            "treat": {
+              "available": false,
+              "survivorHpDelta": 0,
+              "healingPillCost": 0,
+              "bonusRewardPoints": 0,
+              "unavailableReason": "幸存者生命已经全满。"
+            },
+            "push": {
+              "available": true,
+              "survivorHpDelta": -10,
+              "healingPillCost": 0,
+              "bonusRewardPoints": 200,
+              "unavailableReason": null
+            }
+          }
+        },
+        "centralResolve": {
+          "choice": "push",
+          "status": "committed",
+          "log": "护送检查点已强推：本局奖励点 +200，幸存者生命 90/100。",
+          "survivorHpBefore": 100,
+          "survivorHpAfter": 90,
+          "rewardPointsBefore": 5060,
+          "rewardPointsAfter": 5260,
+          "runLootRewardPoints": 4410,
+          "pushCount": 1
+        },
+        "afterAlarm": {
+          "survivorHp": 80,
+          "playerHp": 921
+        },
+        "southPending": {
+          "pendingCheckpointNodeId": "south_checkpoint",
+          "survivorHp": 80,
+          "choices": {
+            "treat": {
+              "available": true,
+              "survivorHpDelta": 20,
+              "healingPillCost": 1,
+              "bonusRewardPoints": 0,
+              "unavailableReason": null
+            },
+            "push": {
+              "available": true,
+              "survivorHpDelta": -10,
+              "healingPillCost": 0,
+              "bonusRewardPoints": 200,
+              "unavailableReason": null
+            }
+          }
+        },
+        "southResolve": {
+          "choice": "treat",
+          "status": "committed",
+          "log": "护送检查点已救治：消耗本轮止血丹 1，幸存者生命 100/100。",
+          "survivorHpBefore": 80,
+          "survivorHpAfter": 100,
+          "resolvedCheckpointChoices": {
+            "north_checkpoint": "treat",
+            "central_checkpoint": "push",
+            "south_checkpoint": "treat"
+          },
+          "treatCount": 2,
+          "pushCount": 1
+        },
+        "finalDisplay": {
+          "status": "幸存者HP 100/100，北:救治，中:强推，南:救治，救治 2，强推 1，run止血丹 3，救治 HP+0/耗药0，强推 HP+0/奖励0，卡宾枪:有，目镜:有，护甲:有，信标:有，秦彻：首次险情护卫，护卫:已用，研判:未用，分诊:未用，Boss快照 未冻结",
+          "severity": "resolved",
+          "meter": {
+            "value": 100,
+            "max": 100
+          },
+          "targetReached": true
+        },
+        "finalModifiers": {
+          "encounter": {
+            "allStatsPercent": -6,
+            "defensePercent": 0,
+            "artPowerPercent": 0
+          },
+          "trap": {
+            "damagePercent": 0,
+            "dcPercent": 0
+          },
+          "healingPercent": 0,
+          "outgoingDamage": {
+            "forcePercent": 6,
+            "artPercent": 6
+          },
+          "guardEffectPercent": 0
+        },
+        "finalLawData": {
+          "kind": "lost_shelter",
+          "survivorHp": 100,
+          "pendingCheckpointNodeId": null,
+          "resolvedCheckpointChoices": {
+            "north_checkpoint": "treat",
+            "central_checkpoint": "push",
+            "south_checkpoint": "treat"
+          },
+          "bossSurvivorSnapshot": null,
+          "entryGear": {
+            "rescueCarbine": true,
+            "triageVisor": true,
+            "evacuationPlate": true,
+            "blackboxBeacon": true
+          },
+          "entryCompanion": {
+            "id": "qin_che",
+            "rank": 2
+          },
+          "firstHazardGuardUsed": true,
+          "companionAnalysisUsed": false,
+          "companionTriageUsed": false
+        },
+        "finalRewardPoints": 6270,
+        "finalRunLootRewardPoints": 5420,
+        "noPendingResolve": {
+          "status": "rejected",
+          "code": "domain-rejected",
+          "message": "The command did not produce a domain transition.",
+          "survivorHpAfter": 100
+        },
+        "reselectCleared": {
+          "status": "rejected",
+          "code": "already-resolved",
+          "message": "The current node is already cleared."
+        },
+        "evacuationOpen": {
+          "at": "north_entry",
+          "target": "evacuation_cache",
+          "gateId": "shelter_evacuation_cache_south_in",
+          "status": "open",
+          "isOpen": true,
+          "blockReason": null
+        },
+        "evacuationLegalMove": {
+          "target": "evacuation_cache",
+          "status": "committed"
+        },
+        "evacuationCollect": {
+          "rewardPoints": 6700,
+          "runLootRewardPoints": 5850,
+          "rescueBadge": 2,
+          "methodPage": 1
+        },
+        "desperateClosed": {
+          "at": "mimic_survivor_alpha",
+          "target": "desperate_armory",
+          "gateId": "shelter_desperate_armory_west_in",
+          "status": "closed",
+          "isOpen": false,
+          "blockReason": "完成三处检查点且幸存者HP不高于40。"
+        },
+        "desperateIllegalMove": {
+          "target": "desperate_armory",
+          "status": "rejected",
+          "code": "departure-blocked",
+          "message": "先处理当前怪物「首席拟声幸存者」，清理后才能离开。"
+        },
+        "roundtrip": {
+          "status": "decoded",
+          "lawData": {
+            "kind": "lost_shelter",
+            "survivorHp": 100,
+            "pendingCheckpointNodeId": null,
+            "resolvedCheckpointChoices": {
+              "north_checkpoint": "treat",
+              "central_checkpoint": "push",
+              "south_checkpoint": "treat"
+            },
+            "bossSurvivorSnapshot": null,
+            "entryGear": {
+              "rescueCarbine": true,
+              "triageVisor": true,
+              "evacuationPlate": true,
+              "blackboxBeacon": true
+            },
+            "entryCompanion": {
+              "id": "qin_che",
+              "rank": 2
+            },
+            "firstHazardGuardUsed": true,
+            "companionAnalysisUsed": false,
+            "companionTriageUsed": false
+          },
+          "displayStatus": "幸存者HP 100/100，北:救治，中:强推，南:救治，救治 2，强推 1，run止血丹 3，救治 HP+0/耗药0，强推 HP+0/奖励0，卡宾枪:有，目镜:有，护甲:有，信标:有，秦彻：首次险情护卫，护卫:已用，研判:未用，分诊:未用，Boss快照 未冻结",
+          "survivorHp": 100,
+          "rewardPoints": 6700
+        }
+      }
+    },
+    {
+      "id": "shelter-hazard-guard-and-hp-clamps",
+      "expected": {
+        "afterAlarmGuarded": {
+          "survivorHp": 100,
+          "firstHazardGuardUsed": true,
+          "companionRole": "秦彻：首次险情护卫"
+        },
+        "afterCollapsed": {
+          "survivorHp": 90
+        },
+        "afterPatrol": {
+          "survivorHp": 84,
+          "rounds": 3,
+          "hpAfter": 928
+        },
+        "northTreat": {
+          "status": "committed",
+          "log": "护送检查点已救治：消耗本轮止血丹 1，幸存者生命 100/100。",
+          "survivorHpBefore": 84,
+          "survivorHpAfter": 100,
+          "availablePillsAfter": 2
+        },
+        "afterEnforcer": {
+          "survivorHp": 94,
+          "rounds": 4,
+          "hpAfter": 919
+        },
+        "afterMimic": {
+          "survivorHp": 88,
+          "rounds": 3,
+          "hpAfter": 905
+        },
+        "centralPush": {
+          "status": "committed",
+          "log": "护送检查点已强推：本局奖励点 +200，幸存者生命 78/100。",
+          "survivorHpBefore": 88,
+          "survivorHpAfter": 78,
+          "rewardPointsBefore": 8730,
+          "rewardPointsAfter": 8930
+        },
+        "southPush": {
+          "status": "committed",
+          "log": "护送检查点已强推：本局奖励点 +200，幸存者生命 68/100。",
+          "survivorHpBefore": 78,
+          "survivorHpAfter": 68,
+          "rewardPointsBefore": 9760,
+          "rewardPointsAfter": 9960
+        },
+        "finalDisplay": {
+          "status": "幸存者HP 68/100，北:救治，中:强推，南:强推，救治 1，强推 2，run止血丹 3，救治 HP+0/耗药0，强推 HP+0/奖励0，卡宾枪:有，目镜:有，护甲:有，信标:有，秦彻：首次险情护卫，护卫:已用，研判:未用，分诊:未用，Boss快照 未冻结",
+          "severity": "resolved",
+          "meter": {
+            "value": 68,
+            "max": 100
+          },
+          "targetReached": true
+        },
+        "finalLawData": {
+          "kind": "lost_shelter",
+          "survivorHp": 68,
+          "pendingCheckpointNodeId": null,
+          "resolvedCheckpointChoices": {
+            "north_checkpoint": "treat",
+            "central_checkpoint": "push",
+            "south_checkpoint": "push"
+          },
+          "bossSurvivorSnapshot": null,
+          "entryGear": {
+            "rescueCarbine": true,
+            "triageVisor": true,
+            "evacuationPlate": true,
+            "blackboxBeacon": true
+          },
+          "entryCompanion": {
+            "id": "qin_che",
+            "rank": 2
+          },
+          "firstHazardGuardUsed": true,
+          "companionAnalysisUsed": false,
+          "companionTriageUsed": false
+        },
+        "final": {
+          "survivorHp": 68,
+          "treatCount": 1,
+          "pushCount": 2,
+          "allCheckpointsResolved": true
+        },
+        "afterHorror": {
+          "survivorHp": 62,
+          "rounds": 3,
+          "hpAfter": 884
+        },
+        "balancedOpen": {
+          "at": "lower_return_portal",
+          "target": "balanced_medbay",
+          "gateId": "shelter_balanced_medbay_north_in",
+          "status": "open",
+          "isOpen": true,
+          "blockReason": null
+        },
+        "balancedLegalMove": {
+          "target": "balanced_medbay",
+          "status": "committed"
+        },
+        "balancedCollect": {
+          "rewardPoints": 13460,
+          "runLootRewardPoints": 12610,
+          "lingyun": 5,
+          "healingPill": 67,
+          "armorPatch": 8
+        },
+        "roundtrip": {
+          "status": "decoded",
+          "lawData": {
+            "kind": "lost_shelter",
+            "survivorHp": 62,
+            "pendingCheckpointNodeId": null,
+            "resolvedCheckpointChoices": {
+              "north_checkpoint": "treat",
+              "central_checkpoint": "push",
+              "south_checkpoint": "push"
+            },
+            "bossSurvivorSnapshot": null,
+            "entryGear": {
+              "rescueCarbine": true,
+              "triageVisor": true,
+              "evacuationPlate": true,
+              "blackboxBeacon": true
+            },
+            "entryCompanion": {
+              "id": "qin_che",
+              "rank": 2
+            },
+            "firstHazardGuardUsed": true,
+            "companionAnalysisUsed": false,
+            "companionTriageUsed": false
+          },
+          "displayStatus": "幸存者HP 62/100，北:救治，中:强推，南:强推，救治 1，强推 2，run止血丹 7，救治 HP+0/耗药0，强推 HP+0/奖励0，卡宾枪:有，目镜:有，护甲:有，信标:有，秦彻：首次险情护卫，护卫:已用，研判:未用，分诊:未用，Boss快照 未冻结",
+          "survivorHp": 62,
+          "rewardPoints": 13460
+        }
+      }
+    },
+    {
+      "id": "shelter-companion-and-reward-split",
+      "expected": {
+        "entryCompanion": {
+          "id": "qin_che",
+          "rank": 2
+        },
+        "entryCompanionRole": "秦彻：首次险情护卫",
+        "afterCollapsedGuarded": {
+          "survivorHp": 100,
+          "firstHazardGuardUsed": true
+        },
+        "patrolAssist": {
+          "rounds": 2,
+          "hpAfter": 999,
+          "survivorHp": 94,
+          "assist": {
+            "beforeAvailable": true,
+            "effect": {
+              "guarding": true,
+              "focusGain": 1,
+              "healPercent": 0
+            },
+            "status": "committed",
+            "log": "秦彻发动「抢位援护」：进入守势，战意 +1。",
+            "guarding": true,
+            "weaponFocus": 1,
+            "companionAssistUsed": true
+          }
+        },
+        "afterNorthPush": {
+          "survivorHp": 84,
+          "rewardPoints": 4840
+        },
+        "afterEnforcer": {
+          "survivorHp": 78
+        },
+        "afterMimic": {
+          "survivorHp": 72
+        },
+        "afterCentralPush": {
+          "survivorHp": 62,
+          "rewardPoints": 9330
+        },
+        "afterAlarm": {
+          "survivorHp": 52
+        },
+        "afterSouthPush": {
+          "survivorHp": 42,
+          "rewardPoints": 10540,
+          "allResolved": true
+        },
+        "afterHorror": {
+          "survivorHp": 36,
+          "rounds": 4,
+          "hpAfter": 869
+        },
+        "balancedClosed": {
+          "at": "lower_return_portal",
+          "target": "balanced_medbay",
+          "gateId": "shelter_balanced_medbay_north_in",
+          "status": "closed",
+          "isOpen": false,
+          "blockReason": "完成三处检查点且幸存者HP为41-74。"
+        },
+        "balancedIllegalMove": {
+          "target": "balanced_medbay",
+          "status": "rejected",
+          "code": "illegal-move",
+          "message": "balanced_medbay is not a legal adjacent destination from lower_return_portal."
+        },
+        "desperateOpen": {
+          "at": "mimic_survivor_alpha",
+          "target": "desperate_armory",
+          "gateId": "shelter_desperate_armory_west_in",
+          "status": "open",
+          "isOpen": true,
+          "blockReason": null
+        },
+        "desperateLegalMove": {
+          "target": "desperate_armory",
+          "status": "committed"
+        },
+        "desperateCollect": {
+          "rewardPoints": 14000,
+          "runLootRewardPoints": 13150,
+          "rescueBadge": 7
+        },
+        "evacuationClosed": {
+          "at": "north_entry",
+          "target": "evacuation_cache",
+          "gateId": "shelter_evacuation_cache_south_in",
+          "status": "closed",
+          "isOpen": false,
+          "blockReason": "完成三处检查点且幸存者HP至少75。"
+        },
+        "evacuationIllegalMove": {
+          "target": "evacuation_cache",
+          "status": "rejected",
+          "code": "illegal-move",
+          "message": "evacuation_cache is not a legal adjacent destination from north_entry."
+        },
+        "bossGateOpen": {
+          "at": "survivor_memory_stage",
+          "target": "shelter_overseer",
+          "gateId": "shelter_memory_boss_gate",
+          "status": "open",
+          "isOpen": true,
+          "blockReason": null
+        },
+        "final": {
+          "survivorHp": 36,
+          "resolvedCheckpointChoices": {
+            "north_checkpoint": "push",
+            "central_checkpoint": "push",
+            "south_checkpoint": "push"
+          },
+          "treatCount": 0,
+          "pushCount": 3
+        },
+        "roundtrip": {
+          "status": "decoded",
+          "lawData": {
+            "kind": "lost_shelter",
+            "survivorHp": 36,
+            "pendingCheckpointNodeId": null,
+            "resolvedCheckpointChoices": {
+              "north_checkpoint": "push",
+              "central_checkpoint": "push",
+              "south_checkpoint": "push"
+            },
+            "bossSurvivorSnapshot": null,
+            "entryGear": {
+              "rescueCarbine": true,
+              "triageVisor": true,
+              "evacuationPlate": true,
+              "blackboxBeacon": true
+            },
+            "entryCompanion": {
+              "id": "qin_che",
+              "rank": 2
+            },
+            "firstHazardGuardUsed": true,
+            "companionAnalysisUsed": false,
+            "companionTriageUsed": false
+          },
+          "displayStatus": "幸存者HP 36/100，北:强推，中:强推，南:强推，救治 0，强推 3，run止血丹 8，救治 HP+0/耗药0，强推 HP+0/奖励0，卡宾枪:有，目镜:有，护甲:有，信标:有，秦彻：首次险情护卫，护卫:已用，研判:未用，分诊:未用，Boss快照 未冻结",
+          "survivorHp": 36,
+          "rewardPoints": 14470
+        }
+      }
+    },
+    {
+      "id": "shelter-boss-snapshot",
+      "expected": {
+        "beforeBoss": {
+          "survivorHp": 100,
+          "bossSurvivorSnapshot": null,
+          "allCheckpointsResolved": true,
+          "choicesTreatAvailable": false
+        },
+        "bossGateOpen": {
+          "at": "survivor_memory_stage",
+          "target": "shelter_overseer",
+          "gateId": "shelter_memory_boss_gate",
+          "status": "open",
+          "isOpen": true,
+          "blockReason": null
+        },
+        "bossEntryBeforeSelect": {
+          "survivorHp": 100,
+          "bossSurvivorSnapshot": null
+        },
+        "bossEntry": {
+          "survivorHp": 100,
+          "bossSurvivorSnapshot": 100,
+          "choicesTreatAvailable": false,
+          "frozenReason": "首领战幸存者状态已冻结。",
+          "monsterHp": 1413,
+          "bossPhase": "sealed",
+          "turn": 1
+        },
+        "bossFight": {
+          "rounds": 7,
+          "hpAfter": 852,
+          "cleared": true
+        },
+        "bossLawAtStart": {
+          "lawData": {
+            "kind": "lost_shelter",
+            "survivorHp": 100,
+            "pendingCheckpointNodeId": null,
+            "resolvedCheckpointChoices": {
+              "north_checkpoint": "treat",
+              "central_checkpoint": "push",
+              "south_checkpoint": "treat"
+            },
+            "bossSurvivorSnapshot": 100,
+            "entryGear": {
+              "rescueCarbine": true,
+              "triageVisor": true,
+              "evacuationPlate": true,
+              "blackboxBeacon": true
+            },
+            "entryCompanion": {
+              "id": "qin_che",
+              "rank": 2
+            },
+            "firstHazardGuardUsed": true,
+            "companionAnalysisUsed": false,
+            "companionTriageUsed": false
+          },
+          "display": {
+            "status": "幸存者HP 100/100，北:救治，中:强推，南:救治，救治 2，强推 1，run止血丹 3，救治 HP+0/耗药0，强推 HP+0/奖励0，卡宾枪:有，目镜:有，护甲:有，信标:有，秦彻：首次险情护卫，护卫:已用，研判:未用，分诊:未用，Boss快照 100",
+            "severity": "resolved",
+            "meter": {
+              "value": 100,
+              "max": 100
+            },
+            "targetReached": true
+          },
+          "modifiers": {
+            "encounter": {
+              "allStatsPercent": -6,
+              "defensePercent": 0,
+              "artPowerPercent": 0
+            },
+            "trap": {
+              "damagePercent": 0,
+              "dcPercent": 0
+            },
+            "healingPercent": 0,
+            "outgoingDamage": {
+              "forcePercent": 6,
+              "artPercent": 6
+            },
+            "guardEffectPercent": 0
+          }
+        },
+        "afterBoss": {
+          "survivorHp": 94,
+          "bossSurvivorSnapshot": 100
+        },
+        "resolveAfterBoss": {
+          "status": "rejected",
+          "code": "domain-rejected",
+          "message": "The command did not produce a domain transition.",
+          "choiceStatus": {
+            "available": false,
+            "survivorHpDelta": 0,
+            "healingPillCost": 0,
+            "bonusRewardPoints": 0,
+            "unavailableReason": "首领战幸存者状态已冻结。"
+          },
+          "survivorHpAfter": 94
+        },
+        "roundtrip": {
+          "status": "decoded",
+          "lawData": {
+            "kind": "lost_shelter",
+            "survivorHp": 94,
+            "pendingCheckpointNodeId": null,
+            "resolvedCheckpointChoices": {
+              "north_checkpoint": "treat",
+              "central_checkpoint": "push",
+              "south_checkpoint": "treat"
+            },
+            "bossSurvivorSnapshot": 100,
+            "entryGear": {
+              "rescueCarbine": true,
+              "triageVisor": true,
+              "evacuationPlate": true,
+              "blackboxBeacon": true
+            },
+            "entryCompanion": {
+              "id": "qin_che",
+              "rank": 2
+            },
+            "firstHazardGuardUsed": true,
+            "companionAnalysisUsed": false,
+            "companionTriageUsed": false
+          },
+          "displayStatus": "幸存者HP 94/100，北:救治，中:强推，南:救治，救治 2，强推 1，run止血丹 4，救治 HP+0/耗药0，强推 HP+0/奖励0，卡宾枪:有，目镜:有，护甲:有，信标:有，秦彻：首次险情护卫，护卫:已用，研判:未用，分诊:未用，Boss快照 100",
+          "survivorHp": 94,
+          "rewardPoints": 10520
+        }
+      }
+    },
+    {
+      "id": "shelter-reward-inheritance",
+      "expected": {
+        "entryRewardPoints": 850,
+        "afterGate": {
+          "rewardPoints": 1350,
+          "runLootRewardPoints": 500,
+          "healingPill": 61,
+          "runHealingPill": 1
+        },
+        "northPush": {
+          "status": "committed",
+          "log": "护送检查点已强推：本局奖励点 +200，幸存者生命 84/100。",
+          "rewardPointsBefore": 4640,
+          "rewardPointsAfter": 4840,
+          "delta": 200,
+          "runLootRewardPoints": 3990
+        },
+        "centralPush": {
+          "status": "committed",
+          "log": "护送检查点已强推：本局奖励点 +200，幸存者生命 74/100。",
+          "rewardPointsBefore": 5260,
+          "rewardPointsAfter": 5460,
+          "delta": 200,
+          "runLootRewardPoints": 4610
+        },
+        "southPush": {
+          "status": "committed",
+          "log": "护送检查点已强推：本局奖励点 +200，幸存者生命 54/100。",
+          "rewardPointsBefore": 6470,
+          "rewardPointsAfter": 6670,
+          "delta": 200,
+          "runLootRewardPoints": 5820
+        },
+        "final": {
+          "survivorHp": 54,
+          "treatCount": 0,
+          "pushCount": 3,
+          "rewardPoints": 6670,
+          "runLootRewardPoints": 5820,
+          "resolvedCheckpointChoices": {
+            "north_checkpoint": "push",
+            "central_checkpoint": "push",
+            "south_checkpoint": "push"
+          },
+          "allCheckpointsResolved": true
+        },
+        "roundtrip": {
+          "status": "decoded",
+          "lawData": {
+            "kind": "lost_shelter",
+            "survivorHp": 54,
+            "pendingCheckpointNodeId": null,
+            "resolvedCheckpointChoices": {
+              "north_checkpoint": "push",
+              "central_checkpoint": "push",
+              "south_checkpoint": "push"
+            },
+            "bossSurvivorSnapshot": null,
+            "entryGear": {
+              "rescueCarbine": true,
+              "triageVisor": true,
+              "evacuationPlate": true,
+              "blackboxBeacon": true
+            },
+            "entryCompanion": {
+              "id": "qin_che",
+              "rank": 2
+            },
+            "firstHazardGuardUsed": true,
+            "companionAnalysisUsed": false,
+            "companionTriageUsed": false
+          },
+          "displayStatus": "幸存者HP 54/100，北:强推，中:强推，南:强推，救治 0，强推 3，run止血丹 5，救治 HP+0/耗药0，强推 HP+0/奖励0，卡宾枪:有，目镜:有，护甲:有，信标:有，秦彻：首次险情护卫，护卫:已用，研判:未用，分诊:未用，Boss快照 未冻结",
+          "survivorHp": 54,
+          "rewardPoints": 6670
+        }
+      }
+    }
+  ]
+}

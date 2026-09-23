@@ -1,0 +1,570 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "law-10-entropy",
+  "provenance": {
+    "oracle": {
+      "project": "infinite-flow-web",
+      "commit": "2645f0232542684d27de1abc321bb26913320420",
+      "path": "infinite-flow/src/dungeon-laws.ts",
+      "sha256": "6deffb2bbbde6a9f4110603fb71f948e6543f5bc3985659cab81a82b7ca292ca"
+    },
+    "goldenManifest": {
+      "path": "packages/save-codec/tests/fixtures/manifest.json",
+      "sha256": "36fcff8420e9aefbb8fe8c472b42fd5dbf6835025beee05b567a8481d6ca6bf1"
+    },
+    "expectedRule": "Entropy Ark tracks entropy 0-4, starting at 2/4. Clearing the bow, midship or stern heading console opens a pending heading for that console; while pending the law display shows 待选航 and departure is blocked until the player chooses steady (entropy -1, or -2 with dissipation_mantle) or rush (entropy +1), logging 方舟航向·稳航/抢航：熵值 ±N，当前熵值 N/4。 and recording the choice in resolvedHeadingChoices. Clearing a monster or trap (except the last_helmsman boss) raises entropy by 1 (the entropy_compass passive negates the first such increase once); clearing a reward node lowers entropy by 1. Route gates ark_bow_dissipation_lane and ark_midship_dissipation_lane open only at entropy at most 1; ark_bow_port_relic_lane and ark_midship_starboard_relic_lane only at entropy at least 3; ark_manifest_helmsman_lane only between 1 and 3; closed gates expose their real block reason (熵值需降至 N 或以下。/熵值需升至 N 或以上。/熵值需保持在 N 至 M 之间。) and remove the edge from legal adjacent targets, so run/move through a closed gate is rejected illegal-move. Threshold modifiers: entropy at most 1 gives enemy defense +(2-entropy)*10%; entropy at least 3 gives trap damage/dc +(entropy-2)*10%, non-boss enemy allStats +(entropy-2)*10% and outgoing force/art +(entropy-2)*10%. Starting the last_helmsman boss combat locks the entropy, clears the pending heading and mints collapseLayers = clamp(|entropy - 2| - ark_keel_boots, 0, 2); the boss gains allStats +10% per collapse layer, the display shows 熵值 N/4，已锁定，崩解层 N and the layers persist through and after the fight. Display severity is danger at collapseLayers 2 or entropy 0/4, resolved only when entropy is 2 with no pending heading and no collapse layers, otherwise warning. Heading choices are unavailable at the 0/4 boundaries (熵值已达 0/4，无法继续稳航降熵。/熵值已达 4/4，无法继续抢航升熵。) and with no pending heading (当前没有待指定的方舟航向。). Law state persists through a save-codec round-trip. Re-selecting a cleared console is rejected already-resolved without changing law state or HP. All expected values are frozen here, never read from candidate code."
+  },
+  "baseInput": {
+    "path": "packages/save-codec/tests/fixtures/new-hub-v1.json",
+    "sha256": "a1de1f1b33b59c91dea46caf55f21b6eee0b7104c2cbe4d68ac5d7a430709e0b"
+  },
+  "inputMutations": [
+    {
+      "op": "replace",
+      "path": ["state", "completedDungeonIds"],
+      "value": ["demon_tower_1", "metro_abyss", "starfall_mine", "rust_hospital", "ash_arena", "dream_archive", "void_citadel", "temporal_observatory", "causal_clearinghouse"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "claimedTaskIds"],
+      "value": ["clear_demon_tower", "clear_metro_abyss", "mainline_clear_starfall_mine", "mainline_clear_rust_hospital", "mainline_clear_ash_arena", "mainline_clear_dream_archive", "mainline_clear_void_citadel", "mainline_clear_temporal_observatory", "mainline_clear_causal_clearinghouse"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "preparedItemIds"],
+      "value": ["healing_pill", "focus_incense", "armor_patch"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "inventory", "healing_pill"],
+      "value": 40
+    },
+    {
+      "op": "replace",
+      "path": ["state", "inventory", "focus_incense"],
+      "value": 3
+    },
+    {
+      "op": "replace",
+      "path": ["state", "inventory", "armor_patch"],
+      "value": 3
+    },
+    {
+      "op": "replace",
+      "path": ["state", "learnedMethods"],
+      "value": ["iron_body"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "methodRanks"],
+      "value": { "iron_body": 1 }
+    },
+    {
+      "op": "add",
+      "path": ["state", "activeMethod"],
+      "value": "iron_body"
+    },
+    {
+      "op": "replace",
+      "path": ["state", "ownedEquipment"],
+      "value": [
+        "training_blade",
+        "patched_headwrap",
+        "patched_coat",
+        "patched_gloves",
+        "patched_boots",
+        "patched_belt",
+        "plain_charm",
+        "ember_staff",
+        "mist_hood",
+        "spirit_robe",
+        "guardian_gauntlets",
+        "cloudstep_boots",
+        "rift_belt",
+        "rift_charm"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "equipped"],
+      "value": {
+        "weapon": "ember_staff",
+        "head": "mist_hood",
+        "armor": "spirit_robe",
+        "hands": "guardian_gauntlets",
+        "feet": "cloudstep_boots",
+        "waist": "rift_belt",
+        "charm": "rift_charm"
+      }
+    },
+    {
+      "op": "replace",
+      "path": ["state", "equipmentLevels"],
+      "value": {
+        "training_blade": 1,
+        "patched_headwrap": 1,
+        "patched_coat": 1,
+        "patched_gloves": 1,
+        "patched_boots": 1,
+        "patched_belt": 1,
+        "plain_charm": 1,
+        "ember_staff": 3,
+        "mist_hood": 1,
+        "spirit_robe": 1,
+        "guardian_gauntlets": 1,
+        "cloudstep_boots": 1,
+        "rift_belt": 1,
+        "rift_charm": 1
+      }
+    },
+    {
+      "op": "replace",
+      "path": ["state", "ownedPets"],
+      "value": ["contract_sprite"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "petLevels"],
+      "value": { "contract_sprite": 1 }
+    },
+    {
+      "op": "add",
+      "path": ["state", "activePet"],
+      "value": "contract_sprite"
+    },
+    {
+      "op": "replace",
+      "path": ["state", "player", "base", "spirit"],
+      "value": 15
+    },
+    {
+      "op": "replace",
+      "path": ["state", "player", "base", "body"],
+      "value": 20
+    },
+    {
+      "op": "replace",
+      "path": ["state", "player", "base", "agility"],
+      "value": 10
+    }
+  ],
+  "entrySeed": 101010101,
+  "scenarioIds": [
+    "entropy-heading-three-consoles",
+    "entropy-threshold-route-gates",
+    "entropy-boss-collapse-layers",
+    "entropy-repeat-boundary"
+  ],
+  "scenarios": [
+    {
+      "id": "entropy-heading-three-consoles",
+      "expected": {
+        "entryDisplay": {
+          "status": "熵值 2/4",
+          "severity": "resolved",
+          "meter": { "value": 2, "max": 4 },
+          "targetReached": true
+        },
+        "entryModifiers": {
+          "encounter": { "allStatsPercent": 0, "defensePercent": 0, "artPowerPercent": 0 },
+          "trap": { "damagePercent": 0, "dcPercent": 0 },
+          "healingPercent": 0,
+          "outgoingDamage": { "forcePercent": 0, "artPercent": 0 },
+          "guardEffectPercent": 0
+        },
+        "entryLawData": {
+          "kind": "entropy_ark",
+          "entropy": 2,
+          "pendingHeadingNodeId": null,
+          "resolvedHeadingChoices": {},
+          "bossEntropyLocked": false,
+          "collapseLayers": 0,
+          "entryPassives": {
+            "entropyCompass": false,
+            "dissipationMantle": false,
+            "arkKeelBoots": false
+          },
+          "compassCreditUsed": false
+        },
+        "clears": [
+          { "kind": "monster", "nodeId": "entropy_deckhand", "rounds": 3, "hpAfter": 366, "entropyAfter": 3 },
+          { "kind": "reward", "nodeId": "wake_inversion", "entropyAfter": 2 },
+          {
+            "kind": "console",
+            "nodeId": "bow_heading_console",
+            "entropyAfter": 2,
+            "pending": "bow_heading_console",
+            "display": {
+              "status": "熵值 2/4，待选航",
+              "severity": "warning",
+              "meter": { "value": 2, "max": 4 },
+              "targetReached": false
+            }
+          },
+          { "kind": "monster", "nodeId": "dissipation_navigator_alpha", "rounds": 4, "hpAfter": 357, "entropyAfter": 2 },
+          {
+            "kind": "console",
+            "nodeId": "midship_heading_console",
+            "entropyAfter": 2,
+            "pending": "midship_heading_console",
+            "display": {
+              "status": "熵值 2/4，待选航",
+              "severity": "warning",
+              "meter": { "value": 2, "max": 4 },
+              "targetReached": false
+            }
+          },
+          { "kind": "reward", "nodeId": "starboard_ballast_core", "entropyAfter": 2 },
+          { "kind": "trap-counter", "nodeId": "soul_recharge_chamber", "hpBefore": 357, "hpAfter": 357, "entropyAfter": 3 },
+          {
+            "kind": "console",
+            "nodeId": "stern_heading_console",
+            "entropyAfter": 3,
+            "pending": "stern_heading_console",
+            "display": {
+              "status": "熵值 3/4，待选航",
+              "severity": "warning",
+              "meter": { "value": 3, "max": 4 },
+              "targetReached": false
+            }
+          }
+        ],
+        "departureBlock": {
+          "status": "rejected",
+          "code": "departure-blocked",
+          "message": "方舟航向尚未指定，请先选择稳航或抢航。",
+          "target": "port_ballast_core"
+        },
+        "headings": [
+          {
+            "console": "bow_heading_console",
+            "choice": "steady",
+            "log": "方舟航向·稳航：熵值 -1，当前熵值 1/4。",
+            "entropyBefore": 2,
+            "entropyAfter": 1,
+            "status": "committed",
+            "display": {
+              "status": "熵值 1/4",
+              "severity": "warning",
+              "meter": { "value": 1, "max": 4 },
+              "targetReached": false
+            }
+          },
+          {
+            "console": "midship_heading_console",
+            "choice": "rush",
+            "log": "方舟航向·抢航：熵值 +1，当前熵值 3/4。",
+            "entropyBefore": 2,
+            "entropyAfter": 3,
+            "status": "committed",
+            "display": {
+              "status": "熵值 3/4",
+              "severity": "warning",
+              "meter": { "value": 3, "max": 4 },
+              "targetReached": false
+            }
+          },
+          {
+            "console": "stern_heading_console",
+            "choice": "steady",
+            "log": "方舟航向·稳航：熵值 -1，当前熵值 2/4。",
+            "entropyBefore": 3,
+            "entropyAfter": 2,
+            "status": "committed",
+            "display": {
+              "status": "熵值 2/4",
+              "severity": "resolved",
+              "meter": { "value": 2, "max": 4 },
+              "targetReached": true
+            }
+          }
+        ],
+        "gates": [
+          {
+            "when": "bow-entropy1",
+            "dissipation": {
+              "at": "bow_heading_console",
+              "target": "dissipation_navigator_alpha",
+              "gateId": "ark_bow_dissipation_lane",
+              "status": "open",
+              "isOpen": true,
+              "blockReason": null
+            },
+            "relic": {
+              "at": "bow_heading_console",
+              "target": "port_relic_hold",
+              "gateId": "ark_bow_port_relic_lane",
+              "status": "closed",
+              "isOpen": false,
+              "blockReason": "左舷遗珍舱需熵值达到 3 或以上。"
+            }
+          },
+          {
+            "when": "midship-entropy3",
+            "dissipation": {
+              "at": "midship_heading_console",
+              "target": "dissipation_navigator_omega",
+              "gateId": "ark_midship_dissipation_lane",
+              "status": "closed",
+              "isOpen": false,
+              "blockReason": "舯部消散航道仅在熵值 1 或以下开放。"
+            },
+            "relic": {
+              "at": "midship_heading_console",
+              "target": "starboard_relic_hold",
+              "gateId": "ark_midship_starboard_relic_lane",
+              "status": "open",
+              "isOpen": true,
+              "blockReason": null
+            }
+          }
+        ],
+        "finalDisplay": {
+          "status": "熵值 2/4",
+          "severity": "resolved",
+          "meter": { "value": 2, "max": 4 },
+          "targetReached": true
+        },
+        "roundtrip": {
+          "status": "decoded",
+          "lawData": {
+            "kind": "entropy_ark",
+            "entropy": 2,
+            "pendingHeadingNodeId": null,
+            "resolvedHeadingChoices": {
+              "bow_heading_console": "steady",
+              "midship_heading_console": "rush",
+              "stern_heading_console": "steady"
+            },
+            "bossEntropyLocked": false,
+            "collapseLayers": 0,
+            "entryPassives": {
+              "entropyCompass": false,
+              "dissipationMantle": false,
+              "arkKeelBoots": false
+            },
+            "compassCreditUsed": false
+          }
+        }
+      }
+    },
+    {
+      "id": "entropy-threshold-route-gates",
+      "expected": {
+        "entryDisplay": {
+          "status": "熵值 2/4",
+          "severity": "resolved",
+          "meter": { "value": 2, "max": 4 },
+          "targetReached": true
+        },
+        "steps": [
+          { "fight": "entropy_deckhand", "rounds": 3, "hpAfter": 366, "entropy": 3 },
+          { "collect": "wake_inversion", "entropy": 2 },
+          { "fight": "entropy_deckhand_port", "rounds": 3, "hpAfter": 360, "entropy": 3 },
+          {
+            "fight": "entropy_deckhand_starboard",
+            "rounds": 3,
+            "hpAfter": 352,
+            "entropy": 4,
+            "display": {
+              "status": "熵值 4/4",
+              "severity": "danger",
+              "meter": { "value": 4, "max": 4 },
+              "targetReached": false
+            }
+          },
+          { "collect": "midship_heading_console", "entropy": 4, "pending": "midship_heading_console" },
+          { "choice": "steady", "entropyBefore": 4, "entropyAfter": 3, "log": "方舟航向·稳航：熵值 -1，当前熵值 3/4。" },
+          { "collect": "starboard_ballast_core", "entropy": 2 },
+          { "collect": "ark_manifest", "entropy": 1 },
+          {
+            "collect": "port_supply",
+            "entropy": 0,
+            "display": {
+              "status": "熵值 0/4",
+              "severity": "danger",
+              "meter": { "value": 0, "max": 4 },
+              "targetReached": false
+            }
+          },
+          { "collect": "bow_heading_console", "entropy": 0, "pending": "bow_heading_console" },
+          { "choice": "rush", "entropyBefore": 0, "entropyAfter": 1, "log": "方舟航向·抢航：熵值 +1，当前熵值 1/4。" },
+          { "fight": "dissipation_navigator_alpha", "rounds": 5, "hpAfter": 324, "entropy": 2 }
+        ],
+        "gates": [
+          {
+            "when": "midship-entropy3",
+            "dissipation": {
+              "at": "midship_heading_console",
+              "target": "dissipation_navigator_omega",
+              "gateId": "ark_midship_dissipation_lane",
+              "status": "closed",
+              "isOpen": false,
+              "blockReason": "舯部消散航道仅在熵值 1 或以下开放。"
+            },
+            "relic": {
+              "at": "midship_heading_console",
+              "target": "starboard_relic_hold",
+              "gateId": "ark_midship_starboard_relic_lane",
+              "status": "open",
+              "isOpen": true,
+              "blockReason": null
+            }
+          },
+          {
+            "when": "bow-entropy1",
+            "dissipation": {
+              "at": "bow_heading_console",
+              "target": "dissipation_navigator_alpha",
+              "gateId": "ark_bow_dissipation_lane",
+              "status": "open",
+              "isOpen": true,
+              "blockReason": null
+            },
+            "relic": {
+              "at": "bow_heading_console",
+              "target": "port_relic_hold",
+              "gateId": "ark_bow_port_relic_lane",
+              "status": "closed",
+              "isOpen": false,
+              "blockReason": "左舷遗珍舱需熵值达到 3 或以上。"
+            }
+          }
+        ],
+        "closedMove": {
+          "target": "dissipation_navigator_omega",
+          "status": "rejected",
+          "code": "illegal-move",
+          "message": "dissipation_navigator_omega is not a legal adjacent destination from midship_heading_console."
+        },
+        "modifiers": {
+          "atEntropy4": {
+            "encounter": { "allStatsPercent": 20, "defensePercent": 0, "artPowerPercent": 0 },
+            "trap": { "damagePercent": 20, "dcPercent": 20 },
+            "healingPercent": 0,
+            "outgoingDamage": { "forcePercent": 20, "artPercent": 20 },
+            "guardEffectPercent": 0
+          },
+          "atEntropy0": {
+            "encounter": { "allStatsPercent": 0, "defensePercent": 20, "artPowerPercent": 0 },
+            "trap": { "damagePercent": -20, "dcPercent": -20 },
+            "healingPercent": 0,
+            "outgoingDamage": { "forcePercent": 0, "artPercent": 0 },
+            "guardEffectPercent": 0
+          }
+        },
+        "pendingChoices": {
+          "atEntropy4": {
+            "available": true,
+            "pending": true,
+            "steady": { "available": true },
+            "rush": { "available": false, "unavailableReason": "熵值已达 4/4，无法继续抢航升熵。" }
+          },
+          "atEntropy0": {
+            "available": true,
+            "pending": true,
+            "steady": { "available": false, "unavailableReason": "熵值已达 0/4，无法继续稳航降熵。" },
+            "rush": { "available": true }
+          }
+        }
+      }
+    },
+    {
+      "id": "entropy-boss-collapse-layers",
+      "expected": {
+        "steps": [
+          { "fight": "entropy_deckhand", "rounds": 3, "entropy": 3 },
+          {
+            "fight": "entropy_deckhand_starboard",
+            "rounds": 3,
+            "hpAfter": 358,
+            "entropy": 4,
+            "display": {
+              "status": "熵值 4/4",
+              "severity": "danger",
+              "meter": { "value": 4, "max": 4 },
+              "targetReached": false
+            }
+          },
+          { "trap": "soul_recharge_chamber", "entropyAfter": 4 }
+        ],
+        "helmsmanGateAtEntropy4": {
+          "at": "ark_manifest",
+          "target": "last_helmsman",
+          "gateId": "ark_manifest_helmsman_lane",
+          "status": "closed",
+          "isOpen": false,
+          "blockReason": "方舟显化需熵值维持在 1 至 3 之间。"
+        },
+        "bossLawAtStart": {
+          "kind": "entropy_ark",
+          "entropy": 4,
+          "pendingHeadingNodeId": null,
+          "resolvedHeadingChoices": {},
+          "bossEntropyLocked": true,
+          "collapseLayers": 2,
+          "entryPassives": {
+            "entropyCompass": false,
+            "dissipationMantle": false,
+            "arkKeelBoots": false
+          },
+          "compassCreditUsed": false
+        },
+        "bossDisplayAtStart": {
+          "status": "熵值 4/4，已锁定，崩解层 2",
+          "severity": "danger",
+          "meter": { "value": 4, "max": 4 },
+          "targetReached": false
+        },
+        "bossModifiersAtStart": {
+          "encounter": { "allStatsPercent": 20, "defensePercent": 0, "artPowerPercent": 0 },
+          "trap": { "damagePercent": 20, "dcPercent": 20 },
+          "healingPercent": 0,
+          "outgoingDamage": { "forcePercent": 20, "artPercent": 20 },
+          "guardEffectPercent": 0
+        },
+        "bossFight": { "rounds": 10, "hpAfter": 95, "cleared": true },
+        "lockedHeading": {
+          "status": "rejected",
+          "code": "domain-rejected",
+          "message": "当前没有待指定的方舟航向。"
+        },
+        "lawAfterBoss": {
+          "kind": "entropy_ark",
+          "entropy": 4,
+          "pendingHeadingNodeId": null,
+          "resolvedHeadingChoices": {},
+          "bossEntropyLocked": true,
+          "collapseLayers": 2,
+          "entryPassives": {
+            "entropyCompass": false,
+            "dissipationMantle": false,
+            "arkKeelBoots": false
+          },
+          "compassCreditUsed": false
+        },
+        "displayAfterBoss": {
+          "status": "熵值 4/4，已锁定，崩解层 2",
+          "severity": "danger",
+          "meter": { "value": 4, "max": 4 },
+          "targetReached": false
+        }
+      }
+    },
+    {
+      "id": "entropy-repeat-boundary",
+      "expected": {
+        "reselectedNodeId": "stern_heading_console",
+        "rejectionCode": "already-resolved",
+        "rejectionMessage": "The current node is already cleared.",
+        "lawStateUnchanged": true,
+        "hpUnchanged": true,
+        "noPendingResolve": {
+          "status": "rejected",
+          "code": "domain-rejected",
+          "message": "当前没有待指定的方舟航向。"
+        }
+      }
+    }
+  ]
+}

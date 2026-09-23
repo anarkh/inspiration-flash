@@ -1,0 +1,764 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "law-15-broadcast",
+  "provenance": {
+    "oracle": {
+      "project": "infinite-flow-web",
+      "commit": "2645f0232542684d27de1abc321bb26913320420",
+      "path": "infinite-flow/src/dungeon-laws.ts",
+      "sha256": "6deffb2bbbde6a9f4110603fb71f948e6543f5bc3985659cab81a82b7ca292ca"
+    },
+    "goldenManifest": {
+      "path": "packages/save-codec/tests/fixtures/manifest.json",
+      "sha256": "36fcff8420e9aefbb8fe8c472b42fd5dbf6835025beee05b567a8481d6ca6bf1"
+    },
+    "expectedRule": "Silent Broadcast Tower tracks three relay consoles (north_relay_console, central_relay_console, south_relay_console) and an integer noise level clamped to 0-6, starting at 0. Entering an unresolved relay console sets it pending; a pending relay blocks departure (广播中继尚未调谐，请先选择静默或播送。) until law/resolve-broadcast-relay chooses mute or broadcast. Mute lowers noise by 1 (by 2 with dead_air_headset equipped, clamped at 0) and pays no reward; broadcast raises noise by 1 (clamped at 6) and pays 180 reward points via applyRunReward to both state.rewardPoints (durable) and state.run.lootBag.rewardPoints (run track). Resolve logs 广播中继已静默：当前噪声 N/6。 or 广播中继已播送：本局奖励点 +180，当前噪声 N/6。. Clearing a dangerous node (monster or trap) raises noise by 1, except the first dangerous clear of the run is muted to 0 when hushblade is equipped (firstClashMutedUsed flips true and the passive reason changes to 断频长刃已抵消首次战斗或陷阱增噪。). Resolving without a pending relay, after all three are resolved, or after the boss snapshot is frozen is rejected as domain-rejected (The command did not produce a domain transition.); re-selecting a cleared console is rejected already-resolved. Entry passives are frozen at run/enter from equipped gear into law.entryPassives (hushblade, deadAirHeadset, anechoicMantle, lastChannelBeacon) and persist across the run and save-codec round-trip. Route gates: broadcast_silent_archive_gate (north_echo_cache to silent_archive) opens only with at least 2 mutes and noise at most 1 (至少静默 2 座中继，且噪声不高于 1。); broadcast_resonance_vault_gate (broadcast_warden_north to resonance_vault) opens only with at least 2 broadcasts and noise at least 4 (至少播送 2 座中继，且噪声不低于 4。); broadcast_balanced_switchboard_gate (soul_recharge_broadcast to balanced_switchboard) opens only when all three relays are resolved and noise is between 2 and 3; broadcast_memory_boss_gate (broadcast_memory_stage to last_broadcaster) opens only when all three relays are resolved. With only three relays, mute>=2 and broadcast>=2 are mutually exclusive, so the silent-archive and resonance-vault gates can never both open in one run. Closed gates remove edges from legal adjacent targets so run/move through them is rejected illegal-move. Starting the last_broadcaster boss combat (run/select-node) with all relays resolved freezes bossNoiseSnapshot = clamp(noise - lastChannelBeacon, 0, 6) and freezes further relay tuning (首领噪声已冻结，不能再调谐中继。); the display appends Boss快照 N. Boss modifiers during the boss encounter derive from the snapshot: at snapshot 0-2 the player gains encounter.defensePercent [12, 8, 4]; at noise 4+ encounter/trap danger and outgoing damage scale up. The boss is a real multi-round combat (monsterHp 1319, bossPhase sealed) with a three-beat finale that deals 16 noise damage on the third beat (4 if guarding). The law display status is 噪声 N/6，北中继:X，中央中继:X，南中继:X，静默 M，播送 B[，待调谐 北中继]，Boss快照 未冻结|N with severity stable/warning/danger/resolved and meter {value: noise, max: 6}; the broadcast-correct API is core.getCurrentBroadcastRelayStatus. Law state, relay choices, noise, entry passives, boss snapshot, and reward points persist through a save-codec round-trip. All expected values are frozen here, never read from candidate code."
+  },
+  "baseInput": {
+    "path": "packages/save-codec/tests/fixtures/new-hub-v1.json",
+    "sha256": "a1de1f1b33b59c91dea46caf55f21b6eee0b7104c2cbe4d68ac5d7a430709e0b"
+  },
+  "inputMutations": [
+    {
+      "op": "replace",
+      "path": ["state", "completedDungeonIds"],
+      "value": [
+        "demon_tower_1",
+        "metro_abyss",
+        "starfall_mine",
+        "rust_hospital",
+        "ash_arena",
+        "dream_archive",
+        "void_citadel",
+        "temporal_observatory",
+        "causal_clearinghouse",
+        "entropy_ark",
+        "mirror_cycle_city",
+        "redaction_scriptorium",
+        "legacy_auction_court",
+        "genesis_vault"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "claimedTaskIds"],
+      "value": [
+        "clear_demon_tower",
+        "clear_metro_abyss",
+        "mainline_clear_starfall_mine",
+        "mainline_clear_rust_hospital",
+        "mainline_clear_ash_arena",
+        "mainline_clear_dream_archive",
+        "mainline_clear_void_citadel",
+        "mainline_clear_temporal_observatory",
+        "mainline_clear_causal_clearinghouse",
+        "mainline_clear_entropy_ark",
+        "mainline_clear_mirror_cycle_city",
+        "mainline_clear_redaction_scriptorium",
+        "mainline_clear_legacy_auction_court",
+        "mainline_clear_genesis_vault"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "preparedItemIds"],
+      "value": ["healing_pill", "focus_incense", "armor_patch"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "inventory", "healing_pill"],
+      "value": 60
+    },
+    {
+      "op": "replace",
+      "path": ["state", "inventory", "focus_incense"],
+      "value": 3
+    },
+    {
+      "op": "replace",
+      "path": ["state", "inventory", "armor_patch"],
+      "value": 3
+    },
+    {
+      "op": "replace",
+      "path": ["state", "learnedMethods"],
+      "value": ["iron_body"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "methodRanks"],
+      "value": { "iron_body": 1 }
+    },
+    {
+      "op": "add",
+      "path": ["state", "activeMethod"],
+      "value": "iron_body"
+    },
+    {
+      "op": "replace",
+      "path": ["state", "ownedEquipment"],
+      "value": [
+        "training_blade",
+        "patched_headwrap",
+        "patched_coat",
+        "patched_gloves",
+        "patched_boots",
+        "patched_belt",
+        "plain_charm",
+        "ember_staff",
+        "mist_hood",
+        "spirit_robe",
+        "guardian_gauntlets",
+        "cloudstep_boots",
+        "rift_belt",
+        "rift_charm",
+        "hushblade",
+        "dead_air_headset",
+        "anechoic_mantle",
+        "last_channel_beacon"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "equipped"],
+      "value": {
+        "weapon": "hushblade",
+        "head": "dead_air_headset",
+        "armor": "anechoic_mantle",
+        "hands": "guardian_gauntlets",
+        "feet": "cloudstep_boots",
+        "waist": "rift_belt",
+        "charm": "last_channel_beacon"
+      }
+    },
+    {
+      "op": "replace",
+      "path": ["state", "equipmentLevels"],
+      "value": {
+        "training_blade": 1,
+        "patched_headwrap": 1,
+        "patched_coat": 1,
+        "patched_gloves": 1,
+        "patched_boots": 1,
+        "patched_belt": 1,
+        "plain_charm": 1,
+        "ember_staff": 3,
+        "mist_hood": 1,
+        "spirit_robe": 1,
+        "guardian_gauntlets": 1,
+        "cloudstep_boots": 1,
+        "rift_belt": 1,
+        "rift_charm": 1,
+        "hushblade": 1,
+        "dead_air_headset": 1,
+        "anechoic_mantle": 1,
+        "last_channel_beacon": 1
+      }
+    },
+    {
+      "op": "replace",
+      "path": ["state", "ownedPets"],
+      "value": ["contract_sprite"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "petLevels"],
+      "value": { "contract_sprite": 1 }
+    },
+    {
+      "op": "add",
+      "path": ["state", "activePet"],
+      "value": "contract_sprite"
+    },
+    {
+      "op": "replace",
+      "path": ["state", "player", "base", "spirit"],
+      "value": 25
+    },
+    {
+      "op": "replace",
+      "path": ["state", "player", "base", "body"],
+      "value": 60
+    },
+    {
+      "op": "replace",
+      "path": ["state", "player", "base", "agility"],
+      "value": 15
+    }
+  ],
+  "entrySeed": 151515151,
+  "scenarioIds": [
+    "broadcast-ordered-relay-noise",
+    "broadcast-noise-passive-clamps",
+    "broadcast-region-gates",
+    "broadcast-boss-snapshot",
+    "broadcast-reward-inheritance"
+  ],
+  "scenarios": [
+    {
+      "id": "broadcast-ordered-relay-noise",
+      "expected": {
+        "entryDisplay": {
+          "status": "噪声 0/6，北中继:未定，中央中继:未定，南中继:未定，静默 0，播送 0，Boss快照 未冻结",
+          "severity": "stable",
+          "meter": { "value": 0, "max": 6 },
+          "targetReached": false
+        },
+        "entryModifiers": {
+          "encounter": { "allStatsPercent": 0, "defensePercent": 0, "artPowerPercent": 0 },
+          "trap": { "damagePercent": 0, "dcPercent": 0 },
+          "healingPercent": 0,
+          "outgoingDamage": { "forcePercent": 0, "artPercent": 0 },
+          "guardEffectPercent": 0
+        },
+        "entryLawData": {
+          "kind": "silent_broadcast_tower",
+          "noise": 0,
+          "pendingRelayNodeId": null,
+          "resolvedRelayChoices": {},
+          "bossNoiseSnapshot": null,
+          "entryPassives": {
+            "hushblade": true,
+            "deadAirHeadset": true,
+            "anechoicMantle": true,
+            "lastChannelBeacon": true
+          },
+          "firstClashMutedUsed": false
+        },
+        "entryBroadcast": {
+          "totalRelayCount": 3,
+          "noise": 0,
+          "pendingRelayNodeId": null,
+          "resolvedRelayChoices": {},
+          "resolvedCount": 0,
+          "muteCount": 0,
+          "broadcastCount": 0,
+          "bossNoiseSnapshot": null,
+          "entryPassives": {
+            "hushblade": true,
+            "deadAirHeadset": true,
+            "anechoicMantle": true,
+            "lastChannelBeacon": true
+          },
+          "firstClashMutedUsed": false,
+          "choices": {
+            "mute": { "available": false, "noiseDelta": 0, "bonusRewardPoints": 0, "unavailableReason": "当前没有待调谐的广播中继。" },
+            "broadcast": { "available": false, "noiseDelta": 0, "bonusRewardPoints": 0, "unavailableReason": "当前没有待调谐的广播中继。" }
+          }
+        },
+        "entryRewardPoints": 850,
+        "gateCollect": { "nodeId": "broadcast_gate", "rewardPoints": 1310, "runLootRewardPoints": 460, "silenceCore": 2, "runSilenceCore": 2 },
+        "northPending": {
+          "pendingRelayNodeId": "north_relay_console",
+          "noise": 0,
+          "choices": {
+            "mute": { "available": true, "noiseDelta": 0, "bonusRewardPoints": 0, "unavailableReason": null },
+            "broadcast": { "available": true, "noiseDelta": 1, "bonusRewardPoints": 180, "unavailableReason": null }
+          }
+        },
+        "pendingDepartureBlock": {
+          "target": "north_echo_cache",
+          "status": "rejected",
+          "code": "departure-blocked",
+          "message": "广播中继尚未调谐，请先选择静默或播送。"
+        },
+        "northResolve": {
+          "choice": "mute",
+          "status": "committed",
+          "log": "广播中继已静默：当前噪声 0/6。",
+          "noiseBefore": 0,
+          "noiseAfter": 0,
+          "resolvedRelayChoices": { "north_relay_console": "mute" },
+          "muteCount": 1
+        },
+        "afterAcoustic": {
+          "noise": 0,
+          "firstClashMutedUsed": true,
+          "hushbladeReason": "断频长刃已抵消首次战斗或陷阱增噪。"
+        },
+        "centralPending": {
+          "pendingRelayNodeId": "central_relay_console",
+          "noise": 0,
+          "choices": {
+            "mute": { "available": true, "noiseDelta": 0, "bonusRewardPoints": 0, "unavailableReason": null },
+            "broadcast": { "available": true, "noiseDelta": 1, "bonusRewardPoints": 180, "unavailableReason": null }
+          }
+        },
+        "centralResolve": {
+          "choice": "broadcast",
+          "status": "committed",
+          "log": "广播中继已播送：本局奖励点 +180，当前噪声 1/6。",
+          "noiseBefore": 0,
+          "noiseAfter": 1,
+          "rewardPointsBefore": 2200,
+          "rewardPointsAfter": 2380,
+          "runLootRewardPoints": 1530,
+          "broadcastCount": 1
+        },
+        "afterStatic": { "noise": 2 },
+        "southPending": {
+          "pendingRelayNodeId": "south_relay_console",
+          "noise": 2,
+          "choices": {
+            "mute": { "available": true, "noiseDelta": -2, "bonusRewardPoints": 0, "unavailableReason": null },
+            "broadcast": { "available": true, "noiseDelta": 1, "bonusRewardPoints": 180, "unavailableReason": null }
+          }
+        },
+        "southResolve": {
+          "choice": "mute",
+          "status": "committed",
+          "log": "广播中继已静默：当前噪声 0/6。",
+          "noiseBefore": 2,
+          "noiseAfter": 0,
+          "resolvedRelayChoices": {
+            "north_relay_console": "mute",
+            "central_relay_console": "broadcast",
+            "south_relay_console": "mute"
+          },
+          "muteCount": 2,
+          "broadcastCount": 1
+        },
+        "finalDisplay": {
+          "status": "噪声 0/6，北中继:静默，中央中继:播送，南中继:静默，静默 2，播送 1，Boss快照 未冻结",
+          "severity": "resolved",
+          "meter": { "value": 0, "max": 6 },
+          "targetReached": true
+        },
+        "finalModifiers": {
+          "encounter": { "allStatsPercent": 0, "defensePercent": 0, "artPowerPercent": 0 },
+          "trap": { "damagePercent": 0, "dcPercent": 0 },
+          "healingPercent": 0,
+          "outgoingDamage": { "forcePercent": 0, "artPercent": 0 },
+          "guardEffectPercent": 0
+        },
+        "finalLawData": {
+          "kind": "silent_broadcast_tower",
+          "noise": 0,
+          "pendingRelayNodeId": null,
+          "resolvedRelayChoices": {
+            "north_relay_console": "mute",
+            "central_relay_console": "broadcast",
+            "south_relay_console": "mute"
+          },
+          "bossNoiseSnapshot": null,
+          "entryPassives": {
+            "hushblade": true,
+            "deadAirHeadset": true,
+            "anechoicMantle": true,
+            "lastChannelBeacon": true
+          },
+          "firstClashMutedUsed": true
+        },
+        "finalRewardPoints": 2900,
+        "finalRunLootRewardPoints": 2050,
+        "noPendingResolve": {
+          "status": "rejected",
+          "code": "domain-rejected",
+          "message": "The command did not produce a domain transition.",
+          "noiseAfter": 0
+        },
+        "reselectCleared": {
+          "status": "rejected",
+          "code": "already-resolved",
+          "message": "The current node is already cleared."
+        },
+        "roundtrip": {
+          "status": "decoded",
+          "lawData": {
+            "kind": "silent_broadcast_tower",
+            "noise": 0,
+            "pendingRelayNodeId": null,
+            "resolvedRelayChoices": {
+              "north_relay_console": "mute",
+              "central_relay_console": "broadcast",
+              "south_relay_console": "mute"
+            },
+            "bossNoiseSnapshot": null,
+            "entryPassives": {
+              "hushblade": true,
+              "deadAirHeadset": true,
+              "anechoicMantle": true,
+              "lastChannelBeacon": true
+            },
+            "firstClashMutedUsed": true
+          },
+          "displayStatus": "噪声 0/6，北中继:静默，中央中继:播送，南中继:静默，静默 2，播送 1，Boss快照 未冻结",
+          "noise": 0,
+          "rewardPoints": 2900
+        }
+      }
+    },
+    {
+      "id": "broadcast-noise-passive-clamps",
+      "expected": {
+        "entryLawData": {
+          "kind": "silent_broadcast_tower",
+          "noise": 0,
+          "pendingRelayNodeId": null,
+          "resolvedRelayChoices": {},
+          "bossNoiseSnapshot": null,
+          "entryPassives": {
+            "hushblade": true,
+            "deadAirHeadset": true,
+            "anechoicMantle": true,
+            "lastChannelBeacon": true
+          },
+          "firstClashMutedUsed": false
+        },
+        "entryPassiveReasons": {
+          "hushblade": "断频长刃可抵消首次战斗或陷阱增噪。",
+          "deadAirHeadset": "死频耳罩使静默调谐额外降低 1 点噪声。",
+          "anechoicMantle": "消声披甲使敌方与陷阱的正向噪声惩罚减半。",
+          "lastChannelBeacon": "末路断播器使首领噪声快照降低 1 点。"
+        },
+        "entryChoices": {
+          "mute": { "available": false, "noiseDelta": 0, "bonusRewardPoints": 0, "unavailableReason": "当前没有待调谐的广播中继。" },
+          "broadcast": { "available": false, "noiseDelta": 0, "bonusRewardPoints": 0, "unavailableReason": "当前没有待调谐的广播中继。" }
+        },
+        "northPendingChoices": {
+          "mute": { "available": true, "noiseDelta": 0 },
+          "broadcast": { "available": true, "noiseDelta": 1, "bonusRewardPoints": 180 }
+        },
+        "northMute": {
+          "status": "committed",
+          "log": "广播中继已静默：当前噪声 0/6。",
+          "noiseBefore": 0,
+          "noiseAfter": 0
+        },
+        "reResolveNoPending": {
+          "status": "rejected",
+          "code": "domain-rejected",
+          "message": "The command did not produce a domain transition.",
+          "noiseAfter": 0
+        },
+        "afterAcousticHushblade": {
+          "noise": 0,
+          "firstClashMutedUsed": true,
+          "hushbladeReason": "断频长刃已抵消首次战斗或陷阱增噪。"
+        },
+        "centralBroadcast": {
+          "status": "committed",
+          "log": "广播中继已播送：本局奖励点 +180，当前噪声 1/6。",
+          "noiseBefore": 0,
+          "noiseAfter": 1,
+          "rewardPointsBefore": 2200,
+          "rewardPointsAfter": 2380
+        },
+        "afterStatic": { "noise": 2 },
+        "omegaFight": { "rounds": 4, "hpAfter": 862, "noise": 3 },
+        "afterSoulRecharge": { "noise": 4 },
+        "afterStudioLock": { "noise": 5 },
+        "southPendingChoices": {
+          "mute": { "available": true, "noiseDelta": -2 },
+          "broadcast": { "available": true, "noiseDelta": 1, "bonusRewardPoints": 180 }
+        },
+        "southBroadcast": {
+          "status": "committed",
+          "log": "广播中继已播送：本局奖励点 +180，当前噪声 6/6。",
+          "noiseBefore": 5,
+          "noiseAfter": 6,
+          "rewardPointsBefore": 5590,
+          "rewardPointsAfter": 5770,
+          "resolvedRelayChoices": {
+            "north_relay_console": "mute",
+            "central_relay_console": "broadcast",
+            "south_relay_console": "broadcast"
+          }
+        },
+        "mimicFight": { "rounds": 3, "hpAfter": 856, "noise": 6 },
+        "resolveAfterAll": {
+          "status": "rejected",
+          "code": "domain-rejected",
+          "message": "The command did not produce a domain transition.",
+          "choiceStatus": {
+            "available": false,
+            "noiseDelta": 0,
+            "bonusRewardPoints": 0,
+            "unavailableReason": "当前没有待调谐的广播中继。"
+          },
+          "noiseAfter": 6
+        },
+        "finalDisplay": {
+          "status": "噪声 6/6，北中继:静默，中央中继:播送，南中继:播送，静默 1，播送 2，Boss快照 未冻结",
+          "severity": "resolved",
+          "meter": { "value": 6, "max": 6 },
+          "targetReached": true
+        },
+        "finalLawData": {
+          "kind": "silent_broadcast_tower",
+          "noise": 6,
+          "pendingRelayNodeId": null,
+          "resolvedRelayChoices": {
+            "north_relay_console": "mute",
+            "central_relay_console": "broadcast",
+            "south_relay_console": "broadcast"
+          },
+          "bossNoiseSnapshot": null,
+          "entryPassives": {
+            "hushblade": true,
+            "deadAirHeadset": true,
+            "anechoicMantle": true,
+            "lastChannelBeacon": true
+          },
+          "firstClashMutedUsed": true
+        },
+        "final": { "noise": 6, "muteCount": 1, "broadcastCount": 2, "allRelaysResolved": true },
+        "roundtrip": {
+          "status": "decoded",
+          "lawData": {
+            "kind": "silent_broadcast_tower",
+            "noise": 6,
+            "pendingRelayNodeId": null,
+            "resolvedRelayChoices": {
+              "north_relay_console": "mute",
+              "central_relay_console": "broadcast",
+              "south_relay_console": "broadcast"
+            },
+            "bossNoiseSnapshot": null,
+            "entryPassives": {
+              "hushblade": true,
+              "deadAirHeadset": true,
+              "anechoicMantle": true,
+              "lastChannelBeacon": true
+            },
+            "firstClashMutedUsed": true
+          },
+          "displayStatus": "噪声 6/6，北中继:静默，中央中继:播送，南中继:播送，静默 1，播送 2，Boss快照 未冻结",
+          "noise": 6,
+          "rewardPoints": 7550
+        }
+      }
+    },
+    {
+      "id": "broadcast-region-gates",
+      "expected": {
+        "silentArchiveClosed": {
+          "at": "north_echo_cache",
+          "target": "silent_archive",
+          "gateId": "broadcast_silent_archive_gate",
+          "status": "closed",
+          "isOpen": false,
+          "blockReason": "至少静默 2 座中继，且噪声不高于 1。"
+        },
+        "silentArchiveIllegalMove": {
+          "target": "silent_archive",
+          "status": "rejected",
+          "code": "illegal-move",
+          "message": "silent_archive is not a legal adjacent destination from north_echo_cache."
+        },
+        "leechFight": { "rounds": 3, "hpAfter": 976, "noise": 0 },
+        "wardenFight": { "rounds": 4, "hpAfter": 967, "noise": 1 },
+        "resonanceVaultClosed": {
+          "at": "broadcast_warden_north",
+          "target": "resonance_vault",
+          "gateId": "broadcast_resonance_vault_gate",
+          "status": "closed",
+          "isOpen": false,
+          "blockReason": "至少播送 2 座中继，且噪声不低于 4。"
+        },
+        "resonanceVaultIllegalMove": {
+          "target": "resonance_vault",
+          "status": "rejected",
+          "code": "illegal-move",
+          "message": "resonance_vault is not a legal adjacent destination from broadcast_warden_north."
+        },
+        "silentArchiveOpen": {
+          "at": "north_echo_cache",
+          "target": "silent_archive",
+          "gateId": "broadcast_silent_archive_gate",
+          "status": "open",
+          "isOpen": true,
+          "blockReason": null
+        },
+        "silentArchiveLegalMove": { "target": "silent_archive", "status": "committed" },
+        "afterStatic": { "noise": 1 },
+        "afterSouthMute": { "noise": 0, "muteCount": 3, "allRelaysResolved": true },
+        "omegaFight": { "rounds": 5, "hpAfter": 895, "noise": 1 },
+        "afterSoulRecharge": { "noise": 2 },
+        "balancedSwitchboardOpen": {
+          "at": "soul_recharge_broadcast",
+          "target": "balanced_switchboard",
+          "gateId": "broadcast_balanced_switchboard_gate",
+          "status": "open",
+          "isOpen": true,
+          "blockReason": null
+        },
+        "balancedSwitchboardLegalMove": { "target": "balanced_switchboard", "status": "committed" },
+        "bossGateOpen": {
+          "at": "broadcast_memory_stage",
+          "target": "last_broadcaster",
+          "gateId": "broadcast_memory_boss_gate",
+          "status": "open",
+          "isOpen": true,
+          "blockReason": null
+        },
+        "final": {
+          "noise": 2,
+          "muteCount": 3,
+          "broadcastCount": 0,
+          "resolvedRelayChoices": {
+            "north_relay_console": "mute",
+            "central_relay_console": "mute",
+            "south_relay_console": "mute"
+          },
+          "allRelaysResolved": true
+        }
+      }
+    },
+    {
+      "id": "broadcast-boss-snapshot",
+      "expected": {
+        "beforeBoss": { "noise": 2, "bossNoiseSnapshot": null, "allRelaysResolved": true, "choicesAvailable": false },
+        "bossEntryBeforeSelect": { "noise": 2, "bossNoiseSnapshot": null },
+        "bossEntry": {
+          "noise": 2,
+          "bossNoiseSnapshot": 1,
+          "choicesAvailable": false,
+          "frozenReason": "首领噪声已冻结，不能再调谐中继。",
+          "monsterHp": 1319,
+          "bossPhase": "sealed",
+          "turn": 1
+        },
+        "bossFight": { "rounds": 7, "hpAfter": 800, "cleared": true },
+        "bossLawAtStart": {
+          "lawData": {
+            "kind": "silent_broadcast_tower",
+            "noise": 2,
+            "pendingRelayNodeId": null,
+            "resolvedRelayChoices": {
+              "north_relay_console": "mute",
+              "central_relay_console": "mute",
+              "south_relay_console": "mute"
+            },
+            "bossNoiseSnapshot": 1,
+            "entryPassives": {
+              "hushblade": true,
+              "deadAirHeadset": true,
+              "anechoicMantle": true,
+              "lastChannelBeacon": true
+            },
+            "firstClashMutedUsed": true
+          },
+          "display": {
+            "status": "噪声 2/6，北中继:静默，中央中继:静默，南中继:静默，静默 3，播送 0，Boss快照 1",
+            "severity": "resolved",
+            "meter": { "value": 2, "max": 6 },
+            "targetReached": true
+          },
+          "modifiers": {
+            "encounter": { "allStatsPercent": 0, "defensePercent": 4, "artPowerPercent": 0 },
+            "trap": { "damagePercent": 0, "dcPercent": 0 },
+            "healingPercent": 0,
+            "outgoingDamage": { "forcePercent": 0, "artPercent": 0 },
+            "guardEffectPercent": 0
+          }
+        },
+        "resolveAfterBoss": {
+          "status": "rejected",
+          "code": "domain-rejected",
+          "message": "The command did not produce a domain transition.",
+          "choiceStatus": {
+            "available": false,
+            "noiseDelta": 0,
+            "bonusRewardPoints": 0,
+            "unavailableReason": "首领噪声已冻结，不能再调谐中继。"
+          },
+          "noiseAfter": 3
+        },
+        "roundtrip": {
+          "status": "decoded",
+          "lawData": {
+            "kind": "silent_broadcast_tower",
+            "noise": 3,
+            "pendingRelayNodeId": null,
+            "resolvedRelayChoices": {
+              "north_relay_console": "mute",
+              "central_relay_console": "mute",
+              "south_relay_console": "mute"
+            },
+            "bossNoiseSnapshot": 1,
+            "entryPassives": {
+              "hushblade": true,
+              "deadAirHeadset": true,
+              "anechoicMantle": true,
+              "lastChannelBeacon": true
+            },
+            "firstClashMutedUsed": true
+          },
+          "displayStatus": "噪声 3/6，北中继:静默，中央中继:静默，南中继:静默，静默 3，播送 0，Boss快照 1",
+          "noise": 3,
+          "rewardPoints": 8720
+        }
+      }
+    },
+    {
+      "id": "broadcast-reward-inheritance",
+      "expected": {
+        "entryRewardPoints": 850,
+        "afterGate": { "rewardPoints": 1310, "runLootRewardPoints": 460, "silenceCore": 2, "runSilenceCore": 2 },
+        "northBroadcast": {
+          "status": "committed",
+          "log": "广播中继已播送：本局奖励点 +180，当前噪声 1/6。",
+          "rewardPointsBefore": 1660,
+          "rewardPointsAfter": 1840,
+          "delta": 180,
+          "runLootRewardPoints": 990
+        },
+        "centralNodeReward": { "rewardPoints": 2380, "runLootRewardPoints": 1530, "silenceCore": 4, "runSilenceCore": 4 },
+        "centralBroadcast": {
+          "status": "committed",
+          "log": "广播中继已播送：本局奖励点 +180，当前噪声 2/6。",
+          "rewardPointsBefore": 2380,
+          "rewardPointsAfter": 2560,
+          "delta": 180,
+          "runLootRewardPoints": 1710
+        },
+        "southBroadcast": {
+          "status": "committed",
+          "log": "广播中继已播送：本局奖励点 +180，当前噪声 4/6。",
+          "rewardPointsBefore": 3080,
+          "rewardPointsAfter": 3260,
+          "delta": 180,
+          "runLootRewardPoints": 2410
+        },
+        "final": {
+          "noise": 4,
+          "muteCount": 0,
+          "broadcastCount": 3,
+          "rewardPoints": 3260,
+          "runLootRewardPoints": 2410,
+          "resolvedRelayChoices": {
+            "north_relay_console": "broadcast",
+            "central_relay_console": "broadcast",
+            "south_relay_console": "broadcast"
+          },
+          "allRelaysResolved": true
+        },
+        "roundtrip": {
+          "status": "decoded",
+          "lawData": {
+            "kind": "silent_broadcast_tower",
+            "noise": 4,
+            "pendingRelayNodeId": null,
+            "resolvedRelayChoices": {
+              "north_relay_console": "broadcast",
+              "central_relay_console": "broadcast",
+              "south_relay_console": "broadcast"
+            },
+            "bossNoiseSnapshot": null,
+            "entryPassives": {
+              "hushblade": true,
+              "deadAirHeadset": true,
+              "anechoicMantle": true,
+              "lastChannelBeacon": true
+            },
+            "firstClashMutedUsed": true
+          },
+          "displayStatus": "噪声 4/6，北中继:播送，中央中继:播送，南中继:播送，静默 0，播送 3，Boss快照 未冻结",
+          "noise": 4,
+          "rewardPoints": 3260
+        }
+      }
+    }
+  ]
+}

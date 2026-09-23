@@ -1,0 +1,406 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "law-07-virtual",
+  "provenance": {
+    "oracle": {
+      "project": "infinite-flow-web",
+      "commit": "2645f0232542684d27de1abc321bb26913320420",
+      "path": "infinite-flow/src/main.ts",
+      "sha256": "d07ff9d4562ecc618caf3341e5f83cb2b43a733c19506c14c362d1cd07bfb8bb"
+    },
+    "goldenManifest": {
+      "path": "packages/save-codec/tests/fixtures/manifest.json",
+      "sha256": "36fcff8420e9aefbb8fe8c472b42fd5dbf6835025beee05b567a8481d6ca6bf1"
+    },
+    "expectedRule": "Void Citadel records the opening style (force=attack, art, guard) of the first offensive action of every non-boss combat victory. Before the boss is engaged, the law shows a preview of the style that would be countered. When the boss combat starts, the assessment is locked: bossAssessmentLocked becomes true and bossCounter is frozen from the non-boss opening distribution, excluding the boss's own placeholder opening record. A distribution is balanced only when all three styles have at least one victory and the max-min spread is at most 1; a balanced distribution locks bossCounter=null and closes the counter, while an imbalanced distribution locks the most-used style (fixed force->art->guard tie order) and applies a -20% penalty to that style's outgoing damage or guard effect for the whole boss encounter. Once locked, the boss's own opening and later hub/top-level state changes cannot backfill the assessment: the player's real opening action in the boss fight does not overwrite the placeholder record, hub commands are refused during combat, and the locked law state survives a save-codec round-trip. Route gates citadel_force_identity_lane, citadel_art_growth_lane, and citadel_guard_echo_lane open after at least one victory with their respective style; citadel_balanced_core_lane opens only for a balanced distribution. All expected values are frozen here, never read from candidate code."
+  },
+  "baseInput": {
+    "path": "packages/save-codec/tests/fixtures/new-hub-v1.json",
+    "sha256": "a1de1f1b33b59c91dea46caf55f21b6eee0b7104c2cbe4d68ac5d7a430709e0b"
+  },
+  "inputMutations": [
+    {
+      "op": "replace",
+      "path": ["state", "completedDungeonIds"],
+      "value": ["demon_tower_1", "metro_abyss", "starfall_mine", "rust_hospital", "ash_arena", "dream_archive"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "claimedTaskIds"],
+      "value": ["clear_demon_tower", "clear_metro_abyss", "mainline_clear_starfall_mine", "mainline_clear_rust_hospital", "mainline_clear_ash_arena", "mainline_clear_dream_archive"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "preparedItemIds"],
+      "value": ["healing_pill", "focus_incense", "armor_patch"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "inventory", "healing_pill"],
+      "value": 20
+    },
+    {
+      "op": "replace",
+      "path": ["state", "inventory", "focus_incense"],
+      "value": 3
+    },
+    {
+      "op": "replace",
+      "path": ["state", "inventory", "armor_patch"],
+      "value": 3
+    },
+    {
+      "op": "replace",
+      "path": ["state", "learnedMethods"],
+      "value": ["iron_body"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "methodRanks"],
+      "value": { "iron_body": 1 }
+    },
+    {
+      "op": "add",
+      "path": ["state", "activeMethod"],
+      "value": "iron_body"
+    },
+    {
+      "op": "replace",
+      "path": ["state", "ownedEquipment"],
+      "value": [
+        "training_blade",
+        "patched_headwrap",
+        "patched_coat",
+        "patched_gloves",
+        "patched_boots",
+        "patched_belt",
+        "plain_charm",
+        "ember_staff",
+        "mist_hood",
+        "spirit_robe",
+        "guardian_gauntlets",
+        "cloudstep_boots",
+        "rift_belt",
+        "rift_charm"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "equipped"],
+      "value": {
+        "weapon": "ember_staff",
+        "head": "mist_hood",
+        "armor": "spirit_robe",
+        "hands": "guardian_gauntlets",
+        "feet": "cloudstep_boots",
+        "waist": "rift_belt",
+        "charm": "rift_charm"
+      }
+    },
+    {
+      "op": "replace",
+      "path": ["state", "equipmentLevels"],
+      "value": {
+        "training_blade": 1,
+        "patched_headwrap": 1,
+        "patched_coat": 1,
+        "patched_gloves": 1,
+        "patched_boots": 1,
+        "patched_belt": 1,
+        "plain_charm": 1,
+        "ember_staff": 3,
+        "mist_hood": 1,
+        "spirit_robe": 1,
+        "guardian_gauntlets": 1,
+        "cloudstep_boots": 1,
+        "rift_belt": 1,
+        "rift_charm": 1
+      }
+    },
+    {
+      "op": "replace",
+      "path": ["state", "ownedPets"],
+      "value": ["contract_sprite"]
+    },
+    {
+      "op": "replace",
+      "path": ["state", "petLevels"],
+      "value": { "contract_sprite": 1 }
+    },
+    {
+      "op": "add",
+      "path": ["state", "activePet"],
+      "value": "contract_sprite"
+    },
+    {
+      "op": "replace",
+      "path": ["state", "player", "base", "spirit"],
+      "value": 7
+    },
+    {
+      "op": "replace",
+      "path": ["state", "player", "base", "body"],
+      "value": 10
+    },
+    {
+      "op": "replace",
+      "path": ["state", "player", "base", "agility"],
+      "value": 4
+    }
+  ],
+  "entrySeed": 707070707,
+  "scenarioIds": [
+    "citadel-boss-assessment-freeze",
+    "citadel-counter-targets-bias",
+    "citadel-style-route-gates",
+    "citadel-repeat-clear-boundary"
+  ],
+  "scenarios": [
+    {
+      "id": "citadel-boss-assessment-freeze",
+      "expected": {
+        "entryDisplay": {
+          "status": "尚无开局记录",
+          "severity": "stable",
+          "targetReached": false,
+          "meter": null
+        },
+        "flows": {
+          "force-biased": {
+            "openings": ["attack", "attack", "attack"],
+            "preLock": {
+              "locked": false,
+              "counter": null,
+              "status": "偏科预警：力",
+              "distribution": { "force": 3, "art": 0, "guard": 0 }
+            },
+            "locked": {
+              "locked": true,
+              "counter": "force",
+              "status": "克制偏科：力",
+              "severity": "danger",
+              "targetReached": false,
+              "distribution": { "force": 3, "art": 0, "guard": 0 },
+              "bossOpeningRecord": { "isBoss": true, "style": null },
+              "modifiers": { "forcePercent": -20, "artPercent": 0, "guardEffectPercent": 0 }
+            },
+            "afterForceAttack": {
+              "locked": true,
+              "counter": "force",
+              "distribution": { "force": 3, "art": 0, "guard": 0 },
+              "bossOpeningRecord": { "isBoss": true, "style": null }
+            },
+            "afterBoss": {
+              "locked": true,
+              "counter": "force",
+              "status": "克制偏科：力",
+              "distribution": { "force": 3, "art": 0, "guard": 0 }
+            },
+            "roundtrip": { "status": "decoded", "locked": true, "counter": "force" }
+          },
+          "balanced": {
+            "openings": ["attack", "art", "guard"],
+            "preLock": {
+              "locked": false,
+              "counter": null,
+              "status": "开局分布均衡",
+              "distribution": { "force": 1, "art": 1, "guard": 1 }
+            },
+            "locked": {
+              "locked": true,
+              "counter": null,
+              "status": "分布均衡，克制关闭",
+              "severity": "resolved",
+              "targetReached": true,
+              "distribution": { "force": 1, "art": 1, "guard": 1 },
+              "bossOpeningRecord": { "isBoss": true, "style": null },
+              "modifiers": { "forcePercent": 0, "artPercent": 0, "guardEffectPercent": 0 }
+            },
+            "afterForceAttack": {
+              "locked": true,
+              "counter": null,
+              "distribution": { "force": 1, "art": 1, "guard": 1 },
+              "bossOpeningRecord": { "isBoss": true, "style": null }
+            },
+            "afterBoss": {
+              "locked": true,
+              "counter": null,
+              "status": "分布均衡，克制关闭",
+              "distribution": { "force": 1, "art": 1, "guard": 1 }
+            },
+            "roundtrip": { "status": "decoded", "locked": true, "counter": null }
+          },
+          "art-biased": {
+            "openings": ["attack", "art", "art"],
+            "preLock": {
+              "locked": false,
+              "counter": null,
+              "status": "偏科预警：术",
+              "distribution": { "force": 1, "art": 2, "guard": 0 }
+            },
+            "locked": {
+              "locked": true,
+              "counter": "art",
+              "status": "克制偏科：术",
+              "severity": "danger",
+              "targetReached": false,
+              "distribution": { "force": 1, "art": 2, "guard": 0 },
+              "bossOpeningRecord": { "isBoss": true, "style": null },
+              "modifiers": { "forcePercent": 0, "artPercent": -20, "guardEffectPercent": 0 }
+            },
+            "afterForceAttack": {
+              "locked": true,
+              "counter": "art",
+              "distribution": { "force": 1, "art": 2, "guard": 0 },
+              "bossOpeningRecord": { "isBoss": true, "style": null }
+            },
+            "afterBoss": {
+              "locked": true,
+              "counter": "art",
+              "status": "克制偏科：术",
+              "distribution": { "force": 1, "art": 2, "guard": 0 }
+            },
+            "roundtrip": { "status": "decoded", "locked": true, "counter": "art" }
+          }
+        },
+        "hubRejection": { "code": "invalid-phase" },
+        "victoryOrder": ["void_knight", "echo_gate_guard", "first_echo_patrol"]
+      }
+    },
+    {
+      "id": "citadel-counter-targets-bias",
+      "expected": {
+        "force-biased": {
+          "counter": "force",
+          "forceDamageLog": "你发动攻击，造成 34 点伤害。",
+          "artDamageLog": "你运转灵力，造成 103 点术法伤害。",
+          "forceDamage": 34,
+          "artDamage": 103,
+          "forceBossPhase": "sealed",
+          "artBossPhase": "awakened"
+        },
+        "balanced": {
+          "counter": null,
+          "forceDamageLog": "你发动攻击，造成 41 点伤害。",
+          "artDamageLog": "你运转灵力，造成 103 点术法伤害。",
+          "forceDamage": 41,
+          "artDamage": 103,
+          "forceBossPhase": "sealed",
+          "artBossPhase": "awakened"
+        },
+        "art-biased": {
+          "counter": "art",
+          "forceDamageLog": "你发动攻击，造成 41 点伤害。",
+          "artDamageLog": "你运转灵力，造成 83 点术法伤害。",
+          "forceDamage": 41,
+          "artDamage": 83,
+          "forceBossPhase": "sealed",
+          "artBossPhase": "sealed"
+        },
+        "relationships": {
+          "forcePenalizedOnlyInForceBiased": true,
+          "artPenalizedOnlyInArtBiased": true,
+          "unpenalizedForceDamageEqual": true,
+          "unpenalizedArtDamageEqual": true
+        }
+      }
+    },
+    {
+      "id": "citadel-style-route-gates",
+      "expected": {
+        "gates": [
+          {
+            "flow": "force-biased",
+            "at": "void_knight",
+            "target": "identity_trap",
+            "gateId": "citadel_force_identity_lane",
+            "status": "open",
+            "isOpen": true,
+            "blockReason": null
+          },
+          {
+            "flow": "force-biased",
+            "at": "echo_gate_guard",
+            "target": "echo_loop_trap",
+            "gateId": "citadel_guard_echo_lane",
+            "status": "closed",
+            "isOpen": false,
+            "blockReason": "先用守式开局获胜 1 场。"
+          },
+          {
+            "flow": "force-biased",
+            "at": "first_echo_patrol",
+            "target": "growth_mirror_trap",
+            "gateId": "citadel_art_growth_lane",
+            "status": "closed",
+            "isOpen": false,
+            "blockReason": "先用术式开局获胜 1 场。"
+          },
+          {
+            "flow": "balanced",
+            "at": "void_knight",
+            "target": "identity_trap",
+            "gateId": "citadel_force_identity_lane",
+            "status": "open",
+            "isOpen": true,
+            "blockReason": null
+          },
+          {
+            "flow": "balanced",
+            "at": "echo_gate_guard",
+            "target": "echo_loop_trap",
+            "gateId": "citadel_guard_echo_lane",
+            "status": "closed",
+            "isOpen": false,
+            "blockReason": "先用守式开局获胜 1 场。"
+          },
+          {
+            "flow": "balanced",
+            "at": "first_echo_patrol",
+            "target": "growth_mirror_trap",
+            "gateId": "citadel_art_growth_lane",
+            "status": "open",
+            "isOpen": true,
+            "blockReason": null
+          },
+          {
+            "flow": "art-biased",
+            "at": "void_knight",
+            "target": "identity_trap",
+            "gateId": "citadel_force_identity_lane",
+            "status": "open",
+            "isOpen": true,
+            "blockReason": null
+          },
+          {
+            "flow": "art-biased",
+            "at": "echo_gate_guard",
+            "target": "echo_loop_trap",
+            "gateId": "citadel_guard_echo_lane",
+            "status": "closed",
+            "isOpen": false,
+            "blockReason": "先用守式开局获胜 1 场。"
+          },
+          {
+            "flow": "art-biased",
+            "at": "first_echo_patrol",
+            "target": "growth_mirror_trap",
+            "gateId": "citadel_art_growth_lane",
+            "status": "open",
+            "isOpen": true,
+            "blockReason": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "citadel-repeat-clear-boundary",
+      "expected": {
+        "reselectedNodeId": "main_god_echo",
+        "rejectionCode": "already-resolved",
+        "lawStateUnchanged": true,
+        "hpUnchanged": true
+      }
+    }
+  ]
+}

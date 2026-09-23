@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "web-v1-methodSnapshot",
+  "provenance": {
+    "oracle": {
+      "project": "infinite-flow-web",
+      "commit": "2645f0232542684d27de1abc321bb26913320420",
+      "path": "infinite-flow/src/main.ts",
+      "sha256": "d07ff9d4562ecc618caf3341e5f83cb2b43a733c19506c14c362d1cd07bfb8bb"
+    },
+    "compatibilityViewOracle": {
+      "path": "infinite-flow/src/game.ts",
+      "sha256": "bb885c467a23fd5b815b93224b3fa9992b055b901142be0878389c21138a02ed"
+    },
+    "goldenManifest": {
+      "path": "packages/save-codec/tests/fixtures/manifest.json",
+      "sha256": "36fcff8420e9aefbb8fe8c472b42fd5dbf6835025beee05b567a8481d6ca6bf1"
+    },
+    "candidateContracts": [
+      "@infinite-flow/save-codec/decodeWebV1",
+      "@infinite-flow/core/getCurrentRunMethodSnapshots",
+      "@infinite-flow/core/getCurrentMethodTechniqueStatus"
+    ],
+    "expectedRule": "hub rank 1 and frozen run rank 3 are deliberately different and statically pinned"
+  },
+  "baseInput": {
+    "path": "packages/save-codec/tests/fixtures/active-combat-v1.json",
+    "sha256": "dda0eb64454305b8c85877678dec51069e1da3204342dd5c854b0a200b88fac2"
+  },
+  "scenarioIds": [
+    "legacy-single-snapshot-keeps-frozen-rank"
+  ],
+  "scenarios": [
+    {
+      "id": "legacy-single-snapshot-keeps-frozen-rank",
+      "inputMutations": [
+        { "op": "replace", "path": ["state", "learnedMethods"], "value": ["gate_sense"] },
+        { "op": "replace", "path": ["state", "methodRanks"], "value": { "gate_sense": 1 } },
+        { "op": "add", "path": ["state", "activeMethod"], "value": "gate_sense" },
+        { "op": "remove", "path": ["state", "run", "methodSnapshots"] },
+        {
+          "op": "add",
+          "path": ["state", "run", "methodSnapshot"],
+          "value": { "rulesVersion": 1, "methodId": "gate_sense", "rank": 3 }
+        }
+      ],
+      "expected": {
+        "hub": {
+          "activeMethod": "gate_sense",
+          "rank": 1
+        },
+        "runSnapshot": {
+          "rulesVersion": 1,
+          "methodId": "gate_sense",
+          "rank": 3
+        },
+        "warningCodes": [
+          "legacy-run-without-companion-snapshot",
+          "legacy-single-method-snapshot",
+          "legacy-run-without-bloodline-snapshot"
+        ]
+      }
+    }
+  ]
+}

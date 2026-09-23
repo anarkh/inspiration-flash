@@ -1,0 +1,149 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "web-v1-missing-run-snapshots",
+  "provenance": {
+    "oracle": {
+      "project": "infinite-flow-web",
+      "commit": "2645f0232542684d27de1abc321bb26913320420",
+      "implementationPath": "infinite-flow/src/main.ts"
+    },
+    "goldenManifest": {
+      "path": "packages/save-codec/tests/fixtures/manifest.json",
+      "caseFile": "legacy-missing-run-snapshots-v1.json"
+    },
+    "candidateContract": {
+      "package": "@infinite-flow/save-codec",
+      "export": "decodeWebV1"
+    }
+  },
+  "input": {
+    "path": "packages/save-codec/tests/fixtures/legacy-missing-run-snapshots-v1.json",
+    "sha256": "ae6531bdb55a61dff19dcb08a1fb2ea8cde886f30f70ca08a6bdf0c6d618574b"
+  },
+  "scenarioIds": [
+    "missing-snapshots-disable-only-dependent-systems"
+  ],
+  "scenarios": [
+    {
+      "id": "missing-snapshots-disable-only-dependent-systems",
+      "expected": {
+        "absentRunFields": [
+          "tacticalLoadout",
+          "companionSnapshot",
+          "methodSnapshots",
+          "methodSnapshot",
+          "bloodlineSnapshot"
+        ],
+        "permanentState": {
+          "phase": "explore",
+          "rewardPoints": 850,
+          "lingyun": 1,
+          "ownedEquipment": [
+            "training_blade",
+            "patched_headwrap",
+            "patched_coat",
+            "patched_gloves",
+            "patched_boots",
+            "patched_belt",
+            "plain_charm"
+          ],
+          "equipped": {
+            "weapon": "training_blade",
+            "head": "patched_headwrap",
+            "armor": "patched_coat",
+            "hands": "patched_gloves",
+            "feet": "patched_boots",
+            "waist": "patched_belt",
+            "charm": "plain_charm"
+          },
+          "enteredDungeonIds": [
+            "demon_tower_1"
+          ]
+        },
+        "otherRunState": {
+          "entryFlowVersion": 2,
+          "explorationRewardVersion": 1,
+          "hiddenTaskSeed": 305419896,
+          "dungeonId": "demon_tower_1",
+          "currentNodeId": "fog_lesser_demon",
+          "discoveredNodeIds": [
+            "broken_sigil_reward",
+            "fog_lesser_demon",
+            "blood_rune_trap",
+            "ash_pit_trap"
+          ],
+          "fieldSurveyState": {
+            "rulesVersion": 1,
+            "frozenSources": [],
+            "resolvedSurveys": []
+          },
+          "equipmentMemorySnapshot": {
+            "rulesVersion": 1,
+            "activeEntries": []
+          },
+          "protocol": {
+            "id": "standard",
+            "rulesVersion": 1
+          },
+          "pressureState": {
+            "rulesVersion": 1,
+            "clearedNodeCount": 0
+          },
+          "relicState": {
+            "rulesVersion": 1,
+            "frame": "assault",
+            "acquiredIds": [],
+            "processedDraftIds": []
+          },
+          "soulSkillState": {
+            "rulesVersion": 1,
+            "frozenSkillIds": [],
+            "readySkillIds": [],
+            "chargesRemaining": 0,
+            "usedRechargeIds": []
+          },
+          "lawState": {
+            "rulesVersion": 1,
+            "dungeonId": "demon_tower_1",
+            "clearedNodeIds": [],
+            "resolvedEventIds": [],
+            "combatOpenings": {},
+            "combatVictoryNodeIds": [],
+            "law": {
+              "kind": "demon_tower",
+              "fogPressure": 0
+            }
+          },
+          "pursuitState": {
+            "rulesVersion": 1,
+            "dungeonId": "demon_tower_1",
+            "status": "disabled",
+            "nodeId": null,
+            "contacts": 0,
+            "graceMoves": 0,
+            "rewardGranted": false,
+            "repelledReason": null
+          }
+        },
+        "repairedDefaults": {
+          "lootBag": {
+            "rewardPoints": 0,
+            "lingyun": 0,
+            "items": {},
+            "equipmentIds": []
+          },
+          "observationShard": 0
+        },
+        "warningCodes": [
+          "legacy-run-without-tactical-snapshot",
+          "legacy-run-without-companion-snapshot",
+          "legacy-run-without-method-snapshot",
+          "legacy-run-without-bloodline-snapshot"
+        ],
+        "repairCodes": [
+          "web-v1-state-normalized"
+        ]
+      }
+    }
+  ]
+}
