@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 
 import { describe, expect, it } from 'vitest';
 
+import { getTacticalLoadoutStatus } from '@infinite-flow/core';
 import { decodeWebV1 } from '../src/index.js';
 
 function fixture(name: string): string {
@@ -85,6 +86,26 @@ describe('Web v1 golden compatibility', () => {
         'legacy-run-without-bloodline-snapshot'
       ])
     );
+  });
+
+  it('decodes legacy preparedItemIds containing supplies and strips them via loadout status', () => {
+    const raw = JSON.parse(fixture('new-hub-v1.json')) as {
+      state: { preparedItemIds?: unknown };
+    };
+    raw.state.preparedItemIds = ['healing_pill', 'dispel_talisman'];
+    const result = decodeWebV1({
+      kind: 'web-local-storage-text',
+      text: JSON.stringify(raw)
+    });
+
+    expect(result.status).toBe('decoded');
+    if (result.status !== 'decoded') throw new Error(result.reason.message);
+    // Supplies remain decodable raw ids (no hard rejection of old saves)...
+    expect(result.state.preparedItemIds).toEqual(['healing_pill', 'dispel_talisman']);
+    // ...but loadout status silently drops them so entry validation never blocks old players.
+    const status = getTacticalLoadoutStatus(result.state);
+    expect(status.preparedItemIds).toEqual(['dispel_talisman']);
+    expect(status.isValid).toBe(true);
   });
 
   it('sanitizes locally corrupt optional subsystem fields before validation', () => {

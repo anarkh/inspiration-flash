@@ -44,6 +44,7 @@ declare module 'cc' {
     elastic: boolean;
     cancelInnerEvents: boolean;
     getScrollOffset(): Vec2;
+    scrollToOffset(offset: Vec2, timeInSecond?: number, attenuated?: boolean): void;
   }
 
   export class TextureBase extends Asset {}
@@ -187,6 +188,7 @@ declare module 'cc' {
 
     string: string;
     fontSize: number;
+    isBold: boolean;
     lineHeight: number;
     color: Color;
     horizontalAlign: number;
@@ -231,6 +233,12 @@ declare module 'cc' {
 
   export const view: {
     getFrameSize(): Size;
+  };
+
+  export const profiler: {
+    hideStats(): void;
+    showStats(): void;
+    isShowingStats(): boolean;
   };
 }
 

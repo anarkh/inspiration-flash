@@ -1,11 +1,10 @@
-import { BlockInputEvents, Color, Graphics, Label, Mask, Node, ScrollView, Size, Sprite, SpriteFrame, UITransform, Vec3 } from 'cc';
-import { EQUIPMENT, ITEMS, getGameAsset } from '@infinite-flow/core';
-import type { GameViewModel, HelpEntryViewModel, HubPanel, MapNodeViewModel, StatusMetric, ViewActionModel } from '@infinite-flow/presentation';
+import { BlockInputEvents, Color, Graphics, Label, Mask, Node, ScrollView, Size, Sprite, SpriteFrame, UITransform, Vec2, Vec3, view } from 'cc';
+import { EQUIPMENT, ITEMS, getGameAsset, type ItemId } from '@infinite-flow/core';
+import type { GameViewModel, HelpEntryViewModel, HubPanel, HubOwnedLoadoutViewModel, HubShopCatalogViewModel, HubShopRowViewModel, MapNodeViewModel, StatusMetric, ViewActionModel } from '@infinite-flow/presentation';
 import {
   buildInfiniteFlowChapterCodexPages,
   buildInfiniteFlowResultPages,
   formatInfiniteFlowCombatChapterContext,
-  formatInfiniteFlowEntryBuildDetail,
   formatInfiniteFlowEquipmentHubDetail,
   formatInfiniteFlowEquipmentMemoryCombat,
   formatInfiniteFlowExploreEquipmentMemory,
@@ -21,6 +20,7 @@ import type { InfiniteFlowRuntimeChrome } from './InfiniteFlowView';
 import {
   DEFAULT_SHEET_THEME,
   sheetRoleCut,
+  withAlpha,
   type SheetFrameRole,
   type SheetPalette,
   type SheetTheme,
@@ -62,6 +62,22 @@ export type MobileSheetState = Readonly<{
   selectedActionId?: string;
   /** Pinned WoW-style GameTooltip; absent when closed. */
   tip?: MobileSheetTip;
+  catalogRowId?: string;
+  catalogSelectedRowId?: string;
+  catalogMoreOpen?: boolean;
+  catalogDetailScrollOffset?: number;
+  catalogServiceOpen?: boolean;
+  catalogExpandedIds?: readonly string[];
+  catalogScrollOffset?: number;
+  /** Expanded service in the reincarnation gate's configuration list. */
+  entryServiceId?: string;
+  entryView?: 'configuration';
+  entryDungeonScrollOffset?: number;
+  mapDungeonId?: string;
+  /** Positive distances from the complete map's top-left corner. */
+  mapScrollOffset?: Readonly<{ x: number; y: number }>;
+  taskId?: string;
+  taskScrollOffset?: number;
 }>;
 export type InfiniteFlowInfoSheetOptions = Readonly<{
   safeInsets: Readonly<{ top: number; right: number; bottom: number; left: number }>;
@@ -84,7 +100,8 @@ export type InfiniteFlowInfoSheetOptions = Readonly<{
    * the current game state, so item tips can toggle carry even when the active
    * hub panel is not supplies. Gallery engines never supply it.
    */
-  supplyActions?: () => readonly ViewActionModel[];
+  supplyActions?: (itemId: ItemId) => readonly ViewActionModel[];
+  ownedLoadout?: () => HubOwnedLoadoutViewModel | undefined;
 }>;
 
 // The existing 750px design space uses 104px controls to retain a 44px target
@@ -100,8 +117,8 @@ const GAP = 16;
 let activeTheme: SheetTheme = DEFAULT_SHEET_THEME;
 const palette = (): SheetPalette => activeTheme.palette;
 const TITLES: Readonly<Record<MobilePanelKind, string>> = Object.freeze({
-  character: '角色状态', inventory: '行囊与装备', map: '区域地图', objectives: '任务与章规',
-  log: '冒险记录', menu: '随身菜单', interaction: '当前交互', entry: '轮回之门',
+  character: '角色信息', inventory: '行囊', map: '区域地图', objectives: '任务目标',
+  log: '冒险记录', menu: '主菜单', interaction: '当前交互', entry: '轮回之门',
   npc: '整备交谈', help: '冒险指南', result: '本轮结算',
 });
 type SheetPage = Readonly<{ title: string; lines: readonly string[]; helpId?: string }>;
@@ -116,6 +133,38 @@ type SheetContext = Readonly<{
   bodyHeight: number;
   images: SheetImageLibrary;
 }>;
+
+const catalogScrollByFrame = new WeakMap<Node, ScrollView>();
+const catalogDetailScrollByFrame = new WeakMap<Node, ScrollView>();
+const sheetScrollCaptures = new WeakMap<Node, Readonly<{ state: MobileSheetState; scroll: ScrollView; detailScroll?: ScrollView }>>();
+type MapScrollCapture = Readonly<{ dungeonId: string; scroll: ScrollView }>;
+const mapScrollByFrame = new WeakMap<Node, MapScrollCapture>();
+const mapScrollCaptures = new WeakMap<Node, MapScrollCapture>();
+
+/** Capture before the host replaces its Cocos tree, including command/asset refreshes. */
+export function captureInfiniteFlowInfoSheetState(root: Node | undefined, state: MobileSheetState): MobileSheetState {
+  if (state.kind === 'map') {
+    const savedMap = root === undefined ? undefined : mapScrollCaptures.get(root);
+    if (!savedMap || (state.mapDungeonId !== undefined && state.mapDungeonId !== savedMap.dungeonId)) return state;
+    const offset = savedMap.scroll.getScrollOffset();
+    // Cocos reports content displacement (negative x), but scrollToOffset accepts positive distances.
+    return { ...state, mapDungeonId: savedMap.dungeonId,
+      mapScrollOffset: { x: Math.max(0, -offset.x), y: Math.max(0, offset.y) } };
+  }
+  const saved = root === undefined ? undefined : sheetScrollCaptures.get(root);
+  if (!saved || saved.state.kind !== state.kind || saved.state.tab !== state.tab
+    || saved.state.entryServiceId !== state.entryServiceId || saved.state.entryView !== state.entryView) return state;
+  if (state.kind === 'objectives') {
+    if (saved.state.taskId !== state.taskId) return state;
+    return { ...state, taskScrollOffset: Math.max(0, saved.scroll.getScrollOffset().y) };
+  }
+  const sameDetail = saved.state.catalogRowId === state.catalogRowId
+    && saved.state.catalogServiceOpen === state.catalogServiceOpen
+    && saved.state.selectedActionId === state.selectedActionId;
+  return { ...state, catalogScrollOffset: Math.max(0, saved.scroll.getScrollOffset().y),
+    catalogDetailScrollOffset: sameDetail && saved.detailScroll
+      ? Math.max(0, saved.detailScroll.getScrollOffset().y) : undefined };
+}
 
 function node(parent: Node, name: string, x: number, y: number, width: number, height: number): Node {
   const child = new Node(name);
@@ -167,8 +216,8 @@ function line(g: Graphics, coordinates: readonly number[]): void {
 }
 
 /** Vector icons remain legible without platform emoji or symbol font support. */
-function icon(parent: Node, name: string, kind: string, x: number, y: number, color = palette().accent): Node {
-  const holder = node(parent, name, x, y, 64, 64);
+function icon(parent: Node, name: string, kind: string, x: number, y: number, color = palette().accent, size = 64): Node {
+  const holder = node(parent, name, x, y, size, size);
   const g = holder.addComponent(Graphics);
   g.strokeColor = color;
   g.fillColor = color;
@@ -205,11 +254,16 @@ function pager(context: SheetContext, count: number): number {
 function tabs(context: SheetContext, choices: readonly Readonly<{ id: string; title: string }>[], fallback: string): Readonly<{ context: SheetContext; active: string }> {
   const active = choices.some(({ id }) => id === context.state.tab) ? context.state.tab! : fallback;
   const width = (context.width - GAP * (choices.length - 1)) / choices.length;
+  // The touch floor stays 104 design px (44 physical px at the 320px viewport),
+  // but the plate is transparent: the visible tab is a compact 60px visual
+  // pinned to its top edge so the strip reads as a WoW tab row, not buttons.
+  const TAB_VISUAL_H = 60;
   for (let index = 0; index < choices.length; index += 1) {
     const choice = choices[index]!;
     const tabRole: SheetFrameRole = choice.id === active ? 'tabActive' : 'tabIdle';
-    const child = panel(context.body, `MobileSheetTab:${choice.id}`, -context.width / 2 + width / 2 + index * (width + GAP), context.bodyHeight / 2 - TOUCH / 2, width, TOUCH, choice.id === active ? palette().accentDark : palette().quiet, choice.id === active ? palette().accent : palette().edge, false, tabRole);
-    text(child, 'Label', choice.title, 0, 0, width - 16, 76, 28, choice.id === active ? palette().accent : palette().text, true);
+    const child = panel(context.body, `MobileSheetTab:${choice.id}`, -context.width / 2 + width / 2 + index * (width + GAP), context.bodyHeight / 2 - TOUCH / 2, width, TOUCH, withAlpha(palette().surface, 0), withAlpha(palette().surface, 0), false, tabRole);
+    const tabVisual = panel(child, 'TabVisual', 0, 0, width, TAB_VISUAL_H, choice.id === active ? palette().accentDark : palette().quiet, choice.id === active ? palette().accent : palette().edge, false, tabRole);
+    text(tabVisual, 'Label', choice.title, 0, 0, width - 16, 40, 26, choice.id === active ? palette().accent : palette().text, true);
     context.options.bindLocal(child, () => context.options.setState({ kind: context.state.kind, page: 0, tab: choice.id }));
   }
   const bodyHeight = context.bodyHeight - TOUCH - GAP;
@@ -393,9 +447,10 @@ export function getInfiniteFlowMobilePanelActions(model: GameViewModel, kind: Mo
     : action.event === undefined && (action.combatAction === 'use_healing_pill' || action.combatAction === 'use_thunder_talisman')));
   if (detail.kind !== 'hub') return [];
   if (kind === 'entry') return detail.activePanel === 'entry'
-    ? actions.filter((action) => hubPanelAction(action, 'entry'))
+    ? [...(detail.entryServices?.flatMap((service) => service.options.map((option) => option.action)) ?? []),
+      ...actions.filter((action) => action.actionId === 'hub.entry.confirm')]
     : actions.filter((action) => action.placement === 'preparation' && action.event?.kind === 'local' && action.event.action.type === 'hub/select-panel' && action.event.action.panel === 'entry');
-  if (kind === 'npc') return detail.activePanel === 'entry' ? [] : actions.filter((action) => hubPanelAction(action, detail.activePanel));
+  if (kind === 'npc') return detail.shop ? [...detail.shop.rows.flatMap((row) => row.actions), ...detail.shop.services] : [];
   if (kind === 'inventory') return actions.filter((action) => {
     if (action.placement === 'preparation' && action.event?.kind === 'local' && action.event.action.type === 'hub/select-panel') return action.event.action.panel === 'supplies' || action.event.action.panel === 'equipment';
     return (detail.activePanel === 'supplies' || detail.activePanel === 'equipment') && hubPanelAction(action, detail.activePanel);
@@ -418,6 +473,8 @@ function actionSummary(model: GameViewModel, action: ViewActionModel): string {
 
 function actionLines(context: SheetContext, action: ViewActionModel): readonly string[] {
   const lines: string[] = [];
+  const detail = context.model.sections[1].detail;
+  if (context.state.kind === 'npc' && detail.kind === 'hub') lines.push(`当前查看：${detail.panelSummary}`);
   if (action.readout) lines.push(`效果与消耗：${readable(action.readout)}`);
   if (action.riskReason) lines.push(`风险：${readable(action.riskReason)}`);
   if (action.disabledReason) lines.push(`不可用原因：${context.model.phase === 'hub' ? formatInfiniteFlowHubActionLockedReason(action) : readable(action.disabledReason)}`);
@@ -450,24 +507,65 @@ function directNavigation(action: ViewActionModel): boolean {
 
 const ACTION_CARD_HEIGHT = 188;
 
+const NPC_ACTION_TAB_LABELS: Readonly<Record<HubPanel, string>> = Object.freeze({
+  entry: '入场选项',
+  supplies: '兑换与携行',
+  equipment: '装备与强化',
+  pets: '签约与培养',
+  methods: '学习与精研',
+  bloodlines: '觉醒与晋升',
+  companions: '招募与出战',
+  tasks: '领取奖励',
+});
+
 function renderActions(context: SheetContext, actions: readonly ViewActionModel[], empty = '当前没有可执行选项。'): void {
   const selected = actions.find((action) => action.actionId === context.state.selectedActionId);
   if (selected !== undefined) { renderActionDetail(context, selected); return; }
   if (actions.length === 0) { renderTextPages(context, [{ title: '当前状态', lines: [empty] }]); return; }
-  const contentHeight = 8 + actions.length * ACTION_CARD_HEIGHT + (actions.length - 1) * GAP + 8;
+  const detail = context.model.sections[1].detail;
+  const npc = context.state.kind === 'npc' && detail.kind === 'hub' ? detail : undefined;
+  // Catalog browsing is local navigation, not an upgrade or purchase. Keep it
+  // separate while preserving the exact VM actions and their host bindings.
+  const navigation = npc ? actions.filter(directNavigation) : [];
+  const choices = npc ? actions.filter((action) => !directNavigation(action)) : actions;
+  const current = npc ? wrapDocSection(context, {
+    title: '当前查看',
+    lines: [npc.panelSummary],
+  }) : undefined;
+  const currentHeight = current ? 76 + current.lines.length * 38 : 0;
+  const navigationRows = Math.ceil(navigation.length / 2);
+  const introHeight = npc ? currentHeight + GAP + navigationRows * (TOUCH + GAP) + 52 : 0;
+  const cardHeight = npc ? ACTION_CARD_HEIGHT + 38 : ACTION_CARD_HEIGHT;
+  const contentHeight = 8 + introHeight + choices.length * (cardHeight + GAP) - GAP + 8;
   const region = scrollRegion(context, contentHeight);
   const content = scrollContentNode(region);
-  actions.forEach((action, index) => {
+  if (current) {
+    const card = panel(content, 'MobileSheetNpcSelection', 0, scrollItemY(region, 8, currentHeight), region.width, currentHeight, palette().quiet, palette().edge);
+    text(card, 'NpcSelectionTitle', current.title, 0, currentHeight / 2 - 30, region.width - 64, 44, 26, palette().accent);
+    current.lines.forEach((entry, index) => text(card, `NpcSelectionLine:${index}`, entry, 0, currentHeight / 2 - 75 - index * 38, region.width - 64, 38, 28));
+    const width = (region.width - GAP) / 2;
+    navigation.forEach((action, index) => {
+      const enabled = canExecute(context, action);
+      const cursor = 8 + currentHeight + GAP + Math.floor(index / 2) * (TOUCH + GAP);
+      const control = button(content, `MobileSheetAction:${action.actionId}`, actionLabel(context.model, action), (index % 2 === 0 ? -1 : 1) * (width + GAP) / 2, scrollItemY(region, cursor, TOUCH), width, enabled, undefined, context.options);
+      if (enabled) context.options.bindAction(control, action);
+    });
+    const heading = panel(content, 'MobileSheetNpcActionHint', 0, scrollItemY(region, 8 + introHeight - 52, 44), region.width, 44, palette().quiet, palette().edge);
+    text(heading, 'NpcActionHint', '选择下方操作，先看用途与消耗，再确认', 0, 0, region.width - 24, 38, 24, palette().textMuted, true);
+  }
+  choices.forEach((action, index) => {
     const enabled = canExecute(context, action);
     const accent = !action.enabled ? palette().textMuted : action.riskReason || action.emphasis === 'danger' ? palette().danger : palette().accent;
-    const cursor = 8 + index * (ACTION_CARD_HEIGHT + GAP);
-    const card = panel(content, `MobileSheetAction:${action.actionId}`, 0, scrollItemY(region, cursor, ACTION_CARD_HEIGHT), region.width, ACTION_CARD_HEIGHT, palette().quiet, accent === palette().danger ? palette().dangerDark : palette().edge);
-    icon(card, 'ActionIcon', action.riskReason ? 'danger' : context.state.kind, -context.width / 2 + 43, ACTION_CARD_HEIGHT / 2 - 47, accent);
-    text(card, 'ActionTitle', actionLabel(context.model, action), 33, ACTION_CARD_HEIGHT / 2 - 42, context.width - 112, 66, 28, action.enabled ? palette().text : palette().textMuted);
+    const cursor = 8 + introHeight + index * (cardHeight + GAP);
+    const card = panel(content, `MobileSheetAction:${action.actionId}`, 0, scrollItemY(region, cursor, cardHeight), region.width, cardHeight, palette().quiet, accent === palette().danger ? palette().dangerDark : palette().edge);
+    icon(card, 'ActionIcon', action.riskReason ? 'danger' : context.state.kind, -context.width / 2 + 43, cardHeight / 2 - 47, accent);
+    text(card, 'ActionTitle', actionLabel(context.model, action), 33, cardHeight / 2 - 42, context.width - 112, 66, 28, action.enabled ? palette().text : palette().textMuted);
     const units = Math.max(8, Math.floor((context.width - 34) / 24));
-    const preview = wrapInfiniteFlowLine(actionSummary(context.model, action), units);
-    text(card, 'ActionReadoutPreview', `${preview.slice(0, 2).join('\n')}${preview.length > 2 ? '…' : ''}`, 0, -8, context.width - 34, 68, 24, palette().textMuted);
-    text(card, 'ActionAffordance', directNavigation(action) && enabled ? '点击切换' : action.enabled ? '查看详情  ›' : '查看不可用原因  ›', 0, -ACTION_CARD_HEIGHT / 2 + 21, context.width - 34, 34, 22, accent);
+    const summary = npc && action.readout ? formatInfiniteFlowHubActionShortCopy(action) : actionSummary(context.model, action);
+    const preview = wrapInfiniteFlowLine(summary, units);
+    const lineCount = npc ? 3 : 2;
+    text(card, 'ActionReadoutPreview', `${preview.slice(0, lineCount).join('\n')}${preview.length > lineCount ? '…' : ''}`, 0, -8, context.width - 34, npc ? 106 : 68, 24, palette().textMuted);
+    text(card, 'ActionAffordance', directNavigation(action) && enabled ? '点击切换' : !action.enabled ? npc ? '暂不可用 · 查看条件  ›' : '查看不可用原因  ›' : npc ? '查看用途与消耗  ›' : '查看详情  ›', 0, -cardHeight / 2 + 21, context.width - 34, 34, 22, accent);
     if (directNavigation(action) && enabled) context.options.bindAction(card, action);
     else context.options.bindLocal(card, () => context.options.setState({ ...context.state, page: 0, selectedActionId: action.actionId }));
   });
@@ -493,10 +591,12 @@ const DOLL_SLOT_LAYOUT: readonly Readonly<{ slot: string; side: -1 | 1; row: num
   { slot: 'armor', side: -1, row: 2 }, { slot: 'waist', side: 1, row: 2 },
   { slot: 'feet', side: -1, row: 3 },
 ];
-const DOLL_ROW_Y = [196, 68, -60, -188] as const;
-const DOLL_SLOT_X = 267;
-const DOLL_STAGE_HEIGHT = 504;
-const DOLL_KPI_HEIGHT = 104;
+const DOLL_ROW_Y = [198, 66, -66, -198] as const;
+const DOLL_SLOT_X = 255;
+const DOLL_STAGE_HEIGHT = 560;
+const DOLL_PORTRAIT_W = 240;
+const DOLL_PORTRAIT_H = 370;
+const STAT_BOX_HEIGHT = 246;
 
 function metricAccent(metric: StatusMetric | undefined): Color {
   if (metric?.severity === 'danger') return palette().danger;
@@ -506,58 +606,110 @@ function metricAccent(metric: StatusMetric | undefined): Color {
 }
 
 function renderCharacter(context: SheetContext): void {
+  if (context.model.phase === 'hub') {
+    const tabbed = tabs(context, [{ id: 'overview', title: '角色' }, { id: 'loadout', title: '整备' }], 'overview');
+    if (tabbed.active === 'loadout') {
+      const owned = context.options.ownedLoadout?.();
+      if (owned) renderHubCatalog(tabbed.context, {
+        rows: owned.rows, title: '我的装备与养成', npcName: '出发前整备',
+        greeting: '在这里穿戴装备、选择出战伙伴和激活已拥有的能力。', services: [],
+      });
+      else renderTextPages(tabbed.context, [{ title: '整备', lines: ['当前没有可配置的装备或能力。'] }]);
+      return;
+    }
+    context = tabbed.context;
+  }
   const loadout = context.model.sections[1].loadout;
   const metrics = context.model.sections[1].metrics;
-  if (!loadout) {
+  const selected = metrics.find((metric) => metric.id === context.state.selectedActionId);
+  if (!loadout || selected) {
+    if (selected) { renderMetricDetail(context, selected); return; }
     renderMetricGrid(context, metrics, context.bodyHeight / 2, context.bodyHeight, 4);
     return;
   }
-  const stage = panel(context.body, 'MobileSheetDollStage', 0, context.bodyHeight / 2 - DOLL_STAGE_HEIGHT / 2, context.width, DOLL_STAGE_HEIGHT, palette().quiet, palette().edgeStrong);
+  // WoW CharacterPaperdoll: the stage and one compact stat box live in a single
+  // scroll document; on tall windows it fits without scrolling, while clipped
+  // insets fall back to in-window scrolling.
+  const contentHeight = 8 + DOLL_STAGE_HEIGHT + GAP + STAT_BOX_HEIGHT + 8;
+  const region = scrollRegion(context, contentHeight);
+  const content = scrollContentNode(region);
+  const stage = panel(content, 'MobileSheetDollStage', 0, scrollItemY(region, 8, DOLL_STAGE_HEIGHT),
+    context.width, DOLL_STAGE_HEIGHT, palette().quiet, palette().edgeStrong);
   // Centered reincarnator portrait (WoW CharacterPaperdoll), glyph-fallback twin.
-  figureNode(context, stage, 'DollPortrait', SHEET_PORTRAIT_KEY, 0, 0, 280, 440,
+  figureNode(context, stage, 'DollPortrait', SHEET_PORTRAIT_KEY, 0, 10, DOLL_PORTRAIT_W, DOLL_PORTRAIT_H,
     { iconKind: 'character', glyphColor: palette().accent }, context.images);
+  const badge = panel(stage, 'DollLevelBadge', 0, -DOLL_PORTRAIT_H / 2 - 14, 150, 36, palette().accentDark, palette().edgeStrong, false, 'cell');
+  text(badge, 'Label', '转生者 Lv.1', 0, 0, 140, 30, 20, palette().accent, true);
   for (const entry of loadout.equipment) {
     const layout = DOLL_SLOT_LAYOUT.find((candidate) => candidate.slot === entry.slot);
     if (!layout) continue;
     const x = layout.side * DOLL_SLOT_X;
     const y = DOLL_ROW_Y[layout.row]!;
-    const slot = panel(stage, `MobileSheetEquip:${entry.slot}`, x, y, TOUCH, TOUCH, palette().raised, palette().edgeStrong, false, 'cell');
-    figureNode(context, slot, `EquipIcon:${entry.slot}`, sheetEquipmentKey(entry.equipmentId), 0, 8, 76, 76,
+    // WoW paper-doll: slot frame carries the equipped item's rarity edge.
+    const slotEdge = qualityEdgeColor(equipmentQuality(entry.equipmentId), palette().edgeStrong);
+    const slot = panel(stage, `MobileSheetEquip:${entry.slot}`, x, y, TOUCH, TOUCH, palette().raised, slotEdge, false, 'cell');
+    // Slot name floats above the slot in the prototype; the level stays inside.
+    text(slot, 'SlotLabel', entry.slotLabel, 0, 68, 96, 24, 18, palette().textMuted, true);
+    figureNode(context, slot, `EquipIcon:${entry.slot}`, sheetEquipmentKey(entry.equipmentId), 0, 6, 76, 76,
       { glyph: entry.name.charAt(entry.name.length - 1), glyphSize: 30, glyphColor: palette().textMuted }, context.images);
-    text(slot, 'SlotLabel', entry.slotLabel, -20, -39, 58, 24, 18, palette().textMuted, true);
-    text(slot, 'SlotLevel', `Lv${entry.level}`, 27, -39, 44, 24, 18, palette().accent, true);
+    text(slot, 'SlotLevel', `Lv${entry.level}`, 0, -40, 60, 24, 18, palette().accent, true);
     // Equipment tips are always read-only; opening works in every phase.
     context.options.bindLocal(slot, () => context.options.setState({ ...context.state, tip: { kind: 'equip', id: entry.equipmentId } }));
   }
 
-  const hpMetric = metrics.find((metric) => metric.id === 'hp' || metric.id === 'player-hp');
-  const attackMetric = metrics.find((metric) => metric.id === 'attack');
-  const kpiWidth = (context.width - GAP * 3) / 4;
-  const kpiY = context.bodyHeight / 2 - DOLL_STAGE_HEIGHT - GAP - DOLL_KPI_HEIGHT / 2;
-  const kpis: readonly Readonly<{ name: string; label: string; value: string; metric?: StatusMetric; accent: Color }>[] = [
-    { name: 'MobileSheetKpi:power', label: '战力', value: String(loadout.power), accent: palette().danger },
-    { name: 'MobileSheetMetric:hp', label: '生命', value: `${loadout.hp}/${loadout.maxHp}`, metric: hpMetric, accent: metricAccent(hpMetric) },
-    { name: 'MobileSheetKpi:attack', label: '攻击/术强', value: `${loadout.attack}/${loadout.artPower}`, metric: attackMetric, accent: metricAccent(attackMetric) },
-    { name: 'MobileSheetKpi:defense', label: '防御', value: String(loadout.defense), accent: palette().text },
+  const boxCursor = 8 + DOLL_STAGE_HEIGHT + GAP;
+  const box = panel(content, 'MobileSheetStatBox', 0, scrollItemY(region, boxCursor, STAT_BOX_HEIGHT), context.width, STAT_BOX_HEIGHT, palette().quiet, palette().edge);
+  const metricValue = (id: string): string => metrics.find((metric) => metric.id === id)?.value ?? '—';
+  const heading = (value: string, y: number): void => {
+    text(box, `StatHeading:${value}`, value, -context.width / 2 + 28 + 52, y, 120, 30, 20, palette().accent);
+    const rule = node(box, `StatRule:${value}`, 0, y - 18, context.width - 56, 2).addComponent(Graphics);
+    rule.strokeColor = palette().edge; rule.lineWidth = 2;
+    rule.moveTo(-(context.width - 56) / 2, 0); rule.lineTo((context.width - 56) / 2, 0); rule.stroke();
+  };
+  heading('属性', 96);
+  const rows: readonly Readonly<{ name: string; label: string; value: string; color?: Color }>[] = [
+    { name: 'MobileSheetKpi:power', label: '战力', value: String(loadout.power), color: palette().danger },
+    { name: 'MobileSheetMetric:hp', label: '生命', value: `${loadout.hp}/${loadout.maxHp}` },
+    { name: 'MobileSheetKpi:attack', label: '攻击', value: String(loadout.attack) },
+    { name: 'MobileSheetKpi:artPower', label: '术法强度', value: String(loadout.artPower) },
+    { name: 'MobileSheetKpi:defense', label: '防御', value: String(loadout.defense) },
+    { name: 'MobileSheetKpi:speed', label: '速度', value: '—' },
   ];
-  kpis.forEach((kpi, index) => {
-    const x = -context.width / 2 + kpiWidth / 2 + index * (kpiWidth + GAP);
-    const card = panel(context.body, kpi.name, x, kpiY, kpiWidth, DOLL_KPI_HEIGHT, palette().quiet, kpi.accent === palette().danger ? palette().dangerDark : palette().edge);
-    text(card, 'KpiLabel', kpi.label, 0, 26, kpiWidth - 12, 30, 21, palette().textMuted, true);
-    text(card, 'KpiValue', kpi.value, 0, -16, kpiWidth - 12, 44, 28, kpi.accent, true);
-    if (kpi.metric) context.options.bindLocal(card, () => context.options.setState({ ...context.state, tab: 'metric', selectedActionId: kpi.metric!.id, page: 0 }));
+  // Two columns of label/value pairs with a 24px gutter; value keeps its framed
+  // semantic node (gate contract) but the cell is compact like the prototype.
+  const columnW = (context.width - 48 - 24) / 2;
+  const statYs = [46, 10, -26] as const;
+  rows.forEach((row, index) => {
+    const col = index % 2 === 0 ? -1 : 1;
+    const left = col < 0 ? -context.width / 2 + 24 : 24;
+    statPair(box, `StatLabel:${index}`, row.name, row.label, row.value, left, statYs[Math.floor(index / 2)]!, columnW, row.color ?? palette().text);
   });
+  heading('货币', -72);
+  const currencies: readonly Readonly<{ name: string; label: string; id: string; color: Color }>[] = [
+    { name: 'MobileSheetMetric:reward-points', label: '奖励点', id: 'reward-points', color: palette().text },
+    { name: 'MobileSheetMetric:lingyun', label: '灵蕴', id: 'lingyun', color: palette().positive },
+  ];
+  currencies.forEach((currency, index) => {
+    const col = index === 0 ? -1 : 1;
+    const left = col < 0 ? -context.width / 2 + 24 : 24;
+    statPair(box, `MoneyLabel:${currency.id}`, currency.name, currency.label, metricValue(currency.id), left, -106, columnW, currency.color);
+  });
+}
 
-  // Phase-specific run metrics remain below the doll; hp/power already head the KPI row.
-  const hidden = context.model.phase === 'hub'
-    ? new Set(['hp', 'power'])
-    : context.model.phase === 'combat'
-      ? new Set(['player-hp', 'attack'])
-      : new Set(['hp']);
-  const rest = metrics.filter((metric) => !hidden.has(metric.id));
-  const regionTop = context.bodyHeight / 2 - DOLL_STAGE_HEIGHT - GAP - DOLL_KPI_HEIGHT - GAP;
-  const regionHeight = Math.max(120, regionTop + context.bodyHeight / 2 - 24);
-  renderMetricGrid(context, rest, regionTop, regionHeight, 2);
+/**
+ * Prototype-style "标签  值" row: pure text on the shared stat-box surface, no
+ * per-value background. The semantic KPI/Metric name stays on a transparent
+ * cut-corner node so the gate's framed-node contract and cut discipline hold.
+ */
+function statPair(parent: Node, labelName: string, valueName: string, label: string, value: string, left: number, y: number, columnW: number, color: Color): void {
+  text(parent, labelName, label, left + 44, y, 96, 28, 19, palette().textMuted);
+  const cellLeft = left + 96;
+  const cellW = left + columnW - cellLeft;
+  const cell = panel(parent, valueName, cellLeft + cellW / 2, y, cellW, 30, withAlpha(palette().surface, 0), withAlpha(palette().surface, 0), false, 'cell');
+  text(cell, 'Value', value, 0, 0, cellW - 8, 26, 19, color, true);
+  // Pin values to the column's right edge (prototype space-between stat rows).
+  const valueLabel = cell.getChildByName('Value')?.getComponent(Label);
+  if (valueLabel) valueLabel.horizontalAlign = Label.HorizontalAlign.RIGHT;
 }
 
 const METRIC_CARD_HEIGHT = 172;
@@ -603,37 +755,95 @@ function renderMap(context: SheetContext): void {
   if (selected !== undefined) {
     const reserve = TOUCH + GAP;
     drawScrollDoc(context, [{ title: mapTitle(selected), lines: [selected.stateLabel, ...(selected.nodeId === detail.currentNode.nodeId ? [detail.currentNode.description] : []), ...(selected.disabledReason ? [selected.disabledReason] : []), '地图用于查看位置。关闭地图后，走近场景中的通道继续探索。'] }], reserve);
-    button(context.body, 'MobileSheetMapBack', '返回地图', 0, -context.bodyHeight / 2 + TOUCH / 2, context.width, true, () => context.options.setState({ kind: 'map', page: 0 }), context.options);
+    button(context.body, 'MobileSheetMapBack', '返回地图', 0, -context.bodyHeight / 2 + TOUCH / 2, context.width, true, () => context.options.setState({ ...context.state, selectedActionId: undefined }), context.options);
     return;
   }
-  const columns = 4;
-  const rows = Math.max(1, Math.min(3, Math.floor((context.bodyHeight - 188) / 136)));
-  const windowsAcross = Math.max(1, Math.ceil(map.width / columns));
-  const windowsDown = Math.max(1, Math.ceil(map.height / rows));
-  const page = pager(context, windowsAcross * windowsDown);
-  const originX = (page % windowsAcross) * columns;
-  const originY = Math.floor(page / windowsAcross) * rows;
-  text(context.body, 'MobileSheetMapTitle', readable(map.dungeonName), 0, context.bodyHeight / 2 - 27, context.width, 50, 29, palette().accent, true);
-  text(context.body, 'MobileSheetMapHint', '点亮区域可查看 · 走近通道移动', 0, context.bodyHeight / 2 - 77, context.width, 54, 24, palette().textMuted, true);
-  const cellWidth = (context.width - GAP * 3) / 4;
-  const cellHeight = 120;
+  const u = catalogUnit(context);
+  const introHeight = 58 * u, legendHeight = 48 * u;
+  const viewHeight = context.bodyHeight - introHeight - legendHeight;
+  const gap = 8 * u, pad = 4 * u;
+  const cellWidth = Math.max(64 * u, (context.width - 3 * gap - 2 * pad) / 4);
+  const cellHeight = 72 * u;
+  const contentWidth = Math.max(context.width, 2 * pad + map.width * (cellWidth + gap) - gap);
+  const contentHeight = Math.max(viewHeight, 2 * pad + map.height * (cellHeight + gap) - gap);
+  catalogText(context, context.body, 'MobileSheetMapTitle', readable(map.dungeonName), 0,
+    context.bodyHeight / 2 - 14 * u, context.width, 24 * u, 14, palette().accent, true);
+  catalogText(context, context.body, 'MobileSheetMapHint', '拖动查看完整地图 · 点击已知区域查看详情', 0,
+    context.bodyHeight / 2 - 39 * u, context.width, 20 * u, 11, palette().textMuted, true);
+  const holder = node(context.body, 'MobileSheetMapScroll', 0, (legendHeight - introHeight) / 2, context.width, viewHeight);
+  holder.addComponent(Mask).type = Mask.Type.GRAPHICS_RECT;
+  const content = node(holder, 'MobileSheetMapContent', (contentWidth - context.width) / 2,
+    (viewHeight - contentHeight) / 2, contentWidth, contentHeight);
+  const scroll = holder.addComponent(ScrollView);
+  scroll.content = content;
+  scroll.horizontal = true;
+  scroll.vertical = true;
+  scroll.inertia = true;
+  scroll.brake = 0.75;
+  scroll.elastic = true;
+  scroll.cancelInnerEvents = true;
+  mapScrollByFrame.set(context.panel, { dungeonId: map.dungeonId, scroll });
   for (const cell of map.nodes) {
-    if (cell.x < originX || cell.x >= originX + columns || cell.y < originY || cell.y >= originY + rows) continue;
     const fogged = cell.state === 'fogged';
     const accent = cell.state === 'current' ? palette().accent : cell.state === 'adjacent' || cell.state === 'cleared' ? palette().text : palette().textMuted;
-    const tile = panel(context.body, fogged ? `MobileSheetFog:${cell.x}:${cell.y}` : `MobileSheetMapCell:${cell.cellId}`, -context.width / 2 + cellWidth / 2 + (cell.x - originX) * (cellWidth + GAP), context.bodyHeight / 2 - 134 - cellHeight / 2 - (cell.y - originY) * (cellHeight + GAP), cellWidth, cellHeight, cell.state === 'current' ? palette().accentDark : fogged ? palette().ink : palette().raised, cell.state === 'current' ? palette().accent : palette().edge, false, fogged ? 'fog' : 'tile');
-    const g = node(tile, 'MapStateIcon', 0, 25, 42, 42).addComponent(Graphics);
-    g.strokeColor = accent; g.fillColor = palette().textMuted; g.lineWidth = 3;
-    if (fogged) { for (const dx of [-10, 0, 10]) { g.circle(dx, 0, 2); g.fill(); } }
-    else if (cell.state === 'current') { g.circle(0, 0, 14); g.stroke(); g.circle(0, 0, 6); g.stroke(); }
-    else if (cell.state === 'cleared') line(g, [-12, 0, -3, -9, 13, 11]);
-    else if (cell.state === 'adjacent') line(g, [-14, 0, 14, 0, 5, 9]);
-    else line(g, [0, 14, 14, 0, 0, -14, -14, 0, 0, 14]);
-    text(tile, 'MapCellTitle', mapTitle(cell), 0, -27, cellWidth - 12, 52, 23, fogged ? palette().textMuted : palette().text, true);
+    const tile = panel(content, fogged ? `MobileSheetFog:${cell.x}:${cell.y}` : `MobileSheetMapCell:${cell.cellId}`,
+      -contentWidth / 2 + pad + cellWidth / 2 + cell.x * (cellWidth + gap),
+      contentHeight / 2 - pad - cellHeight / 2 - cell.y * (cellHeight + gap),
+      cellWidth, cellHeight, cell.state === 'current' ? palette().accentDark : fogged ? palette().ink : palette().raised,
+      cell.state === 'current' ? palette().accent : palette().edge, false, fogged ? 'fog' : 'tile');
+    const g = node(tile, 'MapStateIcon', 0, 16 * u, 24 * u, 24 * u).addComponent(Graphics);
+    g.strokeColor = accent; g.fillColor = palette().textMuted; g.lineWidth = 1.5 * u;
+    if (fogged) { for (const dx of [-6, 0, 6]) { g.circle(dx * u, 0, u); g.fill(); } }
+    else if (cell.state === 'current') { g.circle(0, 0, 8 * u); g.stroke(); g.circle(0, 0, 3 * u); g.stroke(); }
+    else if (cell.state === 'cleared') line(g, [-7, 0, -2, -5, 8, 7].map(value => value * u));
+    else if (cell.state === 'adjacent') line(g, [-8, 0, 8, 0, 3, 5].map(value => value * u));
+    else line(g, [0, 8, 8, 0, 0, -8, -8, 0, 0, 8].map(value => value * u));
+    catalogText(context, tile, 'MapCellTitle', mapTitle(cell), 0, -14 * u, cellWidth - 8 * u,
+      36 * u, 11, fogged ? palette().textMuted : palette().text, true);
     // Fog tiles have no title/nodeId readout or action binding of any kind.
-    if (!fogged) context.options.bindLocal(tile, () => context.options.setState({ kind: 'map', page: 0, selectedActionId: `map:${cell.cellId}` }));
+    if (!fogged) context.options.bindLocal(tile, () => {
+      const offset = scroll.getScrollOffset();
+      context.options.setState({ ...context.state, selectedActionId: `map:${cell.cellId}`, mapDungeonId: map.dungeonId,
+        mapScrollOffset: { x: Math.max(0, -offset.x), y: Math.max(0, offset.y) } });
+    });
   }
-  text(context.body, 'MobileSheetMapLegend', '金环：当前位置    浅灰：相邻 / 已清理\n灰色：已侦察    三点：迷雾未知', 0, -context.bodyHeight / 2 + 47, context.width, 84, 23, palette().textMuted, true);
+  const maxX = contentWidth - context.width, maxY = contentHeight - viewHeight;
+  const thumbSpec = activeTheme.thumb;
+  const thumbs: { axis: 'x' | 'y'; node: Node; length: number }[] = [];
+  for (const axis of ['x', 'y'] as const) {
+    const extent = axis === 'x' ? context.width : viewHeight;
+    const total = axis === 'x' ? contentWidth : contentHeight;
+    if (total <= extent) continue;
+    const length = Math.max(32 * u, (extent - 4 * u) * extent / total);
+    const thumb = node(holder, `MobileSheetMapThumb:${axis}`, 0, 0, axis === 'x' ? length : 2 * u, axis === 'y' ? length : 2 * u);
+    const graphics = thumb.addComponent(Graphics);
+    graphics.fillColor = withAlpha(thumbSpec.color, thumbSpec.alpha);
+    graphics.roundRect(axis === 'x' ? -length / 2 : -u, axis === 'y' ? -length / 2 : -u,
+      axis === 'x' ? length : 2 * u, axis === 'y' ? length : 2 * u, u);
+    graphics.fill();
+    thumbs.push({ axis, node: thumb, length });
+  }
+  const updateThumbs = (): void => {
+    const offset = scroll.getScrollOffset();
+    for (const thumb of thumbs) {
+      const horizontal = thumb.axis === 'x';
+      const ratio = Math.max(0, Math.min(1, horizontal ? -offset.x / maxX : offset.y / maxY));
+      thumb.node.setPosition(new Vec3(horizontal
+        ? -context.width / 2 + 2 * u + thumb.length / 2 + ratio * (context.width - 4 * u - thumb.length)
+        : context.width / 2 - 2 * u,
+      horizontal ? -viewHeight / 2 + 2 * u
+        : viewHeight / 2 - 2 * u - thumb.length / 2 - ratio * (viewHeight - 4 * u - thumb.length), 0));
+    }
+  };
+  scroll.node.on(ScrollView.EventType.SCROLLING, updateThumbs);
+  const current = map.nodes.find(cell => cell.state === 'current');
+  const saved = context.state.mapDungeonId === map.dungeonId ? context.state.mapScrollOffset : undefined;
+  const offsetX = saved?.x ?? (current ? pad + current.x * (cellWidth + gap) + cellWidth / 2 - context.width / 2 : 0);
+  const offsetY = saved?.y ?? (current ? pad + current.y * (cellHeight + gap) + cellHeight / 2 - viewHeight / 2 : 0);
+  scroll.scrollToOffset(new Vec2(Math.max(0, Math.min(maxX, offsetX)), Math.max(0, Math.min(maxY, offsetY))), 0);
+  updateThumbs();
+  catalogText(context, context.body, 'MobileSheetMapLegend', '金环：当前位置    浅灰：相邻 / 已清理\n灰色：已侦察    三点：迷雾未知', 0,
+    -context.bodyHeight / 2 + legendHeight / 2, context.width, 36 * u, 11, palette().textMuted, true);
 }
 
 function objectivePages(model: GameViewModel): readonly SheetPage[] {
@@ -648,13 +858,106 @@ function objectivePages(model: GameViewModel): readonly SheetPage[] {
   return pages;
 }
 
-function entryPages(model: GameViewModel): readonly SheetPage[] {
-  const detail = model.sections[1].detail;
-  if (detail.kind !== 'hub') return [{ title: '轮回之门', lines: ['回到主神空间后可选择下一次冒险。'] }];
-  const pages: SheetPage[] = [{ title: detail.selectedDungeonName, lines: [detail.activePanel === 'entry' ? detail.panelSummary : `当前选择：${detail.selectedDungeonName}`, `共 ${detail.dungeonCount} 个副本；在入场选项中使用上一章、下一章切换。`, formatInfiniteFlowEntryBuildDetail(detail) ?? '打开入场选择后查看协议与配置。'] }];
-  for (const option of detail.entryBuild.routeContract.options) pages.push({ title: `路线契约 · ${option.name}`, lines: [option.description, ...(option.orderedTargets.length ? [option.orderedTargets.map((target) => `${target.order} ${target.nodeTitle}`).join(' → ')] : []), `奖励点 ${option.rewardPoints}`, option.selected ? '当前已选择' : option.disabledReason ?? '可在入场选项中切换选择。'] });
-  for (const option of detail.entryBuild.relic.seedOptions) pages.push({ title: `归档种子 · ${option.name}`, lines: [option.description, option.selected ? '当前已选择' : option.disabledReason ?? '可在入场选项中切换选择。'] });
-  return pages;
+/** The first screen answers what to do; explanations live behind each task. */
+function renderObjectives(context: SheetContext): void {
+  const u = catalogUnit(context);
+  const wrap = (value: string, size: number, width: number): string[] => value.split('\n')
+    .flatMap(line => wrapInfiniteFlowLine(readable(line), Math.max(8, Math.floor(width / (size * u)))));
+  const selected = context.model.tasks.find(task => task.id === context.state.taskId);
+  const rules = context.state.tab === 'rules';
+  const footerHeight = 54 * u;
+  const footerY = -context.bodyHeight / 2 + footerHeight / 2;
+  catalogRule(context.body, 'TaskFooterRule', -context.bodyHeight / 2 + footerHeight, context.width);
+  if (selected || rules) {
+    const backWidth = catalogButtonWidth(context, '返回任务列表');
+    const back = catalogButton(context, context.body, 'MobileSheetTaskBack', '返回任务列表',
+      context.width / 2 - backWidth / 2, footerY, backWidth, true);
+    context.options.bindLocal(back, () => context.options.setState({ ...context.state, taskId: undefined, tab: undefined }));
+    const bodyHeight = context.bodyHeight - footerHeight;
+    const body = node(context.body, selected ? 'MobileSheetTaskDetail' : 'MobileSheetObjectiveRulesDetail',
+      0, footerHeight / 2, context.width, bodyHeight);
+    const detailContext = { ...context, body, bodyHeight };
+    const sections: readonly SheetPage[] = selected ? [
+      { title: selected.title, lines: [selected.kind === 'mainline' ? '主线任务' : '支线任务', ...(selected.detailObjectives ?? selected.objectives)] },
+      { title: '任务说明', lines: [selected.description] },
+      { title: '完成提示', lines: [selected.hint] },
+      { title: '任务奖励', lines: [selected.rewardText, selected.status === 'completed' ? '已完成，返回主神空间领取奖励。' : '完成后返回主神空间领取奖励。'] },
+    ] : objectivePages(context.model);
+    const helpId = sections.find(section => section.helpId !== undefined)?.helpId;
+    const help = context.model.sections[4].entries.find(entry => entry.id === helpId);
+    if (help) {
+      const width = catalogButtonWidth(context, '查看完整规则');
+      const control = catalogButton(context, context.body, 'MobileSheetRelatedHelp', '查看完整规则',
+        -context.width / 2 + width / 2, footerY, width, true);
+      context.options.bindLocal(control, () => context.options.openHelp(help));
+    }
+    const width = context.width - 20 * u;
+    const facts = sections.map(section => {
+      const title = wrap(section.title, 14, width);
+      const lines = section.lines.flatMap(line => wrap(line, 12, width));
+      return { title, lines, height: (24 + title.length * 22 + lines.length * 19) * u };
+    });
+    const region = scrollRegion(detailContext, facts.reduce((sum, fact) => sum + fact.height, 0));
+    const content = scrollContentNode(region);
+    let cursor = 0;
+    facts.forEach((fact, index) => {
+      const item = node(content, `MobileSheetTaskFact:${index}`, 0, scrollItemY(region, cursor, fact.height), context.width, fact.height);
+      catalogText(context, item, 'TaskFactTitle', fact.title.join('\n'), 0,
+        fact.height / 2 - (10 + fact.title.length * 11) * u, width, fact.title.length * 22 * u, 14, palette().accent);
+      catalogText(context, item, 'TaskFactText', fact.lines.join('\n'), 0,
+        fact.height / 2 - (14 + fact.title.length * 22 + fact.lines.length * 9.5) * u,
+        width, fact.lines.length * 19 * u, 12);
+      catalogRule(item, 'TaskFactRule', -fact.height / 2, width);
+      cursor += fact.height;
+    });
+    return;
+  }
+
+  const introHeight = 28 * u;
+  const bodyHeight = context.bodyHeight - introHeight - footerHeight;
+  catalogText(context, context.body, 'MobileSheetTaskHint', `当前任务 ${context.model.tasks.length} · 点击查看详情`,
+    0, context.bodyHeight / 2 - 12 * u, context.width - 8 * u, 22 * u, 11, palette().textMuted);
+  const body = node(context.body, 'MobileSheetTaskList', 0, (footerHeight - introHeight) / 2, context.width, bodyHeight);
+  const list = { ...context, body, bodyHeight };
+  const titleWidth = context.width - 94 * u;
+  const progressWidth = context.width - 32 * u;
+  const rows = context.model.tasks.map(task => {
+    const title = wrap(task.title, 14, titleWidth);
+    const progress = task.objectives.flatMap(line => wrap(line, 12, progressWidth));
+    return { task, title, progress, height: Math.max(64, 22 + title.length * 22 + progress.length * 19) * u };
+  });
+  const region = scrollRegion(list, rows.reduce((sum, row) => sum + row.height, 0));
+  region.holder.name = 'MobileSheetTaskScroll';
+  catalogScrollByFrame.set(context.panel, region.scrollView);
+  region.scrollView.scrollToOffset(new Vec2(0, Math.min(Math.max(0, context.state.taskScrollOffset ?? 0),
+    Math.max(0, region.contentHeight - region.height))), 0);
+  const content = scrollContentNode(region);
+  let cursor = 0;
+  for (const { task, title, progress, height } of rows) {
+    const row = node(content, `MobileSheetTask:${task.id}`, 0, scrollItemY(region, cursor, height), context.width, height);
+    catalogRule(row, 'TaskRule', -height / 2, context.width - 8 * u);
+    catalogText(context, row, 'TaskTitle', title.join('\n'), -37 * u,
+      height / 2 - (10 + title.length * 11) * u, titleWidth, title.length * 22 * u, 14, palette().accent);
+    row.getChildByName('TaskTitle')!.getComponent(Label)!.isBold = true;
+    catalogText(context, row, 'TaskStatus', task.status === 'completed' ? '待领取' : task.kind === 'mainline' ? '主线' : '支线',
+      context.width / 2 - 38 * u, height / 2 - 21 * u, 54 * u, 20 * u, 11,
+      task.status === 'completed' ? palette().positive : palette().textMuted, true);
+    catalogText(context, row, 'TaskProgress', progress.join('\n'), -6 * u,
+      height / 2 - (14 + title.length * 22 + progress.length * 9.5) * u,
+      progressWidth, progress.length * 19 * u, 12);
+    catalogText(context, row, 'TaskExpand', '›', context.width / 2 - 10 * u,
+      -height / 2 + 24 * u, 16 * u, 24 * u, 14, palette().textMuted, true);
+    context.options.bindLocal(row, () => context.options.setState({ ...context.state, taskId: task.id,
+      taskScrollOffset: Math.max(0, region.scrollView.getScrollOffset().y) }));
+    cursor += height;
+  }
+  if (!rows.length) catalogText(context, content, 'MobileSheetTasksEmpty', '暂无进行中的任务', 0,
+    region.contentHeight / 2 - 32 * u, context.width - 20 * u, 40 * u, 13, palette().textMuted, true);
+  const rulesWidth = catalogButtonWidth(context, '章规与探索');
+  const control = catalogButton(context, context.body, 'MobileSheetObjectiveRules', '章规与探索',
+    context.width / 2 - rulesWidth / 2, footerY, rulesWidth, true);
+  context.options.bindLocal(control, () => context.options.setState({ ...context.state, tab: 'rules', taskId: undefined,
+    taskScrollOffset: Math.max(0, region.scrollView.getScrollOffset().y) }));
 }
 
 function inventoryPages(model: GameViewModel): readonly SheetPage[] {
@@ -693,33 +996,43 @@ function renderHelp(context: SheetContext): void {
 }
 
 function renderMenu(context: SheetContext): void {
-  const tabbed = tabs(context, [{ id: 'shortcuts', title: '随身功能' }, { id: 'actions', title: context.model.phase === 'combat' ? '战斗行动' : '进阶行动' }], 'shortcuts');
-  if (tabbed.active === 'actions') { renderActions(tabbed.context, getInfiniteFlowMobilePanelActions(context.model, 'menu')); return; }
-  const ctx = tabbed.context;
-  // WoW ESC menu: a vertical run of full-width gold-edged buttons.
-  const tiles: readonly Readonly<{ kind: MobilePanelKind | 'actions' | 'close'; label: string; iconKind: string; accent: Color }>[] = [
-    { kind: 'character', label: '角色状态', iconKind: 'character', accent: palette().accent },
-    { kind: 'inventory', label: '背包装备', iconKind: 'inventory', accent: palette().accent },
-    { kind: 'map', label: '区域地图', iconKind: 'map', accent: palette().accent },
-    { kind: 'objectives', label: '任务与章规', iconKind: 'objectives', accent: palette().accent },
-    { kind: 'log', label: '冒险记录', iconKind: 'log', accent: palette().accent },
-    { kind: 'help', label: '冒险指南', iconKind: 'help', accent: palette().accent },
-    { kind: 'entry', label: '轮回之门', iconKind: 'entry', accent: palette().accent },
-    { kind: 'actions', label: ctx.model.phase === 'combat' ? '战斗行动' : '进阶行动', iconKind: 'menu', accent: palette().danger },
-    { kind: 'close', label: '收起菜单', iconKind: 'close', accent: palette().textMuted },
+  // The advanced/combat action list is a state-level view with its own back
+  // button; the prototype-style menu carries no permanent tab strip.
+  if (context.state.tab === 'actions') {
+    renderSheetActionView(context, 'menu', '返回主菜单', 'MobileSheetTab:shortcuts');
+    return;
+  }
+  const ctx = context;
+  // WoW ESC menu: a vertical run of slim centered gold buttons. The bound node
+  // stays a full-width 104px transparent touch plate; the visible button inside
+  // is 76px tall and inset on both sides like the prototype menu panel.
+  const MENU_VISUAL_H = 76;
+  const MENU_BUTTON_INSET = 48;
+  const tiles: readonly Readonly<{ kind: MobilePanelKind | 'actions' | 'close'; label: string; danger: boolean }>[] = [
+    { kind: 'character', label: '角色信息', danger: false },
+    { kind: 'inventory', label: '行囊装备', danger: false },
+    { kind: 'map', label: '世界地图', danger: false },
+    { kind: 'objectives', label: '任务目标', danger: false },
+    { kind: 'log', label: '战斗记录', danger: false },
+    { kind: 'help', label: '帮助', danger: false },
+    { kind: 'entry', label: '轮回之门', danger: false },
+    { kind: 'actions', label: ctx.model.phase === 'combat' ? '战斗行动' : '进阶行动', danger: true },
+    { kind: 'close', label: '收起', danger: false },
   ];
   const rowHeight = TOUCH;
-  const headingHeight = 56;
+  const headingHeight = 48;
   const contentHeight = 16 + headingHeight + 12 + tiles.length * rowHeight + (tiles.length - 1) * 12 + 16;
   const region = scrollRegion(ctx, contentHeight);
   const content = scrollContentNode(region);
-  text(content, 'MobileSheetMenuHeading', '随身菜单', 0, scrollItemY(region, 16, headingHeight), ctx.width - 16, headingHeight, 30, palette().accent, true);
+  text(content, 'MobileSheetMenuHeading', '随身菜单', 0, scrollItemY(region, 16, headingHeight), ctx.width - 16, headingHeight, 24, palette().accent, true);
   tiles.forEach((tile, index) => {
     const cursor = 16 + headingHeight + 12 + index * (rowHeight + 12);
     const y = scrollItemY(region, cursor, rowHeight);
-    const cell = panel(content, `MobileSheetShortcut:${tile.kind}`, 0, y, ctx.width, rowHeight, palette().quiet, tile.accent === palette().danger ? palette().danger : palette().edgeStrong, false, 'tile');
-    icon(cell, 'ShortcutIcon', tile.iconKind, -ctx.width / 2 + 56, 0, tile.accent);
-    text(cell, 'ShortcutTitle', tile.label, 24, 0, ctx.width - 160, 52, 27, tile.accent === palette().textMuted ? palette().textMuted : palette().text);
+    // Transparent full-size plate keeps the 104px touch floor and frame name.
+    const cell = panel(content, `MobileSheetShortcut:${tile.kind}`, 0, y, ctx.width, rowHeight, withAlpha(palette().surface, 0), withAlpha(palette().surface, 0), false, 'tile');
+    const visualWidth = ctx.width - MENU_BUTTON_INSET * 2;
+    const visual = panel(cell, 'ShortcutButton', 0, 0, visualWidth, MENU_VISUAL_H, tile.danger ? palette().dangerDark : palette().quiet, tile.danger ? palette().danger : palette().edgeStrong, false, 'tile');
+    text(visual, 'ShortcutTitle', tile.label, 0, 0, visualWidth - 40, 44, 23, tile.kind === 'close' ? palette().textMuted : tile.danger ? palette().danger : palette().text, true);
     if (tile.kind === 'close') ctx.options.bindLocal(cell, () => ctx.options.close());
     else if (tile.kind === 'actions') ctx.options.bindLocal(cell, () => ctx.options.setState({ kind: 'menu', tab: 'actions', page: 0 }));
     else {
@@ -729,71 +1042,137 @@ function renderMenu(context: SheetContext): void {
   });
 }
 
+/**
+ * Full-body action list reached from a sheet destination tile rather than a
+ * permanent tab strip. The list scrolls above a fixed 104px back button.
+ */
+function renderSheetActionView(context: SheetContext, kind: MobilePanelKind, backLabel: string, backName: string): void {
+  const shiftedBody = node(context.body, 'MobileSheetTabBody', 0, (TOUCH + GAP) / 2, context.width, context.bodyHeight - TOUCH - GAP);
+  const shifted: SheetContext = { ...context, body: shiftedBody, bodyHeight: context.bodyHeight - TOUCH - GAP };
+  renderActions(shifted, getInfiniteFlowMobilePanelActions(context.model, kind));
+  if (context.state.selectedActionId === undefined) {
+    button(context.body, backName, backLabel, 0, -context.bodyHeight / 2 + TOUCH / 2, context.width, true,
+      () => context.options.setState({ kind, page: 0 }), context.options);
+  }
+}
+
 const INVENTORY_COLUMNS = 5;
 const INVENTORY_CELL_SIZE = 116;
 const INVENTORY_CELL_GAP = 12;
 const INVENTORY_TOTAL_SLOTS = 100;
 
 /** WoW ContainerFrame: currency/carry header plus a 5×100 scrolling slot grid. */
-function renderInventoryBag(context: SheetContext, loadout: NonNullable<GameViewModel['sections'][1]['loadout']>): void {
+type InventoryBagTab = 'items' | 'carry';
+
+function renderInventoryBag(context: SheetContext, loadout: NonNullable<GameViewModel['sections'][1]['loadout']>, activeTab: InventoryBagTab): void {
   const palette0 = palette();
   const metrics = context.model.sections[1].metrics;
   const metricValue = (id: string): string => metrics.find((metric) => metric.id === id)?.value ?? '—';
 
-  // Header row: carry slots on the left, reward points + lingyun on the right.
-  const headerHeight = 56;
-  const headerY = context.bodyHeight / 2 - headerHeight / 2;
-  text(context.body, 'MobileSheetMoneyCarry', `◆ 携行槽 ${loadout.carriedCount} / 3`, -context.width / 2 + 130, headerY, 240, headerHeight, 24, palette0.accent);
-  panel(context.body, 'MoneyTokenLingyun', 76, headerY, 24, 24, palette0.quiet, palette0.positive, false, 'cell');
-  text(context.body, 'MobileSheetMoney:lingyun', metricValue('lingyun'), 140, headerY, 92, headerHeight, 22, palette0.positive);
-  panel(context.body, 'MoneyTokenReward', 207, headerY, 24, 24, palette0.accentDark, palette0.accent, false, 'cell');
-  text(context.body, 'MobileSheetMoney:reward', metricValue('reward-points'), 271, headerY, 110, headerHeight, 22, palette0.accent);
+  // Header row: tab-specific carry wording hugs the left edge; reward points +
+  // lingyun ride the right.
+  const headerHeight = 48;
+  const headerY = context.bodyHeight / 2 - headerHeight / 2 - 4;
+  const carryLine = activeTab === 'carry'
+    ? `◆ 携行槽 ${loadout.carriedCount} / 3`
+    : '◇ 补给品 · 不占携行槽';
+  text(context.body, 'MobileSheetMoneyCarry', carryLine, -context.width / 2 + 8 + 120, headerY, 280, headerHeight, 22, palette0.accent);
+  const rewardLabelW = 150;
+  const rewardLabelX = context.width / 2 - 8 - rewardLabelW / 2;
+  const rewardTokenX = rewardLabelX - rewardLabelW / 2 - 8 - 14;
+  const lingyunLabelW = 120;
+  const lingyunLabelX = rewardTokenX - 14 - 16 - lingyunLabelW / 2;
+  const lingyunTokenX = lingyunLabelX - lingyunLabelW / 2 - 8 - 14;
+  panel(context.body, 'MoneyTokenReward', rewardTokenX, headerY, 28, 28, palette0.accentDark, palette0.accent, false, 'cell');
+  text(context.body, 'MobileSheetMoney:reward', `${metricValue('reward-points')} 奖励点`, rewardLabelX, headerY, rewardLabelW, headerHeight, 20, palette0.accent);
+  panel(context.body, 'MoneyTokenLingyun', lingyunTokenX, headerY, 28, 28, palette0.quiet, palette0.positive, false, 'cell');
+  text(context.body, 'MobileSheetMoney:lingyun', `${metricValue('lingyun')} 灵蕴`, lingyunLabelX, headerY, lingyunLabelW, headerHeight, 20, palette0.positive);
 
-  const hintY = headerY - headerHeight / 2 - 14 - 10;
-  text(context.body, 'MobileSheetBagHint', '5 列 × 100 格 · 上下滑动浏览 · 点击格子查看详情', 0, hintY, context.width, 24, 20, palette0.textMuted, true);
+  const hintY = headerY - headerHeight / 2 - 12 - 10;
+  const hintCopy = activeTab === 'carry'
+    ? '携行特殊道具 6 种 · 仅主神空间配置 · 5 列 × 100 格'
+    : '补给品 3 种 · 上下滑动浏览 · 点击钉住详情';
+  text(context.body, 'MobileSheetBagHint', hintCopy, 0, hintY, context.width, 24, 20, palette0.textMuted, true);
 
   const gridWidth = INVENTORY_COLUMNS * INVENTORY_CELL_SIZE + (INVENTORY_COLUMNS - 1) * INVENTORY_CELL_GAP;
   const gridTop = hintY - 14 - 12;
   const gridHeight = Math.max(120, gridTop + context.bodyHeight / 2);
   const backing = panel(context.body, 'MobileSheetInventoryRack', 0, gridTop - gridHeight / 2, context.width, gridHeight, palette0.quiet, palette0.edge, false, 'rack');
 
-  const contentHeight = 16 + INVENTORY_TOTAL_SLOTS / INVENTORY_COLUMNS * INVENTORY_CELL_SIZE
-    + (INVENTORY_TOTAL_SLOTS / INVENTORY_COLUMNS - 1) * INVENTORY_CELL_GAP + 16;
+  // Each tab owns a full 5×100 slot grid: the 道具 tab lists the 3 supplies,
+  // the 携行 tab lists the 6 carried special items; every tab pads to 100.
+  const entries = loadout.items.filter((entry) =>
+    activeTab === 'items' ? entry.itemGroup === 'supply' : entry.itemGroup === 'carry');
+
+  const gridRows = INVENTORY_TOTAL_SLOTS / INVENTORY_COLUMNS;
+  // Top pad 16, 20 full rows (incl. gap), 16px bottom pad.
+  const contentHeight = 16 + gridRows * (INVENTORY_CELL_SIZE + INVENTORY_CELL_GAP) - INVENTORY_CELL_GAP + 16;
   const regionContext = surfaceContext(context, { body: backing, width: context.width, bodyHeight: gridHeight });
   const region = scrollRegion(regionContext, contentHeight);
   const content = scrollContentNode(region);
 
-  for (let index = 0; index < INVENTORY_TOTAL_SLOTS; index += 1) {
-    const col = index % INVENTORY_COLUMNS;
-    const row = Math.floor(index / INVENTORY_COLUMNS);
-    const x = -gridWidth / 2 + INVENTORY_CELL_SIZE / 2 + col * (INVENTORY_CELL_SIZE + INVENTORY_CELL_GAP);
-    const cursor = 16 + row * (INVENTORY_CELL_SIZE + INVENTORY_CELL_GAP);
+  const cellX = (col: number): number =>
+    -gridWidth / 2 + INVENTORY_CELL_SIZE / 2 + col * (INVENTORY_CELL_SIZE + INVENTORY_CELL_GAP);
+  let blankIndex = entries.length;
+  const renderBlank = (col: number, cursor: number): void => {
     const y = scrollItemY(region, cursor, INVENTORY_CELL_SIZE);
-    const entry = loadout.items[index];
-    if (!entry) {
-      // Purely decorative empty slot: no label, no data, no interaction.
-      panel(content, `MobileSheetBlank:${index}`, x, y, INVENTORY_CELL_SIZE, INVENTORY_CELL_SIZE, palette0.ink, palette0.edge, false, 'cell');
-      continue;
-    }
+    // Purely decorative empty slot: no label, no data, no interaction.
+    panel(content, `MobileSheetBlank:${blankIndex}`, cellX(col), y, INVENTORY_CELL_SIZE, INVENTORY_CELL_SIZE, palette0.ink, palette0.edge, false, 'cell');
+    blankIndex += 1;
+  };
+  const renderItemCell = (entry: typeof loadout.items[number], col: number, cursor: number): void => {
+    const y = scrollItemY(region, cursor, INVENTORY_CELL_SIZE);
     const empty = entry.count === 0 && !entry.carried;
-    const cell = panel(content, `MobileSheetItem:${entry.itemId}`, x, y, INVENTORY_CELL_SIZE, INVENTORY_CELL_SIZE, palette0.raised, entry.carried ? palette0.accent : palette0.edge, false, 'cell');
+    // Rarity edge (WoW item-button tint); the gold carried seal/edge wins when
+    // the item is pinned to a carry slot.
+    const qualityEdge = qualityEdgeColor(itemQuality(entry.itemId), palette0.edge);
+    const cell = panel(content, `MobileSheetItem:${entry.itemId}`, cellX(col), y, INVENTORY_CELL_SIZE, INVENTORY_CELL_SIZE, palette0.raised, entry.carried ? palette0.accent : qualityEdge, false, 'cell');
     figureNode(context, cell, `ItemIcon:${entry.itemId}`, sheetItemKey(entry.itemId), 0, 6, 80, 80,
       { glyph: entry.name.charAt(entry.name.length - 1), glyphSize: 32, glyphColor: empty ? palette0.textMuted : palette0.text }, context.images);
     text(cell, 'ItemCount', `×${entry.count}`, INVENTORY_CELL_SIZE / 2 - 30, -INVENTORY_CELL_SIZE / 2 + 18, 56, 24, 18, entry.count > 0 ? palette0.text : palette0.textMuted, true);
     if (entry.carried) sealNode(cell, 'ItemCarriedSeal', INVENTORY_CELL_SIZE / 2 - 18, INVENTORY_CELL_SIZE / 2 - 18);
     context.options.bindLocal(cell, () => context.options.setState({ ...context.state, tip: { kind: 'item', id: entry.itemId } }));
+  };
+
+  let cursor = 16;
+  let col = 0;
+  for (const entry of entries) {
+    renderItemCell(entry, col, cursor);
+    col += 1;
+    if (col === INVENTORY_COLUMNS) {
+      col = 0;
+      cursor += INVENTORY_CELL_SIZE + INVENTORY_CELL_GAP;
+    }
+  }
+  // Pad the last partial row, then fill the rest of the 5×100 grid.
+  const placedCells = entries.length;
+  for (let blankSlot = placedCells; blankSlot < INVENTORY_TOTAL_SLOTS; blankSlot += 1) {
+    renderBlank(blankSlot % INVENTORY_COLUMNS, cursor);
+    if (blankSlot % INVENTORY_COLUMNS === INVENTORY_COLUMNS - 1) {
+      cursor += INVENTORY_CELL_SIZE + INVENTORY_CELL_GAP;
+    }
   }
 }
 
 function renderInventory(context: SheetContext): void {
-  const actionTitle = context.model.sections[1].detail.kind === 'hub' ? '物资 / 装备' : '可用道具';
-  const tabbed = tabs(context, [{ id: 'bag', title: '行囊' }, { id: 'actions', title: actionTitle }], 'bag');
-  if (tabbed.active === 'actions') { renderActions(tabbed.context, getInfiniteFlowMobilePanelActions(context.model, 'inventory')); return; }
-  const ctx = tabbed.context;
-  const loadout = ctx.model.sections[1].loadout;
-  if (!loadout) { renderTextPages(ctx, inventoryPages(ctx.model)); return; }
-  renderInventoryBag(ctx, loadout);
+  // A legacy tab:'actions' state renders the real action list for state-level
+  // fixtures, reached from a destination tile in other engines.
+  if (context.state.tab === 'actions') {
+    renderSheetActionView(context, 'inventory', '返回行囊', 'MobileSheetTab:bag');
+    return;
+  }
+  const loadout = context.model.sections[1].loadout;
+  if (!loadout) { renderTextPages(context, inventoryPages(context.model)); return; }
+  // WoW bag with two slot categories: 道具 (supplies, unrestricted) opens by
+  // default; 携行 (the 6 carried special items) is the configured loadout.
+  const tabbed = tabs(context, [
+    { id: 'items', title: '道具' },
+    { id: 'carry', title: '携行' }
+  ], 'items');
+  const activeTab: InventoryBagTab = tabbed.active === 'carry' ? 'carry' : 'items';
+  renderInventoryBag(tabbed.context, loadout, activeTab);
 }
+
 
 function renderTabbedActions(context: SheetContext, pages: readonly SheetPage[], titles: readonly [string, string], initial: 'overview' | 'actions' = 'overview'): void {
   const tabbed = tabs(context, [{ id: 'overview', title: titles[0] }, { id: 'actions', title: titles[1] }], initial);
@@ -807,7 +1186,7 @@ function renderTabbedActions(context: SheetContext, pages: readonly SheetPage[],
  * reading surface. The gallery baseline delegates here live, so per-kind
  * geometry shifts S01 and every theme without re-recording a golden.
  */
-const SHEET_BAND_HEIGHT = 104;
+const SHEET_BAND_HEIGHT = 72;
 const SHEET_KIND_HEIGHT: Readonly<Record<MobilePanelKind, number>> = Object.freeze({
   character: 1000,
   menu: 1000,
@@ -850,13 +1229,21 @@ export function productionRenderChrome(input: SheetChromeInput): SheetLayoutChro
   frame.addComponent(BlockInputEvents);
   // WoW-style gold lacquer title band; the theme accent keeps it per-skin.
   panel(frame, 'MobileSheetTitleBand', 0, bandY, width - 20, SHEET_BAND_HEIGHT, palette().accentDark, palette().edgeStrong, false, 'titleBand');
-  icon(frame, 'MobileSheetHeaderIcon', state.kind, -width / 2 + 56, bandY);
+  icon(frame, 'MobileSheetHeaderIcon', state.kind, -width / 2 + 52, bandY, palette().accent, 48);
   const detail = model.sections[1].detail;
-  const title = state.kind === 'npc' && detail.kind === 'hub' ? detail.activePanelLabel
+  const title = state.kind === 'npc' && detail.kind === 'hub' ? detail.shop?.title ?? detail.activePanelLabel
     : state.kind === 'interaction' && detail.kind === 'explore' ? detail.pending?.title ?? detail.currentNode.title : TITLES[state.kind];
-  text(frame, 'MobileSheetTitle', readable(title), -12, bandY, width - 228, 84, 34, palette().accent);
-  const close = panel(frame, 'MobileSheetClose', width / 2 - 70, bandY, TOUCH, TOUCH, palette().raised, palette().edgeStrong, false, 'iconButton');
-  icon(close, 'CloseIcon', 'close', 0, 0, palette().text);
+  text(frame, 'MobileSheetTitle', readable(title), -16, bandY, width - 220, 60, 27, palette().accent);
+  // WoW close affordance: a full 104px invisible touch plate flush with the
+  // frame top (keeps the 44px physical target) while only a small gold ✕ is
+  // painted, vertically centered on the thinner title band.
+  const close = panel(frame, 'MobileSheetClose', width / 2 - 70, height / 2 - TOUCH / 2, TOUCH, TOUCH, withAlpha(palette().surface, 0), withAlpha(palette().surface, 0), false, 'iconButton');
+  const closeGlyph = node(close, 'CloseIcon', 0, TOUCH / 2 - SHEET_BAND_HEIGHT / 2, 44, 44).addComponent(Graphics);
+  closeGlyph.strokeColor = palette().accent;
+  closeGlyph.lineWidth = 3;
+  closeGlyph.moveTo(-13, -13); closeGlyph.lineTo(13, 13);
+  closeGlyph.moveTo(-13, 13); closeGlyph.lineTo(13, -13);
+  closeGlyph.stroke();
   options.bindLocal(close, options.close);
   const body = node(frame, 'MobileSheetBody', 0, -SHEET_BAND_HEIGHT / 2, bodyWidth, bodyHeight);
   return { frame, body, width: bodyWidth, bodyHeight };
@@ -885,7 +1272,7 @@ export function legacyGalleryRenderChrome(input: SheetChromeInput): SheetLayoutC
   frame.addComponent(BlockInputEvents);
   icon(frame, 'MobileSheetHeaderIcon', state.kind, -width / 2 + 56, height / 2 - 66);
   const detail = model.sections[1].detail;
-  const title = state.kind === 'npc' && detail.kind === 'hub' ? detail.activePanelLabel
+  const title = state.kind === 'npc' && detail.kind === 'hub' ? detail.shop?.title ?? detail.activePanelLabel
     : state.kind === 'interaction' && detail.kind === 'explore' ? detail.pending?.title ?? detail.currentNode.title : TITLES[state.kind];
   text(frame, 'MobileSheetTitle', readable(title), -12, height / 2 - 66, width - 228, 84, 34, palette().text);
   const close = panel(frame, 'MobileSheetClose', width / 2 - 70, height / 2 - 66, TOUCH, TOUCH, palette().raised, palette().edgeStrong, false, 'iconButton');
@@ -907,19 +1294,73 @@ const EQUIP_STAT_LABELS: Readonly<Record<string, string>> = Object.freeze({
   speed: '速度', agility: '身法', spirit: '心神', body: '体魄', luck: '气运', trapCheck: '陷阱感知',
 });
 
+// WoW rarity (UI-only projection; the domain model has no rarity field).
+// Tiers follow the classic WoW quality ladder. Equipment rarity derives from
+// the catalog price tier (reward points / lingyun cost); only the six free
+// starter pieces are explicitly poor. Items follow the accepted prototype
+// mapping (three utility pieces are uncommon).
+type SheetQuality = 'poor' | 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+const QUALITY_LABEL: Readonly<Record<SheetQuality, string>> = Object.freeze({
+  poor: '粗糙', common: '普通', uncommon: '优秀', rare: '精良', epic: '史诗', legendary: '传说',
+});
+// Name colors: classic WoW tints, with rare/epic brightened so dark tooltips
+// keep the >=4.5 contrast contract.
+const QUALITY_NAME_COLORS: Readonly<Record<SheetQuality, Color | undefined>> = Object.freeze({
+  poor: new Color(157, 157, 157, 255),       // #9d9d9d
+  common: undefined,                          // palette text (white)
+  uncommon: new Color(30, 255, 0, 255),      // #1eff00
+  rare: new Color(89, 156, 255, 255),        // brighter #599cff (WoW #0070dd)
+  epic: new Color(187, 119, 255, 255),       // brighter #bb77ff (WoW #a335ee)
+  legendary: new Color(255, 128, 0, 255),    // #ff8000
+});
+// Border tints use the saturated classic WoW quality colors (edges are
+// decorative, so the pure hues read as the familiar slot glow).
+const QUALITY_EDGE_COLORS: Readonly<Record<SheetQuality, Color | undefined>> = Object.freeze({
+  poor: new Color(106, 106, 106, 255),       // #6a6a6a
+  common: undefined,                          // default iron edge
+  uncommon: new Color(47, 158, 34, 255),     // #2f9e22
+  rare: new Color(0, 112, 221, 255),         // #0070dd
+  epic: new Color(163, 53, 238, 255),        // #a335ee
+  legendary: new Color(255, 128, 0, 255),    // #ff8000
+});
+const POOR_EQUIPMENT = new Set<string>([
+  'training_blade', 'patched_headwrap', 'patched_coat', 'patched_gloves',
+  'patched_boots', 'patched_belt',
+]);
+const UNCOMMON_ITEMS = new Set<string>(['gate_sigil', 'capture_net', 'spirit_bait']);
+function equipmentQuality(id: string): SheetQuality {
+  if (POOR_EQUIPMENT.has(id)) return 'poor';
+  const rewardPoints = EQUIPMENT[id as keyof typeof EQUIPMENT]?.cost.rewardPoints ?? 0;
+  if (rewardPoints <= 540) return 'common';
+  if (rewardPoints <= 1020) return 'uncommon';
+  if (rewardPoints <= 1460) return 'rare';
+  if (rewardPoints <= 1980) return 'epic';
+  return 'legendary';
+}
+function itemQuality(id: string): SheetQuality {
+  return UNCOMMON_ITEMS.has(id) ? 'uncommon' : 'common';
+}
+function qualityNameColor(quality: SheetQuality, fallback: Color): Color {
+  return QUALITY_NAME_COLORS[quality] ?? fallback;
+}
+function qualityEdgeColor(quality: SheetQuality, fallback: Color): Color {
+  return QUALITY_EDGE_COLORS[quality] ?? fallback;
+}
+
 const TIP_WIDTH = 460;
 const TIP_PAD = 24;
 const TIP_LINE = 32;
 const TIP_TITLE_LINE = 40;
+const TIP_BUTTON_H = 60;
 
 type TipLine = Readonly<{ text: string; size: number; color: Color; italic?: boolean }>;
 
 /** Resolve the hub supplies toggle action even when another hub panel is active. */
-function resolveCarryToggle(context: SheetContext, itemId: string): ViewActionModel | undefined {
+function resolveCarryToggle(context: SheetContext, itemId: ItemId): ViewActionModel | undefined {
   const actionId = `hub.supplies.toggle:${itemId}`;
   const local = context.model.sections[2].actions.find((action) => action.actionId === actionId);
   if (local) return local;
-  return context.options.supplyActions?.().find((action) => action.actionId === actionId);
+  return context.options.supplyActions?.(itemId).find((action) => action.actionId === actionId);
 }
 
 /** Pinned WoW GameTooltip; mounted as a frame child so scroll masks never clip it. */
@@ -936,8 +1377,9 @@ function renderSheetTip(context: SheetContext, backdrop: Node): void {
   if (tip.kind === 'equip') {
     const equipped = loadout?.equipment.find((entry) => entry.equipmentId === tip.id);
     const definition = EQUIPMENT[tip.id as keyof typeof EQUIPMENT];
-    lines.push({ text: equipped?.name ?? definition?.name ?? tip.id, size: 28, color: palette0.text });
-    if (equipped) lines.push({ text: `${equipped.slotLabel} · 等阶 Lv.${equipped.level}/${equipped.maxLevel} · 已装备`, size: 22, color: palette0.textMuted });
+    const quality = equipmentQuality(tip.id);
+    lines.push({ text: equipped?.name ?? definition?.name ?? tip.id, size: 28, color: qualityNameColor(quality, palette0.text) });
+    if (equipped) lines.push({ text: `${equipped.slotLabel} · ${QUALITY_LABEL[quality]} · 等阶 Lv.${equipped.level}/${equipped.maxLevel} · 已装备`, size: 22, color: palette0.textMuted });
     if (definition) {
       for (const [key, value] of Object.entries(definition.base)) {
         if (typeof value !== 'number' || value === 0) continue;
@@ -953,17 +1395,25 @@ function renderSheetTip(context: SheetContext, backdrop: Node): void {
   } else {
     const entry = loadout?.items.find((item) => item.itemId === tip.id);
     const definition = ITEMS[tip.id as keyof typeof ITEMS];
+    const quality = itemQuality(tip.id);
+    const isSupply = entry?.itemGroup === 'supply';
     carried = entry?.carried ?? false;
-    lines.push({ text: entry?.name ?? definition?.name ?? tip.id, size: 28, color: palette0.text });
-    lines.push({ text: ITEM_CATEGORY_LABELS[entry?.category ?? ''] ?? '战术道具', size: 22, color: palette0.textMuted });
-    if (entry) lines.push({ text: `库存 ${entry.count} · ${entry.carried ? '已携行' : '未携行'}`, size: 22, color: palette0.textMuted });
+    lines.push({ text: entry?.name ?? definition?.name ?? tip.id, size: 28, color: qualityNameColor(quality, palette0.text) });
+    if (isSupply) {
+      lines.push({ text: '补给品 · 随库存可用，无需携行', size: 22, color: palette0.textMuted });
+    } else {
+      lines.push({ text: `${ITEM_CATEGORY_LABELS[entry?.category ?? ''] ?? '战术道具'} · ${QUALITY_LABEL[quality]}`, size: 22, color: palette0.textMuted });
+    }
+    if (entry) lines.push({ text: isSupply
+      ? `库存 ${entry.count} · 补给品`
+      : `库存 ${entry.count} · ${entry.carried ? '已携行' : '未携行'}`, size: 22, color: palette0.textMuted });
     if (definition) {
       lines.push({ text: `使用：${definition.description}`, size: 23, color: palette0.positive });
       const flavor = getGameAsset('item', tip.id)?.alt;
       if (flavor) lines.push({ text: flavor, size: 22, color: palette0.accent, italic: true });
       lines.push({ text: `兑换价：${definition.cost?.rewardPoints ?? '—'} 奖励点`, size: 20, color: palette0.textMuted });
     }
-    if (context.model.phase === 'hub') carryAction = resolveCarryToggle(context, tip.id);
+    if (context.model.phase === 'hub' && entry) carryAction = resolveCarryToggle(context, entry.itemId);
   }
 
   // The toggle action is projected even when the domain rejects it (e.g. the
@@ -1004,19 +1454,623 @@ function renderSheetTip(context: SheetContext, backdrop: Node): void {
 
   const buttonY = -tipHeight / 2 + TIP_PAD + TOUCH / 2;
   const buttonWidth = showCarry ? (TIP_WIDTH - TIP_PAD * 2 - 12) / 2 : TIP_WIDTH - TIP_PAD * 2;
-  const closeButton = panel(card, 'MobileSheetTipClose', showCarry ? -TIP_WIDTH / 2 + TIP_PAD + buttonWidth / 2 + 6 : 0, buttonY, buttonWidth, TOUCH, palette0.raised, palette0.edgeStrong, false, 'control');
-  text(closeButton, 'Label', '关闭', 0, 0, buttonWidth - 16, 60, 26, palette0.text, true);
+  // Bound node keeps the 104px touch floor (and gate contract); the visible
+  // button is a compact 60px child, matching the prototype's small tip buttons.
+  const closeButton = panel(card, 'MobileSheetTipClose', showCarry ? -TIP_WIDTH / 2 + TIP_PAD + buttonWidth / 2 + 6 : 0, buttonY, buttonWidth, TOUCH,
+    withAlpha(palette0.surface, 0), withAlpha(palette0.surface, 0), false, 'control');
+  const closeVisual = panel(closeButton, 'TipButtonVisual', 0, 0, buttonWidth, TIP_BUTTON_H, palette0.raised, palette0.edgeStrong, false, 'control');
+  text(closeVisual, 'Label', '关闭', 0, 0, buttonWidth - 16, 40, 22, palette0.textMuted, true);
   context.options.bindLocal(closeButton, () => context.options.setState({ ...context.state, tip: undefined }));
   if (showCarry && carryAction) {
     const enabled = canExecute(context, carryAction);
     const carryButton = panel(card, `MobileSheetTipCarry:${tip.id}`, TIP_WIDTH / 2 - TIP_PAD - buttonWidth / 2, buttonY, buttonWidth, TOUCH,
+      withAlpha(palette0.surface, 0), withAlpha(palette0.surface, 0), false, 'control');
+    const carryVisual = panel(carryButton, 'TipButtonVisual', 0, 0, buttonWidth, TIP_BUTTON_H,
       enabled ? palette0.accentDark : palette0.quiet, enabled ? palette0.accent : palette0.edge, false, 'control');
-    text(carryButton, 'Label', carried ? '取消携行' : '设为携行', 0, 0, buttonWidth - 16, 60, 26, enabled ? palette0.accent : palette0.textMuted, true);
+    text(carryVisual, 'Label', carried ? '取消携行' : '设为携行', 0, 0, buttonWidth - 16, 40, 22, enabled ? palette0.accent : palette0.textMuted, true);
     if (enabled) context.options.bindAction(carryButton, carryAction);
   }
 
   // Tap outside the frame dismisses only while a tip is pinned.
   context.options.bindLocal(backdrop, () => context.options.setState({ ...context.state, tip: undefined }));
+}
+
+type HubCatalogSurface = Pick<HubShopCatalogViewModel, 'rows' | 'npcName' | 'title' | 'greeting' | 'portraitAssetKey' | 'services' | 'serviceTitle'>;
+
+/** Match the HTML prototype's CSS pixels even when the game canvas is letterboxed. */
+function catalogUnit(context: SheetContext): number {
+  const frame = view.getFrameSize();
+  // Headless renderers have no browser frame; use the prototype's 390px phone preset.
+  const screenWidth = frame.width > 0 && frame.height > 0
+    ? Math.min(frame.width, frame.height * 750 / context.options.surfaceHeight) : 390;
+  return 750 / screenWidth;
+}
+
+function catalogText(context: SheetContext, parent: Node, name: string, value: string, x: number, y: number,
+  width: number, height: number, size: number, color = palette().text, centered = false): void {
+  text(parent, name, value, x, y, width, height, size * catalogUnit(context), color, centered);
+  const label = parent.getChildByName(name)!.getComponent(Label)!;
+  label.fontSize = Math.round(size * catalogUnit(context));
+  label.lineHeight = Math.ceil(label.fontSize * 1.5);
+}
+
+function catalogRule(parent: Node, name: string, y: number, width: number): void {
+  const rule = node(parent, name, 0, y, width, 1).addComponent(Graphics);
+  rule.strokeColor = palette().edgeStrong;
+  rule.lineWidth = 1;
+  rule.moveTo(-width / 2, 0); rule.lineTo(width / 2, 0); rule.stroke();
+}
+
+function catalogTextWidth(value: string, size: number): number {
+  return Array.from(value).reduce((sum, char) => sum + (/[^\x00-\xff]/.test(char) ? 1 : 0.56), 0) * size;
+}
+
+function catalogPanel(context: SheetContext, parent: Node, name: string, x: number, y: number,
+  width: number, height: number, fill: Color, edge: Color, edgeWidth = 1): Node {
+  const control = node(parent, name, x, y, width, height);
+  const graphics = control.addComponent(Graphics);
+  graphics.fillColor = fill;
+  graphics.strokeColor = edge;
+  graphics.lineWidth = edgeWidth * catalogUnit(context);
+  graphics.roundRect(-width / 2, -height / 2, width, height, 3 * catalogUnit(context));
+  graphics.fill(); graphics.stroke();
+  return control;
+}
+
+function catalogActionLabel(action: ViewActionModel, row?: HubShopRowViewModel): string {
+  const label = row ? action.label.split(row.name).join('').replace(/[：:·]\s*$/, '').trim() : action.label;
+  return readable(label || action.label);
+}
+
+function catalogPrice(action: ViewActionModel): string | undefined {
+  return action.readout?.match(/消耗\s+([^。]+)/)?.[1];
+}
+
+function catalogButtonWidth(context: SheetContext, label: string, price?: string): number {
+  const u = catalogUnit(context);
+  return (Math.max(24, catalogTextWidth(label, 12), Math.min(130, catalogTextWidth(price ?? '', 10))) + 20) * u;
+}
+
+/** Compact content-width button: title and price have independent type scales. */
+function catalogButton(context: SheetContext, parent: Node, name: string, label: string, x: number, y: number,
+  width: number, enabled: boolean, price?: string, primary = false, danger = false): Node {
+  const u = catalogUnit(context);
+  const colors = palette();
+  const control = catalogPanel(context, parent, name, x, y, width, 44 * u,
+    !enabled ? colors.quiet : danger ? colors.dangerDark : primary ? colors.accentDark : colors.raised,
+    !enabled ? colors.edge : danger ? colors.danger : primary ? colors.accent : colors.edgeStrong);
+  catalogText(context, control, 'Label', label, 0, price ? 7 * u : 0, width - 16 * u, 20 * u, 12,
+    enabled ? colors.text : colors.textMuted, true);
+  if (price) {
+    const maxUnits = Math.max(4, (width / u - 20) / 10);
+    const lines = wrapInfiniteFlowLine(price, maxUnits);
+    catalogText(context, control, 'Price', lines.length > 1 ? `${lines[0]}…` : price,
+      0, -10 * u, width - 12 * u, 15 * u, 10, enabled ? colors.text : colors.textMuted, true);
+  }
+  return control;
+}
+
+/** Every chapter is visible at the gate; selecting a row opens that chapter's configuration. */
+function renderEntryDungeons(context: SheetContext): void {
+  const detail = context.model.sections[1].detail;
+  if (detail.kind !== 'hub') return;
+  const choices = detail.entryServices?.find(service => service.id === 'dungeon')?.options ?? [];
+  const u = catalogUnit(context);
+  const introHeight = 30 * u;
+  catalogText(context, context.body, 'MobileSheetEntryHint', `共 ${choices.length} 个副本 · 点击查看入场配置`,
+    0, context.bodyHeight / 2 - 12 * u, context.width - 8 * u, 24 * u, 11, palette().textMuted);
+  const bodyHeight = context.bodyHeight - introHeight;
+  const body = node(context.body, 'MobileSheetEntryBody', 0, -introHeight / 2, context.width, bodyHeight);
+  const copyWidth = context.width - 34 * u;
+  const rows = choices.map(option => {
+    const lines = wrapInfiniteFlowLine(option.description, Math.max(8, Math.floor(copyWidth / (11 * u))));
+    const description = lines.slice(0, 2);
+    if (lines.length > 2) description[1] += '…';
+    return { option, description, height: (38 + description.length * 17) * u };
+  });
+  const region = scrollRegion({ ...context, body, bodyHeight }, rows.reduce((sum, row) => sum + row.height, 0));
+  region.holder.name = 'MobileSheetEntryDungeonScroll';
+  catalogScrollByFrame.set(context.panel, region.scrollView);
+  region.scrollView.scrollToOffset(new Vec2(0, Math.min(Math.max(0, context.state.catalogScrollOffset ?? 0),
+    Math.max(0, region.contentHeight - region.height))), 0);
+  const content = scrollContentNode(region);
+  let cursor = 0;
+  for (const { option, description, height } of rows) {
+    const row = node(content, `MobileSheetEntryDungeon:${option.id}`, 0, scrollItemY(region, cursor, height), context.width, height);
+    catalogRule(row, 'EntryDungeonRule', height / 2, context.width - 4 * u);
+    catalogText(context, row, 'EntryDungeonName', option.name, -13 * u, height / 2 - 16 * u,
+      copyWidth, 22 * u, 14, palette().accent);
+    catalogText(context, row, 'EntryDungeonDescription', description.join('\n'), -13 * u,
+      height / 2 - (31 + description.length * 8.5) * u, copyWidth, description.length * 17 * u, 11, palette().textMuted);
+    catalogText(context, row, 'EntryDungeonOpen', '›', context.width / 2 - 12 * u, 0,
+      20 * u, 24 * u, 18, palette().textMuted, true);
+    if (option.selected) context.options.bindLocal(row, () => context.options.setState({ ...context.state,
+      entryView: 'configuration', entryServiceId: undefined,
+      entryDungeonScrollOffset: Math.max(0, region.scrollView.getScrollOffset().y), catalogScrollOffset: 0,
+    }));
+    else if (canExecute(context, option.action)) context.options.bindAction(row, option.action);
+    cursor += height;
+  }
+}
+
+/** Selected chapter configuration; only its fixed footer enters a run. */
+function renderEntryServices(context: SheetContext): void {
+  const detail = context.model.sections[1].detail;
+  if (detail.kind !== 'hub') {
+    renderTextPages(context, [{ title: '轮回之门', lines: ['回到主神空间后可选择下一次冒险。'] }]);
+    return;
+  }
+  const u = catalogUnit(context);
+  const title = context.panel.getChildByName('MobileSheetTitle')?.getComponent(Label);
+  if (title) {
+    title.string = context.state.entryView === 'configuration' ? `${detail.selectedDungeonName} · 入场配置` : '轮回之门';
+    title.fontSize = Math.round(14 * u); title.lineHeight = Math.ceil(21 * u);
+  }
+  if (detail.entryServices && context.state.entryView !== 'configuration') { renderEntryDungeons(context); return; }
+  const services = detail.entryServices?.filter(service => service.id !== 'dungeon') ?? [];
+  const action = getInfiniteFlowMobilePanelActions(context.model, 'entry').find(candidate =>
+    candidate.actionId === (detail.activePanel === 'entry' ? 'hub.entry.confirm' : 'hub.panel:entry'));
+  const enabled = action !== undefined && canExecute(context, action);
+  const wrap = (value: string, size: number, width: number): string[] => value.split('\n')
+    .flatMap(line => wrapInfiniteFlowLine(readable(line), Math.max(8, Math.floor(width / (size * u)))));
+  const notice = [action?.disabledReason, context.options.chrome.blockingMessage,
+    context.options.chrome.busyActionId === undefined ? undefined : '当前行动正在处理，请稍候。'].filter(Boolean).join('\n');
+  const noticeLines = notice ? wrap(notice, 11, context.width - 8 * u) : [];
+  const footerHeight = (62 + noticeLines.length * 17) * u;
+  const introHeight = services.length ? 58 * u : 30 * u;
+  if (services.length) {
+    const backWidth = catalogButtonWidth(context, '返回副本列表');
+    const back = catalogButton(context, context.body, 'MobileSheetEntryBack', '返回副本列表',
+      -context.width / 2 + backWidth / 2, context.bodyHeight / 2 - 24 * u, backWidth, true);
+    context.options.bindLocal(back, () => context.options.setState({ ...context.state, entryView: undefined,
+      entryServiceId: undefined, catalogScrollOffset: context.state.entryDungeonScrollOffset ?? 0 }));
+  } else catalogText(context, context.body, 'MobileSheetEntryHint', '打开副本列表，选择下一次冒险。',
+    0, context.bodyHeight / 2 - 12 * u, context.width - 8 * u, 24 * u, 11, palette().textMuted);
+  const bodyHeight = context.bodyHeight - introHeight - footerHeight;
+  const body = node(context.body, 'MobileSheetEntryBody', 0, (footerHeight - introHeight) / 2, context.width, bodyHeight);
+  const list = { ...context, body, bodyHeight };
+  const copyWidth = context.width - 34 * u;
+  const rows = services.map(service => {
+    const summary = wrap(service.summary, 12, copyWidth);
+    const height = (38 + summary.length * 18) * u;
+    const expanded = context.state.entryServiceId === service.id;
+    const description = expanded && service.description ? wrap(service.description, 11, copyWidth) : [];
+    const options = expanded ? service.options.map(option => {
+      const name = wrap(option.name, 13, copyWidth - 36 * u);
+      const reason = option.action.disabledReason;
+      const description = wrap([option.description, reason && !option.description.includes(reason) ? reason : undefined]
+        .filter(Boolean).join('\n'), 11, copyWidth);
+      return { option, name, description, height: (20 + name.length * 20 + description.length * 17) * u };
+    }) : [];
+    return { service, summary, height, expanded, description, options,
+      totalHeight: height + (description.length ? description.length * 17 + 12 : 0) * u
+        + options.reduce((sum, option) => sum + option.height, 0) };
+  });
+  const contentHeight = rows.reduce((sum, row) => sum + row.totalHeight, 0);
+  const region = scrollRegion(list, contentHeight);
+  region.holder.name = 'MobileSheetEntryScroll';
+  catalogScrollByFrame.set(context.panel, region.scrollView);
+  region.scrollView.scrollToOffset(new Vec2(0, Math.min(Math.max(0, context.state.catalogScrollOffset ?? 0),
+    Math.max(0, region.contentHeight - region.height))), 0);
+  const content = scrollContentNode(region);
+  let cursor = 0;
+  let collapsedCursor = 0;
+  for (const { service, summary, height, expanded, description, options } of rows) {
+    const rowStart = collapsedCursor;
+    collapsedCursor += height;
+    const row = node(content, `MobileSheetEntryService:${service.id}`, 0, scrollItemY(region, cursor, height), context.width, height);
+    catalogRule(row, 'EntryServiceRule', height / 2, context.width - 4 * u);
+    catalogText(context, row, 'EntryServiceName', service.name, -13 * u, height / 2 - 16 * u, copyWidth, 22 * u, 14, palette().accent);
+    catalogText(context, row, 'EntryServiceSummary', summary.join('\n'), -13 * u,
+      height / 2 - (31 + summary.length * 9) * u, copyWidth, summary.length * 18 * u, 12);
+    catalogText(context, row, 'EntryServiceExpand', expanded ? '−' : '+', context.width / 2 - 12 * u,
+      0, 20 * u, 24 * u, 16, palette().textMuted, true);
+    context.options.bindLocal(row, () => context.options.setState({ ...context.state,
+      entryServiceId: expanded ? undefined : service.id,
+      // Bring the chosen service to the top instead of leaving its options below the fold.
+      catalogScrollOffset: expanded ? Math.min(rowStart, region.scrollView.getScrollOffset().y) : rowStart,
+    }));
+    cursor += height;
+    if (description.length) {
+      const descriptionHeight = (description.length * 17 + 12) * u;
+      catalogText(context, content, `EntryServiceDescription:${service.id}`, description.join('\n'), -13 * u,
+        scrollItemY(region, cursor, descriptionHeight), copyWidth, description.length * 17 * u, 11, palette().textMuted);
+      cursor += descriptionHeight;
+    }
+    for (const { option, name, description, height } of options) {
+      const optionRow = node(content, `MobileSheetEntryOption:${option.action.actionId}`, 0,
+        scrollItemY(region, cursor, height), context.width, height);
+      catalogRule(optionRow, 'EntryOptionRule', -height / 2, context.width - 16 * u);
+      catalogText(context, optionRow, 'EntryOptionName', name.join('\n'), -18 * u,
+        height / 2 - (10 + name.length * 10) * u, copyWidth - 36 * u, name.length * 20 * u, 13,
+        option.selected ? palette().positive : palette().text);
+      catalogText(context, optionRow, 'EntryOptionState', option.selected ? '已选' : option.action.enabled ? '选择' : '不可选',
+        context.width / 2 - 28 * u, height / 2 - 20 * u, 44 * u, 20 * u, 10,
+        option.selected ? palette().positive : palette().textMuted, true);
+      catalogText(context, optionRow, 'EntryOptionDescription', description.join('\n'), 0,
+        height / 2 - (10 + name.length * 20 + description.length * 8.5) * u,
+        copyWidth, description.length * 17 * u, 11, palette().textMuted);
+      if (canExecute(context, option.action)) context.options.bindAction(optionRow, option.action);
+      cursor += height;
+    }
+  }
+  const footer = node(context.body, 'MobileSheetEntryFooter', 0,
+    -context.bodyHeight / 2 + footerHeight / 2, context.width, footerHeight);
+  catalogRule(footer, 'EntryFooterRule', footerHeight / 2, context.width);
+  if (noticeLines.length) catalogText(context, footer, 'EntryConfirmNotice', noticeLines.join('\n'), 0,
+    footerHeight / 2 - (6 + noticeLines.length * 8.5) * u, context.width - 8 * u,
+    noticeLines.length * 17 * u, 11, palette().textMuted);
+  if (action) {
+    const label = detail.activePanel === 'entry' ? '确认入场' : '选择入场配置';
+    const width = catalogButtonWidth(context, label);
+    const confirm = catalogButton(context, footer, 'MobileSheetEntryConfirm', label,
+      context.width / 2 - width / 2, -footerHeight / 2 + 28 * u, width, enabled, undefined, true);
+    if (enabled) context.options.bindAction(confirm, action);
+    const summaryWidth = context.width - width - 12 * u;
+    const destination = wrap(detail.selectedDungeonName, 12, summaryWidth).slice(0, 2);
+    catalogText(context, footer, 'EntryDestination', destination.join('\n'), -context.width / 2 + summaryWidth / 2,
+      -footerHeight / 2 + 28 * u, summaryWidth, 40 * u, 12, palette().textMuted);
+  }
+}
+
+function catalogActionButton(context: SheetContext, parent: Node, action: ViewActionModel, row: HubShopRowViewModel | undefined,
+  x: number, y: number, width: number, update: (patch: Partial<MobileSheetState>) => void, confirmed = false): void {
+  const enabled = canExecute(context, action);
+  const danger = action.emphasis === 'danger' || action.recommendation === 'high-risk';
+  const label = `${confirmed ? '确认' : ''}${catalogActionLabel(action, row)}`;
+  const control = catalogButton(context, parent, `MobileSheetShopAction:${action.actionId}`, label, x, y, width,
+    enabled, catalogPrice(action), action.emphasis === 'primary' || action.recommendation === 'recommended', danger);
+  if (enabled && (!danger || confirmed)) context.options.bindAction(control, action);
+  else context.options.bindLocal(control, () => update({
+    catalogRowId: row?.id, catalogServiceOpen: row === undefined, selectedActionId: action.actionId, catalogMoreOpen: false, catalogDetailScrollOffset: undefined,
+  }));
+}
+
+/** Item quality belongs to the frame, so selection never replaces its rarity color. */
+function catalogRarityEdge(row: HubShopRowViewModel): Color {
+  return row.rarity ? qualityEdgeColor(row.rarity, new Color(213, 213, 213, 255)) : palette().edgeStrong;
+}
+
+function renderCatalogPopup(context: SheetContext, catalog: HubCatalogSurface): void {
+  const row = catalog.rows.find((entry) => entry.id === context.state.catalogRowId);
+  const service = context.state.catalogServiceOpen === true;
+  if (!row && !service) return;
+  const u = catalogUnit(context);
+  const update = (patch: Partial<MobileSheetState>): void => context.options.setState({ ...context.state, ...patch });
+  const clear = (): void => update({ catalogRowId: undefined, catalogServiceOpen: undefined,
+    selectedActionId: undefined, catalogMoreOpen: undefined, catalogDetailScrollOffset: undefined });
+  const actions = row?.actions ?? catalog.services;
+  const selected = actions.find((action) => action.actionId === context.state.selectedActionId);
+  const confirm = selected !== undefined && canExecute(context, selected);
+  const width = Math.min(context.width, 480 * u);
+  const innerWidth = width - 28 * u;
+  const sections = row ? [{ label: '', value: row.description }, ...row.details]
+    : actions.map(action => ({ label: catalogActionLabel(action), value: action.readout ?? action.disabledReason ?? action.label }));
+  if (confirm && selected) sections.push({
+    label: `确认${catalogActionLabel(selected, row)}`,
+    value: [selected.readout, selected.disabledReason, selected.riskReason,
+      context.options.chrome.busyActionId === undefined ? undefined : '当前行动正在处理，请稍候。',
+      context.options.chrome.blockingMessage].filter(Boolean).join('\n'),
+  });
+  const facts = sections.map(section => {
+    const lines = section.value.split('\n').flatMap(line => wrapInfiniteFlowLine(readable(line), Math.max(8, Math.floor(innerWidth / (12 * u)))));
+    return { ...section, lines, height: (18 + (section.label ? 18 : 0) + lines.length * 18) * u };
+  });
+  const common = actions.slice(0, 2);
+  const extra = actions.slice(2);
+  const controls: CatalogControl[] = confirm
+    ? [{ label: '取消', width: catalogButtonWidth(context, '取消') },
+      ...(confirm ? [{ action: selected, label: `确认${catalogActionLabel(selected, row)}`,
+        width: catalogButtonWidth(context, `确认${catalogActionLabel(selected, row)}`, catalogPrice(selected)) }] : [])]
+    : [...(extra.length ? [{ label: '更多操作', width: catalogButtonWidth(context, '更多操作 +') }] : []),
+      ...common.map(action => ({ action, label: catalogActionLabel(action, row),
+        width: catalogButtonWidth(context, catalogActionLabel(action, row), catalogPrice(action)) }))];
+  const packed = catalogControlPositions(controls, innerWidth, u, true);
+  const notice = selected && !confirm ? [selected.disabledReason, context.options.chrome.blockingMessage,
+    context.options.chrome.busyActionId === undefined ? undefined : '当前行动正在处理，请稍候。'].filter(Boolean).join('\n') : '';
+  const noticeLines = notice.split('\n').filter(Boolean).flatMap(line => wrapInfiniteFlowLine(readable(line), Math.max(8, Math.floor(innerWidth / (11 * u)))));
+  const noticeHeight = noticeLines.length ? (noticeLines.length * 17 + 8) * u : 0;
+  const footerHeight = controls.length ? packed.height + 20 * u + noticeHeight : 0;
+  const headerHeight = (row?.rarity ? 92 : 78) * u;
+  const contentHeight = facts.reduce((sum, fact) => sum + fact.height, 12 * u);
+  const height = Math.min(context.height - 24 * u, contentHeight + headerHeight + footerHeight + 8 * u);
+  const shade = panel(context.panel, 'MobileSheetCatalogBackdrop', 0, 0, context.width + 40, context.height,
+    withAlpha(palette().surface, 225), palette().edge);
+  shade.addComponent(BlockInputEvents);
+  context.options.bindLocal(shade, clear);
+  const card = catalogPanel(context, shade, 'MobileSheetCatalogDetail', 0, 0, width, height, palette().surface, palette().accent);
+  card.addComponent(BlockInputEvents);
+  if (row) {
+    const image = catalogPanel(context, card, 'CatalogDetailIconFrame', -width / 2 + 40 * u,
+      height / 2 - 40 * u, 52 * u, 52 * u, palette().quiet, catalogRarityEdge(row), 2);
+    figureNode(context, image, 'CatalogDetailIcon', row.visualAssetKey ?? '', 0, 0, 46 * u, 46 * u,
+      { iconKind: 'inventory', glyphColor: palette().accent }, context.images);
+  }
+  const titleLeft = -width / 2 + (row ? 78 : 14) * u;
+  const titleWidth = width - (row ? 138 : 74) * u;
+  catalogText(context, card, 'CatalogDetailTitle', row?.name ?? catalog.serviceTitle ?? '可选服务',
+    titleLeft + titleWidth / 2, height / 2 - 26 * u, titleWidth, 24 * u, 16, palette().accent);
+  catalogText(context, card, 'CatalogDetailStatus', row ? `${row.category} · ${row.status}` : catalog.npcName,
+    titleLeft + titleWidth / 2, height / 2 - 48 * u, titleWidth, 18 * u, 11, palette().textMuted);
+  if (row?.rarity) catalogText(context, card, 'CatalogDetailRarity', QUALITY_LABEL[row.rarity],
+    titleLeft + titleWidth / 2, height / 2 - 67 * u, titleWidth, 18 * u, 11, qualityNameColor(row.rarity, palette().text));
+  const close = catalogButton(context, card, 'MobileSheetCatalogDetailClose', '×', width / 2 - 32 * u, height / 2 - 36 * u, 44 * u, true);
+  context.options.bindLocal(close, clear);
+  catalogRule(card, 'CatalogHeaderRule', height / 2 - headerHeight, width - 2 * u);
+  const bodyHeight = height - headerHeight - footerHeight;
+  const body = node(card, 'CatalogDetailBody', 0, (footerHeight - headerHeight) / 2, innerWidth, bodyHeight);
+  const popup: SheetContext = { ...context, panel: card, body, width: innerWidth, height, bodyHeight };
+  const region = scrollRegion(popup, contentHeight);
+  catalogDetailScrollByFrame.set(context.panel, region.scrollView);
+  const maxOffset = Math.max(0, region.contentHeight - region.height);
+  region.scrollView.scrollToOffset(new Vec2(0, Math.min(maxOffset,
+    context.state.catalogDetailScrollOffset ?? (confirm ? maxOffset : 0))), 0);
+  const content = scrollContentNode(region);
+  let cursor = 6 * u;
+  facts.forEach((fact, index) => {
+    const item = node(content, `CatalogFact:${index}`, 0, scrollItemY(region, cursor, fact.height), innerWidth, fact.height);
+    if (fact.label) catalogText(context, item, 'FactLabel', fact.label, 0, fact.height / 2 - 13 * u, innerWidth, 18 * u, 11, palette().textMuted);
+    catalogText(context, item, 'FactValue', fact.lines.join('\n'), 0,
+      fact.height / 2 - (9 + (fact.label ? 18 : 0) + fact.lines.length * 9) * u,
+      innerWidth, fact.lines.length * 18 * u, 12, fact.label ? palette().text : palette().positive);
+    catalogRule(item, 'FactRule', -fact.height / 2, innerWidth);
+    cursor += fact.height;
+  });
+  if (footerHeight > 0) {
+    const footer = node(card, 'MobileSheetCatalogFooter', 0, -height / 2 + footerHeight / 2, innerWidth, footerHeight);
+    catalogRule(footer, 'CatalogFooterRule', footerHeight / 2, width - 2 * u);
+    if (noticeLines.length) catalogText(context, footer, 'CatalogActionNotice', noticeLines.join('\n'), 0,
+      footerHeight / 2 - (8 + noticeLines.length * 8.5) * u, innerWidth, noticeLines.length * 17 * u, 11, palette().textMuted);
+    for (const control of packed.positions) {
+      const x = -innerWidth / 2 + control.x + control.width / 2;
+      const y = footerHeight / 2 - noticeHeight - 10 * u - control.line * 50 * u - 22 * u;
+      if (control.action) catalogActionButton(context, footer, control.action, row, x, y, control.width, update, confirm);
+      else {
+        const name = confirm ? 'MobileSheetCatalogCancelAction' : 'MobileSheetCatalogMore';
+        const label = confirm ? control.label : `更多操作 ${context.state.catalogMoreOpen ? '−' : '+'}`;
+        const button = catalogButton(context, footer, name, label, x, y, control.width, true);
+        context.options.bindLocal(button, () => update(confirm
+          ? { selectedActionId: undefined, catalogMoreOpen: false, catalogDetailScrollOffset: undefined }
+          : { catalogMoreOpen: !context.state.catalogMoreOpen }));
+      }
+    }
+  }
+  if (!confirm && extra.length && context.state.catalogMoreOpen) {
+    const menuWidth = Math.min(innerWidth, 330 * u);
+    const menuHeight = Math.min(bodyHeight - 8 * u, (extra.length * 50 + 10) * u);
+    const menu = catalogPanel(context, card, 'MobileSheetCatalogActionMenu',
+      width / 2 - 14 * u - menuWidth / 2, -height / 2 + footerHeight + 6 * u + menuHeight / 2,
+      menuWidth, menuHeight, palette().surface, palette().edgeStrong);
+    menu.addComponent(BlockInputEvents);
+    const menuContext = { ...context, panel: card, body: menu, width: menuWidth - 10 * u, bodyHeight: menuHeight - 10 * u };
+    const menuRegion = scrollRegion(menuContext, extra.length * 50 * u);
+    const menuContent = scrollContentNode(menuRegion);
+    extra.forEach((action, index) => catalogActionButton(context, menuContent, action, row, 0,
+      scrollItemY(menuRegion, index * 50 * u, 44 * u), menuContext.width, update));
+  }
+}
+
+type CatalogControl = Readonly<{ action?: ViewActionModel; label: string; width: number }>;
+
+/** Flex-like packing keeps short actions together and wraps only when necessary. */
+function catalogControlPositions(controls: readonly CatalogControl[], available: number, u: number, alignEnd = false) {
+  let x = 0, line = 0;
+  const positions = controls.map(control => {
+    const width = Math.min(available, control.width);
+    if (x > 0 && x + width > available) { x = 0; line += 1; }
+    const result = { ...control, width, x, line };
+    x += width + 6 * u;
+    return result;
+  });
+  if (alignEnd) {
+    const lineWidths = new Map<number, number>();
+    for (const position of positions) lineWidths.set(position.line, position.x + position.width);
+    for (const position of positions) position.x += available - lineWidths.get(position.line)!;
+  }
+  return { positions, height: controls.length ? (line + 1) * 50 * u - 6 * u : 0 };
+}
+
+/** NPC storefront: icon-only goods, with a separate readable task list. */
+function renderNpcGridCatalog(context: SheetContext, catalog: HubCatalogSurface): void {
+  const u = catalogUnit(context);
+  const detail = context.model.sections[1].detail;
+  const tasks = detail.kind === 'hub' && detail.activePanel === 'tasks';
+  const introHeight = 86 * u;
+  const footerHeight = catalog.services.length ? 58 * u : 0;
+  const introWidth = context.width - 60 * u;
+  figureNode(context, context.body, 'MobileSheetNpcPortrait', catalog.portraitAssetKey ?? '',
+    -context.width / 2 + 22 * u, context.bodyHeight / 2 - 28 * u, 40 * u, 48 * u,
+    { glyph: catalog.npcName.slice(0, 1), glyphSize: 21 * u, glyphColor: palette().accent }, context.images);
+  catalogText(context, context.body, 'MobileSheetNpcName', catalog.npcName, 30 * u,
+    context.bodyHeight / 2 - 14 * u, introWidth, 24 * u, 16, palette().accent);
+  const greeting = wrapInfiniteFlowLine(catalog.greeting, Math.floor(introWidth / (11 * u))).slice(0, 2).join('\n');
+  catalogText(context, context.body, 'MobileSheetNpcGreeting', greeting, 30 * u,
+    context.bodyHeight / 2 - 42 * u, introWidth, 36 * u, 11, palette().textMuted);
+  catalogText(context, context.body, 'MobileSheetCatalogCount', `共 ${catalog.rows.length} 项`,
+    -context.width / 2 + 40 * u, context.bodyHeight / 2 - 72 * u, 80 * u, 18 * u, 10, palette().textMuted);
+  catalogText(context, context.body, 'MobileSheetCatalogHint', tasks ? '点击任务查看详情' : '点击图标查看详情',
+    context.width / 2 - 60 * u, context.bodyHeight / 2 - 72 * u, 120 * u, 18 * u, 10, palette().textMuted);
+  const bodyHeight = context.bodyHeight - introHeight - footerHeight;
+  const body = node(context.body, 'MobileSheetCatalogBody', 0, (footerHeight - introHeight) / 2, context.width, bodyHeight);
+  const list = { ...context, body, bodyHeight };
+  const gap = 7 * u;
+  const gridWidth = context.width - 8 * u;
+  const columns = Math.max(1, Math.floor((gridWidth + gap) / (58 * u + gap)));
+  const tileSize = (gridWidth - gap * (columns - 1)) / columns;
+  const taskRows = tasks ? catalog.rows.map(row => {
+    const controls = catalogControlPositions(row.actions.map(action => ({ action,
+      label: catalogActionLabel(action, row), width: catalogButtonWidth(context, catalogActionLabel(action, row), catalogPrice(action)) })), 84 * u, u, true);
+    const copyWidth = context.width - (controls.positions.length ? 96 : 8) * u;
+    const description = wrapInfiniteFlowLine(readable(row.description), Math.max(8, Math.floor(copyWidth / (12 * u)))).slice(0, 2);
+    const progress = row.details.find(fact => fact.label === '当前进度')?.value ?? '';
+    const progressLines = wrapInfiniteFlowLine(`${row.status}  ${progress}`, Math.max(8, Math.floor(copyWidth / (11 * u))));
+    const height = Math.max(controls.height + 24 * u, (72 + description.length * 18 + progressLines.length * 17) * u);
+    return { row, controls, copyWidth, description, progressLines, height };
+  }) : [];
+  const contentHeight = tasks ? taskRows.reduce((sum, item) => sum + item.height, 0)
+    : Math.ceil(catalog.rows.length / columns) * (tileSize + gap) + 4 * u;
+  const region = scrollRegion(list, contentHeight);
+  region.holder.name = 'MobileSheetCatalogScroll';
+  catalogScrollByFrame.set(context.panel, region.scrollView);
+  region.scrollView.scrollToOffset(new Vec2(0, Math.min(Math.max(0, context.state.catalogScrollOffset ?? 0),
+    Math.max(0, region.contentHeight - region.height))), 0);
+  const update = (patch: Partial<MobileSheetState>): void => context.options.setState({ ...context.state,
+    catalogScrollOffset: Math.max(0, region.scrollView.getScrollOffset().y), ...patch });
+  const open = (row: HubShopRowViewModel): void => update({ catalogRowId: row.id, catalogSelectedRowId: row.id,
+    selectedActionId: undefined, catalogServiceOpen: undefined, catalogMoreOpen: false, catalogDetailScrollOffset: undefined });
+  const content = scrollContentNode(region);
+  if (tasks) {
+    let cursor = 0;
+    for (const { row, controls, copyWidth, description, progressLines, height } of taskRows) {
+      const item = node(content, `MobileSheetShopRow:${row.id}`, 0, scrollItemY(region, cursor, height), context.width, height);
+      catalogRule(item, 'ShopRowRule', height / 2, context.width - 4 * u);
+      const info = node(item, `MobileSheetShopInfo:${row.id}`, -context.width / 2 + copyWidth / 2, 0, copyWidth, height);
+      catalogText(context, info, 'ShopRowName', row.name, 0, height / 2 - 21 * u, copyWidth, 24 * u, 14);
+      catalogText(context, info, 'ShopRowCategory', row.category, 0, height / 2 - 42 * u, copyWidth, 16 * u, 10, palette().textMuted);
+      catalogText(context, info, 'ShopRowDescription', description.join('\n'), 0,
+        height / 2 - (54 + description.length * 9) * u, copyWidth, description.length * 18 * u, 12, palette().textMuted);
+      catalogText(context, info, 'ShopRowStatus', progressLines.join('\n'), 0,
+        -height / 2 + (12 + progressLines.length * 8.5) * u, copyWidth, progressLines.length * 17 * u, 11,
+        row.status === '可领取' ? palette().positive : palette().textMuted);
+      context.options.bindLocal(info, () => open(row));
+      for (const control of controls.positions) catalogActionButton(context, item, control.action!, row,
+        context.width / 2 - 84 * u + control.x + control.width / 2,
+        controls.height / 2 - control.line * 50 * u - 22 * u, control.width, update);
+      cursor += height;
+    }
+  } else catalog.rows.forEach((row, index) => {
+    const tile = catalogPanel(context, content, `MobileSheetShopTile:${row.id}`,
+      -context.width / 2 + 2 * u + (index % columns) * (tileSize + gap) + tileSize / 2,
+      scrollItemY(region, 2 * u + Math.floor(index / columns) * (tileSize + gap), tileSize),
+      tileSize, tileSize, palette().quiet, catalogRarityEdge(row));
+    const border = tile.getComponent(Graphics)!;
+    border.strokeColor = catalogRarityEdge(row); border.lineWidth = 2 * u;
+    border.roundRect(-tileSize / 2 + u, -tileSize / 2 + u, tileSize - 2 * u, tileSize - 2 * u, 3 * u); border.stroke();
+    const selected = (context.state.catalogRowId ?? context.state.catalogSelectedRowId) === row.id;
+    if (selected) {
+      border.roundRect(-tileSize / 2 + 4 * u, -tileSize / 2 + 4 * u, tileSize - 8 * u, tileSize - 8 * u, 2 * u); border.stroke();
+      border.fillColor = palette().text;
+      const x = tileSize / 2 - 7 * u, y = -tileSize / 2 + 7 * u;
+      border.moveTo(x, y + 3 * u); border.lineTo(x + 3 * u, y); border.lineTo(x, y - 3 * u); border.lineTo(x - 3 * u, y); border.close(); border.fill();
+    }
+    figureNode(context, tile, `ShopIcon:${row.id}`, row.visualAssetKey ?? '', 0, 0, tileSize - 14 * u, tileSize - 14 * u,
+      { iconKind: 'inventory', glyphColor: palette().accent }, context.images);
+    context.options.bindLocal(tile, () => open(row));
+  });
+  if (footerHeight) {
+    catalogRule(context.body, 'CatalogFooterRule', -context.bodyHeight / 2 + footerHeight, context.width);
+    const label = `${catalog.serviceTitle ?? '其他服务'} ↗`;
+    const width = Math.min(context.width, catalogButtonWidth(context, label));
+    const control = catalogButton(context, context.body, 'MobileSheetShopServices', label,
+      context.width / 2 - width / 2, -context.bodyHeight / 2 + 28 * u, width, true);
+    context.options.bindLocal(control, () => update({ catalogRowId: undefined, catalogServiceOpen: true,
+      selectedActionId: undefined, catalogMoreOpen: false, catalogDetailScrollOffset: undefined }));
+  }
+  renderCatalogPopup(context, catalog);
+}
+
+/** The approved prototype's compact rows, reused for player-owned preparation. */
+function renderHubCatalog(context: SheetContext, catalog: HubCatalogSurface): void {
+  const u = catalogUnit(context);
+  const title = context.panel.getChildByName('MobileSheetTitle')?.getComponent(Label);
+  if (title) {
+    title.fontSize = Math.round(14 * u);
+    title.lineHeight = Math.ceil(21 * u);
+  }
+  if (context.state.kind === 'npc') { renderNpcGridCatalog(context, catalog); return; }
+  const introHeight = 96 * u;
+  const footerHeight = catalog.services.length > 0 ? 56 * u : 0;
+  const portraitX = -context.width / 2 + 24 * u;
+  figureNode(context, context.body, 'MobileSheetNpcPortrait', catalog.portraitAssetKey ?? '', portraitX, context.bodyHeight / 2 - 30 * u, 40 * u, 48 * u,
+    { glyph: catalog.npcName.slice(0, 1), glyphSize: 21 * u, glyphColor: palette().accent }, context.images);
+  const introWidth = context.width - 62 * u;
+  catalogText(context, context.body, 'MobileSheetNpcName', catalog.npcName, 29 * u, context.bodyHeight / 2 - 15 * u, introWidth, 24 * u, 16, palette().accent);
+  const greeting = wrapInfiniteFlowLine(catalog.greeting, Math.floor(introWidth / (11 * u))).slice(0, 2).join('\n');
+  catalogText(context, context.body, 'MobileSheetNpcGreeting', greeting, 29 * u, context.bodyHeight / 2 - 45 * u, introWidth, 36 * u, 11, palette().textMuted);
+  catalogText(context, context.body, 'MobileSheetCatalogCount', `共 ${catalog.rows.length} 项`, -context.width / 2 + 40 * u, context.bodyHeight / 2 - 81 * u, 80 * u, 18 * u, 10, palette().textMuted);
+  catalogText(context, context.body, 'MobileSheetCatalogHint', '点图标或名称查看详情', context.width / 2 - 70 * u, context.bodyHeight / 2 - 81 * u, 140 * u, 18 * u, 10, palette().textMuted);
+  const bodyHeight = context.bodyHeight - introHeight - footerHeight;
+  const body = node(context.body, 'MobileSheetCatalogBody', 0, (footerHeight - introHeight) / 2, context.width, bodyHeight);
+  const list: SheetContext = { ...context, body, bodyHeight };
+  const textLeft = -context.width / 2 + 64 * u;
+  const inlineActions = context.width / u > 510;
+  const copyWidth = context.width - (inlineActions ? 315 : 72) * u;
+  const actionWidth = inlineActions ? 235 * u : copyWidth;
+  const expandedIds = context.state.catalogExpandedIds ?? [];
+  const rows = catalog.rows.map(row => {
+    const merchantEquipment = context.state.kind === 'npc' && row.actions.some(action => action.actionId.startsWith('hub.equipment.'));
+    const common = merchantEquipment ? row.actions.filter(action => /^hub\.equipment\.(buy|upgrade):/.test(action.actionId)) : row.actions;
+    const extra = row.actions.filter(action => !common.includes(action));
+    const expanded = expandedIds.includes(row.id);
+    const control = (action: ViewActionModel): CatalogControl => ({ action, label: catalogActionLabel(action, row), width: catalogButtonWidth(context, catalogActionLabel(action, row), catalogPrice(action)) });
+    const controls: CatalogControl[] = common.map(control);
+    if (extra.length) controls.push({ label: expanded ? '收起 −' : '更多操作 +', width: catalogButtonWidth(context, '更多操作 +') });
+    const actions = catalogControlPositions(controls, actionWidth, u, inlineActions);
+    const extras = catalogControlPositions(expanded ? extra.map(control) : [], context.width - 24 * u, u);
+    const description = wrapInfiniteFlowLine(readable(row.description), Math.max(8, Math.floor(copyWidth / (12 * u))));
+    const descriptionLines = description.slice(0, 2);
+    if (description.length > 2) descriptionLines[1] += '…';
+    const infoHeight = (48 + descriptionLines.length * 19) * u;
+    const extraHeight = expanded && extra.length ? extras.height + 46 * u : 0;
+    const mainHeight = inlineActions ? Math.max(infoHeight, actions.height) : infoHeight + actions.height;
+    return { row, expanded, actions, extras, descriptionLines, infoHeight, height: mainHeight + 28 * u + extraHeight };
+  });
+  const region = scrollRegion(list, rows.reduce((sum, row) => sum + row.height, 0));
+  region.holder.name = 'MobileSheetCatalogScroll';
+  catalogScrollByFrame.set(context.panel, region.scrollView);
+  const offset = Math.min(Math.max(0, context.state.catalogScrollOffset ?? 0), Math.max(0, region.contentHeight - region.height));
+  region.scrollView.scrollToOffset(new Vec2(0, offset), 0);
+  const update = (patch: Partial<MobileSheetState>): void => context.options.setState({
+    ...context.state, catalogScrollOffset: Math.max(0, region.scrollView.getScrollOffset().y), ...patch,
+  });
+  const content = scrollContentNode(region);
+  let cursor = 0;
+  for (const { row, expanded, actions, extras, descriptionLines, infoHeight, height } of rows) {
+    const item = node(content, `MobileSheetShopRow:${row.id}`, 0, scrollItemY(region, cursor, height), region.width, height);
+    catalogRule(item, 'ShopRowRule', height / 2, region.width - 4 * u);
+    const info = node(item, `MobileSheetShopInfo:${row.id}`, 0, height / 2 - 10 * u - infoHeight / 2, region.width, infoHeight);
+    const figure = catalogPanel(context, info, 'ShopIconFrame', -region.width / 2 + 26 * u, 0, 52 * u, 52 * u, palette().quiet, palette().edgeStrong);
+    figureNode(context, figure, `ShopIcon:${row.id}`, row.visualAssetKey ?? '', 0, 0, 46 * u, 46 * u,
+      { glyph: row.name.slice(0, 1), glyphSize: 24 * u, glyphColor: palette().accent }, context.images);
+    const titleWidth = Math.min(copyWidth, catalogTextWidth(row.name, 15) * u + 4 * u);
+    catalogText(context, info, 'ShopRowName', row.name, textLeft + titleWidth / 2, infoHeight / 2 - 12 * u, titleWidth, 24 * u, 15);
+    info.getChildByName('ShopRowName')!.getComponent(Label)!.isBold = true;
+    const categoryWidth = copyWidth - titleWidth - 6 * u;
+    if (categoryWidth > 24 * u) catalogText(context, info, 'ShopRowCategory', row.category, textLeft + titleWidth + 6 * u + categoryWidth / 2,
+      infoHeight / 2 - 13 * u, categoryWidth, 20 * u, 11, palette().textMuted);
+    catalogText(context, info, 'ShopRowStatus', row.status, textLeft + copyWidth / 2, infoHeight / 2 - 36 * u, copyWidth, 20 * u, 12, palette().positive);
+    catalogText(context, info, 'ShopRowDescription', descriptionLines.join('\n'), textLeft + copyWidth / 2,
+      infoHeight / 2 - (48 + descriptionLines.length * 9.5) * u, copyWidth, descriptionLines.length * 19 * u, 12, palette().textMuted);
+    context.options.bindLocal(info, () => update({ catalogRowId: row.id, selectedActionId: undefined, catalogServiceOpen: undefined }));
+    for (const control of actions.positions) {
+      const x = (inlineActions ? context.width / 2 - actionWidth - 12 * u : textLeft) + control.x + control.width / 2;
+      const top = inlineActions ? 10 * u + (Math.max(infoHeight, actions.height) - actions.height) / 2 : infoHeight + 18 * u;
+      const y = height / 2 - top - control.line * 50 * u - 22 * u;
+      if (control.action) catalogActionButton(context, item, control.action, row, x, y, control.width, update);
+      else {
+        const more = catalogButton(context, item, `MobileSheetShopMore:${row.id}`, control.label, x, y, control.width, true);
+        context.options.bindLocal(more, () => update({ catalogExpandedIds: expanded ? expandedIds.filter(id => id !== row.id) : [...expandedIds, row.id] }));
+      }
+    }
+    if (extras.positions.length) {
+      const extraHeight = extras.height + 36 * u;
+      const extra = panel(item, 'CatalogExtraActions', 0, -height / 2 + extraHeight / 2 + 8 * u, context.width, extraHeight, palette().quiet, palette().edge, false, 'card');
+      catalogText(context, extra, 'ExtraLabel', `${row.name} · 强化与委托`, 0, extraHeight / 2 - 14 * u, context.width - 24 * u, 20 * u, 11, palette().textMuted);
+      for (const control of extras.positions) catalogActionButton(context, extra, control.action!, row,
+        -context.width / 2 + 12 * u + control.x + control.width / 2, extraHeight / 2 - 32 * u - control.line * 50 * u - 22 * u, control.width, update);
+    }
+    cursor += height;
+  }
+  if (!rows.length) catalogText(context, content, 'MobileSheetCatalogEmpty', '购入装备或解锁能力后，可以在这里配置。', 0, region.contentHeight / 2 - 48 * u, context.width - 24 * u, 72 * u, 13, palette().textMuted, true);
+  if (footerHeight > 0) {
+    catalogRule(context.body, 'CatalogFooterRule', -context.bodyHeight / 2 + footerHeight, context.width);
+    const label = `${catalog.serviceTitle ?? '其他服务'} ↗`;
+    const width = Math.min(context.width, catalogButtonWidth(context, label));
+    const control = catalogButton(context, context.body, 'MobileSheetShopServices', label,
+      context.width / 2 - width / 2, -context.bodyHeight / 2 + 28 * u, width, true);
+    context.options.bindLocal(control, () => update({ catalogRowId: undefined, catalogServiceOpen: true, selectedActionId: undefined }));
+  }
+  renderCatalogPopup(context, catalog);
 }
 
 function renderSheetKind(context: SheetContext): void {
@@ -1026,13 +2080,16 @@ function renderSheetKind(context: SheetContext): void {
     const selected = model.sections[1].metrics.find((metric) => metric.id === state.selectedActionId);
     if (selected) renderMetricDetail(context, selected); else renderCharacter(context);
   } else if (state.kind === 'map') renderMap(context);
-  else if (state.kind === 'objectives') renderTextPages(context, objectivePages(model));
+  else if (state.kind === 'objectives') renderObjectives(context);
   else if (state.kind === 'log') renderTextPages(context, model.sections[5].lines.length === 0 ? [{ title: '冒险记录', lines: ['本轮还没有新的记录。'] }] : model.sections[5].lines.map((entry, index) => ({ title: `冒险记录 · ${index + 1}`, lines: [entry] })));
   else if (state.kind === 'help') renderHelp(context);
   else if (state.kind === 'menu') renderMenu(context);
-  else if (state.kind === 'entry') renderTabbedActions(context, entryPages(model), ['副本与配置', '入场选项']);
+  else if (state.kind === 'entry') renderEntryServices(context);
   else if (state.kind === 'inventory') renderInventory(context);
-  else if (state.kind === 'npc') renderTabbedActions(context, hubPages(model), ['交谈与详情', '整备选项']);
+  else if (state.kind === 'npc') {
+    if (detail.kind === 'hub' && detail.shop) renderHubCatalog(context, detail.shop);
+    else renderTextPages(context, [{ title: '交谈', lines: ['请在主神空间走近 NPC 后交谈。'] }]);
+  }
   else if (state.kind === 'result') renderTabbedActions(context, detail.kind === 'result' ? buildInfiniteFlowResultPages(detail) : [], ['结算明细', '归档与回城']);
   else if (state.kind === 'interaction') {
     const pages: readonly SheetPage[] = detail.kind === 'explore'
@@ -1230,6 +2287,10 @@ function renderInfiniteFlowInfoSheetBody(root: Node, model: GameViewModel, state
   const context: SheetContext = { model, state, options, panel: chrome.frame, body: chrome.body, width: chrome.width, height: geometry.height, bodyHeight: chrome.bodyHeight, images };
   if (!activeLayout) {
     renderSheetKind(context);
+    const scroll = catalogScrollByFrame.get(context.panel);
+    if (scroll) sheetScrollCaptures.set(root, { state, scroll, detailScroll: catalogDetailScrollByFrame.get(context.panel) });
+    const mapScroll = mapScrollByFrame.get(context.panel);
+    if (mapScroll) mapScrollCaptures.set(root, mapScroll);
     if (state.tip) renderSheetTip(context, backdrop);
     return;
   }

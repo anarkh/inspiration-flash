@@ -58,9 +58,10 @@ export class ScrollView {
   static EventType={SCROLLING:'scrolling'};
   set content(node) { this._content = node; }
   get content() { return this._content; }
-  getScrollOffset() { return { x: 0, y: 0 }; }
+  getScrollOffset() { return this.offset ?? new Vec2(0, 0); }
+  scrollToOffset(offset) { this.offset=new Vec2(offset.x, offset.y); for(const handler of this.node.listeners.get(ScrollView.EventType.SCROLLING) ?? []) handler(); }
 }
-export class Rect {} export class Sprite { static SizeMode={CUSTOM:0,RAW:1,TRIMMED:2}; } export class SpriteFrame {} export class Vec2 {}
+export class Rect {} export class Sprite { static SizeMode={CUSTOM:0,RAW:1,TRIMMED:2}; } export class SpriteFrame {} export class Vec2 { constructor(x=0,y=0) { Object.assign(this,{x,y}); } }
 export const Input={EventType:{TOUCH_START:'touch-start',TOUCH_END:'touch-end'}};
 export const KeyCode={}; export const input={}; export const game={}; export const Game={};
 export const view={ getFrameSize(){ return {width:0,height:0}; } };
@@ -132,7 +133,7 @@ for (const itemId of ['healing_pill', 'dispel_talisman', 'gate_sigil', 'thunder_
 }
 galleryState = commitOrCurrent(galleryState, {
   type: 'hub/configure-tactical-loadout',
-  itemIds: ['healing_pill', 'dispel_talisman', 'gate_sigil'],
+  itemIds: ['thunder_talisman', 'dispel_talisman', 'gate_sigil'],
 });
 galleryState = commitOrCurrent(galleryState, { type: 'hub/learn-method', methodId: 'mist_breathing' });
 const hubModel = api.buildGameViewModel(galleryState, { hubPanel: 'supplies' });
@@ -285,19 +286,22 @@ for (const [kind, model, sheetState] of KINDS) {
   } else if (kind === 'menu') {
     assert.equal(baselineNodes.filter((node) => node.name.startsWith('MobileSheetShortcut:')).length, 9, 'menu: nine shortcut tiles');
   } else {
+    // Default 道具 tab: 3 supply cells.
     assert.ok(names.has('MobileSheetInventoryRack'), 'inventory: loadout rack');
-    assert.equal(baselineNodes.filter((node) => node.name.startsWith('MobileSheetItem:')).length, 9, 'inventory: nine tactical cells');
-    const carriedSeals = baselineNodes.filter((node) => node.name === 'ItemCarriedSeal');
-    assert.equal(carriedSeals.length, 3, 'inventory: three default carried seals');
-    // The actions tab really switches to the action list.
-    const tab = baseline.local.get('MobileSheetTab:actions');
-    assert.ok(tab, 'inventory: actions tab binds a local callback');
-    tab();
-    const switched = baseline.nextState();
-    assert.equal(switched.tab, 'actions', 'inventory: tab state switches to actions');
+    assert.equal(baselineNodes.filter((node) => node.name.startsWith('MobileSheetItem:')).length, 3, 'inventory 道具 tab: three supply cells');
+    assert.ok(names.has('MobileSheetTab:items'), 'inventory: 道具 tab mounted');
+    assert.ok(names.has('MobileSheetTab:carry'), 'inventory: 携行 tab mounted');
+    // The 携行 tab carries the six special items with three prepared seals.
+    const carryView = render(model, { ...sheetState, tab: 'carry' }, undefined);
+    const carryNodes = allNodes(carryView.rootNode);
+    assert.equal(carryNodes.filter((node) => node.name.startsWith('MobileSheetItem:')).length, 6, 'inventory 携行 tab: six carried item cells');
+    const carriedSeals = carryNodes.filter((node) => node.name === 'ItemCarriedSeal');
+    assert.equal(carriedSeals.length, 3, 'inventory 携行 tab: three default carried seals');
+    // The legacy actions state view still renders the real inventory action
+    // list for state-level fixtures/engines.
     const actionsView = render(model, { ...sheetState, tab: 'actions' }, undefined);
     assert.ok(allNodes(actionsView.rootNode).some((node) => node.name.startsWith('MobileSheetAction:')),
-      'inventory: actions tab lists real sheet actions');
+      'inventory: actions state lists real sheet actions');
   }
 }
 
@@ -410,18 +414,18 @@ const shortcutCount = allNodes(handle.root).filter((node) => node.name.startsWit
 assert.equal(shortcutCount, 9, 'menu: nine shortcut tiles');
 firePress(handle.root, 'SheetGalleryKind:inventory');
 assert.ok(findNode(handle.root, 'MobileInfoSheet:inventory'), 'inventory sheet mounted');
-assert.equal(findNodes(handle.root, 'MobileSheetItem:healing_pill').length, 1, 'enriched fixture shows the bought item');
-assert.equal(findNodes(handle.root, 'ItemCarriedSeal').length, 3, 'three prepared seals visible');
+// The bag opens on the 道具 tab: the bought healing pill shows there; the
+// prepared seals live on the 携行 tab.
+assert.equal(findNodes(handle.root, 'MobileSheetItem:healing_pill').length, 1, 'enriched fixture shows the bought item on 道具 tab');
+assert.equal(findNodes(handle.root, 'ItemCarriedSeal').length, 0, '道具 tab carries no prepared seals');
 
-// In-sheet tab switch: pressing the sheet actions tab rebuilds only the sheet subtree.
-const actionsTab = findNode(handle.root, 'MobileSheetTab:actions');
-assert.ok(actionsTab, 'inventory actions tab exists');
-const tabEvent = { propagationStopped: false };
-for (const handler of actionsTab.listeners.get('touch-start') ?? []) handler(tabEvent);
-for (const handler of actionsTab.listeners.get('touch-end') ?? []) handler(tabEvent);
-assert.ok(findNode(handle.root, 'MobileSheetAction:hub.supplies.select:next')
+// In-sheet navigation rebuilds only the sheet subtree: from the menu the
+// 进阶行动 destination tile opens the real action list (the bag has no tabs).
+firePress(handle.root, 'SheetGalleryKind:menu');
+firePress(handle.root, 'MobileSheetShortcut:actions');
+assert.ok(findNode(handle.root, 'MobileSheetTab:shortcuts')
   ?? allNodes(handle.root).some((node) => node.name.startsWith('MobileSheetAction:')),
-  'actions tab lists real actions after touch; bar stays mounted');
+  'actions destination lists real actions after touch; bar stays mounted');
 assert.ok(findNode(handle.root, 'SheetGalleryBar'), 'switcher bar survives in-sheet navigation');
 
 // Exit tears the host out of the canvas.
@@ -429,4 +433,4 @@ firePress(handle.root, 'SheetGalleryExit');
 assert.equal(canvas.children.length, 0, 'exit removes the gallery host');
 
 console.log('Gallery controller: guard (gallery=1 / wx / bare URL), six 104px bar controls with dual touch listeners, '
-  + '10-style walkthrough captions, first/last disabled ends, kind switching, in-sheet tab remount, enriched fixture (3 seals), exit teardown green.');
+  + '10-style walkthrough captions, first/last disabled ends, kind switching, in-sheet tab remount, tabbed bag fixture (道具 pill / 携行 seals), exit teardown green.');

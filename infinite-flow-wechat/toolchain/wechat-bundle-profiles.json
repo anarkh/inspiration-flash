@@ -7,9 +7,9 @@
   },
   "source": {
     "manifestPath": "cocos/assets/config/asset-manifest.json",
-    "manifestRevision": "sha256:c4a23d779df900b49cd9eae86d7be7ce5be7be03e6737e42e03cd0a3294b9ced",
-    "assetCount": 207,
-    "resourceBytes": 76702709
+    "manifestRevision": "sha256:18dd6c94a24afa4ec7c0a44b9f6facf4af6ea6f0ef04e60c47ea56aeee468125",
+    "assetCount": 223,
+    "resourceBytes": 78614634
   },
   "bundle": {
     "name": "resources",

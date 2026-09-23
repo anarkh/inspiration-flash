@@ -4,9 +4,11 @@ import {
   Component,
   ImageAsset,
   JsonAsset,
+  profiler,
   SpriteFrame,
 } from 'cc';
 import type { AssetManager } from 'cc';
+import type { ItemId } from '@infinite-flow/core';
 import {
   createInfiniteFlowClient,
   type InfiniteFlowClient,
@@ -15,8 +17,10 @@ import {
 import { getRouteContractById } from '@infinite-flow/core/route-contracts';
 import {
   buildGameViewModel,
+  buildHubOwnedLoadoutViewModel,
   type EntryProtocolDraft,
   type GameViewModel,
+  type HubOwnedLoadoutViewModel,
   type PresentationEvent,
   type PresentationLocalAction,
   type PresentationLocalUiState,
@@ -67,8 +71,8 @@ const CONFIG_BUNDLE_NAME = 'config';
 const RESOURCES_BUNDLE_NAME = 'resources';
 const ASSET_MANIFEST_PATH = 'asset-manifest';
 const ASSET_MANIFEST_UUID = '3d0842ec-43f7-4b5f-961f-39edb535ccd7';
-const EXPECTED_MANIFEST_REVISION = 'sha256:c4a23d779df900b49cd9eae86d7be7ce5be7be03e6737e42e03cd0a3294b9ced';
-const EXPECTED_MANIFEST_ASSET_COUNT = 207;
+const EXPECTED_MANIFEST_REVISION = 'sha256:18dd6c94a24afa4ec7c0a44b9f6facf4af6ea6f0ef04e60c47ea56aeee468125';
+const EXPECTED_MANIFEST_ASSET_COUNT = 223;
 const GAME_ASSET_KINDS = new Set([
   'character',
   'npc',
@@ -575,7 +579,7 @@ function parseAssetManifest(value: unknown): CocosAssetManifest {
     throw new VisualAssetBootstrapError(
       'manifest-validate',
       'integrity',
-      'Asset manifest must contain exactly 207 assets',
+      'Asset manifest must contain exactly 223 assets',
     );
   }
   const keys = new Set<string>();
@@ -835,6 +839,7 @@ export class InfiniteFlowApp extends Component {
     | ReturnType<typeof createWxPlatformPorts>['lifecycle']
     | undefined;
   private viewModel: GameViewModel | undefined;
+  private ownedLoadoutViewModel: HubOwnedLoadoutViewModel | undefined;
   private localUiState: PresentationLocalUiState = {};
   private runtimeMode: RuntimeMode = BOOT_MODE;
   private safeInsets: InfiniteFlowSafeInsets = INFINITE_FLOW_PREVIEW_SAFE_INSETS;
@@ -881,6 +886,11 @@ export class InfiniteFlowApp extends Component {
   start(): void {
     if (this.started) return;
     this.started = true;
+    // Debug web builds force the engine profiler (FPS/frame-time stats) on.
+    // It is an unscaled screen-space block that covers the lower-left HUD, so
+    // hide it at startup; hideStats is a no-op when it is not showing, so
+    // release builds (profiler off by default) are unaffected.
+    profiler.hideStats();
     // Debug web-only style gallery (?gallery=1). HTML5/DEBUG are compile-time
     // constants, so the WeChat template (HTML5=false) and release (DEBUG=false)
     // eliminate this entire branch.
@@ -2462,6 +2472,7 @@ export class InfiniteFlowApp extends Component {
   }
 
   private refreshViewModel(): void {
+    this.ownedLoadoutViewModel = undefined;
     const client = this.client;
     if (client === undefined || this.destroyed) {
       this.render();
@@ -2492,7 +2503,8 @@ export class InfiniteFlowApp extends Component {
       modeLabel: this.runtimeMode.label,
       modeDetail: this.runtimeMode.detail,
       activityMessage: this.activityMessage,
-      supplyActions: () => this.projectSupplyActions(),
+      supplyActions: (itemId) => this.projectSupplyActions(itemId),
+      ownedLoadout: () => this.projectOwnedLoadout(),
       ...(this.blockingMessage === undefined
         ? {}
         : { blockingMessage: this.blockingMessage }),
@@ -2506,32 +2518,48 @@ export class InfiniteFlowApp extends Component {
   // hub supplies panel is active. The bag tooltip can be opened from any hub
   // panel, so re-project the supplies view on demand and surface the same
   // real command actions (the UI never forges a ViewActionModel).
-  private projectSupplyActions(): readonly ViewActionModel[] {
+  private projectSupplyActions(itemId: ItemId): readonly ViewActionModel[] {
     const client = this.client;
     if (client === undefined || this.viewModel?.phase !== 'hub') return [];
     const supplies = buildGameViewModel(
       client.getState(),
-      localStateWith(this.localUiState, { hubPanel: 'supplies' }),
+      localStateWith(this.localUiState, {
+        hubPanel: 'supplies',
+        hubSelections: { ...this.localUiState.hubSelections, supplies: itemId },
+      }),
     );
     return supplies.sections[2].actions;
   }
 
+  private projectOwnedLoadout(): HubOwnedLoadoutViewModel | undefined {
+    if (!this.client || this.viewModel?.phase !== 'hub') return undefined;
+    if (!this.ownedLoadoutViewModel) {
+      this.ownedLoadoutViewModel = buildHubOwnedLoadoutViewModel(this.client.getState(), this.localUiState);
+      this.primeSheetFigures(this.ownedLoadoutViewModel?.rows.flatMap((row) => row.visualAssetKey ? [row.visualAssetKey] : []) ?? []);
+    }
+    return this.ownedLoadoutViewModel;
+  }
+
   /**
-   * One-shot, generation-guarded best-effort preload of the 17 pinned sheet
-   * figure keys (character portrait + the 7 equipped ids + the 9 tactical
-   * items). Acquires leases through the same manifest port as scene visuals;
+   * Generation-guarded preload of character/bag figures and the active NPC or
+   * owned-loadout catalog. Acquires leases through the scene manifest port;
    * failures stay on the glyph fallback and are retried on the next asset
    * generation. Re-renders once when frames settle.
    */
-  private primeSheetFigures(): void {
+  private primeSheetFigures(extraKeys: readonly string[] = []): void {
     const loadout = this.viewModel?.sections[1].loadout;
     const port = this.assetPort;
     if (loadout === undefined || port === undefined) return;
-    const keys = [
+    const detail = this.viewModel?.sections[1].detail;
+    const shop = detail?.kind === 'hub' ? detail.shop : undefined;
+    const keys = Array.from(new Set([
       SHEET_PORTRAIT_KEY,
       ...loadout.equipment.map((entry) => sheetEquipmentKey(entry.equipmentId)),
       ...loadout.items.map((entry) => sheetItemKey(entry.itemId)),
-    ];
+      ...(shop?.portraitAssetKey ? [shop.portraitAssetKey] : []),
+      ...(shop?.rows.flatMap((row) => row.visualAssetKey ? [row.visualAssetKey] : []) ?? []),
+      ...extraKeys,
+    ]));
     const generation = this.assetGeneration;
     const pending = keys
       .filter((key) => !this.sheetFigureLeases.has(key) && !this.sheetFigureAttempted.has(key));

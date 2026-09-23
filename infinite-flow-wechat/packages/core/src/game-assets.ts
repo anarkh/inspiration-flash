@@ -370,6 +370,26 @@ const sceneAssets = [
   )
 ];
 
+// Approved NPC prototype art. These keys use existing image kinds only.
+const hubCatalogAssets = [
+  defineAsset('item', 'method_mist_breathing', '/assets/item/mist-breathing-v1.png', '吐纳诀', 'icon', 256, 256, 'contain', 'project-original-generated'),
+  defineAsset('item', 'method_iron_body', '/assets/item/iron-body-v1.png', '铁衣诀', 'icon', 256, 256, 'contain', 'project-original-generated'),
+  defineAsset('item', 'method_cloud_step', '/assets/item/cloud-step-v1.png', '云隙步', 'icon', 256, 256, 'contain', 'project-original-generated'),
+  defineAsset('item', 'method_gate_sense', '/assets/item/gate-sense-v1.png', '观门法', 'icon', 256, 256, 'contain', 'project-original-generated'),
+  defineAsset('item', 'method_star_core_method', '/assets/item/star-core-method-v1.png', '星核炼息', 'icon', 256, 256, 'contain', 'project-original-generated'),
+  defineAsset('item', 'method_beast_taming', '/assets/item/beast-taming-v1.png', '御灵印', 'icon', 256, 256, 'contain', 'project-original-generated'),
+  defineAsset('item', 'method_void_heart', '/assets/item/void-heart-v1.png', '虚心诀', 'icon', 256, 256, 'contain', 'project-original-generated'),
+  defineAsset('item', 'bloodline_titan_marrow', '/assets/item/titan-marrow-v1.png', '巨灵骨髓', 'icon', 256, 256, 'contain', 'project-original-generated'),
+  defineAsset('item', 'bloodline_void_symbiote', '/assets/item/void-symbiote-v1.png', '虚界共生体', 'icon', 256, 256, 'contain', 'project-original-generated'),
+  defineAsset('item', 'bloodline_bastion_chitin', '/assets/item/bastion-chitin-v1.png', '界壁甲质', 'icon', 256, 256, 'contain', 'project-original-generated'),
+  defineAsset('item', 'bloodline_phoenix_ember', '/assets/item/phoenix-ember-v1.png', '涅槃余烬', 'icon', 256, 256, 'contain', 'project-original-generated'),
+  defineAsset('character', 'companion_qin_che', '/assets/character/qin-che-v1.png', '秦彻', 'portrait', 256, 256, 'contain', 'project-original-generated'),
+  defineAsset('character', 'companion_zhou_yingxue', '/assets/character/zhou-yingxue-v1.png', '周映雪', 'portrait', 256, 256, 'contain', 'project-original-generated'),
+  defineAsset('character', 'companion_lu_guanlan', '/assets/character/lu-guanlan-v1.png', '陆观澜', 'portrait', 256, 256, 'contain', 'project-original-generated'),
+  defineAsset('npc', 'bloodline_priest', '/assets/npc/bloodline-priest-v1.png', '血脉祭司', 'portrait', 256, 256, 'contain', 'project-original-generated'),
+  defineAsset('npc', 'companion_guide', '/assets/npc/companion-guide-v1.png', '同行引路人', 'portrait', 256, 256, 'contain', 'project-original-generated')
+];
+
 const assets = [
   ...characterAssets,
   ...npcAssets,
@@ -380,7 +400,8 @@ const assets = [
   ...dungeonAssets,
   ...generatedDungeonAssets,
   ...lateDungeonAssets,
-  ...sceneAssets
+  ...sceneAssets,
+  ...hubCatalogAssets
 ];
 
 export const GAME_ASSET_MANIFEST: Readonly<Record<string, GameAssetDefinition>> = Object.freeze(

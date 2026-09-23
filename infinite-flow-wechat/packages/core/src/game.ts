@@ -103,8 +103,8 @@ import type {
 } from './equipment-relic-conduits';
 import {
   createTacticalLoadoutSnapshot,
-  isTacticalItemCarried,
   isTacticalItemId,
+  isTacticalItemUsableInRun,
   validateTacticalLoadout
 } from './tactical-loadout';
 import type {
@@ -1141,7 +1141,7 @@ export type GameState = {
 };
 
 export const DEFAULT_PREPARED_TACTICAL_ITEM_IDS = [
-  'healing_pill',
+  'thunder_talisman',
   'dispel_talisman',
   'gate_sigil'
 ] as const satisfies readonly TacticalItemId[];
@@ -3123,7 +3123,7 @@ function getTacticalItemAvailability(state: GameState, itemId: TacticalItemId): 
   if (!isCurrentDungeonFeatureAvailable(state, 'consumable')) {
     return { available: false, reason: 'sealed' };
   }
-  if (!isTacticalItemCarried(state.run?.tacticalLoadout, itemId)) {
+  if (!isTacticalItemUsableInRun(state.run?.tacticalLoadout, state.run?.lootBag.items, itemId)) {
     return { available: false, reason: 'not_carried' };
   }
   if (state.inventory[itemId] <= 0) {
@@ -3152,7 +3152,8 @@ export function isTacticalItemAvailable(state: GameState, itemId: TacticalItemId
 function isDungeonConsumableAvailable(state: GameState, itemId: ItemId): boolean {
   if (ITEMS[itemId].kind === 'material') return true;
   if (!isCurrentDungeonFeatureAvailable(state, 'consumable')) return false;
-  return !isTacticalItemId(itemId) || isTacticalItemCarried(state.run?.tacticalLoadout, itemId);
+  return !isTacticalItemId(itemId)
+    || isTacticalItemUsableInRun(state.run?.tacticalLoadout, state.run?.lootBag.items, itemId);
 }
 
 function getAvailableEventInventory(state: GameState): Record<ItemId, number> {
@@ -3178,7 +3179,8 @@ export function getTacticalLoadoutStatus(state: GameState): TacticalLoadoutStatu
 
   return {
     ...validation,
-    preparedItemIds: [...preparedItemIds],
+    // 归一化结果：补给品与无效 id 已剔除，旧档进入主神空间立即显示正确配置。
+    preparedItemIds: [...validation.normalizedItemIds],
     activeFieldRigs,
     usesDefaultPreparation: state.preparedItemIds === undefined,
     runSnapshot: state.run?.tacticalLoadout,
@@ -7383,7 +7385,10 @@ function getFieldSurveyCostAvailability(
 
       if (ITEMS[itemId].kind !== 'material' && !isCurrentDungeonFeatureAvailable(state, 'consumable')) {
         reason = 'sealed';
-      } else if (isTacticalItemId(itemId) && !isTacticalItemCarried(state.run?.tacticalLoadout, itemId)) {
+      } else if (
+        isTacticalItemId(itemId)
+        && !isTacticalItemUsableInRun(state.run?.tacticalLoadout, state.run?.lootBag.items, itemId)
+      ) {
         reason = 'not_carried';
       } else if (availableCount < required) {
         reason = 'missing';

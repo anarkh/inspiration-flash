@@ -536,6 +536,10 @@ const sceneSnapshotExpression = String.raw`(async () => {
       pendingKind: detail?.kind === 'explore' ? detail.pending?.kind : undefined,
       attackWouldBeFatal: detail?.kind === 'combat' ? Boolean(app?.viewModel?.sections?.[2]?.actions
         ?.find(({ actionId }) => actionId === 'combat.action:attack')?.readout?.includes('濒死')) : undefined,
+      shopRows: detail?.shop?.rows?.map(({ id, status }) => ({ id, status })),
+      entryDungeons: detail?.entryServices?.find(({ id }) => id === 'dungeon')?.options
+        .map(({ id, name, selected, action }) => ({ id, name, selected, actionId: action.actionId })),
+      mapNodeCount: detail?.kind === 'explore' ? detail.map.nodes.length : undefined,
       availableActions: app?.viewModel?.sections?.[2]?.actions?.map(({ actionId, enabled, label, readout }) =>
         ({ actionId, enabled, label, readout })),
     },
@@ -551,18 +555,29 @@ const sceneSnapshotExpression = String.raw`(async () => {
       close: control('MobileSheetClose'),
       legacyPaging: Boolean(exact('MobileSheetNext') || exact('MobileSheetPrevious') || exact('MobileSheetPageCount')),
       scroll: (() => {
-        const holder = exact('MobileSheetScroll');
-        const content = exact('MobileSheetScrollContent');
+        const holder = exact('MobileSheetMapScroll') ?? exact('MobileSheetCatalogScroll') ?? exact('MobileSheetScroll');
+        const content = holder?.getChildByName('MobileSheetMapContent') ?? holder?.getChildByName('MobileSheetScrollContent');
+        const scroll = holder?.getComponent(cc.ScrollView);
         return {
           present: Boolean(holder),
           view: box(holder),
           content: box(content),
           contentY: content?.position.y,
+          contentX: content?.position.x,
+          offset: scroll?.getScrollOffset()?.y,
+          offsetX: scroll ? -scroll.getScrollOffset().x : undefined,
+          horizontal: scroll?.horizontal,
+          vertical: scroll?.vertical,
           thumb: Boolean(exact('MobileSheetScrollThumb')),
         };
       })(),
       blocker: Boolean(exact('MobileSheetBackdrop')?.getComponent(cc.BlockInputEvents)),
       topmost: root.children.at(-1)?.name === 'MobileSheetBackdrop',
+      catalogRows: activeNodes.filter(node => /^MobileSheetShop(?:Row|Tile):/.test(node.name)).map(node => node.name),
+      mapCells: [...matching('MobileSheetMapCell:'), ...matching('MobileSheetFog:')].map(node => node.name),
+      catalogTiles: matching('MobileSheetShopTile:').map(node => ({ name: node.name, text: text(node) })),
+      catalogDetail: control('MobileSheetCatalogDetail'),
+      shopActions: matching('MobileSheetShopAction:').map((node) => node.name),
       actions: matching('MobileSheetAction:').map((node) => node.name),
       helpEntries: matching('MobileSheetHelp:').map((node) => node.name),
       itemCells: matching('MobileSheetItem:').map((node) => node.name),
@@ -944,25 +959,89 @@ async function runCanvasFlow(cdp, outputDir) {
   assert.deepEqual((await getSceneSnapshot(cdp)).walking.position, modalPosition);
   await save('07-merchant-details', details);
   assertSameDomainEvidence(movementBaseline, await getRuntimeEvidence(cdp), 'merchant selection only');
-  // Buy one healing pill through the real supplies command so the bag carry
-  // toggle below has an owned item to bind.
-  await touchNode(cdp, 'MobileSheetTab:actions');
-  await bringSheetNodeIntoView(cdp, 'MobileSheetAction:hub.supplies.buy:healing_pill');
-  await touchNode(cdp, 'MobileSheetAction:hub.supplies.buy:healing_pill');
-  await waitForSnapshot(cdp, 'buy action detail', (snapshot) =>
-    Boolean(snapshot.diagnostics.activeNodeNames.includes('MobileSheetExecute:hub.supplies.buy:healing_pill')));
+  // The complete icon grid opens immediately; purchases dispatch their original
+  // command from the fixed footer of the selected item detail.
+  assert.equal(details.sheet.catalogRows.length, 9, 'all supplies appear in the icon grid');
+  assert.equal(details.diagnostics.activeNodeNames.some((name) => name.startsWith('MobileSheetTab:')), false);
+  assert.equal(details.sheet.shopActions.some((name) => /select:|carry|loadout|activate/.test(name)), false);
+  assert.equal(details.sheet.catalogTiles.length, 9);
+  assert.ok(details.sheet.catalogTiles.every(tile => !tile.text), 'goods tiles contain no text');
+  assert.equal(details.sheet.shopActions.length, 0, 'goods grid contains no purchase buttons');
+  await save('07a-merchant-grid', details);
+  await touchNode(cdp, 'MobileSheetShopTile:healing_pill');
+  const itemDetail = await waitForSnapshot(cdp, 'supply details and purchase footer', (snapshot) => snapshot.sheet.catalogDetail.present);
+  assert.match(itemDetail.sheet.catalogDetail.text, /止血丹/);
+  assert.equal(itemDetail.sheet.catalogDetail.text.includes('可以对它做什么'), false);
+  await save('07b-merchant-item-detail', itemDetail);
+  await touchNode(cdp, 'MobileSheetCatalogDetailClose');
+  await waitForSnapshot(cdp, 'supply details closed', (snapshot) => !snapshot.sheet.catalogDetail.present);
+  assertSameDomainEvidence(movementBaseline, await getRuntimeEvidence(cdp), 'catalog detail round-trip');
   const buyBaseline = await getRuntimeEvidence(cdp);
-  await touchNode(cdp, 'MobileSheetExecute:hub.supplies.buy:healing_pill');
-  await waitForSnapshot(cdp, 'purchase reflected in the domain', (snapshot) => {
-    const after = snapshot.domain.availableActions.find((action) => action.actionId === 'hub.supplies.buy:healing_pill');
-    return Boolean(after?.readout?.includes('库存 1'));
-  });
+  await touchNode(cdp, 'MobileSheetShopTile:healing_pill');
+  await waitForSnapshot(cdp, 'reopen pill details to purchase', snapshot => snapshot.sheet.catalogDetail.present);
+  const buyPill = 'MobileSheetShopAction:hub.supplies.buy:healing_pill::supplies/healing_pill';
+  await bringSheetNodeIntoView(cdp, buyPill);
+  await touchNode(cdp, buyPill);
+  await waitForSnapshot(cdp, 'purchase reflected in the list', (snapshot) =>
+    snapshot.domain.shopRows?.find((row) => row.id === 'healing_pill')?.status.includes('1'));
   assert.notEqual((await getRuntimeEvidence(cdp)).stateSha256, buyBaseline.stateSha256,
     'buying a pill dispatches a real domain command');
+  // Select the sigil directly from the grid, then purchase in its detail footer.
+  await touchNode(cdp, 'MobileSheetCatalogDetailClose');
+  await bringSheetNodeIntoView(cdp, 'MobileSheetShopTile:gate_sigil');
+  await touchNode(cdp, 'MobileSheetShopTile:gate_sigil');
+  await waitForSnapshot(cdp, 'sigil details', snapshot => snapshot.sheet.catalogDetail.present);
+  const buySigil = 'MobileSheetShopAction:hub.supplies.buy:gate_sigil::supplies/gate_sigil';
+  await bringSheetNodeIntoView(cdp, buySigil);
+  const sigilScroll = (await getSceneSnapshot(cdp)).sheet.scroll.offset;
+  await touchNode(cdp, buySigil);
+  const afterSigil = await waitForSnapshot(cdp, 'gate sigil purchase reflected in the list', (snapshot) =>
+    snapshot.domain.shopRows?.find((row) => row.id === 'gate_sigil')?.status.includes('1'));
+  assert.ok(Math.abs(afterSigil.sheet.scroll.offset - sigilScroll) < 2,
+    `purchase preserves list position: ${sigilScroll} -> ${afterSigil.sheet.scroll.offset}`);
+  await save('07c-merchant-purchase', afterSigil);
+  await touchNode(cdp, 'MobileSheetCatalogDetailClose');
   await touchNode(cdp, 'MobileSheetClose');
   hub = await waitForSnapshot(cdp, 'return to walking world', (snapshot) => matchesWalking(snapshot, 'hub'));
   assert.ok(Math.hypot(hub.walking.position.x - merchantPosition.walking.position.x,
     hub.walking.position.y - merchantPosition.walking.position.y) < 1, 'detail round-trip preserves physical position');
+  const catalogBaseline = await getRuntimeEvidence(cdp);
+  const visits = [
+    { panel: 'equipment', count: 65, path: [{ x: 950, y: 500 }, { x: 330, y: 500 }, { x: 330, y: 380 }] },
+    { panel: 'pets', count: 6, path: [{ x: 330, y: 530 }] },
+    { panel: 'bloodlines', count: 4, path: [{ x: 330, y: 800 }] },
+    { panel: 'tasks', count: 63, path: [{ x: 640, y: 800 }, { x: 640, y: 960 }] },
+    { panel: 'companions', count: 3, path: [{ x: 950, y: 960 }, { x: 950, y: 800 }] },
+    { panel: 'methods', count: 7, path: [{ x: 950, y: 530 }] },
+  ];
+  for (const visit of visits) {
+    for (const destination of visit.path) await walkTo(cdp, destination, 'approach-' + visit.panel);
+    await touchNode(cdp, 'WalkInteract');
+    const catalog = await waitForSnapshot(cdp, visit.panel + ' full catalog', (snapshot) =>
+      snapshot.sheet.kind === 'npc' && snapshot.domain.activePanel === visit.panel
+      && snapshot.sheet.catalogRows.length === visit.count);
+    assert.equal(catalog.sheet.legacyPaging, false);
+    assert.equal(catalog.sheet.shopActions.some((name) => /select:|\.equip:|\.activate:|\.toggle:/.test(name)), false,
+      visit.panel + ': shop exposes no paging or configuration actions');
+    await save('07d-catalog-' + visit.panel, catalog);
+    const rowId = catalog.sheet.catalogRows[0].replace(/^MobileSheetShop(?:Row|Tile):/, '');
+    assert.equal(catalog.sheet.catalogTiles.length, visit.panel === 'tasks' ? 0 : visit.count, 'tasks stay in a list; goods use a grid');
+    assert.ok(catalog.sheet.catalogTiles.every(tile => !tile.text), 'goods grid is icon-only');
+    await touchNode(cdp, (visit.panel === 'tasks' ? 'MobileSheetShopInfo:' : 'MobileSheetShopTile:') + rowId);
+    await waitForSnapshot(cdp, visit.panel + ' item detail', (snapshot) => snapshot.sheet.catalogDetail.present);
+    if (visit.panel === 'equipment') {
+      await touchNode(cdp, 'MobileSheetCatalogMore');
+      await waitForSnapshot(cdp, 'equipment extra actions', snapshot => snapshot.diagnostics.activeNodeNames.includes('MobileSheetCatalogActionMenu'));
+      await save('07e-equipment-expanded', await getSceneSnapshot(cdp));
+    }
+    await touchNode(cdp, 'MobileSheetCatalogDetailClose');
+    await waitForSnapshot(cdp, visit.panel + ' item detail closed', (snapshot) => !snapshot.sheet.catalogDetail.present);
+    await touchNode(cdp, 'MobileSheetClose');
+    await waitForSnapshot(cdp, 'leave-' + visit.panel, (snapshot) => matchesWalking(snapshot, 'hub'));
+  }
+  assertSameDomainEvidence(catalogBaseline, await getRuntimeEvidence(cdp), 'NPC catalog and detail browsing');
+  await walkTo(cdp, { x: 950, y: 500 }, 'return-merchant-corridor');
+  await walkTo(cdp, { x: 950, y: 380 }, 'return-merchant-position');
   const helpBaseline = await getRuntimeEvidence(cdp);
   await touchNode(cdp, 'SceneHelp');
   await waitForSnapshot(cdp, 'mobile menu', (snapshot) => snapshot.sheet.kind === 'menu');
@@ -1022,23 +1101,50 @@ async function runCanvasFlow(cdp, outputDir) {
   await save('13b-equip-tooltip', await getSceneSnapshot(cdp));
   await touchNode(cdp, 'MobileSheetTipClose');
   await waitForSnapshot(cdp, 'equipment tooltip closed', (snapshot) => !snapshot.sheet.tip.present);
+  await touchNode(cdp, 'MobileSheetTab:loadout');
+  const owned = await waitForSnapshot(cdp, 'owned loadout list', (snapshot) => snapshot.sheet.catalogRows.length > 0);
+  assert.equal(owned.sheet.shopActions.some((name) => /\.buy:|\.recruit:|\.cultivate:/.test(name)), false,
+    'owned loadout contains configuration rather than shop transactions');
+  await save('13c-character-loadout', owned);
+  const ownedRowId = owned.sheet.catalogRows[0].slice('MobileSheetShopRow:'.length);
+  await touchNode(cdp, 'MobileSheetShopInfo:' + ownedRowId);
+  await waitForSnapshot(cdp, 'owned equipment details', (snapshot) => snapshot.sheet.catalogDetail.present);
+  await touchNode(cdp, 'MobileSheetCatalogDetailClose');
+  await waitForSnapshot(cdp, 'owned equipment details closed', (snapshot) => !snapshot.sheet.catalogDetail.present);
   await touchNode(cdp, 'MobileSheetClose');
 
   await touchNode(cdp, 'SceneHelp');
   await waitForSnapshot(cdp, 'mobile menu for bag', (snapshot) => snapshot.sheet.kind === 'menu');
   await touchNode(cdp, 'MobileSheetShortcut:inventory');
-  const bag = await waitForSnapshot(cdp, '5x100 bag', (snapshot) => snapshot.sheet.kind === 'inventory');
-  assert.equal(bag.sheet.itemCells.length, 9, 'bag mounts exactly nine real tactical cells');
-  assert.equal(bag.sheet.blankCells, 91, 'bag mounts ninety-one decorative empty cells');
+  const bag = await waitForSnapshot(cdp, 'tabbed 5x100 bag', (snapshot) =>
+    snapshot.sheet.kind === 'inventory'
+    && snapshot.diagnostics.activeNodeNames.includes('MobileSheetTab:items')
+    && snapshot.diagnostics.activeNodeNames.includes('MobileSheetTab:carry'));
+  // The bag defaults to the 道具 tab: 3 supply cells, its own 100-cell grid.
+  assert.deepEqual(bag.sheet.itemCells, [
+    'MobileSheetItem:healing_pill',
+    'MobileSheetItem:armor_patch',
+    'MobileSheetItem:focus_incense',
+  ], '道具 tab mounts exactly the three supply cells');
+  assert.equal(bag.sheet.blankCells, 97, '道具 tab pads its grid to 100');
+  assert.equal(bag.sheet.carriedSeals, 0, '道具 tab carries no seals');
   assert.equal(bag.sheet.scroll.present, true, 'bag grid scrolls in-window');
-  const pillPoint = await queryNodePoint(cdp, 'MobileSheetItem:healing_pill');
-  assert.equal(pillPoint.found && pillPoint.hasTouch, true, 'real cells are tappable');
-  assert.equal((await queryNodePoint(cdp, 'MobileSheetBlank:9')).found, true, 'decorative cells exist in the grid');
-  await save('14-bag-grid', await getSceneSnapshot(cdp));
-  await touchNode(cdp, 'MobileSheetItem:healing_pill');
+  assert.equal((await queryNodePoint(cdp, 'MobileSheetBlank:3')).found, true, 'decorative cells exist in the 道具 grid');
+  await save('14-bag-grid-items', await getSceneSnapshot(cdp));
+  // Switch to the 携行 tab: an independent 5×100 grid with the six carried
+  // special items.
+  await touchNode(cdp, 'MobileSheetTab:carry');
+  const carryBag = await waitForSnapshot(cdp, '携行 tab grid', (snapshot) =>
+    snapshot.sheet.itemCells.length === 6 && snapshot.sheet.blankCells === 94);
+  assert.ok(carryBag.sheet.itemCells.includes('MobileSheetItem:gate_sigil'), '携行 tab lists the gate sigil');
+  assert.equal((await queryNodePoint(cdp, 'MobileSheetBlank:6')).found, true, 'decorative cells exist in the 携行 grid');
+  await save('14a-bag-grid-carry', await getSceneSnapshot(cdp));
+  const sigilPoint = await queryNodePoint(cdp, 'MobileSheetItem:gate_sigil');
+  assert.equal(sigilPoint.found && sigilPoint.hasTouch, true, 'real cells are tappable');
+  await touchNode(cdp, 'MobileSheetItem:gate_sigil');
   const itemTip = await waitForSnapshot(cdp, 'item tooltip with carry action',
     (snapshot) => snapshot.sheet.tip.present && Boolean(snapshot.sheet.tip.carry?.touchable));
-  assert.match(itemTip.sheet.tip.texts.join(' | '), /止血丹|兑换价/u, 'item tooltip shows catalog copy');
+  assert.match(itemTip.sheet.tip.texts.join(' | '), /小界门符|兑换价/u, 'item tooltip shows catalog copy');
   assert.match(itemTip.sheet.tip.carry.label, /设为携行/u, 'hub tooltip offers the real carry command');
   const carryBaseline = await getRuntimeEvidence(cdp);
   await touchNode(cdp, itemTip.sheet.tip.carry.name);
@@ -1054,7 +1160,7 @@ async function runCanvasFlow(cdp, outputDir) {
   const bagScrollBefore = (await getSceneSnapshot(cdp)).sheet.scroll.contentY;
   await dragSheet(cdp, -300);
   const lowerBag = await getSceneSnapshot(cdp);
-  assert.equal(lowerBag.sheet.blankCells, 91, 'scrolling keeps all decorative cells mounted');
+  assert.equal(lowerBag.sheet.blankCells, 94, 'scrolling keeps all 携行 grid cells mounted');
   assert.ok(lowerBag.sheet.scroll.contentY > bagScrollBefore + 5, 'the 100-cell grid physically scrolls');
   await save('14c-bag-scrolled', lowerBag);
   await touchNode(cdp, 'MobileSheetClose');
@@ -1072,20 +1178,18 @@ async function runCanvasFlow(cdp, outputDir) {
     (snapshot) => snapshot.sheet.kind === 'entry' && snapshot.domain.activePanel === 'entry');
   await save('09b-entry-sheet', await getSceneSnapshot(cdp));
   const entryBaseline = await getRuntimeEvidence(cdp);
-  await touchNode(cdp, 'MobileSheetTab:actions');
-  const selectedChapters = [];
-  for (let chapter = 0; chapter < 19; chapter += 1) {
-    const snapshot = await getSceneSnapshot(cdp);
-    selectedChapters.push(snapshot.domain.availableActions.find((action) => action.actionId === 'hub.entry.dungeon:next')?.label);
-    await bringSheetNodeIntoView(cdp, 'MobileSheetAction:hub.entry.dungeon:next');
-    await touchNode(cdp, 'MobileSheetAction:hub.entry.dungeon:next');
+  const choices = (await getSceneSnapshot(cdp)).domain.entryDungeons;
+  const originalChapter = choices.find(({ selected }) => selected);
+  assert.equal(new Set(choices.map(({ id }) => id)).size, 19, 'all 19 chapters are listed without cycling');
+  for (const chapter of [...choices.filter(({ selected }) => !selected), originalChapter]) {
+    await bringSheetNodeIntoView(cdp, `MobileSheetEntryDungeon:${chapter.id}`);
+    await touchNode(cdp, `MobileSheetEntryDungeon:${chapter.id}`);
+    assert.equal((await getSceneSnapshot(cdp)).domain.entryDungeons.find(({ selected }) => selected)?.id,
+      chapter.id, 'selecting a chapter updates the entry draft');
+    if (chapter.id !== originalChapter.id) await touchNode(cdp, 'MobileSheetEntryBack');
   }
-  assert.equal(new Set(selectedChapters).size, 19, 'all 19 chapter choices are reachable without changing campaign unlocks');
-  assertSameDomainEvidence(entryBaseline, await getRuntimeEvidence(cdp), 'cycling every chapter');
-  await bringSheetNodeIntoView(cdp, 'MobileSheetAction:hub.entry.confirm');
-  await touchNode(cdp, 'MobileSheetAction:hub.entry.confirm');
-  assertSameDomainEvidence(entryBaseline, await getRuntimeEvidence(cdp), 'reading entry costs');
-  await touchNode(cdp, 'MobileSheetExecute:hub.entry.confirm');
+  assertSameDomainEvidence(entryBaseline, await getRuntimeEvidence(cdp), 'browsing every chapter');
+  await touchNode(cdp, 'MobileSheetEntryConfirm');
   const explore = await waitForSnapshot(cdp, 'walkable exploration room', (snapshot) => matchesWalking(snapshot, 'explore'));
   assertWalking(explore, 'explore');
   await save('10-explore', explore);
@@ -1167,10 +1271,16 @@ async function runCanvasFlow(cdp, outputDir) {
       && snapshot.domain.currentNodeCleared && !snapshot.sheet.kind);
   await touchNode(cdp, 'SceneMap');
   const map = await waitForSnapshot(cdp, 'mobile map', (snapshot) => snapshot.sheet.kind === 'map');
+  assert.equal(map.sheet.mapCells.length, map.domain.mapNodeCount, 'the map mounts every known and fogged cell together');
+  assert.equal(map.sheet.legacyPaging, false, 'the complete map has no page controls');
+  assert.ok(map.sheet.scroll.horizontal && map.sheet.scroll.vertical, 'the complete map scrolls in both directions');
+  assert.ok(map.sheet.scroll.content.width >= map.sheet.scroll.view.width
+    && map.sheet.scroll.content.height >= map.sheet.scroll.view.height, 'the map content spans its full grid');
   await save('14b-mobile-map', map);
   await touchNode(cdp, 'MobileSheetClose');
   await touchNode(cdp, 'SceneHelp');
-  await touchNode(cdp, 'MobileSheetTab:actions');
+  await waitForSnapshot(cdp, 'mobile menu in explore', (snapshot) => snapshot.sheet.kind === 'menu');
+  await openMenuActions(cdp);
   await touchNode(cdp, 'MobileSheetAction:run.retreat');
   await save('14c-retreat-confirmation', await getSceneSnapshot(cdp));
   await touchNode(cdp, 'MobileSheetExecute:run.retreat');
@@ -1432,6 +1542,7 @@ async function dragSheet(cdp, distance, regionName = 'MobileSheetScroll') {
   // queryNodePoint returns x/y in CSS px but height in design px, so scale
   // the view half-height when keeping the drag start inside the region.
   const scale = viewport.width / designViewport.width;
+  distance = Math.sign(distance) * Math.min(Math.abs(distance), region.height * scale - 48);
   const startX = region.x;
   const startY = Math.min(region.y + Math.abs(distance) / 2 + 12, region.y + (region.height * scale) / 2 - 24);
   const touchId = (physicalTouchSequence % 3) + 1;
@@ -1461,7 +1572,8 @@ function pointInsideHolder(cdp, nodeName) {  return evaluate(cdp, String.raw`(as
     walk(scene);
     const find = (name) => nodes.find((candidate) => candidate.name === name && candidate.activeInHierarchy);
     const target = find(${JSON.stringify(nodeName)});
-    const holder = find('MobileSheetScroll');
+    let holder = target?.parent;
+    while (holder && !holder.getComponent(cc.ScrollView)) holder = holder.parent;
     if (!target || !holder) return { inside: false };
     const cameraNode = nodes.find((candidate) => candidate.getComponent(cc.Camera));
     const screen = new cc.Vec3();
@@ -1473,8 +1585,18 @@ function pointInsideHolder(cdp, nodeName) {  return evaluate(cdp, String.raw`(as
     const toCanvasY = (sy) => rect.top + ((canvas.height - sy) / canvas.height) * rect.height;
     const ty = toCanvasY(screen.y);
     const hy = toCanvasY(hScreen.y);
-    const h = holder.getComponent(cc.UITransform).contentSize.height * (rect.height / canvas.height);
-    return { inside: ty >= hy - h / 2 && ty <= hy + h / 2, y: ty };
+    const screenHeight = (node) => {
+      const transform = node.getComponent(cc.UITransform);
+      const top = transform.convertToWorldSpaceAR(new cc.Vec3(0, transform.contentSize.height / 2, 0));
+      const bottom = transform.convertToWorldSpaceAR(new cc.Vec3(0, -transform.contentSize.height / 2, 0));
+      const a = new cc.Vec3(), b = new cc.Vec3();
+      cameraNode.getComponent(cc.Camera).worldToScreen(top, a);
+      cameraNode.getComponent(cc.Camera).worldToScreen(bottom, b);
+      return Math.abs(toCanvasY(a.y) - toCanvasY(b.y));
+    };
+    const h = screenHeight(holder);
+    const targetHalf = screenHeight(target) / 2;
+    return { inside: ty - targetHalf >= hy - h / 2 && ty + targetHalf <= hy + h / 2, y: ty, holderY: hy, holderName: holder.name };
   })()`);
 }
 
@@ -1483,13 +1605,24 @@ async function bringSheetNodeIntoView(cdp, nodeName) {
   let lastContentY = null;
   for (let attempt = 0; attempt < 12; attempt += 1) {
     const hit = await pointInsideHolder(cdp, nodeName);
-    if (hit.inside) return;
+    if (hit.inside) {
+      // A physical drag leaves Cocos inertia running after the finger lifts.
+      // Wait for it to settle before deriving the next physical tap position.
+      let previous = (await getSceneSnapshot(cdp)).sheet.scroll.offset;
+      for (let settle = 0; settle < 15; settle += 1) {
+        await delay(120);
+        const current = (await getSceneSnapshot(cdp)).sheet.scroll.offset;
+        if (Math.abs(current - previous) < 0.1) break;
+        previous = current;
+      }
+      if ((await pointInsideHolder(cdp, nodeName)).inside) return;
+    }
     const snapshot = await getSceneSnapshot(cdp);
     if (lastContentY !== null && Math.abs(snapshot.sheet.scroll.contentY - lastContentY) < 0.5) {
       throw new Error(`sheet scroll reached its end without revealing ${nodeName}`);
     }
     lastContentY = snapshot.sheet.scroll.contentY;
-    await dragSheet(cdp, -260);
+    await dragSheet(cdp, hit.y < hit.holderY ? 100 : -100, hit.holderName);
   }
   throw new Error(`sheet scroll did not reveal ${nodeName}`);
 }
@@ -1675,8 +1808,8 @@ async function runSheetStyleGallery(cdp, outputDir) {
       assert.equal(snapshot.bar, true, 'switcher bar stays mounted');
       if (kind === 'menu') assert.equal(snapshot.shortcuts, 9, 'menu: nine shortcut tiles');
       if (kind === 'inventory') {
-        assert.equal(snapshot.items, 9, 'inventory: nine tactical cells');
-        assert.equal(snapshot.seals, 3, 'inventory: three prepared seals');
+        assert.equal(snapshot.items, 3, 'inventory 道具 tab: three supply cells');
+        assert.equal(snapshot.seals, 0, 'inventory 道具 tab: no prepared seals');
       }
       if (kind === 'character') assert.equal(snapshot.equipSlots, 7, 'character: seven equip slots');
       await shot(index, kind, snapshot);
@@ -2038,8 +2171,13 @@ async function runSheetLayoutGallery(cdp, outputDir) {
       assert.equal(snapshot.bar, true, 'switcher bar stays mounted');
       if (kind === 'menu') assert.equal(snapshot.shortcuts, 9, 'menu: nine shortcut destinations');
       if (kind === 'inventory') {
-        assert.equal(snapshot.items, 9, 'inventory: nine tactical cells');
-        assert.equal(snapshot.seals, 3, 'inventory: three prepared seals');
+        if (index === 0) {
+          assert.equal(snapshot.items, 3, 'inventory production 道具 tab: three supply cells');
+          assert.equal(snapshot.seals, 0, 'inventory production 道具 tab: no prepared seals');
+        } else {
+          assert.equal(snapshot.items, 9, 'inventory alternate engine: nine tactical cells');
+          assert.equal(snapshot.seals, 3, 'inventory alternate engine: three prepared seals');
+        }
       }
       if (kind === 'character') {
         assert.equal(snapshot.equipSlots, 7, 'character: seven equip slots');

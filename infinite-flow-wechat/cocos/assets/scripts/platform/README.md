@@ -78,7 +78,7 @@ has no `not-loaded` code. Concurrent direct-key requests share one native load b
 each successful request owns one releaseable lease.
 
 The runtime loads the pinned manifest `JsonAsset` from the local shared `config`
-bundle, verifies its UUID, schema version, revision, exact 207-entry count, and
+bundle, verifies its UUID, schema version, revision, exact 223-entry count, and
 unique key/resource paths, then separately loads the shared `resources` bundle.
 PNG resources are explicitly loaded as `ImageAsset`; no SpriteFrame subasset is
 assumed. `InfiniteFlowView` creates its own SpriteFrame/Texture pair and cleanup is

@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>主神空间 · NPC 对话交互原型</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="game-adapter.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <header class="prototype-bar">
+    <a class="prototype-brand" href="#equipment">无限流 <span>NPC 对话原型</span></a>
+    <div class="prototype-controls">
+      <label><span class="sr-only">演示进度</span><select id="preset"><option value="prepared">整备中的角色</option><option value="new">初入空间</option></select></label>
+      <label><span class="sr-only">预览宽度</span><select id="viewport"><option value="auto">自适应</option><option value="390">390 手机</option><option value="320">320 小屏</option></select></label>
+      <button id="reset" class="text-button">重置演示</button>
+    </div>
+  </header>
+
+  <div class="workspace">
+    <aside class="sidebar">
+      <div class="sidebar-heading"><span>主神空间</span><h1>找谁交谈？</h1></div>
+      <nav id="npc-nav" aria-label="主神空间 NPC"></nav>
+      <p class="prototype-note">独立交互原型<br>所有操作只影响本页演示进度。</p>
+    </aside>
+
+    <main class="preview-stage">
+      <section class="dialogue-frame" aria-labelledby="npc-name">
+        <header class="window-bar"><span id="window-title">装备与强化</span><span class="window-mark" aria-hidden="true">主神空间</span></header>
+        <div class="npc-intro" id="npc-intro"></div>
+        <div class="catalog-caption"><span id="result-count"></span><span>点图标或名称查看详情</span></div>
+        <div id="catalog" class="catalog" aria-label="物品与服务列表"></div>
+        <footer id="global-actions" class="global-actions" hidden></footer>
+      </section>
+      <p class="preview-footnote">列表内直接操作 · 详情随点随看 · 关闭详情后留在原位</p>
+    </main>
+  </div>
+
+  <dialog id="detail-dialog" class="detail-dialog" aria-labelledby="detail-title">
+    <div id="detail-content"></div>
+  </dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <noscript>此交互原型需要启用 JavaScript。</noscript>
+</body>
+</html>

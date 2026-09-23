@@ -37,6 +37,7 @@ import {
   getCurrentRunMethodSnapshots,
   getCurrentRunPursuit,
   getDirectiveEvaluation,
+  getDirectiveForDungeon,
   getCompanionRecruitmentStatus,
   getCompanionUpgradeStatus,
   getCurrentEquipmentMemoryCombatStatus,
@@ -67,6 +68,8 @@ import {
   isTacticalItemAvailable,
   listRouteContracts,
   type CombatAction,
+  type DirectiveObjective,
+  type DirectiveObjectiveResult,
   type DungeonId,
   type EquipmentId,
   type GameState,
@@ -99,8 +102,15 @@ import {
   evaluateVisibleTasks,
   type MainGodTaskEvaluation
 } from '@infinite-flow/core/task-system';
-import { TACTICAL_ITEM_IDS, TACTICAL_ITEM_CATEGORY_BY_ID } from '@infinite-flow/core/tactical-loadout';
+import {
+  CARRIED_TACTICAL_ITEM_IDS,
+  FIELD_SUPPLY_ITEM_IDS,
+  TACTICAL_ITEM_IDS,
+  TACTICAL_ITEM_CATEGORY_BY_ID,
+  isFieldSupplyItemId
+} from '@infinite-flow/core/tactical-loadout';
 import { COCOS_DESIGN_TOKENS } from './tokens.js';
+import { buildHubOwnedLoadoutCatalog, buildHubShopCatalog } from './hub-shop.js';
 import {
   HUB_PANELS,
   type ActionsSection,
@@ -130,6 +140,8 @@ import {
   type HelpSection,
   type HubCatalogPanel,
   type HubDetailViewModel,
+  type HubEntryServiceViewModel,
+  type HubOwnedLoadoutViewModel,
   type HubPanel,
   type LogsSection,
   type MapNodeState,
@@ -154,6 +166,7 @@ import {
   type RisksSection,
   type StatusMetric,
   type StatusSection,
+  type TaskViewModel,
   type ViewActionModel,
   type ViewActionPlacement,
   type ViewActionRecommendation
@@ -685,7 +698,7 @@ function previewCommandAction(
   const preview = reduceGameCommand(state, command);
   if (preview.status === 'rejected') {
     const reason = preview.reason.message === 'The command did not produce a domain transition.'
-      ? fallbackDisabledReason ?? '当前状态不满足该动作的领域条件。'
+      ? fallbackDisabledReason ?? '当前尚不满足使用条件。'
       : preview.reason.message;
     const spend = previewSpendWithAbundantResources(state, command);
     const readout = [actionOptions.readout, spend].filter(Boolean).join(' · ');
@@ -734,14 +747,14 @@ function buildCatalogCycleActions(
       `上一项：${previous.name}`,
       'preparation',
       { type: 'hub/select-catalog-entry', panel, entityId: previous.id },
-      { readout: `浏览${HUB_PANEL_LABELS[panel]}目录，不提交领域命令。` }
+      { readout: `查看${previous.name}的用途与操作；浏览不消耗资源。` }
     ),
     localAction(
       `hub.${panel}.select:next`,
       `下一项：${next.name}`,
       'preparation',
       { type: 'hub/select-catalog-entry', panel, entityId: next.id },
-      { readout: `浏览${HUB_PANEL_LABELS[panel]}目录，不提交领域命令。` }
+      { readout: `查看${next.name}的用途与操作；浏览不消耗资源。` }
     )
   ];
 }
@@ -754,7 +767,7 @@ function buildHubNavigation(activePanel: HubPanel): ViewActionModel[] {
         `前往${HUB_PANEL_LABELS[panel]}`,
         'preparation',
         { type: 'hub/select-panel', panel },
-        { readout: '切换大厅面板，不提交领域命令。' }
+        { readout: `打开${HUB_PANEL_LABELS[panel]}，查看可用服务；不消耗资源。` }
       )]);
 }
 
@@ -855,13 +868,178 @@ function buildEntryPanel(state: GameState, draft: EntryProtocolDraft): HubPanelP
   };
 }
 
+/** Expanded entry choices reuse the existing host events without changing the compact action API. */
+function buildEntryServices(
+  state: GameState,
+  draft: EntryProtocolDraft,
+  entryBuild: EntryBuildViewModel,
+  actions: readonly ViewActionModel[]
+): readonly HubEntryServiceViewModel[] {
+  const originalAction = (actionId: string): ViewActionModel => {
+    const action = actions.find((candidate) => candidate.actionId === actionId);
+    if (action === undefined) throw new Error(`Missing entry service action: ${actionId}`);
+    return action;
+  };
+  const dungeonId = DUNGEONS[draft.dungeonId] === undefined ? FIRST_DUNGEON_ID : draft.dungeonId;
+  const dungeon = DUNGEONS[dungeonId];
+  const gates = getCampaignGates(state);
+  const selectedGate = gates.find((gate) => gate.dungeonId === draft.dungeonId);
+  const protocolNames: Readonly<Record<RunProtocolId, string>> = {
+    standard: '标准探索', imprint: '烙印协议', deep: '炼狱探索'
+  };
+  const services: HubEntryServiceViewModel[] = [
+    {
+      id: 'dungeon',
+      name: '挑战副本',
+      summary: `${dungeon.name}${selectedGate?.status === 'locked' ? ' · 未解锁' : ''}`,
+      description: '选择本次挑战的副本。未解锁的副本可查看要求，满足条件后才能入场。',
+      options: gates.map((gate) => {
+        const selected = gate.dungeonId === draft.dungeonId;
+        const status = gate.status === 'locked' ? '未解锁' : gate.status === 'completed' ? '已通关' : '已解锁';
+        const description = `${status} · ${gate.requirementText}`;
+        return {
+          id: gate.dungeonId,
+          name: gate.dungeonName,
+          description,
+          selected,
+          action: selected
+            ? disabledAction(`hub.entry.dungeon:select:${gate.dungeonId}`, gate.dungeonName, 'preparation', '当前已选择该副本。')
+            : localAction(`hub.entry.dungeon:select:${gate.dungeonId}`, gate.dungeonName, 'preparation', {
+                type: 'entry/select-dungeon', dungeonId: gate.dungeonId
+              }, { readout: description })
+        };
+      })
+    },
+    {
+      id: 'protocol',
+      name: '探索协议',
+      summary: protocolNames[draft.protocolId] ?? '未知协议',
+      description: '选择普通探索，或在通关后挑战本章的特殊目标。',
+      options: RUN_PROTOCOL_IDS.map((protocolId) => ({
+        id: protocolId,
+        name: protocolNames[protocolId],
+        description: getRunProtocolDefinition(dungeonId, protocolId)!.description,
+        selected: protocolId === draft.protocolId,
+        action: originalAction(`hub.entry.protocol:${protocolId}`)
+      }))
+    }
+  ];
+  if (draft.protocolId === 'deep') {
+    const unlocked = getInfernoUnlockedTier(state, draft.dungeonId);
+    const tier = draft.infernoTier ?? Math.max(1, unlocked);
+    services.push({
+      id: 'inferno-tier',
+      name: '炼狱层级',
+      summary: `第 ${tier} 层 · 已解锁至 ${unlocked} 层`,
+      description: '逐层挑战炼狱；完成当前最高层后可解锁更高一层。',
+      options: (['down', 'up'] as const).map((direction) => {
+        const action = originalAction(`hub.entry.inferno-tier:${direction}`);
+        return {
+          id: direction,
+          name: direction === 'down' ? '降低一层' : '提高一层',
+          description: action.enabled
+            ? `调整至第 ${tier + (direction === 'down' ? -1 : 1)} 层。`
+            : action.disabledReason!,
+          selected: false,
+          action
+        };
+      })
+    });
+  }
+  const selectedRoute = entryBuild.routeContract.options.find((option) => option.selected);
+  const routeCycle = originalAction('hub.entry.route-contract:next');
+  services.push({
+    id: 'route-contract',
+    name: '路线契约',
+    summary: entryBuild.routeContract.selectionValid ? selectedRoute!.name : '契约异常 · 重新选择',
+    description: entryBuild.routeContract.issue ?? '本章通关后可接取路线契约，按顺序完成两个目标，获得额外奖励。',
+    options: entryBuild.routeContract.options.map((option) => {
+      const description = [
+        option.description,
+        ...option.orderedTargets.map((target) => `目标 ${target.order}：${target.nodeTitle}`),
+        ...(option.rewardPoints > 0 ? [`独立奖励 ${option.rewardPoints} 奖励点`] : [])
+      ].join(' · ');
+      const actionId = `hub.entry.route-contract:select:${option.routeContractId ?? 'none'}`;
+      const cycleMatches = routeCycle.event?.kind === 'local'
+        && routeCycle.event.action.type === 'entry/select-route-contract'
+        && routeCycle.event.action.routeContractId === option.routeContractId;
+      return {
+        id: option.routeContractId ?? 'none',
+        name: option.name,
+        description,
+        selected: option.selected,
+        action: !option.selectable
+          ? disabledAction(actionId, option.name, 'preparation', option.disabledReason!)
+          : cycleMatches ? routeCycle
+            : localAction(actionId, option.name, 'preparation', {
+                type: 'entry/select-route-contract', routeContractId: option.routeContractId
+              }, { readout: description })
+      };
+    })
+  });
+  const preparation = getRunRelicPreparationStatus(state);
+  const frameDescriptions: Readonly<Record<RunRelicFrame, string>> = {
+    assault: '偏向攻击与战斗收益的回响。',
+    bulwark: '偏向防御与恢复的回响。',
+    wayfinder: '偏向探索与路线应对的回响。'
+  };
+  services.push({
+    id: 'relic-frame',
+    name: '遗物回响',
+    summary: `${entryBuild.relic.frameName} · 每次 ${entryBuild.relic.candidateReadout} 个候选`,
+    description: '选择本局回响的方向。切换方向会清除不相容的归档种子。',
+    options: (Object.keys(RUN_RELIC_FRAME_DEFINITIONS) as RunRelicFrame[]).map((frame) => {
+      const selected = frame === entryBuild.relic.frame;
+      const conduit = getEquipmentRelicConduitFrameMatch(frame, preparation.activeConduits);
+      return {
+        id: frame,
+        name: `${RUN_RELIC_FRAME_DEFINITIONS[frame].name}回响`,
+        description: `${frameDescriptions[frame]}每次提供 ${conduit.matched ? '3' : '2'} 个候选。`,
+        selected,
+        action: selected
+          ? disabledAction(`hub.relic-frame:${frame}`, `${RUN_RELIC_FRAME_DEFINITIONS[frame].name}回响`, 'preparation', '当前已选择该回响方向。')
+          : originalAction(`hub.relic-frame:${frame}`)
+      };
+    })
+  });
+  const selectedSeed = entryBuild.relic.seedOptions.find((option) => option.selected);
+  const seedCycle = originalAction('hub.entry.relic-seed:next');
+  services.push({
+    id: 'relic-seed',
+    name: '归档种子',
+    summary: selectedSeed!.name,
+    description: `从已归档的${entryBuild.relic.frameName}回响中选择种子，使它出现在本局首轮候选中。`,
+    options: entryBuild.relic.seedOptions.map((option) => {
+      const actionId = `hub.entry.relic-seed:select:${option.seedRelicId ?? 'none'}`;
+      const cycleMatches = seedCycle.event?.kind === 'local'
+        && seedCycle.event.action.type === 'entry/select-relic-seed'
+        && seedCycle.event.action.seedRelicId === option.seedRelicId;
+      return {
+        id: option.seedRelicId ?? 'none',
+        name: option.name,
+        description: option.description,
+        selected: option.selected,
+        action: !option.selectable
+          ? disabledAction(actionId, option.name, 'preparation', option.disabledReason!)
+          : cycleMatches ? seedCycle
+            : localAction(actionId, option.name, 'preparation', {
+                type: 'entry/select-relic-seed', frame: entryBuild.relic.frame, seedRelicId: option.seedRelicId
+              }, { readout: option.description })
+      };
+    })
+  });
+  return services;
+}
+
 function buildSuppliesPanel(state: GameState, requestedId: string | undefined): HubPanelProjection {
   const entries = TACTICAL_ITEM_IDS.map((id) => ({ id, name: ITEMS[id].name }));
   const index = selectedCatalogIndex(entries, requestedId);
   const itemId = entries[index]!.id as ItemId;
   const item = ITEMS[itemId];
+  const isSupply = isFieldSupplyItemId(itemId);
   const loadout = getTacticalLoadoutStatus(state);
-  const carried = loadout.preparedItemIds.includes(itemId as typeof loadout.preparedItemIds[number]);
+  const carried = !isSupply
+    && loadout.preparedItemIds.includes(itemId as typeof loadout.preparedItemIds[number]);
   const nextItemIds = carried
     ? loadout.preparedItemIds.filter((candidate) => candidate !== itemId)
     : [...loadout.preparedItemIds, itemId];
@@ -873,42 +1051,53 @@ function buildSuppliesPanel(state: GameState, requestedId: string | undefined): 
       `兑换${item.name}`,
       'primary',
       { type: 'hub/buy-item', itemId },
-      { readout: `当前库存 ${state.inventory[itemId]}` }
+      { readout: `获得 1 个并放入背包。${item.description} ${isSupply ? '无需装入携行。' : '带入副本前还需装入携行。'}当前库存 ${state.inventory[itemId]}。` }
     ),
-    previewCommandAction(
-      state,
-      `hub.supplies.toggle:${itemId}`,
-      `${carried ? '移出' : '装入'}携行：${item.name}`,
-      'primary',
-      { type: 'hub/configure-tactical-loadout', itemIds: nextItemIds },
-      {
-        recommendation: carried ? 'neutral' : 'recommended',
-        readout: `当前携行 ${loadout.preparedItemIds.length} 类；库存 ${state.inventory[itemId]}`
-      }
-    ),
+    // 补给品不占携行槽，不生成装入/移出携行动作。
+    ...(isSupply
+      ? []
+      : [
+          previewCommandAction(
+            state,
+            `hub.supplies.toggle:${itemId}`,
+            `${carried ? '移出' : '装入'}携行：${item.name}`,
+            'primary',
+            { type: 'hub/configure-tactical-loadout', itemIds: nextItemIds },
+            {
+              recommendation: carried ? 'neutral' : 'recommended',
+              readout: `${carried ? '下次入场不再携带此道具，背包库存保留。' : '下次入场带上此类道具；只配置携行，不会购买，使用仍需库存。'}当前携行 ${loadout.preparedItemIds.length} 类；库存 ${state.inventory[itemId]}。`
+            }
+          ),
+        ]),
     previewCommandAction(
       state,
       'hub.loadout.current',
       '确认当前携行',
       'preparation',
       { type: 'hub/configure-tactical-loadout', itemIds: [...loadout.preparedItemIds] },
-      { readout: `保留当前 ${loadout.preparedItemIds.length} 类战术道具。` }
+      { readout: `下次入场沿用当前 ${loadout.preparedItemIds.length} 类特殊道具；不购买、不消耗库存。` }
     ),
     previewCommandAction(
       state,
       'hub.loadout.chapter-one',
       '首章生存携行',
       'preparation',
-      { type: 'hub/configure-tactical-loadout', itemIds: ['healing_pill', 'dispel_talisman', 'gate_sigil'] },
-      { recommendation: 'recommended', readout: '止血丹、破禁符、小界门符。' }
+      { type: 'hub/configure-tactical-loadout', itemIds: ['thunder_talisman', 'dispel_talisman', 'gate_sigil'] },
+      { recommendation: 'recommended', readout: '将携行列表替换为雷火符、破禁符、小界门符，分别用于伤敌、破陷阱、稳传送门；不会自动购买。' }
     ),
-    previewCommandAction(state, 'hub.recover', '恢复生命', 'preparation', { type: 'hub/recover' })
+    previewCommandAction(state, 'hub.recover', '恢复生命', 'preparation', { type: 'hub/recover' }, {
+      readout: `免费将生命补满，立即生效。当前生命 ${state.player.hp}/${getDerivedStats(state).maxHp}。`
+    })
   ];
   return {
     actions,
-    summary: `${item.name} · 库存 ${state.inventory[itemId]} · ${carried ? '已携行' : '未携行'}`,
-    objectiveTitle: '兑换物资并逐项配置战术携行',
-    objectiveSummary: `${item.description} 携行变更始终基于当前 ${loadout.preparedItemIds.length} 项选择，不会覆盖其他条目。`
+    summary: isSupply
+      ? `${item.name} · 库存 ${state.inventory[itemId]} · 补给品 · 无需携行`
+      : `${item.name} · 库存 ${state.inventory[itemId]} · ${carried ? '已携行' : '未携行'}`,
+    objectiveTitle: isSupply ? '兑换副本中使用的补给品' : '先兑换道具，再选择带入副本的种类',
+    objectiveSummary: isSupply
+      ? `${item.description} 补给品不占携行槽，副本内库存有即可用。`
+      : `${item.description} 兑换增加库存，装入携行决定下次入场带什么；使用时仍需库存。`
   };
 }
 
@@ -951,7 +1140,7 @@ function buildEquipmentPurchaseAction(
         sourceDungeonId: preferred.dungeonId
       },
       {
-        readout: `${equipment.description} · ${equipmentRecipeReadout(state, preferred)}`,
+        readout: `获得装备并放入装备架，还需点击「装备」才生效。${equipment.description} · ${equipmentRecipeReadout(state, preferred)}`,
         fallbackDisabledReason: `资源不足，无法按${DUNGEONS[preferred.dungeonId].name}章节配方兑换${equipment.name}。`
       }
     );
@@ -963,7 +1152,7 @@ function buildEquipmentPurchaseAction(
       `兑换${equipment.name}`,
       'primary',
       `${equipment.name}不在任何章节兑换目录中，不能按普通奖励点价格回退购买。`,
-      { readout: equipment.description }
+      { readout: `获得后需装备到角色身上才生效。${equipment.description}` }
     );
   }
   const sourceNames = statuses.map(({ dungeonId }) => DUNGEONS[dungeonId].name).join('、');
@@ -973,7 +1162,7 @@ function buildEquipmentPurchaseAction(
     'primary',
     `首次通关${sourceNames}中的任一来源副本后，才会解锁${equipment.name}的章节兑换。`,
     {
-      readout: `${equipment.description} · 来源 ${sourceNames} · ${equipmentRecipeReadout(state, firstRecipe)}`
+      readout: `兑换后放入装备架，还需点击「装备」。${equipment.description} · 来源 ${sourceNames} · ${equipmentRecipeReadout(state, firstRecipe)}`
     }
   );
 }
@@ -1075,7 +1264,7 @@ function buildEquipmentCommissionProjection(
         emphasis: 'danger',
         recommendation: 'high-risk',
         riskReason: `撤回不返还启动消耗，并会丢失 ${completedCount}/${commissionStatus.requiredDungeonCount} 个不同副本进度。`,
-        readout: `不返还 ${rewardPointsRequired} 奖励点与 ${lingyunRequired} 灵蕴；已完成进度全部清空。`
+        readout: `立即解除两件装备的封存。不返还 ${rewardPointsRequired} 奖励点与 ${lingyunRequired} 灵蕴；已完成进度全部清空。`
       }
     ));
   } else {
@@ -1096,14 +1285,16 @@ function buildEquipmentCommissionProjection(
         `hub.equipment.commission.toggle:${focusedEquipmentId}`,
         `封存选择：${EQUIPMENT[focusedEquipmentId].name}`,
         'preparation',
-        '当前装备不在领域返回的可封存候选中。'
+        '需先拥有这件装备，将其升至满级，并确认可淬炼且当前未装备。',
+        { readout: '选择两件满级、可淬炼且未装备的装备，暂时封存，通关后换取淬炼材料。' }
       ));
     } else if (!focusedSelected && draft.equipmentIds.length >= 2) {
       actions.push(disabledAction(
         `hub.equipment.commission.toggle:${focusedEquipmentId}`,
         `封存选择：${EQUIPMENT[focusedEquipmentId].name}`,
         'preparation',
-        '已经选择两件不同装备；请先取消其中一件。'
+        '已经选择两件不同装备；请先取消其中一件。',
+        { readout: '调整准备封存的装备；点击「启动」前不会封存或消耗资源。' }
       ));
     } else {
       actions.push(localAction(
@@ -1119,7 +1310,7 @@ function buildEquipmentCommissionProjection(
             targetMaterialId: nextTargetMaterialId
           }
         },
-        { readout: '仅更新本地委托草稿，不提交领域命令。' }
+        { readout: '选择准备封存的装备；点击「启动」前仍可改选，不会封存或消耗资源。' }
       ));
     }
 
@@ -1128,14 +1319,16 @@ function buildEquipmentCommissionProjection(
         'hub.equipment.commission.material',
         '选择目标淬炼材料',
         'preparation',
-        '先选择至少一件合格装备，才能选择其淬炼材料。'
+        '先选择至少一件合格装备，才能选择其淬炼材料。',
+        { readout: '选择委托完成后领取哪种淬炼材料，用于强化满级装备。' }
       ));
     } else if (materialOptions.length === 1 && materialOptions[0]!.selected) {
       actions.push(disabledAction(
         'hub.equipment.commission.material',
         `目标材料：${materialOptions[0]!.materialName}`,
         'preparation',
-        '所选装备当前只有这一种可用目标材料。'
+        '所选装备当前只有这一种可用目标材料。',
+        { readout: `完成委托后获得${materialOptions[0]!.materialName} x${commissionStatus.materialReward}，用于淬炼装备。` }
       ));
     } else {
       const selectedIndex = materialOptions.findIndex(({ selected }) => selected);
@@ -1158,7 +1351,7 @@ function buildEquipmentCommissionProjection(
         '启动装备封存委托',
         'primary',
         `请选择两件不同的合格装备（当前 ${draft.equipmentIds.length}/2）。`,
-        { emphasis: 'primary' }
+        { emphasis: 'primary', readout: `暂时封存两件装备，成功走出 ${commissionStatus.requiredDungeonCount} 个不同副本后解除封存，并获得所选淬炼材料。` }
       );
     } else if (draft.targetMaterialId === null) {
       startAction = disabledAction(
@@ -1166,7 +1359,7 @@ function buildEquipmentCommissionProjection(
         '启动装备封存委托',
         'primary',
         '请选择来自所选装备的目标淬炼材料。',
-        { emphasis: 'primary' }
+        { emphasis: 'primary', readout: `暂时封存两件装备，成功走出 ${commissionStatus.requiredDungeonCount} 个不同副本后解除封存，并获得所选淬炼材料。` }
       );
     } else {
       startAction = previewCommandAction(
@@ -1182,8 +1375,8 @@ function buildEquipmentCommissionProjection(
         {
           emphasis: 'primary',
           recommendation: 'recommended',
-          readout: `封存两件装备；完成 ${commissionStatus.requiredDungeonCount} 个不同副本后获得${ITEMS[draft.targetMaterialId].name} x${commissionStatus.materialReward}。`,
-          fallbackDisabledReason: '当前委托草稿未通过领域校验。'
+          readout: `封存两件装备，期间不能使用或强化；成功走出 ${commissionStatus.requiredDungeonCount} 个不同副本后解除封存，并获得${ITEMS[draft.targetMaterialId].name} x${commissionStatus.materialReward}。`,
+          fallbackDisabledReason: '请检查所选装备与目标材料是否满足委托条件。'
         }
       );
     }
@@ -1224,7 +1417,7 @@ function buildEquipmentCommissionProjection(
       eligible: focusedCandidate !== undefined,
       selected: focusedSelected,
       ...(!focusedCandidate
-        ? { disabledReason: '当前装备不在领域返回的可封存候选中。' }
+        ? { disabledReason: '需先拥有这件装备，将其升至满级，并确认可淬炼且当前未装备。' }
         : active && !activeEquipmentIds.has(focusedEquipmentId)
           ? { disabledReason: '已有装备封存委托进行中，不能改选装备。' }
           : {})
@@ -1276,21 +1469,24 @@ function buildEquipmentMemoryLibraryProjection(
       'hub.equipment.memory.cycle',
       '装备记忆：不支持',
       'preparation',
-      '当前装备不在领域返回的装备记忆承载目录中。'
+      '这件装备不支持装备记忆。',
+      { readout: '装备记忆为成熟装备提供额外能力；支持记忆的装备可在通关后收录。' }
     );
   } else if (!status.owned) {
     action = disabledAction(
       'hub.equipment.memory.cycle',
       '装备记忆：尚未拥有',
       'preparation',
-      `你还没有${status.equipment.name}，不能切换其装备记忆。`
+      `你还没有${status.equipment.name}，不能切换其装备记忆。`,
+      { readout: '选择一段已收录记忆，装备后在下次副本中获得该能力。' }
     );
   } else if (!nextMemory) {
     action = disabledAction(
       'hub.equipment.memory.cycle',
       '装备记忆：尚未收录',
       'preparation',
-      '当前装备尚未收录任何记忆；可通过附近的 ? 查看现代自动收录条件。'
+      '当前装备尚未收录任何记忆；可通过附近的 ? 查看收录条件。',
+      { readout: '穿戴满级、已铭刻且淬炼 II 的装备，成功走到副本出口后可收录本章记忆。' }
     );
   } else if (status.unlockedMemories.length === 1 && nextMemory.id === activeMemoryId) {
     action = disabledAction(
@@ -1298,7 +1494,7 @@ function buildEquipmentMemoryLibraryProjection(
       `装备记忆：${nextMemory.name}`,
       'preparation',
       `${status.equipment.name}当前只收录并已激活这一段记忆。`,
-      { readout: nextMemory.effectDescription }
+      { readout: `装备后在下次副本获得该能力。${nextMemory.effectDescription}` }
     );
   } else {
     action = previewCommandAction(
@@ -1313,15 +1509,15 @@ function buildEquipmentMemoryLibraryProjection(
       },
       {
         recommendation: activeMemoryId === undefined ? 'recommended' : 'neutral',
-        readout: `${DUNGEONS[nextMemory.dungeonId].name} · ${nextMemory.effectDescription}`,
-        fallbackDisabledReason: '当前装备记忆未通过领域激活校验。'
+        readout: `换用这段记忆，装备后在下次副本生效。${DUNGEONS[nextMemory.dungeonId].name} · ${nextMemory.effectDescription}`,
+        fallbackDisabledReason: '当前无法启用这段记忆，请检查装备是否已拥有且记忆已收录。'
       }
     );
   }
   const acquisitionReadout = !status.supported
     ? '当前装备不承载装备记忆。'
     : status.unlockedMemories.length === 0
-      ? '现代流程不预选记忆狩猎；成熟装备在成功出口后自动收录并激活当前章节记忆。'
+      ? '装备达到满级、完成铭刻与淬炼 II 后，穿戴它成功走到副本出口，即可自动收录并启用本章记忆；无需另接记忆狩猎任务。'
       : `已收录 ${status.unlockedMemories.length} 段；当前${activeMemory ? `激活「${activeMemory.name}」` : '未激活'}。`;
   return {
     action,
@@ -1369,17 +1565,17 @@ function buildEquipmentPanel(
   const actions: ViewActionModel[] = [
     ...buildCatalogCycleActions('equipment', entries, index),
     owned
-      ? disabledAction(`hub.equipment.buy:${equipmentId}`, `兑换${equipment.name}`, 'primary', `装备架已经拥有${equipment.name}。`, { readout: equipment.description })
+      ? disabledAction(`hub.equipment.buy:${equipmentId}`, `兑换${equipment.name}`, 'primary', `装备架已经拥有${equipment.name}。`, { readout: `兑换后放入装备架，装备到角色身上才生效。${equipment.description}` })
       : buildEquipmentPurchaseAction(state, equipmentId),
     equipped
-      ? disabledAction(`hub.equipment.equip:${equipmentId}`, `装备${equipment.name}`, 'primary', `${equipment.name}已经装备在${EQUIPMENT_SLOT_LABELS[equipment.slot]}槽位。`)
+      ? disabledAction(`hub.equipment.equip:${equipmentId}`, `装备${equipment.name}`, 'primary', `${equipment.name}已经装备在${EQUIPMENT_SLOT_LABELS[equipment.slot]}槽位。`, { readout: `穿戴到${EQUIPMENT_SLOT_LABELS[equipment.slot]}，装备属性立即生效；同部位只能装备一件。` })
       : previewCommandAction(
           state,
           `hub.equipment.equip:${equipmentId}`,
           `装备${equipment.name}`,
           'primary',
           { type: 'hub/equip-equipment', equipmentId },
-          { recommendation: 'recommended' }
+          { recommendation: 'recommended', readout: `替换当前${EQUIPMENT_SLOT_LABELS[equipment.slot]}装备，属性立即生效；换下的装备保留在装备架。` }
         ),
     previewCommandAction(
       state,
@@ -1388,7 +1584,7 @@ function buildEquipmentPanel(
       'primary',
       { type: 'hub/upgrade-equipment', equipmentId },
       {
-        readout: `当前等级 ${level}/${equipment.maxLevel}`,
+        readout: `永久提高这件装备的等级和属性，穿戴时生效。当前等级 ${level}/${equipment.maxLevel}。`,
         fallbackDisabledReason: owned ? `${equipment.name}当前无法继续升级。` : `你还没有${equipment.name}。`
       }
     )
@@ -1399,7 +1595,8 @@ function buildEquipmentPanel(
       `hub.equipment.attune:${equipmentId}:none`,
       `${equipment.name}铭刻`,
       'preparation',
-      '该装备没有可用的铭刻分支。'
+      '该装备没有可用的铭刻分支。',
+      { readout: '为满级装备选择一种额外属性；只有支持铭刻的装备可用。' }
     ));
   } else {
     for (const attunement of attunements) {
@@ -1409,7 +1606,7 @@ function buildEquipmentPanel(
             `铭刻：${attunement.name}`,
             'preparation',
             `${equipment.name}已经生效${attunement.name}。`,
-            { readout: attunement.description }
+            { readout: `为满级装备选择额外属性，穿戴时生效。${attunement.description}` }
           )
         : previewCommandAction(
             state,
@@ -1417,7 +1614,7 @@ function buildEquipmentPanel(
             `铭刻：${attunement.name}`,
             'preparation',
             { type: 'hub/attune-equipment', equipmentId, attunementId: attunement.id },
-            { readout: attunement.description }
+            { readout: `为满级装备选择额外属性，穿戴时生效；改选会替换原铭刻并重新消耗资源。${attunement.description}` }
           ));
     }
   }
@@ -1427,7 +1624,7 @@ function buildEquipmentPanel(
     `淬炼${equipment.name}`,
     'preparation',
     { type: 'hub/temper-equipment', equipmentId },
-    { readout: `当前淬炼 ${temper.currentRank}/${temper.maxRank}` }
+    { readout: `进一步提高满级装备的属性，穿戴时生效；淬炼 II 还需先完成铭刻。当前淬炼 ${temper.currentRank}/${temper.maxRank}。` }
   ));
   const commission = buildEquipmentCommissionProjection(state, equipmentId, commissionDraft);
   actions.push(...commission.actions);
@@ -1436,8 +1633,8 @@ function buildEquipmentPanel(
   return {
     actions,
     summary: `${equipment.name} · ${EQUIPMENT_SLOT_LABELS[equipment.slot]} · ${owned ? `等级 ${level}/${equipment.maxLevel}` : '未拥有'} · ${equipped ? '已装备' : '未装备'} · 委托${commission.detail.status === 'active' ? `进行中 ${commission.detail.active?.completedCount ?? 0}/${commission.detail.requiredDungeonCount}` : commission.detail.status === 'draft' ? '草稿' : '待配置'}`,
-    objectiveTitle: '兑换、锻造与装备封存委托',
-    objectiveSummary: `${equipment.description}${attunementId ? ` 当前铭刻：${getEquipmentAttunementOptions(equipmentId).find(({ id }) => id === attunementId)?.name ?? '存档分支异常'}。` : ''} 装备封存委托可在本面板配置、启动或召回；装备记忆只占一个循环激活槽。`,
+    objectiveTitle: '先获得并穿戴装备，再逐步强化',
+    objectiveSummary: `${equipment.description} 兑换后需手动装备；升级提高属性，满级后可铭刻或淬炼。${attunementId ? `当前铭刻：${getEquipmentAttunementOptions(equipmentId).find(({ id }) => id === attunementId)?.name ?? '存档分支异常'}。` : ''}`,
     equipmentCommission: commission.detail,
     equipmentMemory: memory.detail
   };
@@ -1450,11 +1647,13 @@ function buildPetsPanel(state: GameState, requestedId: string | undefined): HubP
   const pet = PETS[petId];
   const owned = state.ownedPets.includes(petId);
   const level = state.petLevels[petId] ?? 1;
+  const acquireReadout = `获得这只灵宠。${state.activePet === undefined ? '当前没有出战灵宠，签约后会自动出战。' : '签约后可手动设为出战灵宠。'}${pet.description}`;
+  const activateReadout = '换用这只灵宠，属性加成立即生效，探索与战斗可发挥它的特性；每次只能出战一只。';
   const actions = [
     ...buildCatalogCycleActions('pets', entries, index),
     owned
-      ? disabledAction(`hub.pets.buy:${petId}`, `签约${pet.name}`, 'primary', `你已经拥有${pet.name}。`)
-      : previewCommandAction(state, `hub.pets.buy:${petId}`, `签约${pet.name}`, 'primary', { type: 'hub/buy-pet', petId }),
+      ? disabledAction(`hub.pets.buy:${petId}`, `签约${pet.name}`, 'primary', `你已经拥有${pet.name}。`, { readout: `拥有后可培养，并设为出战灵宠。${pet.description}` })
+      : previewCommandAction(state, `hub.pets.buy:${petId}`, `签约${pet.name}`, 'primary', { type: 'hub/buy-pet', petId }, { readout: acquireReadout }),
     previewCommandAction(
       state,
       `hub.pets.upgrade:${petId}`,
@@ -1462,26 +1661,26 @@ function buildPetsPanel(state: GameState, requestedId: string | undefined): HubP
       'primary',
       { type: 'hub/upgrade-pet', petId },
       {
-        readout: `当前等级 ${level}/${pet.maxLevel}`,
+        readout: `永久提高灵宠等级，增强它的属性加成；出战时生效。当前等级 ${level}/${pet.maxLevel}。`,
         fallbackDisabledReason: owned ? `${pet.name}当前无法继续培养。` : `你还没有${pet.name}。`
       }
     ),
     state.activePet === petId
-      ? disabledAction(`hub.pets.activate:${petId}`, `设为出战灵宠：${pet.name}`, 'primary', `${pet.name}已经在出战位。`)
+      ? disabledAction(`hub.pets.activate:${petId}`, `设为出战灵宠：${pet.name}`, 'primary', `${pet.name}已经在出战位。`, { readout: activateReadout })
       : previewCommandAction(
           state,
           `hub.pets.activate:${petId}`,
           `设为出战灵宠：${pet.name}`,
           'primary',
           { type: 'hub/activate-pet', petId },
-          { recommendation: 'recommended' }
+          { recommendation: 'recommended', readout: activateReadout }
         )
   ];
   return {
     actions,
     summary: `${pet.name} · ${owned ? `${level}/${pet.maxLevel} 级` : pet.source === 'shop' ? '可签约' : '副本捕获'} · ${state.activePet === petId ? '出战中' : '未出战'}`,
-    objectiveTitle: '签约、培养与配置灵宠',
-    objectiveSummary: pet.description
+    objectiveTitle: '获得灵宠，选一只出战助你探索和战斗',
+    objectiveSummary: `${pet.description} 只有出战灵宠提供加成，培养可永久提高它的等级。`
   };
 }
 
@@ -1494,11 +1693,14 @@ function buildMethodsPanel(state: GameState, requestedId: string | undefined): H
   const upgrade = getMethodUpgradeStatus(methodId, progress);
   const rank = progress.ranks[methodId];
   const learned = rank !== undefined;
+  const technique = METHOD_TECHNIQUE_CATALOG[index]!;
+  const learnReadout = `学会后立即获得属性与被动，下次入场可使用战技「${technique.name}」。${method.passive}`;
+  const activateReadout = '将这门功法排到下次副本战技列表首位；不增加额外属性，也不影响使用其他已学功法。';
   const actions = [
     ...buildCatalogCycleActions('methods', entries, index),
     learned
-      ? disabledAction(`hub.methods.learn:${methodId}`, `学习${method.name}`, 'primary', `你已经学会${method.name}。`)
-      : previewCommandAction(state, `hub.methods.learn:${methodId}`, `学习${method.name}`, 'primary', { type: 'hub/learn-method', methodId }),
+      ? disabledAction(`hub.methods.learn:${methodId}`, `学习${method.name}`, 'primary', `你已经学会${method.name}。`, { readout: learnReadout })
+      : previewCommandAction(state, `hub.methods.learn:${methodId}`, `学习${method.name}`, 'primary', { type: 'hub/learn-method', methodId }, { readout: learnReadout }),
     previewCommandAction(
       state,
       `hub.methods.upgrade:${methodId}`,
@@ -1506,7 +1708,7 @@ function buildMethodsPanel(state: GameState, requestedId: string | undefined): H
       'primary',
       { type: 'hub/upgrade-method', methodId },
       {
-        readout: `当前 ${rank === undefined ? '未学习' : `R${rank}/R3`}`,
+        readout: `永久提高功法阶位，增强战技「${technique.name}」；下次入场按新阶位生效。当前${rank === undefined ? '未学习' : `${rank}/3 阶`}。`,
         fallbackDisabledReason: upgrade?.state === 'max_rank'
           ? `${method.name}已经达到 R3。`
           : !learned
@@ -1515,21 +1717,21 @@ function buildMethodsPanel(state: GameState, requestedId: string | undefined): H
       }
     ),
     progress.activeMethod === methodId
-      ? disabledAction(`hub.methods.activate:${methodId}`, `设为主修：${method.name}`, 'primary', `${method.name}已经是主修功法。`)
+      ? disabledAction(`hub.methods.activate:${methodId}`, `设为常用：${method.name}`, 'primary', `${method.name}已经是常用功法。`, { readout: activateReadout })
       : previewCommandAction(
           state,
           `hub.methods.activate:${methodId}`,
-          `设为主修：${method.name}`,
+          `设为常用：${method.name}`,
           'primary',
           { type: 'hub/activate-method', methodId },
-          { recommendation: 'recommended', fallbackDisabledReason: `请先学习${method.name}。` }
+          { recommendation: 'recommended', readout: activateReadout, fallbackDisabledReason: `请先学习${method.name}。` }
         )
   ];
   return {
     actions,
-    summary: `${method.name} · ${rank === undefined ? '未学习' : `R${rank}`} · ${state.activeMethod === methodId ? '主修中' : '未主修'}`,
-    objectiveTitle: '学习、精研与配置功法',
-    objectiveSummary: `${method.description} ${method.passive}`
+    summary: `${method.name} · ${rank === undefined ? '未学习' : `${rank} 阶`} · ${state.activeMethod === methodId ? '常用功法' : '未设为常用'}`,
+    objectiveTitle: '学习获得被动，精研强化战技',
+    objectiveSummary: `${method.description} 已学功法的被动都可生效；常用设置只调整战技顺序。`
   };
 }
 
@@ -1540,17 +1742,19 @@ function buildBloodlinesPanel(state: GameState, requestedId: string | undefined)
   const progress = getBloodlineProgress(state);
   const upgrade = getBloodlineUpgradeStatus(bloodline.id, progress);
   const rank = progress.ranks[bloodline.id];
+  const unlockReadout = `解锁 1 阶血统，激活后获得属性加成与战斗中的血统爆发。${progress.active === undefined ? '当前没有激活血统，觉醒后自动激活。' : '觉醒后需手动激活。'}`;
+  const activateReadout = '换用这条血统，属性加成立即更新；下次入场带入它的阶位与爆发能力，每次只生效一种。';
   const actions = [
     ...buildCatalogCycleActions('bloodlines', entries, index),
     rank !== undefined
-      ? disabledAction(`hub.bloodlines.unlock:${bloodline.id}`, `觉醒${bloodline.name}`, 'primary', `${bloodline.name}已经觉醒至 R${rank}。`)
+      ? disabledAction(`hub.bloodlines.unlock:${bloodline.id}`, `觉醒${bloodline.name}`, 'primary', `${bloodline.name}已经觉醒至 R${rank}。`, { readout: '解锁血统后可晋升、激活；激活的血统提供属性加成与战斗中的爆发能力。' })
       : previewCommandAction(
           state,
           `hub.bloodlines.unlock:${bloodline.id}`,
           `觉醒${bloodline.name}`,
           'primary',
           { type: 'hub/unlock-bloodline', bloodlineId: bloodline.id },
-          { fallbackDisabledReason: `当前资源不足，无法觉醒${bloodline.name}。` }
+          { readout: unlockReadout, fallbackDisabledReason: `当前资源不足，无法觉醒${bloodline.name}。` }
         ),
     previewCommandAction(
       state,
@@ -1559,7 +1763,7 @@ function buildBloodlinesPanel(state: GameState, requestedId: string | undefined)
       'primary',
       { type: 'hub/upgrade-bloodline', bloodlineId: bloodline.id },
       {
-        readout: `当前 ${rank === undefined ? '未觉醒' : `R${rank}/R3`}`,
+        readout: `永久提高血统阶位，增强属性与爆发能力；激活后随下次入场带入。当前${rank === undefined ? '未觉醒' : `${rank}/3 阶`}。`,
         fallbackDisabledReason: upgrade?.state === 'max_rank'
           ? `${bloodline.name}已经达到 R3。`
           : rank === undefined
@@ -1568,21 +1772,21 @@ function buildBloodlinesPanel(state: GameState, requestedId: string | undefined)
       }
     ),
     progress.active === bloodline.id
-      ? disabledAction(`hub.bloodlines.activate:${bloodline.id}`, `激活${bloodline.name}`, 'primary', `${bloodline.name}已经是当前有效血统。`)
+      ? disabledAction(`hub.bloodlines.activate:${bloodline.id}`, `激活${bloodline.name}`, 'primary', `${bloodline.name}已经是当前有效血统。`, { readout: activateReadout })
       : previewCommandAction(
           state,
           `hub.bloodlines.activate:${bloodline.id}`,
           `激活${bloodline.name}`,
           'primary',
           { type: 'hub/activate-bloodline', bloodlineId: bloodline.id },
-          { recommendation: 'recommended', fallbackDisabledReason: `请先觉醒${bloodline.name}。` }
+          { recommendation: 'recommended', readout: activateReadout, fallbackDisabledReason: `请先觉醒${bloodline.name}。` }
         )
   ];
   return {
     actions,
-    summary: `${bloodline.name} · ${bloodline.title} · ${rank === undefined ? '未觉醒' : `R${rank}`} · ${state.activeBloodline === bloodline.id ? '已激活' : '未激活'}`,
-    objectiveTitle: '觉醒、晋升与激活血统',
-    objectiveSummary: `始祖倾向：${BLOODLINE_ASPECT_LABELS[bloodline.aspect]}。入场时会冻结当前激活血统与阶位。`
+    summary: `${bloodline.name} · ${bloodline.title} · ${rank === undefined ? '未觉醒' : `${rank} 阶`} · ${state.activeBloodline === bloodline.id ? '已激活' : '未激活'}`,
+    objectiveTitle: '激活一种血统，获得属性与爆发能力',
+    objectiveSummary: `始祖倾向：${BLOODLINE_ASPECT_LABELS[bloodline.aspect]}。觉醒解锁，晋升强化，激活后生效；每次副本沿用入场时的血统与阶位。`
   };
 }
 
@@ -1599,16 +1803,19 @@ function buildCompanionsPanel(state: GameState, requestedId: string | undefined)
   const recruitment = getCompanionRecruitmentStatus(companion.id, progress, state.completedDungeonIds);
   const upgrade = getCompanionUpgradeStatus(companion.id, progress);
   const rank = progress.ranks[companion.id];
+  const recruitReadout = `邀请同伴加入，出战后可在副本战斗中使用「${companion.assistName}」。${state.ownedCompanions.length === 0 ? '首位同伴自动设为出战。' : '招募后需手动设为出战。'}`;
+  const activateReadout = `下次入场由这位同伴出战，战斗中可使用「${companion.assistName}」援助；每次只能带一位。`;
   const actions = [
     ...buildCatalogCycleActions('companions', entries, index),
     recruitment === 'owned'
-      ? disabledAction(`hub.companions.recruit:${companion.id}`, `招募${companion.name}`, 'primary', `${companion.name}已经加入轮回小队。`)
+      ? disabledAction(`hub.companions.recruit:${companion.id}`, `招募${companion.name}`, 'primary', `${companion.name}已经加入轮回小队。`, { readout: `加入后可训练，并设为出战同伴，在副本战斗中使用「${companion.assistName}」。` })
       : recruitment === 'locked'
         ? disabledAction(
             `hub.companions.recruit:${companion.id}`,
             `招募${companion.name}`,
             'primary',
-            `首次通关${DUNGEONS[companion.unlockDungeonId].name}后才能招募。`
+            `首次通关${DUNGEONS[companion.unlockDungeonId].name}后才能招募。`,
+            { readout: recruitReadout }
           )
         : previewCommandAction(
             state,
@@ -1617,7 +1824,7 @@ function buildCompanionsPanel(state: GameState, requestedId: string | undefined)
             'primary',
             { type: 'hub/recruit-companion', companionId: companion.id },
             {
-              readout: `已满足首通${DUNGEONS[companion.unlockDungeonId].name}条件`,
+              readout: recruitReadout,
               fallbackDisabledReason: `当前资源不足，无法招募${companion.name}。`
             }
           ),
@@ -1628,7 +1835,7 @@ function buildCompanionsPanel(state: GameState, requestedId: string | undefined)
       'primary',
       { type: 'hub/upgrade-companion', companionId: companion.id },
       {
-        readout: `当前 ${rank === undefined ? '未招募' : `R${rank}/R3`}`,
+        readout: `永久提高同伴阶位，增强「${companion.assistName}」的援助效果；下次出战时生效。当前${rank === undefined ? '未招募' : `${rank}/3 阶`}。`,
         fallbackDisabledReason: upgrade?.state === 'max_rank'
           ? `${companion.name}已经达到 R3。`
           : rank === undefined
@@ -1637,21 +1844,21 @@ function buildCompanionsPanel(state: GameState, requestedId: string | undefined)
       }
     ),
     state.activeCompanion === companion.id
-      ? disabledAction(`hub.companions.activate:${companion.id}`, `设为出战同伴：${companion.name}`, 'primary', `${companion.name}已经在出战位。`)
+      ? disabledAction(`hub.companions.activate:${companion.id}`, `设为出战同伴：${companion.name}`, 'primary', `${companion.name}已经在出战位。`, { readout: activateReadout })
       : previewCommandAction(
           state,
           `hub.companions.activate:${companion.id}`,
           `设为出战同伴：${companion.name}`,
           'primary',
           { type: 'hub/activate-companion', companionId: companion.id },
-          { recommendation: 'recommended', fallbackDisabledReason: `请先招募${companion.name}。` }
+          { recommendation: 'recommended', readout: activateReadout, fallbackDisabledReason: `请先招募${companion.name}。` }
         )
   ];
   return {
     actions,
-    summary: `${companion.name} · ${companion.title} · ${rank === undefined ? '未招募' : `R${rank}`} · ${state.activeCompanion === companion.id ? '出战中' : '未出战'}`,
-    objectiveTitle: '招募、训练与配置同伴',
-    objectiveSummary: `${companion.assistName}；训练材料为${ITEMS[companion.trainingMaterial].name}。`
+    summary: `${companion.name} · ${companion.title} · ${rank === undefined ? '未招募' : `${rank} 阶`} · ${state.activeCompanion === companion.id ? '出战中' : '未出战'}`,
+    objectiveTitle: '招募同伴，选一位提供战斗援助',
+    objectiveSummary: `出战后可使用「${companion.assistName}」；每次副本沿用入场时的同伴与阶位。训练需要${ITEMS[companion.trainingMaterial].name}。`
   };
 }
 
@@ -1674,6 +1881,154 @@ function rewardReadout(evaluation: MainGodTaskEvaluation): string {
   return parts.length > 0 ? `奖励 ${parts.join('、')}` : '无额外奖励';
 }
 
+function taskProgressFraction(evaluation: MainGodTaskEvaluation): string {
+  const fraction = evaluation.progressText.match(/^\d+\/\d+/)?.[0];
+  if (!fraction) throw new Error(`Task ${evaluation.taskId} has no count progress: ${evaluation.progressText}`);
+  return fraction;
+}
+
+function directiveObjectiveAction(objective: DirectiveObjective, result: DirectiveObjectiveResult): readonly string[] {
+  const count = `${Number(result.completed)}/1`;
+  switch (objective.kind) {
+    case 'capture': return [`捕获${objective.petId ? PETS[objective.petId].name : '灵宠'} ${count}`];
+    case 'method': return [`掌握${METHODS[objective.methodId!].name} ${count}`];
+    case 'equip': return [`装备${EQUIPMENT[objective.equipmentId!].name} ${count}`];
+    case 'active_pet': return [`携带${PETS[objective.petId!].name}出战 ${count}`];
+    case 'active_bloodline': return [`携带已觉醒血统入场 ${count}`];
+    case 'hidden_clear': return [result.progressText.replace('全图清理', '清理全部节点')];
+    case 'route': return [`${objective.label} ${result.progressText.replace('路线锚点 ', '')}`];
+    case 'auction': return result.progressText.split('；').map((part) => `完成${part}`);
+    case 'genesis_splice': return result.progressText.split('；').map((part) =>
+      part.startsWith('不同基因') ? part.replace('不同基因', '使用不同基因') : `完成基因${part}`);
+    case 'broadcast_relays': return result.progressText.split('；').map((part) =>
+      part.startsWith('中继') ? `处理中继 ${part.slice(3)}` : part.replace('静默 ', '静默中继 ').replace('广播 ', '广播中继 '));
+    case 'escort_checkpoints': return result.progressText.split('；').filter((part) => !part.startsWith('幸存者生命')).map((part) =>
+      part.replace('检查点 ', '完成检查点 ').replace('救治 ', '救治幸存者 ').replace('推进 ', '推进护送 '));
+    case 'false_testimony_verdict':
+    case 'combat_replay_complete':
+    case 'panopticon_complete': return [`${objective.label} · ${result.progressText}`];
+    // These ongoing limits and final-fight snapshots stay in the full task details.
+    case 'low_damage':
+    case 'no_item':
+    case 'broadcast_snapshot':
+    case 'escort_snapshot':
+    case 'false_testimony_snapshot': return [];
+  }
+}
+
+function getTaskDirectiveEvaluation(state: GameState, dungeonId: DungeonId) {
+  // A different chapter's run must not hide this task's durable equipment/pet/method progress.
+  return getDirectiveEvaluation(state.run?.dungeonId === dungeonId ? state : { ...state, run: undefined }, dungeonId);
+}
+
+function buildDirectiveTaskObjectives(state: GameState, evaluation: MainGodTaskEvaluation): readonly string[] {
+  const dungeonId = evaluation.task.chapterDungeonId;
+  const dungeonName = DUNGEONS[dungeonId].name;
+  if (evaluation.completed) return [`首通${dungeonName}并完成指令 1/1`];
+  const directive = getDirectiveForDungeon(dungeonId);
+  const progress = getTaskDirectiveEvaluation(state, dungeonId);
+  const clearedCount = state.run?.dungeonId === dungeonId ? state.run.clearedNodeIds.length : 0;
+  const objectives = [
+    ...(clearedCount < directive.requiredClears
+      ? [progress.progressText.replace('节点清理', `清理${dungeonName}节点`)]
+      : []),
+    ...directive.optionalObjectives.flatMap((objective, index) => {
+      const result = progress.objectiveResults[index]!;
+      return result.completed ? [] : directiveObjectiveAction(objective, result);
+    }),
+    ...progress.objectiveResults.flatMap((objective) => !objective.completed &&
+      (objective.kind === 'low_damage' || objective.kind === 'no_item')
+      ? [`本轮未满足：${objective.label}`]
+      : []),
+    ...(progress.status === 'completed'
+      ? [`从出口完成${dungeonName}首通结算 0/1`]
+      : [`首通${dungeonName} ${Number(state.completedDungeonIds.includes(dungeonId))}/1`])
+  ];
+  return objectives;
+}
+
+function buildTaskObjectives(state: GameState, evaluation: MainGodTaskEvaluation): readonly string[] {
+  const { task } = evaluation;
+  const dungeonName = DUNGEONS[task.chapterDungeonId].name;
+  const fraction = taskProgressFraction(evaluation);
+  if (task.kind === 'mainline') return [`通关${dungeonName} ${fraction}`];
+
+  const cultivationLabels: Readonly<Record<string, string>> = {
+    side_recruit_first_companion: '招募任意同伴',
+    side_train_companion_rank_2: '训练任意同伴至位阶 2',
+    side_refine_first_method_rank_2: '精研任意功法至 R2',
+    side_master_first_method_rank_3: '精研任意功法至 R3',
+    side_unlock_first_bloodline: '觉醒任意血统',
+    side_master_first_bloodline_rank_3: '觉醒任意血统至 R3'
+  };
+  const cultivationLabel = cultivationLabels[task.id];
+  if (cultivationLabel) return [`${cultivationLabel} ${fraction}`];
+
+  if (task.id === `side_enter_${task.chapterDungeonId}`) {
+    if (task.chapterDungeonId === 'combat_replay_stage') return [`完成战斗录制 ${fraction}`];
+    if (task.chapterDungeonId === 'panopticon_city') return [`完成盲区中继 ${fraction}`];
+    return [`进入${dungeonName} ${fraction}`];
+  }
+
+  if (task.id === `side_directive_${task.chapterDungeonId}`) {
+    if (task.chapterDungeonId === 'combat_replay_stage' || task.chapterDungeonId === 'panopticon_city') {
+      const run = state.run?.dungeonId === task.chapterDungeonId ? state.run : undefined;
+      const law = run?.lawState?.law;
+      const alreadyCleared = state.completedDungeonIds.includes(task.chapterDungeonId);
+      const matchingLaw = law?.kind === task.chapterDungeonId ? law : undefined;
+      const routeSelected = alreadyCleared || matchingLaw?.route != null ||
+        (task.chapterDungeonId === 'combat_replay_stage' && run?.combatReplayState?.route !== undefined);
+      const bossRecorded = alreadyCleared || matchingLaw?.bossSnapshot != null;
+      return [
+        `选择${task.chapterDungeonId === 'combat_replay_stage' ? '复演' : '逃逸'}路线 ${Number(routeSelected)}/1`,
+        `冻结首领快照 ${Number(bossRecorded)}/1`
+      ];
+    }
+    return buildDirectiveTaskObjectives(state, evaluation);
+  }
+  throw new Error(`No objective presentation for task: ${task.id}`);
+}
+
+function buildCurrentTasks(state: GameState): readonly TaskViewModel[] {
+  return evaluateVisibleTasks(state).flatMap((evaluation) => {
+    if (evaluation.status !== 'active' && evaluation.status !== 'completed') return [];
+    const { task } = evaluation;
+    const isDirective = task.id === `side_directive_${task.chapterDungeonId}` &&
+      task.chapterDungeonId !== 'combat_replay_stage' && task.chapterDungeonId !== 'panopticon_city';
+    const directive = isDirective && !evaluation.completed
+      ? getTaskDirectiveEvaluation(state, task.chapterDungeonId)
+      : undefined;
+    const completedDirective = isDirective && evaluation.completed
+      ? getDirectiveForDungeon(task.chapterDungeonId)
+      : undefined;
+    return [{
+      id: task.id,
+      title: task.title,
+      kind: task.kind,
+      status: evaluation.status,
+      objectives: buildTaskObjectives(state, evaluation),
+      ...(directive ? {
+        detailObjectives: [
+          directive.progressText,
+          ...directive.objectiveResults.map((objective) => `${objective.label} · ${objective.progressText}`),
+          `首通${DUNGEONS[task.chapterDungeonId].name} ${Number(state.completedDungeonIds.includes(task.chapterDungeonId))}/1`,
+          '首通时满足全部指令目标，由出口自动结算'
+        ]
+      } : completedDirective ? {
+        detailObjectives: [
+          `清理节点 ${completedDirective.requiredClears}/${completedDirective.requiredClears}`,
+          ...completedDirective.optionalObjectives.map((objective) => `${objective.label} · 首通时已满足`),
+          `首通${DUNGEONS[task.chapterDungeonId].name} 1/1`,
+          '指令奖励已结算 1/1'
+        ]
+      } : {}),
+      description: task.description,
+      hint: task.hint,
+      rewardText: rewardReadout(evaluation)
+    }];
+  });
+}
+
 function buildTasksPanel(state: GameState, requestedId: string | undefined): HubPanelProjection {
   const evaluations = evaluateVisibleTasks(state);
   if (evaluations.length === 0) {
@@ -1688,6 +2043,7 @@ function buildTasksPanel(state: GameState, requestedId: string | undefined): Hub
   const preferredId = requestedId ?? evaluations.find(({ status }) => status === 'completed')?.task.id;
   const index = selectedCatalogIndex(entries, preferredId);
   const evaluation = evaluations[index]!;
+  const claimReadout = `完成后点击领取，奖励立即入账。${rewardReadout(evaluation)}。当前进度：${evaluation.progressText}。`;
   const actions = [
     ...buildCatalogCycleActions('tasks', entries, index),
     evaluation.status === 'claimed'
@@ -1696,7 +2052,7 @@ function buildTasksPanel(state: GameState, requestedId: string | undefined): Hub
           `领取：${evaluation.task.title}`,
           'primary',
           '该任务奖励已经领取。',
-          { readout: rewardReadout(evaluation) }
+          { readout: `任务奖励已入账，每项任务只能领取一次。${rewardReadout(evaluation)}。` }
         )
       : previewCommandAction(
           state,
@@ -1704,14 +2060,14 @@ function buildTasksPanel(state: GameState, requestedId: string | undefined): Hub
           `领取：${evaluation.task.title}`,
           'primary',
           { type: 'hub/claim-task', taskId: evaluation.task.id },
-          { recommendation: evaluation.status === 'completed' ? 'recommended' : 'neutral', readout: rewardReadout(evaluation) }
+          { recommendation: evaluation.status === 'completed' ? 'recommended' : 'neutral', readout: claimReadout }
         )
   ];
   return {
     actions,
     summary: `${evaluation.task.title} · ${taskStatusLabel(evaluation)} · ${evaluation.progressText}`,
-    objectiveTitle: '查看与领取主神任务',
-    objectiveSummary: `${evaluation.task.description} ${evaluation.task.hint}`
+    objectiveTitle: '按目标推进，完成后手动领取奖励',
+    objectiveSummary: `${evaluation.task.description} ${evaluation.task.hint}${evaluation.task.kind === 'mainline' ? ' 主线完成后记得领取奖励，后续章节由领取进度解锁。' : ''}`
   };
 }
 
@@ -1759,12 +2115,21 @@ function buildHubProjection(state: GameState, localUiState: PresentationLocalUiS
     seedStatus: 'host-on-confirm',
     dungeonCount: DUNGEON_ORDER.length,
     entryBuild,
+    ...(activePanel === 'entry' ? { entryServices: buildEntryServices(state, draft, entryBuild, panel.actions) } : {}),
     ...(panel.equipmentCommission
       ? { equipmentCommission: panel.equipmentCommission }
       : {}),
     ...(panel.equipmentMemory
       ? { equipmentMemory: panel.equipmentMemory }
-      : {})
+      : {}),
+    ...(activePanel === 'entry' ? {} : {
+      shop: buildHubShopCatalog(state, activePanel, (id) => buildHubPanelProjection(
+        state,
+        { ...localUiState, hubSelections: { ...localUiState.hubSelections, [activePanel]: id } },
+        draft,
+        activePanel
+      ))
+    })
   };
   const metrics: StatusMetric[] = [
     { id: 'hp', label: '生命', value: `${state.player.hp}/${state.player.maxHp}`, symbol: '♥', severity: state.player.hp < state.player.maxHp / 3 ? 'danger' : 'neutral' },
@@ -1785,6 +2150,38 @@ function buildHubProjection(state: GameState, localUiState: PresentationLocalUiS
     actions,
     logs: state.log.slice(0, 12)
   };
+}
+
+/** Character preparation is requested by the host on demand, independently of NPC shops. */
+export function buildHubOwnedLoadoutViewModel(
+  state: ReadonlyGameState,
+  localUiState: PresentationLocalUiState = {}
+): HubOwnedLoadoutViewModel | undefined {
+  if (state.phase !== 'hub') return undefined;
+  const domain = asDomainState(state);
+  const draft = localUiState.entryDraft ?? defaultEntryDraft();
+  return serializableSnapshot(buildHubOwnedLoadoutCatalog(
+    domain,
+    (panel, id) => buildHubPanelProjection(
+      domain,
+      { ...localUiState, hubSelections: { ...localUiState.hubSelections, [panel]: id } },
+      draft,
+      panel
+    ),
+    (equipmentId, memory) => {
+      const actionId = `hub.equipment.memory.activate:${equipmentId}:${memory.memoryId}::owned/equipment/${equipmentId}`;
+      const label = `激活记忆：${memory.name}`;
+      const readout = `装备后在下次副本获得该能力。${memory.effectDescription}`;
+      return memory.active
+        ? disabledAction(actionId, label, 'preparation', `当前已激活「${memory.name}」。`, { readout })
+        : previewCommandAction(domain, actionId, label, 'preparation', {
+            type: 'hub/activate-equipment-memory', equipmentId, memoryId: memory.memoryId
+          }, {
+            readout,
+            fallbackDisabledReason: '当前无法启用这段记忆，请检查装备是否已拥有且记忆已收录。'
+          });
+    }
+  ));
 }
 
 function getPhysicalAdjacentIds(state: GameState): Set<string> {
@@ -2689,10 +3086,10 @@ function getCombatActionAvailability(state: GameState, action: CombatAction): Re
   }
   if (action === 'use_healing_pill') return isTacticalItemAvailable(state, 'healing_pill')
     ? { available: true }
-    : { available: false, reason: '止血丹未携行、库存不足或被场域封存。' };
+    : { available: false, reason: '止血丹库存不足或被场域封存。' };
   if (action === 'use_thunder_talisman') return isTacticalItemAvailable(state, 'thunder_talisman')
     ? { available: true }
-    : { available: false, reason: '雷火符未携行、库存不足或被场域封存。' };
+    : { available: false, reason: '雷火符未携行（或本局未拾取）、库存不足或被场域封存。' };
   return { available: true };
 }
 
@@ -3584,14 +3981,28 @@ function buildCharacterLoadout(state: GameState): CharacterLoadoutViewModel {
         maxLevel: equipment.maxLevel,
       };
     }),
-    items: TACTICAL_ITEM_IDS.map((itemId) => ({
-      itemId,
-      name: ITEMS[itemId].name,
-      category: TACTICAL_ITEM_CATEGORY_BY_ID[itemId],
-      count: state.inventory[itemId] ?? 0,
-      carried: prepared.has(itemId),
-    })),
-    carriedCount: prepared.size,
+    items: [
+      ...FIELD_SUPPLY_ITEM_IDS.map((itemId) => ({
+        itemId,
+        name: ITEMS[itemId].name,
+        category: TACTICAL_ITEM_CATEGORY_BY_ID[itemId],
+        itemGroup: 'supply' as const,
+        count: state.inventory[itemId] ?? 0,
+        carried: false,
+      })),
+      ...CARRIED_TACTICAL_ITEM_IDS.map((itemId) => ({
+        itemId,
+        name: ITEMS[itemId].name,
+        category: TACTICAL_ITEM_CATEGORY_BY_ID[itemId],
+        itemGroup: 'carry' as const,
+        count: state.inventory[itemId] ?? 0,
+        carried: prepared.has(itemId),
+      })),
+    ],
+    carriedCount: CARRIED_TACTICAL_ITEM_IDS.reduce(
+      (count, itemId) => count + (prepared.has(itemId) ? 1 : 0),
+      0
+    ),
   };
 }
 
@@ -3622,6 +4033,7 @@ export function buildGameViewModel(
       ? {}
       : { visualAssetKey: projection.visualAssetKey }),
     dispatchPolicy: 'one-event-per-action',
+    tasks: buildCurrentTasks(domain),
     sections: [
       projection.objective,
       status,

@@ -83,11 +83,12 @@ export class ScrollView {
   static EventType={SCROLLING:'scrolling'};
   set content(node) { this._content = node; }
   get content() { return this._content; }
-  getScrollOffset() { return { x: 0, y: 0 }; }
+  getScrollOffset() { return this.offset ?? new Vec2(0, 0); }
+  scrollToOffset(offset) { this.offset=new Vec2(offset.x, offset.y); for(const handler of this.node.listeners.get(ScrollView.EventType.SCROLLING) ?? []) handler(); }
 }
 export class Sprite { static SizeMode={CUSTOM:0,RAW:1,TRIMMED:2}; }
 export class SpriteFrame { static createWithImage(image) { const frame = new SpriteFrame(); frame.texture = { __stub: true, image }; return frame; } }
-export class Rect {} export class Vec2 {}
+export class Rect {} export class Vec2 { constructor(x=0,y=0) { Object.assign(this,{x,y}); } }
 export const Input={EventType:{TOUCH_START:'touch-start',TOUCH_END:'touch-end'}};
 export const KeyCode={}; export const input={}; export const game={}; export const Game={};
 export const view={ getFrameSize(){ return {width:0,height:0}; } };
@@ -179,7 +180,7 @@ for (const itemId of ['healing_pill', 'dispel_talisman', 'gate_sigil', 'thunder_
 }
 galleryState = commitOrCurrent(galleryState, {
   type: 'hub/configure-tactical-loadout',
-  itemIds: ['healing_pill', 'dispel_talisman', 'gate_sigil'],
+  itemIds: ['thunder_talisman', 'dispel_talisman', 'gate_sigil'],
 });
 galleryState = commitOrCurrent(galleryState, { type: 'hub/learn-method', methodId: 'mist_breathing' });
 const hubModel = api.buildGameViewModel(galleryState, { hubPanel: 'supplies' });
@@ -303,7 +304,16 @@ for (const [kind, model, sheetState] of KINDS) {
     } else if (kind === 'menu') {
       assert.equal(nodes.filter((node) => node.name.startsWith('MobileSheetShortcut:')).length, 9,
         `${label}: nine shortcut tiles`);
+    } else if (style.id === '01') {
+      // Production bag: default 道具 tab has 3 supply cells + 97 blanks.
+      assert.equal(nodes.filter((node) => node.name.startsWith('MobileSheetItem:')).length, 3,
+        `${label}: three supply cells on the 道具 tab`);
+      assert.equal(nodes.filter((node) => node.name.startsWith('MobileSheetBlank:')).length, 97,
+        `${label}: ninety-seven blanks on the 道具 tab`);
+      assert.equal(nodes.filter((node) => node.name === 'ItemCarriedSeal').length, 0,
+        `${label}: 道具 tab carries no seals`);
     } else {
+      // Alternate layout engines still render the full nine-cell loadout.
       assert.equal(nodes.filter((node) => node.name.startsWith('MobileSheetItem:')).length, 9,
         `${label}: nine tactical item cells`);
       assert.equal(nodes.filter((node) => node.name === 'ItemCarriedSeal').length, 3,
@@ -382,6 +392,17 @@ for (const [kind, model, sheetState] of KINDS) {
       );
     }
   }
+}
+
+// The 携行 tab is a second, independently full 5×100 grid: six carried-item
+// cells + 94 blanks + the three prepared seals.
+{
+  const [, inventoryModel] = KINDS.find(([kind]) => kind === 'inventory');
+  const carry = renderProduction(inventoryModel, { kind: 'inventory', page: 0, tab: 'carry' });
+  const carryNodes = allNodes(carry.rootNode);
+  assert.equal(carryNodes.filter((node) => node.name.startsWith('MobileSheetItem:')).length, 6, 'carry tab: six carried item cells');
+  assert.equal(carryNodes.filter((node) => node.name.startsWith('MobileSheetBlank:')).length, 94, 'carry tab: ninety-four blanks');
+  assert.equal(carryNodes.filter((node) => node.name === 'ItemCarriedSeal').length, 3, 'carry tab: three prepared seals');
 }
 
 // Local contrast fallback removed: the canonical sheetContrastRatio comes

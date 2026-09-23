@@ -8,7 +8,7 @@ import { buildGameViewModel as buildActualGameViewModel } from '@infinite-flow/p
 
 const TEST_CONTROL_KEY = '__INFINITE_FLOW_BOOTSTRAP_RACE_CONTROL__';
 const MANIFEST_UUID = '3d0842ec-43f7-4b5f-961f-39edb535ccd7';
-const MANIFEST_REVISION = 'sha256:c4a23d779df900b49cd9eae86d7be7ce5be7be03e6737e42e03cd0a3294b9ced';
+const MANIFEST_REVISION = 'sha256:18dd6c94a24afa4ec7c0a44b9f6facf4af6ea6f0ef04e60c47ea56aeee468125';
 
 function validManifest() {
   const assets = [
@@ -25,7 +25,7 @@ function validManifest() {
       resourcePath: `dungeon-world/${dungeonId}-v1`,
     })),
   ];
-  for (let index = assets.length; index < 207; index += 1) {
+  for (let index = assets.length; index < 223; index += 1) {
     assets.push({
       key: `item:fixture_${index}`,
       kind: 'item',
@@ -36,7 +36,7 @@ function validManifest() {
   return {
     schemaVersion: 2,
     manifestRevision: MANIFEST_REVISION,
-    assetCount: 207,
+    assetCount: 223,
     assets,
   };
 }
@@ -292,6 +292,8 @@ const virtualModules = new Map([
     }
     export class ScrollView {
       static EventType = { SCROLLING: 'scrolling' };
+      getScrollOffset() { return this.offset ?? new Vec2(0, 0); }
+      scrollToOffset(offset) { this.offset = new Vec2(offset.x, offset.y); this.node?.emit?.(ScrollView.EventType.SCROLLING); }
     }
     export class Vec2 {
       constructor(x = 0, y = 0) { this.x = x; this.y = y; }
@@ -360,6 +362,7 @@ const virtualModules = new Map([
         );
       },
     };
+    export const profiler = { hideStats() {}, showStats() {}, isShowingStats() { return false; } };
     export class Component {
       constructor() { this.node = { name: 'headless-root' }; }
     }
@@ -381,7 +384,12 @@ const virtualModules = new Map([
     }
   `],
   ['@infinite-flow/presentation', `
+    export function buildHubOwnedLoadoutViewModel(state) {
+      return (state.phase ?? 'hub') === 'hub' ? state.ownedLoadout ?? { rows: [] } : undefined;
+    }
     export function buildGameViewModel(state, localUiState) {
+      const actualProjection = globalThis.${TEST_CONTROL_KEY}.actualProjection;
+      if (actualProjection) return actualProjection(state, localUiState);
       const entryDraft = localUiState.entryDraft ?? {
         dungeonId: 'demon_tower_1',
         protocolId: 'standard',
@@ -391,6 +399,7 @@ const virtualModules = new Map([
         localUiState,
         phase: state.phase ?? 'hub',
         visualAssetKey: state.visualAssetKey,
+        tasks: [],
         sections: [{}, { detail: state.detail ?? { kind: 'hub', entryDraft } }],
       };
     }
@@ -633,7 +642,8 @@ const viewVirtualCc = `
     static EventType = { SCROLLING: 'scrolling' };
     set content(node) { this._content = node; }
     get content() { return this._content; }
-    getScrollOffset() { return new Vec2(0, 0); }
+    getScrollOffset() { return this.offset ?? new Vec2(0, 0); }
+    scrollToOffset(offset) { this.offset = new Vec2(offset.x, offset.y); this.node.emit(ScrollView.EventType.SCROLLING); }
   }
   export class Color {
     constructor(r, g, b, a = 255) { this.channels = [r, g, b, a]; Object.assign(this, { r, g, b, a }); }
@@ -3072,6 +3082,7 @@ function exploreModel(decision, options = {}) {
     phase: 'explore',
     screenTitle: options.screenTitle ?? `探索 · ${decision?.dungeonName ?? '未记录章规'}`,
     dispatchPolicy: 'one-event-per-action',
+    tasks: [],
     sections: [
       { kind: 'objective', title: '探索', summary: '清理节点并抵达出口。' },
       {
@@ -3451,6 +3462,7 @@ function hubModel(actions, options = {}) {
     screenTitle: options.screenTitle ?? '主神空间 · 祭坛',
     dispatchPolicy: 'one-event-per-action',
     visualAssetKey: 'scene:main_god_space',
+    tasks: [],
     sections: [
       {
         kind: 'objective',
@@ -5469,6 +5481,7 @@ function combatModel(context, options = {}) {
     phase: 'combat',
     screenTitle: `战斗 · ${context.dungeonName}`,
     dispatchPolicy: 'one-event-per-action',
+    tasks: [],
     sections: [
       { kind: 'objective', title: '战斗', summary: '击败敌人。' },
       {
@@ -6304,6 +6317,7 @@ function resultModel(options = {}) {
     screenTitle: '镇魔塔一层 · 结算',
     visualAssetKey: 'dungeon:demon_tower_1',
     dispatchPolicy: 'one-event-per-action',
+    tasks: [],
     sections: [
       {
         kind: 'objective',
@@ -7005,6 +7019,44 @@ const resultPendingActionsFive = Object.freeze([
 
 const controller = createController();
 globalThis[TEST_CONTROL_KEY] = controller;
+
+// App supply seam must project the inspected bag item, independent of the
+// active NPC and the last selected shop item. Use the real pure projection.
+{
+  const app = new InfiniteFlowApp();
+  const state = createInitialState();
+  state.inventory.gate_sigil = 1;
+  app.client = { getState: () => state };
+  const projections = [];
+  controller.actualProjection = (snapshot, local) => {
+    projections.push({ snapshot, local });
+    return buildActualGameViewModel(snapshot, local);
+  };
+  try {
+    for (const hubPanel of ['equipment', 'supplies']) {
+      app.localUiState = { hubPanel, hubSelections: { supplies: 'healing_pill', equipment: 'training_blade' } };
+      const before = structuredClone(app.localUiState);
+      app.viewModel = buildActualGameViewModel(state, app.localUiState);
+      const actions = app.projectSupplyActions('gate_sigil');
+      assert.equal(projections.at(-1).local.hubPanel, 'supplies', 'App uses the supplies command projection');
+      assert.equal(projections.at(-1).local.hubSelections.supplies, 'gate_sigil', 'App targets the inspected bag item');
+      assert.equal(projections.at(-1).snapshot, state, 'App projects current domain state');
+      assert.deepEqual(app.localUiState, before, 'on-demand supply projection preserves NPC selections');
+      const toggle = actions.find(action => action.actionId === 'hub.supplies.toggle:gate_sigil');
+      assert.ok(toggle?.enabled && toggle.event?.kind === 'command', 'App makes the gate toggle reachable');
+      const result = reduceGameCommand(state, toggle.event.command);
+      assert.equal(result.status, 'committed');
+      assert.ok(result.state.preparedItemIds.includes('gate_sigil'), 'App seam command configures the inspected gate');
+    }
+    const count = projections.length;
+    app.viewModel = { phase: 'combat' };
+    assert.deepEqual(app.projectSupplyActions('gate_sigil'), [], 'App never provides hub carry actions during combat');
+    assert.equal(projections.length, count, 'combat does not request an auxiliary projection');
+  } finally {
+    delete controller.actualProjection;
+    app.client = undefined;
+  }
+}
 
 function createRetryScheduler() {
   const tasks = [];
@@ -9388,6 +9440,17 @@ delete globalThis.wx;
   const key = (code, down) => globalThis.__walkingTestInput.emit(down ? 'key-down' : 'key-up', { keyCode: code });
   const advance = (frames = 30) => { for (let i = 0; i < frames; i += 1) view.tick(1 / 60); };
   const model = hubModel(hubEntryActionFixtures(false));
+  // Keep the walking boundary fixture explicit: service options own the same
+  // immutable actions as the projection, while entering remains a footer action.
+  const dungeonService = buildActualGameViewModel(createInitialState(), { hubPanel: 'entry' }).sections[1].detail.entryServices.find(service => service.id === 'dungeon');
+  model.sections[1].detail.entryServices = [dungeonService, {
+    id: 'protocol', name: '探索协议', summary: '标准探索',
+    options: model.sections[2].actions.filter(action => action.actionId.startsWith('hub.entry.protocol:')).map(action => ({
+      id: action.actionId, name: action.label,
+      description: action.disabledReason ?? '确认入场前可调整本次探索协议。',
+      selected: action.actionId === 'hub.entry.protocol:standard', action,
+    })),
+  }];
   const domainSnapshot = JSON.stringify(model);
   view.render(model, chrome, EXPLORE_INSETS_320);
   assertDarkWalkingUi(root(), model, EXPLORE_INSETS_320);
@@ -9452,14 +9515,52 @@ delete globalThis.wx;
   const beforeInteraction = calls.length;
   emitTouch(findNode(root(), 'WalkInteract'), 901);
   const enter = model.sections[2].actions.find((action) => action.actionId === 'hub.entry.confirm');
-  assert.equal(calls.length, beforeInteraction, 'approaching the portal opens configuration, never auto-enters');
+  assert.equal(calls.length, beforeInteraction, 'approaching the portal opens its chapter directory, never auto-enters');
   assert.ok(findNode(root(), 'MobileInfoSheet:entry'));
-  emitTouch(findNode(root(), 'MobileSheetTab:actions'), 902);
-  emitTouch(findNode(root(), 'MobileSheetAction:hub.entry.confirm'), 903);
-  assert.equal(calls.length, beforeInteraction, 'reading entry costs is not confirmation');
-  assert.ok(collectStrings(findNode(root(), 'MobileSheetExecute:hub.entry.confirm')).includes('确认入场'));
-  emitTouch(findNode(root(), 'MobileSheetExecute:hub.entry.confirm'), 904);
-  assert.equal(calls.length, beforeInteraction + 1);
+  assert.equal(findNode(root(), 'MobileSheetEntryConfirm'), undefined, 'chapter directory cannot enter before a chapter is opened');
+  assert.equal(findNode(root(), 'MobileSheetEntryService:protocol'), undefined, 'default portal starts with chapters, not configuration services');
+  assert.equal(dungeonService.options.length, 19);
+  for (const option of dungeonService.options) assert.ok(findNode(root(), `MobileSheetEntryDungeon:${option.id}`), 'all 19 chapters are immediately reachable');
+  const dungeonScroll = () => Array.from(findNode(root(), 'MobileSheetEntryDungeonScroll').components.values()).find(component => typeof component.getScrollOffset === 'function');
+  dungeonScroll().scrollToOffset({ x: 0, y: 180 });
+  const currentChapter = dungeonService.options.find(option => option.selected);
+  emitTouch(findNode(root(), `MobileSheetEntryDungeon:${currentChapter.id}`), 902);
+  assert.equal(calls.length, beforeInteraction, 'current chapter opens configuration without dispatching selection or entry');
+  assert.ok(findNode(root(), 'MobileSheetEntryService:protocol'));
+  assert.equal(view.mobileSheet.entryDungeonScrollOffset, 180, 'configuration retains the separate chapter list position');
+  emitTouch(findNode(root(), 'MobileSheetEntryBack'), 903);
+  assert.equal(dungeonScroll().getScrollOffset().y, 180, 'back restores the chapter directory scroll position');
+  const otherChapter = dungeonService.options.find(option => !option.selected);
+  const staleChapterRow = findNode(root(), `MobileSheetEntryDungeon:${otherChapter.id}`);
+  emitTouch(staleChapterRow, 904);
+  assert.equal(calls.length, beforeInteraction + 1, 'another chapter forwards one preparation selection');
+  assert.equal(calls.at(-1).event, otherChapter.action.event, 'chapter selection preserves its exact projection-owned event');
+  assert.equal(view.mobileSheet.entryView, 'configuration', 'chapter selection switches the host sheet before dispatch');
+  assert.equal(view.mobileSheet.entryDungeonScrollOffset, 180, 'chapter selection preserves directory position across host refresh');
+  // The host renders the projection after a local selection; refresh must not
+  // recapture the old directory scroll as the new configuration scroll.
+  view.render(model, chrome, EXPLORE_INSETS_320);
+  assert.ok(findNode(root(), 'MobileSheetEntryService:protocol'));
+  assert.equal(view.mobileSheet.catalogScrollOffset, 0, 'new configuration starts at the top after host refresh');
+  emitTouch(staleChapterRow, 905);
+  assert.equal(calls.length, beforeInteraction + 1, 'a chapter callback from the old directory cannot dispatch again');
+  emitTouch(findNode(root(), 'MobileSheetEntryBack'), 906);
+  assert.equal(dungeonScroll().getScrollOffset().y, 180, 'back after a dispatched chapter selection restores the same list position');
+  emitTouch(findNode(root(), `MobileSheetEntryDungeon:${currentChapter.id}`), 907);
+  const beforeEntryConfirmation = calls.length;
+  const staleEntryConfirm = findNode(root(), 'MobileSheetEntryConfirm');
+  emitTouch(findNode(root(), 'MobileSheetEntryService:protocol'), 902);
+  assert.ok(findNode(root(), 'MobileSheetEntryOption:hub.entry.protocol:standard'), 'portal service opens its options in the list');
+  emitTouch(findNode(root(), 'MobileSheetEntryOption:hub.entry.protocol:standard'), 903);
+  assert.equal(calls.length, beforeEntryConfirmation, 'reading or touching the selected entry protocol is not confirmation');
+  emitTouch(staleEntryConfirm, 903);
+  assert.equal(calls.length, beforeEntryConfirmation, 'service refresh invalidates the stale entry confirmation callback');
+  const entryConfirm = findNode(root(), 'MobileSheetEntryConfirm');
+  assert.ok(collectStrings(entryConfirm).includes('确认入场'));
+  assert.ok(findNode(findNode(root(), 'MobileSheetEntryFooter'), 'MobileSheetEntryConfirm'), 'entry confirmation remains in its fixed footer');
+  emitTouch(entryConfirm, 904);
+  entryConfirm.emit('touch-end', { getID: () => 904, propagationStopped: false });
+  assert.equal(calls.length, beforeEntryConfirmation + 1, 'duplicate entry touch-end dispatches exactly one request');
   assert.equal(calls.at(-1).event, enter.event, 'explicit portal confirmation dispatches the exact entry action');
   emitTouch(findNode(root(), 'MobileSheetClose'), 905);
   const beforeDetails = pos();
@@ -9797,7 +9898,7 @@ console.log(JSON.stringify({
   // variants, lawless fail-closed, 320x568/390x844 reachability, danger law
   // rendering, no non-combat commands, post-destroy inertness). Every NON_RELEASE
   // scenario also proves zero wx.getStorageSync/setStorageSync calls.
-  scenarios: 90,
+  scenarios: 91,
   dedicatedDungeonBackgrounds: 19,
   darkUiBodyContrastPairs: 15,
   darkUiMinimumBodyContrast: Number(darkUiMinimumBodyContrast.toFixed(3)),

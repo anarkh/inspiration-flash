@@ -25,6 +25,9 @@ const virtualModules = new Map([
     }
     export class ImageAsset {}
     export class JsonAsset {}
+    export class SpriteFrame {
+      static createWithImage() { throw new Error('visual figures are not used in the diagnostic boot test'); }
+    }
     export const assetManager = {
       loadBundle(name) {
         // The visual bootstrap is not under test here. Never settle: the app's
@@ -33,6 +36,7 @@ const virtualModules = new Map([
         globalThis.${TEST_CONTROL_KEY}.loadBundleCalls.push(name);
       },
     };
+    export const profiler = { hideStats() {}, showStats() {}, isShowingStats() { return false; } };
   `],
   ['@infinite-flow/client', `
     export function createInfiniteFlowClient(options) {
@@ -43,6 +47,9 @@ const virtualModules = new Map([
     export function getRouteContractById() { return undefined; }
   `],
   ['@infinite-flow/presentation', `
+    export function buildHubOwnedLoadoutViewModel(state) {
+      return (state.phase ?? 'hub') === 'hub' ? state.ownedLoadout ?? { rows: [] } : undefined;
+    }
     export function buildGameViewModel(state, localUiState) {
       return globalThis.${TEST_CONTROL_KEY}.buildViewModel(state, localUiState);
     }
@@ -104,6 +111,20 @@ const virtualModules = new Map([
       focusPrimaryActions() {}
       destroy() { this.destroyCalls += 1; }
     }
+  `],
+  ['cc/env', `
+    export const DEBUG = false;
+    export const HTML5 = false;
+  `],
+  // Browser-only galleries are outside the WeChat boot boundary. Fail if a
+  // future change accidentally enters one during this diagnostic regression.
+  ['./ui/InfiniteFlowSheetGallery', `
+    export function sheetGalleryRequested() { return false; }
+    export function startInfiniteFlowSheetGallery() { throw new Error('browser gallery entered during WeChat boot'); }
+  `],
+  ['./ui/InfiniteFlowSheetLayoutGallery', `
+    export function sheetLayoutGalleryRequested() { return false; }
+    export function startInfiniteFlowSheetLayoutGallery() { throw new Error('browser layout gallery entered during WeChat boot'); }
   `],
 ]);
 
@@ -221,7 +242,11 @@ function createController() {
       this.viewModelCalls.push({ state, localUiState });
       const builder = this.viewModelBuilders.shift();
       if (builder) return builder(state, localUiState);
-      return { sections: [], visualAssetKey: undefined };
+      return {
+        phase: state.phase ?? 'hub',
+        sections: [{}, { detail: { kind: 'hub' } }],
+        visualAssetKey: undefined,
+      };
     },
   };
 }
@@ -312,7 +337,7 @@ function assertStageAttributed(result, stage) {
 {
   const result = await runScenario();
   try {
-    assert.equal(result.app.runtimeMode.kind, 'wx-devtools');
+    assert.equal(result.app.runtimeMode.kind, 'wx-devtools', result.app.blockingMessage);
     assert.match(result.app.activityMessage, /NON_RELEASE 就绪/);
     assert.ok(result.app.client, 'success hands off the client');
     assert.equal(result.controller.createPortsCalls, 1, 'platform-ports stage ran');

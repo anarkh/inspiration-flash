@@ -338,6 +338,48 @@ export type EquipmentMemoryLibraryViewModel = Readonly<{
   acquisitionReadout: string;
 }>;
 
+export type HubShopRowViewModel = Readonly<{
+  id: string;
+  name: string;
+  category: string;
+  /** Display-only grade; does not change item stats, acquisition rules, or saves. */
+  rarity?: 'poor' | 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+  visualAssetKey?: string;
+  description: string;
+  status: string;
+  details: readonly Readonly<{ label: string; value: string }>[];
+  actions: readonly ViewActionModel[];
+}>;
+
+export type HubShopCatalogViewModel = Readonly<{
+  panel: HubCatalogPanel;
+  npcName: string;
+  title: string;
+  greeting: string;
+  portraitAssetKey?: string;
+  rows: readonly HubShopRowViewModel[];
+  serviceTitle?: string;
+  services: readonly ViewActionModel[];
+}>;
+
+export type HubOwnedLoadoutViewModel = Readonly<{
+  rows: readonly HubShopRowViewModel[];
+}>;
+
+export type HubEntryServiceViewModel = Readonly<{
+  id: string;
+  name: string;
+  summary: string;
+  description?: string;
+  options: readonly Readonly<{
+    id: string;
+    name: string;
+    description: string;
+    selected: boolean;
+    action: ViewActionModel;
+  }>[];
+}>;
+
 export type HubDetailViewModel = Readonly<{
   kind: 'hub';
   activePanel: HubPanel;
@@ -348,8 +390,10 @@ export type HubDetailViewModel = Readonly<{
   seedStatus: 'host-on-confirm';
   dungeonCount: number;
   entryBuild: EntryBuildViewModel;
+  entryServices?: readonly HubEntryServiceViewModel[];
   equipmentCommission?: EquipmentCommissionDetailViewModel;
   equipmentMemory?: EquipmentMemoryLibraryViewModel;
+  shop?: HubShopCatalogViewModel;
 }>;
 
 export type EquipmentMemoryHuntSignalViewModel = Readonly<{
@@ -807,6 +851,8 @@ export type CharacterLoadoutViewModel = Readonly<{
     itemId: ItemId;
     name: string;
     category: TacticalItemCategory;
+    /** supply = 补给品（不占携行槽）；carry = 携行特殊道具（受 3 槽约束）。 */
+    itemGroup: 'supply' | 'carry';
     count: number;
     carried: boolean;
   }>[];
@@ -877,11 +923,24 @@ export type OrderedViewSections = readonly [
   LogsSection
 ];
 
+export type TaskViewModel = Readonly<{
+  id: string;
+  title: string;
+  kind: 'mainline' | 'side';
+  status: 'active' | 'completed';
+  objectives: readonly string[];
+  detailObjectives?: readonly string[];
+  description: string;
+  hint: string;
+  rewardText: string;
+}>;
+
 export type GameViewModel = Readonly<{
   schemaVersion: 1;
   phase: Phase;
   screenTitle: string;
   visualAssetKey?: GameAssetDefinition['key'];
   dispatchPolicy: 'one-event-per-action';
+  tasks: readonly TaskViewModel[];
   sections: OrderedViewSections;
 }>;

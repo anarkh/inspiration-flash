@@ -18,12 +18,13 @@ import {
   view,
 } from 'cc';
 import type { Asset } from 'cc';
+import type { ItemId } from '@infinite-flow/core';
 import { renderInfiniteFlowScene } from './InfiniteFlowScene';
 import type { InfiniteFlowSceneOptions } from './InfiniteFlowScene';
 import { renderInfiniteFlowWalkScene } from './InfiniteFlowWalkScene';
 import type { WalkSceneHandle } from './InfiniteFlowWalkScene';
 import { InfiniteFlowWalkInput } from './InfiniteFlowWalkInput';
-import { renderInfiniteFlowInfoSheet } from './InfiniteFlowInfoSheet';
+import { captureInfiniteFlowInfoSheetState, renderInfiniteFlowInfoSheet } from './InfiniteFlowInfoSheet';
 import type { MobilePanelKind, MobileSheetState } from './InfiniteFlowInfoSheet';
 import { buildWalkWorld, nearestWalkTarget } from './walk-world';
 import type { WorldPoint, WorldTarget } from './walk-world';
@@ -45,6 +46,7 @@ import type {
   GameViewModel,
   HelpSection,
   HubPanel,
+  HubOwnedLoadoutViewModel,
   MapNodeViewModel,
   MapNodeState,
   MapViewModel,
@@ -262,7 +264,8 @@ export type InfiniteFlowRuntimeChrome = Readonly<{
   blockingMessage?: string;
   busyActionId?: string;
   /** Hub-only: supplies-panel actions for item-tip carry toggles (projected on demand). */
-  supplyActions?: () => readonly ViewActionModel[];
+  supplyActions?: (itemId: ItemId) => readonly ViewActionModel[];
+  ownedLoadout?: () => HubOwnedLoadoutViewModel | undefined;
 }>;
 
 export type InfiniteFlowPlayerChrome = Readonly<{
@@ -2854,6 +2857,7 @@ export class InfiniteFlowView {
     safeInsets: InfiniteFlowSafeInsets,
   ): void {
     if (this.destroyed) return;
+    if (this.mobileSheet) this.mobileSheet = captureInfiniteFlowInfoSheetState(this.root, this.mobileSheet);
     this.stopWalking();
     this.lastModel = model;
     this.lastChrome = chrome;
@@ -2962,7 +2966,17 @@ export class InfiniteFlowView {
           const event = action.event;
           if (event === undefined) return;
           this.bindPhysical(node, enabled && action.enabled, (physicalId) => {
-            if (isCurrent()) this.delegate.activate(physicalId, action.actionId, event);
+            if (!isCurrent()) return;
+            if (node.name.startsWith('MobileSheetShopAction:') && this.mobileSheet) {
+              this.mobileSheet = { ...captureInfiniteFlowInfoSheetState(root, this.mobileSheet),
+                selectedActionId: undefined, catalogMoreOpen: false };
+            }
+            if (node.name.startsWith('MobileSheetEntryDungeon:') && this.mobileSheet) {
+              const state = captureInfiniteFlowInfoSheetState(root, this.mobileSheet);
+              this.mobileSheet = { ...state, entryView: 'configuration', entryServiceId: undefined,
+                entryDungeonScrollOffset: state.catalogScrollOffset ?? 0, catalogScrollOffset: 0 };
+            }
+            this.delegate.activate(physicalId, action.actionId, event);
           });
         },
         close: () => { this.mobileSheet = undefined; this.renderAgain(); },
@@ -2972,6 +2986,7 @@ export class InfiniteFlowView {
           this.delegate.activate(`cocos-help:${this.physicalSequence}`, entry.openAction.actionId, entry.openAction.event);
         },
         ...(chrome.supplyActions === undefined ? {} : { supplyActions: chrome.supplyActions }),
+        ...(chrome.ownedLoadout === undefined ? {} : { ownedLoadout: chrome.ownedLoadout }),
       });
     }
 

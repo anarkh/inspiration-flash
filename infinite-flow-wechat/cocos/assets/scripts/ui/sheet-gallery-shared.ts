@@ -54,11 +54,11 @@ export async function createGalleryClient(): Promise<InfiniteFlowClient> {
     }
   };
   // Starting save carries 850 reward points: stay inside it so every dispatch
-  // commits (healing 120 x3, dispel 240, gate 220 = 820).
+  // commits (healing 120 x2, thunder 320, dispel 240 = 800).
   for (const [itemId, amount] of [
-    ['healing_pill', 3],
+    ['healing_pill', 2],
+    ['thunder_talisman', 1],
     ['dispel_talisman', 1],
-    ['gate_sigil', 1],
   ] as const) {
     for (let purchased = 0; purchased < amount; purchased += 1) {
       await dispatchIgnored({ type: 'hub/buy-item', itemId });
@@ -66,7 +66,7 @@ export async function createGalleryClient(): Promise<InfiniteFlowClient> {
   }
   await dispatchIgnored({
     type: 'hub/configure-tactical-loadout',
-    itemIds: ['healing_pill', 'dispel_talisman', 'gate_sigil'],
+    itemIds: ['thunder_talisman', 'dispel_talisman', 'gate_sigil'],
   });
   await dispatchIgnored({ type: 'hub/learn-method', methodId: 'mist_breathing' });
   await dispatchIgnored({ type: 'hub/recruit-companion', companionId: 'qin_che' });

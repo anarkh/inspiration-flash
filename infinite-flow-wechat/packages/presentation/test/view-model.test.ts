@@ -1,4 +1,8 @@
 import type { GameCommand } from '@infinite-flow/application';
+import { verifyHubShops } from './hub-shop.test.js';
+import './owned-loadout.test.js';
+import './entry-services.test.js';
+import './task-list.test.js';
 import { reduceGameCommand } from '@infinite-flow/application';
 import {
   DUNGEON_FEATURE_HELP_IDS,
@@ -625,7 +629,9 @@ function verifyEquipmentMemoryProjection(): void {
   assert(noUnlockView.sections[1].detail.kind === 'hub', 'no-unlock memory state remains inspectable');
   equal(noUnlockView.sections[1].detail.equipmentMemory?.unlocked, false, 'no-unlock state is explicit');
   equal(noUnlockView.sections[1].detail.equipmentMemory?.active, false, 'no-active state is explicit');
-  assert(noUnlockView.sections[1].detail.equipmentMemory?.acquisitionReadout.includes('现代流程不预选记忆狩猎'), 'empty library states the modern no-hunt boundary');
+  const acquisitionReadout = noUnlockView.sections[1].detail.equipmentMemory?.acquisitionReadout ?? '';
+  assert(acquisitionReadout.includes('无需另接记忆狩猎任务'), 'empty library states the modern no-hunt boundary');
+  assert(['满级', '铭刻', '淬炼 II', '穿戴', '副本出口'].every((condition) => acquisitionReadout.includes(condition)), 'empty library explains the collection requirements to the player');
 
   const unsupportedView = buildGameViewModel(rich, {
     hubPanel: 'equipment',
@@ -1023,25 +1029,37 @@ function verifyHubPanelsAndGrowthCommands(): void {
 
   const supplies = buildGameViewModel(initial, {
     hubPanel: 'supplies',
-    hubSelections: { supplies: 'healing_pill' }
+    hubSelections: { supplies: 'thunder_talisman' }
   });
   verifyActionContract(supplies);
   assert(supplies.sections[1].detail.kind === 'hub', 'supplies hub detail');
   equal(supplies.sections[1].detail.activePanel, 'supplies', 'supplies panel selection');
   assert(getActions(supplies).length < 20, 'hub panel navigation plus focused operations remains compact');
   assert(getActions(supplies).some((action) => action.actionId === 'hub.panel:entry'), 'every non-entry panel can return to entry');
-  assertEnabledCommand(initial, supplies, 'hub.supplies.buy:healing_pill', 'hub/buy-item');
-  const toggle = commandFrom(requireAction(supplies, 'hub.supplies.toggle:healing_pill'));
-  equal(toggle.type, 'hub/configure-tactical-loadout', 'supply toggle command type');
+  assertEnabledCommand(initial, supplies, 'hub.supplies.buy:thunder_talisman', 'hub/buy-item');
+  const toggle = commandFrom(requireAction(supplies, 'hub.supplies.toggle:thunder_talisman'));
+  equal(toggle.type, 'hub/configure-tactical-loadout', 'carried-item toggle command type');
   assert(toggle.type === 'hub/configure-tactical-loadout', 'toggle payload narrowed');
-  equal(toggle.itemIds.join(','), 'healing_pill', 'toggle adds one item without replacing unrelated current choices');
+  equal(toggle.itemIds.join(','), 'thunder_talisman', 'toggle adds one item without replacing unrelated current choices');
   const preset = commandFrom(requireAction(supplies, 'hub.loadout.chapter-one'));
   assert(preset.type === 'hub/configure-tactical-loadout', 'chapter-one preset command type');
-  equal(preset.itemIds.join(','), 'healing_pill,dispel_talisman,gate_sigil', 'verified first-chapter loadout shortcut remains stable');
+  equal(preset.itemIds.join(','), 'thunder_talisman,dispel_talisman,gate_sigil', 'verified first-chapter loadout shortcut remains stable');
+
+  // 补给品仍可购买，但不生成装入/移出携行的 toggle action。
+  const supplyView = buildGameViewModel(initial, {
+    hubPanel: 'supplies',
+    hubSelections: { supplies: 'healing_pill' }
+  });
+  verifyActionContract(supplyView);
+  assertEnabledCommand(initial, supplyView, 'hub.supplies.buy:healing_pill', 'hub/buy-item');
+  assert(
+    getActions(supplyView).find((action) => action.actionId === 'hub.supplies.toggle:healing_pill') === undefined,
+    'supply items never emit a carry toggle action'
+  );
 
   const carriedState: GameState = {
     ...initial,
-    preparedItemIds: ['healing_pill', 'gate_sigil']
+    preparedItemIds: ['thunder_talisman', 'gate_sigil']
   };
   const carriedView = buildGameViewModel(carriedState, {
     hubPanel: 'supplies',
@@ -1049,7 +1067,7 @@ function verifyHubPanelsAndGrowthCommands(): void {
   });
   const addThird = commandFrom(requireAction(carriedView, 'hub.supplies.toggle:dispel_talisman'));
   assert(addThird.type === 'hub/configure-tactical-loadout', 'add-third toggle command type');
-  equal(addThird.itemIds.join(','), 'healing_pill,gate_sigil,dispel_talisman', 'toggle preserves every existing tactical selection');
+  equal(addThird.itemIds.join(','), 'thunder_talisman,gate_sigil,dispel_talisman', 'toggle preserves every existing tactical selection');
 
   const rich = buildRichHubState();
   for (const hubPanel of HUB_PANELS) {
@@ -2742,6 +2760,7 @@ function verifyResultSettlement(): void {
 }
 
 verifyHubAndHelp();
+verifyHubShops();
 verifyEquipmentChapterRecipeSemantics();
 verifyEquipmentCommission();
 verifyEquipmentMemoryProjection();

@@ -24,6 +24,15 @@
 - 陷阱、奖励、调查、共鸣和法则选择由现场物件打开选项，先看效果/风险，再明确执行。
 - 装备、成长、掉落、章节解锁和存档结构不变；地图只查看已知区域，不能点击传送。
 
+NPC 商品以带品质边框的图标网格展示，点击查看详情，购买与培养操作固定在详情右下角；
+任务使者保留文字列表。购入后的装备、激活和出战配置在角色整备中进行，背包负责携行。
+轮回之门先列出全部 19 个副本，点击后进入服务配置，确认入场按钮固定在右下角。
+地图一次挂载完整区域，可上下左右拖动；“目标”首屏列出当前任务及简短进度，点击后
+查看完整条件和奖励，返回列表保留滚动位置。
+
+补给品（止血丹、护甲补片、定神香）不占携行槽，有库存即可在副本使用；特殊道具需要
+入场携行或本局拾取。旧配置中的补给品在携行校验时剔除，不改变存档结构。
+
 19 个副本均使用与章节介绍对应的独立俯视底图：积水地铁、废弃医院、陨矿洞穴、
 灰烬竞技场、梦档案馆、方舟甲板、生物原型库和监察街道等，不再共用大厅地砖与图标柱。
 底图由内置 imagegen 生成，源图及逐张提示词保存在 `art-source/dungeon-world/`，运行时
@@ -39,7 +48,7 @@ Web 预览只保留内存进度，刷新后丢失。真实 Chrome 已覆盖 750�
 Explore 现在投影五个由 selector 派生的章节决策面：章节法则、章节指令、有序路线
 契约、压迫段位和追猎者。它们只读消费 ViewModel，不重算领域规则；presentation
 聚焦测试覆盖 `metro_abyss`、`starfall_mine`、`rust_hospital` 三个回放副本、pending
-装备供奉共存与 JSON/deep freeze 快照。默认行走界面通过“目标”弹层分页查看这五面，
+装备供奉共存与 JSON/deep freeze 快照。默认行走界面通过“目标”中的“章规与探索”查看这五面，
 地图、当前节点选择、装备记忆与菜单行动各自点开查看；邻近帮助只打开本地既有帮助，
 headless 覆盖物理 320×568 与 390×844 两档。
 
@@ -66,7 +75,7 @@ law/pursuit/fail-closed/JSON/deep-freeze/动作不变，headless 覆盖 320×568
 - `packages/save-codec/`：Web v1 原始存档的只读兼容解码器与 checksum fixture。
 - `packages/client/`：唯一 session 编排、入场 seed、物理输入去重和生命周期绑定。
 - `packages/presentation/`：四阶段只读 ViewModel、帮助语义和移动端设计令牌。
-- `cocos/`：Cocos 3.8.8 场景、行走及详情 UI、207 个资源和微信平台适配。
+- `cocos/`：Cocos 3.8.8 场景、行走及详情 UI、223 个资源和微信平台适配。
 - `acceptance/`：冻结的 103 项迁移验收登记；登记有效不等于 case PASS。
 - `docs/`：迁移阶段、工具链、当前状态和风险。
 
@@ -83,7 +92,7 @@ npm run verify
 
 `verify` 会核对精确 Node/npm/TypeScript 版本，按依赖顺序构建六个共享包，并检查
 六包的 resolved `target/lib` 与发布 JavaScript 均满足 ES2020、源码目录无生成物
-污染、207 项资源及 Creator metadata、Cocos 场景、headless
+污染、223 项资源及 Creator metadata、Cocos 场景、headless
 bootstrap/销毁/视觉资源与装备系统竞态、连续移动及手机详情检查、103 项 registry、验收 runner 合同、远程 bundle
 配置/产物合同、全部
 workspace 类型、90 项微信平台自检和包级测试。

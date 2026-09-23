@@ -16,7 +16,25 @@ const manifestPath = resolve(
 const assetRoot = resolve(projectRoot, "cocos/assets");
 const resourceRoot = resolve(projectRoot, "cocos/assets/resources");
 const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
-const EXPECTED_ASSET_COUNT = 207;
+const EXPECTED_ASSET_COUNT = 223;
+const NPC_GRID_ASSET_KEYS = new Set([
+  "item:method_mist_breathing",
+  "item:method_iron_body",
+  "item:method_cloud_step",
+  "item:method_gate_sense",
+  "item:method_star_core_method",
+  "item:method_beast_taming",
+  "item:method_void_heart",
+  "item:bloodline_titan_marrow",
+  "item:bloodline_void_symbiote",
+  "item:bloodline_bastion_chitin",
+  "item:bloodline_phoenix_ember",
+  "character:companion_qin_che",
+  "character:companion_zhou_yingxue",
+  "character:companion_lu_guanlan",
+  "npc:bloodline_priest",
+  "npc:companion_guide",
+]);
 const FROZEN_PRE_WORLD_ASSET_COUNT = 188;
 const FROZEN_PRE_WORLD_ENTRIES_SHA256 = "37b55ba133a83ba2c1b713d437be2b24345dbf01314ce91275b475033d39906f";
 const failures = [];
@@ -267,7 +285,9 @@ if (manifest.assetCount !== EXPECTED_ASSET_COUNT || assets.length !== EXPECTED_A
   );
 }
 
-const originalAssets = assets.filter((asset) => !asset.key.startsWith("scene:dungeon_world_"));
+const npcGridAssets = assets.filter((asset) => NPC_GRID_ASSET_KEYS.has(asset.key));
+if (npcGridAssets.length !== 16) failures.push("NPC grid must include all 16 approved artworks");
+const originalAssets = assets.filter((asset) => !asset.key.startsWith("scene:dungeon_world_") && !NPC_GRID_ASSET_KEYS.has(asset.key));
 if (originalAssets.length !== FROZEN_PRE_WORLD_ASSET_COUNT
   || sha256(JSON.stringify(originalAssets)) !== FROZEN_PRE_WORLD_ENTRIES_SHA256) {
   failures.push("the original 187 Web assets and walking atlas must remain unchanged");

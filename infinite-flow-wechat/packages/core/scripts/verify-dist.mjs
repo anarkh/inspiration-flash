@@ -173,4 +173,57 @@ assert.ok(
   'equipment-system.ts must use Array.from(new Set() for target-safe dedup',
 );
 
-console.log('Core dist ESM, explicit subpath exports, deterministic seed injection, equipment catalog diagnostic, and Set-dedup target safety verified.');
+// Carry split: supplies (3) are unrestricted; the other 6 tactical items are
+// the only ones normalized into the carried loadout, and in-run usability
+// follows the entry snapshot or same-run lootBag pickups.
+const {
+  TACTICAL_ITEM_IDS,
+  FIELD_SUPPLY_ITEM_IDS,
+  CARRIED_TACTICAL_ITEM_IDS,
+  normalizeTacticalLoadout,
+  validateTacticalLoadout,
+  createTacticalLoadoutSnapshot,
+  isTacticalItemUsableInRun
+} = await import(`@infinite-flow/core/tactical-loadout`);
+assert.deepEqual([...FIELD_SUPPLY_ITEM_IDS], ['healing_pill', 'armor_patch', 'focus_incense']);
+assert.deepEqual(
+  [...FIELD_SUPPLY_ITEM_IDS, ...CARRIED_TACTICAL_ITEM_IDS].sort(),
+  [...TACTICAL_ITEM_IDS].sort(),
+  'supplies + carried items partition the nine tactical ids'
+);
+const legacyNormalization = normalizeTacticalLoadout([
+  'healing_pill', 'dispel_talisman', 'gate_sigil', 'armor_patch'
+]);
+assert.deepEqual(
+  [...legacyNormalization.normalizedItemIds],
+  ['dispel_talisman', 'gate_sigil'],
+  'supplies are silently stripped from legacy preparedItemIds'
+);
+assert.deepEqual(legacyNormalization.invalidItemIds, []);
+assert.deepEqual(
+  createTacticalLoadoutSnapshot(['healing_pill', 'gate_sigil']).itemIds,
+  ['gate_sigil'],
+  'entry snapshots never carry supply ids'
+);
+assert.equal(
+  validateTacticalLoadout(['healing_pill', 'thunder_talisman', 'dispel_talisman', 'gate_sigil']).isValid,
+  true,
+  'a loadout of three carried items plus supplies fits the 3 general slots'
+);
+const snapshot = createTacticalLoadoutSnapshot(['gate_sigil']);
+assert.equal(isTacticalItemUsableInRun(snapshot, {}, 'healing_pill'), true, 'supply usable without snapshot entry');
+assert.equal(isTacticalItemUsableInRun(snapshot, {}, 'gate_sigil'), true, 'snapshotted carried item usable');
+assert.equal(isTacticalItemUsableInRun(snapshot, {}, 'thunder_talisman'), false, 'unsnapshotted carried item locked');
+assert.equal(
+  isTacticalItemUsableInRun(snapshot, { thunder_talisman: 1 }, 'thunder_talisman'),
+  true,
+  'same-run lootBag pickup becomes immediately usable'
+);
+assert.equal(
+  isTacticalItemUsableInRun(undefined, {}, 'thunder_talisman'),
+  true,
+  'legacy runs without a snapshot stay unrestricted'
+);
+assert.equal(isTacticalItemUsableInRun(snapshot, {}, 'demon_bone'), false, 'non-tactical id is false');
+
+console.log('Core dist ESM, explicit subpath exports, deterministic seed injection, equipment catalog diagnostic, Set-dedup target safety, and supply/carry loadout split verified.');

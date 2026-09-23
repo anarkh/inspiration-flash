@@ -323,8 +323,8 @@ try {
   };
   assert.equal(profile.creator.version, "3.8.8");
   assert.equal(profile.creator.builderConfigVersion, "1.3.9");
-  assert.equal(profile.source.assetCount, 207);
-  assert.equal(profile.source.resourceBytes, 76_702_709);
+  assert.equal(profile.source.assetCount, 223);
+  assert.equal(profile.source.resourceBytes, 78_614_634);
   assert.equal(profile.bundle.uuid, "fb6cd6ef-57d2-4cf7-8286-327137b480cc");
   assert.equal(profile.bundle.bundleConfigID, "resources-remote-wechat-v1");
   assert.deepEqual(validateProjectBundlePolicy(profile, projectBundlePolicy), []);
@@ -953,7 +953,7 @@ try {
     releaseEligible: true,
     nonRelease: false,
   });
-  assert.equal(firstRemoteOutput.tracedAssets, 207);
+  assert.equal(firstRemoteOutput.tracedAssets, 223);
   assert.equal(firstRemoteOutput.configBundleManifestUuid, profile.configBundle.manifestUuid);
   assert.equal(firstRemoteOutput.treeSha256, repeatedRemoteOutput.treeSha256);
   assert.equal(firstRemoteOutput.packageSha256, repeatedRemoteOutput.packageSha256);

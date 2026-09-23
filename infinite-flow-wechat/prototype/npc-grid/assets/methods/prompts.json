@@ -1,0 +1,40 @@
+{
+  "tool": "built-in image_gen",
+  "assets": [
+    {
+      "file": "methods/mist-breathing-v1.png",
+      "name": "吐纳诀",
+      "prompt": "Use case: stylized-concept. Asset type: a single square inventory ability icon for the dark fantasy Chinese RPG Infinite Flow. Make one original painterly realistic game asset, intricate weathered materials, restrained ominous dark-fantasy aesthetic, readable at 64 pixels. One central strong silhouette occupying about 75 percent of the square with safe empty margins, localized luminous highlights illuminating the subject, nearly black neutral background, no surrounding scene. No text, no letters, no UI, no border, no badge, no watermark. Rich tactile rendering, not a flat vector, not a diagram, not anime. A small ancient pale-jade statuette of a seated meditator with hands resting at the abdomen, an elegant spiral of blue-green mist and a tiny soft light at its chest, calm concentric breathing aura; full statuette shown clearly, stone and mist rather than a living person."
+    },
+    {
+      "file": "methods/iron-body-v1.png",
+      "name": "铁衣诀",
+      "prompt": "Use case: stylized-concept. Asset type: a single square inventory ability icon for the dark fantasy Chinese RPG Infinite Flow. Make one original painterly realistic game asset, intricate weathered materials, restrained ominous dark-fantasy aesthetic, readable at 64 pixels. One central strong silhouette occupying about 75 percent of the square with safe empty margins, localized luminous highlights illuminating the subject, nearly black neutral background, no surrounding scene. No text, no letters, no UI, no border, no badge, no watermark. Rich tactile rendering, not a flat vector, not a diagram, not anime. A heavy ancient iron gauntlet clenched into an upright fist, weathered charcoal metal and warm bronze rivets, a thin golden translucent ward hugging the knuckles, conveying unbreakable defensive cultivation."
+    },
+    {
+      "file": "methods/cloud-step-v1.png",
+      "name": "云隙步",
+      "prompt": "Use case: stylized-concept. Asset type: a single square inventory ability icon for the dark fantasy Chinese RPG Infinite Flow. Make one original painterly realistic game asset, intricate weathered materials, restrained ominous dark-fantasy aesthetic, readable at 64 pixels. One central strong silhouette occupying about 75 percent of the square with safe empty margins, localized luminous highlights illuminating the subject, nearly black neutral background, no surrounding scene. No text, no letters, no UI, no border, no badge, no watermark. Rich tactile rendering, not a flat vector, not a diagram, not anime. A single graceful dark leather martial boot stepping on a curled pale-turquoise cloud, two elegant wisps tracing a swift arc, weathered silver fittings, a striking diagonal motion silhouette conveying magical agility."
+    },
+    {
+      "file": "methods/gate-sense-v1.png",
+      "name": "观门法",
+      "prompt": "Use case: stylized-concept. Asset type: a single square inventory ability icon for the dark fantasy Chinese RPG Infinite Flow. Make one original painterly realistic game asset, intricate weathered materials, restrained ominous dark-fantasy aesthetic, readable at 64 pixels. One central strong silhouette occupying about 75 percent of the square with safe empty margins, localized luminous highlights illuminating the subject, nearly black neutral background, no surrounding scene. No text, no letters, no UI, no border, no badge, no watermark. Rich tactile rendering, not a flat vector, not a diagram, not anime. A small ancient broken circular stone gateway standing upright in three-quarter perspective, a green-teal luminous spatial rift within it, delicate gold light tracing visible cracks in the stone, isolated as a magical portal perception artifact. The portal is the central object, NOT an icon border."
+    },
+    {
+      "file": "methods/star-core-method-v1.png",
+      "name": "星核炼息",
+      "prompt": "Use case: stylized-concept. Asset type: a single square inventory ability icon for the dark fantasy Chinese RPG Infinite Flow. Make one original painterly realistic game asset, intricate weathered materials, restrained ominous dark-fantasy aesthetic, readable at 64 pixels. One central strong silhouette occupying about 75 percent of the square with safe empty margins, localized luminous highlights illuminating the subject, nearly black neutral background, no surrounding scene. No text, no letters, no UI, no border, no badge, no watermark. Rich tactile rendering, not a flat vector, not a diagram, not anime. A radiant blue-white stellar mineral core held within angular dark meteorite fragments, three thin bronze orbital rings and gold sparks, a coiling breath-like energy wisp pulling toward the center, conveying star-powered cultivation. Bold crystalline star silhouette."
+    },
+    {
+      "file": "methods/beast-taming-v1.png",
+      "name": "御灵印",
+      "prompt": "Use case: stylized-concept. Asset type: a single square inventory ability icon for the dark fantasy Chinese RPG Infinite Flow. Make one original painterly realistic game asset, intricate weathered materials, restrained ominous dark-fantasy aesthetic, readable at 64 pixels. One central strong silhouette occupying about 75 percent of the square with safe empty margins, localized luminous highlights illuminating the subject, nearly black neutral background, no surrounding scene. No text, no letters, no UI, no border, no badge, no watermark. Rich tactile rendering, not a flat vector, not a diagram, not anime. A weathered dark jade animal-taming talisman carved as a wolf-like spirit beast head, warm gold clasps, one elegant turquoise luminous binding cord curling around the carved beast, calm bright eyes, tangible carved stone artifact rather than a drawn symbol."
+    },
+    {
+      "file": "methods/void-heart-v1.png",
+      "name": "虚心诀",
+      "prompt": "Use case: stylized-concept. Asset type: a single square inventory ability icon for the dark fantasy Chinese RPG Infinite Flow. Make one original painterly realistic game asset, intricate weathered materials, restrained ominous dark-fantasy aesthetic, readable at 64 pixels. One central strong silhouette occupying about 75 percent of the square with safe empty margins, localized luminous highlights illuminating the subject, nearly black neutral background, no surrounding scene. No text, no letters, no UI, no border, no badge, no watermark. Rich tactile rendering, not a flat vector, not a diagram, not anime. A floating heart-shaped obsidian crystal reliquary with a luminous violet void at its center, cracked geometric stone segments held together by faint violet filaments, delicate platinum vein inlays and sparse deep-purple stardust, tranquil controlled inner emptiness. Clearly a magical stone artifact, no flesh, no gore."
+    }
+  ]
+}
