@@ -102,6 +102,49 @@ test("runs Aiden through the interactive terminal runner when available", async 
   }
 });
 
+test("runs Aiden chat through print mode when an interactive runner is available", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "agent-bridge-aiden-chat-"));
+  try {
+    const workerContextDir = join(dir, "worker-context");
+    const fake = join(dir, "aiden");
+    await writeFile(fake, `#!/usr/bin/env node
+import { readFile } from "node:fs/promises";
+const task = process.argv.at(-1) ?? "";
+const promptPath = task.match(/\\/[^\\n]+review-context-[^\\n]+\\.md/)?.[0];
+if (!promptPath || !(await readFile(promptPath, "utf8")).includes("plain chat question")) process.exit(2);
+console.log("plain chat answer");
+`, "utf8");
+    await chmod(fake, 0o755);
+    const agent: Agent = {
+      id: "aiden",
+      kind: "aiden",
+      label: "Aiden",
+      command: fake,
+      enabled: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    const runner: AgentCommandRunner = {
+      async run() {
+        throw new Error("chat mode must not replace the persistent review worker");
+      },
+      async runTty() {
+        throw new Error("chat mode must not wait for a structured TUI result");
+      }
+    };
+
+    const result = await aidenAdapter.run(agent, dir, "plain chat question", {
+      runner,
+      workerContextDir,
+      outputMode: "chat"
+    });
+    assert.equal(result.verdict, "pass", JSON.stringify(result));
+    assert.equal(result.summary, "plain chat answer");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
 test("passes producer sender and mentions through Aiden terminal input", async () => {
   const dir = await mkdtemp(join(tmpdir(), "agent-bridge-aiden-metadata-"));
   try {

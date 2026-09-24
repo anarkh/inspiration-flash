@@ -152,12 +152,15 @@ function startConsumerTask(runId: string | null, agent: Agent, payload: Normaliz
           : undefined)
         : null;
       if (terminal && runId) {
-        attachTmuxRunner(terminal, {
-          runId,
-          agent,
-          cwd: payload.cwd,
-          onStart: onProcessStart
-        });
+        if (!(agent.kind === "aiden" && outputMode === "chat")) {
+          attachTmuxRunner(terminal, {
+            runId,
+            agent,
+            cwd: payload.cwd,
+            onStart: onProcessStart
+          });
+        }
+        await terminal.flush();
       }
       if (runId) {
         await recordConsumerStarted(runId, agent, terminal
@@ -183,11 +186,13 @@ function startConsumerTask(runId: string | null, agent: Agent, payload: Normaliz
           producerSender: payload.sender,
           producerMentions: payload.mentions
         });
+        await terminal?.flush();
         if (runId) {
           await recordConsumerCompleted(runId, agent, result).catch(() => undefined);
         }
         return result;
       } catch (error) {
+        await terminal?.flush().catch(() => undefined);
         if (runId) {
           await recordConsumerError(runId, agent, error).catch(() => undefined);
         }

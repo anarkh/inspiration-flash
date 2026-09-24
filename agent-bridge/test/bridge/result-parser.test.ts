@@ -118,6 +118,78 @@ test("treats unstructured chat-mode output as a successful answer", () => {
   assert.equal(result.rawOutput, "Plain answer\nwith detail.");
 });
 
+test("extracts Claude plain result from terminal output in chat mode", () => {
+  const output = [
+    "# Agent Bridge tmux terminal",
+    "$ claude -p --output-format json",
+    JSON.stringify({
+      type: "result",
+      result: "persistent claude chat worker ok"
+    }),
+    "# agent-bridge command exit code 0"
+  ].join("\n");
+
+  const result = parseBridgeOutput(output, "Claude Code", { mode: "chat" });
+  assert.equal(result.verdict, "pass");
+  assert.equal(result.summary, "persistent claude chat worker ok");
+  assert.match(result.rawOutput ?? "", /Agent Bridge tmux terminal/);
+});
+
+test("treats an empty Claude chat result as uncertain", () => {
+  const output = [
+    "# Agent Bridge tmux terminal",
+    JSON.stringify({ type: "result", subtype: "success", is_error: false, result: "" }),
+    "# agent-bridge command exit code 0"
+  ].join("\n");
+
+  const result = parseBridgeOutput(output, "Claude Code", { mode: "chat" });
+  assert.equal(result.verdict, "uncertain");
+  assert.equal(result.summary, "Agent returned empty output.");
+  assert.match(result.rawOutput ?? "", /Agent Bridge tmux terminal/);
+});
+
+test("keeps known-error phrases inside a successful Claude chat result", () => {
+  const output = JSON.stringify({
+    type: "result",
+    subtype: "success",
+    is_error: false,
+    result: "Unauthorized request means the caller lacks valid credentials."
+  });
+
+  const result = parseBridgeOutput(output, "Claude Code", { mode: "chat" });
+  assert.equal(result.verdict, "pass");
+  assert.match(result.summary, /Unauthorized request/);
+});
+
+test("keeps known-error phrases inside a successful plain chat answer", () => {
+  const result = parseBridgeOutput("Unauthorized request is the phrase shown by the example.", "Aiden", { mode: "chat" });
+
+  assert.equal(result.verdict, "pass");
+  assert.match(result.summary, /Unauthorized request/);
+});
+
+test("surfaces Claude error envelopes as uncertain chat results", () => {
+  const output = JSON.stringify({
+    type: "result",
+    subtype: "error_max_turns",
+    is_error: true,
+    errors: ["Reached maximum number of turns (3)"]
+  });
+
+  const result = parseBridgeOutput(output, "Claude Code", { mode: "chat" });
+  assert.equal(result.verdict, "uncertain");
+  assert.match(result.summary, /maximum turn limit/);
+  assert.match(result.findings[0].detail ?? "", /maximum number of turns/);
+});
+
+test("does not treat an arbitrary trailing JSON example as a CLI envelope in chat mode", () => {
+  const output = "Use this example:\n{\"content\":\"only the example\"}";
+  const result = parseBridgeOutput(output, "Claude Code", { mode: "chat" });
+
+  assert.equal(result.verdict, "pass");
+  assert.equal(result.summary, output);
+});
+
 test("summarizes provider rate limits", () => {
   const result = parseBridgeOutput("429 Gateway retry policy failed: code: rate_limit_reached; Requests have exceeded the throughput limit", "Aiden");
   assert.equal(result.verdict, "uncertain");

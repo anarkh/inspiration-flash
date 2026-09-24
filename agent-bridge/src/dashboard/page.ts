@@ -190,7 +190,7 @@ export function dashboardHtml(): string {
       background: var(--muted-2);
     }
     .run-row.status-running::before, .run-row.status-pending::before { background: var(--accent); }
-    .run-row.status-pass::before, .run-row.status-late_pass::before { background: var(--ok); }
+    .run-row.status-pass::before, .run-row.status-late_pass::before, .run-row.status-done::before { background: var(--ok); }
     .run-row.status-fail::before, .run-row.status-late_fail::before, .run-row.status-error::before { background: var(--bad); }
     .run-row.status-uncertain::before, .run-row.status-late_uncertain::before, .run-row.status-timed_out::before, .run-row.status-interrupted::before { background: var(--warn); }
     .run-row:hover { background: var(--panel-2); border-color: var(--border); }
@@ -273,7 +273,7 @@ export function dashboardHtml(): string {
     .badge.running, .badge.pending { color: var(--accent); border-color: color-mix(in srgb, var(--accent), transparent 45%); }
     .badge.ready { color: var(--accent); border-color: color-mix(in srgb, var(--accent), transparent 45%); }
     .badge.disabled { color: var(--muted); border-color: var(--border); }
-    .badge.pass, .badge.late_pass { color: var(--ok); border-color: color-mix(in srgb, var(--ok), transparent 45%); }
+    .badge.pass, .badge.late_pass, .badge.done { color: var(--ok); border-color: color-mix(in srgb, var(--ok), transparent 45%); }
     .badge.fail, .badge.late_fail, .badge.error { color: var(--bad); border-color: color-mix(in srgb, var(--bad), transparent 45%); }
     .badge.uncertain, .badge.late_uncertain, .badge.timed_out, .badge.interrupted { color: var(--warn); border-color: color-mix(in srgb, var(--warn), transparent 45%); }
     .empty {
@@ -695,19 +695,21 @@ export function dashboardHtml(): string {
     function renderSessionRow(session) {
       const row = document.createElement("button");
       const selected = selectedMatches(session);
-      const statusClass = String(session.consumer.status || "idle").replace(/[^a-z_]/g, "");
+      const displayStatus = sessionDisplayStatus(session);
+      const statusClass = String(displayStatus || "idle").replace(/[^a-z_]/g, "");
       row.className = "run-row status-" + statusClass + (selected ? " selected" : "");
       row.disabled = !session.consumer.terminalId && !session.consumer.logPath;
       row.innerHTML = '<div class="line"><span class="run-id"></span><span class=""></span></div><div class="path"></div><div class="preview"></div><div class="row-meta"><span></span><span></span><span></span></div>';
       row.querySelector(".run-id").textContent = session.consumer.label + " / " + session.run.id;
       const status = row.querySelector(".line span:last-child");
-      status.className = badge(session.consumer.status);
-      status.textContent = session.consumer.status;
+      status.className = badge(displayStatus);
+      status.textContent = displayStatus;
       row.querySelector(".path").textContent = session.run.cwd;
       row.querySelector(".preview").textContent = directPreview(session.run) || runSubject(session.run, session.consumer);
       const meta = row.querySelectorAll(".row-meta span");
+      const backend = session.consumer.terminalBackend === "tmux" ? "tmux" : "capture";
       meta[0].textContent = elapsed(session.consumer.startedAt || session.run.startedAt, session.consumer.completedAt);
-      meta[1].textContent = session.consumer.terminalBackend === "tmux" ? "tmux" : "capture";
+      meta[1].textContent = [directModeLabel(session.run), backend].filter(Boolean).join(" / ");
       meta[2].textContent = (session.consumer.commandLine || session.consumer.command || workerSuffix(session.consumer) || runSubject(session.run, session.consumer));
       row.onclick = () => openTerminal(session.run, session.consumer, true);
       return row;
@@ -761,6 +763,8 @@ export function dashboardHtml(): string {
         session.run.status,
         session.run.cwd,
         session.run.directMessagePreview,
+        session.run.outputMode,
+        directModeLabel(session.run),
         session.consumer.kind,
         session.consumer.label,
         session.consumer.status,
@@ -819,6 +823,18 @@ export function dashboardHtml(): string {
 
     function directPreview(run) {
       return run.source === "direct" && run.directMessagePreview ? run.directMessagePreview : "";
+    }
+
+    function directModeLabel(run) {
+      if (run.source !== "direct") return "";
+      return run.outputMode || "unknown mode";
+    }
+
+    function sessionDisplayStatus(session) {
+      if (session.run.source === "direct" && session.run.outputMode === "chat" && session.consumer.status === "pass") {
+        return "done";
+      }
+      return session.consumer.status;
     }
 
     function workerSuffix(consumer) {

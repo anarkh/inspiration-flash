@@ -2,6 +2,7 @@ import http from "node:http";
 import { spawn } from "node:child_process";
 import { once } from "node:events";
 import { isAbsolute, resolve } from "node:path";
+import { StringDecoder } from "node:string_decoder";
 import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 import { loadConfig } from "../config/store.ts";
@@ -10,7 +11,7 @@ import type { AppConfig, BridgeRunRecord, ConsumerRunRecord, RawDirectEnvelope, 
 import { dashboardHtml } from "../dashboard/page.ts";
 import { runBridge, runDirectBridge } from "../bridge/runner.ts";
 import { loadBridgeRuns, markInterruptedBridgeRuns } from "../bridge/run-state.ts";
-import { ensureTerminalLogTail, subscribeTerminalLog, terminalLogPath } from "../terminal/logs.ts";
+import { streamTerminalLogSnapshot, subscribeTerminalLog, tailTerminalLog, terminalLogPath } from "../terminal/logs.ts";
 import { handleTerminalWebSocket, type TerminalSocketTarget } from "../terminal/websocket.ts";
 import { ensureDir, pathExists, readJson, readText, writeJson, writeText } from "../utils/fs.ts";
 
@@ -351,19 +352,86 @@ function sendText(response: http.ServerResponse, statusCode: number, body: strin
   response.end(body);
 }
 
-async function streamTerminalLog(response: http.ServerResponse, target: TerminalSocketTarget): Promise<void> {
+export async function streamTerminalLog(response: http.ServerResponse, target: TerminalSocketTarget): Promise<void> {
   response.writeHead(200, {
     "content-type": "text/event-stream; charset=utf-8",
     "cache-control": "no-cache, no-transform",
     connection: "keep-alive"
   });
-  const send = (event: unknown) => {
-    response.write(`data: ${JSON.stringify(event)}\n\n`);
+  const releases: Array<() => void> = [];
+  let cleanedUp = false;
+  const cleanup = () => {
+    if (cleanedUp) {
+      return;
+    }
+    cleanedUp = true;
+    for (const release of releases.splice(0)) {
+      release();
+    }
   };
-  send({ type: "snapshot", data: (await readText(target.logPath)) ?? "" });
-  ensureTerminalLogTail(target.terminalId, target.logPath, true);
-  const unsubscribe = subscribeTerminalLog(target.terminalId, (event) => send(event));
-  response.on("close", unsubscribe);
+  const addRelease = (release: () => void) => {
+    if (cleanedUp) {
+      release();
+    } else {
+      releases.push(release);
+    }
+  };
+  response.on("close", cleanup);
+  response.on("error", cleanup);
+  const decoder = new StringDecoder("utf8");
+  if (!await writeResponseChunk(response, 'data: {"type":"snapshot","data":"')) {
+    return;
+  }
+  const snapshotOffset = await streamTerminalLogSnapshot(target.logPath, async (chunk) => {
+    const data = decoder.write(chunk);
+    return data ? writeResponseChunk(response, jsonStringContent(data)) : true;
+  });
+  if (cleanedUp || response.destroyed) {
+    return;
+  }
+  if (!target.tail) {
+    const remainder = decoder.end();
+    if (remainder && !await writeResponseChunk(response, jsonStringContent(remainder))) {
+      return;
+    }
+  }
+  if (!await writeResponseChunk(response, '"}\n\n')) {
+    return;
+  }
+  const send = (event: unknown) => writeResponseChunk(response, `data: ${JSON.stringify(event)}\n\n`);
+  addRelease(subscribeTerminalLog(target.terminalId, (event) => {
+    void send(event);
+  }));
+  if (target.tail) {
+    addRelease(tailTerminalLog(target.logPath, snapshotOffset, async (data) => {
+      await send({ type: "stdout", data });
+    }, decoder));
+  }
+}
+
+async function writeResponseChunk(response: http.ServerResponse, chunk: string): Promise<boolean> {
+  if (response.destroyed || response.writableEnded) {
+    return false;
+  }
+  if (response.write(chunk)) {
+    return true;
+  }
+  await new Promise<void>((resolve) => {
+    const done = () => {
+      response.off("drain", done);
+      response.off("close", done);
+      response.off("error", done);
+      resolve();
+    };
+    response.once("drain", done);
+    response.once("close", done);
+    response.once("error", done);
+  });
+  return !response.destroyed && !response.writableEnded;
+}
+
+function jsonStringContent(value: string): string {
+  return JSON.stringify(value).slice(1, -1);
 }
 
 function parseTerminalRoute(url: string | undefined): { runId: string; kind: string; mode: "log" | "stream" | "ws" } | null {
@@ -403,10 +471,13 @@ export async function terminalTarget(runId: string, kind: string, mode: "log" | 
     return null;
   }
   const runTerminalId = `${runId}:${kind}`;
-  const workerTarget = mode !== "log" && consumer.workerLogPath;
+  const workerTarget = mode !== "log"
+    && consumer.workerLogPath
+    && await pathExists(consumer.workerLogPath);
   return {
     terminalId: workerTarget ? consumer.terminalId ?? runTerminalId : runTerminalId,
-    logPath: workerTarget ? consumer.workerLogPath! : consumer.logPath ?? terminalLogPath(runId, kind)
+    logPath: workerTarget ? consumer.workerLogPath! : consumer.logPath ?? terminalLogPath(runId, kind),
+    tail: mode !== "log"
   };
 }
 
@@ -464,7 +535,8 @@ function printRun(run: BridgeRunRecord): void {
 function formatRunSubject(run: BridgeRunRecord): string {
   if (run.source === "direct") {
     const consumer = run.consumers[0];
-    return `direct -> ${consumer?.label ?? consumer?.kind ?? "consumer"}`;
+    const mode = run.outputMode ? ` ${run.outputMode}` : "";
+    return `direct${mode} -> ${consumer?.label ?? consumer?.kind ?? "consumer"}`;
   }
   return `${PRODUCER_LABELS[run.producer]} ${run.event}`;
 }

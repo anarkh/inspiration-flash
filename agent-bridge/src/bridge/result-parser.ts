@@ -5,8 +5,25 @@ export interface BridgeOutputParseOptions {
   mode?: BridgeOutputMode;
 }
 
+interface CliResultEnvelope {
+  text: string;
+  isError: boolean;
+  subtype?: string;
+  errors: string[];
+}
+
 export function parseBridgeOutput(output: string, agent: string, options: BridgeOutputParseOptions = {}): BridgeResult {
+  const rawText = stripAnsi(output).trim();
   const text = extractTextFromCliOutput(output).trim();
+  if (options.mode === "chat") {
+    const envelope = extractCliResultEnvelope(rawText);
+    if (envelope) {
+      return envelope.isError
+        ? cliEnvelopeErrorResult(envelope, agent, rawText)
+        : chatOutputResult(envelope.text.trim(), agent, rawText);
+    }
+    return chatOutputResult(text, agent, rawText);
+  }
   const parsed = tryParseJsonObject(text);
   if (parsed) {
     return normalizeParsedResult(parsed, agent, text);
@@ -14,9 +31,6 @@ export function parseBridgeOutput(output: string, agent: string, options: Bridge
   const knownError = knownErrorResult(text, agent);
   if (knownError) {
     return knownError;
-  }
-  if (options.mode === "chat") {
-    return chatOutputResult(text, agent);
   }
   return {
     verdict: "uncertain",
@@ -32,7 +46,28 @@ export function parseBridgeOutput(output: string, agent: string, options: Bridge
   };
 }
 
-function chatOutputResult(text: string, agent: string): BridgeResult {
+function cliEnvelopeErrorResult(envelope: CliResultEnvelope, agent: string, rawOutput: string): BridgeResult {
+  const maxTurns = envelope.subtype === "error_max_turns";
+  const detail = envelope.errors.join("\n") || envelope.text || envelope.subtype || "Consumer CLI returned an error result.";
+  return {
+    verdict: "uncertain",
+    summary: maxTurns
+      ? `${agent} reached its maximum turn limit before producing an answer.`
+      : `${agent} returned an error result instead of an answer.`,
+    findings: [{
+      severity: "info",
+      title: maxTurns ? `${agent} maximum turns reached` : `${agent} CLI error`,
+      detail
+    }],
+    suggestedPrompt: maxTurns
+      ? "Retry with fewer tool steps or increase the configured Claude maximum turns."
+      : "Inspect the consumer CLI error and retry the direct message.",
+    agent,
+    rawOutput
+  };
+}
+
+function chatOutputResult(text: string, agent: string, rawOutput = text): BridgeResult {
   if (!text) {
     return {
       verdict: "uncertain",
@@ -43,7 +78,7 @@ function chatOutputResult(text: string, agent: string): BridgeResult {
       }],
       suggestedPrompt: "Retry the direct chat message or inspect the consumer CLI logs.",
       agent,
-      rawOutput: text
+      rawOutput
     };
   }
   return {
@@ -52,7 +87,7 @@ function chatOutputResult(text: string, agent: string): BridgeResult {
     findings: [],
     suggestedPrompt: "",
     agent,
-    rawOutput: text
+    rawOutput
   };
 }
 
@@ -157,6 +192,14 @@ export function hasBridgeResultJson(output: string): boolean {
   return tryParseJsonObject(text) !== null;
 }
 
+export function hasSuccessfulCliOutput(output: string): boolean {
+  if (hasBridgeResultJson(output)) {
+    return true;
+  }
+  const envelope = extractCliResultEnvelope(stripAnsi(output).trim());
+  return envelope !== null && !envelope.isError;
+}
+
 function tryParseJsonObject(text: string): Record<string, unknown> | null {
   const candidates = [
     text,
@@ -241,6 +284,47 @@ function bridgeResultObject(value: unknown): Record<string, unknown> | null {
   }
   const embedded = embeddedText(value);
   return embedded ? tryParseJsonObject(embedded) : null;
+}
+
+function extractCliResultEnvelope(text: string): CliResultEnvelope | null {
+  const candidates = [
+    text,
+    fencedJson(text)
+  ].filter((item): item is string => Boolean(item));
+  for (const candidate of candidates) {
+    const envelope = cliResultEnvelope(tryJson(candidate) ?? tryJson(repairTerminalWrappedJson(candidate)));
+    if (envelope) {
+      return envelope;
+    }
+  }
+  for (const candidate of jsonObjectCandidatesFromEnd(text)) {
+    const envelope = cliResultEnvelope(tryJson(candidate) ?? tryJson(repairTerminalWrappedJson(candidate)));
+    if (envelope) {
+      return envelope;
+    }
+  }
+  return null;
+}
+
+function cliResultEnvelope(value: unknown): CliResultEnvelope | null {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return null;
+  }
+  const record = value as Record<string, unknown>;
+  if (record.type !== "result") {
+    return null;
+  }
+  const subtype = typeof record.subtype === "string" ? record.subtype : undefined;
+  const errors = Array.isArray(record.errors)
+    ? record.errors.filter((item): item is string => typeof item === "string")
+    : [];
+  const text = typeof record.result === "string" ? record.result : "";
+  return {
+    text,
+    isError: record.is_error === true || Boolean(subtype?.startsWith("error_")),
+    subtype,
+    errors
+  };
 }
 
 function embeddedText(value: unknown): string | null {
