@@ -1,0 +1,8 @@
+Use case: stylized-concept
+Asset type: One isolated transparent PNG world prop for a Chinese dark fantasy dungeon HTML art proposal.
+Primary request: A single small Chinese resonance shrine: a low octagonal black-grey stone altar with restrained old bronze cloud-scroll edging and a shallow ancient bronze fire bowl centered on top. Inside the bowl is one small warm-white spiritual flame with a faint pale grey-celadon wisp, approximately one quarter the height of the stone base. Flame is restrained and believable, no magic aura.
+Style/medium: Detailed realistic hand-painted environment game asset, matching a dark ruined Chinese temple dungeon of cold grey flagstones, aged iron and tarnished gold details. Elegant but weathered old stone, realistic carved relief and muted texture.
+Composition: Lightly elevated three-quarter top-down game camera, top surface visible along with front and side. Entire shrine and all base feet visible; compact single grounded silhouette, centered in a square image, 12% transparent padding. No independent props or separate stones.
+Materials: weathered ash-black stone, dull old bronze, subtle worn gold inlay, no bright polished surfaces. Very low saturation, diffuse cold overhead lighting and a tiny warm light localized only within the fire bowl.
+Background: genuinely transparent alpha, no scene, no ground plane, no baked shadow plate or checkerboard. Fine flame alpha preserved.
+Avoid: cartoon, vector flat fill, low-poly, neon blue/cyan/purple, large glow halo, particle cloud, floating runes, energy rings, floating objects, skulls, text, readable symbols, UI, frame, logo, watermark, asset sheet.

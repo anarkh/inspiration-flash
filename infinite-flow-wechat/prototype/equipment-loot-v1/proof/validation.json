@@ -1,0 +1,736 @@
+{
+  "checks": [
+    {
+      "name": "390-default",
+      "result": {
+        "buttons": [
+          {
+            "disabled": false,
+            "height": 44,
+            "text": "×",
+            "width": 44
+          },
+          {
+            "disabled": false,
+            "height": 145.1484375,
+            "text": "雾行兜帽Lv.1 · 头部",
+            "width": 104
+          },
+          {
+            "disabled": false,
+            "height": 145.1484375,
+            "text": "灵纹软甲Lv.1 · 护甲",
+            "width": 104
+          },
+          {
+            "disabled": false,
+            "height": 145.1484375,
+            "text": "破甲剑Lv.1 · 武器",
+            "width": 104
+          },
+          {
+            "disabled": false,
+            "height": 44,
+            "text": "收入战利品袋→",
+            "width": 326
+          },
+          {
+            "disabled": false,
+            "height": 44,
+            "text": "放弃装备",
+            "width": 326
+          }
+        ],
+        "caption": "待领取 · 当前选中破甲剑",
+        "detail": "破甲剑Lv.1 · 武器基础属性攻击 +9速度 +1固定词缀破甲锋线攻击 +2",
+        "dialog": {
+          "height": 468.6953125,
+          "horizontalOverflow": false,
+          "insideStage": true,
+          "scrollOverflow": false,
+          "width": 356
+        },
+        "hidden": false,
+        "images": [
+          {
+            "loaded": true,
+            "src": "../../cocos/assets/resources/character/reincarnator-v2.png"
+          },
+          {
+            "loaded": true,
+            "src": "../../cocos/assets/resources/equipment/armor-piercing-sword-v1.png"
+          },
+          {
+            "loaded": true,
+            "src": "../../cocos/assets/resources/equipment/mist-hood-v1.png"
+          },
+          {
+            "loaded": true,
+            "src": "../../cocos/assets/resources/equipment/spirit-robe-v1.png"
+          },
+          {
+            "loaded": true,
+            "src": "../../cocos/assets/resources/equipment/armor-piercing-sword-v1.png"
+          }
+        ],
+        "pageOverflow": false,
+        "selected": "armor_piercing_sword",
+        "stage": {
+          "height": 844,
+          "width": 390
+        },
+        "title": "选择一件装备"
+      }
+    },
+    {
+      "name": "all-three-items",
+      "passed": true,
+      "details": "Physical card clicks displayed the correct Lv.1 base stats and fixed affix for hood, robe and sword."
+    },
+    {
+      "name": "320-selection",
+      "result": {
+        "buttons": [
+          {
+            "disabled": false,
+            "height": 44,
+            "text": "×",
+            "width": 44
+          },
+          {
+            "disabled": false,
+            "height": 121.09375,
+            "text": "雾行兜帽Lv.1 · 头部",
+            "width": 87.328125
+          },
+          {
+            "disabled": false,
+            "height": 121.09375,
+            "text": "灵纹软甲Lv.1 · 护甲",
+            "width": 87.3359375
+          },
+          {
+            "disabled": false,
+            "height": 121.09375,
+            "text": "破甲剑Lv.1 · 武器",
+            "width": 87.3359375
+          },
+          {
+            "disabled": false,
+            "height": 44,
+            "text": "收入战利品袋→",
+            "width": 272
+          },
+          {
+            "disabled": false,
+            "height": 44,
+            "text": "放弃装备",
+            "width": 272
+          }
+        ],
+        "caption": "待领取 · 当前选中破甲剑",
+        "detail": "破甲剑Lv.1 · 武器基础属性攻击 +9速度 +1固定词缀破甲锋线攻击 +2",
+        "dialog": {
+          "height": 414.890625,
+          "horizontalOverflow": false,
+          "insideStage": true,
+          "scrollOverflow": false,
+          "width": 298
+        },
+        "hidden": false,
+        "images": [
+          {
+            "loaded": true,
+            "src": "../../cocos/assets/resources/character/reincarnator-v2.png"
+          },
+          {
+            "loaded": true,
+            "src": "../../cocos/assets/resources/equipment/armor-piercing-sword-v1.png"
+          },
+          {
+            "loaded": true,
+            "src": "../../cocos/assets/resources/equipment/mist-hood-v1.png"
+          },
+          {
+            "loaded": true,
+            "src": "../../cocos/assets/resources/equipment/spirit-robe-v1.png"
+          },
+          {
+            "loaded": true,
+            "src": "../../cocos/assets/resources/equipment/armor-piercing-sword-v1.png"
+          }
+        ],
+        "pageOverflow": false,
+        "selected": "armor_piercing_sword",
+        "stage": {
+          "height": 568,
+          "width": 320
+        },
+        "title": "选择一件装备"
+      }
+    },
+    {
+      "name": "selected-is-not-claimed",
+      "result": {
+        "buttons": [
+          {
+            "disabled": false,
+            "height": 44,
+            "text": "×",
+            "width": 44
+          },
+          {
+            "disabled": false,
+            "height": 44,
+            "text": "返回选装备→",
+            "width": 272
+          },
+          {
+            "disabled": false,
+            "height": 44,
+            "text": "继续探索",
+            "width": 272
+          }
+        ],
+        "caption": "本局战利品为空 · 选中不等于领取",
+        "detail": null,
+        "dialog": {
+          "height": 367.09375,
+          "horizontalOverflow": false,
+          "insideStage": true,
+          "scrollOverflow": false,
+          "width": 298
+        },
+        "hidden": false,
+        "images": [
+          {
+            "loaded": true,
+            "src": "../../cocos/assets/resources/character/reincarnator-v2.png"
+          },
+          {
+            "loaded": true,
+            "src": "../../cocos/assets/resources/equipment/armor-piercing-sword-v1.png"
+          }
+        ],
+        "pageOverflow": false,
+        "selected": null,
+        "stage": {
+          "height": 568,
+          "width": 320
+        },
+        "title": "本局战利品"
+      }
+    },
+    {
+      "name": "actual-320-viewport",
+      "result": {
+        "buttons": [
+          {
+            "disabled": false,
+            "height": 44,
+            "text": "×",
+            "width": 44
+          },
+          {
+            "disabled": false,
+            "height": 121.09375,
+            "text": "雾行兜帽Lv.1 · 头部",
+            "width": 82.328125
+          },
+          {
+            "disabled": false,
+            "height": 121.09375,
+            "text": "灵纹软甲Lv.1 · 护甲",
+            "width": 82.3359375
+          },
+          {
+            "disabled": false,
+            "height": 121.09375,
+            "text": "破甲剑Lv.1 · 武器",
+            "width": 82.3359375
+          },
+          {
+            "disabled": false,
+            "height": 44,
+            "text": "收入战利品袋→",
+            "width": 257
+          },
+          {
+            "disabled": false,
+            "height": 44,
+            "text": "放弃装备",
+            "width": 257
+          }
+        ],
+        "caption": "待领取 · 当前选中破甲剑",
+        "detail": "破甲剑Lv.1 · 武器基础属性攻击 +9速度 +1固定词缀破甲锋线攻击 +2",
+        "dialog": {
+          "height": 414.890625,
+          "horizontalOverflow": false,
+          "insideStage": true,
+          "scrollOverflow": false,
+          "width": 283
+        },
+        "hidden": false,
+        "images": [
+          {
+            "loaded": true,
+            "src": "../../cocos/assets/resources/character/reincarnator-v2.png"
+          },
+          {
+            "loaded": true,
+            "src": "../../cocos/assets/resources/equipment/armor-piercing-sword-v1.png"
+          },
+          {
+            "loaded": true,
+            "src": "../../cocos/assets/resources/equipment/mist-hood-v1.png"
+          },
+          {
+            "loaded": true,
+            "src": "../../cocos/assets/resources/equipment/spirit-robe-v1.png"
+          },
+          {
+            "loaded": true,
+            "src": "../../cocos/assets/resources/equipment/armor-piercing-sword-v1.png"
+          }
+        ],
+        "pageOverflow": false,
+        "selected": "armor_piercing_sword",
+        "stage": {
+          "height": 568,
+          "width": 305
+        },
+        "title": "选择一件装备"
+      }
+    },
+    {
+      "name": "rapid-double-click",
+      "result": {
+        "buttons": [
+          {
+            "disabled": true,
+            "height": 44,
+            "text": "×",
+            "width": 44
+          },
+          {
+            "disabled": true,
+            "height": 121.09375,
+            "text": "雾行兜帽Lv.1 · 头部",
+            "width": 82.328125
+          },
+          {
+            "disabled": true,
+            "height": 121.09375,
+            "text": "灵纹软甲Lv.1 · 护甲",
+            "width": 82.3359375
+          },
+          {
+            "disabled": true,
+            "height": 121.09375,
+            "text": "破甲剑Lv.1 · 武器",
+            "width": 82.3359375
+          },
+          {
+            "disabled": true,
+            "height": 44,
+            "text": "正在收入战利品袋· · ·",
+            "width": 257
+          },
+          {
+            "disabled": true,
+            "height": 44,
+            "text": "放弃装备",
+            "width": 257
+          }
+        ],
+        "caption": "正在入袋 · 请稍候，不能重复领取",
+        "detail": "破甲剑Lv.1 · 武器基础属性攻击 +9速度 +1固定词缀破甲锋线攻击 +2",
+        "dialog": {
+          "height": 414.890625,
+          "horizontalOverflow": false,
+          "insideStage": true,
+          "scrollOverflow": false,
+          "width": 283
+        },
+        "hidden": false,
+        "images": [
+          {
+            "loaded": true,
+            "src": "../../cocos/assets/resources/character/reincarnator-v2.png"
+          },
+          {
+            "loaded": true,
+            "src": "../../cocos/assets/resources/equipment/armor-piercing-sword-v1.png"
+          },
+          {
+            "loaded": true,
+            "src": "../../cocos/assets/resources/equipment/mist-hood-v1.png"
+          },
+          {
+            "loaded": true,
+            "src": "../../cocos/assets/resources/equipment/spirit-robe-v1.png"
+          },
+          {
+            "loaded": true,
+            "src": "../../cocos/assets/resources/equipment/armor-piercing-sword-v1.png"
+          }
+        ],
+        "pageOverflow": false,
+        "selected": "armor_piercing_sword",
+        "stage": {
+          "height": 568,
+          "width": 305
+        },
+        "title": "选择一件装备"
+      }
+    },
+    {
+      "name": "claimed-result-320",
+      "result": {
+        "buttons": [
+          {
+            "disabled": false,
+            "height": 44,
+            "text": "×",
+            "width": 44
+          },
+          {
+            "disabled": false,
+            "height": 44,
+            "text": "查看战利品→",
+            "width": 257
+          },
+          {
+            "disabled": false,
+            "height": 44,
+            "text": "继续探索",
+            "width": 257
+          }
+        ],
+        "caption": "已收入战利品袋 · 待通关 · 不可重复领取",
+        "detail": null,
+        "dialog": {
+          "height": 402.5,
+          "horizontalOverflow": false,
+          "insideStage": true,
+          "scrollOverflow": false,
+          "width": 283
+        },
+        "hidden": false,
+        "images": [
+          {
+            "loaded": true,
+            "src": "../../cocos/assets/resources/character/reincarnator-v2.png"
+          },
+          {
+            "loaded": true,
+            "src": "../../cocos/assets/resources/equipment/armor-piercing-sword-v1.png"
+          },
+          {
+            "loaded": true,
+            "src": "../../cocos/assets/resources/equipment/armor-piercing-sword-v1.png"
+          }
+        ],
+        "pageOverflow": false,
+        "selected": null,
+        "stage": {
+          "height": 568,
+          "width": 305
+        },
+        "title": "破甲剑已收入战利品袋"
+      }
+    },
+    {
+      "name": "pending-bag-320",
+      "result": {
+        "buttons": [
+          {
+            "disabled": false,
+            "height": 44,
+            "text": "×",
+            "width": 44
+          },
+          {
+            "disabled": false,
+            "height": 44,
+            "text": "继续探索→",
+            "width": 257
+          }
+        ],
+        "caption": "已收入战利品袋 · 待通关 · 不可重复领取",
+        "detail": "基础属性攻击 +9速度 +1固定词缀破甲锋线攻击 +2",
+        "dialog": {
+          "height": 352.796875,
+          "horizontalOverflow": false,
+          "insideStage": true,
+          "scrollOverflow": false,
+          "width": 283
+        },
+        "hidden": false,
+        "images": [
+          {
+            "loaded": true,
+            "src": "../../cocos/assets/resources/character/reincarnator-v2.png"
+          },
+          {
+            "loaded": true,
+            "src": "../../cocos/assets/resources/equipment/armor-piercing-sword-v1.png"
+          },
+          {
+            "loaded": true,
+            "src": "../../cocos/assets/resources/equipment/armor-piercing-sword-v1.png"
+          }
+        ],
+        "pageOverflow": false,
+        "selected": null,
+        "stage": {
+          "height": 568,
+          "width": 305
+        },
+        "title": "本局战利品"
+      }
+    },
+    {
+      "name": "bag-reopen-after-double-click",
+      "passed": true,
+      "quantity": 1,
+      "claimControlCount": 0
+    },
+    {
+      "name": "abandon-confirmed",
+      "result": {
+        "buttons": [
+          {
+            "disabled": false,
+            "height": 44,
+            "text": "×",
+            "width": 44
+          },
+          {
+            "disabled": false,
+            "height": 44,
+            "text": "继续探索→",
+            "width": 257
+          }
+        ],
+        "caption": "已确认放弃 · 此处不可再次领取",
+        "detail": null,
+        "dialog": {
+          "height": 281.09375,
+          "horizontalOverflow": false,
+          "insideStage": true,
+          "scrollOverflow": false,
+          "width": 283
+        },
+        "hidden": false,
+        "images": [
+          {
+            "loaded": true,
+            "src": "../../cocos/assets/resources/character/reincarnator-v2.png"
+          },
+          {
+            "loaded": true,
+            "src": "../../cocos/assets/resources/equipment/armor-piercing-sword-v1.png"
+          }
+        ],
+        "pageOverflow": false,
+        "selected": null,
+        "stage": {
+          "height": 568,
+          "width": 305
+        },
+        "title": "本次装备已放弃"
+      }
+    },
+    {
+      "name": "actual-390-viewport",
+      "result": {
+        "buttons": [
+          {
+            "disabled": false,
+            "height": 44,
+            "text": "×",
+            "width": 44
+          },
+          {
+            "disabled": false,
+            "height": 137.1484375,
+            "text": "雾行兜帽Lv.1 · 头部",
+            "width": 99
+          },
+          {
+            "disabled": false,
+            "height": 137.1484375,
+            "text": "灵纹软甲Lv.1 · 护甲",
+            "width": 99
+          },
+          {
+            "disabled": false,
+            "height": 137.1484375,
+            "text": "破甲剑Lv.1 · 武器",
+            "width": 99
+          },
+          {
+            "disabled": false,
+            "height": 44,
+            "text": "收入战利品袋→",
+            "width": 311
+          },
+          {
+            "disabled": false,
+            "height": 44,
+            "text": "放弃装备",
+            "width": 311
+          }
+        ],
+        "caption": "待领取 · 当前选中破甲剑",
+        "detail": "破甲剑Lv.1 · 武器基础属性攻击 +9速度 +1固定词缀破甲锋线攻击 +2",
+        "dialog": {
+          "height": 458.6953125,
+          "horizontalOverflow": false,
+          "insideStage": true,
+          "scrollOverflow": false,
+          "width": 341
+        },
+        "hidden": false,
+        "images": [
+          {
+            "loaded": true,
+            "src": "../../cocos/assets/resources/character/reincarnator-v2.png"
+          },
+          {
+            "loaded": true,
+            "src": "../../cocos/assets/resources/equipment/armor-piercing-sword-v1.png"
+          },
+          {
+            "loaded": true,
+            "src": "../../cocos/assets/resources/equipment/mist-hood-v1.png"
+          },
+          {
+            "loaded": true,
+            "src": "../../cocos/assets/resources/equipment/spirit-robe-v1.png"
+          },
+          {
+            "loaded": true,
+            "src": "../../cocos/assets/resources/equipment/armor-piercing-sword-v1.png"
+          }
+        ],
+        "pageOverflow": false,
+        "selected": "armor_piercing_sword",
+        "stage": {
+          "height": 844,
+          "width": 375
+        },
+        "title": "选择一件装备"
+      }
+    },
+    {
+      "name": "final-390-stage",
+      "result": {
+        "buttons": [
+          {
+            "disabled": false,
+            "height": 44,
+            "text": "×",
+            "width": 44
+          },
+          {
+            "disabled": false,
+            "height": 137.1484375,
+            "text": "雾行兜帽Lv.1 · 头部",
+            "width": 104
+          },
+          {
+            "disabled": false,
+            "height": 137.1484375,
+            "text": "灵纹软甲Lv.1 · 护甲",
+            "width": 104
+          },
+          {
+            "disabled": false,
+            "height": 137.1484375,
+            "text": "破甲剑Lv.1 · 武器",
+            "width": 104
+          },
+          {
+            "disabled": false,
+            "height": 44,
+            "text": "收入战利品袋→",
+            "width": 326
+          },
+          {
+            "disabled": false,
+            "height": 44,
+            "text": "放弃装备",
+            "width": 326
+          }
+        ],
+        "caption": "待领取 · 当前选中破甲剑",
+        "detail": "破甲剑Lv.1 · 武器基础属性攻击 +9速度 +1固定词缀破甲锋线攻击 +2",
+        "dialog": {
+          "height": 458.6953125,
+          "horizontalOverflow": false,
+          "insideStage": true,
+          "scrollOverflow": false,
+          "width": 356
+        },
+        "hidden": false,
+        "images": [
+          {
+            "loaded": true,
+            "src": "../../cocos/assets/resources/character/reincarnator-v2.png"
+          },
+          {
+            "loaded": true,
+            "src": "../../cocos/assets/resources/equipment/armor-piercing-sword-v1.png"
+          },
+          {
+            "loaded": true,
+            "src": "../../cocos/assets/resources/equipment/mist-hood-v1.png"
+          },
+          {
+            "loaded": true,
+            "src": "../../cocos/assets/resources/equipment/spirit-robe-v1.png"
+          },
+          {
+            "loaded": true,
+            "src": "../../cocos/assets/resources/equipment/armor-piercing-sword-v1.png"
+          }
+        ],
+        "pageOverflow": false,
+        "selected": "armor_piercing_sword",
+        "stage": {
+          "height": 844,
+          "width": 390
+        },
+        "title": "选择一件装备"
+      }
+    },
+    {
+      "name": "close-reopen-and-abandon-cancel",
+      "passed": true,
+      "details": "Hood selection survived closing and returning from empty bag; canceling abandonment preserved sword selection."
+    },
+    {
+      "name": "confirmed-abandon-empty-bag",
+      "passed": true,
+      "claimControlCount": 0
+    },
+    {
+      "name": "source-syntax-and-assets",
+      "passed": true,
+      "details": "node --check passed; all five referenced PNG resources verified; no save integration or localStorage."
+    }
+  ],
+  "screenshots": [
+    "selection-390.jpg",
+    "selection-320.jpg",
+    "receipt-320.jpg",
+    "loot-bag-320.jpg"
+  ],
+  "capturedAt": "2026-10-12T09:40:17.454Z",
+  "url": "http://127.0.0.1:8125/prototype/equipment-loot-v1/",
+  "consoleErrors": [],
+  "scope": "Isolated HTML prototype only. Existing live game inspected read-only; no Cocos integration or WeChat device acceptance performed."
+}

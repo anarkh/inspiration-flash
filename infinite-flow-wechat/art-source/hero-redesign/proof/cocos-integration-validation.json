@@ -1,0 +1,157 @@
+{
+  "date": "2026-10-08",
+  "status": "locally-integrated-and-web-mobile-verified",
+  "manifestRevision": "sha256:767dea057cff04fd1eaae26a3c8d31f8482eb3d230b74a030e539d98e4e3313a",
+  "assetCount": 305,
+  "onlyChangedAssetEntries": [
+    "character:reincarnator_walk"
+  ],
+  "unchangedAssetEntries": 304,
+  "heroResource": {
+    "key": "character:reincarnator_walk",
+    "kind": "character",
+    "entityId": "reincarnator_walk",
+    "resourcePath": "character/reincarnator-walk-v2",
+    "resourceFile": "character/reincarnator-walk-v2.png",
+    "sourceFile": "infinite-flow-wechat/art-source/hero-redesign/reincarnator-walk-v2.png",
+    "sourceFormat": "png",
+    "targetFormat": "png",
+    "cocosImageImport": "supported",
+    "alt": "束发、青灰围巾与旧铜单肩甲的成年轮回者四方向行走图集，每行四帧",
+    "role": "sprite-sheet",
+    "width": 1254,
+    "height": 1254,
+    "fit": "contain",
+    "source": "project-original-generated",
+    "sourceRevision": 2,
+    "sourceSha256": "897deadd34e18c9e3c8e7d52461a8fddac5272503696e263cee2e7baec6bb918",
+    "targetSha256": "897deadd34e18c9e3c8e7d52461a8fddac5272503696e263cee2e7baec6bb918",
+    "transformation": {
+      "operation": "byte-copy",
+      "tool": "cp",
+      "targetDimensions": {
+        "width": 1254,
+        "height": 1254
+      }
+    }
+  },
+  "build": {
+    "engine": "Cocos Creator 3.8.8",
+    "platform": "web-mobile",
+    "exitCode": 36,
+    "log": "/tmp/infinite-flow-hero-apply-20261008/creator-build.log"
+  },
+  "checks": {
+    "assetsVerify": "pass",
+    "bundleSelfCheck": "pass",
+    "headlessTypecheck": "pass",
+    "creatorTypecheck": "pass",
+    "sourceVerify": "pass",
+    "bootstrapRaceScenarios": 101,
+    "walkWorldChecks": 44
+  },
+  "runs": [
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "deviceScaleFactor": 1
+      },
+      "scope": "full",
+      "exitCode": 0,
+      "manifest": "cocos/build/web-mobile-canvas-smoke/2026-10-08T12-23-54-650Z-390x844-78406/manifest.json",
+      "flowStages": 43,
+      "browserFailureCount": 0,
+      "combatOutcome": "victory-returned-to-explore",
+      "physicalAttackCount": 3,
+      "verifiedScreenshotHashes": 87,
+      "selectedScreenshots": [
+        {
+          "stage": "01-hub",
+          "file": "art-source/hero-redesign/proof/cocos-hero-hub-390.png",
+          "sha256": "a8ca8d561db525065287308bd5cec2187faa6f7a9dc9fd6a2a6e500c02ec9c35"
+        },
+        {
+          "stage": "06-merchant-before-approach",
+          "file": "art-source/hero-redesign/proof/cocos-hero-left-390.png",
+          "sha256": "bd149887803d07dd4e27919080de5f153fc4cfc7ce003845862ee32b5cfa7b8c"
+        },
+        {
+          "stage": "10-explore",
+          "file": "art-source/hero-redesign/proof/cocos-hero-dungeon-390.png",
+          "sha256": "81896917735c835a7bb73acfa31740fd7af7001a656fe53bfd95994496475aed"
+        },
+        {
+          "stage": "12-combat",
+          "file": "art-source/hero-redesign/proof/cocos-hero-combat-390.png",
+          "sha256": "63e72b9a58ead399d23eaf1ee92675b2f1504e695a195201eb19a4e1999594bb"
+        }
+      ]
+    },
+    {
+      "viewport": {
+        "width": 320,
+        "height": 568,
+        "deviceScaleFactor": 1
+      },
+      "scope": "dungeon-only",
+      "exitCode": 0,
+      "manifest": "cocos/build/web-mobile-canvas-smoke/2026-10-08T12-25-40-393Z-320x568-82153/manifest.json",
+      "flowStages": 21,
+      "browserFailureCount": 0,
+      "combatOutcome": "victory-returned-to-explore",
+      "physicalAttackCount": 3,
+      "verifiedScreenshotHashes": 46,
+      "selectedScreenshots": [
+        {
+          "stage": "01-hub",
+          "file": "art-source/hero-redesign/proof/cocos-hero-hub-320.png",
+          "sha256": "0c7c27b78a67dd649e1d743f8437207192fea7afb2abc8e55313ea92ec4d1f9f"
+        },
+        {
+          "stage": "06-merchant-before-approach",
+          "file": "art-source/hero-redesign/proof/cocos-hero-left-320.png",
+          "sha256": "dba1dd27d0237032c7adc0878fc95d6668168590979e35f481b43f56c50f1336"
+        },
+        {
+          "stage": "10-explore",
+          "file": "art-source/hero-redesign/proof/cocos-hero-dungeon-320.png",
+          "sha256": "24a8232258bf0cdfcaab63960e820d9e7b518e6c913c5d36f455619454bd65f4"
+        },
+        {
+          "stage": "12-combat",
+          "file": "art-source/hero-redesign/proof/cocos-hero-combat-320.png",
+          "sha256": "c18ded0a95a3865b4c6b252793a0f6cb7d868b0fa13fd05e1f2b886346584197"
+        }
+      ]
+    }
+  ],
+  "frameGallery": {
+    "file": "art-source/hero-redesign/proof/cocos-frame-gallery.png",
+    "scope": "temporary real-engine SpriteFrame gallery; all16 source frames; static visual inspection; no gameplay state mutation",
+    "overlayRemoved": true,
+    "sha256": "8e1717a0fa231947a0f067c151668f866681a124143ea798339983f34c2f1112"
+  },
+  "deliveryBoundary": "Local source and Cocos Web Mobile only; not WeChat release or physical-device acceptance",
+  "gameUrl": "http://127.0.0.1:8125/cocos/build/web-mobile/index.html",
+  "localReferenceChecks": {
+    "checked": 24,
+    "historicalPrototypeFiles": 13,
+    "missing": 0
+  },
+  "httpChecks": [
+    {
+      "url": "http://127.0.0.1:8125/cocos/build/web-mobile/index.html",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8125/cocos/assets/resources/character/reincarnator-walk-v2.png",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8125/art-source/reincarnator-walk-v1.png",
+      "status": 200
+    }
+  ],
+  "livePreviewScreenshot": "art-source/hero-redesign/proof/cocos-live-preview.png"
+}

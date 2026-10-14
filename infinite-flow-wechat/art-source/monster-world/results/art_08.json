@@ -1,0 +1,21 @@
+{
+  "entityId": "zero_hour_regent",
+  "status": "complete",
+  "tool": "built-in imagegen",
+  "path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/art-source/monster-world/zero-hour-regent-world-v1.png",
+  "sourcePath": "/Users/bytedance/.codex/generated_images/01a0ecb4-491d-7f61-9885-a3911b4a254d/exec-705dadfd-ef3f-4c69-b8c7-1ad74c0810c2.png",
+  "referencePath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/monster/zero-hour-regent-v1.png",
+  "width": 1024,
+  "height": 1536,
+  "mode": "RGBA",
+  "alpha": {
+    "min": 0,
+    "max": 254,
+    "fullyTransparentPixels": 586137,
+    "fullyTransparentRatio": 0.37265586853027344
+  },
+  "sha256": "51e199c78a354b104f2842e48b448e9a3cbef1379d61adc31a59d1f717312809",
+  "rawSourcePreserved": true,
+  "promptSource": "art-source/monster-world/prompts.json sharedPrompt + zero_hour_regent.subject",
+  "visualInspection": "Full robed body with crown and hands visible; charcoal, aged bronze and cyan-gold temporal echoes preserve reference identity. Genuine alpha transparency present."
+}

@@ -1,0 +1,44 @@
+{
+  "movement": {
+    "input": "actual joystick pointer drag",
+    "before": {
+      "x": 500,
+      "y": 700
+    },
+    "after": {
+      "x": 498.6182407490852,
+      "y": 549.614347709501
+    },
+    "cameraFixed": true,
+    "domainUnchanged": true,
+    "revisionUnchanged": true
+  },
+  "combat": {
+    "input": "actual pointer click",
+    "before": {
+      "hp": 102,
+      "monsterHp": 42,
+      "revision": {
+        "acceptingInput": true,
+        "durableRevision": 2,
+        "ledgerRevision": 2
+      },
+      "turn": 1
+    },
+    "after": {
+      "assets": "ready",
+      "busy": null,
+      "hp": 92,
+      "monsterHp": 24,
+      "phase": "combat",
+      "playback": null,
+      "revision": {
+        "acceptingInput": true,
+        "durableRevision": 3,
+        "ledgerRevision": 3
+      },
+      "turn": 2
+    }
+  },
+  "consoleErrors": []
+}

@@ -1,0 +1,10 @@
+Use case: style-transfer.
+Asset type: single transparent inventory icon for a dark Chinese fantasy game HTML prototype.
+Input image 1 is the original titan marrow icon, for subject identity only. Input image 2 is the demon bone style reference: match its quiet, weathered, tactile hand-painted realism and muted ancient material.
+Primary request: create one newly illustrated titan marrow relic. A single old ivory-grey broken bone, diagonally oriented, with a narrow exposed marrow fissure containing only a tiny amount of very dim tarnished dark gold. Preserve the recognizable bone and marrow theme, but eliminate the original luminous gold effect.
+Style/medium: realistic hand-painted game object, grounded, aged, fine material texture, subtle painterly edges, no bold outlines, no graphic cel shading.
+Composition/framing: square canvas; one centered isolated object taking up 70–80% of the canvas; broad readable silhouette; show whole object with generous transparent padding. It must remain identifiable at 48px.
+Materials: porous worn bone, hairline cracks, dust in recesses; pale grey-beige ivory and desaturated umber shadows. The internal gold is a small dark metallic detail, not a light source.
+Lighting: soft neutral upper-left light, restrained highlights, no bloom, no halo.
+Scene/backdrop: genuinely transparent alpha background, nothing behind or beneath the object, no ground plane.
+Constraints: one object only; no labels, numbers, frame, text, watermark or adjacent fragment; no bright orange fire, no magical rays, no decoration outside the silhouette. Produce finished illustration pixels directly.

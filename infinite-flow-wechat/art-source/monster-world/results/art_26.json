@@ -1,0 +1,32 @@
+{
+  "entityId": "sweep_sentinel",
+  "status": "complete",
+  "tool": "built-in imagegen",
+  "path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/art-source/monster-world/sweep-sentinel-world-v1.png",
+  "sourcePath": "/Users/bytedance/.codex/generated_images/01a0ecb7-4038-7d90-8e4b-546fc5c1211c/exec-a97c63c4-2806-40bc-8eaa-19b1347dd178.png",
+  "referencePath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/monster/sweep-sentinel-v1.png",
+  "size": {
+    "width": 1024,
+    "height": 1536
+  },
+  "mode": "RGBA",
+  "alpha": {
+    "min": 0,
+    "max": 254,
+    "transparentPixels": 797847,
+    "nonzeroPixels": 775017,
+    "cornerAlpha": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "visualInspection": {
+    "fullBody": true,
+    "identityPreserved": true,
+    "notes": "扇形观测冠、黑甲长袍、锁链、提灯与权杖保留；完整轮廓无裁切。"
+  },
+  "promptSource": "art-source/monster-world/prompts.json sharedPrompt + subject for sweep_sentinel",
+  "rawCopyVerified": true
+}

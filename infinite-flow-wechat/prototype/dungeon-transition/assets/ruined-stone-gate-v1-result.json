@@ -1,0 +1,36 @@
+{
+  "asset": "ruined-stone-gate-v1",
+  "tool": "built-in image_gen.imagegen",
+  "intent": "generate",
+  "createdAt": "2026-09-30",
+  "transparentBackground": true,
+  "promptFile": "ruined-stone-gate-v1.prompt.txt",
+  "prompt": "Use case: game-asset. Asset type: a single isolated transparent 2.5D dungeon exit sprite, hand-painted realistic dark fantasy for a Chinese mobile RPG.\nCreate ONE weathered stone passage doorway, visibly inhabitable architecture rather than a sign or UI button. A rough, slightly asymmetric arch made of slate charcoal-grey squared stones, subdued moss-green seams, a thin worn bronze inlay on the arch keystone, two short low stone feet, and a very small threshold. Inside the open passage is deep near-black green shadow with an extremely soft muted amber seam of light at its far back; it should read as a natural doorway into a dark adjacent room, not a magic portal. No door leaf.\nCamera: 2.5D front view from a modest elevated angle, so a little top surface of the arch and threshold are visible, no strongly diagonal isometric angle. Match the muted painterly stony dungeon atmosphere of a ruined Chinese demon tower, with realistic rock material and slightly softened illustrative edges. Soft cool overhead illumination, warm light only deep inside. Silhouette width:height about 0.78:1. Entire object visible and centered, bottom center foot anchor. Object fills 85-90% of the canvas with narrow safe transparent margins. Rectangular portrait canvas.\nStrict constraints: genuine transparent alpha outside the object. No background, no environment, no floor plane, no enclosing rectangle, no ground slab, no large shadow plane, no decorative sign, no floating glyphs, no characters, no text, no UI, no arrow, no runic circle, no crystals, no neon, no bright cyan, no saturated blue glow, no particles. Do not draw a checkerboard. Preserve clean natural alpha edges. The main readable forms must remain clear when displayed at 108 x 146 pixels.",
+  "sourceGeneratedPath": "/Users/bytedance/.codex/generated_images/01a0f19f-2b43-79d2-bd9f-caa6cbd96ba5/exec-774fc517-232a-4e42-91d4-a1ebe753acce.png",
+  "finalPath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/dungeon-transition/assets/ruined-stone-gate-v1.png",
+  "width": 1073,
+  "height": 1465,
+  "mode": "RGBA",
+  "alphaBBox": [
+    0,
+    0,
+    1063,
+    1441
+  ],
+  "alphaZeroPixels": 501223,
+  "transparentPercent": 31.886,
+  "sha256": "48aa094175451317d0a44d18dc6dabafd245f646dff1c578ec76bcab10dd6e69",
+  "sourceSha256": "48aa094175451317d0a44d18dc6dabafd245f646dff1c578ec76bcab10dd6e69",
+  "bytes": 2322022,
+  "finalFilePreservedByteForByte": true,
+  "postProcessing": "None. Exact byte copy; browser only scales the sprite. Locked state dims the image with CSS and the quiet variant hides a separate CSS ground light.",
+  "visualInspection": "Single complete front/elevated dark slate stone arch. Old gold keystone, deep passage with muted amber background, transparent exterior. No UI, no sign, no lettering, no particles. Not a portal swirl.",
+  "usage": "Prototype only. No production resource registration or game action changes.",
+  "alphaBBox32": [
+    60,
+    69,
+    1016,
+    1407
+  ],
+  "alphaBBox32Purpose": "Read-only content-bound measurement; the PNG is not modified."
+}

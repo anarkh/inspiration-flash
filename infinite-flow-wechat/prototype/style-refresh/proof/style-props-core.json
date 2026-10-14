@@ -1,0 +1,200 @@
+{
+  "scope": "HTML prototype only; no production hookup",
+  "generator": "built-in image_gen",
+  "postprocessing": "none; byte-for-byte copy",
+  "items": [
+    {
+      "candidate": "chest-proposed.png",
+      "native_output_path": "/Users/bytedance/.codex/generated_images/01a11a76-dc3c-73c0-8915-07f6602050d2/exec-8d4c68df-e998-4070-a966-d9c9e1c08399.png",
+      "project_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/assets/chest-proposed.png",
+      "prompt_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/prompts/style-props-core-chest.txt",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "alpha_zero_pixels": 771378,
+      "alpha_opaque_pixels": 517,
+      "alpha_partial_pixels": 800621,
+      "content_bounds": [
+        0,
+        20,
+        1240,
+        1254
+      ],
+      "sha256_native": "d5abfec22278040a8a276832d7a2009d5e2044536ba9f31346317f6dc47695a5",
+      "sha256_project": "d5abfec22278040a8a276832d7a2009d5e2044536ba9f31346317f6dc47695a5",
+      "byte_identical": true,
+      "content_bounds_alpha_128": [
+        27,
+        222,
+        1230,
+        1146
+      ],
+      "alpha_histogram_top5": [
+        [
+          0,
+          771378
+        ],
+        [
+          252,
+          522189
+        ],
+        [
+          253,
+          213971
+        ],
+        [
+          251,
+          28861
+        ],
+        [
+          1,
+          12668
+        ]
+      ]
+    },
+    {
+      "candidate": "exit-proposed.png",
+      "native_output_path": "/Users/bytedance/.codex/generated_images/01a11a76-dc3c-73c0-8915-07f6602050d2/exec-790d7081-8cc6-4782-ac72-13984a102ca2.png",
+      "project_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/assets/exit-proposed.png",
+      "prompt_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/prompts/style-props-core-exit.txt",
+      "width": 1145,
+      "height": 1374,
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "alpha_zero_pixels": 559743,
+      "alpha_opaque_pixels": 516,
+      "alpha_partial_pixels": 1012971,
+      "content_bounds": [
+        0,
+        0,
+        1129,
+        1374
+      ],
+      "sha256_native": "81b674164ee006184f36559629092dee769dc78e8a30c1ed154e423cd0c645f9",
+      "sha256_project": "81b674164ee006184f36559629092dee769dc78e8a30c1ed154e423cd0c645f9",
+      "byte_identical": true,
+      "content_bounds_alpha_128": [
+        58,
+        48,
+        1085,
+        1321
+      ],
+      "alpha_histogram_top5": [
+        [
+          253,
+          744205
+        ],
+        [
+          0,
+          559743
+        ],
+        [
+          252,
+          227046
+        ],
+        [
+          251,
+          9232
+        ],
+        [
+          1,
+          8807
+        ]
+      ]
+    }
+  ],
+  "debris_proof": {
+    "asset": "debris-proposed.png",
+    "tool": "built-in image_gen edit",
+    "use": "HTML prototype only; not integrated into production",
+    "nativeOutputPath": "/Users/bytedance/.codex/generated_images/01a11a78-3f97-74f1-849e-afaa38c3eb20/exec-bcbae936-5592-4a51-bb53-4a374dce022a.png",
+    "originalNativeOutputPath": "/Users/bytedance/.codex/generated_images/01a11a78-3f97-74f1-849e-afaa38c3eb20/exec-36bf44a5-06ca-4a70-abe1-4dde76639161.png",
+    "savedPath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/assets/debris-proposed.png",
+    "sourceSha256": "d0dea6331d34acd63b0c7da6f74ae8fc5dd1223a02fec0cd947bb4de7fce8371",
+    "savedSha256": "d0dea6331d34acd63b0c7da6f74ae8fc5dd1223a02fec0cd947bb4de7fce8371",
+    "byteIdentical": true,
+    "dimensions": [
+      1536,
+      1024
+    ],
+    "mode": "RGBA",
+    "alphaExtrema": [
+      0,
+      254
+    ],
+    "alphaBoundingBox": [
+      31,
+      46,
+      1516,
+      960
+    ],
+    "fullyTransparentPixels": 701849,
+    "partiallyTransparentPixels": 871015,
+    "lowAlpha1to50Pixels": 22298,
+    "fullyOpaquePixels": 0,
+    "promptPath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/prompts/style-props-core-debris-edit.txt",
+    "visualInspection": "Complete rubble composition with same stones and textures; slightly enlarged and brighter by model. Tool RGB preview still depicts a broad grey halo, but sampled halo pixels are alpha=0, so browser compositing inspection is required rather than judging RGB preview. Edit removes edge-reaching alpha noise; bbox is fully inset. No image postprocessing performed.",
+    "haloAlphaSamples": {
+      "(900, 100)": [
+        17,
+        17,
+        16,
+        0
+      ],
+      "(950, 170)": [
+        56,
+        55,
+        52,
+        0
+      ],
+      "(300, 60)": [
+        36,
+        34,
+        32,
+        0
+      ],
+      "(600, 990)": [
+        18,
+        17,
+        15,
+        0
+      ],
+      "(768, 10)": [
+        9,
+        8,
+        6,
+        0
+      ],
+      "(50, 350)": [
+        43,
+        43,
+        39,
+        0
+      ],
+      "(1300, 950)": [
+        14,
+        14,
+        11,
+        0
+      ],
+      "(400, 10)": [
+        51,
+        49,
+        46,
+        0
+      ]
+    }
+  },
+  "visual_assessment": {
+    "chest": "Realistic dark wood and matte iron, limited worn gold details; full low rectangular chest and feet intact. No evident neighboring-object fragment.",
+    "exit": "Complete worn grey stone arch with restrained blue-grey interior fog. Full two feet and threshold intact. Detailed relief is slightly more ornate than plain masonry, no bright halo or gold scroll.",
+    "debris": "Low grey weathered rubble with minor moss. One built-in imagegen edit reduced faint alpha edge pixels and inset full-alpha bounds; native RGBA copied verbatim. Tool RGB preview showed wide grey halo but representative outside pixels have alpha 0, so judge actual compositing in browser. The edit slightly brightened and enlarged pile; feet remain complete."
+  }
+}

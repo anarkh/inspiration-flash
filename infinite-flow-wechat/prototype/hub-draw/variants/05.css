@@ -1,0 +1,90 @@
+.v05 {
+  --shrine-gold: #d6b77b;
+  --shrine-ink: #0c0e13;
+  position: relative;
+  width: 390px;
+  height: 740px;
+  overflow: hidden;
+  isolation: isolate;
+  color: #f4ead7;
+  background: #101014;
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+.v05 *, .v05 *::before, .v05 *::after { box-sizing: border-box; }
+.v05 button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.v05 button:focus-visible { outline: 2px solid #ffe3a8; outline-offset: 3px; }
+.v05 .scene-background { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .57; z-index: -3; }
+.v05 .shrine-veil { position: absolute; inset: 0; background: linear-gradient(180deg, #0a0a0ce8 0%, #11121694 29%, #101014aa 65%, #080b11 96%); z-index: -2; }
+.v05 .shrine-veil::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 64px, #d3b7860c 65px 66px, transparent 67px 129px); }
+.v05 .scene-header { position: absolute; top: 14px; left: 16px; right: 16px; height: 62px; display: flex; align-items: center; gap: 12px; }
+.v05 .avatar-button { width: 56px; height: 62px; padding: 0; position: relative; overflow: hidden; background: #151619; border: 1px solid #967950; clip-path: polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px); }
+.v05 .avatar-button img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 15%; }
+.v05 .avatar-button span { position: absolute; bottom: 0; left: 0; right: 0; font-size: 12px; line-height: 19px; background: #0b0c13dc; }
+.v05 .scene-identity { flex: 1; align-self: center; display: flex; flex-direction: column; gap: 5px; }
+.v05 .scene-place { font-family: "Songti SC", "SimSun", serif; font-size: 22px; font-weight: 700; letter-spacing: 4px; }
+.v05 .scene-health { display: flex; gap: 5px; align-items: baseline; font-size: 12px; line-height: 14px; color: #d3c9b7; }
+.v05 .scene-health b { color: #f3ead8; font-weight: 600; }
+.v05 .scene-health > span { color: #aaa294; }
+.v05 .hp-track { display: block; width: 162px; height: 3px; background: #484238; }
+.v05 .hp-track i { display: block; height: 100%; width: 100%; background: #cfad6e; box-shadow: 0 0 9px #c8a36666; }
+.v05 .scene-menu { width: 56px; height: 56px; display: grid; place-items: center; padding: 16px; border: 1px solid #a98a5745; background: #1112189c; }
+.v05 .scene-menu svg { width: 23px; height: 23px; color: #ddc390; }
+.v05 .shrine-resources { position: absolute; top: 88px; left: 16px; right: 16px; min-height: 31px; display: flex; justify-content: center; align-items: center; gap: 33px; border-top: 1px solid #cfac6c39; border-bottom: 1px solid #cfac6c39; font-size: 12px; color: #c6bda9; letter-spacing: .8px; }
+.v05 .shrine-resources b { color: #e7cca0; padding-left: 5px; font-weight: 600; }
+.v05 .shrine-inscription { position: absolute; top: 131px; left: 19px; right: 19px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #bca77d; letter-spacing: 2px; }
+.v05 .shrine-inscription b { font-family: "Songti SC", "SimSun", serif; font-size: 14px; letter-spacing: 5px; font-weight: 500; color: #e7c98f; }
+.v05 .shrine-architecture { position: absolute; left: 115px; top: 151px; width: 160px; height: 387px; pointer-events: none; }
+.v05 .shrine-spire { position: absolute; top: 0; bottom: 43px; left: 15px; right: 15px; border: 1px solid #c3a05e47; clip-path: polygon(50% 0,100% 14%,100% 100%,0 100%,0 14%); background: linear-gradient(90deg, #ddbc7420, #d9b66b03 20%, #d9b66b03 80%, #ddbc7420); }
+.v05 .shrine-spire::after { content: ""; position: absolute; inset: 9px 7px 0; border: 1px solid #c3a05e42; clip-path: polygon(50% 0,100% 13%,100% 100%,0 100%,0 13%); }
+.v05 .shrine-halo { position: absolute; top: 23px; left: 14px; width: 132px; height: 132px; border: 1px solid #ccb07150; border-radius: 50%; box-shadow: 0 0 45px #e6bc7017, inset 0 0 26px #e6bc7017; }
+.v05 .shrine-halo::before { content: ""; position: absolute; inset: 10px; border: 1px dashed #dcbf774f; border-radius: 50%; }
+.v05 .shrine-halo::after { content: ""; position: absolute; inset: -13px 65px; border-left: 1px solid #d7b1686b; }
+.v05 .shrine-altar { position: absolute; bottom: 0; left: -20px; width: 200px; height: 56px; }
+.v05 .shrine-altar i { position: absolute; left: 0; right: 0; height: 22px; border: 1px solid #b2945b60; background: linear-gradient(90deg, #292421, #55453280, #292421); transform: perspective(90px) rotateX(34deg); }
+.v05 .shrine-altar i:nth-child(1) { bottom: 0; }
+.v05 .shrine-altar i:nth-child(2) { left: 14px; right: 14px; bottom: 13px; }
+.v05 .shrine-altar i:nth-child(3) { left: 29px; right: 29px; bottom: 26px; }
+.v05 .shrine-niches { position: absolute; top: 179px; left: 17px; right: 17px; height: 351px; }
+.v05 .niche { position: absolute; width: 96px; height: 113px; padding: 0; border: 0; background: transparent; }
+.v05 .niche-west { left: 0; }
+.v05 .niche-east { right: 0; }
+.v05 .niche-one { top: 0; }
+.v05 .niche-two { top: 118px; }
+.v05 .niche-three { top: 236px; }
+.v05 .niche::before { content: ""; position: absolute; left: 12px; right: 12px; top: 0; height: 78px; background: radial-gradient(ellipse at 50% 20%, #b9986640, #080b12d9 58%); border: 1px solid #b391565a; border-bottom-color: #b391568c; clip-path: polygon(50% 0,100% 15%,100% 100%,0 100%,0 15%); }
+.v05 .niche::after { content: ""; position: absolute; top: 70px; left: 9px; right: 9px; height: 7px; background: linear-gradient(#b794536b,#0b0d12); border-top: 1px solid #b89a67; }
+.v05 .niche .svc-art { position: absolute; top: -5px; left: 18px; width: 60px; height: 85px; object-fit: contain; mix-blend-mode: screen; filter: contrast(1.06) brightness(1.18); z-index: 1; }
+.v05 .niche .svc-copy { position: absolute; top: 81px; left: -2px; right: -2px; display: flex; flex-direction: column; gap: 2px; text-align: center; }
+.v05 .niche .svc-title { font-size: 13px; font-weight: 600; line-height: 16px; color: #eee1c9; letter-spacing: .5px; white-space: nowrap; }
+.v05 .niche .svc-purpose { font-size: 12px; line-height: 14px; color: #c0ae8a; white-space: nowrap; }
+.v05 .niche .svc-icon { position: absolute; top: 53px; right: 7px; width: 25px; height: 25px; padding: 4px; border: 1px solid #b29a6680; background: #0e1015dd; z-index: 2; }
+.v05 .svc-icon svg { width: 100%; height: 100%; }
+.v05 .niche:hover::before, .v05 .niche:focus-visible::before { border-color: #e9ca89; background: radial-gradient(ellipse at 50% 20%, #b998666b, #080b12d9 65%); }
+.v05 .projection-wordmark { position: absolute; left: 130px; right: 130px; top: 161px; text-align: center; font-family: "Songti SC", "SimSun", serif; font-size: 12px; letter-spacing: 3px; color: #d1ae70; }
+.v05 .shrine-projection { position: absolute; left: 122px; top: 180px; width: 146px; height: 341px; padding: 0; border: 0; background: transparent; }
+.v05 .shrine-projection .svc-art { position: absolute; top: 5px; left: -22px; width: 190px; height: 300px; object-fit: contain; mix-blend-mode: screen; filter: brightness(1.14); }
+.v05 .shrine-projection .svc-copy { position: absolute; bottom: 0; left: -1px; right: -1px; text-align: center; display: flex; flex-direction: column; gap: 4px; padding: 7px 1px; background: linear-gradient(90deg, transparent, #0e1014df 16%, #0e1014df 84%, transparent); }
+.v05 .shrine-projection .svc-title { font-family: "Songti SC", "SimSun", serif; font-size: 17px; line-height: 20px; letter-spacing: 3px; color: #ffdf9f; }
+.v05 .shrine-projection .svc-purpose { font-size: 12px; line-height: 15px; color: #ddc795; letter-spacing: .7px; }
+.v05 .shrine-projection .svc-icon { display: none; }
+.v05 .altar-caption { position: absolute; top: 542px; left: 41px; right: 41px; display: flex; align-items: center; gap: 12px; font-size: 12px; letter-spacing: 3px; color: #c0ae8d; justify-content: center; }
+.v05 .altar-caption i { width: 33px; height: 1px; background: #af905955; }
+.v05 .shrine-seal { position: absolute; left: 23px; right: 23px; top: 574px; height: 78px; display: flex; align-items: center; padding: 8px 14px; gap: 14px; text-align: left; border: 1px solid #c8aa6b9e; background: linear-gradient(90deg,#16191deb,#2c2922e8,#16191deb); clip-path: polygon(12px 0,calc(100% - 12px) 0,100% 12px,100% calc(100% - 12px),calc(100% - 12px) 100%,12px 100%,0 calc(100% - 12px),0 12px); box-shadow: inset 0 0 25px #c59b4433; }
+.v05 .shrine-seal::after { content: ""; position: absolute; inset: 4px; border: 1px solid #c8aa6b30; pointer-events: none; }
+.v05 .portal-symbol { width: 39px; height: 49px; flex: 0 0 39px; border: 1px solid #d1ad69; position: relative; background: #b5944520; }
+.v05 .portal-symbol::before { content: ""; position: absolute; inset: 6px 7px; border: 1px solid #d1ad696b; }
+.v05 .portal-symbol::after { content: ""; position: absolute; left: 18px; top: 5px; bottom: 5px; border-left: 1px solid #e5c992; }
+.v05 .portal-symbol b { position: absolute; left: 13px; top: 18px; width: 11px; height: 11px; background: #d3b06a; transform: rotate(45deg); box-shadow: 0 0 16px #e0b767; }
+.v05 .portal-symbol i { display: none; }
+.v05 .portal-copy { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+.v05 .portal-eyebrow { font-size: 12px; line-height: 14px; color: #d4bd8e; }
+.v05 .portal-copy strong { font-family: "Songti SC", "SimSun", serif; font-size: 19px; line-height: 22px; font-weight: 600; letter-spacing: 2px; color: #ffe3af; }
+.v05 .portal-hint { font-size: 12px; line-height: 15px; color: #d4c5a7; }
+.v05 .portal-arrow { width: 22px; height: 22px; color: #e6c889; }
+.v05 .portal-arrow svg { width: 100%; height: 100%; }
+.v05 .shrine-tools { position: absolute; top: 667px; left: 23px; right: 23px; height: 58px; display: flex; align-items: center; justify-content: space-around; border-top: 1px solid #c4a16333; }
+.v05 .scene-utility { width: 147px; height: 57px; display: flex; align-items: center; justify-content: center; gap: 11px; border: 0; background: transparent; font-size: 14px; letter-spacing: 2px; color: #dcc49b; }
+.v05 .scene-utility svg { width: 23px; height: 23px; }
+.v05 .shrine-tool-divider { width: 1px; height: 24px; background: #c4a16333; }
+.v05 .scene-utility:hover, .v05 .shrine-seal:hover { filter: brightness(1.2); }
+@media (prefers-reduced-motion: reduce) { .v05 *, .v05 *::before, .v05 *::after { animation: none !important; transition: none !important; } }

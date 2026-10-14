@@ -1,0 +1,24 @@
+{
+  "entityId": "false_testimony_judge",
+  "status": "generated",
+  "path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/art-source/monster-world/false-testimony-judge-world-v1.png",
+  "sourcePath": "/Users/bytedance/.codex/generated_images/01a0ecb6-5e83-7b31-957e-716154c23b0d/exec-e58edbfb-8101-485c-92e5-0ab6e1d72385.png",
+  "referencePath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/monster/false-testimony-judge-v1.png",
+  "size": {
+    "width": 1024,
+    "height": 1536
+  },
+  "mode": "RGBA",
+  "alpha": {
+    "min": 0,
+    "max": 254,
+    "transparentPixels": 653889,
+    "transparentRatio": 0.41573143005371094,
+    "hasTransparency": true
+  },
+  "prompt": "art-source/monster-world/prompts.json sharedPrompt + asset.subject",
+  "tool": "built-in imagegen",
+  "visualCheck": "Full body with hood, halo, hammer, three chest judgement lamps and long tattered robe; black bronze dark RPG style preserved.",
+  "sha256": "303979858cd84ca32181f0c2951c6dff69d4a450e2efc7b365577838b84ea146",
+  "originalBytesPreserved": true
+}

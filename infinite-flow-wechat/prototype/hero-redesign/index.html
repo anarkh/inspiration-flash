@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>无限流 · 轮回者主角素材设计</title>
+  <link rel="stylesheet" href="style.css?v=20261008-applied-2">
+  <script src="app.js?v=20261008-applied-2" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#design">跳至角色设计</a>
+  <header class="site-header">
+    <a class="brand" href="../style-refresh/index.html" aria-label="返回素材风格对照"><span class="brand-seal" aria-hidden="true">界</span><span>无限流<span class="brand-subtitle">美术工作台</span></span></a>
+    <p class="proposal-status">角色设计 · 行走修订版已接入</p>
+  </header>
+  <nav class="page-nav" aria-label="设计预览导航">
+    <a href="#design">角色设定</a><a href="#comparison">场景与动作</a><a href="#source">完整图集</a><a href="../../cocos/build/web-mobile/index.html">进入游戏 ↗</a>
+  </nav>
+  <main>
+    <section id="design" class="design-section" aria-labelledby="design-title" tabindex="-1">
+      <div class="section-heading"><h1 id="design-title">轮回者<span>主角素材设计</span></h1><p>延续束发、青巾与旧铜单肩甲，让人物与现有场景共享同一种质感。</p></div>
+      <div class="design-board">
+        <figure class="fullbody-panel">
+          <div class="panel-heading"><h2>全身设定</h2><span>新设计 · 透明 PNG</span></div>
+          <button class="fullbody-stage" type="button" data-preview="fullbody" aria-label="查看轮回者全身设定完整原图">
+            <span class="stage-axis" aria-hidden="true"></span>
+            <img src="../../art-source/hero-redesign/reincarnator-fullbody-v1.png" alt="轮回者全身设计，玄黑布衣、灰青围巾与旧铜单肩甲" class="fullbody-image" fetchpriority="high" data-required-image>
+            <span class="enlarge-hint">查看完整原图 ↗</span>
+          </button>
+          <figcaption>成年比例 · 克制轮廓 · 磨损材质</figcaption>
+        </figure>
+        <aside class="identity-panel" aria-labelledby="identity-title">
+          <div class="identity-heading"><p class="eyebrow">保留同一位轮回者</p><h2 id="identity-title">从现有肖像<br>延伸到全身与行走</h2></div>
+          <figure class="portrait-reference"><button type="button" data-preview="portrait" aria-label="查看现有角色肖像完整原图"><img src="../../cocos/assets/resources/character/reincarnator-v2.png" alt="游戏中现有轮回者肖像，用于保持人物身份一致" data-required-image></button><figcaption><strong>现有角色肖像</strong><span>五官、束发、青巾与肩甲<br>作为本次设计的身份依据</span></figcaption></figure>
+          <dl class="design-decisions">
+            <div><dt>比例</dt><dd>成年身形，收敛头身反差；保留利落的肩线与下摆。</dd></div>
+            <div><dt>材质</dt><dd>粗织布、旧皮革、暗铜甲片，以明暗和磨损区分层次。</dd></div>
+            <div><dt>辨识</dt><dd>灰青围巾与单侧肩甲成为远景识别点，减少细碎亮边。</dd></div>
+          </dl>
+          <div class="palette" aria-label="角色色彩方向"><span><i class="charcoal"></i>玄黑</span><span><i class="teal"></i>灰青</span><span><i class="bronze"></i>旧铜</span></div>
+        </aside>
+      </div>
+    </section>
+
+    <section id="comparison" class="comparison-section" aria-labelledby="comparison-title">
+      <div class="section-heading"><h2 id="comparison-title">场景与动作对照</h2><p>保留原版与首版草图的对照。游戏已使用进一步修订、校准脚点的 v2 图集；以下为 HTML 合成预览，不是游戏截图。</p></div>
+      <div class="controls">
+        <div class="controls-main"><label class="select-label">场景<select id="scene-select"><option value="hub">主神空间 · 轮回庭院</option><option value="dungeon">镇妖塔 · 第一层</option></select></label><div class="direction-controls" role="group" aria-label="行走方向"><button type="button" data-direction="0" aria-pressed="true">朝下</button><button type="button" data-direction="1" aria-pressed="false">朝左</button><button type="button" data-direction="2" aria-pressed="false">朝右</button><button type="button" data-direction="3" aria-pressed="false">朝上</button></div><button id="play-toggle" class="primary-button" type="button" aria-pressed="true">暂停动作</button></div>
+        <div class="controls-detail"><label class="select-label">帧窗尺寸<select id="size-select"><option value="96">96 × 96 px</option><option value="144" selected>144 × 144 px</option></select></label><label class="guide-control"><input id="guide-toggle" type="checkbox">显示脚点参考</label><span class="animation-meta" id="animation-meta">朝下 · 9 fps · 帧 1 / 4</span></div>
+      </div>
+      <div class="comparison-grid">
+        <figure class="compare-panel">
+          <div class="panel-heading"><h3>替换前行走素材</h3><span>历史原图</span></div>
+          <div class="scene" data-scene="hub" data-sprite-scene>
+            <img src="../../cocos/assets/resources/hub-courtyard/walk-sanctuary-v1.png" class="scene-background" alt="轮回庭院现有游戏背景" data-scene-background>
+            <div class="foot-baseline" aria-hidden="true"><span>脚点参考</span></div>
+            <div class="character-anchor"><span class="ground-shadow" aria-hidden="true"></span><div class="sprite sprite-old" role="img" aria-label="现用主角朝下行走动画" data-sprite="old"></div></div>
+            <p class="asset-state" data-sprite-state="old" hidden></p>
+          </div>
+          <figcaption><strong>替换前版本</strong><p>观察当前头身比例、布料色彩与肩甲亮度。</p><button class="text-button" type="button" data-preview="old-atlas">查看完整图集 ↗</button></figcaption>
+        </figure>
+        <figure class="compare-panel proposed-panel">
+          <div class="panel-heading"><h3>首版行走草图</h3><span>设计留档</span></div>
+          <div class="scene" data-scene="hub" data-sprite-scene>
+            <img src="../../cocos/assets/resources/hub-courtyard/walk-sanctuary-v1.png" class="scene-background" alt="轮回庭院现有游戏背景" data-scene-background>
+            <div class="foot-baseline" aria-hidden="true"><span>脚点参考</span></div>
+            <div class="character-anchor"><span class="ground-shadow" aria-hidden="true"></span><div class="sprite sprite-new" role="img" aria-label="新设计主角朝下行走动画候选" data-sprite="new"></div></div>
+            <p class="asset-state" data-sprite-state="new" hidden></p>
+          </div>
+          <figcaption><strong>写实比例与材质方向</strong><p>检查玄黑衣装、灰青围巾与旧铜肩甲的场景融合。</p><button class="text-button" type="button" data-preview="new-atlas">查看完整图集 ↗</button></figcaption>
+        </figure>
+      </div>
+      <div class="frame-inspector"><label for="frame-select">逐帧检查</label><input id="frame-select" type="range" min="0" max="3" value="0" step="1" aria-valuetext="第 1 帧"><output id="frame-label" for="frame-select">1 / 4</output><p>拖动暂停动画；按“播放动作”恢复 9 fps。</p></div>
+      <p class="scope-note">这里保留四方向 16 帧草图，按实测行列位置取窗。游戏使用修订后的图集与统一脚点定义，未直接使用这张草图。</p>
+    </section>
+
+    <section id="source" class="source-section" aria-labelledby="source-title">
+      <div class="section-heading"><h2 id="source-title">完整图集</h2><p>四方向 16 帧设计草图，保留完整透明画布；点击放大检查每一帧。</p></div>
+      <div class="source-layout">
+        <button class="atlas-preview checkerboard" type="button" data-preview="new-atlas" aria-label="放大新设计完整四方向行走图集"><img src="../../art-source/hero-redesign/reincarnator-walk-v2-candidate.png" alt="新设计完整行走图集，四行分别为朝下、朝左、朝右、朝上，每行四帧" loading="lazy" data-required-image></button>
+        <div class="source-details"><h3>行走素材 · 设计候选</h3><dl><div><dt>行顺序</dt><dd>朝下 / 朝左 / 朝右 / 朝上</dd></div><div><dt>帧窗依据</dt><dd>原图行列间距不等，按实测位置取窗</dd></div><div><dt>预览播放</dt><dd>9 fps · 每方向四帧草图循环</dd></div><div><dt>当前状态</dt><dd>首版草图留档；修订后的 v2 已接入游戏</dd></div></dl><div class="source-links"><a href="../../art-source/hero-redesign/reincarnator-walk-v2.png" target="_blank" rel="noopener">打开游戏已采用的修订图集 ↗</a><a href="../../art-source/hero-redesign/reincarnator-fullbody-v1.png" target="_blank" rel="noopener">打开全身设定原图 ↗</a><a href="../../art-source/hero-redesign/reincarnator-walk-v2-candidate.png" target="_blank" rel="noopener">打开行走图集原图 ↗</a></div><p>全身设定用于确认形象与材质，行走草图用于检查小尺寸表现。两者均保留原始生成文件；游戏图集已另行修订并完成脚点校准。</p></div>
+      </div>
+    </section>
+    <footer class="page-footer"><span>无限流 · 主角设计预览</span><p>本页保留设计过程的 HTML 合成。实际游戏已采用修订并校准的 v2 图集，沿用原移动、碰撞与交互。</p></footer>
+    <p id="page-error" class="error-notice" role="alert" hidden></p>
+    <noscript><p class="error-notice">请启用 JavaScript，以切换场景、动作与完整原图预览。原始素材链接仍可直接打开。</p></noscript>
+  </main>
+  <dialog id="image-dialog" aria-labelledby="dialog-title"><div class="dialog-header"><h2 id="dialog-title">完整原图</h2><button id="close-dialog" type="button" aria-label="关闭原图预览">×</button></div><div class="dialog-image-container checkerboard"><img id="dialog-image" alt=""></div><div class="dialog-footer"><p id="dialog-caption"></p><a id="dialog-original" target="_blank" rel="noopener">单独打开原图 ↗</a></div></dialog>
+  <div id="live-status" class="sr-only" role="status" aria-live="polite"></div>
+</body>
+</html>

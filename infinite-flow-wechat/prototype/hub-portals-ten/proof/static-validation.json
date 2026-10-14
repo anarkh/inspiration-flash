@@ -1,0 +1,165 @@
+{
+  "status": "PASS",
+  "target": "Main god space / Reincarnation courtyard dungeon entry portal",
+  "assetCount": 10,
+  "uniqueAssets": true,
+  "assets": [
+    {
+      "id": "hub-portal-01",
+      "width": 1019,
+      "height": 1544,
+      "bytes": 2380376,
+      "sha256": "d83c817d5c80c3165385b20c1015fc07361efe62177127fcee6aa53d679a12c9",
+      "sourceCopyExact": true,
+      "pngColorType": "RGBA"
+    },
+    {
+      "id": "hub-portal-02",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2084694,
+      "sha256": "7cb20855d7c12134e32aae73220152e4b15205b0350a9db9ab8bf1ad19029fe0",
+      "sourceCopyExact": true,
+      "pngColorType": "RGBA"
+    },
+    {
+      "id": "hub-portal-03",
+      "width": 1190,
+      "height": 1322,
+      "bytes": 2020597,
+      "sha256": "507a899fc459927f2d68ff381baa2a1e2584177434d2243e86ac5089b348bd17",
+      "sourceCopyExact": true,
+      "pngColorType": "RGBA"
+    },
+    {
+      "id": "hub-portal-04",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2593938,
+      "sha256": "0d9a7292eff3fb500f4ebda44c1630c37a2f268ef5ac16f4b986dd18c6463cda",
+      "sourceCopyExact": true,
+      "pngColorType": "RGBA"
+    },
+    {
+      "id": "hub-portal-05",
+      "width": 1018,
+      "height": 1544,
+      "bytes": 2246487,
+      "sha256": "5890979a915339a0a54caac983a1d3a4c8dd6a72be1dba05c3a16a0d981e09a0",
+      "sourceCopyExact": true,
+      "pngColorType": "RGBA"
+    },
+    {
+      "id": "hub-portal-06",
+      "width": 1018,
+      "height": 1544,
+      "bytes": 2226716,
+      "sha256": "c6928cd9b1f7487903cf170cff3873ce804d1e995183b867d88d9a4c77338bf9",
+      "sourceCopyExact": true,
+      "pngColorType": "RGBA"
+    },
+    {
+      "id": "hub-portal-07",
+      "width": 1018,
+      "height": 1545,
+      "bytes": 2329868,
+      "sha256": "e77658a165eab7c3fe527b309909bca1d0be7c4fddd4ab5d4c75905a33927d4e",
+      "sourceCopyExact": true,
+      "pngColorType": "RGBA"
+    },
+    {
+      "id": "hub-portal-08",
+      "width": 1019,
+      "height": 1544,
+      "bytes": 2462725,
+      "sha256": "fa074dbbcb56f8caa41c2b7c4bd86356e201d3d14a8638fb5025f001ef983daa",
+      "sourceCopyExact": true,
+      "pngColorType": "RGBA"
+    },
+    {
+      "id": "hub-portal-09",
+      "width": 1019,
+      "height": 1543,
+      "bytes": 1897950,
+      "sha256": "9155dff8fba6e58ec6b30af5de7bb4d0911af3452990c2411882e733e329b40c",
+      "sourceCopyExact": true,
+      "pngColorType": "RGBA"
+    },
+    {
+      "id": "hub-portal-10",
+      "width": 1018,
+      "height": 1545,
+      "bytes": 2196160,
+      "sha256": "6f2ee6721c035965684af0146e50dd4ed4f1aee66557940eeeaec821a08fad86",
+      "sourceCopyExact": true,
+      "pngColorType": "RGBA"
+    }
+  ],
+  "http": [
+    {
+      "path": "prototype/hub-portals-ten/index.html",
+      "httpStatus": 200
+    },
+    {
+      "path": "prototype/hub-portals-ten/styles.css",
+      "httpStatus": 200
+    },
+    {
+      "path": "prototype/hub-portals-ten/app.js",
+      "httpStatus": 200
+    },
+    {
+      "path": "prototype/hub-portals-ten/assets/current-hub-portal.svg",
+      "httpStatus": 200
+    },
+    {
+      "path": "prototype/hub-portals-ten/assets/hub-portal-01.png",
+      "httpStatus": 200
+    },
+    {
+      "path": "prototype/hub-portals-ten/assets/hub-portal-02.png",
+      "httpStatus": 200
+    },
+    {
+      "path": "prototype/hub-portals-ten/assets/hub-portal-03.png",
+      "httpStatus": 200
+    },
+    {
+      "path": "prototype/hub-portals-ten/assets/hub-portal-04.png",
+      "httpStatus": 200
+    },
+    {
+      "path": "prototype/hub-portals-ten/assets/hub-portal-05.png",
+      "httpStatus": 200
+    },
+    {
+      "path": "prototype/hub-portals-ten/assets/hub-portal-06.png",
+      "httpStatus": 200
+    },
+    {
+      "path": "prototype/hub-portals-ten/assets/hub-portal-07.png",
+      "httpStatus": 200
+    },
+    {
+      "path": "prototype/hub-portals-ten/assets/hub-portal-08.png",
+      "httpStatus": 200
+    },
+    {
+      "path": "prototype/hub-portals-ten/assets/hub-portal-09.png",
+      "httpStatus": 200
+    },
+    {
+      "path": "prototype/hub-portals-ten/assets/hub-portal-10.png",
+      "httpStatus": 200
+    },
+    {
+      "path": "cocos/assets/resources/hub-courtyard/walk-sanctuary-v1.png",
+      "httpStatus": 200
+    },
+    {
+      "path": "cocos/assets/resources/character/reincarnator-walk-v1.png",
+      "httpStatus": 200
+    }
+  ],
+  "scope": "Only prototype/hub-portals-ten. No production resources, manifests, domain, storage or deployments changed."
+}

@@ -1,0 +1,26 @@
+{
+  "entityId": "final_cut_director",
+  "status": "generated",
+  "path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/art-source/monster-world/final-cut-director-world-v1.png",
+  "sourcePath": "/Users/bytedance/.codex/generated_images/01a0ecb7-1684-7ec1-a7d5-82e6cb132b08/exec-c719b259-4934-43fd-8c8f-522ae430bf8f.png",
+  "referencePath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/monster/final-cut-director-v1.png",
+  "width": 1024,
+  "height": 1536,
+  "mode": "RGBA",
+  "alpha": {
+    "min": 0,
+    "max": 254,
+    "transparentPixels": 538291,
+    "nonOpaquePixels": 1572864,
+    "cornerValues": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "visualCheck": "Full figure and bottom appendages visible; preserved frozen frames, clapperboard equipment, black and bronze robes; grounded dark fantasy style.",
+  "promptSource": "art-source/monster-world/prompts.json sharedPrompt + assets[entityId=final_cut_director].subject",
+  "tool": "built-in image_gen",
+  "edited": false
+}

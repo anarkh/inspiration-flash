@@ -1,0 +1,164 @@
+[
+  {
+    "entityId": "fog_lesser_demon",
+    "sourceFile": "fog-lesser-demon-world-v1.png",
+    "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a0ec83-8976-7783-9644-3911d3f62eb9/exec-c7c883a8-7aa0-460a-9ee5-77b4bd3ba023.png",
+    "status": "complete",
+    "validation": {
+      "size": [
+        1024,
+        1536
+      ],
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "transparentPixels": 782651,
+      "visualInspection": "complete full body; identity preserved; dark fantasy palette"
+    }
+  },
+  {
+    "entityId": "tower_butcher",
+    "sourceFile": "tower-butcher-world-v1.png",
+    "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a0ec83-8976-7783-9644-3911d3f62eb9/exec-67e69636-93cd-4df7-bf70-97b87e5cf134.png",
+    "status": "complete",
+    "validation": {
+      "size": [
+        1024,
+        1536
+      ],
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "transparentPixels": 746514,
+      "visualInspection": "complete full body; identity preserved; dark fantasy palette"
+    }
+  },
+  {
+    "entityId": "tide_boatman",
+    "sourceFile": "tide-boatman-world-v1.png",
+    "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a0ec83-8976-7783-9644-3911d3f62eb9/exec-daaa1e41-3177-4679-a8c0-8f6618c1bea6.png",
+    "status": "complete",
+    "validation": {
+      "size": [
+        1024,
+        1536
+      ],
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "transparentPixels": 745118,
+      "visualInspection": "complete full body; identity preserved; dark fantasy palette"
+    }
+  },
+  {
+    "entityId": "mirror_thread_spider",
+    "sourceFile": "mirror-thread-spider-world-v1.png",
+    "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a0ec83-8976-7783-9644-3911d3f62eb9/exec-40b85298-4de0-40e4-9b07-d3476e43c4a5.png",
+    "status": "complete",
+    "validation": {
+      "size": [
+        1024,
+        1536
+      ],
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "transparentPixels": 823660,
+      "visualInspection": "complete full body; identity preserved; dark fantasy palette"
+    }
+  },
+  {
+    "entityId": "rail_wraith",
+    "sourceFile": "rail-wraith-world-v1.png",
+    "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a0ec83-8976-7783-9644-3911d3f62eb9/exec-9502a937-63d2-4a52-b619-ba3f715e933d.png",
+    "status": "complete",
+    "validation": {
+      "size": [
+        1024,
+        1536
+      ],
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "transparentPixels": 895399,
+      "visualInspection": "complete full body; identity preserved; dark fantasy palette"
+    }
+  },
+  {
+    "entityId": "mine_shell_guard",
+    "sourceFile": "mine-shell-guard-world-v1.png",
+    "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a0ec83-8976-7783-9644-3911d3f62eb9/exec-774d57b2-484f-4239-8456-9538fcb4f536.png",
+    "status": "complete",
+    "validation": {
+      "size": [
+        1024,
+        1536
+      ],
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "transparentPixels": 626177,
+      "visualInspection": "complete full body; identity preserved; dark fantasy palette"
+    }
+  },
+  {
+    "entityId": "spark_imp",
+    "sourceFile": "spark-imp-world-v1.png",
+    "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a0ec83-8976-7783-9644-3911d3f62eb9/exec-4702bc86-21c9-4f73-bfde-6c51f217c33b.png",
+    "status": "complete",
+    "validation": {
+      "size": [
+        1024,
+        1536
+      ],
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "transparentPixels": 910185,
+      "visualInspection": "complete full body; identity preserved; dark fantasy palette"
+    }
+  },
+  {
+    "entityId": "portal_molt_beast",
+    "sourceFile": "portal-molt-beast-world-v1.png",
+    "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a0ec83-8976-7783-9644-3911d3f62eb9/exec-826bb436-4ceb-4f16-b19e-f80d30c863b0.png",
+    "status": "complete",
+    "validation": {
+      "size": [
+        1024,
+        1536
+      ],
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "transparentPixels": 846459,
+      "visualInspection": "complete full body; identity preserved; dark fantasy palette"
+    }
+  },
+  {
+    "entityId": "plague_orderly",
+    "sourceFile": "plague-orderly-world-v1.png",
+    "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a0ec83-8976-7783-9644-3911d3f62eb9/exec-8b484a89-5773-4c53-9843-1cd4c3d68ea1.png",
+    "status": "complete",
+    "validation": {
+      "size": [
+        1024,
+        1536
+      ],
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "transparentPixels": 757058,
+      "visualInspection": "complete full body; identity preserved; dark fantasy palette"
+    }
+  }
+]

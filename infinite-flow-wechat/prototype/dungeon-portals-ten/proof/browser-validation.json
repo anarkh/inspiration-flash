@@ -1,0 +1,184 @@
+{
+  "status": "PASS",
+  "url": "http://127.0.0.1:8125/prototype/dungeon-portals-ten/index.html",
+  "concepts": 10,
+  "dialogSequence": [
+    {
+      "link": "assets/portal-01.png",
+      "position": "01 / 10",
+      "src": "assets/portal-01.png",
+      "title": "残檐石阙"
+    },
+    {
+      "link": "assets/portal-02.png",
+      "position": "02 / 10",
+      "src": "assets/portal-02.png",
+      "title": "无顶双碑"
+    },
+    {
+      "link": "assets/portal-03.png",
+      "position": "03 / 10",
+      "src": "assets/portal-03.png",
+      "title": "地面符环"
+    },
+    {
+      "link": "assets/portal-04.png",
+      "position": "04 / 10",
+      "src": "assets/portal-04.png",
+      "title": "断阶下行"
+    },
+    {
+      "link": "assets/portal-05.png",
+      "position": "05 / 10",
+      "src": "assets/portal-05.png",
+      "title": "斜裂石隙"
+    },
+    {
+      "link": "assets/portal-06.png",
+      "position": "06 / 10",
+      "src": "assets/portal-06.png",
+      "title": "铁栅雾门"
+    },
+    {
+      "link": "assets/portal-07.png",
+      "position": "07 / 10",
+      "src": "assets/portal-07.png",
+      "title": "悬符结界"
+    },
+    {
+      "link": "assets/portal-08.png",
+      "position": "08 / 10",
+      "src": "assets/portal-08.png",
+      "title": "枯木山门"
+    },
+    {
+      "link": "assets/portal-09.png",
+      "position": "09 / 10",
+      "src": "assets/portal-09.png",
+      "title": "玄镜通路"
+    },
+    {
+      "link": "assets/portal-10.png",
+      "position": "10 / 10",
+      "src": "assets/portal-10.png",
+      "title": "残壁暗口"
+    }
+  ],
+  "controls": [
+    {
+      "backgrounds": [
+        "url('../../cocos/assets/resources/dungeon-world/metro_abyss-v1.png')",
+        "url('../../cocos/assets/resources/dungeon-world/metro_abyss-v1.png')",
+        "url('../../cocos/assets/resources/dungeon-world/metro_abyss-v1.png')",
+        "url('../../cocos/assets/resources/dungeon-world/metro_abyss-v1.png')",
+        "url('../../cocos/assets/resources/dungeon-world/metro_abyss-v1.png')",
+        "url('../../cocos/assets/resources/dungeon-world/metro_abyss-v1.png')",
+        "url('../../cocos/assets/resources/dungeon-world/metro_abyss-v1.png')",
+        "url('../../cocos/assets/resources/dungeon-world/metro_abyss-v1.png')",
+        "url('../../cocos/assets/resources/dungeon-world/metro_abyss-v1.png')",
+        "url('../../cocos/assets/resources/dungeon-world/metro_abyss-v1.png')"
+      ],
+      "description": "地铁 · 场景比例 · 入口畅通"
+    },
+    {
+      "backgrounds": [
+        "url('../../cocos/assets/resources/dungeon-world/starfall_mine-v1.png')",
+        "url('../../cocos/assets/resources/dungeon-world/starfall_mine-v1.png')",
+        "url('../../cocos/assets/resources/dungeon-world/starfall_mine-v1.png')",
+        "url('../../cocos/assets/resources/dungeon-world/starfall_mine-v1.png')",
+        "url('../../cocos/assets/resources/dungeon-world/starfall_mine-v1.png')",
+        "url('../../cocos/assets/resources/dungeon-world/starfall_mine-v1.png')",
+        "url('../../cocos/assets/resources/dungeon-world/starfall_mine-v1.png')",
+        "url('../../cocos/assets/resources/dungeon-world/starfall_mine-v1.png')",
+        "url('../../cocos/assets/resources/dungeon-world/starfall_mine-v1.png')",
+        "url('../../cocos/assets/resources/dungeon-world/starfall_mine-v1.png')"
+      ],
+      "description": "矿井 · 场景比例 · 入口畅通"
+    },
+    {
+      "backgrounds": [
+        "url('../../cocos/assets/resources/dungeon-world/demon_tower_1-v1.png')",
+        "url('../../cocos/assets/resources/dungeon-world/demon_tower_1-v1.png')",
+        "url('../../cocos/assets/resources/dungeon-world/demon_tower_1-v1.png')",
+        "url('../../cocos/assets/resources/dungeon-world/demon_tower_1-v1.png')",
+        "url('../../cocos/assets/resources/dungeon-world/demon_tower_1-v1.png')",
+        "url('../../cocos/assets/resources/dungeon-world/demon_tower_1-v1.png')",
+        "url('../../cocos/assets/resources/dungeon-world/demon_tower_1-v1.png')",
+        "url('../../cocos/assets/resources/dungeon-world/demon_tower_1-v1.png')",
+        "url('../../cocos/assets/resources/dungeon-world/demon_tower_1-v1.png')",
+        "url('../../cocos/assets/resources/dungeon-world/demon_tower_1-v1.png')"
+      ],
+      "description": "妖塔 · 场景比例 · 入口畅通"
+    },
+    {
+      "description": "妖塔 · 场景比例 · 未开放",
+      "locked": 10
+    },
+    {
+      "detail": "残壁暗口",
+      "dialogOpen": true,
+      "mode": "asset"
+    }
+  ],
+  "viewports": [
+    {
+      "controls": [
+        {
+          "height": 44,
+          "text": "妖塔",
+          "width": 71.328125
+        },
+        {
+          "height": 44,
+          "text": "地铁",
+          "width": 71.3359375
+        },
+        {
+          "height": 44,
+          "text": "矿井",
+          "width": 70.3359375
+        },
+        {
+          "height": 44,
+          "text": "放入场景",
+          "width": 107
+        },
+        {
+          "height": 44,
+          "text": "单独素材",
+          "width": 106
+        },
+        {
+          "height": 44,
+          "text": "畅通",
+          "width": 107
+        },
+        {
+          "height": 44,
+          "text": "未开放",
+          "width": 106
+        }
+      ],
+      "galleryTop": 449.8828125,
+      "height": 568,
+      "scrollWidth": 305,
+      "width": 320
+    },
+    {
+      "columns": "343px",
+      "height": 844,
+      "imagesLoaded": true,
+      "minimumControlHeight": 44,
+      "scrollWidth": 375,
+      "width": 390
+    },
+    {
+      "columns": "220.195px 220.203px 220.195px 220.203px 220.195px",
+      "height": 720,
+      "imagesLoaded": true,
+      "scrollWidth": 1265,
+      "width": 1280
+    }
+  ],
+  "browserLogs": []
+}

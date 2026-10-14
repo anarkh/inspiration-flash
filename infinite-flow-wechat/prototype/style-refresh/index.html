@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>无限流 · 素材风格对照原型</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="legacy-props.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#workspace">跳至素材对照</a>
+  <header class="site-header">
+    <div class="brand"><span class="brand-seal" aria-hidden="true">界</span><div><span class="overline">无限流 · 美术工作台</span><h1>素材风格对照</h1></div></div>
+    <div class="header-right"><span class="proposal-status"><i></i> 已应用游戏 · 保留方案对照</span><a class="quiet-link" href="../style-audit-20261008/index.html#report" target="_blank" rel="noopener">查看排查依据 ↗</a></div>
+  </header>
+  <nav id="categories" class="categories" aria-label="素材分类"></nav>
+  <main id="workspace" tabindex="-1">
+    <section class="section-heading" aria-labelledby="section-title">
+      <div><p class="eyebrow" id="section-eyebrow"></p><h2 id="section-title"></h2><p class="section-description" id="section-description"></p></div>
+      <div class="direction"><span>统一基调</span><b>玄黑 · 旧金 · 灰青</b><small>写实绘画 / 磨损材质 / 克制发光</small></div>
+    </section>
+    <div class="workspace-grid">
+      <div class="comparison-workspace">
+        <div class="view-toolbar">
+          <div class="view-title"><span class="tiny-square"></span><h3 id="asset-title"></h3><span id="asset-type" class="subtle-tag"></span></div>
+          <div class="view-controls" id="view-controls"></div>
+        </div>
+        <div class="comparison" id="comparison"></div>
+        <section class="detail-strip" id="detail-strip" aria-label="细节与尺寸检查"></section>
+      </div>
+      <aside class="asset-panel" aria-labelledby="asset-list-title">
+        <div class="panel-heading"><h3 id="asset-list-title">本组素材</h3><span id="asset-count"></span></div>
+        <div class="asset-list" id="asset-list"></div>
+        <div class="design-note"><span class="eyebrow">本次处理</span><h4 id="note-title"></h4><p id="note-body"></p></div>
+      </aside>
+    </div>
+    <footer class="page-footer"><span>26 张新素材 · 7 组对照</span><p>场景为 HTML 合成预览，尺寸用于观察融合与辨识度；原图可独立查看。26 张素材与 HUD 样式已接入游戏；此页保留替换前后对照。</p></footer>
+    <noscript><p class="error-notice">此对照原型需要 JavaScript 才能切换素材。请启用后刷新页面。</p></noscript>
+  </main>
+  <dialog id="image-dialog" aria-labelledby="dialog-title"><div class="dialog-header"><div><span class="eyebrow">完整原图 · 不裁切</span><h2 id="dialog-title"></h2></div><button class="icon-button" id="close-dialog" aria-label="关闭原图预览">×</button></div><div id="dialog-image-container" class="dialog-image-container"></div><div class="dialog-footer"><span id="dialog-caption"></span><a id="dialog-original" class="button" target="_blank" rel="noopener">单独打开原图 ↗</a></div></dialog>
+  <div id="live-status" class="sr-only" role="status" aria-live="polite"></div>
+</body>
+</html>

@@ -1,0 +1,29 @@
+{
+  "entityId": "mutation_guardian",
+  "status": "generated",
+  "path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/art-source/monster-world/mutation-guardian-world-v1.png",
+  "sourcePath": "/Users/bytedance/.codex/generated_images/01a0ecb5-8e65-72f3-9757-ac7f8f291a50/exec-b2047648-aec5-4b2e-ad43-f73863d7c880.png",
+  "referencePath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/monster/mutation-guardian-v1.png",
+  "width": 1024,
+  "height": 1536,
+  "mode": "RGBA",
+  "alpha": {
+    "min": 0,
+    "max": 254,
+    "transparentPixels": 616909,
+    "totalPixels": 1572864,
+    "corners": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "tool": "built-in imagegen",
+  "prompt": "sharedPrompt + Subject: 活性甲壳与血清罐共生的变异守库体",
+  "visualInspection": {
+    "fullBody": true,
+    "referenceIdentityPreserved": true,
+    "notes": "Armored quadruped with full claws visible, weathered charcoal/bronze shell and cyan serum tanks preserved. Side padding is narrower than prompt target but no limbs or props visibly cut off."
+  }
+}

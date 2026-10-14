@@ -25,6 +25,12 @@ needs a generated seed must provide `DungeonEntryOptions.seedSource`; explicit
 `hiddenTaskSeed` and `infernoMapSeed` values continue to take precedence. The source
 web project is unchanged.
 
+Completed encounters restore the player's HP to the final derived maximum after
+victory, capture, successful escape, defeat, or retreat during combat. Damage
+history, rewards, and defeat settlement remain intact; an unsuccessful escape
+that leaves combat active does not heal. This recovery is independent of ordinary
+healing modifiers and is an intentional rule change from the source web project.
+
 The two `Array.prototype.at()` reads in copied `src/dungeon-laws.ts` use equivalent
 length-indexed access so the same rules compile against the WeChat/Cocos ES2020
 library surface. This changes neither ordering nor fallback behavior.

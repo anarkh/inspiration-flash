@@ -1,0 +1,33 @@
+{
+  "asset": "assets/mirror-banner-proposed.png",
+  "purpose": "HTML prototype mirror city banner and centered settlement crop preview only; not connected to the game",
+  "generator": "built-in image_gen.imagegen",
+  "generated_source": "/Users/bytedance/.codex/generated_images/01a11a80-a384-7912-8c60-58411ef032bf/exec-1439c627-e1bf-4df5-8eb2-18e11481caa7.png",
+  "saved_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/assets/mirror-banner-proposed.png",
+  "sha256": "6da074afcd4e0bb6eb8436caf285964d143d84b9bb9ab085e244faf21dfd7d42",
+  "source_sha256": "6da074afcd4e0bb6eb8436caf285964d143d84b9bb9ab085e244faf21dfd7d42",
+  "byte_identical_copy": true,
+  "bytes": 3098206,
+  "width": 2172,
+  "height": 724,
+  "aspect_ratio": 3.0,
+  "png_bit_depth": 8,
+  "png_color_type": 2,
+  "transparent_background_requested": false,
+  "post_processing": "none; original bytes copied without crop, resizing, recoloring or re-encoding",
+  "reference": {
+    "path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/dungeon-world/mirror_cycle_city-v1.png",
+    "sha256": "7d2c6e4b864bdc90828c1625e1077e9517dedb1713420f96d10613439cd79dab",
+    "role": "style and material reference"
+  },
+  "old_banner_inspected": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/dungeon/mirror-cycle-city.png",
+  "prompt_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/prompts/style-mirror-banner.txt",
+  "prompt_sha256": "4cb7bdd1f6166e7bcc5ddf8bbe17b7a24c3c70eaa77227cb7081fa9cac8aba8c",
+  "inspection": {
+    "style": "realistic painted ancient stone city with muted blue-gray and smoky violet reflections",
+    "composition": "central architecture and fractured mirror surface readable in centered crop; nonessential environment at sides",
+    "text_or_ui": false,
+    "characters": false,
+    "hard_split_line": false
+  }
+}

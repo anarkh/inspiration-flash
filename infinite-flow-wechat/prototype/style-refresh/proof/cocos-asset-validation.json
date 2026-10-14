@@ -1,0 +1,174 @@
+{
+  "manifestRevision": "sha256:b172370b7d7c0000c130dd12e713437fb6ef6797f89564b4e2fc0e8a9987dee9",
+  "assetCount": 305,
+  "resourceBytes": 302054936,
+  "changedExisting": 17,
+  "newAssets": 9,
+  "unrelatedUnchanged": true,
+  "checks": [
+    {
+      "key": "scene:dungeon_prop_chest",
+      "exactApprovedBytes": true,
+      "correctDimensions": true
+    },
+    {
+      "key": "scene:dungeon_prop_exit",
+      "exactApprovedBytes": true,
+      "correctDimensions": true
+    },
+    {
+      "key": "scene:dungeon_prop_event",
+      "exactApprovedBytes": true,
+      "correctDimensions": true
+    },
+    {
+      "key": "scene:dungeon_prop_trap",
+      "exactApprovedBytes": true,
+      "correctDimensions": true
+    },
+    {
+      "key": "scene:dungeon_prop_survey",
+      "exactApprovedBytes": true,
+      "correctDimensions": true
+    },
+    {
+      "key": "scene:dungeon_prop_relic",
+      "exactApprovedBytes": true,
+      "correctDimensions": true
+    },
+    {
+      "key": "scene:dungeon_prop_shrine",
+      "exactApprovedBytes": true,
+      "correctDimensions": true
+    },
+    {
+      "key": "scene:dungeon_prop_law",
+      "exactApprovedBytes": true,
+      "correctDimensions": true
+    },
+    {
+      "key": "scene:dungeon_prop_debris",
+      "exactApprovedBytes": true,
+      "correctDimensions": true
+    },
+    {
+      "key": "item:method_mist_breathing",
+      "exactApprovedBytes": true,
+      "correctDimensions": true,
+      "originalPreserved": true,
+      "uuidPreserved": true
+    },
+    {
+      "key": "item:method_iron_body",
+      "exactApprovedBytes": true,
+      "correctDimensions": true,
+      "originalPreserved": true,
+      "uuidPreserved": true
+    },
+    {
+      "key": "item:method_cloud_step",
+      "exactApprovedBytes": true,
+      "correctDimensions": true,
+      "originalPreserved": true,
+      "uuidPreserved": true
+    },
+    {
+      "key": "item:method_gate_sense",
+      "exactApprovedBytes": true,
+      "correctDimensions": true,
+      "originalPreserved": true,
+      "uuidPreserved": true
+    },
+    {
+      "key": "item:method_star_core_method",
+      "exactApprovedBytes": true,
+      "correctDimensions": true,
+      "originalPreserved": true,
+      "uuidPreserved": true
+    },
+    {
+      "key": "item:method_beast_taming",
+      "exactApprovedBytes": true,
+      "correctDimensions": true,
+      "originalPreserved": true,
+      "uuidPreserved": true
+    },
+    {
+      "key": "item:method_void_heart",
+      "exactApprovedBytes": true,
+      "correctDimensions": true,
+      "originalPreserved": true,
+      "uuidPreserved": true
+    },
+    {
+      "key": "item:bloodline_titan_marrow",
+      "exactApprovedBytes": true,
+      "correctDimensions": true,
+      "originalPreserved": true,
+      "uuidPreserved": true
+    },
+    {
+      "key": "item:bloodline_void_symbiote",
+      "exactApprovedBytes": true,
+      "correctDimensions": true,
+      "originalPreserved": true,
+      "uuidPreserved": true
+    },
+    {
+      "key": "item:bloodline_bastion_chitin",
+      "exactApprovedBytes": true,
+      "correctDimensions": true,
+      "originalPreserved": true,
+      "uuidPreserved": true
+    },
+    {
+      "key": "item:bloodline_phoenix_ember",
+      "exactApprovedBytes": true,
+      "correctDimensions": true,
+      "originalPreserved": true,
+      "uuidPreserved": true
+    },
+    {
+      "key": "equipment:rebirth_amulet",
+      "exactApprovedBytes": true,
+      "correctDimensions": true,
+      "originalPreserved": true,
+      "uuidPreserved": true
+    },
+    {
+      "key": "equipment:triage_visor",
+      "exactApprovedBytes": true,
+      "correctDimensions": true,
+      "originalPreserved": true,
+      "uuidPreserved": true
+    },
+    {
+      "key": "equipment:forensic_visor",
+      "exactApprovedBytes": true,
+      "correctDimensions": true,
+      "originalPreserved": true,
+      "uuidPreserved": true
+    },
+    {
+      "key": "character:reincarnator",
+      "exactApprovedBytes": true,
+      "correctDimensions": true,
+      "originalPreserved": true,
+      "uuidPreserved": true
+    },
+    {
+      "key": "npc:companion_guide",
+      "exactApprovedBytes": true,
+      "correctDimensions": true,
+      "originalPreserved": true,
+      "uuidPreserved": true
+    },
+    {
+      "key": "dungeon:mirror_cycle_city",
+      "exactApprovedBytes": true,
+      "correctDimensions": true,
+      "originalPreserved": true,
+      "uuidPreserved": true
+    }
+  ]
+}

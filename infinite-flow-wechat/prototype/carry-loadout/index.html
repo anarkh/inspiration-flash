@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>角色携行 · 交互原型</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #100f0d; --panel: #1b1813; --raised: #252017;
+      --gold: #c6a36b; --bright: #edcf97; --edge: #635033;
+      --text: #eee5d4; --muted: #b8ac95; --dim: #a29a8c;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100dvh; color: var(--text); background: #080807; font: 14px/1.5 -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; }
+    button, select { font: inherit; color: inherit; }
+    button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    button:focus-visible, select:focus-visible { outline: 2px solid var(--bright); outline-offset: 3px; }
+    button:disabled { cursor: not-allowed; }
+    img { display: block; object-fit: contain; user-select: none; }
+    [hidden] { display: none !important; }
+    .demo { width: min(100% - 24px, 430px); height: 48px; margin: auto; display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--muted); }
+    .demo span { margin-right: auto; }
+    .demo select, .demo button { border: 1px solid #49402f; background: #171510; border-radius: 3px; min-height: 32px; padding: 3px 8px; }
+    .stage { width: min(100%, 430px); height: calc(100dvh - 48px); max-height: 800px; margin: 0 auto; padding: 18px 12px; position: relative; display: flex; align-items: center; justify-content: center; isolation: isolate; background: #12120f; }
+    .stage::before { content: ""; position: absolute; inset: 0; background: linear-gradient(#12100dbb, #0b0a09d9), url('../../cocos/assets/resources/scene/main-god-space.png') center/cover; z-index: -1; }
+    .scene-label { position: absolute; top: 6px; left: 18px; font-size: 10px; letter-spacing: .16em; color: #c5b186; }
+    .sheet { position: relative; width: 100%; max-height: 100%; height: 702px; display: flex; flex-direction: column; background: linear-gradient(135deg, #282219 0, var(--panel) 38%, #14120f 100%); border: 1px solid var(--edge); border-radius: 4px; box-shadow: 0 18px 70px #000a, inset 0 0 0 3px #13100c, inset 0 0 0 4px #403523; overflow: hidden; }
+    .titlebar { height: 49px; flex: none; display: flex; justify-content: center; align-items: center; border-bottom: 1px solid #75603c; background: linear-gradient(#4a3920, #2a2115); position: relative; }
+    .titlebar h1 { font-size: 18px; font-weight: 600; letter-spacing: .22em; margin: 0; color: #f0d7a6; font-family: "Songti SC", "STSong", serif; text-shadow: 0 2px 3px #000; }
+    .titlebar h1::before, .titlebar h1::after { content: "◇"; font-size: 12px; margin: 0 16px; color: var(--gold); }
+    .close { width: 44px; height: 44px; position: absolute; right: 3px; top: 2px; border: 0; background: none; color: #d7bd91; font-size: 25px; }
+    .tabs { display: grid; grid-template-columns: 1fr 1fr; flex: none; height: 43px; margin: 0 15px; border-bottom: 1px solid #4b3c28; gap: 4px; }
+    .tab { border: 0; background: transparent; color: var(--muted); position: relative; letter-spacing: .15em; }
+    .tab[aria-selected="true"] { color: var(--bright); background: linear-gradient(transparent, #c6a36b0e); }
+    .tab[aria-selected="true"]::after { content: ""; height: 2px; background: var(--gold); position: absolute; bottom: -1px; left: 22%; right: 22%; }
+    .carry { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+    .equipped { flex: none; padding: 13px 16px 11px; border-bottom: 1px solid #4c3d28; background: linear-gradient(#30261933, transparent); }
+    .section-title { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+    h2 { margin: 0; font-size: 14px; font-weight: 600; letter-spacing: .06em; }
+    .counter { color: var(--muted); font: 12px/1.5 Georgia, serif; }
+    .counter strong { color: var(--bright); font-size: 19px; font-weight: 400; }
+    .slots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 9px; }
+    .slot { border: 1px solid #59472c; background: radial-gradient(ellipse at center, #32291b, #12110e); border-radius: 3px; color: var(--muted); position: relative; min-width: 0; min-height: 99px; padding: 5px 3px 7px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: inset 0 0 0 3px #17130e; }
+    .slot.occupied { border-color: #a88a54; background: radial-gradient(ellipse at 50% 40%, #51412788, #17130e); }
+    .slot.occupied:hover { border-color: var(--bright); background-color: #3e301a; }
+    .slot.empty { cursor: default; }
+    .slot img { width: 53px; height: 58px; }
+    .slot .name { font-size: 12px; line-height: 1.5; color: var(--text); }
+    .empty-emblem { height: 53px; display: grid; place-items: center; width: 45px; font: 25px Georgia, serif; color: #786443; }
+    .empty-emblem::before { content: ""; position: absolute; top: 20px; width: 28px; height: 28px; border: 1px solid #55432d; transform: rotate(45deg); }
+    .slot-number { position: absolute; top: 4px; left: 7px; color: #b4a283; font: 9px Georgia, serif; }
+    .remove { position: absolute; right: 6px; top: 1px; color: var(--gold); font-size: 17px; }
+    .slot-note { margin: 8px 0 0; color: var(--muted); text-align: center; font-size: 11px; }
+    .catalog { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 12px 16px 0; }
+    .catalog .section-title { padding-bottom: 9px; flex: none; }
+    .catalog .section-title span { color: var(--muted); font-size: 11px; }
+    .item-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; align-content: start; overflow-y: auto; min-height: 0; padding: 1px 2px 9px; margin: 0 -2px; scrollbar-width: thin; scrollbar-color: #806c48 #191510; }
+    .item { min-width: 0; padding: 8px; min-height: 108px; text-align: left; border: 1px solid #615034; border-radius: 3px; background: #221d15; position: relative; color: var(--text); display: grid; grid-template-columns: 44px 1fr; column-gap: 7px; row-gap: 3px; align-content: start; transition: border-color 160ms, background-color 160ms; }
+    .item:hover:not(:disabled) { background: #332a1c; border-color: #c5a166; }
+    .item:active:not(:disabled) { background: #493921; }
+    .item img { width: 44px; height: 46px; background: #12100c; border: 1px solid #605035; border-radius: 2px; }
+    .item-heading { align-self: center; min-width: 0; }
+    .item-name { font-size: 13px; font-weight: 500; display: block; white-space: nowrap; }
+    .quantity { font-size: 11px; color: var(--muted); display: block; margin-top: 3px; }
+    .description { grid-column: 1 / -1; font-size: 11px; line-height: 1.55; color: #c0b39a; min-height: 18px; }
+    .item-action { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; padding-top: 4px; border-top: 1px solid #62503155; color: var(--bright); font-size: 11px; }
+    .item-action .category { color: #c0b39a; font-size: 10px; }
+    .item.carried { border-color: #94805a; background: #32291b88; }
+    .item.unavailable { border-color: #403b32; background: #1b1915; color: var(--dim); }
+    .item.unavailable img { filter: grayscale(1) brightness(.65); border-color: #49443a; }
+    .item.unavailable .description, .item.unavailable .item-action, .item.unavailable .quantity, .item.unavailable .category { color: var(--dim); }
+    .footnote { margin: 0 16px; min-height: 42px; flex: none; display: flex; align-items: center; justify-content: center; border-top: 1px solid #4b3c28; font-size: 11px; color: var(--muted); text-align: center; }
+    .status { position: absolute; z-index: 3; top: 87px; left: 50%; transform: translateX(-50%); width: max-content; max-width: calc(100% - 32px); background: #342a1bee; box-shadow: 0 4px 15px #0008; color: #f0d6a4; border: 1px solid #927445; border-radius: 3px; padding: 8px 12px; font-size: 12px; pointer-events: none; opacity: 0; transition: opacity 150ms; }
+    .status.show { opacity: 1; }
+    .slot.just-added { animation: socket-in 340ms ease-out; }
+    @keyframes socket-in { from { box-shadow: inset 0 0 18px #d5b56a99, 0 0 12px #d5b56a66; } to { box-shadow: inset 0 0 0 3px #17130e; } }
+    .overview { flex: 1; min-height: 0; overflow: auto; padding: 20px; }
+    .portrait { width: 140px; height: 180px; object-fit: cover; margin: 0 auto 18px; border: 1px solid var(--edge); }
+    .overview h2 { text-align: center; color: var(--bright); font-size: 17px; }
+    .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; }
+    .stats div { padding: 9px; background: #110f0c; border: 1px solid #4b3c28; display: flex; justify-content: space-between; }
+    .stats span { color: var(--muted); }
+    .overview p { color: var(--muted); font-size: 12px; text-align: center; }
+    .gold-button { min-height: 44px; padding: 10px 25px; border: 1px solid #a28551; border-radius: 3px; background: linear-gradient(#4b3920,#2b2115); color: var(--bright); }
+    .overview .gold-button { display: block; margin: 20px auto; }
+    .reopen { box-shadow: 0 10px 60px #000; }
+    @media (max-width: 380px) {
+      .stage { padding: 12px 7px; }
+      .demo { width: calc(100% - 16px); gap: 6px; }
+      .demo span { font-size: 11px; }
+      .equipped { padding: 10px 12px; }
+      .catalog { padding: 10px 12px 0; }
+      .slot { min-height: 91px; }
+      .slots { gap: 8px; }
+      .item { padding: 6px; column-gap: 5px; grid-template-columns: 38px 1fr; }
+      .item img { width: 38px; height: 43px; }
+      .item-name { font-size: 12px; }
+      .description { font-size: 11px; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+  </style>
+</head>
+<body>
+  <div class="demo" aria-label="原型演示设置">
+    <span>交互原型 · 示例库存</span>
+    <select id="scenario" aria-label="演示状态">
+      <option value="normal">常规状态</option>
+      <option value="empty">空携行槽</option>
+      <option value="full">携行已满</option>
+      <option value="unowned">全部未持有</option>
+    </select>
+    <button id="reset" type="button">重置</button>
+  </div>
+  <main class="stage">
+    <span class="scene-label" aria-hidden="true">主神空间</span>
+    <button id="reopen" class="gold-button reopen" type="button" hidden>打开角色信息</button>
+    <section class="sheet" aria-label="角色信息" id="sheet">
+      <header class="titlebar"><h1>角色信息</h1><button class="close" id="close" type="button" aria-label="关闭角色信息">×</button></header>
+      <div class="tabs" role="tablist" aria-label="角色信息分类">
+        <button class="tab" id="overview-tab" role="tab" aria-selected="false" aria-controls="overview-panel" tabindex="-1">角色</button>
+        <button class="tab" id="carry-tab" role="tab" aria-selected="true" aria-controls="carry-panel">携行</button>
+      </div>
+      <div class="carry" id="carry-panel" role="tabpanel" aria-labelledby="carry-tab">
+        <section class="equipped" aria-labelledby="slot-heading">
+          <div class="section-title"><h2 id="slot-heading">携行槽</h2><span class="counter"><strong id="carried-count">1</strong> / 3</span></div>
+          <div class="slots" id="slots"></div>
+          <p class="slot-note" id="slot-note">点击道具装备 · 再次点击卸下</p>
+        </section>
+        <section class="catalog" aria-labelledby="catalog-heading">
+          <div class="section-title"><h2 id="catalog-heading">携行道具</h2><span>全部 6 种</span></div>
+          <div class="item-list" id="items"></div>
+        </section>
+        <p class="footnote">下次入场生效 · 补给品不占槽</p>
+      </div>
+      <div class="overview" id="overview-panel" role="tabpanel" aria-labelledby="overview-tab" hidden>
+        <img class="portrait" src="../../cocos/assets/resources/character/reincarnator-v1.png" alt="轮回者">
+        <h2>轮回者</h2>
+        <div class="stats"><div><span>生命</span><strong>102 / 102</strong></div><div><span>境界</span><strong>炼气</strong></div></div>
+        <p>选好随身道具，再进入下一轮冒险。</p>
+        <button class="gold-button" id="go-carry" type="button">配置携行</button>
+      </div>
+      <div id="status" class="status" role="status" aria-live="polite" aria-atomic="true"></div>
+    </section>
+  </main>
+  <script>
+    // Standalone interaction proposal: fixture inventory only; no game/storage imports.
+    const items = [
+      { id: 'thunder_talisman', name: '雷火符', slug: 'thunder-talisman', category: '战斗', description: '战斗中造成稳定术法伤害', count: 3 },
+      { id: 'dispel_talisman', name: '破禁符', slug: 'dispel-talisman', category: '防护', description: '抵消一次符文或机关陷阱', count: 2 },
+      { id: 'gate_sigil', name: '小界门符', slug: 'gate-sigil', category: '传送', description: '稳定传送门，避免裂隙反噬', count: 0 },
+      { id: 'echo_coin', name: '回响铜币', slug: 'echo-coin', category: '传送', description: '传送后额外获得奖励点', count: 5 },
+      { id: 'capture_net', name: '缚灵网', slug: 'capture-net', category: '捕获', description: '捕获低血量的可驯化目标', count: 1 },
+      { id: 'spirit_bait', name: '灵饵', slug: 'spirit-bait', category: '捕获', description: '满足高阶灵宠的捕获条件', count: 0 },
+    ];
+    const byId = new Map(items.map(item => [item.id, item]));
+    const slotsElement = document.querySelector('#slots');
+    const itemsElement = document.querySelector('#items');
+    const status = document.querySelector('#status');
+    const scenario = document.querySelector('#scenario');
+    let slots = ['dispel_talisman', null, null];
+    let toastTimer;
+    const image = item => `../../cocos/assets/resources/item/${item.slug}-v1.png`;
+    const stock = item => scenario.value === 'unowned' ? 0 : item.count;
+    function announce(message) {
+      clearTimeout(toastTimer);
+      status.textContent = message;
+      status.classList.add('show');
+      toastTimer = setTimeout(() => status.classList.remove('show'), 2200);
+    }
+    function render(highlight = -1) {
+      const scroll = itemsElement.scrollTop;
+      const carried = slots.filter(Boolean).length;
+      document.querySelector('#carried-count').textContent = carried;
+      document.querySelector('#slot-note').textContent = carried === 3 ? '携行槽已满 · 再次点击已装备道具即可卸下' : '点击道具装备 · 再次点击卸下';
+      slotsElement.innerHTML = slots.map((id, index) => {
+        const item = byId.get(id);
+        return item
+          ? `<button type="button" class="slot occupied ${highlight === index ? 'just-added' : ''}" data-slot="${index}" aria-label="卸下${item.name}，携行槽${index + 1}"><span class="slot-number">0${index + 1}</span><span class="remove" aria-hidden="true">×</span><img src="${image(item)}" alt=""><span class="name">${item.name}</span></button>`
+          : `<div class="slot empty" aria-label="携行槽${index + 1}，空槽"><span class="slot-number">0${index + 1}</span><span class="empty-emblem" aria-hidden="true">${['Ⅰ', 'Ⅱ', 'Ⅲ'][index]}</span><span class="name">待装入</span></div>`;
+      }).join('');
+      itemsElement.innerHTML = items.map(item => {
+        const has = slots.includes(item.id);
+        const quantity = stock(item);
+        const blocked = !has && (quantity === 0 || carried === 3);
+        const action = has ? '已装备 · 卸下' : quantity === 0 ? '未持有' : blocked ? '携行槽已满' : '装备';
+        return `<button type="button" class="item ${has ? 'carried' : blocked ? 'unavailable' : ''}" data-item="${item.id}" ${blocked ? 'disabled' : ''} aria-pressed="${has}" aria-label="${item.name}，库存${quantity}，${action}"><img src="${image(item)}" alt=""><span class="item-heading"><span class="item-name">${item.name}</span><span class="quantity">库存 ${quantity}</span></span><span class="description">${item.description}</span><span class="item-action"><span class="category">${item.category}</span><span>${has ? '✓ ' : ''}${action}${has || blocked ? '' : ' ＋'}</span></span></button>`;
+      }).join('');
+      itemsElement.scrollTop = scroll;
+    }
+    function unequip(index) {
+      const item = byId.get(slots[index]);
+      slots[index] = null;
+      render();
+      document.querySelector(`[data-item="${item.id}"]`).focus({ preventScroll: true });
+      announce(`已卸下${item.name}`);
+    }
+    itemsElement.addEventListener('click', event => {
+      const button = event.target.closest('[data-item]');
+      if (!button || button.disabled) return;
+      const item = byId.get(button.dataset.item);
+      const equippedIndex = slots.indexOf(item.id);
+      if (equippedIndex >= 0) { unequip(equippedIndex); return; }
+      const index = slots.indexOf(null);
+      if (index < 0) { announce('携行槽已满，请先卸下一件道具'); return; }
+      slots[index] = item.id;
+      render(index);
+      document.querySelector(`[data-item="${item.id}"]`).focus({ preventScroll: true });
+      announce(`${item.name}已装入携行槽 ${index + 1}`);
+    });
+    slotsElement.addEventListener('click', event => {
+      const button = event.target.closest('[data-slot]');
+      if (!button) return;
+      unequip(Number(button.dataset.slot));
+    });
+    function changeTab(id, focus = false) {
+      for (const name of ['overview', 'carry']) {
+        const active = name === id;
+        const tab = document.querySelector(`#${name}-tab`);
+        tab.setAttribute('aria-selected', String(active));
+        tab.tabIndex = active ? 0 : -1;
+        document.querySelector(`#${name}-panel`).hidden = !active;
+        if (focus && active) tab.focus();
+      }
+    }
+    for (const name of ['overview', 'carry']) {
+      document.querySelector(`#${name}-tab`).addEventListener('click', () => changeTab(name));
+      document.querySelector(`#${name}-tab`).addEventListener('keydown', event => {
+        if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
+          event.preventDefault();
+          changeTab(event.key === 'Home' ? 'overview' : event.key === 'End' ? 'carry' : name === 'carry' ? 'overview' : 'carry', true);
+        }
+      });
+    }
+    document.querySelector('#go-carry').addEventListener('click', () => changeTab('carry', true));
+    function reset() {
+      slots = scenario.value === 'normal' ? ['dispel_talisman', null, null]
+        : scenario.value === 'full' ? ['dispel_talisman', 'thunder_talisman', 'echo_coin'] : [null, null, null];
+      clearTimeout(toastTimer);
+      status.classList.remove('show');
+      status.textContent = '';
+      render();
+    }
+    scenario.addEventListener('change', reset);
+    document.querySelector('#reset').addEventListener('click', reset);
+    function close() {
+      document.querySelector('#sheet').hidden = true;
+      document.querySelector('#reopen').hidden = false;
+      document.querySelector('#reopen').focus();
+    }
+    document.querySelector('#close').addEventListener('click', close);
+    document.querySelector('#reopen').addEventListener('click', () => {
+      document.querySelector('#sheet').hidden = false;
+      document.querySelector('#reopen').hidden = true;
+      document.querySelector('[aria-selected="true"]').focus();
+    });
+    document.addEventListener('keydown', event => { if (event.key === 'Escape') close(); });
+    render();
+  </script>
+</body>
+</html>

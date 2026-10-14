@@ -1,0 +1,1469 @@
+{
+  "generatedAt": "2026-09-30T04:13:19.213Z",
+  "scope": "Independent HTML prototype; Cocos gameplay not migrated",
+  "modelTests": {
+    "file": "walk-world.test.mjs",
+    "passed": 11
+  },
+  "sceneChecks": [
+    {
+      "broken": [],
+      "entities": 8,
+      "id": "01",
+      "services": 7,
+      "wrongDepth": []
+    },
+    {
+      "broken": [],
+      "entities": 8,
+      "id": "02",
+      "services": 7,
+      "wrongDepth": []
+    },
+    {
+      "broken": [],
+      "entities": 8,
+      "id": "03",
+      "services": 7,
+      "wrongDepth": []
+    },
+    {
+      "broken": [],
+      "entities": 8,
+      "id": "04",
+      "services": 7,
+      "wrongDepth": []
+    },
+    {
+      "broken": [],
+      "entities": 8,
+      "id": "05",
+      "services": 7,
+      "wrongDepth": []
+    },
+    {
+      "broken": [],
+      "entities": 8,
+      "id": "06",
+      "services": 7,
+      "wrongDepth": []
+    },
+    {
+      "broken": [],
+      "entities": 8,
+      "id": "07",
+      "services": 7,
+      "wrongDepth": []
+    },
+    {
+      "broken": [],
+      "entities": 8,
+      "id": "08",
+      "services": 7,
+      "wrongDepth": []
+    },
+    {
+      "broken": [],
+      "entities": 8,
+      "id": "09",
+      "services": 7,
+      "wrongDepth": []
+    },
+    {
+      "broken": [],
+      "entities": 8,
+      "id": "10",
+      "services": 7,
+      "wrongDepth": []
+    }
+  ],
+  "routeChecks": [
+    {
+      "id": "01",
+      "targetId": "npc:equipment",
+      "motion": "paused",
+      "targetX": 260,
+      "targetY": 466,
+      "title": "军需官",
+      "x": 345.883,
+      "y": 505.394,
+      "distance": 94.4869140410459
+    },
+    {
+      "id": "01",
+      "targetId": "npc:supplies",
+      "motion": "paused",
+      "targetX": 520,
+      "targetY": 636,
+      "title": "补给商",
+      "x": 444.198,
+      "y": 579.141,
+      "distance": 94.75700018995961
+    },
+    {
+      "id": "01",
+      "targetId": "npc:pets",
+      "motion": "paused",
+      "targetX": 850,
+      "targetY": 466,
+      "title": "灵宠师",
+      "x": 757.582,
+      "y": 491.767,
+      "distance": 95.94282158139816
+    },
+    {
+      "id": "01",
+      "targetId": "npc:methods",
+      "motion": "paused",
+      "targetX": 1120,
+      "targetY": 636,
+      "title": "修行导师",
+      "x": 1030.48,
+      "y": 600.375,
+      "distance": 96.34817603359183
+    },
+    {
+      "id": "01",
+      "targetId": "npc:bloodlines",
+      "motion": "paused",
+      "targetX": 1450,
+      "targetY": 466,
+      "title": "血脉祭司",
+      "x": 1358.97,
+      "y": 495.159,
+      "distance": 95.58612964755919
+    },
+    {
+      "id": "01",
+      "targetId": "npc:companions",
+      "motion": "paused",
+      "targetX": 1710,
+      "targetY": 636,
+      "title": "同行引路人",
+      "x": 1620.18,
+      "y": 599.964,
+      "distance": 96.7792627374273
+    },
+    {
+      "id": "01",
+      "targetId": "npc:tasks",
+      "motion": "paused",
+      "targetX": 1940,
+      "targetY": 466,
+      "title": "任务使者",
+      "x": 1848.88,
+      "y": 504.17,
+      "distance": 98.79171675803585
+    },
+    {
+      "id": "01",
+      "targetId": "portal:entry",
+      "motion": "paused",
+      "targetX": 2190,
+      "targetY": 466,
+      "title": "副本传送门",
+      "x": 2073.15,
+      "y": 479.075,
+      "distance": 117.57924189668846
+    },
+    {
+      "id": "02",
+      "targetId": "npc:equipment",
+      "motion": "paused",
+      "targetX": 270,
+      "targetY": 596,
+      "title": "军需官",
+      "x": 366.101,
+      "y": 596,
+      "distance": 96.101
+    },
+    {
+      "id": "02",
+      "targetId": "npc:supplies",
+      "motion": "paused",
+      "targetX": 540,
+      "targetY": 466,
+      "title": "补给商",
+      "x": 460.116,
+      "y": 525.718,
+      "distance": 99.73812199956443
+    },
+    {
+      "id": "02",
+      "targetId": "npc:pets",
+      "motion": "paused",
+      "targetX": 850,
+      "targetY": 596,
+      "title": "灵宠师",
+      "x": 752.718,
+      "y": 578.463,
+      "distance": 98.85005762770201
+    },
+    {
+      "id": "02",
+      "targetId": "npc:methods",
+      "motion": "paused",
+      "targetX": 1170,
+      "targetY": 466,
+      "title": "修行导师",
+      "x": 1073.97,
+      "y": 491.881,
+      "distance": 99.45645811610221
+    },
+    {
+      "id": "02",
+      "targetId": "npc:bloodlines",
+      "motion": "paused",
+      "targetX": 1500,
+      "targetY": 596,
+      "title": "血脉祭司",
+      "x": 1408.39,
+      "y": 573.611,
+      "distance": 94.30620033168542
+    },
+    {
+      "id": "02",
+      "targetId": "npc:companions",
+      "motion": "paused",
+      "targetX": 1800,
+      "targetY": 466,
+      "title": "同行引路人",
+      "x": 1709.82,
+      "y": 490.78,
+      "distance": 93.5226218623067
+    },
+    {
+      "id": "02",
+      "targetId": "npc:tasks",
+      "motion": "paused",
+      "targetX": 2130,
+      "targetY": 596,
+      "title": "任务使者",
+      "x": 2035.94,
+      "y": 572.446,
+      "distance": 96.96429505751065
+    },
+    {
+      "id": "02",
+      "targetId": "portal:entry",
+      "motion": "paused",
+      "targetX": 2160,
+      "targetY": 466,
+      "title": "副本传送门",
+      "x": 2071.03,
+      "y": 542.336,
+      "distance": 117.22988439813444
+    },
+    {
+      "id": "03",
+      "targetId": "npc:equipment",
+      "motion": "paused",
+      "targetX": 230,
+      "targetY": 466,
+      "title": "军需官",
+      "x": 324.443,
+      "y": 493.284,
+      "distance": 98.30512145865033
+    },
+    {
+      "id": "03",
+      "targetId": "npc:supplies",
+      "motion": "paused",
+      "targetX": 490,
+      "targetY": 466,
+      "title": "补给商",
+      "x": 393.067,
+      "y": 481.975,
+      "distance": 98.24055737830481
+    },
+    {
+      "id": "03",
+      "targetId": "npc:pets",
+      "motion": "paused",
+      "targetX": 790,
+      "targetY": 636,
+      "title": "灵宠师",
+      "x": 698.271,
+      "y": 600.406,
+      "distance": 98.39279585924983
+    },
+    {
+      "id": "03",
+      "targetId": "npc:methods",
+      "motion": "paused",
+      "targetX": 1080,
+      "targetY": 466,
+      "title": "修行导师",
+      "x": 993.847,
+      "y": 516.728,
+      "distance": 99.97834462022263
+    },
+    {
+      "id": "03",
+      "targetId": "npc:bloodlines",
+      "motion": "paused",
+      "targetX": 1390,
+      "targetY": 636,
+      "title": "血脉祭司",
+      "x": 1295.74,
+      "y": 607.619,
+      "distance": 98.43997542157352
+    },
+    {
+      "id": "03",
+      "targetId": "npc:companions",
+      "motion": "paused",
+      "targetX": 1700,
+      "targetY": 466,
+      "title": "同行引路人",
+      "x": 1610.62,
+      "y": 497.31,
+      "distance": 94.70533511898904
+    },
+    {
+      "id": "03",
+      "targetId": "npc:tasks",
+      "motion": "paused",
+      "targetX": 2020,
+      "targetY": 636,
+      "title": "任务使者",
+      "x": 1928.22,
+      "y": 604.905,
+      "distance": 96.90442417660813
+    },
+    {
+      "id": "03",
+      "targetId": "portal:entry",
+      "motion": "paused",
+      "targetX": 2220,
+      "targetY": 466,
+      "title": "副本传送门",
+      "x": 2112.47,
+      "y": 517.189,
+      "distance": 119.09246248608702
+    },
+    {
+      "id": "04",
+      "targetId": "npc:equipment",
+      "motion": "paused",
+      "targetX": 230,
+      "targetY": 596,
+      "title": "军需官",
+      "x": 329.078,
+      "y": 596,
+      "distance": 99.07799999999997
+    },
+    {
+      "id": "04",
+      "targetId": "npc:supplies",
+      "motion": "paused",
+      "targetX": 540,
+      "targetY": 466,
+      "title": "补给商",
+      "x": 458.057,
+      "y": 516.505,
+      "distance": 96.25700116874614
+    },
+    {
+      "id": "04",
+      "targetId": "npc:pets",
+      "motion": "paused",
+      "targetX": 810,
+      "targetY": 466,
+      "title": "灵宠师",
+      "x": 714.234,
+      "y": 479.743,
+      "distance": 96.7470764674571
+    },
+    {
+      "id": "04",
+      "targetId": "npc:methods",
+      "motion": "paused",
+      "targetX": 1110,
+      "targetY": 596,
+      "title": "修行导师",
+      "x": 1017.62,
+      "y": 568.863,
+      "distance": 96.28333796145621
+    },
+    {
+      "id": "04",
+      "targetId": "npc:bloodlines",
+      "motion": "paused",
+      "targetX": 1430,
+      "targetY": 466,
+      "title": "血脉祭司",
+      "x": 1336.75,
+      "y": 489.261,
+      "distance": 96.10742229921684
+    },
+    {
+      "id": "04",
+      "targetId": "npc:companions",
+      "motion": "paused",
+      "targetX": 1730,
+      "targetY": 596,
+      "title": "同行引路人",
+      "x": 1638.94,
+      "y": 571.283,
+      "distance": 94.35493462983264
+    },
+    {
+      "id": "04",
+      "targetId": "npc:tasks",
+      "motion": "paused",
+      "targetX": 2020,
+      "targetY": 466,
+      "title": "任务使者",
+      "x": 1927.28,
+      "y": 491.616,
+      "distance": 96.19343977631742
+    },
+    {
+      "id": "04",
+      "targetId": "portal:entry",
+      "motion": "paused",
+      "targetX": 2220,
+      "targetY": 596,
+      "title": "副本传送门",
+      "x": 2108,
+      "y": 556.06,
+      "distance": 118.90838322002367
+    },
+    {
+      "id": "05",
+      "targetId": "npc:equipment",
+      "motion": "paused",
+      "targetX": 270,
+      "targetY": 466,
+      "title": "军需官",
+      "x": 363.002,
+      "y": 495.488,
+      "distance": 97.56492273353165
+    },
+    {
+      "id": "05",
+      "targetId": "npc:supplies",
+      "motion": "paused",
+      "targetX": 590,
+      "targetY": 636,
+      "title": "补给商",
+      "x": 506.378,
+      "y": 584.238,
+      "distance": 98.34603971690979
+    },
+    {
+      "id": "05",
+      "targetId": "npc:pets",
+      "motion": "paused",
+      "targetX": 920,
+      "targetY": 466,
+      "title": "灵宠师",
+      "x": 824.85,
+      "y": 493.2,
+      "distance": 98.96141925012996
+    },
+    {
+      "id": "05",
+      "targetId": "npc:methods",
+      "motion": "paused",
+      "targetX": 1210,
+      "targetY": 636,
+      "title": "修行导师",
+      "x": 1116.62,
+      "y": 601.378,
+      "distance": 99.59170288733905
+    },
+    {
+      "id": "05",
+      "targetId": "npc:bloodlines",
+      "motion": "paused",
+      "targetX": 1500,
+      "targetY": 466,
+      "title": "血脉祭司",
+      "x": 1406.58,
+      "y": 498.987,
+      "distance": 99.07289522871538
+    },
+    {
+      "id": "05",
+      "targetId": "npc:companions",
+      "motion": "paused",
+      "targetX": 1800,
+      "targetY": 636,
+      "title": "同行引路人",
+      "x": 1709.73,
+      "y": 600.257,
+      "distance": 97.0887992973443
+    },
+    {
+      "id": "05",
+      "targetId": "npc:tasks",
+      "motion": "paused",
+      "targetX": 2070,
+      "targetY": 466,
+      "title": "任务使者",
+      "x": 1977,
+      "y": 500.657,
+      "distance": 99.24770853274143
+    },
+    {
+      "id": "05",
+      "targetId": "portal:entry",
+      "motion": "paused",
+      "targetX": 2190,
+      "targetY": 636,
+      "title": "副本传送门",
+      "x": 2089.77,
+      "y": 572.313,
+      "distance": 118.7522078489491
+    },
+    {
+      "id": "06",
+      "targetId": "npc:equipment",
+      "motion": "paused",
+      "targetX": 260,
+      "targetY": 596,
+      "title": "军需官",
+      "x": 358.036,
+      "y": 596,
+      "distance": 98.036
+    },
+    {
+      "id": "06",
+      "targetId": "npc:supplies",
+      "motion": "paused",
+      "targetX": 570,
+      "targetY": 466,
+      "title": "补给商",
+      "x": 487.913,
+      "y": 516.345,
+      "distance": 96.29587007758953
+    },
+    {
+      "id": "06",
+      "targetId": "npc:pets",
+      "motion": "paused",
+      "targetX": 860,
+      "targetY": 596,
+      "title": "灵宠师",
+      "x": 767.586,
+      "y": 576.216,
+      "distance": 94.50795761204448
+    },
+    {
+      "id": "06",
+      "targetId": "npc:methods",
+      "motion": "paused",
+      "targetX": 1140,
+      "targetY": 466,
+      "title": "修行导师",
+      "x": 1045.81,
+      "y": 493.876,
+      "distance": 98.22844535062137
+    },
+    {
+      "id": "06",
+      "targetId": "npc:bloodlines",
+      "motion": "paused",
+      "targetX": 1450,
+      "targetY": 596,
+      "title": "血脉祭司",
+      "x": 1358.46,
+      "y": 572.872,
+      "distance": 94.41650271006651
+    },
+    {
+      "id": "06",
+      "targetId": "npc:companions",
+      "motion": "paused",
+      "targetX": 1780,
+      "targetY": 466,
+      "title": "同行引路人",
+      "x": 1687.06,
+      "y": 499.516,
+      "distance": 98.79861262183803
+    },
+    {
+      "id": "06",
+      "targetId": "npc:tasks",
+      "motion": "paused",
+      "targetX": 2110,
+      "targetY": 596,
+      "title": "任务使者",
+      "x": 2018.13,
+      "y": 575.042,
+      "distance": 94.2302216064463
+    },
+    {
+      "id": "06",
+      "targetId": "portal:entry",
+      "motion": "paused",
+      "targetX": 2210,
+      "targetY": 466,
+      "title": "副本传送门",
+      "x": 2108.27,
+      "y": 523.813,
+      "distance": 117.0099819203473
+    },
+    {
+      "id": "07",
+      "targetId": "npc:equipment",
+      "motion": "paused",
+      "targetX": 230,
+      "targetY": 466,
+      "title": "军需官",
+      "x": 324.377,
+      "y": 496.057,
+      "distance": 99.04767224927602
+    },
+    {
+      "id": "07",
+      "targetId": "npc:supplies",
+      "motion": "paused",
+      "targetX": 530,
+      "targetY": 596,
+      "title": "补给商",
+      "x": 443.004,
+      "y": 553.716,
+      "distance": 96.72766239292665
+    },
+    {
+      "id": "07",
+      "targetId": "npc:pets",
+      "motion": "paused",
+      "targetX": 820,
+      "targetY": 466,
+      "title": "灵宠师",
+      "x": 727.04,
+      "y": 487.629,
+      "distance": 95.44304710663845
+    },
+    {
+      "id": "07",
+      "targetId": "npc:methods",
+      "motion": "paused",
+      "targetX": 1120,
+      "targetY": 596,
+      "title": "修行导师",
+      "x": 1028.07,
+      "y": 570.646,
+      "distance": 95.36220538557197
+    },
+    {
+      "id": "07",
+      "targetId": "npc:bloodlines",
+      "motion": "paused",
+      "targetX": 1430,
+      "targetY": 466,
+      "title": "血脉祭司",
+      "x": 1339.67,
+      "y": 489.518,
+      "distance": 93.34133716633796
+    },
+    {
+      "id": "07",
+      "targetId": "npc:companions",
+      "motion": "paused",
+      "targetX": 1740,
+      "targetY": 596,
+      "title": "同行引路人",
+      "x": 1649.05,
+      "y": 571.81,
+      "distance": 94.11194716931539
+    },
+    {
+      "id": "07",
+      "targetId": "npc:tasks",
+      "motion": "paused",
+      "targetX": 2030,
+      "targetY": 466,
+      "title": "任务使者",
+      "x": 1936.41,
+      "y": 491.996,
+      "distance": 97.13331105238812
+    },
+    {
+      "id": "07",
+      "targetId": "portal:entry",
+      "motion": "paused",
+      "targetX": 2220,
+      "targetY": 552,
+      "title": "副本传送门",
+      "x": 2102.91,
+      "y": 527.224,
+      "distance": 119.68257298370567
+    },
+    {
+      "id": "08",
+      "targetId": "npc:equipment",
+      "motion": "paused",
+      "targetX": 270,
+      "targetY": 636,
+      "title": "军需官",
+      "x": 363.063,
+      "y": 626.921,
+      "distance": 93.50481383329948
+    },
+    {
+      "id": "08",
+      "targetId": "npc:supplies",
+      "motion": "paused",
+      "targetX": 580,
+      "targetY": 466,
+      "title": "补给商",
+      "x": 500.548,
+      "y": 524.936,
+      "distance": 98.92457935215091
+    },
+    {
+      "id": "08",
+      "targetId": "npc:pets",
+      "motion": "paused",
+      "targetX": 880,
+      "targetY": 636,
+      "title": "灵宠师",
+      "x": 785.482,
+      "y": 608.335,
+      "distance": 98.4835242515214
+    },
+    {
+      "id": "08",
+      "targetId": "npc:methods",
+      "motion": "paused",
+      "targetX": 1190,
+      "targetY": 466,
+      "title": "修行导师",
+      "x": 1100.27,
+      "y": 497.574,
+      "distance": 95.12302758007655
+    },
+    {
+      "id": "08",
+      "targetId": "npc:bloodlines",
+      "motion": "paused",
+      "targetX": 1490,
+      "targetY": 636,
+      "title": "血脉祭司",
+      "x": 1401.79,
+      "y": 604.671,
+      "distance": 93.60828136975918
+    },
+    {
+      "id": "08",
+      "targetId": "npc:companions",
+      "motion": "paused",
+      "targetX": 1790,
+      "targetY": 466,
+      "title": "同行引路人",
+      "x": 1697.33,
+      "y": 502.873,
+      "distance": 99.7363876877442
+    },
+    {
+      "id": "08",
+      "targetId": "npc:tasks",
+      "motion": "paused",
+      "targetX": 2090,
+      "targetY": 636,
+      "title": "任务使者",
+      "x": 1997.6,
+      "y": 599.857,
+      "distance": 99.21731929960625
+    },
+    {
+      "id": "08",
+      "targetId": "portal:entry",
+      "motion": "paused",
+      "targetX": 2230,
+      "targetY": 466,
+      "title": "副本传送门",
+      "x": 2126.9,
+      "y": 525.381,
+      "distance": 118.97778431707314
+    },
+    {
+      "id": "09",
+      "targetId": "npc:equipment",
+      "motion": "paused",
+      "targetX": 230,
+      "targetY": 466,
+      "title": "军需官",
+      "x": 324.101,
+      "y": 493.185,
+      "distance": 97.94908078180214
+    },
+    {
+      "id": "09",
+      "targetId": "npc:supplies",
+      "motion": "paused",
+      "targetX": 510,
+      "targetY": 596,
+      "title": "补给商",
+      "x": 425.444,
+      "y": 549.235,
+      "distance": 96.62650961822018
+    },
+    {
+      "id": "09",
+      "targetId": "npc:pets",
+      "motion": "paused",
+      "targetX": 820,
+      "targetY": 466,
+      "title": "灵宠师",
+      "x": 726.744,
+      "y": 485.673,
+      "distance": 95.3084910435581
+    },
+    {
+      "id": "09",
+      "targetId": "npc:methods",
+      "motion": "paused",
+      "targetX": 1130,
+      "targetY": 596,
+      "title": "修行导师",
+      "x": 1034.25,
+      "y": 569.803,
+      "distance": 99.2690551430807
+    },
+    {
+      "id": "09",
+      "targetId": "npc:bloodlines",
+      "motion": "paused",
+      "targetX": 1440,
+      "targetY": 466,
+      "title": "血脉祭司",
+      "x": 1346.23,
+      "y": 489.989,
+      "distance": 96.7899014412144
+    },
+    {
+      "id": "09",
+      "targetId": "npc:companions",
+      "motion": "paused",
+      "targetX": 1740,
+      "targetY": 596,
+      "title": "同行引路人",
+      "x": 1648.89,
+      "y": 571.471,
+      "distance": 94.35414109089216
+    },
+    {
+      "id": "09",
+      "targetId": "npc:tasks",
+      "motion": "paused",
+      "targetX": 2030,
+      "targetY": 466,
+      "title": "任务使者",
+      "x": 1936.84,
+      "y": 491.783,
+      "distance": 96.66203333781064
+    },
+    {
+      "id": "09",
+      "targetId": "portal:entry",
+      "motion": "paused",
+      "targetX": 2210,
+      "targetY": 596,
+      "title": "副本传送门",
+      "x": 2102.4,
+      "y": 554.949,
+      "distance": 115.16485835965756
+    },
+    {
+      "id": "10",
+      "targetId": "npc:equipment",
+      "motion": "paused",
+      "targetX": 270,
+      "targetY": 636,
+      "title": "军需官",
+      "x": 363.063,
+      "y": 626.921,
+      "distance": 93.50481383329948
+    },
+    {
+      "id": "10",
+      "targetId": "npc:supplies",
+      "motion": "paused",
+      "targetX": 580,
+      "targetY": 466,
+      "title": "补给商",
+      "x": 500.135,
+      "y": 525.242,
+      "distance": 99.43858802798839
+    },
+    {
+      "id": "10",
+      "targetId": "npc:pets",
+      "motion": "paused",
+      "targetX": 900,
+      "targetY": 636,
+      "title": "灵宠师",
+      "x": 808.126,
+      "y": 610.552,
+      "distance": 95.3332711072058
+    },
+    {
+      "id": "10",
+      "targetId": "npc:methods",
+      "motion": "paused",
+      "targetX": 1220,
+      "targetY": 466,
+      "title": "修行导师",
+      "x": 1128.55,
+      "y": 498.096,
+      "distance": 96.91880991840546
+    },
+    {
+      "id": "10",
+      "targetId": "npc:bloodlines",
+      "motion": "paused",
+      "targetX": 1500,
+      "targetY": 636,
+      "title": "血脉祭司",
+      "x": 1408.74,
+      "y": 602.118,
+      "distance": 97.34668727799624
+    },
+    {
+      "id": "10",
+      "targetId": "npc:companions",
+      "motion": "paused",
+      "targetX": 1780,
+      "targetY": 466,
+      "title": "同行引路人",
+      "x": 1689.56,
+      "y": 499.157,
+      "distance": 96.32642549684905
+    },
+    {
+      "id": "10",
+      "targetId": "npc:tasks",
+      "motion": "paused",
+      "targetX": 2070,
+      "targetY": 636,
+      "title": "任务使者",
+      "x": 1983.83,
+      "y": 589.644,
+      "distance": 97.84757348038842
+    },
+    {
+      "id": "10",
+      "targetId": "portal:entry",
+      "motion": "paused",
+      "targetX": 2230,
+      "targetY": 466,
+      "title": "副本传送门",
+      "x": 2126.96,
+      "y": 517.753,
+      "distance": 115.30661129787832
+    }
+  ],
+  "keyboardChecks": [
+    {
+      "key": "ArrowRight",
+      "before": {
+        "facing": "right",
+        "x": 680,
+        "y": 596
+      },
+      "after": {
+        "atlas": "0% 66.6667%",
+        "facing": "right",
+        "x": 684.446,
+        "y": 596
+      }
+    },
+    {
+      "key": "ArrowUp",
+      "before": {
+        "facing": "right",
+        "x": 684.446,
+        "y": 596
+      },
+      "after": {
+        "atlas": "0% 66.6667%",
+        "facing": "right",
+        "x": 684.446,
+        "y": 593.578
+      }
+    },
+    {
+      "key": "ArrowLeft",
+      "before": {
+        "facing": "right",
+        "x": 684.446,
+        "y": 593.578
+      },
+      "after": {
+        "atlas": "0% 33.3333%",
+        "facing": "left",
+        "x": 679.896,
+        "y": 593.578
+      }
+    },
+    {
+      "key": "Shift+ArrowRight",
+      "before": {
+        "facing": "left",
+        "x": 679.896,
+        "y": 593.578
+      },
+      "after": {
+        "atlas": "0% 66.6667%",
+        "facing": "right",
+        "x": 687.189,
+        "y": 593.578
+      }
+    }
+  ],
+  "overview": {
+    "broken": [],
+    "cards": 10,
+    "entities": [
+      {
+        "id": "01",
+        "targets": 8
+      },
+      {
+        "id": "02",
+        "targets": 8
+      },
+      {
+        "id": "03",
+        "targets": 8
+      },
+      {
+        "id": "04",
+        "targets": 8
+      },
+      {
+        "id": "05",
+        "targets": 8
+      },
+      {
+        "id": "06",
+        "targets": 8
+      },
+      {
+        "id": "07",
+        "targets": 8
+      },
+      {
+        "id": "08",
+        "targets": 8
+      },
+      {
+        "id": "09",
+        "targets": 8
+      },
+      {
+        "id": "10",
+        "targets": 8
+      }
+    ]
+  },
+  "deck": {
+    "overviewSelection": "03 / 10 · 灰烬营地",
+    "favoriteBefore": "false",
+    "favoriteKept": "true",
+    "favoritePersisted": "true",
+    "favoriteRestored": "false",
+    "drawCards": [
+      "03 / 10 · 灰烬营地",
+      "07 / 10 · 虚空月台",
+      "06 / 10 · 青铜仪盘",
+      "05 / 10 · 黑曜神龛",
+      "09 / 10 · 冷光终端",
+      "01 / 10 · 归墟圣殿",
+      "04 / 10 · 主神档案",
+      "08 / 10 · 万象回廊",
+      "10 / 10 · 轮回庭院",
+      "02 / 10 · 星环议庭"
+    ],
+    "uniqueCount": 10,
+    "roundEnd": "再抽一轮"
+  },
+  "mobile": {
+    "portrait": {
+      "controls": [
+        {
+          "name": "角色信息",
+          "rect": {
+            "bottom": 254.796875,
+            "height": 53,
+            "left": 26,
+            "right": 75,
+            "top": 201.796875,
+            "width": 49,
+            "x": 26,
+            "y": 201.796875
+          }
+        },
+        {
+          "name": "寻找 NPC",
+          "rect": {
+            "bottom": 312.046875,
+            "height": 44,
+            "left": 144,
+            "right": 188,
+            "top": 268.046875,
+            "width": 44,
+            "x": 144,
+            "y": 268.046875
+          }
+        },
+        {
+          "name": "打开背包",
+          "rect": {
+            "bottom": 312.046875,
+            "height": 44,
+            "left": 193,
+            "right": 237,
+            "top": 268.046875,
+            "width": 44,
+            "x": 193,
+            "y": 268.046875
+          }
+        },
+        {
+          "name": "打开菜单",
+          "rect": {
+            "bottom": 312.046875,
+            "height": 44,
+            "left": 242,
+            "right": 286,
+            "top": 268.046875,
+            "width": 44,
+            "x": 242,
+            "y": 268.046875
+          }
+        },
+        {
+          "name": "移动摇杆",
+          "rect": {
+            "bottom": 625.84375,
+            "height": 110,
+            "left": 21,
+            "right": 131,
+            "top": 515.84375,
+            "width": 110,
+            "x": 21,
+            "y": 515.84375
+          }
+        },
+        {
+          "name": "靠近人物 · E 交谈",
+          "rect": {
+            "bottom": 572.84375,
+            "height": 46,
+            "left": 138,
+            "right": 284,
+            "top": 526.84375,
+            "width": 146,
+            "x": 138,
+            "y": 526.84375
+          }
+        },
+        {
+          "name": "跳跃",
+          "rect": {
+            "bottom": 623.84375,
+            "height": 44,
+            "left": 138,
+            "right": 207.5,
+            "top": 579.84375,
+            "width": 69.5,
+            "x": 138,
+            "y": 579.84375
+          }
+        },
+        {
+          "name": "奔跑Shift",
+          "rect": {
+            "bottom": 623.84375,
+            "height": 44,
+            "left": 214.5,
+            "right": 284,
+            "top": 579.84375,
+            "width": 69.5,
+            "x": 214.5,
+            "y": 579.84375
+          }
+        }
+      ],
+      "height": 740,
+      "overflow": false,
+      "stage": {
+        "bottom": 640.84375,
+        "height": 456.796875,
+        "left": 9,
+        "right": 296,
+        "top": 184.046875,
+        "width": 287,
+        "x": 9,
+        "y": 184.046875
+      },
+      "width": 320
+    },
+    "landscape": {
+      "controls": [
+        {
+          "name": "寻找 NPC",
+          "rect": {
+            "bottom": 178.6953125,
+            "height": 48,
+            "left": 468.3046875,
+            "right": 582,
+            "top": 130.6953125,
+            "width": 113.6953125,
+            "x": 468.3046875,
+            "y": 130.6953125
+          }
+        },
+        {
+          "name": "军需官",
+          "rect": {
+            "bottom": 282.6953125,
+            "height": 44,
+            "left": 406,
+            "right": 576,
+            "top": 238.6953125,
+            "width": 170,
+            "x": 406,
+            "y": 238.6953125
+          }
+        },
+        {
+          "name": "补给商",
+          "rect": {
+            "bottom": 326.6953125,
+            "height": 44,
+            "left": 406,
+            "right": 576,
+            "top": 282.6953125,
+            "width": 170,
+            "x": 406,
+            "y": 282.6953125
+          }
+        },
+        {
+          "name": "灵宠师",
+          "rect": {
+            "bottom": 370.6953125,
+            "height": 44,
+            "left": 406,
+            "right": 576,
+            "top": 326.6953125,
+            "width": 170,
+            "x": 406,
+            "y": 326.6953125
+          }
+        },
+        {
+          "name": "修行导师",
+          "rect": {
+            "bottom": 414.6953125,
+            "height": 44,
+            "left": 406,
+            "right": 576,
+            "top": 370.6953125,
+            "width": 170,
+            "x": 406,
+            "y": 370.6953125
+          }
+        },
+        {
+          "name": "血脉祭司",
+          "rect": {
+            "bottom": 458.6953125,
+            "height": 44,
+            "left": 406,
+            "right": 576,
+            "top": 414.6953125,
+            "width": 170,
+            "x": 406,
+            "y": 414.6953125
+          }
+        },
+        {
+          "name": "同行引路人",
+          "rect": {
+            "bottom": 502.6953125,
+            "height": 44,
+            "left": 406,
+            "right": 576,
+            "top": 458.6953125,
+            "width": 170,
+            "x": 406,
+            "y": 458.6953125
+          }
+        },
+        {
+          "name": "任务使者",
+          "rect": {
+            "bottom": 546.6953125,
+            "height": 44,
+            "left": 406,
+            "right": 576,
+            "top": 502.6953125,
+            "width": 170,
+            "x": 406,
+            "y": 502.6953125
+          }
+        },
+        {
+          "name": "副本传送门",
+          "rect": {
+            "bottom": 590.6953125,
+            "height": 44,
+            "left": 406,
+            "right": 576,
+            "top": 546.6953125,
+            "width": 170,
+            "x": 406,
+            "y": 546.6953125
+          }
+        },
+        {
+          "name": "打开背包",
+          "rect": {
+            "bottom": 178.6953125,
+            "height": 48,
+            "left": 589,
+            "right": 637,
+            "top": 130.6953125,
+            "width": 48,
+            "x": 589,
+            "y": 130.6953125
+          }
+        },
+        {
+          "name": "打开菜单",
+          "rect": {
+            "bottom": 178.6953125,
+            "height": 48,
+            "left": 644,
+            "right": 692,
+            "top": 130.6953125,
+            "width": 48,
+            "x": 644,
+            "y": 130.6953125
+          }
+        },
+        {
+          "name": "移动摇杆",
+          "rect": {
+            "bottom": 385.6953125,
+            "height": 110,
+            "left": 35,
+            "right": 145,
+            "top": 275.6953125,
+            "width": 110,
+            "x": 35,
+            "y": 275.6953125
+          }
+        },
+        {
+          "name": "靠近人物 · E 交谈",
+          "rect": {
+            "bottom": 334.6953125,
+            "height": 46,
+            "left": 530,
+            "right": 694,
+            "top": 288.6953125,
+            "width": 164,
+            "x": 530,
+            "y": 288.6953125
+          }
+        },
+        {
+          "name": "跳跃",
+          "rect": {
+            "bottom": 385.6953125,
+            "height": 44,
+            "left": 530,
+            "right": 608.5,
+            "top": 341.6953125,
+            "width": 78.5,
+            "x": 530,
+            "y": 341.6953125
+          }
+        },
+        {
+          "name": "奔跑Shift",
+          "rect": {
+            "bottom": 385.6953125,
+            "height": 44,
+            "left": 615.5,
+            "right": 694,
+            "top": 341.6953125,
+            "width": 78.5,
+            "x": 615.5,
+            "y": 341.6953125
+          }
+        }
+      ],
+      "height": 390,
+      "overflow": false,
+      "stage": {
+        "bottom": 404.6953125,
+        "height": 288,
+        "left": 17,
+        "right": 708,
+        "top": 116.6953125,
+        "width": 691,
+        "x": 17,
+        "y": 116.6953125
+      },
+      "width": 740
+    },
+    "joystick": {
+      "portrait": {
+        "initial": {
+          "x": 680,
+          "y": 596
+        },
+        "after": {
+          "x": 698.928,
+          "y": 596.066
+        }
+      },
+      "landscape": {
+        "before": {
+          "x": "698.928px",
+          "y": "596.066px"
+        },
+        "after": {
+          "motion": "idle",
+          "stick": "0px",
+          "x": "718.776px",
+          "y": "595.774px"
+        }
+      },
+      "released": {
+        "motion": "idle",
+        "stick": "0px",
+        "x": "718.776px",
+        "y": "595.774px"
+      }
+    }
+  },
+  "consoleWarningsAndErrors": [],
+  "finalState": {
+    "dialogOpen": false,
+    "focused": "2.5D主神空间，可横向走动并靠近人物交谈",
+    "height": 828,
+    "label": "10 / 10 · 轮回庭院",
+    "overflow": false,
+    "player": {
+      "facing": "right",
+      "footX": "680",
+      "footY": "596",
+      "motion": "idle",
+      "player": ""
+    },
+    "width": 930,
+    "worldTransform": "translate(-77.7222px, 0px) scale(0.744444)"
+  }
+}

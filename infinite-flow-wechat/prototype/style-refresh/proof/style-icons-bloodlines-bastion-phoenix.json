@@ -1,0 +1,77 @@
+{
+  "assets": [
+    {
+      "asset": "bastion-chitin",
+      "generation_mode": "built-in image_gen",
+      "tool_calls": 1,
+      "source": "/Users/bytedance/.codex/generated_images/01a11a7c-803f-7e42-ae58-600fd952bc99/exec-1a65ba2a-4c70-4667-bbaa-3d81f1add456.png",
+      "destination": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/assets/bastion-chitin-proposed.png",
+      "prompt": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/prompts/style-icons-bloodlines-bastion-chitin.txt",
+      "source_sha256": "9a571e47a73e3dee8a1724860cf36e0c42b0483035c82b54298c69bee6e1917b",
+      "destination_sha256": "9a571e47a73e3dee8a1724860cf36e0c42b0483035c82b54298c69bee6e1917b",
+      "byte_exact_copy": true,
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "fully_transparent_pixels": 814695,
+      "partially_transparent_pixels": 757591,
+      "fully_opaque_pixels": 230,
+      "alpha_bbox": [
+        0,
+        23,
+        1253,
+        1254
+      ],
+      "bbox_fraction": [
+        0.9992,
+        0.9817
+      ],
+      "processing": "Copied original generated PNG bytes; no crop, resize, recolor, background removal or reencoding.",
+      "visual_check": "Single centered object; muted worn physical material; no text, frame, neon or external flame.",
+      "prototype_only": true,
+      "alpha_nonzero_pixels": 757821
+    },
+    {
+      "asset": "phoenix-ember",
+      "generation_mode": "built-in image_gen",
+      "tool_calls": 1,
+      "source": "/Users/bytedance/.codex/generated_images/01a11a7c-803f-7e42-ae58-600fd952bc99/exec-5d32459d-bd13-42fb-80b9-67433630f787.png",
+      "destination": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/assets/phoenix-ember-proposed.png",
+      "prompt": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/prompts/style-icons-bloodlines-phoenix-ember.txt",
+      "source_sha256": "e176580c531b22261c6af7137253b4806e77bee2a9eb3dfe636c2599cdebb599",
+      "destination_sha256": "e176580c531b22261c6af7137253b4806e77bee2a9eb3dfe636c2599cdebb599",
+      "byte_exact_copy": true,
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "fully_transparent_pixels": 1100401,
+      "partially_transparent_pixels": 471854,
+      "fully_opaque_pixels": 261,
+      "alpha_bbox": [
+        0,
+        2,
+        1230,
+        1254
+      ],
+      "bbox_fraction": [
+        0.9809,
+        0.9984
+      ],
+      "processing": "Copied original generated PNG bytes; no crop, resize, recolor, background removal or reencoding.",
+      "visual_check": "Single centered object; muted worn physical material; no text, frame, neon or external flame.",
+      "prototype_only": true,
+      "alpha_nonzero_pixels": 472115
+    }
+  ],
+  "limitations": [
+    "Generated silhouettes are taller than the requested 70-80 percent canvas occupancy; original bytes are preserved. HTML should use contain sizing if more visual padding is needed."
+  ]
+}

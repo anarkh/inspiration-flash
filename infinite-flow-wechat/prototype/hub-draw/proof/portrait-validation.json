@@ -1,0 +1,2099 @@
+{
+  "generatedAt": "2026-09-30T04:39:06.059Z",
+  "stageRatio": "390:740",
+  "scope": "Independent HTML prototype",
+  "mobile320": {
+    "controls": [
+      {
+        "name": "角色信息",
+        "rect": {
+          "bottom": 270.046875,
+          "height": 53,
+          "left": 26,
+          "right": 75,
+          "top": 217.046875,
+          "width": 49,
+          "x": 26,
+          "y": 217.046875
+        }
+      },
+      {
+        "name": "寻找 NPC",
+        "rect": {
+          "bottom": 250.046875,
+          "height": 44,
+          "left": 192,
+          "right": 286,
+          "top": 206.046875,
+          "width": 94,
+          "x": 192,
+          "y": 206.046875
+        }
+      },
+      {
+        "name": "打开背包",
+        "rect": {
+          "bottom": 300.046875,
+          "height": 44,
+          "left": 192,
+          "right": 236,
+          "top": 256.046875,
+          "width": 44,
+          "x": 192,
+          "y": 256.046875
+        }
+      },
+      {
+        "name": "打开菜单",
+        "rect": {
+          "bottom": 300.046875,
+          "height": 44,
+          "left": 242,
+          "right": 286,
+          "top": 256.046875,
+          "width": 44,
+          "x": 242,
+          "y": 256.046875
+        }
+      },
+      {
+        "name": "移动摇杆",
+        "rect": {
+          "bottom": 724.3984375,
+          "height": 110,
+          "left": 21,
+          "right": 131,
+          "top": 614.3984375,
+          "width": 110,
+          "x": 21,
+          "y": 614.3984375
+        }
+      },
+      {
+        "name": "靠近人物 · E 交谈",
+        "rect": {
+          "bottom": 668.3984375,
+          "height": 60,
+          "left": 180,
+          "right": 284,
+          "top": 608.3984375,
+          "width": 104,
+          "x": 180,
+          "y": 608.3984375
+        }
+      },
+      {
+        "name": "跳跃",
+        "rect": {
+          "bottom": 724.3984375,
+          "height": 48,
+          "left": 180,
+          "right": 228,
+          "top": 676.3984375,
+          "width": 48,
+          "x": 180,
+          "y": 676.3984375
+        }
+      },
+      {
+        "name": "奔跑Shift",
+        "rect": {
+          "bottom": 724.3984375,
+          "height": 48,
+          "left": 236,
+          "right": 284,
+          "top": 676.3984375,
+          "width": 48,
+          "x": 236,
+          "y": 676.3984375
+        }
+      }
+    ],
+    "frame": {
+      "bottom": 740.3984375,
+      "height": 546.3515625,
+      "left": 9,
+      "right": 296,
+      "top": 194.046875,
+      "width": 287,
+      "x": 9,
+      "y": 194.046875
+    },
+    "height": 740,
+    "overflow": false,
+    "player": {
+      "facing": "right",
+      "footX": "680",
+      "footY": "596",
+      "motion": "idle",
+      "player": ""
+    },
+    "stage": {
+      "bottom": 741.3984375,
+      "height": 548.3515625,
+      "left": 8,
+      "right": 297,
+      "top": 193.046875,
+      "width": 289,
+      "x": 8,
+      "y": 193.046875
+    },
+    "width": 320
+  },
+  "mobile390": {
+    "controls": [
+      {
+        "name": "角色信息",
+        "rect": {
+          "bottom": 270.046875,
+          "height": 53,
+          "left": 38.4296875,
+          "right": 87.4296875,
+          "top": 217.046875,
+          "width": 49,
+          "x": 38.4296875,
+          "y": 217.046875
+        }
+      },
+      {
+        "name": "寻找 NPC",
+        "rect": {
+          "bottom": 250.046875,
+          "height": 44,
+          "left": 249.5625,
+          "right": 343.5625,
+          "top": 206.046875,
+          "width": 94,
+          "x": 249.5625,
+          "y": 206.046875
+        }
+      },
+      {
+        "name": "打开背包",
+        "rect": {
+          "bottom": 300.046875,
+          "height": 44,
+          "left": 249.5625,
+          "right": 293.5625,
+          "top": 256.046875,
+          "width": 44,
+          "x": 249.5625,
+          "y": 256.046875
+        }
+      },
+      {
+        "name": "打开菜单",
+        "rect": {
+          "bottom": 300.046875,
+          "height": 44,
+          "left": 299.5625,
+          "right": 343.5625,
+          "top": 256.046875,
+          "width": 44,
+          "x": 299.5625,
+          "y": 256.046875
+        }
+      },
+      {
+        "name": "移动摇杆",
+        "rect": {
+          "bottom": 810.0390625,
+          "height": 110,
+          "left": 33.4296875,
+          "right": 143.4296875,
+          "top": 700.0390625,
+          "width": 110,
+          "x": 33.4296875,
+          "y": 700.0390625
+        }
+      },
+      {
+        "name": "靠近人物 · E 交谈",
+        "rect": {
+          "bottom": 754.0390625,
+          "height": 60,
+          "left": 237.5625,
+          "right": 341.5625,
+          "top": 694.0390625,
+          "width": 104,
+          "x": 237.5625,
+          "y": 694.0390625
+        }
+      },
+      {
+        "name": "跳跃",
+        "rect": {
+          "bottom": 810.0390625,
+          "height": 48,
+          "left": 237.5625,
+          "right": 285.5625,
+          "top": 762.0390625,
+          "width": 48,
+          "x": 237.5625,
+          "y": 762.0390625
+        }
+      },
+      {
+        "name": "奔跑Shift",
+        "rect": {
+          "bottom": 810.0390625,
+          "height": 48,
+          "left": 293.5625,
+          "right": 341.5625,
+          "top": 762.0390625,
+          "width": 48,
+          "x": 293.5625,
+          "y": 762.0390625
+        }
+      }
+    ],
+    "height": 844,
+    "overflow": false,
+    "player": {
+      "facing": "right",
+      "footX": "698.9797820292741",
+      "footY": "595.8314472069513",
+      "motion": "idle",
+      "player": ""
+    },
+    "stage": {
+      "bottom": 827.0390625,
+      "height": 633.9921875,
+      "left": 20.4296875,
+      "right": 354.5625,
+      "top": 193.046875,
+      "width": 334.1328125,
+      "x": 20.4296875,
+      "y": 193.046875
+    },
+    "tutorialDisplay": "none",
+    "width": 390
+  },
+  "expandedMobile": {
+    "controls": [
+      {
+        "name": "靠近人物 · E 交谈",
+        "rect": {
+          "bottom": 677.71875,
+          "height": 50,
+          "left": 202,
+          "right": 348,
+          "top": 627.71875,
+          "width": 146,
+          "x": 202,
+          "y": 627.71875
+        }
+      },
+      {
+        "name": "跳跃C",
+        "rect": {
+          "bottom": 737.71875,
+          "height": 50,
+          "left": 202,
+          "right": 270,
+          "top": 687.71875,
+          "width": 68,
+          "x": 202,
+          "y": 687.71875
+        }
+      },
+      {
+        "name": "奔跑Shift",
+        "rect": {
+          "bottom": 737.71875,
+          "height": 50,
+          "left": 280,
+          "right": 348,
+          "top": 687.71875,
+          "width": 68,
+          "x": 280,
+          "y": 687.71875
+        }
+      }
+    ],
+    "player": {
+      "facing": "right",
+      "footX": "698.9797820292741",
+      "footY": "595.8314472069513",
+      "motion": "idle",
+      "player": ""
+    },
+    "stage": {
+      "bottom": 762.71875,
+      "height": 681.171875,
+      "left": 8,
+      "right": 367,
+      "top": 81.546875,
+      "width": 359,
+      "x": 8,
+      "y": 81.546875
+    },
+    "worldTransform": "translate(-480.677px, 0px) scale(0.943056)"
+  },
+  "joystick": {
+    "before": {
+      "facing": "right",
+      "footX": "680",
+      "footY": "596",
+      "motion": "idle",
+      "player": ""
+    },
+    "after": {
+      "facing": "right",
+      "footX": "698.9797820292741",
+      "footY": "595.8314472069513",
+      "motion": "walk",
+      "player": ""
+    },
+    "stopped": {
+      "facing": "right",
+      "footX": "698.9797820292741",
+      "footY": "595.8314472069513",
+      "motion": "idle",
+      "player": ""
+    }
+  },
+  "sceneChecks": [
+    {
+      "id": "01",
+      "broken": [],
+      "controls": [
+        {
+          "name": "角色信息",
+          "rect": {
+            "bottom": 73.546875,
+            "height": 53,
+            "left": 26,
+            "right": 75,
+            "top": 20.546875,
+            "width": 49,
+            "x": 26,
+            "y": 20.546875
+          }
+        },
+        {
+          "name": "寻找 NPC",
+          "rect": {
+            "bottom": 57.046875,
+            "height": 44,
+            "left": 262,
+            "right": 356,
+            "top": 13.046875,
+            "width": 94,
+            "x": 262,
+            "y": 13.046875
+          }
+        },
+        {
+          "name": "打开背包",
+          "rect": {
+            "bottom": 107.046875,
+            "height": 44,
+            "left": 262,
+            "right": 306,
+            "top": 63.046875,
+            "width": 44,
+            "x": 262,
+            "y": 63.046875
+          }
+        },
+        {
+          "name": "打开菜单",
+          "rect": {
+            "bottom": 107.046875,
+            "height": 44,
+            "left": 312,
+            "right": 356,
+            "top": 63.046875,
+            "width": 44,
+            "x": 312,
+            "y": 63.046875
+          }
+        },
+        {
+          "name": "移动摇杆",
+          "rect": {
+            "bottom": 658.21875,
+            "height": 110,
+            "left": 27,
+            "right": 137,
+            "top": 548.21875,
+            "width": 110,
+            "x": 27,
+            "y": 548.21875
+          }
+        },
+        {
+          "name": "靠近人物 · E 交谈",
+          "rect": {
+            "bottom": 596.21875,
+            "height": 50,
+            "left": 202,
+            "right": 348,
+            "top": 546.21875,
+            "width": 146,
+            "x": 202,
+            "y": 546.21875
+          }
+        },
+        {
+          "name": "跳跃",
+          "rect": {
+            "bottom": 656.21875,
+            "height": 50,
+            "left": 202,
+            "right": 270,
+            "top": 606.21875,
+            "width": 68,
+            "x": 202,
+            "y": 606.21875
+          }
+        },
+        {
+          "name": "奔跑Shift",
+          "rect": {
+            "bottom": 656.21875,
+            "height": 50,
+            "left": 280,
+            "right": 348,
+            "top": 606.21875,
+            "width": 68,
+            "x": 280,
+            "y": 606.21875
+          }
+        }
+      ],
+      "label": "01 / 10 · 归墟圣殿",
+      "overflow": false,
+      "player": {
+        "facing": "right",
+        "footX": "680",
+        "footY": "596",
+        "motion": "idle",
+        "player": ""
+      },
+      "stage": {
+        "bottom": 681.21875,
+        "height": 681.171875,
+        "left": 8,
+        "right": 367,
+        "top": 0.046875,
+        "width": 359,
+        "x": 8,
+        "y": 0.046875
+      },
+      "targets": 8
+    },
+    {
+      "id": "02",
+      "broken": [
+        "assets/walk-void-v1.png"
+      ],
+      "controls": [
+        {
+          "name": "角色信息",
+          "rect": {
+            "bottom": 73.546875,
+            "height": 53,
+            "left": 26,
+            "right": 75,
+            "top": 20.546875,
+            "width": 49,
+            "x": 26,
+            "y": 20.546875
+          }
+        },
+        {
+          "name": "寻找 NPC",
+          "rect": {
+            "bottom": 57.046875,
+            "height": 44,
+            "left": 262,
+            "right": 356,
+            "top": 13.046875,
+            "width": 94,
+            "x": 262,
+            "y": 13.046875
+          }
+        },
+        {
+          "name": "打开背包",
+          "rect": {
+            "bottom": 107.046875,
+            "height": 44,
+            "left": 262,
+            "right": 306,
+            "top": 63.046875,
+            "width": 44,
+            "x": 262,
+            "y": 63.046875
+          }
+        },
+        {
+          "name": "打开菜单",
+          "rect": {
+            "bottom": 107.046875,
+            "height": 44,
+            "left": 312,
+            "right": 356,
+            "top": 63.046875,
+            "width": 44,
+            "x": 312,
+            "y": 63.046875
+          }
+        },
+        {
+          "name": "移动摇杆",
+          "rect": {
+            "bottom": 658.21875,
+            "height": 110,
+            "left": 27,
+            "right": 137,
+            "top": 548.21875,
+            "width": 110,
+            "x": 27,
+            "y": 548.21875
+          }
+        },
+        {
+          "name": "靠近人物 · E 交谈",
+          "rect": {
+            "bottom": 596.21875,
+            "height": 50,
+            "left": 202,
+            "right": 348,
+            "top": 546.21875,
+            "width": 146,
+            "x": 202,
+            "y": 546.21875
+          }
+        },
+        {
+          "name": "跳跃",
+          "rect": {
+            "bottom": 656.21875,
+            "height": 50,
+            "left": 202,
+            "right": 270,
+            "top": 606.21875,
+            "width": 68,
+            "x": 202,
+            "y": 606.21875
+          }
+        },
+        {
+          "name": "奔跑Shift",
+          "rect": {
+            "bottom": 656.21875,
+            "height": 50,
+            "left": 280,
+            "right": 348,
+            "top": 606.21875,
+            "width": 68,
+            "x": 280,
+            "y": 606.21875
+          }
+        }
+      ],
+      "label": "02 / 10 · 星环议庭",
+      "overflow": false,
+      "player": {
+        "facing": "right",
+        "footX": "680",
+        "footY": "596",
+        "motion": "idle",
+        "player": ""
+      },
+      "stage": {
+        "bottom": 681.21875,
+        "height": 681.171875,
+        "left": 8,
+        "right": 367,
+        "top": 0.046875,
+        "width": 359,
+        "x": 8,
+        "y": 0.046875
+      },
+      "targets": 8
+    },
+    {
+      "id": "03",
+      "broken": [
+        "assets/walk-camp-v1.png"
+      ],
+      "controls": [
+        {
+          "name": "角色信息",
+          "rect": {
+            "bottom": 73.546875,
+            "height": 53,
+            "left": 26,
+            "right": 75,
+            "top": 20.546875,
+            "width": 49,
+            "x": 26,
+            "y": 20.546875
+          }
+        },
+        {
+          "name": "寻找 NPC",
+          "rect": {
+            "bottom": 57.046875,
+            "height": 44,
+            "left": 262,
+            "right": 356,
+            "top": 13.046875,
+            "width": 94,
+            "x": 262,
+            "y": 13.046875
+          }
+        },
+        {
+          "name": "打开背包",
+          "rect": {
+            "bottom": 107.046875,
+            "height": 44,
+            "left": 262,
+            "right": 306,
+            "top": 63.046875,
+            "width": 44,
+            "x": 262,
+            "y": 63.046875
+          }
+        },
+        {
+          "name": "打开菜单",
+          "rect": {
+            "bottom": 107.046875,
+            "height": 44,
+            "left": 312,
+            "right": 356,
+            "top": 63.046875,
+            "width": 44,
+            "x": 312,
+            "y": 63.046875
+          }
+        },
+        {
+          "name": "移动摇杆",
+          "rect": {
+            "bottom": 658.21875,
+            "height": 110,
+            "left": 27,
+            "right": 137,
+            "top": 548.21875,
+            "width": 110,
+            "x": 27,
+            "y": 548.21875
+          }
+        },
+        {
+          "name": "靠近人物 · E 交谈",
+          "rect": {
+            "bottom": 596.21875,
+            "height": 50,
+            "left": 202,
+            "right": 348,
+            "top": 546.21875,
+            "width": 146,
+            "x": 202,
+            "y": 546.21875
+          }
+        },
+        {
+          "name": "跳跃",
+          "rect": {
+            "bottom": 656.21875,
+            "height": 50,
+            "left": 202,
+            "right": 270,
+            "top": 606.21875,
+            "width": 68,
+            "x": 202,
+            "y": 606.21875
+          }
+        },
+        {
+          "name": "奔跑Shift",
+          "rect": {
+            "bottom": 656.21875,
+            "height": 50,
+            "left": 280,
+            "right": 348,
+            "top": 606.21875,
+            "width": 68,
+            "x": 280,
+            "y": 606.21875
+          }
+        }
+      ],
+      "label": "03 / 10 · 灰烬营地",
+      "overflow": false,
+      "player": {
+        "facing": "right",
+        "footX": "680",
+        "footY": "596",
+        "motion": "idle",
+        "player": ""
+      },
+      "stage": {
+        "bottom": 681.21875,
+        "height": 681.171875,
+        "left": 8,
+        "right": 367,
+        "top": 0.046875,
+        "width": 359,
+        "x": 8,
+        "y": 0.046875
+      },
+      "targets": 8
+    },
+    {
+      "id": "04",
+      "broken": [],
+      "controls": [
+        {
+          "name": "角色信息",
+          "rect": {
+            "bottom": 73.546875,
+            "height": 53,
+            "left": 26,
+            "right": 75,
+            "top": 20.546875,
+            "width": 49,
+            "x": 26,
+            "y": 20.546875
+          }
+        },
+        {
+          "name": "寻找 NPC",
+          "rect": {
+            "bottom": 57.046875,
+            "height": 44,
+            "left": 262,
+            "right": 356,
+            "top": 13.046875,
+            "width": 94,
+            "x": 262,
+            "y": 13.046875
+          }
+        },
+        {
+          "name": "打开背包",
+          "rect": {
+            "bottom": 107.046875,
+            "height": 44,
+            "left": 262,
+            "right": 306,
+            "top": 63.046875,
+            "width": 44,
+            "x": 262,
+            "y": 63.046875
+          }
+        },
+        {
+          "name": "打开菜单",
+          "rect": {
+            "bottom": 107.046875,
+            "height": 44,
+            "left": 312,
+            "right": 356,
+            "top": 63.046875,
+            "width": 44,
+            "x": 312,
+            "y": 63.046875
+          }
+        },
+        {
+          "name": "移动摇杆",
+          "rect": {
+            "bottom": 658.21875,
+            "height": 110,
+            "left": 27,
+            "right": 137,
+            "top": 548.21875,
+            "width": 110,
+            "x": 27,
+            "y": 548.21875
+          }
+        },
+        {
+          "name": "靠近人物 · E 交谈",
+          "rect": {
+            "bottom": 596.21875,
+            "height": 50,
+            "left": 202,
+            "right": 348,
+            "top": 546.21875,
+            "width": 146,
+            "x": 202,
+            "y": 546.21875
+          }
+        },
+        {
+          "name": "跳跃",
+          "rect": {
+            "bottom": 656.21875,
+            "height": 50,
+            "left": 202,
+            "right": 270,
+            "top": 606.21875,
+            "width": 68,
+            "x": 202,
+            "y": 606.21875
+          }
+        },
+        {
+          "name": "奔跑Shift",
+          "rect": {
+            "bottom": 656.21875,
+            "height": 50,
+            "left": 280,
+            "right": 348,
+            "top": 606.21875,
+            "width": 68,
+            "x": 280,
+            "y": 606.21875
+          }
+        }
+      ],
+      "label": "04 / 10 · 主神档案",
+      "overflow": false,
+      "player": {
+        "facing": "right",
+        "footX": "680",
+        "footY": "596",
+        "motion": "idle",
+        "player": ""
+      },
+      "stage": {
+        "bottom": 681.21875,
+        "height": 681.171875,
+        "left": 8,
+        "right": 367,
+        "top": 0.046875,
+        "width": 359,
+        "x": 8,
+        "y": 0.046875
+      },
+      "targets": 8
+    },
+    {
+      "id": "05",
+      "broken": [
+        "assets/walk-sanctuary-v1.png"
+      ],
+      "controls": [
+        {
+          "name": "角色信息",
+          "rect": {
+            "bottom": 73.546875,
+            "height": 53,
+            "left": 26,
+            "right": 75,
+            "top": 20.546875,
+            "width": 49,
+            "x": 26,
+            "y": 20.546875
+          }
+        },
+        {
+          "name": "寻找 NPC",
+          "rect": {
+            "bottom": 57.046875,
+            "height": 44,
+            "left": 262,
+            "right": 356,
+            "top": 13.046875,
+            "width": 94,
+            "x": 262,
+            "y": 13.046875
+          }
+        },
+        {
+          "name": "打开背包",
+          "rect": {
+            "bottom": 107.046875,
+            "height": 44,
+            "left": 262,
+            "right": 306,
+            "top": 63.046875,
+            "width": 44,
+            "x": 262,
+            "y": 63.046875
+          }
+        },
+        {
+          "name": "打开菜单",
+          "rect": {
+            "bottom": 107.046875,
+            "height": 44,
+            "left": 312,
+            "right": 356,
+            "top": 63.046875,
+            "width": 44,
+            "x": 312,
+            "y": 63.046875
+          }
+        },
+        {
+          "name": "移动摇杆",
+          "rect": {
+            "bottom": 658.21875,
+            "height": 110,
+            "left": 27,
+            "right": 137,
+            "top": 548.21875,
+            "width": 110,
+            "x": 27,
+            "y": 548.21875
+          }
+        },
+        {
+          "name": "E · 与补给商交谈",
+          "rect": {
+            "bottom": 596.21875,
+            "height": 50,
+            "left": 202,
+            "right": 348,
+            "top": 546.21875,
+            "width": 146,
+            "x": 202,
+            "y": 546.21875
+          }
+        },
+        {
+          "name": "跳跃",
+          "rect": {
+            "bottom": 656.21875,
+            "height": 50,
+            "left": 202,
+            "right": 270,
+            "top": 606.21875,
+            "width": 68,
+            "x": 202,
+            "y": 606.21875
+          }
+        },
+        {
+          "name": "奔跑Shift",
+          "rect": {
+            "bottom": 656.21875,
+            "height": 50,
+            "left": 280,
+            "right": 348,
+            "top": 606.21875,
+            "width": 68,
+            "x": 280,
+            "y": 606.21875
+          }
+        }
+      ],
+      "label": "05 / 10 · 黑曜神龛",
+      "overflow": false,
+      "player": {
+        "facing": "right",
+        "footX": "680",
+        "footY": "596",
+        "motion": "idle",
+        "player": ""
+      },
+      "stage": {
+        "bottom": 681.21875,
+        "height": 681.171875,
+        "left": 8,
+        "right": 367,
+        "top": 0.046875,
+        "width": 359,
+        "x": 8,
+        "y": 0.046875
+      },
+      "targets": 8
+    },
+    {
+      "id": "06",
+      "broken": [],
+      "controls": [
+        {
+          "name": "角色信息",
+          "rect": {
+            "bottom": 73.546875,
+            "height": 53,
+            "left": 26,
+            "right": 75,
+            "top": 20.546875,
+            "width": 49,
+            "x": 26,
+            "y": 20.546875
+          }
+        },
+        {
+          "name": "寻找 NPC",
+          "rect": {
+            "bottom": 57.046875,
+            "height": 44,
+            "left": 262,
+            "right": 356,
+            "top": 13.046875,
+            "width": 94,
+            "x": 262,
+            "y": 13.046875
+          }
+        },
+        {
+          "name": "打开背包",
+          "rect": {
+            "bottom": 107.046875,
+            "height": 44,
+            "left": 262,
+            "right": 306,
+            "top": 63.046875,
+            "width": 44,
+            "x": 262,
+            "y": 63.046875
+          }
+        },
+        {
+          "name": "打开菜单",
+          "rect": {
+            "bottom": 107.046875,
+            "height": 44,
+            "left": 312,
+            "right": 356,
+            "top": 63.046875,
+            "width": 44,
+            "x": 312,
+            "y": 63.046875
+          }
+        },
+        {
+          "name": "移动摇杆",
+          "rect": {
+            "bottom": 658.21875,
+            "height": 110,
+            "left": 27,
+            "right": 137,
+            "top": 548.21875,
+            "width": 110,
+            "x": 27,
+            "y": 548.21875
+          }
+        },
+        {
+          "name": "靠近人物 · E 交谈",
+          "rect": {
+            "bottom": 596.21875,
+            "height": 50,
+            "left": 202,
+            "right": 348,
+            "top": 546.21875,
+            "width": 146,
+            "x": 202,
+            "y": 546.21875
+          }
+        },
+        {
+          "name": "跳跃",
+          "rect": {
+            "bottom": 656.21875,
+            "height": 50,
+            "left": 202,
+            "right": 270,
+            "top": 606.21875,
+            "width": 68,
+            "x": 202,
+            "y": 606.21875
+          }
+        },
+        {
+          "name": "奔跑Shift",
+          "rect": {
+            "bottom": 656.21875,
+            "height": 50,
+            "left": 280,
+            "right": 348,
+            "top": 606.21875,
+            "width": 68,
+            "x": 280,
+            "y": 606.21875
+          }
+        }
+      ],
+      "label": "06 / 10 · 青铜仪盘",
+      "overflow": false,
+      "player": {
+        "facing": "right",
+        "footX": "680",
+        "footY": "596",
+        "motion": "idle",
+        "player": ""
+      },
+      "stage": {
+        "bottom": 681.21875,
+        "height": 681.171875,
+        "left": 8,
+        "right": 367,
+        "top": 0.046875,
+        "width": 359,
+        "x": 8,
+        "y": 0.046875
+      },
+      "targets": 8
+    },
+    {
+      "id": "07",
+      "broken": [],
+      "controls": [
+        {
+          "name": "角色信息",
+          "rect": {
+            "bottom": 73.546875,
+            "height": 53,
+            "left": 26,
+            "right": 75,
+            "top": 20.546875,
+            "width": 49,
+            "x": 26,
+            "y": 20.546875
+          }
+        },
+        {
+          "name": "寻找 NPC",
+          "rect": {
+            "bottom": 57.046875,
+            "height": 44,
+            "left": 262,
+            "right": 356,
+            "top": 13.046875,
+            "width": 94,
+            "x": 262,
+            "y": 13.046875
+          }
+        },
+        {
+          "name": "打开背包",
+          "rect": {
+            "bottom": 107.046875,
+            "height": 44,
+            "left": 262,
+            "right": 306,
+            "top": 63.046875,
+            "width": 44,
+            "x": 262,
+            "y": 63.046875
+          }
+        },
+        {
+          "name": "打开菜单",
+          "rect": {
+            "bottom": 107.046875,
+            "height": 44,
+            "left": 312,
+            "right": 356,
+            "top": 63.046875,
+            "width": 44,
+            "x": 312,
+            "y": 63.046875
+          }
+        },
+        {
+          "name": "移动摇杆",
+          "rect": {
+            "bottom": 658.21875,
+            "height": 110,
+            "left": 27,
+            "right": 137,
+            "top": 548.21875,
+            "width": 110,
+            "x": 27,
+            "y": 548.21875
+          }
+        },
+        {
+          "name": "靠近人物 · E 交谈",
+          "rect": {
+            "bottom": 596.21875,
+            "height": 50,
+            "left": 202,
+            "right": 348,
+            "top": 546.21875,
+            "width": 146,
+            "x": 202,
+            "y": 546.21875
+          }
+        },
+        {
+          "name": "跳跃",
+          "rect": {
+            "bottom": 656.21875,
+            "height": 50,
+            "left": 202,
+            "right": 270,
+            "top": 606.21875,
+            "width": 68,
+            "x": 202,
+            "y": 606.21875
+          }
+        },
+        {
+          "name": "奔跑Shift",
+          "rect": {
+            "bottom": 656.21875,
+            "height": 50,
+            "left": 280,
+            "right": 348,
+            "top": 606.21875,
+            "width": 68,
+            "x": 280,
+            "y": 606.21875
+          }
+        }
+      ],
+      "label": "07 / 10 · 虚空月台",
+      "overflow": false,
+      "player": {
+        "facing": "right",
+        "footX": "680",
+        "footY": "596",
+        "motion": "idle",
+        "player": ""
+      },
+      "stage": {
+        "bottom": 681.21875,
+        "height": 681.171875,
+        "left": 8,
+        "right": 367,
+        "top": 0.046875,
+        "width": 359,
+        "x": 8,
+        "y": 0.046875
+      },
+      "targets": 8
+    },
+    {
+      "id": "08",
+      "broken": [],
+      "controls": [
+        {
+          "name": "角色信息",
+          "rect": {
+            "bottom": 73.546875,
+            "height": 53,
+            "left": 26,
+            "right": 75,
+            "top": 20.546875,
+            "width": 49,
+            "x": 26,
+            "y": 20.546875
+          }
+        },
+        {
+          "name": "寻找 NPC",
+          "rect": {
+            "bottom": 57.046875,
+            "height": 44,
+            "left": 262,
+            "right": 356,
+            "top": 13.046875,
+            "width": 94,
+            "x": 262,
+            "y": 13.046875
+          }
+        },
+        {
+          "name": "打开背包",
+          "rect": {
+            "bottom": 107.046875,
+            "height": 44,
+            "left": 262,
+            "right": 306,
+            "top": 63.046875,
+            "width": 44,
+            "x": 262,
+            "y": 63.046875
+          }
+        },
+        {
+          "name": "打开菜单",
+          "rect": {
+            "bottom": 107.046875,
+            "height": 44,
+            "left": 312,
+            "right": 356,
+            "top": 63.046875,
+            "width": 44,
+            "x": 312,
+            "y": 63.046875
+          }
+        },
+        {
+          "name": "移动摇杆",
+          "rect": {
+            "bottom": 658.21875,
+            "height": 110,
+            "left": 27,
+            "right": 137,
+            "top": 548.21875,
+            "width": 110,
+            "x": 27,
+            "y": 548.21875
+          }
+        },
+        {
+          "name": "靠近人物 · E 交谈",
+          "rect": {
+            "bottom": 596.21875,
+            "height": 50,
+            "left": 202,
+            "right": 348,
+            "top": 546.21875,
+            "width": 146,
+            "x": 202,
+            "y": 546.21875
+          }
+        },
+        {
+          "name": "跳跃",
+          "rect": {
+            "bottom": 656.21875,
+            "height": 50,
+            "left": 202,
+            "right": 270,
+            "top": 606.21875,
+            "width": 68,
+            "x": 202,
+            "y": 606.21875
+          }
+        },
+        {
+          "name": "奔跑Shift",
+          "rect": {
+            "bottom": 656.21875,
+            "height": 50,
+            "left": 280,
+            "right": 348,
+            "top": 606.21875,
+            "width": 68,
+            "x": 280,
+            "y": 606.21875
+          }
+        }
+      ],
+      "label": "08 / 10 · 万象回廊",
+      "overflow": false,
+      "player": {
+        "facing": "right",
+        "footX": "680",
+        "footY": "596",
+        "motion": "idle",
+        "player": ""
+      },
+      "stage": {
+        "bottom": 681.21875,
+        "height": 681.171875,
+        "left": 8,
+        "right": 367,
+        "top": 0.046875,
+        "width": 359,
+        "x": 8,
+        "y": 0.046875
+      },
+      "targets": 8
+    },
+    {
+      "id": "09",
+      "broken": [],
+      "controls": [
+        {
+          "name": "角色信息",
+          "rect": {
+            "bottom": 73.546875,
+            "height": 53,
+            "left": 26,
+            "right": 75,
+            "top": 20.546875,
+            "width": 49,
+            "x": 26,
+            "y": 20.546875
+          }
+        },
+        {
+          "name": "寻找 NPC",
+          "rect": {
+            "bottom": 57.046875,
+            "height": 44,
+            "left": 262,
+            "right": 356,
+            "top": 13.046875,
+            "width": 94,
+            "x": 262,
+            "y": 13.046875
+          }
+        },
+        {
+          "name": "打开背包",
+          "rect": {
+            "bottom": 107.046875,
+            "height": 44,
+            "left": 262,
+            "right": 306,
+            "top": 63.046875,
+            "width": 44,
+            "x": 262,
+            "y": 63.046875
+          }
+        },
+        {
+          "name": "打开菜单",
+          "rect": {
+            "bottom": 107.046875,
+            "height": 44,
+            "left": 312,
+            "right": 356,
+            "top": 63.046875,
+            "width": 44,
+            "x": 312,
+            "y": 63.046875
+          }
+        },
+        {
+          "name": "移动摇杆",
+          "rect": {
+            "bottom": 658.21875,
+            "height": 110,
+            "left": 27,
+            "right": 137,
+            "top": 548.21875,
+            "width": 110,
+            "x": 27,
+            "y": 548.21875
+          }
+        },
+        {
+          "name": "靠近人物 · E 交谈",
+          "rect": {
+            "bottom": 596.21875,
+            "height": 50,
+            "left": 202,
+            "right": 348,
+            "top": 546.21875,
+            "width": 146,
+            "x": 202,
+            "y": 546.21875
+          }
+        },
+        {
+          "name": "跳跃",
+          "rect": {
+            "bottom": 656.21875,
+            "height": 50,
+            "left": 202,
+            "right": 270,
+            "top": 606.21875,
+            "width": 68,
+            "x": 202,
+            "y": 606.21875
+          }
+        },
+        {
+          "name": "奔跑Shift",
+          "rect": {
+            "bottom": 656.21875,
+            "height": 50,
+            "left": 280,
+            "right": 348,
+            "top": 606.21875,
+            "width": 68,
+            "x": 280,
+            "y": 606.21875
+          }
+        }
+      ],
+      "label": "09 / 10 · 冷光终端",
+      "overflow": false,
+      "player": {
+        "facing": "right",
+        "footX": "680",
+        "footY": "596",
+        "motion": "idle",
+        "player": ""
+      },
+      "stage": {
+        "bottom": 681.21875,
+        "height": 681.171875,
+        "left": 8,
+        "right": 367,
+        "top": 0.046875,
+        "width": 359,
+        "x": 8,
+        "y": 0.046875
+      },
+      "targets": 8
+    },
+    {
+      "id": "10",
+      "broken": [],
+      "controls": [
+        {
+          "name": "角色信息",
+          "rect": {
+            "bottom": 73.546875,
+            "height": 53,
+            "left": 26,
+            "right": 75,
+            "top": 20.546875,
+            "width": 49,
+            "x": 26,
+            "y": 20.546875
+          }
+        },
+        {
+          "name": "寻找 NPC",
+          "rect": {
+            "bottom": 57.046875,
+            "height": 44,
+            "left": 262,
+            "right": 356,
+            "top": 13.046875,
+            "width": 94,
+            "x": 262,
+            "y": 13.046875
+          }
+        },
+        {
+          "name": "打开背包",
+          "rect": {
+            "bottom": 107.046875,
+            "height": 44,
+            "left": 262,
+            "right": 306,
+            "top": 63.046875,
+            "width": 44,
+            "x": 262,
+            "y": 63.046875
+          }
+        },
+        {
+          "name": "打开菜单",
+          "rect": {
+            "bottom": 107.046875,
+            "height": 44,
+            "left": 312,
+            "right": 356,
+            "top": 63.046875,
+            "width": 44,
+            "x": 312,
+            "y": 63.046875
+          }
+        },
+        {
+          "name": "移动摇杆",
+          "rect": {
+            "bottom": 658.21875,
+            "height": 110,
+            "left": 27,
+            "right": 137,
+            "top": 548.21875,
+            "width": 110,
+            "x": 27,
+            "y": 548.21875
+          }
+        },
+        {
+          "name": "靠近人物 · E 交谈",
+          "rect": {
+            "bottom": 596.21875,
+            "height": 50,
+            "left": 202,
+            "right": 348,
+            "top": 546.21875,
+            "width": 146,
+            "x": 202,
+            "y": 546.21875
+          }
+        },
+        {
+          "name": "跳跃",
+          "rect": {
+            "bottom": 656.21875,
+            "height": 50,
+            "left": 202,
+            "right": 270,
+            "top": 606.21875,
+            "width": 68,
+            "x": 202,
+            "y": 606.21875
+          }
+        },
+        {
+          "name": "奔跑Shift",
+          "rect": {
+            "bottom": 656.21875,
+            "height": 50,
+            "left": 280,
+            "right": 348,
+            "top": 606.21875,
+            "width": 68,
+            "x": 280,
+            "y": 606.21875
+          }
+        }
+      ],
+      "label": "10 / 10 · 轮回庭院",
+      "overflow": false,
+      "player": {
+        "facing": "right",
+        "footX": "680",
+        "footY": "596",
+        "motion": "idle",
+        "player": ""
+      },
+      "stage": {
+        "bottom": 681.21875,
+        "height": 681.171875,
+        "left": 8,
+        "right": 367,
+        "top": 0.046875,
+        "width": 359,
+        "x": 8,
+        "y": 0.046875
+      },
+      "targets": 8
+    }
+  ],
+  "settledImageChecks": [
+    {
+      "id": "02",
+      "images": [
+        {
+          "complete": true,
+          "height": 724,
+          "src": "assets/walk-void-v1.png",
+          "width": 2172
+        },
+        {
+          "complete": true,
+          "height": 1536,
+          "src": "../../cocos/assets/resources/npc/equipment-quartermaster-world-v1.png",
+          "width": 1024
+        },
+        {
+          "complete": true,
+          "height": 1536,
+          "src": "../../cocos/assets/resources/npc/supply-trader-world-v1.png",
+          "width": 1024
+        },
+        {
+          "complete": true,
+          "height": 1536,
+          "src": "../../cocos/assets/resources/npc/pet-keeper-world-v1.png",
+          "width": 1024
+        },
+        {
+          "complete": true,
+          "height": 1536,
+          "src": "../../cocos/assets/resources/npc/method-master-world-v1.png",
+          "width": 1024
+        },
+        {
+          "complete": true,
+          "height": 1536,
+          "src": "../../cocos/assets/resources/npc/bloodline-priest-world-v1.png",
+          "width": 1024
+        },
+        {
+          "complete": true,
+          "height": 1536,
+          "src": "../../cocos/assets/resources/npc/companion-guide-world-v1.png",
+          "width": 1024
+        },
+        {
+          "complete": true,
+          "height": 1536,
+          "src": "../../cocos/assets/resources/npc/main-god-projection-world-v1.png",
+          "width": 1024
+        },
+        {
+          "complete": true,
+          "height": 768,
+          "src": "../../cocos/assets/resources/character/reincarnator-v1.png",
+          "width": 768
+        }
+      ],
+      "label": "02 / 10 · 星环议庭"
+    },
+    {
+      "id": "03",
+      "images": [
+        {
+          "complete": true,
+          "height": 724,
+          "src": "assets/walk-camp-v1.png",
+          "width": 2172
+        },
+        {
+          "complete": true,
+          "height": 1536,
+          "src": "../../cocos/assets/resources/npc/equipment-quartermaster-world-v1.png",
+          "width": 1024
+        },
+        {
+          "complete": true,
+          "height": 1536,
+          "src": "../../cocos/assets/resources/npc/supply-trader-world-v1.png",
+          "width": 1024
+        },
+        {
+          "complete": true,
+          "height": 1536,
+          "src": "../../cocos/assets/resources/npc/pet-keeper-world-v1.png",
+          "width": 1024
+        },
+        {
+          "complete": true,
+          "height": 1536,
+          "src": "../../cocos/assets/resources/npc/method-master-world-v1.png",
+          "width": 1024
+        },
+        {
+          "complete": true,
+          "height": 1536,
+          "src": "../../cocos/assets/resources/npc/bloodline-priest-world-v1.png",
+          "width": 1024
+        },
+        {
+          "complete": true,
+          "height": 1536,
+          "src": "../../cocos/assets/resources/npc/companion-guide-world-v1.png",
+          "width": 1024
+        },
+        {
+          "complete": true,
+          "height": 1536,
+          "src": "../../cocos/assets/resources/npc/main-god-projection-world-v1.png",
+          "width": 1024
+        },
+        {
+          "complete": true,
+          "height": 768,
+          "src": "../../cocos/assets/resources/character/reincarnator-v1.png",
+          "width": 768
+        }
+      ],
+      "label": "03 / 10 · 灰烬营地"
+    },
+    {
+      "id": "05",
+      "images": [
+        {
+          "complete": true,
+          "height": 724,
+          "src": "assets/walk-sanctuary-v1.png",
+          "width": 2172
+        },
+        {
+          "complete": true,
+          "height": 1536,
+          "src": "../../cocos/assets/resources/npc/equipment-quartermaster-world-v1.png",
+          "width": 1024
+        },
+        {
+          "complete": true,
+          "height": 1536,
+          "src": "../../cocos/assets/resources/npc/supply-trader-world-v1.png",
+          "width": 1024
+        },
+        {
+          "complete": true,
+          "height": 1536,
+          "src": "../../cocos/assets/resources/npc/pet-keeper-world-v1.png",
+          "width": 1024
+        },
+        {
+          "complete": true,
+          "height": 1536,
+          "src": "../../cocos/assets/resources/npc/method-master-world-v1.png",
+          "width": 1024
+        },
+        {
+          "complete": true,
+          "height": 1536,
+          "src": "../../cocos/assets/resources/npc/bloodline-priest-world-v1.png",
+          "width": 1024
+        },
+        {
+          "complete": true,
+          "height": 1536,
+          "src": "../../cocos/assets/resources/npc/companion-guide-world-v1.png",
+          "width": 1024
+        },
+        {
+          "complete": true,
+          "height": 1536,
+          "src": "../../cocos/assets/resources/npc/main-god-projection-world-v1.png",
+          "width": 1024
+        },
+        {
+          "complete": true,
+          "height": 768,
+          "src": "../../cocos/assets/resources/character/reincarnator-v1.png",
+          "width": 768
+        }
+      ],
+      "label": "05 / 10 · 黑曜神龛"
+    }
+  ],
+  "companionArrival": {
+    "dialog": {
+      "bottom": 720.21875,
+      "height": 275.4453125,
+      "left": 17,
+      "right": 358,
+      "top": 444.7734375,
+      "width": 341,
+      "x": 17,
+      "y": 444.7734375
+    },
+    "player": {
+      "facing": "right",
+      "footX": "1689.5990960449956",
+      "footY": "494.7510240480895",
+      "motion": "paused",
+      "player": ""
+    },
+    "title": "同行引路人",
+    "worldTransform": "translate(-1397.69px, 0px) scale(0.943056)"
+  },
+  "nearCompanion": {
+    "rect": {
+      "bottom": 567.21875,
+      "height": 62,
+      "left": 202,
+      "right": 348,
+      "top": 505.21875,
+      "width": 146,
+      "x": 202,
+      "y": 505.21875
+    },
+    "text": "E · 与同行引路人交谈"
+  },
+  "portalArrival": {
+    "player": {
+      "facing": "right",
+      "footX": "2116.7028797646017",
+      "footY": "472.0277623605506",
+      "motion": "paused",
+      "player": ""
+    },
+    "title": "副本传送门",
+    "worldTransform": "translate(-1791.24px, 0px) scale(0.943056)"
+  },
+  "overview": {
+    "cards": [
+      {
+        "broken": [],
+        "id": "01",
+        "rect": {
+          "bottom": 412.9921875,
+          "height": 304.7109375,
+          "left": 24,
+          "right": 184.59375,
+          "top": 108.28125,
+          "width": 160.59375,
+          "x": 24,
+          "y": 108.28125
+        },
+        "targets": 8,
+        "world": "translate(-503.889px, 0px) scale(1.02778)"
+      },
+      {
+        "broken": [],
+        "id": "02",
+        "rect": {
+          "bottom": 413.0078125,
+          "height": 304.7265625,
+          "left": 200.59375,
+          "right": 361.1953125,
+          "top": 108.28125,
+          "width": 160.6015625,
+          "x": 200.59375,
+          "y": 108.28125
+        },
+        "targets": 8,
+        "world": "translate(-503.889px, 0px) scale(1.02778)"
+      },
+      {
+        "broken": [],
+        "id": "03",
+        "rect": {
+          "bottom": 413.0078125,
+          "height": 304.7265625,
+          "left": 377.1953125,
+          "right": 537.796875,
+          "top": 108.28125,
+          "width": 160.6015625,
+          "x": 377.1953125,
+          "y": 108.28125
+        },
+        "targets": 8,
+        "world": "translate(-503.889px, 0px) scale(1.02778)"
+      },
+      {
+        "broken": [],
+        "id": "04",
+        "rect": {
+          "bottom": 413.0078125,
+          "height": 304.7265625,
+          "left": 553.796875,
+          "right": 714.3984375,
+          "top": 108.28125,
+          "width": 160.6015625,
+          "x": 553.796875,
+          "y": 108.28125
+        },
+        "targets": 8,
+        "world": "translate(-503.889px, 0px) scale(1.02778)"
+      },
+      {
+        "broken": [],
+        "id": "05",
+        "rect": {
+          "bottom": 413.0078125,
+          "height": 304.7265625,
+          "left": 730.3984375,
+          "right": 891,
+          "top": 108.28125,
+          "width": 160.6015625,
+          "x": 730.3984375,
+          "y": 108.28125
+        },
+        "targets": 8,
+        "world": "translate(-503.889px, 0px) scale(1.02778)"
+      },
+      {
+        "broken": [],
+        "id": "06",
+        "rect": {
+          "bottom": 812.21875,
+          "height": 304.7109375,
+          "left": 24,
+          "right": 184.59375,
+          "top": 507.5078125,
+          "width": 160.59375,
+          "x": 24,
+          "y": 507.5078125
+        },
+        "targets": 8,
+        "world": "translate(-503.889px, 0px) scale(1.02778)"
+      },
+      {
+        "broken": [],
+        "id": "07",
+        "rect": {
+          "bottom": 812.234375,
+          "height": 304.7265625,
+          "left": 200.59375,
+          "right": 361.1953125,
+          "top": 507.5078125,
+          "width": 160.6015625,
+          "x": 200.59375,
+          "y": 507.5078125
+        },
+        "targets": 8,
+        "world": "translate(-503.889px, 0px) scale(1.02778)"
+      },
+      {
+        "broken": [],
+        "id": "08",
+        "rect": {
+          "bottom": 812.234375,
+          "height": 304.7265625,
+          "left": 377.1953125,
+          "right": 537.796875,
+          "top": 507.5078125,
+          "width": 160.6015625,
+          "x": 377.1953125,
+          "y": 507.5078125
+        },
+        "targets": 8,
+        "world": "translate(-503.889px, 0px) scale(1.02778)"
+      },
+      {
+        "broken": [],
+        "id": "09",
+        "rect": {
+          "bottom": 812.234375,
+          "height": 304.7265625,
+          "left": 553.796875,
+          "right": 714.3984375,
+          "top": 507.5078125,
+          "width": 160.6015625,
+          "x": 553.796875,
+          "y": 507.5078125
+        },
+        "targets": 8,
+        "world": "translate(-503.889px, 0px) scale(1.02778)"
+      },
+      {
+        "broken": [],
+        "id": "10",
+        "rect": {
+          "bottom": 812.234375,
+          "height": 304.7265625,
+          "left": 730.3984375,
+          "right": 891,
+          "top": 507.5078125,
+          "width": 160.6015625,
+          "x": 730.3984375,
+          "y": 507.5078125
+        },
+        "targets": 8,
+        "world": "translate(-503.889px, 0px) scale(1.02778)"
+      }
+    ],
+    "expanded": "true",
+    "fullSize": true,
+    "sizeLabel": "收起舞台"
+  },
+  "finalState": {
+    "dialogOpen": false,
+    "frame": {
+      "bottom": 745.578125,
+      "height": 615.984375,
+      "left": 72.1484375,
+      "right": 395.84375,
+      "top": 129.59375,
+      "width": 323.6953125,
+      "x": 72.1484375,
+      "y": 129.59375
+    },
+    "fullSize": false,
+    "label": "10 / 10 · 轮回庭院",
+    "overflow": false,
+    "overviewHidden": true,
+    "player": {
+      "facing": "right",
+      "footX": "680",
+      "footY": "596",
+      "motion": "idle",
+      "player": ""
+    },
+    "runPressed": "false",
+    "scrollTop": 34.5,
+    "stage": {
+      "bottom": 746.578125,
+      "height": 617.984375,
+      "left": 71.1484375,
+      "right": 396.84375,
+      "top": 128.59375,
+      "width": 325.6953125,
+      "x": 71.1484375,
+      "y": 128.59375
+    },
+    "viewport": {
+      "height": 828,
+      "width": 930
+    }
+  },
+  "consoleWarningsAndErrors": []
+}

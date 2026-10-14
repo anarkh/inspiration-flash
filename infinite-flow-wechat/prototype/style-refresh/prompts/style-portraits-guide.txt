@@ -1,0 +1,11 @@
+Use case: identity-preserve
+Asset type: square companion character portrait for a dark fantasy exploration game's HTML visual prototype.
+Primary request: Create one square head-and-shoulders to upper-chest illustrated portrait of this SAME elderly East Asian female guide. Use the first reference's elderly identity and worn materials, with the second reference only as the existing portrait composition to improve. Preserve her mature, weathered face, gray-white hair gathered into a long braid over one shoulder, kind steady expression, old brown travel cloak, muted olive scarf and small aged-brass compass brooch.
+Input images: Image 1 is the identity and clothing/material reference companion-guide-world-v1.png. Image 2 is the old portrait companion-guide-v1.png; preserve character identity but replace its photographic finish with coherent realistic hand-painted game concept art.
+Scene/backdrop: Dark softly blurred brown-charcoal atmosphere with no identifiable objects.
+Style/medium: Realistic hand-painted dark-fantasy game illustration with subtle painterly brushwork, convincing cloth and aged metal, tactile painted surfaces. Do NOT produce a photograph or photorealistic face.
+Composition/framing: Exact square 1:1 image; centered head, both shoulders and upper chest visible; entire crown of hair visible with comfortable top margin; braid, scarf and worn cloak readable at thumbnail size. Calm three-quarter view similar to the references.
+Lighting/mood: Gentle broad soft light, restrained contrast, compassionate experienced guide.
+Color palette: Low-saturation gray-brown, dusty olive, restrained old gold. No neon colors or glowing effects.
+Materials/textures: Weathered woven cloth and softened old leather, oxidized brass, gray-white strands of hair, natural age lines painted with care.
+Constraints: Keep her visibly elderly, approximately 65–75; do not beautify into youth or erase her age. One character only. No weapons, no extra objects, no UI, no text, no border, no watermark. No glossy beauty photography, no anime, no flat vector art. Opaque background.

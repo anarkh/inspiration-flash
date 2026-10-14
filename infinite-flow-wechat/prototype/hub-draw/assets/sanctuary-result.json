@@ -1,0 +1,14 @@
+{
+  "tool": "image_gen.imagegen",
+  "prompt": "Use case: stylized-concept\nAsset type: empty environment background for an original Chinese infinite-flow survival RPG main-god sanctuary, used behind NPC sprites and controls on a 390x740 mobile screen.\nPrimary request: Generate one original portrait 1024x1536 hand-painted 2D game environment.\nScene/backdrop: a broad, quiet obsidian and charcoal stone courtyard within an ancient sanctuary of bronze columns. A symmetric architectural axis leads to a restrained altar near the upper center, with a small distant warm-gold floating main-god light above it.\nStyle/medium: grounded painted dark fantasy, with restrained retro-science-fiction influence; clearly illustrated game environment, not a photograph.\nComposition/framing: elevated 30-degree near-orthographic camera. Spacious, plain stone floor across the middle and foreground; the middle 60 percent intentionally remains open for overlaid NPC sprites and controls. All major architecture stays within a mobile portrait crop. No dramatic stairs covering the center; no tall foreground obstruction.\nLighting/mood: muted oxidized-cyan side lighting, subtle old-gold edges, soft dusty haze, quiet and solemn.\nMaterials/textures: worn stone and aged bronze, bronze inlay rings in the floor, subtle detail without clutter.\nConstraints: empty environment only; no people, NPCs, monsters, or any additional objects. No interface, buttons, cards, text, glyph letters, numbers, logo, or watermark. No neon, no cyberpunk. Opaque background.",
+  "generatedPath": "/Users/bytedance/.codex/generated_images/01a0f036-1b26-7610-918c-a77f1c16e005/exec-b4b584e8-03f0-422b-83bc-a4b976a60323.png",
+  "copiedPath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-draw/assets/sanctuary-v1.png",
+  "dimensions": {
+    "width": 1024,
+    "height": 1536
+  },
+  "hash": {
+    "algorithm": "sha256",
+    "value": "fcde845ca7a2df71bfd8e44b2c9eb4f21de11c3d5daf9c2d0c8a1db138265c02"
+  }
+}

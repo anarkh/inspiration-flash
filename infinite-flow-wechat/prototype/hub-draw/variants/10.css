@@ -1,0 +1,105 @@
+.variant-scene.v10 {
+  --court-ink: #101d1c;
+  --court-gold: #c0ad7a;
+  --court-paper: #eee9d8;
+  position: relative;
+  width: 390px;
+  height: 740px;
+  overflow: hidden;
+  isolation: isolate;
+  color: var(--court-paper);
+  background: #152624;
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+.v10 *, .v10 *::before, .v10 *::after { box-sizing: border-box; }
+.v10 button { min-width: 70px; min-height: 70px; margin: 0; font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.v10 button:focus-visible { outline: 2px solid #f2deb0; outline-offset: 2px; }
+.v10 svg { display: block; width: 24px; height: 24px; }
+.v10 .scene-background { position: absolute; inset: 0; z-index: -4; width: 100%; height: 100%; object-fit: cover; object-position: center; opacity: .67; filter: saturate(.55) brightness(.61); }
+.v10 .court-atmosphere { position: absolute; inset: 0; z-index: -3; background: linear-gradient(180deg, #0e1a1be6 0%, #152624a8 18%, #20322b1f 42%, #122725b8 80%, #0c1a1af2 100%); }
+.v10 .court-atmosphere::before { content: ""; position: absolute; left: 72px; top: 142px; width: 246px; height: 375px; border-radius: 50%; background: radial-gradient(ellipse, #bdc5a72b, transparent 65%); }
+.v10 .court-pool { position: absolute; z-index: -2; left: -38px; right: -38px; top: 455px; bottom: 55px; transform: perspective(300px) rotateX(29deg); transform-origin: bottom; border-top: 1px solid #b7c3a336; background: linear-gradient(180deg, #45635c33, #142f2d77); }
+.v10 .court-pool i { position: absolute; left: 8%; width: 84%; height: 24px; border: 1px solid #b7c3a315; border-radius: 50%; }
+.v10 .court-pool i:nth-child(1) { top: 62px; }
+.v10 .court-pool i:nth-child(2) { top: 130px; left: 18%; width: 64%; }
+.v10 .court-pool i:nth-child(3) { top: 212px; left: 3%; width: 94%; }
+.v10 .court-stairs { position: absolute; z-index: -1; left: 129px; width: 132px; top: 269px; height: 393px; clip-path: polygon(27% 0, 73% 0, 100% 100%, 0 100%); background: linear-gradient(180deg, #74807555, #44584d66 42%, #40554e44); }
+.v10 .court-stairs::before { content: ""; position: absolute; inset: 0; border-left: 1px solid #d0cbae32; border-right: 1px solid #d0cbae32; }
+.v10 .court-stairs i { position: absolute; left: 0; right: 0; height: 5px; border-top: 1px solid #cbd3b92b; border-bottom: 1px solid #08181566; }
+.v10 .court-stairs i:nth-child(1) { top: 31px; }
+.v10 .court-stairs i:nth-child(2) { top: 67px; }
+.v10 .court-stairs i:nth-child(3) { top: 110px; }
+.v10 .court-stairs i:nth-child(4) { top: 172px; }
+.v10 .court-stairs i:nth-child(5) { top: 250px; }
+.v10 .court-stairs i:nth-child(6) { top: 351px; }
+.v10 .court-lantern { position: absolute; z-index: 0; top: 247px; width: 14px; height: 27px; background: linear-gradient(180deg, #867b54 0 12%, #d4b77988 13% 61%, #4b4e3c 62%); box-shadow: 0 0 22px #d4b77929; border-radius: 3px 3px 0 0; }
+.v10 .court-lantern::after { content: ""; position: absolute; left: 5px; top: 27px; width: 4px; height: 32px; background: #676c59; }
+.v10 .court-lantern-left { left: 112px; }
+.v10 .court-lantern-right { right: 112px; }
+.v10 .scene-header { position: absolute; z-index: 4; left: 12px; right: 12px; top: 10px; height: 70px; display: flex; align-items: center; gap: 10px; padding: 0; border: 0; background: none; }
+.v10 .avatar-button { flex: 0 0 70px; position: relative; width: 70px; height: 70px; border: 0; color: var(--court-paper); background: none; padding: 4px 9px 15px; }
+.v10 .avatar-button img { width: 49px; height: 49px; display: block; object-fit: cover; object-position: center 23%; border-radius: 50%; border: 1px solid #c0ad7a99; filter: saturate(.64); }
+.v10 .avatar-button span { position: absolute; bottom: 1px; left: 0; right: 0; text-align: center; font-size: 15px; line-height: 1.1; background: none; }
+.v10 .scene-identity { display: flex; flex: 1; flex-direction: column; gap: 5px; min-width: 0; }
+.v10 .scene-place { font-family: "Songti SC", "Noto Serif CJK SC", serif; color: #ded7bd; font-size: 21px; letter-spacing: 3px; }
+.v10 .scene-health { font-size: 15px; color: #bdc7b9; line-height: 1; white-space: nowrap; margin-top: 0; }
+.v10 .scene-health b { font-weight: 500; color: #eee9d8; margin-left: 5px; }
+.v10 .scene-health > span { color: #a5b1a5; margin-left: 3px; }
+.v10 .hp-track { width: 128px; height: 2px; margin-top: 0; border: 0; background: #afbfab22; }
+.v10 .hp-track i { display: block; width: 100%; height: 100%; background: #a9bc98; }
+.v10 .scene-menu { width: 70px; height: 70px; flex: 0 0 70px; border: 0; background: none; color: #cacbb8; display: grid; place-items: center; }
+.v10 .scene-menu svg { width: 23px; height: 23px; }
+.v10 .court-heading { position: absolute; z-index: 2; top: 101px; left: 75px; right: 75px; text-align: center; }
+.v10 .court-heading > span { font-size: 15px; letter-spacing: 3px; color: #bcc5b3; }
+.v10 .court-heading h2 { margin: 7px 0 0; font-family: "Songti SC", "Noto Serif CJK SC", "SimSun", serif; font-size: 31px; line-height: 1.25; font-weight: 500; letter-spacing: 8px; text-indent: 8px; color: #d8c99a; }
+.v10 .court-heading > i { display: block; width: 38px; height: 1px; margin: 13px auto 0; background: #c0ad7a70; }
+.v10 .court-gate { position: absolute; z-index: 3; top: 179px; left: 86px; width: 218px; height: 93px; border: 0; padding: 0; color: var(--court-paper); background: transparent; display: flex; align-items: center; justify-content: center; }
+.v10 .portal-symbol { position: absolute; inset: 0; z-index: -1; width: auto; height: auto; }
+.v10 .portal-symbol i { position: absolute; width: 63px; height: 84px; top: 5px; left: 77px; right: auto; bottom: auto; transform: none; border: 1px solid #c0ad7a80; border-bottom: 0; border-radius: 45% 45% 0 0; box-shadow: 0 0 29px #b2d2b820, inset 0 0 25px #afcbb316; }
+.v10 .portal-symbol i:nth-child(2) { inset: auto; left: 67px; top: 0; width: 83px; height: 93px; transform: none; border-color: #aab69226; }
+.v10 .portal-symbol i:nth-child(3) { inset: auto; left: 88px; top: 18px; width: 41px; height: 66px; transform: none; border-color: #bdcaaa33; }
+.v10 .portal-symbol b { position: absolute; left: 38px; right: 38px; top: auto; bottom: 4px; height: 1px; transform: none; box-shadow: none; background: linear-gradient(90deg, transparent, #c0ad7a99, transparent); }
+.v10 .portal-copy { display: flex; flex-direction: column; align-items: center; gap: 6px; text-shadow: 0 2px 7px #061816, 0 0 15px #061816; }
+.v10 .portal-eyebrow { color: #d4c89b; font-size: 15px; letter-spacing: 4px; }
+.v10 .portal-copy strong { font-family: "Songti SC", "Noto Serif CJK SC", serif; font-size: 22px; letter-spacing: 3px; font-weight: 500; }
+.v10 .portal-hint { color: #e1e4d5; font-size: 15px; }
+.v10 .portal-arrow { position: absolute; right: 1px; top: 38px; color: #d8c99a; }
+.v10 .portal-arrow svg { width: 19px; height: 19px; }
+.v10 .court-gate:hover { background: transparent; border: 0; }
+.v10 .court-gate:hover .portal-symbol i { border-color: #e0cda177; }
+.v10 .court-people { position: absolute; z-index: 2; inset: 0; pointer-events: none; }
+.v10 .court-person { position: absolute; width: 112px; height: 122px; border: 0; padding: 0; background: none; color: var(--court-paper); pointer-events: auto; }
+.v10 .court-person::before { content: ""; position: absolute; left: 15px; right: 15px; top: 66px; height: 16px; border: 1px solid #c0ad7a38; border-radius: 50%; background: #04121155; box-shadow: 0 4px 12px #04121166; }
+.v10 .svc-art { position: absolute; top: 0; left: 9px; width: 94px; height: 90px; object-fit: contain; object-position: center bottom; filter: saturate(.72) drop-shadow(0 4px 5px #071412a3); }
+.v10 .svc-copy { position: absolute; bottom: 0; left: 0; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 5px 0 4px; background: linear-gradient(90deg, transparent, #10231cf0 16%, #10231cf0 84%, transparent); }
+.v10 .svc-title { font-family: "Songti SC", "Noto Serif CJK SC", serif; font-size: 18px; font-weight: 500; line-height: 1.15; color: #f0e8cc; letter-spacing: .7px; }
+.v10 .svc-purpose { color: #cad3c2; font-size: 15px; line-height: 1.15; }
+.v10 .svc-icon { display: none; }
+.v10 .service-equipment { left: 16px; top: 274px; }
+.v10 .service-supplies { right: 16px; top: 274px; }
+.v10 .service-methods { left: 12px; top: 407px; }
+.v10 .service-bloodlines { right: 12px; top: 407px; }
+.v10 .service-pets { left: 18px; top: 539px; }
+.v10 .service-companions { right: 18px; top: 539px; }
+.v10 .service-tasks { left: 139px; top: 539px; }
+.v10 .court-person:hover { background: transparent; border: 0; }
+.v10 .court-person:hover .svc-art, .v10 .court-person:focus-visible .svc-art { filter: saturate(.95) drop-shadow(0 0 8px #d5c59344); }
+.v10 .court-person:hover .svc-title, .v10 .court-person:focus-visible .svc-title { color: #ffedba; }
+.v10 .court-wanderer { position: absolute; z-index: 2; left: 154px; top: 387px; width: 82px; height: 130px; padding: 0; border: 0; background: none; color: #e3e5d8; }
+.v10 .walker-art { display: block; position: absolute; top: 0; left: -15px; width: 112px; height: 112px; background: url("../../../art-source/reincarnator-walk-v1.png") 0 0 / 400% 400% no-repeat; filter: saturate(.58) drop-shadow(0 6px 4px #0a1715); }
+.v10 .player-name { position: absolute; left: 0; right: 0; bottom: 0; padding: 0; border: 0; background: none; font-size: 15px; letter-spacing: 2px; text-shadow: 0 2px 4px #0a1715; }
+.v10 .court-footer { position: absolute; z-index: 4; bottom: 0; left: 18px; right: 18px; height: 72px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #afc0a226; }
+.v10 .court-balance { position: static; inset: auto; z-index: auto; display: flex; flex-direction: column; gap: 7px; font-size: 15px; color: #bec8b8; }
+.v10 .court-balance > span { white-space: nowrap; }
+.v10 .court-balance b { margin-left: 7px; font-weight: 500; color: #e6dab4; font-variant-numeric: tabular-nums; }
+.v10 .court-utilities { display: flex; gap: 2px; height: 70px; }
+.v10 .scene-utility { width: 70px; height: 70px; padding: 6px 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; border: 0; background: none; color: #d3d7c3; }
+.v10 .scene-utility span { font-size: 15px; }
+.v10 .scene-utility:hover, .v10 .scene-menu:hover { color: #f6e3ae; background: none; border: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .v10, .v10 *, .v10 *::before, .v10 *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

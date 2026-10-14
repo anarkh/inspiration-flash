@@ -1,0 +1,126 @@
+{
+  "generation_mode": "built-in image_gen, three separate generation calls, transparent_background=true",
+  "intent": "generate new independent sprites; inspected local images are style references only",
+  "reference_images": [
+    "cocos/assets/resources/dungeon-world/demon_tower_1-v1.png",
+    "cocos/assets/resources/hub-courtyard/altar-v1.png"
+  ],
+  "production_integration": false,
+  "postprocessing": "none; originals copied byte-for-byte",
+  "assets": [
+    {
+      "asset": "trap",
+      "source": "/Users/bytedance/.codex/generated_images/01a11a77-f98c-7880-9848-c083d1566b40/exec-73047c0f-3de0-4ba1-9038-9604d159527e.png",
+      "destination": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/assets/trap-proposed.png",
+      "prompt": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/prompts/style-props-events-trap.txt",
+      "source_sha256": "e48901773ef4f794848b43adc7d19042617167157bdb620db9932e871def1931",
+      "destination_sha256": "e48901773ef4f794848b43adc7d19042617167157bdb620db9932e871def1931",
+      "original_bytes_preserved": true,
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "transparent_pixel_count": 863510,
+      "partial_alpha_pixel_count": 708555,
+      "opaque_pixel_count": 451,
+      "alpha_bbox": [
+        0,
+        46,
+        1242,
+        1254
+      ],
+      "visible_alpha_128_bbox": [
+        22,
+        76,
+        1233,
+        1196
+      ],
+      "border_max_alpha": {
+        "top": 0,
+        "bottom": 1,
+        "left": 1,
+        "right": 0
+      },
+      "visual_check": "Complete independent prop, no readable text/UI, no adjacent objects, restrained stone/iron/brass, no opaque background; event canopy and both feet visibly complete; no crop or postprocessing."
+    },
+    {
+      "asset": "event",
+      "source": "/Users/bytedance/.codex/generated_images/01a11a77-f98c-7880-9848-c083d1566b40/exec-b8e54359-a1cb-48ad-a116-93e5790007d8.png",
+      "destination": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/assets/event-proposed.png",
+      "prompt": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/prompts/style-props-events-event.txt",
+      "source_sha256": "351c5b7cbe3752612e078154c1ddc479f34d8714a6b0727134964f980c0cc9ed",
+      "destination_sha256": "351c5b7cbe3752612e078154c1ddc479f34d8714a6b0727134964f980c0cc9ed",
+      "original_bytes_preserved": true,
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "transparent_pixel_count": 847791,
+      "partial_alpha_pixel_count": 724292,
+      "opaque_pixel_count": 433,
+      "alpha_bbox": [
+        0,
+        0,
+        1236,
+        1254
+      ],
+      "visible_alpha_128_bbox": [
+        94,
+        8,
+        1144,
+        1245
+      ],
+      "border_max_alpha": {
+        "top": 2,
+        "bottom": 1,
+        "left": 1,
+        "right": 0
+      },
+      "visual_check": "Complete independent prop, no readable text/UI, no adjacent objects, restrained stone/iron/brass, no opaque background; event canopy and both feet visibly complete; no crop or postprocessing."
+    },
+    {
+      "asset": "survey",
+      "source": "/Users/bytedance/.codex/generated_images/01a11a77-f98c-7880-9848-c083d1566b40/exec-b5d66f34-54b3-4cfd-8fde-852b8ba2b42d.png",
+      "destination": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/assets/survey-proposed.png",
+      "prompt": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/prompts/style-props-events-survey.txt",
+      "source_sha256": "7a41a55d8c139bf035cf6a7623e9314acf8d882ff4887cd6e78c31fbc35b2f90",
+      "destination_sha256": "7a41a55d8c139bf035cf6a7623e9314acf8d882ff4887cd6e78c31fbc35b2f90",
+      "original_bytes_preserved": true,
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "transparent_pixel_count": 974619,
+      "partial_alpha_pixel_count": 596971,
+      "opaque_pixel_count": 926,
+      "alpha_bbox": [
+        33,
+        8,
+        1223,
+        1228
+      ],
+      "visible_alpha_128_bbox": [
+        68,
+        164,
+        1219,
+        1176
+      ],
+      "border_max_alpha": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      },
+      "visual_check": "Complete independent prop, no readable text/UI, no adjacent objects, restrained stone/iron/brass, no opaque background; event canopy and both feet visibly complete; no crop or postprocessing."
+    }
+  ]
+}

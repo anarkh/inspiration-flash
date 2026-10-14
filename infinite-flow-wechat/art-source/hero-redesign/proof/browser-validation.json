@@ -1,0 +1,144 @@
+{
+  "date": "2026-10-08",
+  "previewUrl": "http://127.0.0.1:8125/prototype/hero-redesign/index.html#design",
+  "testedWidths": [
+    1280,
+    390,
+    320
+  ],
+  "horizontalOverflow": false,
+  "requiredImagesLoaded": true,
+  "sceneSwitch": [
+    "hub",
+    "dungeon"
+  ],
+  "spriteSizes": [
+    96,
+    144
+  ],
+  "dialogOpenEscapeFocusReturn": true,
+  "guideToggle": true,
+  "playPause": true,
+  "all16Frames": [
+    {
+      "clip": "inset(0px 0px 2.71132%)",
+      "frame": "0",
+      "label": "朝下 · 已暂停 · 帧 1 / 4",
+      "paused": true,
+      "position": "9.38331% 0.850611%"
+    },
+    {
+      "clip": "inset(0px 0px 2.71132%)",
+      "frame": "1",
+      "label": "朝下 · 已暂停 · 帧 2 / 4",
+      "paused": true,
+      "position": "36.8155% 0.850611%"
+    },
+    {
+      "clip": "inset(0px 0px 2.71132%)",
+      "frame": "2",
+      "label": "朝下 · 已暂停 · 帧 3 / 4",
+      "paused": true,
+      "position": "64.2477% 0.850611%"
+    },
+    {
+      "clip": "inset(0px 0px 2.71132%)",
+      "frame": "3",
+      "label": "朝下 · 已暂停 · 帧 4 / 4",
+      "paused": true,
+      "position": "92.2116% 0.850611%"
+    },
+    {
+      "clip": "inset(0px 0px 1.75439%)",
+      "frame": "0",
+      "label": "朝左 · 已暂停 · 帧 1 / 4",
+      "paused": true,
+      "position": "9.38331% 33.3865%"
+    },
+    {
+      "clip": "inset(0px 0px 1.75439%)",
+      "frame": "1",
+      "label": "朝左 · 已暂停 · 帧 2 / 4",
+      "paused": true,
+      "position": "36.8155% 33.3865%"
+    },
+    {
+      "clip": "inset(0px 0px 1.75439%)",
+      "frame": "2",
+      "label": "朝左 · 已暂停 · 帧 3 / 4",
+      "paused": true,
+      "position": "64.2477% 33.3865%"
+    },
+    {
+      "clip": "inset(0px 0px 1.75439%)",
+      "frame": "3",
+      "label": "朝左 · 已暂停 · 帧 4 / 4",
+      "paused": true,
+      "position": "92.2116% 33.3865%"
+    },
+    {
+      "clip": "inset(0px 0px 2.39234%)",
+      "frame": "0",
+      "label": "朝右 · 已暂停 · 帧 1 / 4",
+      "paused": true,
+      "position": "9.38331% 66.3477%"
+    },
+    {
+      "clip": "inset(0px 0px 2.39234%)",
+      "frame": "1",
+      "label": "朝右 · 已暂停 · 帧 2 / 4",
+      "paused": true,
+      "position": "36.8155% 66.3477%"
+    },
+    {
+      "clip": "inset(0px 0px 2.39234%)",
+      "frame": "2",
+      "label": "朝右 · 已暂停 · 帧 3 / 4",
+      "paused": true,
+      "position": "64.2477% 66.3477%"
+    },
+    {
+      "clip": "inset(0px 0px 2.39234%)",
+      "frame": "3",
+      "label": "朝右 · 已暂停 · 帧 4 / 4",
+      "paused": true,
+      "position": "92.2116% 66.3477%"
+    },
+    {
+      "clip": "inset(0px 0px 3.0303%)",
+      "frame": "0",
+      "label": "朝上 · 已暂停 · 帧 1 / 4",
+      "paused": true,
+      "position": "9.38331% 98.8836%"
+    },
+    {
+      "clip": "inset(0px 0px 3.0303%)",
+      "frame": "1",
+      "label": "朝上 · 已暂停 · 帧 2 / 4",
+      "paused": true,
+      "position": "36.8155% 98.8836%"
+    },
+    {
+      "clip": "inset(0px 0px 3.0303%)",
+      "frame": "2",
+      "label": "朝上 · 已暂停 · 帧 3 / 4",
+      "paused": true,
+      "position": "64.2477% 98.8836%"
+    },
+    {
+      "clip": "inset(0px 0px 3.0303%)",
+      "frame": "3",
+      "label": "朝上 · 已暂停 · 帧 4 / 4",
+      "paused": true,
+      "position": "92.2116% 98.8836%"
+    }
+  ],
+  "mobile320": {
+    "error": "",
+    "loaded": true,
+    "overflow": false,
+    "width": 320
+  },
+  "consoleErrors": [],
+  "productionIntegration": false
+}

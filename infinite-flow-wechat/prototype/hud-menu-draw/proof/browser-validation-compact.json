@@ -1,0 +1,1295 @@
+{
+  "version": "v2-compact",
+  "variants": [
+    {
+      "boxes": [
+        {
+          "h": 43.9993896484375,
+          "w": 53.67999267578125,
+          "x": 244,
+          "y": 8.13336181640625
+        },
+        {
+          "h": 43.99945068359375,
+          "w": 53.67999267578125,
+          "x": 244,
+          "y": 52.13275146484375
+        },
+        {
+          "h": 43.9993896484375,
+          "w": 53.67999267578125,
+          "x": 244,
+          "y": 96.1322021484375
+        },
+        {
+          "h": 43.99945068359375,
+          "w": 53.67999267578125,
+          "x": 244,
+          "y": 140.131591796875
+        }
+      ],
+      "gaps": [
+        0,
+        0,
+        0
+      ],
+      "glyphSizes": [
+        {
+          "h": 32,
+          "w": 32
+        },
+        {
+          "h": 30,
+          "w": 30
+        },
+        {
+          "h": 30,
+          "w": 30
+        },
+        {
+          "h": 30,
+          "w": 30
+        },
+        {
+          "h": 30,
+          "w": 30
+        }
+      ],
+      "health": {
+        "h": 11.183349609375,
+        "w": 57.32093811035156,
+        "x": 61,
+        "y": 16.26666259765625
+      },
+      "id": "01",
+      "noHorizontalOverflow": true,
+      "order": [
+        "menu",
+        "bag",
+        "map",
+        "quests"
+      ],
+      "removedTexts": true,
+      "stageWidth": 305,
+      "textFits": true,
+      "track": {
+        "h": 1.22003173828125,
+        "w": 103.6999969482422,
+        "x": 61,
+        "y": 32.12664794921875
+      },
+      "transparentHeader": true
+    },
+    {
+      "boxes": [
+        {
+          "h": 43.9993896484375,
+          "w": 53.67999267578125,
+          "x": 244,
+          "y": 8.13336181640625
+        },
+        {
+          "h": 43.99945068359375,
+          "w": 53.67999267578125,
+          "x": 244,
+          "y": 52.13275146484375
+        },
+        {
+          "h": 43.9993896484375,
+          "w": 53.67999267578125,
+          "x": 244,
+          "y": 96.1322021484375
+        },
+        {
+          "h": 43.99945068359375,
+          "w": 53.67999267578125,
+          "x": 244,
+          "y": 140.131591796875
+        }
+      ],
+      "gaps": [
+        0,
+        0,
+        0
+      ],
+      "glyphSizes": [
+        {
+          "h": 32,
+          "w": 32
+        },
+        {
+          "h": 32,
+          "w": 32
+        },
+        {
+          "h": 32,
+          "w": 32
+        },
+        {
+          "h": 32,
+          "w": 32
+        },
+        {
+          "h": 32,
+          "w": 32
+        }
+      ],
+      "health": {
+        "h": 11.183349609375,
+        "w": 57.32093811035156,
+        "x": 57.74666595458984,
+        "y": 15.45330810546875
+      },
+      "id": "02",
+      "noHorizontalOverflow": true,
+      "order": [
+        "menu",
+        "bag",
+        "map",
+        "quests"
+      ],
+      "removedTexts": true,
+      "stageWidth": 305,
+      "textFits": true,
+      "track": {
+        "h": 1.219970703125,
+        "w": 99.2266616821289,
+        "x": 57.74666595458984,
+        "y": 31.3133544921875
+      },
+      "transparentHeader": true
+    },
+    {
+      "boxes": [
+        {
+          "h": 43.9993896484375,
+          "w": 53.67999267578125,
+          "x": 244,
+          "y": 8.13336181640625
+        },
+        {
+          "h": 43.99945068359375,
+          "w": 53.67999267578125,
+          "x": 244,
+          "y": 52.13275146484375
+        },
+        {
+          "h": 43.9993896484375,
+          "w": 53.67999267578125,
+          "x": 244,
+          "y": 96.1322021484375
+        },
+        {
+          "h": 43.99945068359375,
+          "w": 53.67999267578125,
+          "x": 244,
+          "y": 140.131591796875
+        }
+      ],
+      "gaps": [
+        0,
+        0,
+        0
+      ],
+      "glyphSizes": [
+        {
+          "h": 32,
+          "w": 32
+        },
+        {
+          "h": 32,
+          "w": 32
+        },
+        {
+          "h": 32,
+          "w": 32
+        },
+        {
+          "h": 32,
+          "w": 32
+        },
+        {
+          "h": 32,
+          "w": 32
+        }
+      ],
+      "health": {
+        "h": 10.7353515625,
+        "w": 55.93572616577149,
+        "x": 59.37333297729492,
+        "y": 22.7733154296875
+      },
+      "id": "03",
+      "noHorizontalOverflow": true,
+      "order": [
+        "menu",
+        "bag",
+        "map",
+        "quests"
+      ],
+      "removedTexts": true,
+      "stageWidth": 305,
+      "textFits": true,
+      "track": {
+        "h": 1.22003173828125,
+        "w": 77.26666259765625,
+        "x": 135.01333618164062,
+        "y": 28.05999755859375
+      },
+      "transparentHeader": true
+    },
+    {
+      "boxes": [
+        {
+          "h": 43.9993896484375,
+          "w": 53.67999267578125,
+          "x": 244,
+          "y": 8.13336181640625
+        },
+        {
+          "h": 43.99945068359375,
+          "w": 53.67999267578125,
+          "x": 244,
+          "y": 52.13275146484375
+        },
+        {
+          "h": 43.9993896484375,
+          "w": 53.67999267578125,
+          "x": 244,
+          "y": 96.1322021484375
+        },
+        {
+          "h": 43.99945068359375,
+          "w": 53.67999267578125,
+          "x": 244,
+          "y": 140.131591796875
+        }
+      ],
+      "gaps": [
+        0,
+        0,
+        0
+      ],
+      "glyphSizes": [
+        {
+          "h": 32,
+          "w": 32
+        },
+        {
+          "h": 32,
+          "w": 32
+        },
+        {
+          "h": 32,
+          "w": 32
+        },
+        {
+          "h": 32,
+          "w": 32
+        },
+        {
+          "h": 32,
+          "w": 32
+        }
+      ],
+      "health": {
+        "h": 12.40338134765625,
+        "w": 113.05332946777344,
+        "x": 62.62666702270508,
+        "y": 17.893310546875
+      },
+      "id": "04",
+      "noHorizontalOverflow": true,
+      "order": [
+        "menu",
+        "bag",
+        "map",
+        "quests"
+      ],
+      "removedTexts": true,
+      "stageWidth": 305,
+      "textFits": true,
+      "track": {
+        "h": 1.62664794921875,
+        "w": 113.05332946777344,
+        "x": 62.62666702270508,
+        "y": 33.75335693359375
+      },
+      "transparentHeader": true
+    },
+    {
+      "boxes": [
+        {
+          "h": 43.9993896484375,
+          "w": 53.67999267578125,
+          "x": 244,
+          "y": 8.13336181640625
+        },
+        {
+          "h": 43.99945068359375,
+          "w": 53.67999267578125,
+          "x": 244,
+          "y": 52.13275146484375
+        },
+        {
+          "h": 43.9993896484375,
+          "w": 53.67999267578125,
+          "x": 244,
+          "y": 96.1322021484375
+        },
+        {
+          "h": 43.99945068359375,
+          "w": 53.67999267578125,
+          "x": 244,
+          "y": 140.131591796875
+        }
+      ],
+      "gaps": [
+        0,
+        0,
+        0
+      ],
+      "glyphSizes": [
+        {
+          "h": 34,
+          "w": 34
+        },
+        {
+          "h": 34,
+          "w": 34
+        },
+        {
+          "h": 34,
+          "w": 34
+        },
+        {
+          "h": 34,
+          "w": 34
+        },
+        {
+          "h": 34,
+          "w": 34
+        }
+      ],
+      "health": {
+        "h": 12.40338134765625,
+        "w": 135.82666015625,
+        "x": 71.57333374023438,
+        "y": 17.893310546875
+      },
+      "id": "05",
+      "noHorizontalOverflow": true,
+      "order": [
+        "menu",
+        "bag",
+        "map",
+        "quests"
+      ],
+      "removedTexts": true,
+      "stageWidth": 305,
+      "textFits": true,
+      "track": {
+        "h": 1.62664794921875,
+        "w": 113.05333709716795,
+        "x": 82.95999908447266,
+        "y": 33.75335693359375
+      },
+      "transparentHeader": true
+    },
+    {
+      "boxes": [
+        {
+          "h": 43.9993896484375,
+          "w": 53.67999267578125,
+          "x": 244,
+          "y": 8.13336181640625
+        },
+        {
+          "h": 43.99945068359375,
+          "w": 53.67999267578125,
+          "x": 244,
+          "y": 52.13275146484375
+        },
+        {
+          "h": 43.9993896484375,
+          "w": 53.67999267578125,
+          "x": 244,
+          "y": 96.1322021484375
+        },
+        {
+          "h": 43.99945068359375,
+          "w": 53.67999267578125,
+          "x": 244,
+          "y": 140.131591796875
+        }
+      ],
+      "gaps": [
+        0,
+        0,
+        0
+      ],
+      "glyphSizes": [
+        {
+          "h": 30,
+          "w": 30
+        },
+        {
+          "h": 30,
+          "w": 30
+        },
+        {
+          "h": 30,
+          "w": 30
+        },
+        {
+          "h": 30,
+          "w": 30
+        },
+        {
+          "h": 30,
+          "w": 30
+        }
+      ],
+      "health": {
+        "h": 12.40338134765625,
+        "w": 106.95333862304688,
+        "x": 104.91999816894533,
+        "y": 17.893310546875
+      },
+      "id": "06",
+      "noHorizontalOverflow": true,
+      "order": [
+        "menu",
+        "bag",
+        "map",
+        "quests"
+      ],
+      "removedTexts": true,
+      "stageWidth": 305,
+      "textFits": true,
+      "track": {
+        "h": 1.219970703125,
+        "w": 145.99334716796875,
+        "x": 65.87999725341797,
+        "y": 33.75335693359375
+      },
+      "transparentHeader": true
+    },
+    {
+      "boxes": [
+        {
+          "h": 43.9993896484375,
+          "w": 53.67999267578125,
+          "x": 244,
+          "y": 8.13336181640625
+        },
+        {
+          "h": 43.99945068359375,
+          "w": 53.67999267578125,
+          "x": 244,
+          "y": 52.13275146484375
+        },
+        {
+          "h": 43.9993896484375,
+          "w": 53.67999267578125,
+          "x": 244,
+          "y": 96.1322021484375
+        },
+        {
+          "h": 43.99945068359375,
+          "w": 53.67999267578125,
+          "x": 244,
+          "y": 140.131591796875
+        }
+      ],
+      "gaps": [
+        0,
+        0,
+        0
+      ],
+      "glyphSizes": [
+        {
+          "h": 32,
+          "w": 32
+        },
+        {
+          "h": 30,
+          "w": 30
+        },
+        {
+          "h": 30,
+          "w": 30
+        },
+        {
+          "h": 30,
+          "w": 30
+        },
+        {
+          "h": 30,
+          "w": 30
+        }
+      ],
+      "health": {
+        "h": 11.7933349609375,
+        "w": 58.172393798828125,
+        "x": 61,
+        "y": 17.893310546875
+      },
+      "id": "07",
+      "noHorizontalOverflow": true,
+      "order": [
+        "menu",
+        "bag",
+        "map",
+        "quests"
+      ],
+      "removedTexts": true,
+      "stageWidth": 305,
+      "textFits": true,
+      "track": {
+        "h": 1.62664794921875,
+        "w": 124.44000244140624,
+        "x": 61,
+        "y": 33.75335693359375
+      },
+      "transparentHeader": true
+    },
+    {
+      "boxes": [
+        {
+          "h": 43.9993896484375,
+          "w": 53.67999267578125,
+          "x": 244,
+          "y": 8.13336181640625
+        },
+        {
+          "h": 43.99945068359375,
+          "w": 53.67999267578125,
+          "x": 244,
+          "y": 52.13275146484375
+        },
+        {
+          "h": 43.9993896484375,
+          "w": 53.67999267578125,
+          "x": 244,
+          "y": 96.1322021484375
+        },
+        {
+          "h": 43.99945068359375,
+          "w": 53.67999267578125,
+          "x": 244,
+          "y": 140.131591796875
+        }
+      ],
+      "gaps": [
+        0,
+        0,
+        0
+      ],
+      "glyphSizes": [
+        {
+          "h": 32,
+          "w": 32
+        },
+        {
+          "h": 32,
+          "w": 32
+        },
+        {
+          "h": 32,
+          "w": 32
+        },
+        {
+          "h": 32,
+          "w": 32
+        },
+        {
+          "h": 32,
+          "w": 32
+        }
+      ],
+      "health": {
+        "h": 11.7933349609375,
+        "w": 123.6266632080078,
+        "x": 61,
+        "y": 17.893310546875
+      },
+      "id": "08",
+      "noHorizontalOverflow": true,
+      "order": [
+        "menu",
+        "bag",
+        "map",
+        "quests"
+      ],
+      "removedTexts": true,
+      "stageWidth": 305,
+      "textFits": true,
+      "track": {
+        "h": 1.219970703125,
+        "w": 123.6266632080078,
+        "x": 61,
+        "y": 33.75335693359375
+      },
+      "transparentHeader": true
+    },
+    {
+      "boxes": [
+        {
+          "h": 43.9993896484375,
+          "w": 53.67999267578125,
+          "x": 244,
+          "y": 8.13336181640625
+        },
+        {
+          "h": 43.99945068359375,
+          "w": 53.67999267578125,
+          "x": 244,
+          "y": 52.13275146484375
+        },
+        {
+          "h": 43.9993896484375,
+          "w": 53.67999267578125,
+          "x": 244,
+          "y": 96.1322021484375
+        },
+        {
+          "h": 43.99945068359375,
+          "w": 53.67999267578125,
+          "x": 244,
+          "y": 140.131591796875
+        }
+      ],
+      "gaps": [
+        0,
+        0,
+        0
+      ],
+      "glyphSizes": [
+        {
+          "h": 30,
+          "w": 30
+        },
+        {
+          "h": 0,
+          "w": 0
+        },
+        {
+          "h": 0,
+          "w": 0
+        },
+        {
+          "h": 0,
+          "w": 0
+        },
+        {
+          "h": 0,
+          "w": 0
+        }
+      ],
+      "health": {
+        "h": 11.7933349609375,
+        "w": 57.35906219482422,
+        "x": 61.813331604003906,
+        "y": 17.893310546875
+      },
+      "id": "09",
+      "noHorizontalOverflow": true,
+      "order": [
+        "menu",
+        "bag",
+        "map",
+        "quests"
+      ],
+      "removedTexts": true,
+      "stageWidth": 305,
+      "textFits": true,
+      "track": {
+        "h": 0.81329345703125,
+        "w": 100.85334014892578,
+        "x": 61.813331604003906,
+        "y": 33.75335693359375
+      },
+      "transparentHeader": true
+    },
+    {
+      "boxes": [
+        {
+          "h": 43.9993896484375,
+          "w": 53.67999267578125,
+          "x": 244,
+          "y": 8.13336181640625
+        },
+        {
+          "h": 43.99945068359375,
+          "w": 53.67999267578125,
+          "x": 244,
+          "y": 52.13275146484375
+        },
+        {
+          "h": 43.9993896484375,
+          "w": 53.67999267578125,
+          "x": 244,
+          "y": 96.1322021484375
+        },
+        {
+          "h": 43.99945068359375,
+          "w": 53.67999267578125,
+          "x": 244,
+          "y": 140.131591796875
+        }
+      ],
+      "gaps": [
+        0,
+        0,
+        0
+      ],
+      "glyphSizes": [
+        {
+          "h": 30,
+          "w": 30
+        },
+        {
+          "h": 30,
+          "w": 30
+        },
+        {
+          "h": 30,
+          "w": 30
+        },
+        {
+          "h": 30,
+          "w": 30
+        },
+        {
+          "h": 30,
+          "w": 30
+        }
+      ],
+      "health": {
+        "h": 12.606689453125,
+        "w": 32.71760559082031,
+        "x": 162.25999450683594,
+        "y": 22.7733154296875
+      },
+      "id": "10",
+      "noHorizontalOverflow": true,
+      "order": [
+        "menu",
+        "bag",
+        "map",
+        "quests"
+      ],
+      "removedTexts": true,
+      "stageWidth": 305,
+      "textFits": true,
+      "track": {
+        "h": 1.22003173828125,
+        "w": 94.34666442871094,
+        "x": 61,
+        "y": 28.05999755859375
+      },
+      "transparentHeader": true
+    }
+  ],
+  "dialogs": [
+    {
+      "kind": "menu",
+      "open": true,
+      "title": "菜单",
+      "closed": true,
+      "focus": "menu"
+    },
+    {
+      "kind": "bag",
+      "open": true,
+      "title": "背包",
+      "closed": true,
+      "focus": "bag"
+    },
+    {
+      "kind": "map",
+      "open": true,
+      "title": "地图",
+      "closed": true,
+      "focus": "map"
+    },
+    {
+      "kind": "quests",
+      "open": true,
+      "title": "目标",
+      "closed": true,
+      "focus": "quests"
+    }
+  ],
+  "variants390": [
+    {
+      "buttons": [
+        {
+          "action": "menu",
+          "background": "rgba(0, 0, 0, 0)",
+          "h": 44,
+          "textFits": true,
+          "w": 66
+        },
+        {
+          "action": "bag",
+          "background": "rgba(0, 0, 0, 0)",
+          "h": 44,
+          "textFits": true,
+          "w": 66
+        },
+        {
+          "action": "map",
+          "background": "rgba(0, 0, 0, 0)",
+          "h": 44,
+          "textFits": true,
+          "w": 66
+        },
+        {
+          "action": "quests",
+          "background": "rgba(0, 0, 0, 0)",
+          "h": 44,
+          "textFits": true,
+          "w": 66
+        }
+      ],
+      "id": "01",
+      "railHeight": 176,
+      "removedTexts": true
+    },
+    {
+      "buttons": [
+        {
+          "action": "menu",
+          "background": "rgba(0, 0, 0, 0)",
+          "h": 44,
+          "textFits": true,
+          "w": 66
+        },
+        {
+          "action": "bag",
+          "background": "rgba(0, 0, 0, 0)",
+          "h": 44,
+          "textFits": true,
+          "w": 66
+        },
+        {
+          "action": "map",
+          "background": "rgba(0, 0, 0, 0)",
+          "h": 44,
+          "textFits": true,
+          "w": 66
+        },
+        {
+          "action": "quests",
+          "background": "rgba(0, 0, 0, 0)",
+          "h": 44,
+          "textFits": true,
+          "w": 66
+        }
+      ],
+      "id": "02",
+      "railHeight": 176,
+      "removedTexts": true
+    },
+    {
+      "buttons": [
+        {
+          "action": "menu",
+          "background": "rgba(0, 0, 0, 0)",
+          "h": 44,
+          "textFits": true,
+          "w": 66
+        },
+        {
+          "action": "bag",
+          "background": "rgba(0, 0, 0, 0)",
+          "h": 44,
+          "textFits": true,
+          "w": 66
+        },
+        {
+          "action": "map",
+          "background": "rgba(0, 0, 0, 0)",
+          "h": 44,
+          "textFits": true,
+          "w": 66
+        },
+        {
+          "action": "quests",
+          "background": "rgba(0, 0, 0, 0)",
+          "h": 44,
+          "textFits": true,
+          "w": 66
+        }
+      ],
+      "id": "03",
+      "railHeight": 176,
+      "removedTexts": true
+    },
+    {
+      "buttons": [
+        {
+          "action": "menu",
+          "background": "rgba(0, 0, 0, 0)",
+          "h": 44,
+          "textFits": true,
+          "w": 66
+        },
+        {
+          "action": "bag",
+          "background": "rgba(0, 0, 0, 0)",
+          "h": 44,
+          "textFits": true,
+          "w": 66
+        },
+        {
+          "action": "map",
+          "background": "rgba(0, 0, 0, 0)",
+          "h": 44,
+          "textFits": true,
+          "w": 66
+        },
+        {
+          "action": "quests",
+          "background": "rgba(0, 0, 0, 0)",
+          "h": 44,
+          "textFits": true,
+          "w": 66
+        }
+      ],
+      "id": "04",
+      "railHeight": 176,
+      "removedTexts": true
+    },
+    {
+      "buttons": [
+        {
+          "action": "menu",
+          "background": "rgba(0, 0, 0, 0)",
+          "h": 44,
+          "textFits": true,
+          "w": 66
+        },
+        {
+          "action": "bag",
+          "background": "rgba(0, 0, 0, 0)",
+          "h": 44,
+          "textFits": true,
+          "w": 66
+        },
+        {
+          "action": "map",
+          "background": "rgba(0, 0, 0, 0)",
+          "h": 44,
+          "textFits": true,
+          "w": 66
+        },
+        {
+          "action": "quests",
+          "background": "rgba(0, 0, 0, 0)",
+          "h": 44,
+          "textFits": true,
+          "w": 66
+        }
+      ],
+      "id": "05",
+      "railHeight": 176,
+      "removedTexts": true
+    },
+    {
+      "buttons": [
+        {
+          "action": "menu",
+          "background": "rgba(0, 0, 0, 0)",
+          "h": 44,
+          "textFits": true,
+          "w": 66
+        },
+        {
+          "action": "bag",
+          "background": "rgba(0, 0, 0, 0)",
+          "h": 44,
+          "textFits": true,
+          "w": 66
+        },
+        {
+          "action": "map",
+          "background": "rgba(0, 0, 0, 0)",
+          "h": 44,
+          "textFits": true,
+          "w": 66
+        },
+        {
+          "action": "quests",
+          "background": "rgba(0, 0, 0, 0)",
+          "h": 44,
+          "textFits": true,
+          "w": 66
+        }
+      ],
+      "id": "06",
+      "railHeight": 176,
+      "removedTexts": true
+    },
+    {
+      "buttons": [
+        {
+          "action": "menu",
+          "background": "rgba(0, 0, 0, 0)",
+          "h": 44,
+          "textFits": true,
+          "w": 66
+        },
+        {
+          "action": "bag",
+          "background": "rgba(0, 0, 0, 0)",
+          "h": 44,
+          "textFits": true,
+          "w": 66
+        },
+        {
+          "action": "map",
+          "background": "rgba(0, 0, 0, 0)",
+          "h": 44,
+          "textFits": true,
+          "w": 66
+        },
+        {
+          "action": "quests",
+          "background": "rgba(0, 0, 0, 0)",
+          "h": 44,
+          "textFits": true,
+          "w": 66
+        }
+      ],
+      "id": "07",
+      "railHeight": 176,
+      "removedTexts": true
+    },
+    {
+      "buttons": [
+        {
+          "action": "menu",
+          "background": "rgba(0, 0, 0, 0)",
+          "h": 44,
+          "textFits": true,
+          "w": 66
+        },
+        {
+          "action": "bag",
+          "background": "rgba(0, 0, 0, 0)",
+          "h": 44,
+          "textFits": true,
+          "w": 66
+        },
+        {
+          "action": "map",
+          "background": "rgba(0, 0, 0, 0)",
+          "h": 44,
+          "textFits": true,
+          "w": 66
+        },
+        {
+          "action": "quests",
+          "background": "rgba(0, 0, 0, 0)",
+          "h": 44,
+          "textFits": true,
+          "w": 66
+        }
+      ],
+      "id": "08",
+      "railHeight": 176,
+      "removedTexts": true
+    },
+    {
+      "buttons": [
+        {
+          "action": "menu",
+          "background": "rgba(0, 0, 0, 0)",
+          "h": 44,
+          "textFits": true,
+          "w": 66
+        },
+        {
+          "action": "bag",
+          "background": "rgba(0, 0, 0, 0)",
+          "h": 44,
+          "textFits": true,
+          "w": 66
+        },
+        {
+          "action": "map",
+          "background": "rgba(0, 0, 0, 0)",
+          "h": 44,
+          "textFits": true,
+          "w": 66
+        },
+        {
+          "action": "quests",
+          "background": "rgba(0, 0, 0, 0)",
+          "h": 44,
+          "textFits": true,
+          "w": 66
+        }
+      ],
+      "id": "09",
+      "railHeight": 176,
+      "removedTexts": true
+    },
+    {
+      "buttons": [
+        {
+          "action": "menu",
+          "background": "rgba(0, 0, 0, 0)",
+          "h": 44,
+          "textFits": true,
+          "w": 66
+        },
+        {
+          "action": "bag",
+          "background": "rgba(0, 0, 0, 0)",
+          "h": 44,
+          "textFits": true,
+          "w": 66
+        },
+        {
+          "action": "map",
+          "background": "rgba(0, 0, 0, 0)",
+          "h": 44,
+          "textFits": true,
+          "w": 66
+        },
+        {
+          "action": "quests",
+          "background": "rgba(0, 0, 0, 0)",
+          "h": 44,
+          "textFits": true,
+          "w": 66
+        }
+      ],
+      "id": "10",
+      "railHeight": 176,
+      "removedTexts": true
+    }
+  ],
+  "baseline": {
+    "design": "current",
+    "headerMenu": true,
+    "preview": "临时试玩刷新丢失进度",
+    "railCount": 3,
+    "zone": "妖塔一层"
+  },
+  "overview": [
+    {
+      "entries": 4,
+      "id": "01",
+      "removedTexts": true,
+      "rowHeight": "86px"
+    },
+    {
+      "entries": 4,
+      "id": "02",
+      "removedTexts": true,
+      "rowHeight": "86px"
+    },
+    {
+      "entries": 4,
+      "id": "03",
+      "removedTexts": true,
+      "rowHeight": "86px"
+    },
+    {
+      "entries": 4,
+      "id": "04",
+      "removedTexts": true,
+      "rowHeight": "86px"
+    },
+    {
+      "entries": 4,
+      "id": "05",
+      "removedTexts": true,
+      "rowHeight": "86px"
+    },
+    {
+      "entries": 4,
+      "id": "06",
+      "removedTexts": true,
+      "rowHeight": "86px"
+    },
+    {
+      "entries": 4,
+      "id": "07",
+      "removedTexts": true,
+      "rowHeight": "86px"
+    },
+    {
+      "entries": 4,
+      "id": "08",
+      "removedTexts": true,
+      "rowHeight": "86px"
+    },
+    {
+      "entries": 4,
+      "id": "09",
+      "removedTexts": true,
+      "rowHeight": "86px"
+    },
+    {
+      "entries": 4,
+      "id": "10",
+      "removedTexts": true,
+      "rowHeight": "86px"
+    }
+  ],
+  "injured": {
+    "fill": "36.27450980392157%",
+    "hiddenTexts": true,
+    "hp": "37",
+    "scene": "archive"
+  },
+  "comparison": [
+    {
+      "id": "01",
+      "order": [
+        "menu",
+        "bag",
+        "map",
+        "quests"
+      ],
+      "removedTexts": true
+    },
+    {
+      "id": "05",
+      "order": [
+        "menu",
+        "bag",
+        "map",
+        "quests"
+      ],
+      "removedTexts": true
+    }
+  ],
+  "logs": [],
+  "finalCopy": "生命悬在左上场景中，细线向右舒展，右侧四个入口收成连续的小图标与横字。",
+  "assets": [
+    {
+      "loaded": true,
+      "src": "../../cocos/assets/resources/dungeon-world/ruined-stone-gate-v1.png"
+    },
+    {
+      "loaded": true,
+      "src": "../../cocos/assets/resources/monster-world/fog-lesser-demon-world-v1.png"
+    },
+    {
+      "loaded": true,
+      "src": "../../cocos/assets/resources/dungeon-world/ruined-stone-gate-v1.png"
+    },
+    {
+      "loaded": true,
+      "src": "../../cocos/assets/resources/monster-world/fog-lesser-demon-world-v1.png"
+    }
+  ],
+  "pass": true
+}

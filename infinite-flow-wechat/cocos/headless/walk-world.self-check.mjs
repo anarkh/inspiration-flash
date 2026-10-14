@@ -8,7 +8,8 @@ const bundle = await build({
   stdin: {
     contents: `
       export * from './cocos/assets/scripts/ui/walk-world.ts';
-      export { createInitialState, DUNGEON_ORDER, DUNGEONS } from '@infinite-flow/core';
+      export { getInfiniteFlowSceneVisualKeys } from './cocos/assets/scripts/ui/scene-visuals.ts';
+      export { createInitialState, DUNGEON_ORDER, DUNGEONS, MONSTERS } from '@infinite-flow/core';
       export { getBossDefinition } from '@infinite-flow/core/boss-system';
       export { DUNGEON_ELITE_MONSTERS } from './packages/core/src/dungeon-loot.ts';
       export { DUNGEON_WORLD_THEMES } from './cocos/assets/scripts/ui/dungeon-world-theme.ts';
@@ -26,9 +27,9 @@ const bundle = await build({
   absWorkingDir: resolve(root),
 });
 const {
-  buildWalkWorld, stepWalkPosition, nearestWalkTarget,
+  buildWalkWorld, stepWalkPosition, nearestWalkTarget, findWalkPath, isWalkPointClear, isWalkSegmentClear, getInfiniteFlowSceneVisualKeys,
   createInitialState, reduceGameCommand, buildGameViewModel,
-  DUNGEON_ORDER, DUNGEONS, getBossDefinition, DUNGEON_ELITE_MONSTERS, DUNGEON_WORLD_THEMES,
+  DUNGEON_ORDER, DUNGEONS, MONSTERS, getBossDefinition, DUNGEON_ELITE_MONSTERS, DUNGEON_WORLD_THEMES,
 } = await import(`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString('base64')}`);
 
 let checks = 0;
@@ -59,6 +60,103 @@ function commit(state, command) {
   const result = reduceGameCommand(state, command);
   assert.equal(result.status, 'committed', result.reason?.message);
   return result.state;
+}
+function requireMonsterVisual(world, view, monsterId, label) {
+  assert.ok(MONSTERS[monsterId], `${label}: monster identity must exist in the real catalog`);
+  const expectedKey = `monster:${monsterId}_world`;
+  const monsters = world.targets.filter((target) => target.kind === 'monster');
+  assert.equal(monsters.length, 1, `${label}: exactly one visible monster`);
+  assert.equal(monsters[0].visualAssetKey, expectedKey, `${label}: world figure uses the real monster identity`);
+  assert.equal(getInfiniteFlowSceneVisualKeys(view).opponent, expectedKey,
+    `${label}: the scene requests the same world figure`);
+}
+function requireNoMonsterVisual(world, view, label) {
+  assert.ok(world.targets.every((target) => !target.visualAssetKey?.startsWith('monster:')),
+    `${label}: inactive or non-monster targets must not request monster art`);
+  assert.equal(getInfiniteFlowSceneVisualKeys(view).opponent, undefined,
+    `${label}: the scene must not request an inactive or non-monster opponent`);
+}
+
+const ROOM_SIDES = ['north', 'south', 'west', 'east'];
+const EXPLORE_PERIMETER = [
+  { x: 0, y: 0, width: 1000, height: 40 },
+  { x: 0, y: 960, width: 1000, height: 40 },
+  { x: 0, y: 40, width: 40, height: 920 },
+  { x: 960, y: 40, width: 40, height: 920 },
+];
+const COMBAT_PERIMETER = [
+  { x: 0, y: 0, width: 1280, height: 40 },
+  { x: 0, y: 960, width: 1280, height: 40 },
+  { x: 0, y: 40, width: 40, height: 920 },
+  { x: 1240, y: 40, width: 40, height: 920 },
+];
+
+function requireFourRoomDirections(world, view, label) {
+  const detail = view.sections[1].detail;
+  const current = detail.map.nodes.find((node) => node.nodeId === detail.map.currentNodeId);
+  assert.ok(current, `${label}: current public map cell exists`);
+  const neighbors = detail.map.nodes.filter((node) => node.isAdjacent && node.cellId !== current.cellId);
+  const doors = world.targets.filter((target) => target.kind === 'transition');
+  const realDoors = doors.filter((target) => target.id.startsWith('door:'));
+  assert.deepEqual(realDoors.map((target) => target.id).sort(), neighbors.map((node) => `door:${node.cellId}`).sort(),
+    `${label}: every original adjacent cell is represented exactly once`);
+  assert.deepEqual([...new Set(doors.map((target) => target.doorSide))].sort(), [...ROOM_SIDES].sort(),
+    `${label}: north, south, west and east remain represented`);
+  for (const side of ROOM_SIDES) {
+    const sameSide = doors.filter((target) => target.doorSide === side);
+    const closed = sameSide.filter((target) => target.id.startsWith('closed-door:'));
+    assert.equal(closed.length, sameSide.some((target) => target.id.startsWith('door:')) ? 0 : 1,
+      `${label}/${side}: a closed marker fills only an absent direction`);
+    for (const target of closed) {
+      assert.equal(target.id, `closed-door:${side}`);
+      assert.equal(target.action, undefined, `${label}: a closed marker never creates an action`);
+      assert.equal(target.destinationNodeId, undefined, `${label}: a closed marker never invents a destination`);
+      assert.equal(target.disabledReason, '此方向没有相邻区域。');
+      assert.equal(target.interactionLabel, '封闭');
+    }
+  }
+  for (const target of realDoors) {
+    const neighbor = neighbors.find((node) => `door:${node.cellId}` === target.id);
+    assert.ok(neighbor.x === current.x || neighbor.y === current.y,
+      `${label}: a real grid neighbor lies on one original cardinal axis`);
+    const expectedSide = neighbor.x === current.x ? neighbor.y < current.y ? 'north' : 'south'
+      : neighbor.x < current.x ? 'west' : 'east';
+    assert.equal(target.doorSide, expectedSide, `${label}: gate direction matches the actual public neighbor coordinates`);
+    const sideCoordinate = target.doorSide === 'north' ? target.y
+      : target.doorSide === 'south' ? target.y : target.x;
+    assert.equal(sideCoordinate, target.doorSide === 'north' || target.doorSide === 'west' ? 125 : 875,
+      `${label}: original gate feet remain on the original side anchor`);
+    assert.equal(target.radius, 110, `${label}: original interaction range remains`);
+    if (doors.filter((door) => door.doorSide === target.doorSide).length === 1) {
+      assert.equal(target.doorSide === 'north' || target.doorSide === 'south' ? target.x : target.y, 500,
+        `${label}: a single original neighbor keeps the original side midpoint`);
+    }
+    const visible = neighbor.state !== 'fogged' && neighbor.nodeId !== undefined;
+    assert.equal(target.destinationNodeId, visible ? neighbor.nodeId : undefined);
+    const candidates = view.sections[2].actions.filter((action) => action.actionId === neighbor.moveActionId);
+    const candidate = candidates.length === 1 ? candidates[0] : undefined;
+    const legal = visible && neighbor.canMove && candidate?.enabled && candidate.event?.kind === 'command'
+      && candidate.event.command.type === 'run/move' && candidate.event.command.nodeId === neighbor.nodeId;
+    assert.equal(target.action, legal ? candidate : undefined,
+      `${label}: the original exact-destination action controls gate availability`);
+    if (target.action) assert.equal(target.action.event, candidate.event, `${label}: no synthetic move event`);
+    else assert.ok(target.disabledReason, `${label}: every unavailable gate explains its state`);
+  }
+}
+
+function requireClosedCombatDirections(world, label) {
+  const doors = world.targets.filter((target) => target.kind === 'transition');
+  assert.equal(doors.length, 4, `${label}: combat has four closed direction markers`);
+  assert.deepEqual(doors.map((target) => target.doorSide).sort(), [...ROOM_SIDES].sort());
+  for (const target of doors) {
+    assert.equal(target.id, `closed-door:${target.doorSide}`);
+    assert.equal(target.action, undefined, `${label}: combat gates cannot dispatch movement`);
+    assert.equal(target.destinationNodeId, undefined);
+    assert.equal(target.disabledReason, '战斗中无法通过房门。');
+  }
+  assert.deepEqual(doors.map(({ doorSide, x, y }) => [doorSide, x, y]), [
+    ['north', 640, 125], ['south', 640, 875], ['west', 125, 500], ['east', 1155, 500],
+  ], `${label}: gates use the original arena edges`);
 }
 
 check('up, down, left and right are continuous and reversible', () => {
@@ -125,8 +223,9 @@ const hubView = buildGameViewModel(initial, {});
 const hub = buildWalkWorld(hubView);
 const confirm = hubView.sections[2].actions.find((action) => action.actionId === 'hub.entry.confirm');
 
-check('hub has seven people and exactly the original seeded entry request', () => {
-  assert.deepEqual([hub.width, hub.height, hub.spawn.x, hub.spawn.y], [1280, 1150, 640, 820]);
+check('approved courtyard keeps the exact final layout and original seeded entry request', () => {
+  assert.deepEqual([hub.width, hub.height, hub.spawn.x, hub.spawn.y], [1200, 720, 600, 550]);
+  assert.deepEqual(hub.bounds, { x: 64, y: 420, width: 1072, height: 246 });
   assert.equal(hub.targets.filter((target) => target.kind === 'npc').length, 7);
   const portal = hub.targets.find((target) => target.id === 'portal:entry');
   assert.equal(portal.action, confirm);
@@ -136,8 +235,104 @@ check('hub has seven people and exactly the original seeded entry request', () =
     assert.equal(npc.action, hubView.sections[2].actions.find((action) => action.actionId === `hub.panel:${npc.id.slice(4)}`));
     assert.equal(npc.action.event.action.type, 'hub/select-panel');
   }
-  const approach = walkFor(hub, hub.spawn, { x: 0, y: -1 }, 3);
-  assert.equal(nearestWalkTarget(hub, approach), portal, 'the north portal is reachable on foot');
+  assert.deepEqual(hub.targets.filter((target) => target.kind === 'npc').map(({ id, x, y, radius }) => [id, x, y, radius]), [
+    ['npc:equipment', 160, 636, 100], ['npc:supplies', 290, 466, 100], ['npc:pets', 430, 636, 100],
+    ['npc:methods', 570, 466, 100], ['npc:bloodlines', 710, 636, 100], ['npc:companions', 850, 466, 100],
+    ['npc:tasks', 990, 636, 100],
+  ]);
+  assert.deepEqual([portal.x, portal.y, portal.radius], [1080, 466, 120]);
+  assert.equal(getInfiniteFlowSceneVisualKeys(hubView).background, 'scene:hub_courtyard_walk');
+});
+
+check('courtyard props collide only at their ground footprints and the lamp stays passable', () => {
+  assert.deepEqual(hub.props.map(({ kind, x, y, width, height, visualAssetKey }) => [kind, x, y, width, height, visualAssetKey]), [
+    ['altar', 430, 480, 120, 84, 'scene:courtyard_altar'],
+    ['lamp', 1120, 628, 46, 118, 'scene:courtyard_lamp'],
+    ['crate', 705, 480, 92, 68, 'scene:courtyard_crate'],
+    ['pillar', 570, 628, 72, 150, 'scene:courtyard_pillar'],
+  ]);
+  const expectedFootprints = [
+    { x: 386.8, y: 466, width: 86.4, height: 24 },
+    { x: 671.88, y: 466, width: 66.24, height: 24 },
+    { x: 544.08, y: 614, width: 51.84, height: 24 },
+  ];
+  assert.equal(hub.obstacles.length, expectedFootprints.length);
+  hub.obstacles.forEach((obstacle, index) => {
+    for (const property of ['x', 'y', 'width', 'height']) {
+      approximately(obstacle[property], expectedFootprints[index][property], `footprint ${index}/${property}`);
+    }
+  });
+  for (const obstacle of hub.obstacles) {
+    const y = obstacle.y + obstacle.height / 2;
+    const start = { x: obstacle.x - 35, y };
+    const stopped = walkFor(hub, start, { x: 1, y: 0 }, 0.5);
+    approximately(stopped.x, obstacle.x - 14, 'feet remain outside the painted base');
+  }
+  const lampWalk = walkFor(hub, { x: 1120, y: 570 }, { x: 0, y: 1 }, 0.5);
+  assert.ok(lampWalk.y > 628, 'decorative lamp cannot create an invisible wall');
+});
+
+check('courtyard lateral and depth speeds match the approved prototype and bounded feet stay on the floor', () => {
+  approximately(walkFor(hub, hub.spawn, { x: 1, y: 0 }, 1).x, 860, 'lateral speed');
+  approximately(walkFor(hub, hub.spawn, { x: 0, y: -1 }, 0.5).y, 477.5, 'shallow depth speed');
+  assert.deepEqual(stepWalkPosition(hub, { x: 80, y: 435 }, { x: -1, y: -1 }, 0.1), { x: 78, y: 434 });
+  assert.deepEqual(stepWalkPosition(hub, { x: 1120, y: 650 }, { x: 1, y: 1 }, 0.1), { x: 1122, y: 652 });
+});
+
+function requireClearCourtyardFeet(position, label) {
+  assert.ok(position.x >= 78 - 1e-6 && position.x <= 1122 + 1e-6
+    && position.y >= 434 - 1e-6 && position.y <= 652 + 1e-6, `${label}: complete feet stay in the shallow lane`);
+  for (const obstacle of hub.obstacles) {
+    const x = Math.max(obstacle.x, Math.min(position.x, obstacle.x + obstacle.width));
+    const y = Math.max(obstacle.y, Math.min(position.y, obstacle.y + obstacle.height));
+    assert.ok(Math.hypot(position.x - x, position.y - y) >= 14 - 1e-5, `${label}: complete feet clear every prop base`);
+  }
+}
+
+check('courtyard routes reach all seven NPCs and the portal with continuous collision-safe walking', () => {
+  for (const target of hub.targets) {
+    const path = findWalkPath(hub, hub.spawn, target);
+    assert.ok(path.length > 0, `${target.id}: real route exists`);
+    let previous = hub.spawn;
+    for (const waypoint of path) {
+      assert.ok(isWalkSegmentClear(previous, waypoint, hub), `${target.id}: smoothed route retains circular foot clearance`);
+      previous = waypoint;
+    }
+    assert.deepEqual({ x: path.at(-1).x, y: path.at(-1).y }, { x: target.x, y: target.y });
+    let position = { ...hub.spawn };
+    let frames = 0;
+    while (nearestWalkTarget(hub, position) !== target && frames < 120) {
+      while (path.length > 0 && Math.hypot(path[0].x - position.x, path[0].y - position.y) < 6) path.shift();
+      assert.ok(path.length > 0, `${target.id}: walking cannot stop outside its interaction radius`);
+      const point = path[0];
+      const dx = (point.x - position.x) / 260, dy = (point.y - position.y) / 145;
+      const length = Math.hypot(dx, dy);
+      const amplitude = Math.min(1, Math.hypot(point.x - position.x, point.y - position.y) / 14);
+      position = stepWalkPosition(hub, position, { x: dx / length * amplitude, y: dy / length * amplitude }, 1 / 60);
+      requireClearCourtyardFeet(position, target.id);
+      frames += 1;
+    }
+    assert.equal(nearestWalkTarget(hub, position), target, `${target.id}: approaches within two seconds`);
+  }
+  for (const start of hub.targets) for (const target of hub.targets) {
+    if (start === target) continue;
+    const path = findWalkPath(hub, start, target);
+    assert.ok(path.length > 0, `${start.id} -> ${target.id}: NPC-to-NPC route exists`);
+    let previous = start;
+    for (const waypoint of path) {
+      assert.ok(isWalkSegmentClear(previous, waypoint, hub), `${start.id} -> ${target.id}: every segment is clear`);
+      previous = waypoint;
+    }
+  }
+});
+
+check('click navigation rejects sealed, blocked and outside destinations without tunnelling', () => {
+  const closed = emptyWorld({ obstacles: [{ x: 490, y: 0, width: 20, height: 1000 }] });
+  assert.deepEqual(findWalkPath(closed, { x: 200, y: 500 }, { x: 800, y: 500 }), []);
+  assert.equal(isWalkSegmentClear({ x: 200, y: 500 }, { x: 800, y: 500 }, closed), false);
+  assert.deepEqual(findWalkPath(hub, hub.spawn, { x: 705, y: 480 }), [], 'crate interior cannot be a destination');
+  assert.equal(isWalkPointClear({ x: 705, y: 480 }, hub), false);
+  assert.deepEqual(findWalkPath(hub, hub.spawn, { x: 600, y: 420 }), [], 'whole feet must stay within lane bounds');
 });
 
 check('selected NPC still exists without a fabricated panel event and hub key stays stable', () => {
@@ -164,9 +359,11 @@ check('exploration starts in one room with an original combat target and blocked
   assert.equal(explore.key, `explore:${detail.map.dungeonId}:${detail.map.currentNodeId}`);
   const monster = explore.targets.find((target) => target.kind === 'monster');
   assert.ok(monster);
+  requireMonsterVisual(explore, exploreView, detail.currentNode.monsterId, 'opening encounter');
   assert.equal(monster.action, exploreView.sections[2].actions.find((action) => action.actionId === `node.select:${detail.currentNode.nodeId}`));
   const doors = explore.targets.filter((target) => target.kind === 'transition');
-  assert.equal(doors.length, detail.map.nodes.filter((node) => node.isAdjacent).length);
+  requireFourRoomDirections(explore, exploreView, 'opening room');
+  assert.deepEqual(explore.obstacles, EXPLORE_PERIMETER, 'the original perimeter remains while interior debris is removed');
   assert.ok(doors.every((door) => door.action === undefined && door.disabledReason));
   assert.equal(nearestWalkTarget(explore, walkFor(explore, explore.spawn, { x: 0, y: -1 }, 1.7)), monster);
 });
@@ -178,6 +375,11 @@ check('combat is a separate walkable arena and preserves the attack command', ()
   assert.deepEqual([arena.width, arena.height, arena.spawn.x, arena.spawn.y], [1280, 1000, 440, 700]);
   assert.deepEqual([arena.targets[0].x, arena.targets[0].y], [820, 340]);
   assert.equal(arena.targets[0].action, combatView.sections[2].actions.find((action) => action.actionId === 'combat.action:attack'));
+  assert.deepEqual(arena.obstacles, COMBAT_PERIMETER);
+  requireClosedCombatDirections(arena, 'opening combat');
+  assert.equal(combatView.sections[1].detail.enemy.id, exploreView.sections[1].detail.currentNode.monsterId,
+    'the real encounter command preserves the opening monster identity');
+  requireMonsterVisual(arena, combatView, exploreView.sections[1].detail.currentNode.monsterId, 'opening combat');
   const before = JSON.stringify(combatView);
   assert.ok(walkFor(arena, arena.spawn, { x: 0, y: -1 }, 0.4).y < arena.spawn.y);
   assert.equal(JSON.stringify(combatView), before, 'walking cannot mutate combat state');
@@ -196,8 +398,14 @@ const cleared = buildWalkWorld(clearedView);
 check('clearing a room preserves its world key and opens only exact legal movement events', () => {
   assert.equal(cleared.key, explore.key);
   assert.equal(cleared.targets.some((target) => target.kind === 'monster'), false);
+  requireNoMonsterVisual(cleared, clearedView, 'cleared opening encounter');
   for (const door of cleared.targets.filter((target) => target.kind === 'transition')) {
     const node = clearedView.sections[1].detail.map.nodes.find((entry) => entry.cellId === door.id.slice(5));
+    if (door.id.startsWith('closed-door:')) {
+      assert.equal(door.action, undefined);
+      assert.equal(door.destinationNodeId, undefined);
+      continue;
+    }
     if (node.canMove) {
       assert.equal(door.action, clearedView.sections[2].actions.find((action) => action.actionId === node.moveActionId));
       assert.equal(door.action.event.command.type, 'run/move');
@@ -208,6 +416,26 @@ check('clearing a room preserves its world key and opens only exact legal moveme
   assert.ok(door, 'a cleared opening room exposes a legal neighboring room');
   const moved = commit(state, door.action.event.command);
   assert.notEqual(buildWalkWorld(buildGameViewModel(moved, {})).key, cleared.key);
+});
+
+check('same-side branches preserve every original destination and their pre-fit gate coordinates', () => {
+  const detail = clearedView.sections[1].detail;
+  const current = detail.map.nodes.find((node) => node.nodeId === detail.map.currentNodeId);
+  const neighbors = detail.map.nodes.filter((node) => node.isAdjacent && node.canMove && node.moveActionId);
+  assert.ok(neighbors.length >= 2, 'the cleared opening room supplies two real movement actions');
+  const branchNodes = neighbors.slice(0, 2).map((node, index) => ({ ...node, x: current.x + index + 1, y: current.y }));
+  const branched = withDetail(clearedView, { ...detail, map: { ...detail.map, nodes: [current, ...branchNodes] } });
+  const world = buildWalkWorld(branched);
+  requireFourRoomDirections(world, branched, 'same-side branch fixture');
+  const east = world.targets.filter((target) => target.doorSide === 'east');
+  assert.equal(east.length, 2, 'the fixed room must not collapse two same-side routes to one');
+  assert.deepEqual(east.map(({ x, y, radius }) => [x, y, radius]), [[875, 420, 110], [875, 580, 110]],
+    'the original two-branch layout retains its world-space coordinates');
+  for (const target of east) {
+    const node = branchNodes.find((entry) => `door:${entry.cellId}` === target.id);
+    assert.equal(target.action, clearedView.sections[2].actions.find((action) => action.actionId === node.moveActionId));
+    assert.equal(target.action.event.command.nodeId, node.nodeId);
+  }
 });
 
 check('duplicate or wrong-destination actions cannot unlock a door', () => {
@@ -272,8 +500,14 @@ const pendingFixtures = new Map();
 const enteredChapters = new Map();
 const kindsCovered = new Set();
 const ranksCovered = new Set();
+const nodeMonsterIdsCovered = new Set();
+const visibleMonsterIdsCovered = new Set();
+const aliasMonsterNodesCovered = new Map();
+const combatMonsterIdsCovered = new Set();
 let realNodesCovered = 0;
+let realMonsterNodesCovered = 0;
 let combatChaptersCovered = 0;
+let originalNeighborBindingsCovered = 0;
 
 // Test-only coverage fixture: resource and unlock overrides permit real reducer entry into
 // each chapter. Relocating currentNodeId below is a rendering fixture, not route traversal,
@@ -349,11 +583,29 @@ for (const dungeonId of DUNGEON_ORDER) {
       assert.equal(detail.kind, 'explore');
       assert.equal(detail.currentNode.nodeId, node.id);
       assert.equal(detail.currentNode.nodeType, node.type);
+      assert.equal(detail.currentNode.monsterId, node.monsterId,
+        `${dungeonId}/${node.id}: public identity must come directly from the core node`);
+      if (node.type === 'monster') {
+        assert.ok(MONSTERS[node.monsterId]);
+        nodeMonsterIdsCovered.add(node.monsterId);
+        if (node.id !== node.monsterId) aliasMonsterNodesCovered.set(`${dungeonId}/${node.id}`, node.monsterId);
+        const clearedMonsterView = buildGameViewModel(locateNodeForProjection(entered, node.id, {
+          clearedNodeIds: [node.id],
+        }), {});
+        requireNoMonsterVisual(buildWalkWorld(clearedMonsterView), clearedMonsterView,
+          `${dungeonId}/${node.id}: cleared monster node`);
+        realMonsterNodesCovered += 1;
+      }
       const world = buildWalkWorld(view);
       const target = world.targets.find((entry) => entry.id === `node:${node.id}`);
       assert.ok(target, `${dungeonId}/${node.id}: current node needs an interactable object`);
       assert.equal(world.theme.id, dungeonId);
       assert.equal(world.key, `explore:${dungeonId}:${node.id}`);
+      assert.deepEqual([world.width, world.height, world.spawn.x, world.spawn.y], [1000, 1000, 500, 700],
+        `${dungeonId}/${node.id}: fixed projection does not resize the logical world or move its spawn`);
+      assert.deepEqual(world.obstacles, EXPLORE_PERIMETER, `${dungeonId}/${node.id}: only interior debris is removed`);
+      assert.deepEqual([target.x, target.y, target.radius], [500, 400, 115],
+        `${dungeonId}/${node.id}: the current interaction keeps its original feet and range`);
       assert.equal(world.rooms.length, 1);
       assert.equal(world.rooms[0].label, node.title);
       assert.equal(target.label, detail.pending?.title ?? node.title);
@@ -369,17 +621,37 @@ for (const dungeonId of DUNGEON_ORDER) {
           : node.monsterId === DUNGEON_ELITE_MONSTERS[dungeonId] ? 'elite' : 'normal';
         assert.equal(target.rank, rank, `${node.id}: boss, elite and ordinary enemies are distinguishable`);
         ranksCovered.add(rank);
-      }
+        requireMonsterVisual(world, view, node.monsterId, `${dungeonId}/${node.id}`);
+        visibleMonsterIdsCovered.add(node.monsterId);
+
+        // Location is a rendering fixture; encounter entry still uses the original public
+        // command and reducer. Boss gates are handled by the dedicated chapter path below.
+        if (rank !== 'boss' && !combatMonsterIdsCovered.has(node.monsterId)) {
+          const start = view.sections[2].actions.find((action) => action.actionId === `node.select:${node.id}`);
+          assert.ok(start?.enabled && start.event?.kind === 'command',
+            `${dungeonId}/${node.id}: real encounter action`);
+          const fighting = commit(located, start.event.command);
+          assert.equal(fighting.phase, 'combat');
+          const fightingView = buildGameViewModel(fighting, {});
+          assert.equal(fightingView.sections[1].detail.enemy.id, node.monsterId,
+            `${node.id}: the encounter command preserves the exploration identity`);
+          requireMonsterVisual(buildWalkWorld(fightingView), fightingView, node.monsterId,
+            `${dungeonId}/${node.id}: combat`);
+          combatMonsterIdsCovered.add(node.monsterId);
+        }
+      } else requireNoMonsterVisual(world, view, `${dungeonId}/${node.id}`);
       requireOriginalActions(world, view);
-      for (const door of world.targets.filter((entry) => entry.kind === 'transition')) {
-        const mapNode = detail.map.nodes.find((entry) => `door:${entry.cellId}` === door.id);
-        assert.ok(mapNode?.isAdjacent, `${node.id}: only physically adjacent entrances are instantiated`);
-        if (door.action) {
-          assert.equal(mapNode.canMove, true);
-          assert.equal(door.action.actionId, mapNode.moveActionId);
-          assert.deepEqual(door.action.event.command, { type: 'run/move', nodeId: mapNode.nodeId });
-        } else assert.ok(door.disabledReason);
-      }
+      requireFourRoomDirections(world, view, `${dungeonId}/${node.id}`);
+      // Revealing and clearing the catalog is only a projection fixture. The real
+      // ViewModel still decides whether each original neighbor command is legal.
+      const knownView = buildGameViewModel(locateNodeForProjection(entered, node.id, {
+        clearedNodeIds: DUNGEONS[dungeonId].nodes.map((entry) => entry.id),
+        discoveredNodeIds: DUNGEONS[dungeonId].nodes.map((entry) => entry.id),
+      }), {});
+      const knownWorld = buildWalkWorld(knownView);
+      requireFourRoomDirections(knownWorld, knownView, `${dungeonId}/${node.id}: revealed neighbors`);
+      requireOriginalActions(knownWorld, knownView);
+      originalNeighborBindingsCovered += knownWorld.targets.filter((entry) => entry.id.startsWith('door:')).length;
       for (const hidden of detail.map.nodes.filter((entry) => entry.state === 'fogged')) {
         assert.equal(hidden.nodeId, undefined);
         const hiddenNode = DUNGEONS[dungeonId].nodes.find((entry) =>
@@ -419,6 +691,10 @@ for (const dungeonId of DUNGEON_ORDER) {
       });
     }
     const bossView = buildGameViewModel(bossFixture, {});
+    const bossMonsterId = bossView.sections[1].detail.currentNode.monsterId;
+    if (bossView.sections[1].detail.pending) {
+      requireNoMonsterVisual(buildWalkWorld(bossView), bossView, `${dungeonId}: pending before boss combat`);
+    } else requireMonsterVisual(buildWalkWorld(bossView), bossView, bossMonsterId, `${dungeonId}: before boss combat`);
     const start = bossView.sections[2].actions.find((action) => action.actionId === `node.select:${boss.nodeId}`);
     assert.ok(start?.enabled && start.event?.kind === 'command', `${dungeonId}: real boss encounter action`);
     const fighting = commit(bossFixture, start.event.command);
@@ -429,16 +705,60 @@ for (const dungeonId of DUNGEON_ORDER) {
     assert.equal(arena.targets[0].kind, 'monster');
     assert.equal(arena.targets[0].rank, 'boss');
     assert.equal(arena.targets[0].label, arenaView.sections[1].detail.enemy.name);
+    assert.equal(arenaView.sections[1].detail.enemy.id, bossMonsterId,
+      `${dungeonId}: the boss command preserves the exploration identity`);
+    requireMonsterVisual(arena, arenaView, bossMonsterId, `${dungeonId}: boss combat`);
+    combatMonsterIdsCovered.add(bossMonsterId);
     requireOriginalActions(arena, arenaView);
+    assert.deepEqual([arena.width, arena.height, arena.spawn.x, arena.spawn.y], [1280, 1000, 440, 700]);
+    assert.deepEqual([arena.targets[0].x, arena.targets[0].y, arena.targets[0].radius], [820, 340, 115]);
+    assert.equal(arena.key, `combat:${dungeonId}:${bossMonsterId}`, 'the original combat key preserves live arena position');
+    assert.deepEqual(arena.obstacles, COMBAT_PERIMETER);
+    requireClosedCombatDirections(arena, `${dungeonId}: boss arena`);
     combatChaptersCovered += 1;
   });
 }
 
 check('chapter coverage includes all 570 real nodes, all five node kinds and all enemy ranks', () => {
   assert.equal(realNodesCovered, 570);
+  assert.equal(realMonsterNodesCovered, 130);
   assert.equal(combatChaptersCovered, 19);
+  assert.ok(originalNeighborBindingsCovered > realNodesCovered, 'real neighbor bindings are checked across every chapter and cell');
   assert.deepEqual([...kindsCovered].sort(), Object.keys(originalKinds).sort());
   assert.deepEqual([...ranksCovered].sort(), ['boss', 'elite', 'normal']);
+});
+
+check('all 59 catalog monsters keep their real identity from public node models into combat', () => {
+  const catalogIds = Object.keys(MONSTERS).sort();
+  assert.equal(catalogIds.length, 59);
+  assert.deepEqual([...nodeMonsterIdsCovered].sort(), catalogIds,
+    'every catalog monster is covered by a real dungeon-node public model');
+  assert.deepEqual([...combatMonsterIdsCovered].sort(), catalogIds,
+    'every catalog monster enters combat through its original public command');
+  for (const [nodeKey, monsterId] of [
+    ['demon_tower_1/upper_fog_patrol', 'fog_lesser_demon'],
+    ['demon_tower_1/bone_lane_monster', 'tower_butcher'],
+    ['ash_arena/cinder_lancer', 'ash_duelist'],
+    ['lost_shelter/north_rescue_patrol', 'rogue_sentry'],
+    ['panopticon_city/sweep_sentinel_north', 'phase_hunter_drone'],
+  ]) {
+    assert.equal(aliasMonsterNodesCovered.get(nodeKey), monsterId,
+      `${nodeKey}: a node alias must not be interpreted as a monster ID`);
+  }
+});
+
+check('missing monster identity and non-monster node types cannot infer world art from node names', () => {
+  const detail = exploreView.sections[1].detail;
+  const missingIdentity = withDetail(exploreView, {
+    ...detail, currentNode: { ...detail.currentNode, nodeId: 'tower_butcher', monsterId: undefined },
+  });
+  requireNoMonsterVisual(buildWalkWorld(missingIdentity), missingIdentity, 'missing public monster identity');
+  for (const nodeType of Object.keys(originalKinds).filter((kind) => kind !== 'monster')) {
+    const nonMonster = withDetail(exploreView, {
+      ...detail, currentNode: { ...detail.currentNode, nodeType },
+    });
+    requireNoMonsterVisual(buildWalkWorld(nonMonster), nonMonster, `${nodeType}: retained identity is not visibility`);
+  }
 });
 
 check('a cleared node retains its original soul-recharge action and can open the real pending choice', () => {
@@ -453,6 +773,7 @@ check('a cleared node retains its original soul-recharge action and can open the
   const view = buildGameViewModel(shrineFixture, {});
   const world = buildWalkWorld(view);
   const shrine = world.targets.find((target) => target.id === 'node:upper_fog_patrol');
+  requireNoMonsterVisual(world, view, 'cleared monster with an active soul shrine');
   const activation = view.sections[2].actions.find((action) => action.actionId === 'soul-recharge.activate:soul_node_demon_mist_watch');
   assert.ok(shrine, 'clearing a room must not remove its usable shrine');
   assert.equal(shrine.kind, 'shrine');
@@ -463,6 +784,7 @@ check('a cleared node retains its original soul-recharge action and can open the
   assert.equal(pendingView.sections[1].detail.pending.kind, 'soul-recharge');
   pendingFixtures.set('soul-recharge', pendingView);
   const pendingWorld = buildWalkWorld(pendingView);
+  requireNoMonsterVisual(pendingWorld, pendingView, 'pending soul recharge on a monster node');
   assert.equal(pendingWorld.key, world.key, 'activation preserves local walking position');
   assert.equal(pendingWorld.targets.find((target) => target.id === shrine.id).action, undefined);
 
@@ -511,6 +833,7 @@ check('all six real pending projections stay explicit even when only one option 
     const detail = view.sections[1].detail;
     assert.equal(detail.pending.kind, pendingKind);
     const world = buildWalkWorld(view);
+    requireNoMonsterVisual(world, view, `${pendingKind}: pending choice`);
     const target = world.targets.find((entry) => entry.id === `node:${detail.currentNode.nodeId}`);
     assert.equal(target.kind, pendingKinds[pendingKind]);
     assert.equal(target.label, detail.pending.title);
@@ -519,6 +842,7 @@ check('all six real pending projections stay explicit even when only one option 
     const firstId = detail.pending.actionIds[0];
     assert.ok(view.sections[2].actions.some((action) => action.actionId === firstId));
     const oneOption = withDetail(view, { ...detail, pending: { ...detail.pending, actionIds: [firstId] } });
+    requireNoMonsterVisual(buildWalkWorld(oneOption), oneOption, `${pendingKind}: single pending choice`);
     assert.equal(buildWalkWorld(oneOption).targets.find((entry) => entry.id === target.id).action, undefined,
       `${pendingKind}: reducing choices does not authorize an automatic decision`);
   }
@@ -536,8 +860,8 @@ check('a locked chapter keeps the hub portal inspectable without enabling its en
   assert.equal(portal.action, lockedConfirm);
   assert.equal(portal.action.event, undefined);
   assert.equal(portal.disabledReason, undefined, 'the portal itself must still open chapter selection');
-  assert.equal(portal.interactionLabel, '选副本');
+  assert.equal(portal.interactionLabel, '进入');
   assert.equal(nearestWalkTarget(world, portal), portal);
 });
 
-console.log(`Walk world self-check passed (${checks} checks; ${enteredChapters.size} chapters, ${realNodesCovered} real-node projections, ${combatChaptersCovered} boss arenas, ${pendingFixtures.size} pending kinds).`);
+console.log(`Walk world self-check passed (${checks} checks; ${enteredChapters.size} chapters, ${realNodesCovered} real-node projections, ${originalNeighborBindingsCovered} original neighbor bindings, ${nodeMonsterIdsCovered.size} catalog identities, ${visibleMonsterIdsCovered.size} visible exploration identities, ${combatMonsterIdsCovered.size} combat identities, ${combatChaptersCovered} boss arenas, ${pendingFixtures.size} pending kinds).`);

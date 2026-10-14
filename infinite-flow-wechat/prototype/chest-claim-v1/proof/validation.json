@@ -1,0 +1,523 @@
+{
+  "scope": "Standalone HTML/CSS/JS prototype only; no game code or save changes",
+  "validatedAt": "2026-10-12T08:40:14.522Z",
+  "initial390": {
+    "balance": "1085",
+    "buttons": [
+      {
+        "disabled": false,
+        "height": 44,
+        "pressed": null,
+        "text": "×",
+        "width": 44
+      },
+      {
+        "disabled": false,
+        "height": 48,
+        "pressed": null,
+        "text": "领取奖励→",
+        "width": 314
+      }
+    ],
+    "dialog": {
+      "bottom": 642.69921875,
+      "height": 441.3984375,
+      "top": 201.30078125,
+      "width": 356
+    },
+    "dialogHidden": false,
+    "horizontalOverflow": false,
+    "images": [
+      {
+        "loaded": true,
+        "path": "/cocos/assets/resources/character/reincarnator-v2.png"
+      },
+      {
+        "loaded": true,
+        "path": "/cocos/assets/resources/dungeon-world/chest-v1.png"
+      },
+      {
+        "loaded": true,
+        "path": "/cocos/assets/resources/dungeon-world/chest-v1.png"
+      },
+      {
+        "loaded": true,
+        "path": "/cocos/assets/resources/item/medicine-ash-v1.png"
+      }
+    ],
+    "stage": {
+      "height": 844,
+      "width": 390
+    },
+    "status": "待领取 · 点击主按钮体验完整流程",
+    "title": "巡哨布袋",
+    "verticalOverflow": false,
+    "withinStage": true
+  },
+  "initial320": {
+    "balance": "1085",
+    "buttons": [
+      {
+        "disabled": false,
+        "height": 44,
+        "pressed": null,
+        "text": "×",
+        "width": 44
+      },
+      {
+        "disabled": false,
+        "height": 46,
+        "pressed": null,
+        "text": "领取奖励→",
+        "width": 262
+      }
+    ],
+    "dialog": {
+      "bottom": 472.796875,
+      "height": 377.59375,
+      "top": 95.203125,
+      "width": 294
+    },
+    "dialogHidden": false,
+    "horizontalOverflow": false,
+    "images": [
+      {
+        "loaded": true,
+        "path": "/cocos/assets/resources/character/reincarnator-v2.png"
+      },
+      {
+        "loaded": true,
+        "path": "/cocos/assets/resources/dungeon-world/chest-v1.png"
+      },
+      {
+        "loaded": true,
+        "path": "/cocos/assets/resources/dungeon-world/chest-v1.png"
+      },
+      {
+        "loaded": true,
+        "path": "/cocos/assets/resources/item/medicine-ash-v1.png"
+      }
+    ],
+    "stage": {
+      "height": 568,
+      "width": 320
+    },
+    "status": "待领取 · 点击主按钮体验完整流程",
+    "title": "巡哨布袋",
+    "verticalOverflow": false,
+    "withinStage": true
+  },
+  "choosing390": {
+    "balance": "1155",
+    "buttons": [
+      {
+        "disabled": false,
+        "height": 44,
+        "pressed": null,
+        "text": "×",
+        "width": 44
+      },
+      {
+        "disabled": false,
+        "height": 197.59375,
+        "pressed": "false",
+        "text": "雾锋攻击 +6术法 +4",
+        "width": 152.5
+      },
+      {
+        "disabled": false,
+        "height": 197.59375,
+        "pressed": "false",
+        "text": "聚念棱镜每场战斗开始战意 +1",
+        "width": 152.5
+      },
+      {
+        "disabled": true,
+        "height": 48,
+        "pressed": null,
+        "text": "请选择一份回响→",
+        "width": 314
+      }
+    ],
+    "dialog": {
+      "bottom": 673.74609375,
+      "height": 503.4921875,
+      "top": 170.25390625,
+      "width": 356
+    },
+    "dialogHidden": false,
+    "horizontalOverflow": false,
+    "images": [
+      {
+        "loaded": true,
+        "path": "/cocos/assets/resources/character/reincarnator-v2.png"
+      },
+      {
+        "loaded": true,
+        "path": "/cocos/assets/resources/dungeon-world/chest-v1.png"
+      },
+      {
+        "loaded": true,
+        "path": "/cocos/assets/resources/item/medicine-ash-v1.png"
+      },
+      {
+        "loaded": true,
+        "path": "/cocos/assets/resources/run-relic/mist_edge-v1.png"
+      },
+      {
+        "loaded": true,
+        "path": "/cocos/assets/resources/run-relic/focus_prism-v1.png"
+      }
+    ],
+    "stage": {
+      "height": 844,
+      "width": 390
+    },
+    "status": "物资已领取 · 选择一份回响后继续探索",
+    "title": "选择一份回响",
+    "verticalOverflow": false,
+    "withinStage": true
+  },
+  "choosing320": {
+    "balance": "1155",
+    "buttons": [
+      {
+        "disabled": false,
+        "height": 44,
+        "pressed": null,
+        "text": "×",
+        "width": 44
+      },
+      {
+        "disabled": false,
+        "height": 180.3984375,
+        "pressed": "true",
+        "text": "雾锋攻击 +6术法 +4",
+        "width": 126.5
+      },
+      {
+        "disabled": false,
+        "height": 180.3984375,
+        "pressed": "false",
+        "text": "聚念棱镜每场战斗开始战意 +1",
+        "width": 126.5
+      },
+      {
+        "disabled": false,
+        "height": 46,
+        "pressed": null,
+        "text": "获得雾锋→",
+        "width": 262
+      }
+    ],
+    "dialog": {
+      "bottom": 512.24609375,
+      "height": 456.4921875,
+      "top": 55.75390625,
+      "width": 294
+    },
+    "dialogHidden": false,
+    "horizontalOverflow": false,
+    "images": [
+      {
+        "loaded": true,
+        "path": "/cocos/assets/resources/character/reincarnator-v2.png"
+      },
+      {
+        "loaded": true,
+        "path": "/cocos/assets/resources/dungeon-world/chest-v1.png"
+      },
+      {
+        "loaded": true,
+        "path": "/cocos/assets/resources/item/medicine-ash-v1.png"
+      },
+      {
+        "loaded": true,
+        "path": "/cocos/assets/resources/run-relic/mist_edge-v1.png"
+      },
+      {
+        "loaded": true,
+        "path": "/cocos/assets/resources/run-relic/focus_prism-v1.png"
+      }
+    ],
+    "stage": {
+      "height": 568,
+      "width": 320
+    },
+    "status": "物资已领取 · 选择一份回响后继续探索",
+    "title": "选择一份回响",
+    "verticalOverflow": false,
+    "withinStage": true
+  },
+  "rapidDoubleClick": {
+    "balanceBefore": "1085",
+    "balanceAfter": "1155",
+    "pointsAdded": 70
+  },
+  "closeAndReopen": {
+    "closedStatus": "回响尚未选择 · 重新打开可继续",
+    "reopenedStatus": "物资已领取 · 选择一份回响后继续探索",
+    "balance": "1155",
+    "selectionPreserved": true
+  },
+  "completed": {
+    "balance": "1155",
+    "buttons": [
+      {
+        "disabled": true,
+        "height": 0,
+        "pressed": null,
+        "text": "×",
+        "width": 0
+      },
+      {
+        "disabled": true,
+        "height": 0,
+        "pressed": "true",
+        "text": "雾锋攻击 +6术法 +4",
+        "width": 0
+      },
+      {
+        "disabled": true,
+        "height": 0,
+        "pressed": "false",
+        "text": "聚念棱镜每场战斗开始战意 +1",
+        "width": 0
+      },
+      {
+        "disabled": true,
+        "height": 0,
+        "pressed": null,
+        "text": "正在获得· · ·",
+        "width": 0
+      }
+    ],
+    "dialog": {
+      "bottom": -142,
+      "height": 0,
+      "top": -142,
+      "width": 0
+    },
+    "dialogHidden": true,
+    "horizontalOverflow": false,
+    "images": [
+      {
+        "loaded": true,
+        "path": "/cocos/assets/resources/character/reincarnator-v2.png"
+      },
+      {
+        "loaded": true,
+        "path": "/cocos/assets/resources/dungeon-world/chest-v1.png"
+      }
+    ],
+    "stage": {
+      "height": 568,
+      "width": 320
+    },
+    "status": "领取完成 · 不可重复领取",
+    "title": "选择一份回响",
+    "verticalOverflow": false,
+    "withinStage": true
+  },
+  "completedSummary": {
+    "balance": "1155",
+    "buttons": [
+      {
+        "disabled": false,
+        "height": 44,
+        "pressed": null,
+        "text": "×",
+        "width": 44
+      },
+      {
+        "disabled": false,
+        "height": 46,
+        "pressed": null,
+        "text": "继续探索→",
+        "width": 262
+      }
+    ],
+    "dialog": {
+      "bottom": 499.59375,
+      "height": 431.1875,
+      "top": 68.40625,
+      "width": 294
+    },
+    "dialogHidden": false,
+    "horizontalOverflow": false,
+    "images": [
+      {
+        "loaded": true,
+        "path": "/cocos/assets/resources/character/reincarnator-v2.png"
+      },
+      {
+        "loaded": true,
+        "path": "/cocos/assets/resources/dungeon-world/chest-v1.png"
+      },
+      {
+        "loaded": true,
+        "path": "/cocos/assets/resources/item/medicine-ash-v1.png"
+      },
+      {
+        "loaded": true,
+        "path": "/cocos/assets/resources/run-relic/mist_edge-v1.png"
+      }
+    ],
+    "stage": {
+      "height": 568,
+      "width": 320
+    },
+    "status": "已领取 · 此处仅查看本次收获",
+    "title": "收获已收下",
+    "verticalOverflow": false,
+    "withinStage": true
+  },
+  "ordinaryInitial": {
+    "balance": "1085",
+    "buttons": [
+      {
+        "disabled": false,
+        "height": 44,
+        "pressed": null,
+        "text": "×",
+        "width": 44
+      },
+      {
+        "disabled": false,
+        "height": 46,
+        "pressed": null,
+        "text": "领取奖励→",
+        "width": 262
+      }
+    ],
+    "dialog": {
+      "bottom": 469.796875,
+      "height": 371.59375,
+      "top": 98.203125,
+      "width": 294
+    },
+    "dialogHidden": false,
+    "horizontalOverflow": false,
+    "images": [
+      {
+        "loaded": true,
+        "path": "/cocos/assets/resources/character/reincarnator-v2.png"
+      },
+      {
+        "loaded": true,
+        "path": "/cocos/assets/resources/dungeon-world/chest-v1.png"
+      },
+      {
+        "loaded": true,
+        "path": "/cocos/assets/resources/dungeon-world/chest-v1.png"
+      },
+      {
+        "loaded": true,
+        "path": "/cocos/assets/resources/item/dispel-talisman-v1.png"
+      }
+    ],
+    "stage": {
+      "height": 568,
+      "width": 320
+    },
+    "status": "待领取 · 点击主按钮体验完整流程",
+    "title": "北墙补给龛",
+    "verticalOverflow": false,
+    "withinStage": true
+  },
+  "ordinaryCompleted": {
+    "balance": "1165",
+    "buttons": [
+      {
+        "disabled": true,
+        "height": 0,
+        "pressed": null,
+        "text": "×",
+        "width": 0
+      },
+      {
+        "disabled": true,
+        "height": 0,
+        "pressed": null,
+        "text": "正在领取· · ·",
+        "width": 0
+      }
+    ],
+    "dialog": {
+      "bottom": -142,
+      "height": 0,
+      "top": -142,
+      "width": 0
+    },
+    "dialogHidden": true,
+    "horizontalOverflow": false,
+    "images": [
+      {
+        "loaded": true,
+        "path": "/cocos/assets/resources/character/reincarnator-v2.png"
+      },
+      {
+        "loaded": true,
+        "path": "/cocos/assets/resources/dungeon-world/chest-v1.png"
+      }
+    ],
+    "stage": {
+      "height": 568,
+      "width": 320
+    },
+    "status": "领取完成 · 不可重复领取",
+    "title": "北墙补给龛",
+    "verticalOverflow": false,
+    "withinStage": true
+  },
+  "ordinarySummary": {
+    "balance": "1165",
+    "buttons": [
+      {
+        "disabled": false,
+        "height": 44,
+        "pressed": null,
+        "text": "×",
+        "width": 44
+      },
+      {
+        "disabled": false,
+        "height": 46,
+        "pressed": null,
+        "text": "继续探索→",
+        "width": 262
+      }
+    ],
+    "dialog": {
+      "bottom": 455.59375,
+      "height": 343.1875,
+      "top": 112.40625,
+      "width": 294
+    },
+    "dialogHidden": false,
+    "horizontalOverflow": false,
+    "images": [
+      {
+        "loaded": true,
+        "path": "/cocos/assets/resources/character/reincarnator-v2.png"
+      },
+      {
+        "loaded": true,
+        "path": "/cocos/assets/resources/dungeon-world/chest-v1.png"
+      },
+      {
+        "loaded": true,
+        "path": "/cocos/assets/resources/item/dispel-talisman-v1.png"
+      }
+    ],
+    "stage": {
+      "height": 568,
+      "width": 320
+    },
+    "status": "已领取 · 此处仅查看本次收获",
+    "title": "收获已收下",
+    "verticalOverflow": false,
+    "withinStage": true
+  },
+  "browserErrors": []
+}

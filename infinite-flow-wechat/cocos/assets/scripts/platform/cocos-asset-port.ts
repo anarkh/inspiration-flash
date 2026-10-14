@@ -312,15 +312,14 @@ export class ManifestCocosAssetPort implements AssetPort {
         retryable: false,
       });
     }
+    // Protect a cached native handle while ownership passes between consumers.
+    // Even a resolved load promise yields before the successful lease is recorded.
+    this.referenceCounts.set(key, (this.referenceCounts.get(key) ?? 0) + 1);
     try {
       const handle = await this.loadKey(asset);
       this.loadedByDirectKey.set(
         key,
         (this.loadedByDirectKey.get(key) ?? 0) + 1,
-      );
-      this.referenceCounts.set(
-        key,
-        (this.referenceCounts.get(key) ?? 0) + 1,
       );
       return {
         ok: true,
@@ -329,6 +328,7 @@ export class ManifestCocosAssetPort implements AssetPort {
         revision: this.manifestRevision,
       };
     } catch (cause) {
+      this.releaseReference(key);
       const classified = this.classifyError(cause, asset);
       const item = failure(key, this.manifestRevision, classified);
       this.lastFailures.set(key, item);
@@ -432,11 +432,12 @@ export class ManifestCocosAssetPort implements AssetPort {
           failures.push(mismatch);
           return;
         }
+        this.referenceCounts.set(key, (this.referenceCounts.get(key) ?? 0) + 1);
         try {
           await this.loadKey(asset);
           alreadyLoaded.add(key);
-          this.referenceCounts.set(key, (this.referenceCounts.get(key) ?? 0) + 1);
         } catch (cause) {
+          this.releaseReference(key);
           const classified = this.classifyError(cause, asset);
           const item = failure(key, this.manifestRevision, classified);
           this.lastFailures.set(key, item);

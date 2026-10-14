@@ -1,0 +1,47 @@
+{
+  "revision": 2,
+  "variants": [
+    {
+      "id": "01",
+      "name": "游丝"
+    },
+    {
+      "id": "02",
+      "name": "悬针"
+    },
+    {
+      "id": "03",
+      "name": "疏影"
+    },
+    {
+      "id": "04",
+      "name": "墨点"
+    },
+    {
+      "id": "05",
+      "name": "月弧"
+    },
+    {
+      "id": "06",
+      "name": "剑锋"
+    },
+    {
+      "id": "07",
+      "name": "页边"
+    },
+    {
+      "id": "08",
+      "name": "听雨"
+    },
+    {
+      "id": "09",
+      "name": "墨字"
+    },
+    {
+      "id": "10",
+      "name": "游标"
+    }
+  ],
+  "newDependencies": 0,
+  "productionEdited": false
+}

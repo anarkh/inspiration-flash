@@ -196,8 +196,12 @@ async function checkAssetManifestExtensionBoundaries() {
   ));
   const cases = [
     ["current count drift", (value) => { value.assetCount -= 1; }, "assetCount field"],
-    ["migrated metadata drift", (value) => { value.assets[0].alt = "changed"; }, "frozen Web manifestRevision"],
-    ["migrated source removed", (value) => { delete value.assets[0].webSourcePath; }, "frozen Web asset count"],
+    ["migrated metadata drift", (value) => {
+      value.assets.find((asset) => asset.key === fixture.expected.sample.key).alt = "changed";
+    }, "frozen Web manifestRevision"],
+    ["migrated source removed", (value) => {
+      delete value.assets.find((asset) => asset.key === fixture.expected.sample.key).webSourcePath;
+    }, "frozen Web asset count"],
     ["new atlas byte hash drift", (value) => {
       value.assets.find((asset) => asset.key === "character:reincarnator_walk").targetSha256 = "0".repeat(64);
     }, "physical SHA-256"],
@@ -453,7 +457,7 @@ function copyPath(source, destination) {
 }
 
 function createCleanGitRepository(root) {
-  const repository = join(root, "repository");
+  const repository = join(root, "infinite-flow-wechat");
   mkdirSync(repository, { mode: 0o700 });
   runGit(repository, ["init", "--quiet"]);
   runGit(repository, ["config", "user.name", "Migration Runner Self Check"]);
@@ -463,6 +467,7 @@ function createCleanGitRepository(root) {
     "package.json",
     "package-lock.json",
     "acceptance",
+    "art-source/style-refresh/before/manifest-entries.json",
     "toolchain/cocos-toolchain.lock.json",
     "cocos/assets/config/asset-manifest.json",
     "cocos/assets/resources",
@@ -475,6 +480,29 @@ function createCleanGitRepository(root) {
     "scripts/npm-toolchain.mjs",
   ]) {
     copyPath(resolve(projectRoot, relativePath), resolve(repository, relativePath));
+  }
+  const assetManifest = JSON.parse(readFileSync(
+    resolve(projectRoot, "cocos/assets/config/asset-manifest.json"),
+    "utf8",
+  ));
+  const beforeRefresh = JSON.parse(readFileSync(
+    resolve(projectRoot, "art-source/style-refresh/before/manifest-entries.json"),
+    "utf8",
+  ));
+  const replacedWebAssets = beforeRefresh.assets.filter(
+    (asset) => typeof asset.webSourcePath === "string",
+  );
+  const replacedWebKeys = new Set(replacedWebAssets.map((asset) => asset.key));
+  const sourceFiles = new Set([
+    ...assetManifest.assets.filter((asset) => (
+      typeof asset.webSourcePath === "string" || replacedWebKeys.has(asset.key)
+    )),
+    ...replacedWebAssets,
+  ].map((asset) => asset.sourceFile));
+  // Preserve the documented repository-relative sourceFile layout, including
+  // the unchanged Web originals beside the isolated Cocos project.
+  for (const sourceFile of sourceFiles) {
+    copyPath(resolve(projectRoot, "..", sourceFile), resolve(root, sourceFile));
   }
   for (const name of workspacePackages) {
     for (const relativePath of [

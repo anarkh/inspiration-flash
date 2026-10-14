@@ -1,0 +1,8 @@
+Use case: style-transfer
+Asset type: standalone transparent RPG inventory icon, one single asset for an HTML style prototype.
+Input images: Image 1 is the existing bastion-chitin icon to reinterpret; Image 2 demon-bone is the style reference for muted, ancient, weathered hand-painted physical material.
+Primary request: Repaint one single ancient weathered chitin armor plate. Keep a readable curved, overlapping armored-plate silhouette like Image 1. Match Image 2's restrained, low-saturation, softly hand-painted realism. The object should feel excavated, tactile and old, not magical or polished.
+Composition: square canvas, isolated centered object occupying 70-80 percent of the width and height; broad simple silhouette immediately legible at 48 pixels; comfortably clear alpha margins on all sides. Three-quarter front view, single coherent item, no extra shards or adjacent objects.
+Materials: layered gray-olive carapace, ash-brown worn ridges, natural pitting and scuffed edges. Broad painterly texture rather than hyper-detailed noise. Muted natural highlights, soft diffuse lighting.
+Background: genuine fully transparent alpha outside the single object, no ground plane and no cast shadow outside the object.
+Constraints: one object only, no frame, no text, no symbol labels, no thick outlines, no neon, no rim glow, no bright magic, no sparks, no watermark, no background scenery. Preserve alpha.

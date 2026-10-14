@@ -1,0 +1,36 @@
+{
+  "packetPath": "/tmp/infinite-flow-equipment-claim-sync-20261012/natural-offer-packet.json",
+  "packetReadbackEqual": true,
+  "formalClientRestoreEqual": true,
+  "stoppedPhase": "combat",
+  "enemyId": "tower_butcher",
+  "enemyHp": 66,
+  "boost": {
+    "body": 40,
+    "agility": 20,
+    "hp": "filled once before the run from official derived maxHp"
+  },
+  "initialOwnedCount": 7,
+  "preparedCommandCount": 8,
+  "revision": {
+    "durableRevision": 8,
+    "ledgerRevision": 8,
+    "acceptingInput": true
+  },
+  "nextCommand": {
+    "type": "combat/act",
+    "action": "attack"
+  },
+  "naturalOffer": {
+    "equipmentIds": [
+      "bone_spear",
+      "mist_hood",
+      "spirit_robe"
+    ],
+    "offerId": "dungeon-loot:demon_tower_1:tower_butcher_patrol"
+  },
+  "verification": "Separate cloned storage replay confirmed one natural attack generates the exact three candidates, then official claim and equip both commit.",
+  "clonedReplayClaimStatus": "committed",
+  "clonedReplayEquipStatus": "committed",
+  "exportedStorageStillPreAttack": true
+}

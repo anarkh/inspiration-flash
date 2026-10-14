@@ -1,0 +1,118 @@
+{
+  "date": "2026-10-12",
+  "scope": "standalone-prototype-only",
+  "viewport390": {
+    "cardCount": 19,
+    "cardHeight": 84,
+    "dock": {
+      "bottom": 958,
+      "height": 109,
+      "top": 849,
+      "width": 364,
+      "x": 123,
+      "y": 849
+    },
+    "entryEnabled": true,
+    "fullCards": 6,
+    "list": {
+      "bottom": 849,
+      "height": 572.5,
+      "top": 276.5,
+      "width": 364,
+      "x": 123,
+      "y": 276.5
+    },
+    "noHorizontalOverflow": true,
+    "scrollTop": 0,
+    "selected": "妖塔一层",
+    "stage": {
+      "bottom": 983,
+      "height": 844,
+      "top": 139,
+      "width": 390,
+      "x": 110,
+      "y": 139
+    }
+  },
+  "viewport320": {
+    "cardCount": 19,
+    "cardHeight": 76,
+    "dock": {
+      "bottom": 690,
+      "height": 107,
+      "top": 583,
+      "width": 302,
+      "x": 154,
+      "y": 583
+    },
+    "entryEnabled": true,
+    "fullCards": 4,
+    "list": {
+      "bottom": 583,
+      "height": 330.5,
+      "top": 252.5,
+      "width": 302,
+      "x": 154,
+      "y": 252.5
+    },
+    "noHorizontalOverflow": true,
+    "scrollTop": 0,
+    "selected": "妖塔一层",
+    "stage": {
+      "bottom": 707,
+      "height": 568,
+      "top": 139,
+      "width": 320,
+      "x": 145,
+      "y": 139
+    }
+  },
+  "scrollToLast": {
+    "cardCount": 19,
+    "cardHeight": 84,
+    "dock": {
+      "bottom": 958,
+      "height": 109,
+      "top": 849,
+      "width": 364,
+      "x": 123,
+      "y": 849
+    },
+    "entryEnabled": false,
+    "fullCards": 6,
+    "list": {
+      "bottom": 849,
+      "height": 572.5,
+      "top": 276.5,
+      "width": 364,
+      "x": 123,
+      "y": 276.5
+    },
+    "noHorizontalOverflow": true,
+    "scrollTop": 1177.5,
+    "selected": "天幕监察城",
+    "stage": {
+      "bottom": 983,
+      "height": 844,
+      "top": 139,
+      "width": 390,
+      "x": 110,
+      "y": 139
+    }
+  },
+  "dockStayedFixed": true,
+  "entryFlow": {
+    "panelHidden": true,
+    "preparation": "标准探索 · 守御回响",
+    "resultVisible": true,
+    "title": "妖塔一层"
+  },
+  "lockedLongName": {
+    "cardTitleFits": true,
+    "detail": "完成并领取「删界终稿院主线」",
+    "disabled": true,
+    "noHorizontalOverflow": true,
+    "title": "亡队遗产拍卖庭"
+  },
+  "errors": []
+}

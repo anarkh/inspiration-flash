@@ -1,0 +1,24 @@
+{
+  "id": "portal-08",
+  "title": "枯木山门",
+  "tool": "image_gen.imagegen",
+  "transparent_background": true,
+  "source_path": "/Users/bytedance/.codex/generated_images/01a11978-834a-79a3-85fb-08271558cdce/exec-4224fced-a886-491e-bc86-2eba676e0677.png",
+  "saved_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/dungeon-portals-ten/assets/portal-08.png",
+  "prompt_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/dungeon-portals-ten/assets/portal-08.prompt.txt",
+  "source_sha256": "475674f19e70bb2a9d685cacd3015077439ea2042f37dbb73aba7a630542e098",
+  "saved_sha256": "475674f19e70bb2a9d685cacd3015077439ea2042f37dbb73aba7a630542e098",
+  "width": 1374,
+  "height": 1145,
+  "mode": "RGBA",
+  "alpha_extrema": [
+    0,
+    255
+  ],
+  "fully_transparent_pixels": 898390,
+  "partially_transparent_pixels": 673527,
+  "opaque_pixels": 1313,
+  "byte_for_byte_copy": true,
+  "post_processing": "none",
+  "visual_review": "Crooked timber lintel, coarse root silhouette, broken blue-grey stone feet, small cold mist at base. Clear oblique overhead perspective and large transparent passage."
+}

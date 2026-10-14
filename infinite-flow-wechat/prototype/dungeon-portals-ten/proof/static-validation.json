@@ -1,0 +1,182 @@
+{
+  "status": "PASS",
+  "assetCount": 10,
+  "uniqueAssets": true,
+  "assets": [
+    {
+      "id": "portal-01",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2291302,
+      "sha256": "46eaf3e91099c03bb83a0cc3a43066edb201c67512cc18edf3b098b41cb97969",
+      "sourceCopyExact": true,
+      "pngColorType": "RGBA",
+      "prompt": "assets/portal-01.prompt.txt"
+    },
+    {
+      "id": "portal-02",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1698637,
+      "sha256": "74db57e769daa0dbcd9a1ea5c803475eede23836120f1b07d4e425c6d463935e",
+      "sourceCopyExact": true,
+      "pngColorType": "RGBA",
+      "prompt": "assets/portal-02.prompt.txt"
+    },
+    {
+      "id": "portal-03",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 2449269,
+      "sha256": "4e9d5ee713e6153f4aeb0bead244187835470b509619b04dd045ac9d32b4a8dd",
+      "sourceCopyExact": true,
+      "pngColorType": "RGBA",
+      "prompt": "assets/portal-03.prompt.txt"
+    },
+    {
+      "id": "portal-04",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2129836,
+      "sha256": "732a6e368f6dcaf9b3fc3acfbb3b897231741190d85b07bd8099cbf31cb36e20",
+      "sourceCopyExact": true,
+      "pngColorType": "RGBA",
+      "prompt": "assets/portal-04.prompt.txt"
+    },
+    {
+      "id": "portal-05",
+      "width": 1068,
+      "height": 1473,
+      "bytes": 2279261,
+      "sha256": "5dd2c93c767618c2a578324a8798b4aee2a83fe8631464d3391932854a9787c1",
+      "sourceCopyExact": true,
+      "pngColorType": "RGBA",
+      "prompt": "assets/portal-05.prompt.txt"
+    },
+    {
+      "id": "portal-06",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 2497392,
+      "sha256": "0cf554f3aa61b7831771d6a13b7ad038a0abb3e0270f14be2d26db80572afc01",
+      "sourceCopyExact": true,
+      "pngColorType": "RGBA",
+      "prompt": "assets/portal-06.prompt.txt"
+    },
+    {
+      "id": "portal-07",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 2235361,
+      "sha256": "913b4d2b4bc2ce31dc6ce4794f663ecaa79468804fbc3f1842e2185cffafab77",
+      "sourceCopyExact": true,
+      "pngColorType": "RGBA",
+      "prompt": "assets/portal-07.prompt.txt"
+    },
+    {
+      "id": "portal-08",
+      "width": 1374,
+      "height": 1145,
+      "bytes": 1597611,
+      "sha256": "475674f19e70bb2a9d685cacd3015077439ea2042f37dbb73aba7a630542e098",
+      "sourceCopyExact": true,
+      "pngColorType": "RGBA",
+      "prompt": "assets/portal-08.prompt.txt"
+    },
+    {
+      "id": "portal-09",
+      "width": 1072,
+      "height": 1467,
+      "bytes": 1719303,
+      "sha256": "a8be6ffd45a3350ddae9ac9e03d8ac2d2972125590923e9eebbbc54d8520b228",
+      "sourceCopyExact": true,
+      "pngColorType": "RGBA",
+      "prompt": "assets/portal-09.prompt.txt"
+    },
+    {
+      "id": "portal-10",
+      "width": 1072,
+      "height": 1467,
+      "bytes": 1581085,
+      "sha256": "f0dd536b07c4866eaf937eaeda26d607e97b8b772c3706df2b273f28325278ee",
+      "sourceCopyExact": true,
+      "pngColorType": "RGBA",
+      "prompt": "assets/portal-10.prompt.txt"
+    }
+  ],
+  "http": [
+    {
+      "path": "prototype/dungeon-portals-ten/index.html",
+      "httpStatus": 200
+    },
+    {
+      "path": "prototype/dungeon-portals-ten/styles.css",
+      "httpStatus": 200
+    },
+    {
+      "path": "prototype/dungeon-portals-ten/app.js",
+      "httpStatus": 200
+    },
+    {
+      "path": "prototype/dungeon-portals-ten/assets/portal-01.png",
+      "httpStatus": 200
+    },
+    {
+      "path": "prototype/dungeon-portals-ten/assets/portal-02.png",
+      "httpStatus": 200
+    },
+    {
+      "path": "prototype/dungeon-portals-ten/assets/portal-03.png",
+      "httpStatus": 200
+    },
+    {
+      "path": "prototype/dungeon-portals-ten/assets/portal-04.png",
+      "httpStatus": 200
+    },
+    {
+      "path": "prototype/dungeon-portals-ten/assets/portal-05.png",
+      "httpStatus": 200
+    },
+    {
+      "path": "prototype/dungeon-portals-ten/assets/portal-06.png",
+      "httpStatus": 200
+    },
+    {
+      "path": "prototype/dungeon-portals-ten/assets/portal-07.png",
+      "httpStatus": 200
+    },
+    {
+      "path": "prototype/dungeon-portals-ten/assets/portal-08.png",
+      "httpStatus": 200
+    },
+    {
+      "path": "prototype/dungeon-portals-ten/assets/portal-09.png",
+      "httpStatus": 200
+    },
+    {
+      "path": "prototype/dungeon-portals-ten/assets/portal-10.png",
+      "httpStatus": 200
+    },
+    {
+      "path": "cocos/assets/resources/dungeon-world/demon_tower_1-v1.png",
+      "httpStatus": 200
+    },
+    {
+      "path": "cocos/assets/resources/dungeon-world/metro_abyss-v1.png",
+      "httpStatus": 200
+    },
+    {
+      "path": "cocos/assets/resources/dungeon-world/starfall_mine-v1.png",
+      "httpStatus": 200
+    },
+    {
+      "path": "cocos/assets/resources/character/reincarnator-walk-v1.png",
+      "httpStatus": 200
+    },
+    {
+      "path": "prototype/dungeon-transition/assets/ruined-stone-gate-v1.png",
+      "httpStatus": 200
+    }
+  ],
+  "scope": "Standalone HTML prototype; no production assets, manifests, domain or storage changed."
+}

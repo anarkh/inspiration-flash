@@ -1,0 +1,136 @@
+{
+  "url": "http://127.0.0.1:8125/prototype/modal-system-v1/index.html#system-loading",
+  "object": "local HTML prototype only",
+  "checks": [
+    {
+      "check": "claim-opens-relic-without-preselect",
+      "pass": true
+    },
+    {
+      "check": "claimed-relic-close-does-not-return-to-unclaimed-chest",
+      "pass": true
+    },
+    {
+      "check": "relic-choice-updates-label-in-same-modal",
+      "pass": true
+    },
+    {
+      "check": "reopen-preserves-relic-selection",
+      "pass": true
+    },
+    {
+      "check": "relic-confirm-closes-with-inline-feedback",
+      "pass": true
+    },
+    {
+      "check": "equipment-requires-choice",
+      "pass": true
+    },
+    {
+      "check": "equipment-selection-shows-attributes-in-same-modal",
+      "pass": true
+    },
+    {
+      "check": "character-has-seven-equipment-slots",
+      "pass": true
+    },
+    {
+      "check": "character-slot-opens-matching-readonly-equipment",
+      "pass": true
+    },
+    {
+      "check": "nested-equipment-close-returns-to-character",
+      "pass": true
+    },
+    {
+      "check": "bag-has-100-cells-and-scrollable-body",
+      "pass": true
+    },
+    {
+      "check": "tabs-close-whole-modal-without-going-back-to-previous-tab",
+      "pass": true
+    },
+    {
+      "check": "merchant-opens-sword-details",
+      "pass": true
+    },
+    {
+      "check": "merchant-more-actions-opens-nested-layer",
+      "pass": true
+    },
+    {
+      "check": "more-actions-close-returns-to-details",
+      "pass": true
+    },
+    {
+      "check": "withdraw-service-requests-confirmation",
+      "pass": true
+    },
+    {
+      "check": "service-cancel-returns-to-service",
+      "pass": true
+    },
+    {
+      "check": "entry-requires-world-selection",
+      "pass": true
+    },
+    {
+      "check": "entry-selection-enables-enter-in-same-list",
+      "pass": true
+    },
+    {
+      "check": "protocol-initially-unselected",
+      "pass": true
+    },
+    {
+      "check": "protocol-choice-enables-confirm",
+      "pass": true
+    },
+    {
+      "check": "spell-click-direct-feedback-without-confirm-modal",
+      "pass": true
+    },
+    {
+      "check": "medicine-click-direct-feedback-without-confirm-modal",
+      "pass": true
+    },
+    {
+      "check": "archive-requires-choice",
+      "pass": true
+    },
+    {
+      "check": "archive-selection-enables-confirm",
+      "pass": true
+    },
+    {
+      "check": "locked-entry-disabled-with-actual-requirement",
+      "pass": true
+    },
+    {
+      "check": "archive-completion-enables-return-to-hub",
+      "pass": true
+    },
+    {
+      "check": "escape-on-completed-archive-closes-without-unarchiving",
+      "pass": true
+    },
+    {
+      "check": "equipment-claim-closes-with-feedback",
+      "pass": true
+    },
+    {
+      "check": "skip-archive-enables-return",
+      "pass": true
+    },
+    {
+      "check": "completed-return-closes-without-unarchiving",
+      "pass": true
+    },
+    {
+      "check": "loading-cannot-be-dismissed-by-escape",
+      "pass": true
+    }
+  ],
+  "allPassed": true,
+  "consoleErrors": []
+}

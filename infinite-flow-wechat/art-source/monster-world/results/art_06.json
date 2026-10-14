@@ -1,0 +1,25 @@
+{
+  "entityId": "clockwork_scout",
+  "status": "complete",
+  "tool": "built-in imagegen",
+  "path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/art-source/monster-world/clockwork-scout-world-v1.png",
+  "sourcePath": "/Users/bytedance/.codex/generated_images/01a0ecb3-fa4d-7662-b7a8-569c99629f57/exec-1cd7bcd5-e87d-4a42-89be-0790e2808174.png",
+  "referencePath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/monster/clockwork-scout-v1.png",
+  "promptSource": "art-source/monster-world/prompts.json: sharedPrompt + subject for clockwork_scout",
+  "width": 1024,
+  "height": 1536,
+  "mode": "RGBA",
+  "alpha": {
+    "min": 0,
+    "max": 254,
+    "transparentPixels": 941948,
+    "transparentRatio": 0.5988744099934896,
+    "cornerAlpha": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "visualReview": "Complete full-body silhouette, telescope head and articulated old-bronze clockwork identity retained; restrained cyan temporal trails; no frame or text. Original generated PNG copied without image editing."
+}

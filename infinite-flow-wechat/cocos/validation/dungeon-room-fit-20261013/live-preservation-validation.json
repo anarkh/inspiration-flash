@@ -1,0 +1,29 @@
+{
+  "checks": {
+    "state": true,
+    "storage": true,
+    "durableStorage": true,
+    "durability": true,
+    "revision": true,
+    "remainingSeeds": true,
+    "localUiState": true,
+    "ui": true,
+    "mobileSheet": true,
+    "walk": true
+  },
+  "sourceTab": "19",
+  "targetTab": "20",
+  "phase": "explore",
+  "hp": 102,
+  "rewardPoints": 1155,
+  "revision": {
+    "acceptingInput": true,
+    "durableRevision": 9,
+    "ledgerRevision": 9
+  },
+  "pendingDraftPreserved": true,
+  "selectedRelicPreserved": true,
+  "sheetClosed": true,
+  "positionPreserved": true,
+  "seedConsumed": 0
+}

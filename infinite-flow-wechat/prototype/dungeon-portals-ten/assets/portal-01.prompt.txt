@@ -1,0 +1,10 @@
+Use case: stylized-concept.
+Asset type: one standalone transparent-background dungeon portal sprite for a dark Eastern fantasy 2.5D hand-painted realistic mobile game.
+Input image role: the provided dungeon image is STYLE AND CAMERA REFERENCE ONLY. Match its cold dark blue-gray weathered stone, restrained brown-gray accents, painterly game texture and elevated oblique camera. Do not reproduce its scenery.
+Subject: 残檐石阙 — a squat, broad ancient Chinese ruined stone ceremonial gateway, with one simple broken stone-tile eave roof. Wide dark passage beneath a low lintel, two irregular asymmetrical battered stone pillars, chipped roof corners and one visibly broken eave end. Big simple readable silhouettes, few broad surfaces. This should resemble an architectural relic naturally found in the reference dungeon.
+Camera: elevated 40-degree downward oblique three-quarter game view. Clearly show the roof TOP, lintel TOP, pillar side faces, and top surface of a single shallow threshold. Never eye-level or frontal.
+Composition: exactly one isolated game object, complete uncut silhouette, centered with feet near canvas bottom and a small transparent bottom margin; fill approximately 85% of the image. Broad low proportions, not tall or narrow. Readable when displayed at 122 by 167 logical pixels.
+Lighting/material: very dark charcoal and blue-black worn rough stone. Soft cool diffuse lighting, low saturation and low contrast matching reference. The opening is almost black with a tiny weak warm-gray glimmer at the threshold, no bright edge lighting.
+Background: GENUINELY TRANSPARENT PNG alpha around the object. No backdrop or scene. No surrounding ground square, floor tile platform, large cast shadow or cutout rectangle. A small integrated threshold is allowed.
+Avoid: Western arch, semicircular arch, narrow upright doorway, bright gold trim, ornate decoration, intricate sigils, lettering, symbols resembling text, digits, neon, magical rings, floating particles, broad baked glow, people, vegetation, objects around the gate, card border, checkerboard pixels.
+Generate only this single isolated gateway asset.

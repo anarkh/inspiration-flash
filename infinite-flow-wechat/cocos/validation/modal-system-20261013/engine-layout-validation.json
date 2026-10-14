@@ -1,0 +1,2321 @@
+[
+  {
+    "id": "family-character",
+    "viewport": 390,
+    "assets": "ready",
+    "buttons": [
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": true,
+        "name": "MobileSheetOwnedLoadout",
+        "w": 110
+      }
+    ],
+    "h": 423,
+    "inSurface": true,
+    "kind": "character",
+    "scrolls": [
+      {
+        "contentHeight": 334,
+        "height": 300,
+        "name": "MobileSheetScroll"
+      }
+    ],
+    "spriteCount": 8,
+    "w": 304
+  },
+  {
+    "id": "family-inventory",
+    "viewport": 390,
+    "assets": "ready",
+    "buttons": [],
+    "h": 464,
+    "inSurface": true,
+    "kind": "inventory",
+    "scrolls": [
+      {
+        "contentHeight": 1111,
+        "height": 275.00000000000006,
+        "name": "MobileSheetScroll"
+      }
+    ],
+    "spriteCount": 3,
+    "w": 304
+  },
+  {
+    "id": "family-map",
+    "viewport": 390,
+    "assets": "ready",
+    "buttons": [],
+    "h": 464,
+    "inSurface": true,
+    "kind": "map",
+    "scrolls": [
+      {
+        "contentHeight": 235.33333333333337,
+        "height": 235.33333333333337,
+        "name": "MobileSheetMapScroll"
+      }
+    ],
+    "spriteCount": 0,
+    "w": 304,
+    "errors": []
+  },
+  {
+    "id": "family-objectives",
+    "viewport": 390,
+    "assets": "ready",
+    "buttons": [
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": true,
+        "insideScroll": false,
+        "name": "MobileSheetObjectiveRules",
+        "w": 89
+      }
+    ],
+    "h": 420,
+    "inSurface": true,
+    "kind": "objectives",
+    "scrolls": [
+      {
+        "contentHeight": 286,
+        "height": 272.00000000000006,
+        "name": "MobileSheetTaskScroll"
+      }
+    ],
+    "spriteCount": 0,
+    "w": 304,
+    "errors": []
+  },
+  {
+    "id": "family-log",
+    "viewport": 390,
+    "assets": "ready",
+    "buttons": [],
+    "h": 265,
+    "inSurface": true,
+    "kind": "log",
+    "scrolls": [
+      {
+        "contentHeight": 192.99999999999997,
+        "height": 192.99999999999997,
+        "name": "MobileSheetScroll"
+      }
+    ],
+    "spriteCount": 0,
+    "w": 304,
+    "errors": []
+  },
+  {
+    "id": "family-menu",
+    "viewport": 390,
+    "assets": "ready",
+    "buttons": [],
+    "h": 372,
+    "inSurface": true,
+    "kind": "menu",
+    "scrolls": [
+      {
+        "contentHeight": 522,
+        "height": 300,
+        "name": "MobileSheetScroll"
+      }
+    ],
+    "spriteCount": 0,
+    "w": 304,
+    "errors": []
+  },
+  {
+    "id": "family-interaction",
+    "viewport": 390,
+    "assets": "ready",
+    "buttons": [
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": true,
+        "insideScroll": false,
+        "name": "MobileSheetExecute:none",
+        "w": 148
+      }
+    ],
+    "h": 449,
+    "inSurface": true,
+    "kind": "interaction",
+    "scrolls": [
+      {
+        "contentHeight": 274,
+        "height": 274,
+        "name": "MobileSheetScroll"
+      }
+    ],
+    "spriteCount": 0,
+    "w": 304,
+    "errors": []
+  },
+  {
+    "id": "family-entry",
+    "viewport": 390,
+    "assets": "ready",
+    "buttons": [
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": true,
+        "insideScroll": false,
+        "name": "MobileSheetEntryConfirm",
+        "w": 110
+      }
+    ],
+    "h": 464,
+    "inSurface": true,
+    "kind": "entry",
+    "scrolls": [
+      {
+        "contentHeight": 2140,
+        "height": 276.00000000000006,
+        "name": "MobileSheetEntryDungeonScroll"
+      }
+    ],
+    "spriteCount": 19,
+    "w": 304,
+    "errors": []
+  },
+  {
+    "id": "family-npc",
+    "viewport": 390,
+    "assets": "ready",
+    "buttons": [
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": true,
+        "insideScroll": false,
+        "name": "MobileSheetShopServices",
+        "w": 122.28
+      }
+    ],
+    "h": 464,
+    "inSurface": true,
+    "kind": "npc",
+    "scrolls": [
+      {
+        "contentHeight": 745,
+        "height": 266,
+        "name": "MobileSheetCatalogScroll"
+      }
+    ],
+    "spriteCount": 10,
+    "w": 304,
+    "errors": []
+  },
+  {
+    "id": "family-help",
+    "viewport": 390,
+    "assets": "ready",
+    "buttons": [],
+    "h": 372,
+    "inSurface": true,
+    "kind": "help",
+    "scrolls": [
+      {
+        "contentHeight": 1388,
+        "height": 300,
+        "name": "MobileSheetScroll"
+      }
+    ],
+    "spriteCount": 0,
+    "w": 304,
+    "errors": []
+  },
+  {
+    "id": "family-result",
+    "viewport": 390,
+    "assets": "ready",
+    "buttons": [],
+    "h": 464,
+    "inSurface": true,
+    "kind": "result",
+    "scrolls": [
+      {
+        "contentHeight": 680.9999999999999,
+        "height": 300,
+        "name": "MobileSheetScroll"
+      }
+    ],
+    "spriteCount": 0,
+    "w": 304,
+    "errors": []
+  },
+  {
+    "id": "catalog-supplies",
+    "viewport": 390,
+    "assets": "ready",
+    "buttons": [
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": true,
+        "insideScroll": false,
+        "name": "MobileSheetShopServices",
+        "w": 96.28
+      }
+    ],
+    "h": 464,
+    "inSurface": true,
+    "kind": "npc",
+    "scrolls": [
+      {
+        "contentHeight": 266,
+        "height": 266,
+        "name": "MobileSheetCatalogScroll"
+      }
+    ],
+    "spriteCount": 10,
+    "w": 304,
+    "errors": []
+  },
+  {
+    "id": "catalog-equipment",
+    "viewport": 390,
+    "assets": "ready",
+    "buttons": [
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": true,
+        "insideScroll": false,
+        "name": "MobileSheetShopServices",
+        "w": 122.28
+      }
+    ],
+    "h": 464,
+    "inSurface": true,
+    "kind": "npc",
+    "scrolls": [
+      {
+        "contentHeight": 745,
+        "height": 266,
+        "name": "MobileSheetCatalogScroll"
+      }
+    ],
+    "spriteCount": 10,
+    "w": 304,
+    "errors": []
+  },
+  {
+    "id": "catalog-pets",
+    "viewport": 390,
+    "assets": "ready",
+    "buttons": [],
+    "h": 464,
+    "inSurface": true,
+    "kind": "npc",
+    "scrolls": [
+      {
+        "contentHeight": 300,
+        "height": 300,
+        "name": "MobileSheetCatalogScroll"
+      }
+    ],
+    "spriteCount": 7,
+    "w": 304,
+    "errors": []
+  },
+  {
+    "id": "catalog-methods",
+    "viewport": 390,
+    "assets": "ready",
+    "buttons": [],
+    "h": 464,
+    "inSurface": true,
+    "kind": "npc",
+    "scrolls": [
+      {
+        "contentHeight": 300,
+        "height": 300,
+        "name": "MobileSheetCatalogScroll"
+      }
+    ],
+    "spriteCount": 8,
+    "w": 304,
+    "errors": []
+  },
+  {
+    "id": "catalog-bloodlines",
+    "viewport": 390,
+    "assets": "ready",
+    "buttons": [],
+    "h": 464,
+    "inSurface": true,
+    "kind": "npc",
+    "scrolls": [
+      {
+        "contentHeight": 300,
+        "height": 300,
+        "name": "MobileSheetCatalogScroll"
+      }
+    ],
+    "spriteCount": 5,
+    "w": 304,
+    "errors": []
+  },
+  {
+    "id": "catalog-companions",
+    "viewport": 390,
+    "assets": "ready",
+    "buttons": [],
+    "h": 464,
+    "inSurface": true,
+    "kind": "npc",
+    "scrolls": [
+      {
+        "contentHeight": 300,
+        "height": 300,
+        "name": "MobileSheetCatalogScroll"
+      }
+    ],
+    "spriteCount": 4,
+    "w": 304,
+    "errors": []
+  },
+  {
+    "id": "catalog-tasks",
+    "viewport": 390,
+    "assets": "ready",
+    "buttons": [
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": true,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:mainline_clear_demon_tower_1::tasks/mainline_clear_demon_tower_1",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": true,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_enter_demon_tower_1::tasks/side_enter_demon_tower_1",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": true,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_directive_demon_tower_1::tasks/side_directive_demon_tower_1",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_recruit_first_companion::tasks/side_recruit_first_companion",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_unlock_first_bloodline::tasks/side_unlock_first_bloodline",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:mainline_clear_metro_abyss::tasks/mainline_clear_metro_abyss",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:mainline_clear_starfall_mine::tasks/mainline_clear_starfall_mine",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:mainline_clear_rust_hospital::tasks/mainline_clear_rust_hospital",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:mainline_clear_ash_arena::tasks/mainline_clear_ash_arena",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:mainline_clear_dream_archive::tasks/mainline_clear_dream_archive",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:mainline_clear_void_citadel::tasks/mainline_clear_void_citadel",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:mainline_clear_temporal_observatory::tasks/mainline_clear_temporal_observatory",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:mainline_clear_causal_clearinghouse::tasks/mainline_clear_causal_clearinghouse",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:mainline_clear_entropy_ark::tasks/mainline_clear_entropy_ark",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:mainline_clear_mirror_cycle_city::tasks/mainline_clear_mirror_cycle_city",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:mainline_clear_redaction_scriptorium::tasks/mainline_clear_redaction_scriptorium",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:mainline_clear_legacy_auction_court::tasks/mainline_clear_legacy_auction_court",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:mainline_clear_genesis_vault::tasks/mainline_clear_genesis_vault",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:mainline_clear_silent_broadcast_tower::tasks/mainline_clear_silent_broadcast_tower",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:mainline_clear_lost_shelter::tasks/mainline_clear_lost_shelter",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:mainline_clear_false_testimony_court::tasks/mainline_clear_false_testimony_court",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:mainline_clear_combat_replay_stage::tasks/mainline_clear_combat_replay_stage",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:mainline_clear_panopticon_city::tasks/mainline_clear_panopticon_city",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_enter_metro_abyss::tasks/side_enter_metro_abyss",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_directive_metro_abyss::tasks/side_directive_metro_abyss",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_enter_starfall_mine::tasks/side_enter_starfall_mine",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_directive_starfall_mine::tasks/side_directive_starfall_mine",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_enter_rust_hospital::tasks/side_enter_rust_hospital",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_directive_rust_hospital::tasks/side_directive_rust_hospital",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_enter_ash_arena::tasks/side_enter_ash_arena",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_directive_ash_arena::tasks/side_directive_ash_arena",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_enter_dream_archive::tasks/side_enter_dream_archive",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_directive_dream_archive::tasks/side_directive_dream_archive",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_enter_void_citadel::tasks/side_enter_void_citadel",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_directive_void_citadel::tasks/side_directive_void_citadel",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_enter_temporal_observatory::tasks/side_enter_temporal_observatory",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_directive_temporal_observatory::tasks/side_directive_temporal_observatory",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_enter_causal_clearinghouse::tasks/side_enter_causal_clearinghouse",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_directive_causal_clearinghouse::tasks/side_directive_causal_clearinghouse",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_enter_entropy_ark::tasks/side_enter_entropy_ark",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_directive_entropy_ark::tasks/side_directive_entropy_ark",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_enter_mirror_cycle_city::tasks/side_enter_mirror_cycle_city",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_directive_mirror_cycle_city::tasks/side_directive_mirror_cycle_city",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_enter_redaction_scriptorium::tasks/side_enter_redaction_scriptorium",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_directive_redaction_scriptorium::tasks/side_directive_redaction_scriptorium",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_enter_legacy_auction_court::tasks/side_enter_legacy_auction_court",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_directive_legacy_auction_court::tasks/side_directive_legacy_auction_court",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_enter_genesis_vault::tasks/side_enter_genesis_vault",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_directive_genesis_vault::tasks/side_directive_genesis_vault",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_enter_silent_broadcast_tower::tasks/side_enter_silent_broadcast_tower",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_directive_silent_broadcast_tower::tasks/side_directive_silent_broadcast_tower",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_enter_lost_shelter::tasks/side_enter_lost_shelter",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_directive_lost_shelter::tasks/side_directive_lost_shelter",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_enter_false_testimony_court::tasks/side_enter_false_testimony_court",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_directive_false_testimony_court::tasks/side_directive_false_testimony_court",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_enter_combat_replay_stage::tasks/side_enter_combat_replay_stage",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_directive_combat_replay_stage::tasks/side_directive_combat_replay_stage",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_enter_panopticon_city::tasks/side_enter_panopticon_city",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_directive_panopticon_city::tasks/side_directive_panopticon_city",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_train_companion_rank_2::tasks/side_train_companion_rank_2",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_refine_first_method_rank_2::tasks/side_refine_first_method_rank_2",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_master_first_method_rank_3::tasks/side_master_first_method_rank_3",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_master_first_bloodline_rank_3::tasks/side_master_first_bloodline_rank_3",
+        "w": 84
+      }
+    ],
+    "h": 464,
+    "inSurface": true,
+    "kind": "npc",
+    "scrolls": [
+      {
+        "contentHeight": 6961.999999999995,
+        "height": 300,
+        "name": "MobileSheetCatalogScroll"
+      }
+    ],
+    "spriteCount": 1,
+    "w": 304,
+    "errors": []
+  },
+  {
+    "id": "pending-equipment-offer",
+    "viewport": 390,
+    "assets": "ready",
+    "buttons": [
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": true,
+        "insideScroll": false,
+        "name": "MobileSheetEquipmentClaim",
+        "w": 148
+      }
+    ],
+    "h": 372,
+    "inSurface": true,
+    "kind": "interaction",
+    "scrolls": [
+      {
+        "contentHeight": 248,
+        "height": 247.99999999999997,
+        "name": "MobileSheetScroll"
+      }
+    ],
+    "spriteCount": 3,
+    "w": 304,
+    "errors": []
+  },
+  {
+    "id": "pending-relic-draft",
+    "viewport": 390,
+    "assets": "ready",
+    "buttons": [
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": true,
+        "insideScroll": false,
+        "name": "MobileSheetRelicClaim",
+        "w": 148
+      }
+    ],
+    "h": 385,
+    "inSurface": true,
+    "kind": "interaction",
+    "scrolls": [
+      {
+        "contentHeight": 261,
+        "height": 261,
+        "name": "MobileSheetScroll"
+      }
+    ],
+    "spriteCount": 0,
+    "w": 304,
+    "errors": []
+  },
+  {
+    "id": "pending-field-survey",
+    "viewport": 390,
+    "assets": "ready",
+    "buttons": [
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": true,
+        "insideScroll": false,
+        "name": "MobileSheetExecute:none",
+        "w": 148
+      }
+    ],
+    "h": 372,
+    "inSurface": true,
+    "kind": "interaction",
+    "scrolls": [
+      {
+        "contentHeight": 197,
+        "height": 196.99999999999997,
+        "name": "MobileSheetScroll"
+      }
+    ],
+    "spriteCount": 0,
+    "w": 304,
+    "errors": []
+  },
+  {
+    "id": "pending-law",
+    "viewport": 390,
+    "assets": "ready",
+    "buttons": [
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": true,
+        "insideScroll": false,
+        "name": "MobileSheetExecute:none",
+        "w": 148
+      }
+    ],
+    "h": 372,
+    "inSurface": true,
+    "kind": "interaction",
+    "scrolls": [
+      {
+        "contentHeight": 197,
+        "height": 196.99999999999997,
+        "name": "MobileSheetScroll"
+      }
+    ],
+    "spriteCount": 0,
+    "w": 304,
+    "errors": []
+  },
+  {
+    "id": "pending-dungeon-event",
+    "viewport": 390,
+    "assets": "ready",
+    "buttons": [
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": true,
+        "insideScroll": false,
+        "name": "MobileSheetRewardClaim",
+        "w": 136.5
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": true,
+        "insideScroll": false,
+        "name": "MobileSheetRewardServices",
+        "w": 136.5
+      }
+    ],
+    "h": 391,
+    "inSurface": true,
+    "kind": "interaction",
+    "scrolls": [
+      {
+        "contentHeight": 267,
+        "height": 267,
+        "name": "MobileSheetScroll"
+      }
+    ],
+    "spriteCount": 3,
+    "w": 304,
+    "errors": []
+  },
+  {
+    "id": "pending-soul-recharge",
+    "viewport": 390,
+    "assets": "ready",
+    "buttons": [
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": true,
+        "insideScroll": false,
+        "name": "MobileSheetExecute:none",
+        "w": 148
+      }
+    ],
+    "h": 313,
+    "inSurface": true,
+    "kind": "interaction",
+    "scrolls": [
+      {
+        "contentHeight": 138,
+        "height": 137.99999999999997,
+        "name": "MobileSheetScroll"
+      }
+    ],
+    "spriteCount": 0,
+    "w": 304,
+    "errors": []
+  },
+  {
+    "id": "reward-watch_post_cache",
+    "viewport": 390,
+    "assets": "ready",
+    "buttons": [
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": true,
+        "insideScroll": false,
+        "name": "MobileSheetRewardClaim",
+        "w": 148
+      }
+    ],
+    "h": 267,
+    "inSurface": true,
+    "kind": "interaction",
+    "scrolls": [
+      {
+        "contentHeight": 143,
+        "height": 143,
+        "name": "MobileSheetScroll"
+      }
+    ],
+    "spriteCount": 2,
+    "w": 304,
+    "errors": []
+  },
+  {
+    "id": "reward-north_supply_niche",
+    "viewport": 390,
+    "assets": "ready",
+    "buttons": [
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": true,
+        "insideScroll": false,
+        "name": "MobileSheetRewardClaim",
+        "w": 148
+      }
+    ],
+    "h": 267,
+    "inSurface": true,
+    "kind": "interaction",
+    "scrolls": [
+      {
+        "contentHeight": 143,
+        "height": 143,
+        "name": "MobileSheetScroll"
+      }
+    ],
+    "spriteCount": 2,
+    "w": 304,
+    "errors": []
+  },
+  {
+    "id": "result-pending-archive",
+    "viewport": 390,
+    "assets": "ready",
+    "buttons": [],
+    "h": 464,
+    "inSurface": true,
+    "kind": "result",
+    "scrolls": [
+      {
+        "contentHeight": 527,
+        "height": 300,
+        "name": "MobileSheetScroll"
+      }
+    ],
+    "spriteCount": 0,
+    "w": 304,
+    "errors": []
+  },
+  {
+    "id": "family-character",
+    "viewport": 320,
+    "assets": "ready",
+    "buttons": [
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": true,
+        "insideScroll": true,
+        "name": "MobileSheetOwnedLoadout",
+        "w": 110
+      }
+    ],
+    "h": 413.1514242878561,
+    "inSurface": true,
+    "kind": "character",
+    "scrolls": [
+      {
+        "contentHeight": 334,
+        "height": 292.1514242878561,
+        "name": "MobileSheetScroll"
+      }
+    ],
+    "spriteCount": 8,
+    "w": 279.34032983508246,
+    "errors": []
+  },
+  {
+    "id": "family-inventory",
+    "viewport": 320,
+    "assets": "ready",
+    "buttons": [],
+    "h": 413.1514242878561,
+    "inSurface": true,
+    "kind": "inventory",
+    "scrolls": [
+      {
+        "contentHeight": 1017.3613193403298,
+        "height": 226.1514242878561,
+        "name": "MobileSheetScroll"
+      }
+    ],
+    "spriteCount": 3,
+    "w": 279.34032983508246,
+    "errors": []
+  },
+  {
+    "id": "family-map",
+    "viewport": 320,
+    "assets": "ready",
+    "buttons": [],
+    "h": 413.1514242878561,
+    "inSurface": true,
+    "kind": "map",
+    "scrolls": [
+      {
+        "contentHeight": 232,
+        "height": 193.15142428785617,
+        "name": "MobileSheetMapScroll"
+      }
+    ],
+    "spriteCount": 0,
+    "w": 279.34032983508246,
+    "errors": []
+  },
+  {
+    "id": "family-objectives",
+    "viewport": 320,
+    "assets": "ready",
+    "buttons": [
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": true,
+        "insideScroll": false,
+        "name": "MobileSheetObjectiveRules",
+        "w": 89
+      }
+    ],
+    "h": 413.1514242878561,
+    "inSurface": true,
+    "kind": "objectives",
+    "scrolls": [
+      {
+        "contentHeight": 286,
+        "height": 267.1514242878561,
+        "name": "MobileSheetTaskScroll"
+      }
+    ],
+    "spriteCount": 0,
+    "w": 279.34032983508246,
+    "errors": []
+  },
+  {
+    "id": "family-log",
+    "viewport": 320,
+    "assets": "ready",
+    "buttons": [],
+    "h": 262.99999999999994,
+    "inSurface": true,
+    "kind": "log",
+    "scrolls": [
+      {
+        "contentHeight": 193,
+        "height": 193,
+        "name": "MobileSheetScroll"
+      }
+    ],
+    "spriteCount": 0,
+    "w": 279.34032983508246,
+    "errors": []
+  },
+  {
+    "id": "family-menu",
+    "viewport": 320,
+    "assets": "ready",
+    "buttons": [],
+    "h": 369.99999999999994,
+    "inSurface": true,
+    "kind": "menu",
+    "scrolls": [
+      {
+        "contentHeight": 521.9999999999999,
+        "height": 300,
+        "name": "MobileSheetScroll"
+      }
+    ],
+    "spriteCount": 0,
+    "w": 279.34032983508246,
+    "errors": []
+  },
+  {
+    "id": "family-interaction",
+    "viewport": 320,
+    "assets": "ready",
+    "buttons": [
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": true,
+        "insideScroll": false,
+        "name": "MobileSheetExecute:none",
+        "w": 148
+      }
+    ],
+    "h": 413.1514242878561,
+    "inSurface": true,
+    "kind": "interaction",
+    "scrolls": [
+      {
+        "contentHeight": 274,
+        "height": 240.15142428785612,
+        "name": "MobileSheetScroll"
+      }
+    ],
+    "spriteCount": 0,
+    "w": 279.34032983508246,
+    "errors": []
+  },
+  {
+    "id": "family-entry",
+    "viewport": 320,
+    "assets": "ready",
+    "buttons": [
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": true,
+        "insideScroll": false,
+        "name": "MobileSheetEntryConfirm",
+        "w": 110
+      }
+    ],
+    "h": 413.1514242878561,
+    "inSurface": true,
+    "kind": "entry",
+    "scrolls": [
+      {
+        "contentHeight": 2140.000000000001,
+        "height": 227.15142428785612,
+        "name": "MobileSheetEntryDungeonScroll"
+      }
+    ],
+    "spriteCount": 19,
+    "w": 279.34032983508246,
+    "errors": []
+  },
+  {
+    "id": "family-npc",
+    "viewport": 320,
+    "assets": "ready",
+    "buttons": [
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": true,
+        "insideScroll": false,
+        "name": "MobileSheetShopServices",
+        "w": 122.28
+      }
+    ],
+    "h": 413.1514242878561,
+    "inSurface": true,
+    "kind": "npc",
+    "scrolls": [
+      {
+        "contentHeight": 683.4848575712143,
+        "height": 217.15142428785617,
+        "name": "MobileSheetCatalogScroll"
+      }
+    ],
+    "spriteCount": 66,
+    "w": 279.34032983508246,
+    "errors": []
+  },
+  {
+    "id": "family-help",
+    "viewport": 320,
+    "assets": "ready",
+    "buttons": [],
+    "h": 369.99999999999994,
+    "inSurface": true,
+    "kind": "help",
+    "scrolls": [
+      {
+        "contentHeight": 1388,
+        "height": 300,
+        "name": "MobileSheetScroll"
+      }
+    ],
+    "spriteCount": 0,
+    "w": 279.34032983508246,
+    "errors": []
+  },
+  {
+    "id": "family-result",
+    "viewport": 320,
+    "assets": "ready",
+    "buttons": [],
+    "h": 413.1514242878561,
+    "inSurface": true,
+    "kind": "result",
+    "scrolls": [
+      {
+        "contentHeight": 681,
+        "height": 292.1514242878561,
+        "name": "MobileSheetScroll"
+      }
+    ],
+    "spriteCount": 0,
+    "w": 279.34032983508246,
+    "errors": []
+  },
+  {
+    "id": "catalog-supplies",
+    "viewport": 320,
+    "assets": "ready",
+    "buttons": [
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": true,
+        "insideScroll": false,
+        "name": "MobileSheetShopServices",
+        "w": 96.28
+      }
+    ],
+    "h": 413.1514242878561,
+    "inSurface": true,
+    "kind": "npc",
+    "scrolls": [
+      {
+        "contentHeight": 217.15142428785617,
+        "height": 217.15142428785617,
+        "name": "MobileSheetCatalogScroll"
+      }
+    ],
+    "spriteCount": 10,
+    "w": 279.34032983508246,
+    "errors": []
+  },
+  {
+    "id": "catalog-equipment",
+    "viewport": 320,
+    "assets": "ready",
+    "buttons": [
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": true,
+        "insideScroll": false,
+        "name": "MobileSheetShopServices",
+        "w": 122.28
+      }
+    ],
+    "h": 413.1514242878561,
+    "inSurface": true,
+    "kind": "npc",
+    "scrolls": [
+      {
+        "contentHeight": 683.4848575712143,
+        "height": 217.15142428785617,
+        "name": "MobileSheetCatalogScroll"
+      }
+    ],
+    "spriteCount": 66,
+    "w": 279.34032983508246,
+    "errors": []
+  },
+  {
+    "id": "catalog-pets",
+    "viewport": 320,
+    "assets": "ready",
+    "buttons": [],
+    "h": 413.1514242878561,
+    "inSurface": true,
+    "kind": "npc",
+    "scrolls": [
+      {
+        "contentHeight": 267.1514242878561,
+        "height": 267.1514242878561,
+        "name": "MobileSheetCatalogScroll"
+      }
+    ],
+    "spriteCount": 7,
+    "w": 279.34032983508246,
+    "errors": []
+  },
+  {
+    "id": "catalog-methods",
+    "viewport": 320,
+    "assets": "ready",
+    "buttons": [],
+    "h": 413.1514242878561,
+    "inSurface": true,
+    "kind": "npc",
+    "scrolls": [
+      {
+        "contentHeight": 267.1514242878561,
+        "height": 267.1514242878561,
+        "name": "MobileSheetCatalogScroll"
+      }
+    ],
+    "spriteCount": 8,
+    "w": 279.34032983508246,
+    "errors": []
+  },
+  {
+    "id": "catalog-bloodlines",
+    "viewport": 320,
+    "assets": "ready",
+    "buttons": [],
+    "h": 413.1514242878561,
+    "inSurface": true,
+    "kind": "npc",
+    "scrolls": [
+      {
+        "contentHeight": 267.1514242878561,
+        "height": 267.1514242878561,
+        "name": "MobileSheetCatalogScroll"
+      }
+    ],
+    "spriteCount": 5,
+    "w": 279.34032983508246,
+    "errors": []
+  },
+  {
+    "id": "catalog-companions",
+    "viewport": 320,
+    "assets": "ready",
+    "buttons": [],
+    "h": 413.1514242878561,
+    "inSurface": true,
+    "kind": "npc",
+    "scrolls": [
+      {
+        "contentHeight": 267.1514242878561,
+        "height": 267.1514242878561,
+        "name": "MobileSheetCatalogScroll"
+      }
+    ],
+    "spriteCount": 4,
+    "w": 279.34032983508246,
+    "errors": []
+  },
+  {
+    "id": "catalog-tasks",
+    "viewport": 320,
+    "assets": "ready",
+    "buttons": [
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": true,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:mainline_clear_demon_tower_1::tasks/mainline_clear_demon_tower_1",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": true,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_enter_demon_tower_1::tasks/side_enter_demon_tower_1",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_directive_demon_tower_1::tasks/side_directive_demon_tower_1",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_recruit_first_companion::tasks/side_recruit_first_companion",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_unlock_first_bloodline::tasks/side_unlock_first_bloodline",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:mainline_clear_metro_abyss::tasks/mainline_clear_metro_abyss",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:mainline_clear_starfall_mine::tasks/mainline_clear_starfall_mine",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:mainline_clear_rust_hospital::tasks/mainline_clear_rust_hospital",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:mainline_clear_ash_arena::tasks/mainline_clear_ash_arena",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:mainline_clear_dream_archive::tasks/mainline_clear_dream_archive",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:mainline_clear_void_citadel::tasks/mainline_clear_void_citadel",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:mainline_clear_temporal_observatory::tasks/mainline_clear_temporal_observatory",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:mainline_clear_causal_clearinghouse::tasks/mainline_clear_causal_clearinghouse",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:mainline_clear_entropy_ark::tasks/mainline_clear_entropy_ark",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:mainline_clear_mirror_cycle_city::tasks/mainline_clear_mirror_cycle_city",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:mainline_clear_redaction_scriptorium::tasks/mainline_clear_redaction_scriptorium",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:mainline_clear_legacy_auction_court::tasks/mainline_clear_legacy_auction_court",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:mainline_clear_genesis_vault::tasks/mainline_clear_genesis_vault",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:mainline_clear_silent_broadcast_tower::tasks/mainline_clear_silent_broadcast_tower",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:mainline_clear_lost_shelter::tasks/mainline_clear_lost_shelter",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:mainline_clear_false_testimony_court::tasks/mainline_clear_false_testimony_court",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:mainline_clear_combat_replay_stage::tasks/mainline_clear_combat_replay_stage",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:mainline_clear_panopticon_city::tasks/mainline_clear_panopticon_city",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_enter_metro_abyss::tasks/side_enter_metro_abyss",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_directive_metro_abyss::tasks/side_directive_metro_abyss",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_enter_starfall_mine::tasks/side_enter_starfall_mine",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_directive_starfall_mine::tasks/side_directive_starfall_mine",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_enter_rust_hospital::tasks/side_enter_rust_hospital",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_directive_rust_hospital::tasks/side_directive_rust_hospital",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_enter_ash_arena::tasks/side_enter_ash_arena",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_directive_ash_arena::tasks/side_directive_ash_arena",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_enter_dream_archive::tasks/side_enter_dream_archive",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_directive_dream_archive::tasks/side_directive_dream_archive",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_enter_void_citadel::tasks/side_enter_void_citadel",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_directive_void_citadel::tasks/side_directive_void_citadel",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_enter_temporal_observatory::tasks/side_enter_temporal_observatory",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_directive_temporal_observatory::tasks/side_directive_temporal_observatory",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_enter_causal_clearinghouse::tasks/side_enter_causal_clearinghouse",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_directive_causal_clearinghouse::tasks/side_directive_causal_clearinghouse",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_enter_entropy_ark::tasks/side_enter_entropy_ark",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_directive_entropy_ark::tasks/side_directive_entropy_ark",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_enter_mirror_cycle_city::tasks/side_enter_mirror_cycle_city",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_directive_mirror_cycle_city::tasks/side_directive_mirror_cycle_city",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_enter_redaction_scriptorium::tasks/side_enter_redaction_scriptorium",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_directive_redaction_scriptorium::tasks/side_directive_redaction_scriptorium",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_enter_legacy_auction_court::tasks/side_enter_legacy_auction_court",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_directive_legacy_auction_court::tasks/side_directive_legacy_auction_court",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_enter_genesis_vault::tasks/side_enter_genesis_vault",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_directive_genesis_vault::tasks/side_directive_genesis_vault",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_enter_silent_broadcast_tower::tasks/side_enter_silent_broadcast_tower",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_directive_silent_broadcast_tower::tasks/side_directive_silent_broadcast_tower",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_enter_lost_shelter::tasks/side_enter_lost_shelter",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_directive_lost_shelter::tasks/side_directive_lost_shelter",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_enter_false_testimony_court::tasks/side_enter_false_testimony_court",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_directive_false_testimony_court::tasks/side_directive_false_testimony_court",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_enter_combat_replay_stage::tasks/side_enter_combat_replay_stage",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_directive_combat_replay_stage::tasks/side_directive_combat_replay_stage",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_enter_panopticon_city::tasks/side_enter_panopticon_city",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_directive_panopticon_city::tasks/side_directive_panopticon_city",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_train_companion_rank_2::tasks/side_train_companion_rank_2",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_refine_first_method_rank_2::tasks/side_refine_first_method_rank_2",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_master_first_method_rank_3::tasks/side_master_first_method_rank_3",
+        "w": 84
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": false,
+        "insideScroll": true,
+        "name": "MobileSheetShopAction:hub.tasks.claim:side_master_first_bloodline_rank_3::tasks/side_master_first_bloodline_rank_3",
+        "w": 84
+      }
+    ],
+    "h": 413.1514242878561,
+    "inSurface": true,
+    "kind": "npc",
+    "scrolls": [
+      {
+        "contentHeight": 6978.00000000001,
+        "height": 267.1514242878561,
+        "name": "MobileSheetCatalogScroll"
+      }
+    ],
+    "spriteCount": 1,
+    "w": 279.34032983508246,
+    "errors": []
+  },
+  {
+    "id": "pending-equipment-offer",
+    "viewport": 320,
+    "assets": "ready",
+    "buttons": [
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": true,
+        "insideScroll": false,
+        "name": "MobileSheetEquipmentClaim",
+        "w": 148
+      }
+    ],
+    "h": 403.99999999999994,
+    "inSurface": true,
+    "kind": "interaction",
+    "scrolls": [
+      {
+        "contentHeight": 282,
+        "height": 282,
+        "name": "MobileSheetScroll"
+      }
+    ],
+    "spriteCount": 3,
+    "w": 279.34032983508246,
+    "errors": []
+  },
+  {
+    "id": "pending-relic-draft",
+    "viewport": 320,
+    "assets": "ready",
+    "buttons": [
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": true,
+        "insideScroll": false,
+        "name": "MobileSheetRelicClaim",
+        "w": 148
+      }
+    ],
+    "h": 382.99999999999994,
+    "inSurface": true,
+    "kind": "interaction",
+    "scrolls": [
+      {
+        "contentHeight": 261,
+        "height": 261,
+        "name": "MobileSheetScroll"
+      }
+    ],
+    "spriteCount": 3,
+    "w": 279.34032983508246,
+    "errors": []
+  },
+  {
+    "id": "pending-field-survey",
+    "viewport": 320,
+    "assets": "ready",
+    "buttons": [
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": true,
+        "insideScroll": false,
+        "name": "MobileSheetExecute:none",
+        "w": 148
+      }
+    ],
+    "h": 369.99999999999994,
+    "inSurface": true,
+    "kind": "interaction",
+    "scrolls": [
+      {
+        "contentHeight": 197,
+        "height": 196.99999999999991,
+        "name": "MobileSheetScroll"
+      }
+    ],
+    "spriteCount": 1,
+    "w": 279.34032983508246,
+    "errors": []
+  },
+  {
+    "id": "pending-law",
+    "viewport": 320,
+    "assets": "ready",
+    "buttons": [
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": true,
+        "insideScroll": false,
+        "name": "MobileSheetExecute:none",
+        "w": 148
+      }
+    ],
+    "h": 387.99999999999994,
+    "inSurface": true,
+    "kind": "interaction",
+    "scrolls": [
+      {
+        "contentHeight": 215,
+        "height": 214.99999999999991,
+        "name": "MobileSheetScroll"
+      }
+    ],
+    "spriteCount": 0,
+    "w": 279.34032983508246,
+    "errors": []
+  },
+  {
+    "id": "pending-dungeon-event",
+    "viewport": 320,
+    "assets": "ready",
+    "buttons": [
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": true,
+        "insideScroll": false,
+        "name": "MobileSheetRewardClaim",
+        "w": 125.17016491754124
+      },
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": true,
+        "insideScroll": false,
+        "name": "MobileSheetRewardServices",
+        "w": 125.17016491754124
+      }
+    ],
+    "h": 388.99999999999994,
+    "inSurface": true,
+    "kind": "interaction",
+    "scrolls": [
+      {
+        "contentHeight": 267,
+        "height": 267,
+        "name": "MobileSheetScroll"
+      }
+    ],
+    "spriteCount": 3,
+    "w": 279.34032983508246,
+    "errors": []
+  },
+  {
+    "id": "pending-soul-recharge",
+    "viewport": 320,
+    "assets": "ready",
+    "buttons": [
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": true,
+        "insideScroll": false,
+        "name": "MobileSheetExecute:none",
+        "w": 148
+      }
+    ],
+    "h": 310.99999999999994,
+    "inSurface": true,
+    "kind": "interaction",
+    "scrolls": [
+      {
+        "contentHeight": 138,
+        "height": 137.99999999999997,
+        "name": "MobileSheetScroll"
+      }
+    ],
+    "spriteCount": 0,
+    "w": 279.34032983508246,
+    "errors": []
+  },
+  {
+    "id": "reward-watch_post_cache",
+    "viewport": 320,
+    "assets": "ready",
+    "buttons": [
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": true,
+        "insideScroll": false,
+        "name": "MobileSheetRewardClaim",
+        "w": 148
+      }
+    ],
+    "h": 265,
+    "inSurface": true,
+    "kind": "interaction",
+    "scrolls": [
+      {
+        "contentHeight": 143.00000000000003,
+        "height": 143.00000000000003,
+        "name": "MobileSheetScroll"
+      }
+    ],
+    "spriteCount": 2,
+    "w": 279.34032983508246,
+    "errors": []
+  },
+  {
+    "id": "reward-north_supply_niche",
+    "viewport": 320,
+    "assets": "ready",
+    "buttons": [
+      {
+        "h": 32,
+        "hitH": 44,
+        "inside": true,
+        "insideScroll": false,
+        "name": "MobileSheetRewardClaim",
+        "w": 148
+      }
+    ],
+    "h": 265,
+    "inSurface": true,
+    "kind": "interaction",
+    "scrolls": [
+      {
+        "contentHeight": 143.00000000000003,
+        "height": 143.00000000000003,
+        "name": "MobileSheetScroll"
+      }
+    ],
+    "spriteCount": 2,
+    "w": 279.34032983508246,
+    "errors": []
+  },
+  {
+    "id": "result-pending-archive",
+    "viewport": 320,
+    "assets": "ready",
+    "buttons": [],
+    "h": 413.1514242878561,
+    "inSurface": true,
+    "kind": "result",
+    "scrolls": [
+      {
+        "contentHeight": 527,
+        "height": 292.1514242878561,
+        "name": "MobileSheetScroll"
+      }
+    ],
+    "spriteCount": 0,
+    "w": 279.34032983508246,
+    "errors": []
+  }
+]

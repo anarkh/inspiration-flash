@@ -78,7 +78,7 @@ has no `not-loaded` code. Concurrent direct-key requests share one native load b
 each successful request owns one releaseable lease.
 
 The runtime loads the pinned manifest `JsonAsset` from the local shared `config`
-bundle, verifies its UUID, schema version, revision, exact 223-entry count, and
+bundle, verifies its UUID, schema version, revision, exact 305-entry count, and
 unique key/resource paths, then separately loads the shared `resources` bundle.
 PNG resources are explicitly loaded as `ImageAsset`; no SpriteFrame subasset is
 assumed. `InfiniteFlowView` creates its own SpriteFrame/Texture pair and cleanup is
@@ -87,6 +87,12 @@ release the exact ImageAsset reference through `image.decRef()`. The matching
 `image.addRef()` happens immediately after a successful `Bundle.load`; path-based
 `Bundle.release` is forbidden because it could force-release another shared-cache
 consumer. Neither shared bundle is removed or globally released by the app.
+
+The 59 `monster:<id>_world` entries are independent transparent full-body images
+used by exploration and combat. They retain each monster's original portrait and
+use the same image lease lifecycle. The asset gate verifies their exact identity
+coverage, RGBA alpha, dimensions, byte-identical source copies, and unique Creator
+metadata UUIDs; failed loads retain the existing vector fallback.
 
 Ordinary Creator errors are classified without displaying their original message:
 timeout and explicit network/offline failures are retryable; missing native paths,

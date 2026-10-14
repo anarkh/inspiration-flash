@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>战斗页面 · 无限流交互原型</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="combat-effects.css">
+</head>
+<body>
+  <div class="preview-tools" aria-label="原型演示设置">
+    <span>战斗 · HTML 原型</span>
+    <select id="scenario" aria-label="演示状态">
+      <option value="normal">常规战斗</option>
+      <option value="heavy">重击预警</option>
+      <option value="full">生命已满</option>
+      <option value="empty">药品耗尽</option>
+      <option value="used">功法已使用</option>
+      <option value="focus">战意充足</option>
+      <option value="danger">低生命</option>
+      <option value="talisman">携带雷火符</option>
+      <option value="slow">动作慢放</option>
+    </select>
+    <button id="reset" type="button">重置</button>
+  </div>
+
+  <main class="game" aria-label="妖塔一层战斗原型">
+    <div class="world" aria-hidden="true"></div>
+    <header class="hud">
+      <button class="icon-button" data-panel="character" aria-label="查看角色"><span data-icon="character"></span><span>角色</span></button>
+      <div class="player-status">
+        <div class="chapter"><strong>妖塔一层</strong><span>轮回者</span></div>
+        <div class="hp-caption">生命 <span id="player-hp">78 / 116</span></div>
+        <div class="health-track" role="progressbar" aria-label="我方生命" aria-valuemin="0" aria-valuemax="116" aria-valuenow="78"><span id="player-hp-bar"></span></div>
+      </div>
+      <button class="icon-button" data-panel="menu" aria-label="打开菜单"><span data-icon="menu"></span><span>菜单</span></button>
+    </header>
+
+    <div class="intent" role="status" aria-live="polite"><span class="turn" id="turn">第 1 回合</span><div class="intent-copy"><span class="intent-line">敌方意图 · <strong id="intent-name">常规追击</strong></span><span class="intent-hint" id="intent-hint">行动后反击 · 预计承伤 12</span></div></div>
+    <nav class="side-tools" aria-label="战斗信息">
+      <button class="icon-button" data-panel="inventory"><span data-icon="bag"></span><span>背包</span></button>
+      <button class="icon-button" data-panel="objectives"><span data-icon="flag"></span><span>目标</span></button>
+    </nav>
+
+    <button class="enemy" id="enemy" data-panel="enemy" aria-label="查看雾中妖鬼信息">
+      <span class="enemy-heading"><strong>雾中妖鬼</strong><span id="enemy-hp">42 / 42</span></span>
+      <span class="enemy-health"><span id="enemy-hp-bar"></span></span>
+      <svg class="monster" viewBox="0 0 128 136" aria-hidden="true">
+        <ellipse cx="64" cy="125" rx="47" ry="9" fill="#07090a88"/>
+        <g transform="translate(64 123) scale(1 -1)" stroke="#29232c" stroke-width="1.5" stroke-linejoin="round">
+          <path d="M-27 36L-35 18 -41 3 -19 1 -12 30 M27 36L35 18 41 3 19 1 12 30" fill="#4b5756"/>
+          <path d="M-29 69L-49 55 -55 24 -44 13 -32 26 -28 42 M29 69L49 55 55 24 44 13 32 26 28 42" fill="#4b5756"/>
+          <ellipse cy="49" rx="33" ry="39" fill="#4b5756"/>
+          <path d="M-19 69L-13 30 0 23 13 30 19 69Z" fill="#856460" stroke="none"/>
+          <path d="M-26 77L-38 106 -14 94 14 94 38 106 26 77Z" fill="#918173"/>
+          <ellipse cy="82" rx="26" ry="24" fill="#6a504f"/>
+          <path d="M-18 86L-5 82 -10 78 -20 80Z M18 86L5 82 10 78 20 80Z" fill="#ed8f80" stroke="none"/>
+          <path d="M-14 71L0 64 14 71 9 57 -9 57Z" fill="#29232c"/>
+          <path d="M-11 70L-6 58 -3 67Z M11 70L6 58 3 67Z" fill="#ece4cf" stroke="none"/>
+        </g>
+      </svg>
+      <span class="target-ring" aria-hidden="true"></span>
+    </button>
+
+    <div class="player" id="player" aria-label="轮回者">
+      <div class="player-shadow"></div><div class="player-sprite" id="player-sprite"></div>
+      <div class="buffs" id="buffs"></div>
+    </div>
+    <div class="battle-feedback" id="feedback" role="status" aria-live="polite">选择行动，迎战雾中妖鬼。</div>
+
+    <section class="controls" aria-label="战斗操作">
+      <div class="move-controls">
+        <div class="joystick" id="joystick" role="group" aria-label="移动摇杆，也可使用方向键或 WASD" tabindex="0"><span class="joystick-ring"></span><span class="joystick-knob" id="joystick-knob"></span></div>
+      </div>
+      <div class="action-area">
+        <div class="action-grid">
+          <button class="action choice" data-group="spells"><span data-icon="spell"></span><span>法术</span></button>
+          <div class="combat-actions" id="combat-actions"></div>
+          <button class="action choice medicine" data-group="medicines"><span data-icon="bottle"></span><span>药品</span><small id="pill-badge">2</small></button>
+        </div>
+        <button class="interact" id="interact"><span data-icon="interact"></span><span>靠近互动</span></button>
+      </div>
+    </section>
+    <div class="movement-note">摇杆移动 · 靠近目标互动</div>
+    <dialog id="sheet" aria-labelledby="sheet-title">
+      <header class="sheet-header"><span class="sheet-emblem" data-icon="spell"></span><h1 id="sheet-title">选择法术</h1><span class="sheet-hint" id="sheet-hint"></span><button id="close-sheet" class="close" aria-label="关闭窗口">×</button></header>
+      <div class="sheet-content" id="sheet-content"></div>
+      <footer class="sheet-footer" id="sheet-footer"></footer>
+    </dialog>
+  </main>
+  <script src="combat-effects.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

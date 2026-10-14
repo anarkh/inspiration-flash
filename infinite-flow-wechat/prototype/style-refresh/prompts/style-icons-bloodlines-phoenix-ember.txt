@@ -1,0 +1,8 @@
+Use case: style-transfer
+Asset type: standalone transparent RPG inventory icon, one single asset for an HTML style prototype.
+Input images: Image 1 is the existing phoenix-ember icon to reinterpret; Image 2 demon-bone is the style reference for muted, ancient, weathered hand-painted physical material.
+Primary request: Repaint one single charred phoenix ember as a dark carbonized, slightly egg-shaped physical relic with a pointed asymmetrical top. It is mostly soot-black and charcoal brown, with only a few restrained dark burnt-orange fissures deep inside. Remove the tall flame and the bright orange glow of Image 1. Match Image 2's low-saturation softly hand-painted realism, ancient tactile material and quiet mood.
+Composition: square canvas, isolated centered single ember occupying 70-80 percent of the width and height; broad simple silhouette immediately legible at 48 pixels; comfortably clear alpha margins on all sides. Three-quarter view, coherent object with no adjacent fragments.
+Materials: rough charred carbon crust with broad flakes and softly worn ridges, a few sparse dark rust-orange cracks; no emitted light, no yellow, no fire plume. Broad painterly values, soft diffuse neutral lighting.
+Background: genuine fully transparent alpha outside the single object, no ground plane and no cast shadow outside the object.
+Constraints: one object only, no frame, no text, no symbol labels, no thick outlines, no neon, no rim glow, no bright magic, no sparks, no external flames, no watermark, no background scenery. Preserve alpha.

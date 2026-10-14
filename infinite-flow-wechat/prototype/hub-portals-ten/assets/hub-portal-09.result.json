@@ -1,0 +1,26 @@
+{
+  "concept_id": "09",
+  "title": "天阶引渡",
+  "generator": "built-in image_gen",
+  "source_path": "/Users/bytedance/.codex/generated_images/01a11978-ca69-7a43-9d84-74a21482996f/exec-d6b6bc98-7b77-4831-9d56-8184a34da91e.png",
+  "output_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-portals-ten/assets/hub-portal-09.png",
+  "prompt_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-portals-ten/assets/hub-portal-09.prompt.txt",
+  "transparent_background_requested": true,
+  "copy_method": "source bytes exact copy; no post-processing",
+  "sha256": "9155dff8fba6e58ec6b30af5de7bb4d0911af3452990c2411882e733e329b40c",
+  "source_sha256": "9155dff8fba6e58ec6b30af5de7bb4d0911af3452990c2411882e733e329b40c",
+  "width": 1019,
+  "height": 1543,
+  "image_mode": "RGBA",
+  "alpha_extrema": [
+    0,
+    255
+  ],
+  "visible_bbox": [
+    0,
+    0,
+    1004,
+    1543
+  ],
+  "fully_transparent_pixel_count": 575454
+}

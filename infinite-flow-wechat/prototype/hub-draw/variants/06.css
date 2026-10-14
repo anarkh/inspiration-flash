@@ -1,0 +1,96 @@
+.v06 {
+  --dial-brass: #c8ae78;
+  --dial-floor: #1a211f;
+  position: relative;
+  width: 390px;
+  height: 740px;
+  overflow: hidden;
+  isolation: isolate;
+  color: #ebe5d4;
+  background: #161c1c;
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+.v06 *, .v06 *::before, .v06 *::after { box-sizing: border-box; }
+.v06 button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.v06 button:focus-visible { outline: 2px solid #f0d597; outline-offset: 3px; }
+.v06 .scene-background { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .23; filter: sepia(.75) saturate(.5); z-index: -3; }
+.v06 .dial-veil { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 48%, #666d3e19, #111c1c6b 54%, #111719ef 100%); z-index: -2; }
+.v06 .dial-veil::after { content: ""; position: absolute; inset: 0; background-image: linear-gradient(#b4a16e08 1px, transparent 1px), linear-gradient(90deg, #b4a16e08 1px, transparent 1px); background-size: 26px 26px; }
+.v06 .scene-header { position: absolute; top: 15px; left: 17px; right: 17px; height: 60px; display: flex; align-items: center; gap: 12px; }
+.v06 .avatar-button { width: 56px; height: 60px; padding: 0; position: relative; overflow: hidden; border: 1px solid #a28e5f; background: #192324; border-radius: 4px; }
+.v06 .avatar-button img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 15%; }
+.v06 .avatar-button span { position: absolute; bottom: 0; left: 0; right: 0; font-size: 12px; line-height: 18px; background: #101a1fdf; }
+.v06 .scene-identity { flex: 1; display: flex; flex-direction: column; gap: 5px; }
+.v06 .scene-place { font-family: "Songti SC", "SimSun", serif; font-size: 22px; line-height: 25px; letter-spacing: 3px; font-weight: 600; color: #efe6cb; }
+.v06 .scene-health { font-size: 12px; line-height: 14px; color: #c3c6ae; display: flex; gap: 5px; }
+.v06 .scene-health b { color: #e7e0c5; font-weight: 600; }
+.v06 .scene-health > span { color: #a6ac97; }
+.v06 .hp-track { display: block; height: 3px; width: 160px; background: #414a3f; }
+.v06 .hp-track i { display: block; height: 100%; width: 100%; background: #afa976; }
+.v06 .scene-menu { width: 56px; height: 56px; border: 1px solid #b69c5f50; border-radius: 50%; display: grid; place-items: center; padding: 17px; background: #172122a6; }
+.v06 .scene-menu svg { width: 22px; height: 22px; color: #d7c798; }
+.v06 .dial-resources { position: absolute; top: 89px; left: 17px; right: 17px; height: 30px; display: flex; justify-content: flex-start; gap: 28px; align-items: center; border-top: 1px solid #bba26a40; border-bottom: 1px solid #bba26a40; font-size: 12px; color: #c1c3ad; }
+.v06 .dial-resources b { color: #e9d499; font-weight: 600; margin-left: 5px; }
+.v06 .dial-heading { position: absolute; top: 135px; left: 19px; right: 19px; display: flex; justify-content: space-between; font-size: 12px; line-height: 17px; letter-spacing: 2px; color: #cfc199; }
+.v06 .dial-heading > span:first-child { font-family: "Songti SC", "SimSun", serif; font-size: 15px; font-weight: 600; }
+.v06 .dial-map { position: absolute; left: 0; top: 156px; width: 390px; height: 430px; }
+.v06 .dial-plate { position: absolute; left: 20px; top: 45px; width: 350px; height: 350px; border: 1px solid #9d8b5780; border-radius: 50%; background: radial-gradient(circle, #8195680a 0 35%, #b4a2700d 35% 36%, #1d282664 36% 68%, #4b4a311f 68% 100%); box-shadow: inset 0 0 18px #ccb67120, 0 10px 30px #0005; }
+.v06 .dial-plate::before { content: ""; position: absolute; inset: 5px; border-radius: 50%; background: repeating-conic-gradient(from -1deg, #c1ab674d 0deg 1deg, transparent 1deg 10deg); mask-image: radial-gradient(circle, transparent 0 67%, #000 68% 100%); -webkit-mask-image: radial-gradient(circle, transparent 0 67%, #000 68% 100%); }
+.v06 .dial-plate::after { content: ""; position: absolute; inset: 24px; border: 1px solid #b5a15f3c; border-radius: 50%; }
+.v06 .dial-plate i { position: absolute; left: 50%; top: 7px; bottom: 7px; border-left: 1px solid #bba67229; }
+.v06 .dial-plate i:nth-child(1) { transform: rotate(45deg); }
+.v06 .dial-plate i:nth-child(2) { transform: rotate(-45deg); }
+.v06 .dial-plate b { position: absolute; inset: 84px; border: 1px solid #bba67246; transform: rotate(45deg); }
+.v06 .dial-cardinals { position: absolute; inset: 0; color: #d3be81; font-family: "Songti SC", "SimSun", serif; font-size: 12px; }
+.v06 .dial-cardinals span { position: absolute; width: 22px; text-align: center; }
+.v06 .dial-cardinals span:nth-child(1) { top: 21px; left: 184px; }
+.v06 .dial-cardinals span:nth-child(2) { top: 211px; right: 0; }
+.v06 .dial-cardinals span:nth-child(3) { top: 401px; left: 184px; }
+.v06 .dial-cardinals span:nth-child(4) { top: 211px; left: 0; }
+.v06 .dial-routes { position: absolute; inset: 0; width: 390px; height: 430px; pointer-events: none; }
+.v06 .dial-routes path, .v06 .dial-routes circle { stroke: #c3ad705c; stroke-width: 1; }
+.v06 .dial-routes .dial-perimeter { stroke-dasharray: 3 5; opacity: .55; }
+.v06 .dial-routes .dial-sights { stroke: #dec88a8c; }
+.v06 .dial-sector { position: absolute; left: 141px; width: 108px; text-align: center; font-size: 12px; color: #bbb38d; letter-spacing: 1px; }
+.v06 .sector-north { top: 85px; }
+.v06 .sector-south { top: 342px; }
+.v06 .dial-station { position: absolute; width: 110px; height: 104px; border: 0; padding: 0; background: transparent; text-align: center; }
+.v06 .dial-station .svc-art { position: absolute; top: 0; left: 27px; width: 56px; height: 56px; object-fit: cover; object-position: 50% 23%; border-radius: 50%; border: 1px solid #d0b77c; box-shadow: 0 0 0 4px #141e20, 0 0 0 5px #b9a16466, 0 5px 15px #0006; filter: saturate(.68) sepia(.15); }
+.v06 .dial-station .svc-copy { position: absolute; top: 62px; left: 0; right: 0; display: flex; flex-direction: column; gap: 2px; align-items: center; }
+.v06 .dial-station .svc-title { font-size: 13px; line-height: 17px; font-weight: 600; letter-spacing: .4px; white-space: nowrap; color: #f0e6c8; padding: 0 4px; background: #152121d9; }
+.v06 .dial-station .svc-purpose { font-size: 12px; line-height: 16px; white-space: nowrap; color: #c5c4a8; padding: 0 4px; background: #152121c9; }
+.v06 .dial-station .svc-icon { position: absolute; right: 23px; top: 38px; width: 22px; height: 22px; padding: 3px; background: #26332d; border: 1px solid #c9b47a9c; border-radius: 50%; color: #e5d6ac; }
+.v06 .svc-icon svg { width: 100%; height: 100%; }
+.v06 .station-equipment { left: 49px; top: 52px; }
+.v06 .station-supplies { left: 231px; top: 52px; }
+.v06 .station-pets { left: 275px; top: 190px; }
+.v06 .station-methods { left: 225px; top: 327px; }
+.v06 .station-bloodlines { left: 55px; top: 327px; }
+.v06 .station-companions { left: 5px; top: 190px; }
+.v06 .dial-origin { position: absolute; left: 140px; top: 151px; width: 110px; text-align: center; font-size: 12px; line-height: 16px; color: #dbc689; letter-spacing: 2px; }
+.v06 .station-tasks { left: 140px; top: 178px; height: 126px; }
+.v06 .station-tasks .svc-art { left: 20px; width: 70px; height: 70px; border: 1px solid #ead295; box-shadow: 0 0 0 5px #202a23, 0 0 0 6px #c2a766aa, 0 0 25px #d5b86530; }
+.v06 .station-tasks .svc-copy { top: 79px; }
+.v06 .station-tasks .svc-title { font-size: 14px; color: #ffe4a4; }
+.v06 .station-tasks .svc-icon { right: 15px; top: 53px; }
+.v06 .dial-station:hover .svc-art, .v06 .dial-station:focus-visible .svc-art { filter: saturate(.9) brightness(1.15); border-color: #ffe4a4; }
+.v06 .dial-legend { position: absolute; left: 20px; right: 20px; top: 601px; height: 18px; display: flex; align-items: center; gap: 7px; font-size: 12px; line-height: 18px; color: #c0c2a8; }
+.v06 .dial-legend i { width: 5px; height: 5px; border-radius: 50%; background: #b0bd89; box-shadow: 0 0 8px #b0bd895e; }
+.v06 .dial-legend span:last-child { margin-left: auto; color: #c8bc94; }
+.v06 .dial-console { position: absolute; left: 17px; right: 17px; top: 634px; height: 78px; display: flex; gap: 9px; align-items: stretch; }
+.v06 .dial-departure { width: 219px; display: flex; align-items: center; gap: 9px; padding: 9px 10px; text-align: left; background: linear-gradient(125deg,#574e33ba,#252f27dd 50%,#2c3528dd); border: 1px solid #c5ac6a8f; border-radius: 3px; box-shadow: inset 0 0 0 3px #b6a26a17; }
+.v06 .portal-symbol { position: relative; flex: 0 0 27px; width: 27px; height: 43px; border: 1px solid #dbc17b; border-radius: 15px 15px 0 0; background: #d2b0610a; box-shadow: inset 0 0 12px #e1c57527; }
+.v06 .portal-symbol::before { content: ""; position: absolute; inset: 4px; border: 1px solid #e9d18e5a; border-radius: 11px 11px 0 0; }
+.v06 .portal-symbol b { position: absolute; left: 9px; top: 19px; width: 7px; height: 7px; background: #e1c575; transform: rotate(45deg); box-shadow: 0 0 10px #e1c575; }
+.v06 .portal-symbol i { display: none; }
+.v06 .portal-copy { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 3px; }
+.v06 .portal-eyebrow { font-size: 12px; line-height: 14px; color: #cdbf94; white-space: nowrap; }
+.v06 .portal-copy strong { font-family: "Songti SC", "SimSun", serif; font-size: 18px; line-height: 23px; color: #f4e0ae; font-weight: 600; letter-spacing: 1px; white-space: nowrap; }
+.v06 .portal-hint { font-size: 12px; line-height: 14px; color: #d0d0b3; white-space: nowrap; }
+.v06 .portal-arrow { display: none; }
+.v06 .dial-tools { display: flex; gap: 5px; flex: 1; }
+.v06 .scene-utility { min-width: 56px; width: 56px; height: 78px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 8px; font-size: 13px; line-height: 16px; border: 1px solid #ab9b654d; background: #152020b8; border-radius: 3px; color: #dad1af; }
+.v06 .scene-utility svg { width: 24px; height: 24px; color: #cabb83; }
+.v06 .scene-utility:hover, .v06 .dial-departure:hover { filter: brightness(1.18); }
+.v06 .dial-footer { position: absolute; left: 20px; right: 20px; top: 725px; display: flex; justify-content: space-between; font-size: 12px; line-height: 15px; color: #a8ae93; }
+@media (prefers-reduced-motion: reduce) { .v06 *, .v06 *::before, .v06 *::after { animation: none !important; transition: none !important; } }

@@ -1,0 +1,77 @@
+{
+  "checkedAt": "2026-09-30T09:32:01.193Z",
+  "scope": "Static resources and code syntax. Live browser interaction and viewport checks are performed separately by the coordinating agent.",
+  "scriptSyntax": "node --check app.js passed",
+  "resources": [
+    {
+      "url": "/prototype/dungeon-transition/",
+      "status": 200,
+      "contentType": "text/html",
+      "bytes": 5372
+    },
+    {
+      "url": "/prototype/dungeon-transition/style.css",
+      "status": 200,
+      "contentType": "text/css",
+      "bytes": 9851
+    },
+    {
+      "url": "/prototype/dungeon-transition/app.js",
+      "status": 200,
+      "contentType": "text/javascript",
+      "bytes": 6442
+    },
+    {
+      "url": "/prototype/dungeon-transition/assets/ruined-stone-gate-v1.png",
+      "status": 200,
+      "contentType": "image/png",
+      "bytes": 2322022
+    },
+    {
+      "url": "/cocos/assets/resources/character/reincarnator-walk-v1.png",
+      "status": 200,
+      "contentType": "image/png",
+      "bytes": 1190135
+    },
+    {
+      "url": "/cocos/assets/resources/dungeon-world/demon_tower_1-v1.png",
+      "status": 200,
+      "contentType": "image/png",
+      "bytes": 2840057
+    },
+    {
+      "url": "/cocos/assets/resources/dungeon-world/metro_abyss-v1.png",
+      "status": 200,
+      "contentType": "image/png",
+      "bytes": 2803389
+    },
+    {
+      "url": "/cocos/assets/resources/dungeon-world/starfall_mine-v1.png",
+      "status": 200,
+      "contentType": "image/png",
+      "bytes": 2946134
+    },
+    {
+      "url": "/prototype/dungeon-ux/",
+      "status": 200,
+      "contentType": "text/html",
+      "bytes": 3043
+    }
+  ],
+  "productionMutations": false,
+  "persistenceAPIsPresent": false,
+  "unsafeHtmlInjectionPresent": false,
+  "minimumCssTouchTarget": "44px for controls; gate at minimum stage height420 has 51.24 x 70.14 CSS pixels before label",
+  "expectedInteractiveControls": {
+    "variantButtons": 2,
+    "backgroundButtons": 3,
+    "stateButtons": 3,
+    "gate": 1,
+    "bottomAction": 1,
+    "reset": 1,
+    "details": 1,
+    "dialogClose": 1,
+    "backLink": 1
+  },
+  "buttonTags": 12
+}

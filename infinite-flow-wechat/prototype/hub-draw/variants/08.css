@@ -1,0 +1,109 @@
+.v08.variant-scene {
+  --v08-gold: #e7cf92;
+  --v08-line: rgba(225, 193, 120, .32);
+  position: relative;
+  width: 390px;
+  height: 740px;
+  overflow: hidden;
+  isolation: isolate;
+  color: #f5ead3;
+  background: #19191c;
+  font-family: "Songti SC", "Noto Serif SC", "SimSun", serif;
+  font-size: 12px;
+}
+.v08 *, .v08 *::before, .v08 *::after { box-sizing: border-box; }
+.v08 button { margin: 0; color: inherit; font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.v08 button:focus-visible { outline: 2px solid #fff0b6; outline-offset: 3px; }
+.v08 svg { display: block; width: 22px; height: 22px; }
+.v08 .scene-background { position: absolute; inset: 0; z-index: -4; width: 100%; height: 100%; object-fit: cover; object-position: center 42%; opacity: .83; filter: saturate(.78); }
+.v08 .v08-shade { position: absolute; inset: 0; z-index: -3; pointer-events: none; background: linear-gradient(180deg, rgba(19, 20, 24, .85), rgba(23, 22, 26, .18) 29%, rgba(10, 17, 23, .32) 64%, rgba(13, 19, 23, .97) 98%), linear-gradient(90deg, rgba(13, 20, 26, .56), transparent 33%, transparent 67%, rgba(13, 20, 26, .56)); }
+.v08 .v08-perspective { position: absolute; z-index: -2; top: 253px; bottom: 59px; left: 60px; width: 270px; clip-path: polygon(43% 0, 57% 0, 100% 100%, 0 100%); background: linear-gradient(180deg, rgba(241, 216, 147, .07), rgba(8, 20, 29, .46)); pointer-events: none; }
+.v08 .v08-perspective::before, .v08 .v08-perspective::after { content: ""; position: absolute; top: 0; height: 420px; width: 1px; background: linear-gradient(transparent, rgba(241, 221, 168, .53)); transform-origin: top; }
+.v08 .v08-perspective::before { left: 43%; transform: rotate(15deg); }
+.v08 .v08-perspective::after { right: 43%; transform: rotate(-15deg); }
+.v08 .v08-perspective i { position: absolute; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(225, 206, 169, .28), transparent); }
+.v08 .v08-perspective i:nth-child(1) { top: 106px; }
+.v08 .v08-perspective i:nth-child(2) { top: 240px; }
+.v08 .v08-perspective i:nth-child(3) { top: 373px; }
+.v08 .v08-architecture { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+.v08 .v08-architecture i { position: absolute; left: 50%; transform: translateX(-50%); border: 1px solid var(--v08-line); border-bottom: 0; border-radius: 50% 50% 0 0 / 24% 24% 0 0; box-shadow: inset 5px 0 0 rgba(210, 182, 127, .04), inset -5px 0 0 rgba(210, 182, 127, .04); }
+.v08 .v08-architecture i:nth-child(1) { top: 130px; width: 164px; height: 215px; opacity: .45; }
+.v08 .v08-architecture i:nth-child(2) { top: 125px; width: 276px; height: 405px; }
+.v08 .v08-architecture i:nth-child(3) { top: 117px; width: 366px; height: 554px; border-color: rgba(226, 205, 161, .45); }
+.v08 .v08-architecture::before, .v08 .v08-architecture::after { content: ""; position: absolute; top: 191px; bottom: 77px; width: 7px; border-right: 1px solid rgba(223, 190, 126, .22); border-left: 1px solid rgba(223, 190, 126, .22); }
+.v08 .v08-architecture::before { left: 17px; }
+.v08 .v08-architecture::after { right: 17px; }
+.v08 .scene-header { position: absolute; z-index: 8; top: 15px; left: 18px; right: 18px; height: 68px; display: flex; align-items: center; justify-content: space-between; gap: 0; padding: 0; border: 0; background: transparent; }
+.v08 .avatar-button { position: relative; width: 56px; height: 56px; padding: 0; overflow: hidden; border: 1px solid rgba(235, 210, 155, .62); border-radius: 50%; background: #263039; box-shadow: 0 0 0 4px rgba(223, 196, 140, .06); }
+.v08 .avatar-button img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.v08 .avatar-button span { position: absolute; bottom: 2px; left: 0; right: 0; padding: 2px; color: #f5ead7; font-size: 12px; background: rgba(18, 27, 34, .88); }
+.v08 .scene-identity { position: absolute; top: 0; left: 78px; right: 78px; height: 68px; display: flex; flex-direction: column; align-items: center; gap: 7px; padding-top: 4px; }
+.v08 .scene-place { color: #f2e1b8; font-size: 23px; font-weight: 500; line-height: 28px; letter-spacing: 6px; text-indent: 6px; white-space: nowrap; }
+.v08 .scene-health { color: #c6cbbd; font-family: "PingFang SC", sans-serif; font-size: 12px; }
+.v08 .scene-health b { color: #ecf0db; padding-left: 4px; font-weight: 500; }
+.v08 .scene-health > span { color: #afb8af; }
+.v08 .hp-track { width: 122px; height: 2px; margin: 0; border: 0; background: rgba(233, 213, 164, .14); }
+.v08 .hp-track i { display: block; width: 100%; height: 100%; background: #b4c7a3; }
+.v08 .scene-menu { width: 56px; height: 56px; display: grid; place-items: center; margin-left: auto; padding: 0; border: 1px solid rgba(229, 203, 154, .28); border-radius: 50%; background: rgba(20, 28, 35, .52); color: #e6d5b0; }
+.v08 .scene-menu svg { width: 23px; height: 23px; }
+.v08 .v08-chapter { position: absolute; z-index: 2; top: 100px; left: 38px; right: 38px; display: flex; align-items: center; justify-content: center; gap: 12px; color: #c4bcaa; font-size: 12px; letter-spacing: 2px; }
+.v08 .v08-chapter span:first-child { color: #ddcfaa; }
+.v08 .v08-chapter i { width: 18px; height: 1px; background: rgba(221, 200, 151, .47); }
+.v08 .portal { position: absolute; z-index: 2; top: 138px; left: 142px; width: 106px; height: 163px; padding: 0; border: 0; background: transparent; text-align: center; }
+.v08 .portal:hover { background: transparent; border: 0; }
+.v08 .portal:hover .portal-symbol { border-color: #fff0c5; box-shadow: inset 0 0 23px rgba(244, 229, 196, .18), 0 0 26px rgba(237, 207, 131, .22), 0 0 0 5px rgba(221, 192, 133, .1); }
+.v08 .portal-symbol { position: absolute; top: 0; left: 5px; width: 96px; height: 142px; border: 1px solid rgba(244, 222, 158, .82); border-radius: 50px 50px 1px 1px; background: radial-gradient(ellipse at 50% 35%, rgba(218, 232, 238, .3), rgba(94, 124, 145, .08) 63%); box-shadow: inset 0 0 23px rgba(244, 229, 196, .12), 0 0 26px rgba(237, 207, 131, .14), 0 0 0 5px rgba(221, 192, 133, .06); }
+.v08 .portal-symbol::before { content: ""; position: absolute; inset: 7px 7px 0; border: 1px solid rgba(213, 221, 218, .35); border-bottom: 0; border-radius: 44px 44px 0 0; }
+.v08 .portal-symbol::after { content: ""; position: absolute; bottom: -5px; left: -18px; right: -18px; height: 16px; border: 1px solid rgba(233, 207, 144, .55); border-radius: 50%; background: rgba(215, 206, 171, .1); }
+.v08 .portal-symbol i, .v08 .portal-symbol i:nth-child(n) { position: absolute; inset: auto; top: 25px; bottom: 8px; width: 1px; border: 0; border-radius: 0; transform: none; background: linear-gradient(transparent, rgba(218, 236, 241, .55), transparent); }
+.v08 .portal-symbol i:nth-child(1) { left: 28px; }
+.v08 .portal-symbol i:nth-child(2) { left: 47px; }
+.v08 .portal-symbol i:nth-child(3) { right: 28px; }
+.v08 .portal-symbol b { position: absolute; inset: auto; top: 31px; left: 35px; width: 25px; height: 25px; border: 1px solid rgba(245, 225, 174, .76); background: rgba(245, 225, 174, .1); transform: rotate(45deg); box-shadow: 0 0 14px rgba(214, 220, 225, .25); }
+.v08 .portal-copy { position: absolute; top: 84px; left: -37px; right: -37px; display: grid; gap: 5px; padding: 10px 0; background: linear-gradient(90deg, transparent, rgba(17, 27, 37, .91) 20%, rgba(17, 27, 37, .91) 80%, transparent); }
+.v08 .portal-eyebrow { color: #d6cfbe; font-size: 12px; letter-spacing: 2px; }
+.v08 .portal-copy strong { color: #f5e6c2; font-size: 17px; font-weight: 500; letter-spacing: 3px; }
+.v08 .portal-hint { color: #c4cec7; font-size: 12px; }
+.v08 .portal-arrow { display: none; }
+.v08 .v08-residents { position: absolute; inset: 0; pointer-events: none; }
+.v08 .service { position: absolute; z-index: 4; display: block; width: 125px; height: 126px; padding: 0; overflow: visible; border: 0; background: transparent; text-align: left; pointer-events: auto; }
+.v08 .service::before { content: ""; position: absolute; bottom: 31px; left: 18px; right: 16px; height: 16px; border: 1px solid rgba(208, 185, 127, .41); border-radius: 50%; background: radial-gradient(ellipse, rgba(207, 204, 172, .13), transparent 66%); box-shadow: 0 4px 9px rgba(1, 8, 15, .35); }
+.v08 .service::after { content: ""; position: absolute; left: 6px; bottom: 2px; height: 32px; width: 1px; background: linear-gradient(transparent, #e8d293, transparent); }
+.v08 .svc-art { position: absolute; top: -10px; left: 50%; width: 86px; height: 111px; transform: translateX(-50%); object-fit: contain; object-position: center bottom; filter: drop-shadow(0 4px 7px rgba(2, 9, 14, .6)); transition: filter 180ms ease; }
+.v08 .svc-copy { position: absolute; bottom: 0; left: 4px; right: 4px; display: grid; gap: 3px; min-height: 42px; padding: 6px 25px 6px 9px; border-top: 1px solid rgba(229, 205, 152, .4); background: linear-gradient(90deg, rgba(11, 25, 33, .91), rgba(15, 26, 32, .77) 80%, transparent); text-shadow: 0 1px 3px #0e1821; }
+.v08 .svc-title { color: #f4e5bd; font-size: 14px; font-weight: 500; line-height: 17px; white-space: nowrap; }
+.v08 .svc-purpose { color: #c0cbc4; font-family: "PingFang SC", sans-serif; font-size: 12px; line-height: 15px; white-space: nowrap; }
+.v08 .svc-icon { position: absolute; bottom: 15px; right: 10px; color: #d8c590; }
+.v08 .svc-icon svg { width: 16px; height: 16px; }
+.v08 .service:hover .svc-art { filter: drop-shadow(0 0 9px rgba(227, 207, 151, .38)) drop-shadow(0 4px 6px rgba(2, 9, 14, .6)); }
+.v08 .service:hover .svc-copy { border-top-color: #fff0bb; background: linear-gradient(90deg, rgba(28, 41, 46, .97), rgba(28, 41, 46, .84), transparent); }
+.v08 .service:active .svc-copy { background: rgba(49, 57, 51, .96); }
+.v08 .v08-depth-one { top: 156px; left: 28px; width: 111px; height: 98px; }
+.v08 .v08-depth-one .svc-art { top: -10px; width: 63px; height: 78px; opacity: .92; }
+.v08 .v08-depth-one .svc-copy { padding-right: 10px; }
+.v08 .v08-depth-one .svc-icon { display: none; }
+.v08 .v08-depth-two { top: 214px; right: 18px; width: 112px; height: 106px; }
+.v08 .v08-depth-two .svc-art { width: 70px; height: 89px; }
+.v08 .v08-depth-three { top: 271px; left: 17px; width: 126px; height: 121px; }
+.v08 .v08-depth-four { top: 335px; right: 13px; width: 126px; height: 130px; }
+.v08 .v08-depth-four .svc-art { width: 87px; height: 118px; }
+.v08 .v08-depth-five { top: 405px; left: 7px; width: 140px; height: 133px; }
+.v08 .v08-depth-five .svc-art { width: 90px; height: 124px; }
+.v08 .v08-depth-six { top: 479px; right: 6px; width: 143px; height: 154px; }
+.v08 .v08-depth-six .svc-art { width: 101px; height: 143px; top: -9px; }
+.v08 .v08-depth-seven { top: 546px; left: 4px; width: 143px; height: 115px; }
+.v08 .v08-depth-seven .svc-art { width: 85px; height: 102px; top: -9px; }
+.v08 .v08-walkline { position: absolute; z-index: 2; left: 158px; top: 363px; bottom: 77px; width: 74px; display: flex; align-items: center; flex-direction: column; gap: 12px; color: #b8bea9; font-size: 12px; letter-spacing: 2px; pointer-events: none; }
+.v08 .v08-walkline i { height: 92px; width: 1px; background: linear-gradient(transparent, rgba(239, 223, 180, .6), transparent); }
+.v08 .v08-walkline span { writing-mode: vertical-rl; text-shadow: 0 1px 4px #07121c; opacity: .8; }
+.v08 .scene-player { position: absolute; z-index: 5; top: 541px; left: 149px; width: 92px; height: 123px; padding: 0; border: 0; background: transparent; }
+.v08 .walker-art { position: absolute; top: 0; left: -10px; width: 112px; height: 112px; background: url("../../../art-source/reincarnator-walk-v1.png") 0 100% / 400% 400% no-repeat; filter: drop-shadow(0 5px 7px rgba(1, 8, 13, .68)); }
+.v08 .player-name { position: absolute; bottom: 0; left: 13px; right: 13px; color: #ebdba9; font-size: 12px; letter-spacing: 2px; padding: 3px; border-top: 1px solid rgba(236, 210, 139, .34); background: rgba(14, 26, 34, .7); }
+.v08 .v08-footer { position: absolute; z-index: 8; left: 16px; right: 16px; top: 678px; height: 56px; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid rgba(231, 207, 153, .39); background: linear-gradient(90deg, rgba(13, 25, 33, .68), rgba(13, 25, 33, .92), rgba(13, 25, 33, .68)); }
+.v08 .scene-utility { display: flex; align-items: center; justify-content: center; gap: 7px; width: 72px; height: 56px; padding: 0; border: 0; background: transparent; color: #eadcb9; font-size: 14px; }
+.v08 .scene-utility svg { width: 21px; height: 21px; color: #dbcc9b; }
+.v08 .scene-utility:hover { background: rgba(225, 206, 164, .08); }
+.v08 .scene-resources { position: static; inset: auto; z-index: auto; display: grid; gap: 5px; min-width: 128px; padding: 0 20px; border-left: 1px solid rgba(222, 194, 134, .19); border-right: 1px solid rgba(222, 194, 134, .19); color: #c0c8bd; font-family: "PingFang SC", sans-serif; font-size: 12px; }
+.v08 .scene-resources > span { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.v08 .scene-resources b { color: #eee2be; font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) { .v08 *, .v08 *::before, .v08 *::after { transition: none !important; animation: none !important; } }

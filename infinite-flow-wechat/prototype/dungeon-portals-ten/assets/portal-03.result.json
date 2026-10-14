@@ -1,0 +1,23 @@
+{
+  "asset_id": "portal-03",
+  "tool": "image_gen.imagegen",
+  "transparent_background": true,
+  "source_path": "/Users/bytedance/.codex/generated_images/01a11977-eba6-7053-8b04-432632e1d812/exec-0b50e897-dcb1-402b-a1c6-2426548ff08c.png",
+  "output_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/dungeon-portals-ten/assets/portal-03.png",
+  "sha256": "4e9d5ee713e6153f4aeb0bead244187835470b509619b04dd045ac9d32b4a8dd",
+  "source_sha256": "4e9d5ee713e6153f4aeb0bead244187835470b509619b04dd045ac9d32b4a8dd",
+  "dimensions": [
+    1536,
+    1024
+  ],
+  "mode": "RGBA",
+  "alpha_extrema": [
+    0,
+    254
+  ],
+  "alpha_zero_pixels": 701379,
+  "alpha_opaque_pixels": 0,
+  "alpha_partial_pixels": 871485,
+  "copied_without_postprocessing": true,
+  "prompt_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/dungeon-portals-ten/assets/portal-03.prompt.txt"
+}

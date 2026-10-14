@@ -1,0 +1,36 @@
+{
+  "protectedSource": {
+    "cocos/assets/scripts/ui/walk-world.ts": {
+      "before": "58fc85b0e7ebaf95c229efcb58809e125f035a9324937ce931b538f65ddef3a8",
+      "after": "58fc85b0e7ebaf95c229efcb58809e125f035a9324937ce931b538f65ddef3a8",
+      "equal": true
+    },
+    "cocos/assets/scripts/ui/scene-visuals.ts": {
+      "before": "1efbb4003c0aa38056a2f6dde9d62057b20eec0fe794121634cfef8c67fa2a96",
+      "after": "1efbb4003c0aa38056a2f6dde9d62057b20eec0fe794121634cfef8c67fa2a96",
+      "equal": true
+    },
+    "cocos/headless/walk-world.self-check.mjs": {
+      "before": "f87d5a1b65e2b3804258b4b5d96b6033dd8af15caece02d38031d31e0fe3aa51",
+      "after": "f87d5a1b65e2b3804258b4b5d96b6033dd8af15caece02d38031d31e0fe3aa51",
+      "equal": true
+    }
+  },
+  "approvedAssets": {
+    "cocos/assets/resources/dungeon-world/demon_tower_1-v1.png": {
+      "before": "955674f151e05823f676b768e3585da4f64ede7fff15cea2486952cc4a84b88f",
+      "after": "955674f151e05823f676b768e3585da4f64ede7fff15cea2486952cc4a84b88f",
+      "equal": true
+    },
+    "prototype/dungeon-room-fullscreen-v2/styles.css": {
+      "before": "2f7a3a379717db7e80392f7f5aacd8d79304bf725935e2e32cb5fa4282aa67b9",
+      "after": "2f7a3a379717db7e80392f7f5aacd8d79304bf725935e2e32cb5fa4282aa67b9",
+      "equal": true
+    },
+    "prototype/dungeon-room-fullscreen-v2/app.js": {
+      "before": "dd32a63f4dc6cc86e61739472e56def5ad67ea082f44db2b802164c7fe0a16d7",
+      "after": "dd32a63f4dc6cc86e61739472e56def5ad67ea082f44db2b802164c7fe0a16d7",
+      "equal": true
+    }
+  }
+}

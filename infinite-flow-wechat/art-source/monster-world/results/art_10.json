@@ -1,0 +1,27 @@
+{
+  "entityId": "palimpsest_censor",
+  "status": "complete",
+  "path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/art-source/monster-world/palimpsest-censor-world-v1.png",
+  "sourcePath": "/Users/bytedance/.codex/generated_images/01a0ecb4-9d26-7023-a330-86fbf27fe1d5/exec-4ee0003e-6597-4ebc-b381-57586ce7636a.png",
+  "referencePath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/monster/palimpsest-censor-v1.png",
+  "width": 1024,
+  "height": 1536,
+  "mode": "RGBA",
+  "alpha": {
+    "min": 0,
+    "max": 254,
+    "transparentPixels": 671207,
+    "nonTransparentPixels": 901657,
+    "bbox": [
+      0,
+      33,
+      992,
+      1536
+    ]
+  },
+  "sha256": "165a2f385de943a0177ee0f9fd9ae4a07e0ec5f9bf0b3f836a67a4ce6d5b3a25",
+  "byteIdenticalCopy": true,
+  "tool": "built-in imagegen",
+  "promptSet": "art-source/monster-world/prompts.json sharedPrompt + palimpsest_censor subject",
+  "visualCheck": "Full figure including head, both feet and all props visible; dark charcoal and old bronze armor, chained faceplate, blank page shield and book preserved; no frame or text."
+}

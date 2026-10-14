@@ -1,0 +1,17 @@
+{
+  "capturedAt": "2026-10-12T09:32:58.601Z",
+  "source": "Read-only inspection of the existing live Cocos game tab",
+  "url": "http://127.0.0.1:8125/cocos/build/web-mobile-dungeon-entry/index.html",
+  "state": {
+    "dungeon": "demon_tower_1",
+    "equippedWeapon": "training_blade",
+    "lootEquipment": [
+      "armor_piercing_sword"
+    ],
+    "pendingEquipmentOffer": null,
+    "permanentSword": false,
+    "phase": "explore"
+  },
+  "conclusion": "armor_piercing_sword was claimed and remains in run loot; permanent ownership has not been settled",
+  "mutationsPerformed": false
+}

@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="dark">
+<title>留白之间 · 无限流菜单原型</title>
+<link rel="stylesheet" href="style.css"><link rel="stylesheet" href="variants/stone-metal.css"><link rel="stylesheet" href="variants/scroll-jade.css"><link rel="stylesheet" href="variants/relic-minimal.css">
+<script type="module" src="app.js"></script>
+</head>
+<body>
+<header class="masthead"><a class="brand" href="#01" aria-label="无限流菜单原型首页"><span class="brand-mark">界</span><span>无限流<span class="brand-sub">界面手札 / 002</span></span></a><div class="edition">菜单与行走界面<span>第二轮 · 十款原型</span></div></header>
+<main>
+<section class="intro"><div><p class="eyebrow">小图标 · 无底板 · 场景优先</p><h1>留白之间</h1><p class="intro-copy">缩小入口，让角色与生命悬浮在场景上。重新抽一组，更轻的界面。</p></div><div class="draw-actions"><button type="button" id="draw" class="primary">抽一张 <span aria-hidden="true">↗</span></button><button type="button" id="show-all" aria-expanded="false" aria-controls="overview">展开十款</button></div></section>
+<section class="workspace" aria-label="方案工作台">
+<div class="preview-area"><div class="preview-toolbar"><span id="stage-title">01 / 10</span><div class="size-options" aria-label="预览尺寸"><button type="button" data-size="320" aria-pressed="false">320</button><button type="button" data-size="390" aria-pressed="true">390</button><button type="button" id="baseline" aria-pressed="false">看现用</button></div></div><div class="stages" id="stages"><div class="stage-column"><div class="stage-caption" id="current-caption"></div><div class="stage-slot" id="main-stage"></div></div><div class="stage-column compare-column" id="compare-column" hidden><div class="stage-caption"><span id="compare-caption"></span><button type="button" id="unpin" aria-label="关闭并排比较">关闭对比 ×</button></div><div class="stage-slot" id="compare-stage"></div></div></div><p class="stage-hint">点画面中的「角色、菜单、背包、地图、目标」体验样式。场景与数据仅用于原型。</p></div>
+<aside class="notes-panel"><div class="card-top"><span id="card-number" class="card-number">01</span><span id="material" class="material"></span></div><h2 id="card-title"></h2><p id="description" class="description"></p><ul id="features" class="features"></ul><p id="tradeoff" class="tradeoff"></p><div class="choice-actions"><button type="button" id="favorite" aria-pressed="false">留这张</button><button type="button" id="pin">钉住对比</button></div><div class="environment"><p class="eyebrow">同场景检视</p><label for="scene">环境</label><select id="scene" aria-label="环境"><option value="tower">妖塔 · 灰青石殿</option><option value="mine">矿井 · 幽暗岩壁</option><option value="archive">档案馆 · 暖色旧木</option></select><div class="condition-row"><span>生命状态</span><div class="segmented"><button type="button" data-health="102" aria-pressed="true">满血</button><button type="button" data-health="37" aria-pressed="false">受伤</button></div></div></div><div class="deck-heading"><span id="draw-count">已看 1 / 10</span><button type="button" id="shuffle">重洗卡组</button></div><nav id="deck" class="deck" aria-label="十款方案"></nav><div class="deck-foot"><button type="button" id="prev" aria-label="上一款">← 上一款</button><button type="button" id="next" aria-label="下一款">下一款 →</button></div><p class="selection-note">选好后告诉我编号。也可以说<br>「01 的顶栏 + 10 的侧边菜单」。</p><p class="save-notice" id="save-notice" hidden></p></aside>
+</section>
+<section id="overview" class="overview" hidden><div class="section-heading"><div><p class="eyebrow">把卡面摊开</p><h2>同一场景，十种留白。</h2></div><button type="button" id="only-favorites" aria-pressed="false">只看留牌</button></div><div id="overview-grid" class="overview-grid"></div><p id="empty-favorites" hidden>还没有留牌。在喜欢的方案上点「留这张」。</p></section>
+<footer><span>设计范围：顶部状态栏与五个菜单入口</span><span>独立原型 · 尚未接入正式游戏</span></footer>
+</main>
+<div id="live-status" class="sr-only" role="status" aria-live="polite"></div>
+<dialog id="menu-dialog" aria-labelledby="dialog-title"><div class="dialog-head"><div><span id="dialog-kicker"></span><h2 id="dialog-title"></h2></div><button type="button" id="dialog-close" aria-label="关闭面板">×</button></div><div id="dialog-body"></div><p class="dialog-note">交互样例 · 不改变游戏进度</p></dialog>
+<noscript><p>请启用 JavaScript 查看十款交互原型。</p></noscript>
+</body></html>

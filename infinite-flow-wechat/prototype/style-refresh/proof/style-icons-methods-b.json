@@ -1,0 +1,125 @@
+{
+  "scope": "HTML proposal only; no production resources modified",
+  "built_in_image_gen_calls": 3,
+  "all_copied_original_bytes": true,
+  "items": [
+    {
+      "asset": "star-core-method-proposed.png",
+      "source_path": "/Users/bytedance/.codex/generated_images/01a11a7b-2889-72b1-967f-192809cd9aeb/exec-edb3c253-aa49-48bf-b726-bc1e417efe4e.png",
+      "destination_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/assets/star-core-method-proposed.png",
+      "source_sha256": "20749ad83ad69787f4517d2c2fedcc103ebe5389432ec56519fe446d25501f78",
+      "sha256": "20749ad83ad69787f4517d2c2fedcc103ebe5389432ec56519fe446d25501f78",
+      "copied_original_bytes": true,
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "generator": "built-in image_gen",
+      "generation_calls": 1,
+      "original_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/item/star-core-method-v1.png",
+      "style_reference_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/item/focus-incense-v1.png",
+      "prompt_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/prompts/style-icons-methods-b-star-core-method.txt",
+      "prompt": "Use case: stylized-concept\nAsset type: Single inventory cultivation-method icon for a subdued Chinese dark-fantasy game, HTML proposal only.\nPrimary request: A small aged bronze armillary instrument surrounding one dark star stone. Retain the star cultivation identity of reference 1 but redesign it as a tangible weathered artifact in the grounded material rendering of reference 2.\nInput images: image 1 star-core-method-v1.png is subject/theme reference only; image 2 focus-incense-v1.png is rendering/material reference only.\nSubject: one compact antique bronze armillary instrument with 2 or 3 thin but readable imperfect concentric rings around a rugged dark charcoal star stone, tiny dull warm metal pins. Stone contains only very faint cold grey-blue mineral specks, no energy vortex. This is one cohesive object, not a collection.\nStyle: realistic hand-painted game item, restrained soft brushwork, aged matte bronze, charcoal stone, subtle patina, muted low saturation, quiet ancient and solemn feeling, clear silhouette at 48px.\nComposition: square canvas, isolated centered single subject occupying 75 percent of canvas; slight three-quarter view with rings forming a compact readable silhouette; ample transparent padding on all sides; do not crop.\nLighting: soft warm neutral upper-left illumination, no dramatic bloom.\nBackground: genuinely transparent alpha, no painted ground, no backdrop, no cast shadow outside subject.\nAvoid: brilliant blue/purple glow, magical aura, stars floating outside, smoke, shining central explosion, comic outlines, cel shading, neon, frame, labels, letters, text, watermark, multiple items. Do not copy the incense burner subject.\n",
+      "alpha": {
+        "present": true,
+        "extrema": [
+          0,
+          255
+        ],
+        "transparent_pixels": 1088986,
+        "partial_alpha_pixels": 482752,
+        "opaque_pixels": 778,
+        "visible_bbox_alpha_ge_128": [
+          215,
+          84,
+          1074,
+          1131
+        ],
+        "visible_width_fraction": 0.685,
+        "visible_height_fraction": 0.835
+      }
+    },
+    {
+      "asset": "beast-taming-proposed.png",
+      "generator": "built-in image_gen",
+      "generation_calls": 1,
+      "source_path": "/Users/bytedance/.codex/generated_images/01a11a7b-99d5-77d1-a3e5-13194bd9d124/exec-8d94ad4a-ff73-4e53-9997-135c79deaf52.png",
+      "destination_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/assets/beast-taming-proposed.png",
+      "copied_original_bytes": true,
+      "sha256": "d38e051e0f5602acc0238f1ea488c833ed61bbe94dcb35d98e63fbfef1ef9a25",
+      "source_sha256": "d38e051e0f5602acc0238f1ea488c833ed61bbe94dcb35d98e63fbfef1ef9a25",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "alpha": {
+        "present": true,
+        "extrema": [
+          0,
+          255
+        ],
+        "transparent_pixels": 911993,
+        "opaque_pixels": 162,
+        "partial_alpha_pixels": 660361,
+        "nontransparent_bbox": [
+          0,
+          23,
+          1230,
+          1254
+        ],
+        "visible_bbox_alpha_ge_128": [
+          175,
+          63,
+          1060,
+          1175
+        ],
+        "nearly_opaque_pixels_alpha_ge_250": 609824
+      },
+      "original_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/item/beast-taming-v1.png",
+      "style_reference_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/item/focus-incense-v1.png",
+      "prompt_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/prompts/style-icons-methods-b-beast-taming.txt",
+      "prompt": "Use case: style-transfer\nAsset type: transparent inventory icon proposal for a Chinese dark fantasy mobile game, readable at 48 px\nPrimary request: Redesign the beast-taming seal from reference image 1 as a small timeworn jade beast-head contract seal with one old cord knot, with the grounded, restrained hand-painted material treatment of reference image 2.\nInput images: Image 1 is the subject reference, a beast-head seal icon; preserve the idea of a carved beast head and cord binding but simplify its shape. Image 2 is the style reference, an aged bronze incense burner with subdued painterly textures; follow its material realism, quiet lighting and low saturation, do not depict the incense burner.\nScene/backdrop: Genuinely transparent background, clean isolated object, no ground, no scenery, no frame, no background shadow.\nSubject: A single coherent aged jade beast-head contract seal in a three-quarter view, compact dark gray-green weathered jade, softly worn carving of a dignified small guardian beast face, attached old dark brown cord knot and a discreet dull bronze fastening. The carving and cord must read as one collectible object.\nStyle/medium: Realistic hand-painted game inventory illustration with natural worn materials and restrained edges. No photographic look, no cartoon outline.\nComposition/framing: Square canvas, one centered object occupies approximately 70 to 80 percent of width and height with transparent breathing room on all sides. Full silhouette visible, designed to remain understandable at 48 px.\nLighting/mood: Quiet soft warm side light, limited highlights, ambient shaded crevices, no magical glow.\nColor palette: Low saturation stone gray-green jade, dark brown cord, very restrained aged brass detail, warm charcoal shadows.\nMaterials/textures: Patinated jade with fine chips and rubbed high points, frayed old cord, tarnished bronze. Simplify tiny ornament to preserve small-size readability.\nConstraints: Exactly one icon and one subject, no other props, preserve actual alpha transparency. No text, no numbers, no symbols floating around it, no borders, no watermark.\nAvoid: Bright cyan or turquoise cord, cyan emissions, bright glowing eyes, neon, saturated gold, oversharp glossy 3D, anime, comic contours, sticker border, checkerboard drawn into the image, scenery, crop, detached fragments.\n",
+      "visual_inspection": "Single coherent gray-green jade beast-head contract seal, weathered brown cord knot and muted bronze. Full silhouette and true transparency; no cyan glow, lettering, scenery or neighboring fragments. Vertical extent exceeds requested 80 percent; proposal remains unmodified as generated."
+    },
+    {
+      "asset": "void-heart-proposed.png",
+      "source_path": "/Users/bytedance/.codex/generated_images/01a11a7b-2889-72b1-967f-192809cd9aeb/exec-fd4a0f60-91b5-4cc3-b231-6b1da8d2cb57.png",
+      "destination_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/assets/void-heart-proposed.png",
+      "source_sha256": "bdfbea5b45d0eefb465100bc1be99f42875361fd5093828712b197356df3a5d1",
+      "sha256": "bdfbea5b45d0eefb465100bc1be99f42875361fd5093828712b197356df3a5d1",
+      "copied_original_bytes": true,
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "generator": "built-in image_gen",
+      "generation_calls": 1,
+      "original_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/item/void-heart-v1.png",
+      "style_reference_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/item/focus-incense-v1.png",
+      "prompt_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/prompts/style-icons-methods-b-void-heart.txt",
+      "prompt": "Use case: stylized-concept\nAsset type: Single inventory cultivation-method icon for a subdued Chinese dark-fantasy game, HTML proposal only.\nPrimary request: Redraw the Void Heart as a tangible fractured obsidian heart-stone with only restrained grey-violet inner light, matching the antique, subdued hand-painted material treatment of the style reference.\nInput images: image 1 void-heart-v1.png is subject/theme reference only; image 2 focus-incense-v1.png is rendering/material reference only.\nSubject: one compact irregular heart-shaped dark obsidian stone, fractured into a few large readable planes while remaining one cohesive object; faint old bronze binding lines hug a few edges, subtle charcoal and weathered mineral surfaces, soft dim grey-purple radiance visible only deep within two or three narrow cracks. No central hole or vortex. Convincingly physical, old, slightly worn.\nStyle: realistic hand-painted game item, restrained soft brushwork, low saturation, ancient quiet material presence, matte dark stone with subtle broad worn highlights. Match incense reference's grounded aged-material quality, without copying the incense subject.\nComposition: square canvas; single centered isolated heart stone occupying 75 percent of canvas; compact instantly readable silhouette at 48px; ample transparent margin, no clipping.\nLighting: soft warm neutral upper-left illumination with very restrained diffuse inner crack light; no bloom.\nBackground: genuinely transparent alpha, no floor, no backdrop, no ground shadow outside the object.\nAvoid: strong purple or blue glow, bright void sphere, energy vortex, neon, sparks, smoke, background aura, comic outlines, cel shading, frame, lettering, words, watermark, multiple objects.\n",
+      "alpha": {
+        "present": true,
+        "extrema": [
+          0,
+          255
+        ],
+        "transparent_pixels": 884216,
+        "partial_alpha_pixels": 688071,
+        "opaque_pixels": 229,
+        "visible_bbox_alpha_ge_128": [
+          152,
+          55,
+          1142,
+          1188
+        ],
+        "visible_width_fraction": 0.789,
+        "visible_height_fraction": 0.904
+      }
+    }
+  ],
+  "visual_inspection": "Star core is one compact aged bronze armillary with charcoal star stone, no bright aura. Beast is worn green-gray jade with brown cord. Void heart is charcoal fractured stone with subdued gray-violet fissures and tarnished bronze detail. All have genuine alpha and no text, backdrop or unrelated fragments. Visible object heights exceed the prompt 70-80 percent target; preserve source bytes and normalize display size in HTML if desired."
+}

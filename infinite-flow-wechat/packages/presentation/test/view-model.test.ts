@@ -1,8 +1,13 @@
 import type { GameCommand } from '@infinite-flow/application';
 import { verifyHubShops } from './hub-shop.test.js';
 import './owned-loadout.test.js';
+import './equipment-inventory.test.js';
+import './run-relics.test.js';
+import './reward-claim.test.js';
 import './entry-services.test.js';
 import './task-list.test.js';
+import './combat-choices.test.js';
+import './map-topology.test.js';
 import { reduceGameCommand } from '@infinite-flow/application';
 import {
   DUNGEON_FEATURE_HELP_IDS,
@@ -2310,20 +2315,21 @@ function verifyResultSettlement(): void {
       const retainedItemTotal = Object.values(bag.items).reduce((sum, count) => sum + Math.floor(count / 2), 0);
       equal(card.retainedItemCount, retainedItemTotal, 'secured retreat retains half items');
       equal(card.lostItemCount, itemTotal - retainedItemTotal, 'secured retreat loses half items');
-      equal(card.retainedEquipmentCount, 0, 'secured retreat retains no equipment');
-      equal(card.lostEquipmentCount, bag.equipmentIds.length, 'secured retreat loses all equipment');
-      equal(card.lostEquipmentNames.join(','), equipmentNames.join(','), 'secured retreat loses equipment names');
+      equal(card.retainedEquipmentCount, bag.equipmentIds.length, 'secured retreat keeps permanently claimed equipment');
+      equal(card.retainedEquipmentNames.join(','), equipmentNames.join(','), 'secured retreat keeps claimed equipment names');
+      equal(card.lostEquipmentCount, 0, 'secured retreat loses no equipment');
+      equal(card.lostEquipmentNames.length, 0, 'secured retreat reports no lost equipment names');
     } else {
       equal(card.retainedRewardPoints, 0, 'unsecured loss retains no reward points');
       equal(card.retainedLingyun, 0, 'unsecured loss retains no lingyun');
       equal(card.retainedItemCount, 0, 'unsecured loss retains no items');
-      equal(card.retainedEquipmentCount, 0, 'unsecured loss retains no equipment');
-      equal(card.retainedEquipmentNames.length, 0, 'unsecured loss retains no equipment names');
+      equal(card.retainedEquipmentCount, bag.equipmentIds.length, 'unsecured loss keeps permanently claimed equipment');
+      equal(card.retainedEquipmentNames.join(','), equipmentNames.join(','), 'unsecured loss keeps claimed equipment names');
       equal(card.lostRewardPoints, bag.rewardPoints, 'unsecured loss loses all reward points');
       equal(card.lostLingyun, bag.lingyun, 'unsecured loss loses all lingyun');
       equal(card.lostItemCount, itemTotal, 'unsecured loss loses all items');
-      equal(card.lostEquipmentCount, bag.equipmentIds.length, 'unsecured loss loses all equipment');
-      equal(card.lostEquipmentNames.join(','), equipmentNames.join(','), 'unsecured loss loses equipment names');
+      equal(card.lostEquipmentCount, 0, 'unsecured loss loses no equipment');
+      equal(card.lostEquipmentNames.length, 0, 'unsecured loss reports no lost equipment names');
     }
   }
 

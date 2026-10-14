@@ -1,0 +1,73 @@
+{
+  "tool": "built-in imagegen",
+  "promptSource": "art-source/monster-world/prompts.json",
+  "promptComposition": "sharedPrompt + Subject: subject",
+  "results": [
+    {
+      "entityId": "pulse_doctor",
+      "savedPath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/art-source/monster-world/pulse-doctor-world-v1.png",
+      "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a0ecb3-1352-77b2-8d10-bffb82a7dd64/exec-22d4efd1-4a8c-4500-9b06-7bff1371d96e.png",
+      "width": 1024,
+      "height": 1536,
+      "mode": "RGBA",
+      "alphaValidation": {
+        "hasAlpha": true,
+        "extrema": [
+          0,
+          254
+        ],
+        "fullyTransparentPixels": 845838,
+        "nonzeroAlphaPixels": 727026,
+        "bbox": [
+          22,
+          40,
+          1010,
+          1504
+        ],
+        "borderMaxAlpha": 0,
+        "passed": true
+      },
+      "visualValidation": {
+        "inspectedWith": "view_image",
+        "completeFigure": true,
+        "referenceIdentityPreserved": true,
+        "notes": "Complete masked head, medical pack, cable loop, pulse instrument, coat tails and both feet visible; charcoal/bronze/cyan identity preserved."
+      },
+      "sourceCopyExact": true,
+      "sha256": "0b687fb84d42dd06a56d8ff18b4ae16c181cbbfedf3742df1fe4c19fe9947114"
+    },
+    {
+      "entityId": "ash_duelist",
+      "savedPath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/art-source/monster-world/ash-duelist-world-v1.png",
+      "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a0ecb3-1352-77b2-8d10-bffb82a7dd64/exec-96a14220-afb0-4895-bd22-524c0b738e02.png",
+      "width": 1024,
+      "height": 1536,
+      "mode": "RGBA",
+      "alphaValidation": {
+        "hasAlpha": true,
+        "extrema": [
+          0,
+          254
+        ],
+        "fullyTransparentPixels": 877556,
+        "nonzeroAlphaPixels": 695308,
+        "bbox": [
+          25,
+          21,
+          998,
+          1508
+        ],
+        "borderMaxAlpha": 0,
+        "passed": true
+      },
+      "visualValidation": {
+        "inspectedWith": "view_image",
+        "completeFigure": true,
+        "referenceIdentityPreserved": true,
+        "notes": "Complete helmet, body, both feet and both blades visible; black weathered armor and ember cracks preserve reference identity."
+      },
+      "sourceCopyExact": true,
+      "sha256": "98f9d941d03fe81e67e0e486393bb1b6725a8f3eaf45666207086b6586e2c4ce"
+    }
+  ]
+}

@@ -1,0 +1,80 @@
+.v04 {
+  position: relative;
+  width: 390px;
+  height: 740px;
+  overflow: hidden;
+  isolation: isolate;
+  background: #d9c9a8;
+  color: #302719;
+  font-family: "Songti SC", "STSong", "Noto Serif CJK SC", serif;
+}
+.v04 * { box-sizing: border-box; }
+.v04.variant-scene button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.v04 button:focus-visible { outline: 2px solid #87531e; outline-offset: 3px; }
+.v04 button:active { filter: brightness(.92); }
+.v04 svg { width: 22px; height: 22px; }
+.v04 .scene-background { position: absolute; inset: 0; z-index: -3; width: 100%; height: 100%; object-fit: cover; opacity: .08; filter: sepia(1); }
+.v04 .archive-paper-grain { position: absolute; inset: 0; z-index: -2; background: linear-gradient(90deg, #51462e25, transparent 4%, transparent 95%, #51462e2b), repeating-linear-gradient(0deg, transparent 0 3px, #795c2610 3px 4px), radial-gradient(ellipse at 50% 20%, #fff2c337, transparent 64%); box-shadow: inset 0 0 70px #594c2824; }
+.v04 .scene-header { position: absolute; top: 13px; left: 14px; right: 14px; height: 78px; display: flex; gap: 12px; align-items: center; padding: 9px; color: #e9d8b3; background: #25251feF; border: 1px solid #9a8351; box-shadow: 0 3px 6px #1c150c30; }
+.v04 .scene-header::before { content: ""; position: absolute; inset: 4px; pointer-events: none; border: 1px solid #cab36c26; }
+.v04 .avatar-button { flex: 0 0 58px; height: 58px; position: relative; padding: 0; overflow: hidden; background: #24241f; border: 1px solid #a48a55; }
+.v04 .avatar-button img { width: 100%; height: 100%; object-fit: cover; object-position: center 18%; filter: sepia(.3); }
+.v04 .avatar-button span { position: absolute; bottom: 0; left: 0; right: 0; padding: 2px; background: #17170fe0; color: #ecdbb7; font-size: 12px; }
+.v04 .scene-identity { display: flex; align-items: center; flex-wrap: wrap; column-gap: 8px; row-gap: 6px; flex: 1; min-width: 0; }
+.v04 .scene-place { font-size: 20px; font-weight: 600; letter-spacing: 3px; flex: 0 0 100%; }
+.v04 .scene-health { color: #cfbf9c; font-family: "PingFang SC", sans-serif; font-size: 12px; }
+.v04 .scene-health b { font-weight: 500; margin-left: 5px; color: #eee2c9; font-size: 13px; }
+.v04 .scene-health > span { margin-left: 4px; color: #b5ac95; }
+.v04 .hp-track { display: block; width: 100%; height: 3px; background: #5b5642; }
+.v04 .hp-track i { display: block; width: 100%; height: 100%; background: #adae83; }
+.v04 .scene-menu { flex: 0 0 56px; height: 56px; display: grid; place-items: center; color: #deca99; border: 0; border-left: 1px solid #b3a06c38; background: transparent; }
+.v04 .archive-resources { position: absolute; top: 91px; left: 14px; width: 362px; height: 30px; display: flex; justify-content: center; align-items: center; gap: 30px; background: #323229; border: 1px solid #978151; border-top: 0; color: #d9c79f; font-family: "PingFang SC", sans-serif; font-size: 12px; }
+.v04 .archive-resources b { color: #eee2c7; margin-left: 5px; font-size: 13px; font-weight: 500; }
+.v04 .archive-title { position: absolute; left: 20px; top: 136px; right: 20px; display: flex; align-items: baseline; justify-content: space-between; }
+.v04 .archive-title > span { font-size: 22px; font-weight: 700; letter-spacing: 5px; }
+.v04 .archive-title small { font-size: 12px; letter-spacing: .5px; color: #5d4f35; }
+.v04 .archive-book { position: absolute; top: 178px; left: 14px; width: 235px; height: 395px; padding: 12px 8px 14px 9px; background: linear-gradient(90deg, #d2c29f, #f0e3c6 6%, #ecdfc1 96%, #ccb994); border: 1px solid #927c4c72; box-shadow: 3px 4px 0 #ac9c7a, 5px 6px 0 #6654384a, 0 4px 10px #4c321321; }
+.v04 .archive-book::before { content: ""; position: absolute; top: 12px; bottom: 14px; left: 38px; border-left: 1px solid #98623943; }
+.v04 .archive-book-heading { height: 27px; display: flex; align-items: flex-start; justify-content: space-between; padding-left: 3px; padding-right: 2px; border-bottom: 2px solid #6b5a363c; font-size: 14px; font-weight: 600; color: #4c3c20; }
+.v04 .archive-book-heading span:last-child { font-size: 12px; font-weight: 400; padding-top: 2px; color: #756143; }
+.v04 .archive-index { margin: 0; padding: 0; list-style: none; }
+.v04 .archive-entry { height: 56px; display: flex; align-items: center; position: relative; border-bottom: 1px solid #9a815647; }
+.v04 .archive-number { width: 28px; flex: 0 0 28px; padding-left: 1px; font-family: Georgia, serif; font-size: 14px; font-style: italic; color: #846944; }
+.v04 .archive-person { position: relative; flex: 1; height: 56px; display: flex; align-items: center; text-align: left; border: 0; padding: 4px 36px 4px 7px; background: transparent; min-width: 56px; }
+.v04 .archive-person:hover { background: #97784815; }
+.v04 .archive-person .svc-copy { display: flex; flex-direction: column; gap: 4px; position: relative; z-index: 1; }
+.v04 .archive-person .svc-title { font-size: 15px; font-weight: 600; line-height: 1.1; white-space: nowrap; color: #33281b; }
+.v04 .archive-person .svc-purpose { font-family: "PingFang SC", sans-serif; font-size: 12px; line-height: 1.1; white-space: nowrap; color: #68573d; }
+.v04 .archive-person .svc-art { position: absolute; top: 7px; right: 2px; width: 35px; height: 42px; object-fit: cover; object-position: center 20%; border: 1px solid #87744984; filter: sepia(.45) contrast(.93); background: #373025; }
+.v04 .archive-person .svc-icon { display: none; }
+.v04 .archive-page { position: absolute; bottom: 5px; left: 0; width: 100%; text-align: center; font-size: 12px; line-height: 1; color: #806d4b; }
+.v04 .archive-projection-frame { position: absolute; top: 178px; left: 262px; width: 114px; height: 334px; background: linear-gradient(180deg, #22231d, #34362c); border: 1px solid #78683c; box-shadow: inset 0 0 0 4px #c3a66314, 0 4px 9px #3b2b1e30; }
+.v04 .archive-projection-frame > span { position: absolute; top: 13px; right: 8px; writing-mode: vertical-rl; font-size: 13px; letter-spacing: 5px; color: #c0a873; z-index: 2; }
+.v04 .archive-projection-frame i { position: absolute; top: 70px; left: 12px; width: 84px; height: 198px; border: 1px solid #b79c4935; border-radius: 50%; box-shadow: 0 0 23px #ceb27410; }
+.v04 .archive-projection { position: absolute; top: 184px; left: 263px; width: 112px; height: 315px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding: 0 3px 3px; border: 0; background: transparent; min-width: 56px; min-height: 56px; color: #efe2bd; }
+.v04 .archive-projection .svc-art { position: absolute; top: 47px; left: -13px; width: 137px; height: 215px; object-fit: contain; filter: drop-shadow(0 0 8px #dec56b20); }
+.v04 .archive-projection .svc-copy { width: 100%; position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding-top: 10px; border-top: 1px solid #baa15862; background: linear-gradient(180deg, #25261b00, #25261bef 15%); }
+.v04 .archive-projection .svc-title { font-size: 15px; font-weight: 600; letter-spacing: 1px; line-height: 1.1; }
+.v04 .archive-projection .svc-purpose { font-family: "PingFang SC", sans-serif; font-size: 12px; color: #c6b58c; line-height: 1.1; }
+.v04 .archive-projection .svc-icon { display: none; }
+.v04 .archive-projection-number { position: absolute; top: 190px; left: 272px; color: #bba473; font-family: Georgia, serif; font-size: 20px; line-height: 1; pointer-events: none; }
+.v04 .archive-player { position: absolute; top: 510px; left: 269px; width: 102px; height: 108px; padding: 0; border: 0; background: transparent; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; }
+.v04 .archive-player .walker-art { display: block; width: 81px; height: 81px; background-image: url('../../../art-source/reincarnator-walk-v1.png'); background-repeat: no-repeat; background-size: 324px 324px; background-position: 0 0; filter: sepia(.23) drop-shadow(0 2px 2px #22180d4d); }
+.v04 .archive-player .player-name { display: block; font-size: 12px; line-height: 1.2; color: #4e3d24; padding: 2px 7px; border-bottom: 1px solid #806b414f; }
+.v04 .archive-tool-strip { position: absolute; top: 587px; left: 15px; width: 234px; height: 56px; display: flex; gap: 6px; }
+.v04 .archive-tool { width: 61px; height: 56px; flex: 0 0 61px; padding: 3px 0; border: 1px solid #7e69436b; background: #f1e4c957; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 13px; color: #4b3b23; }
+.v04 .archive-tool svg { width: 22px; height: 22px; }
+.v04 .archive-file-note { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: #695239; font-size: 12px; white-space: nowrap; }
+.v04 .archive-file-note b { font-weight: 400; color: #8b4c36; padding: 2px 8px; border: 1px solid #a567506b; transform: rotate(-7deg); }
+.v04 .archive-permit { position: absolute; top: 657px; left: 15px; width: 361px; height: 66px; display: flex; align-items: center; gap: 11px; padding: 7px 12px; border: 1px solid #917443; background: linear-gradient(105deg, #eadcbb, #f1e4c7 60%, #dfccaa); text-align: left; box-shadow: 0 3px 0 #baa580, 0 5px 8px #4a331c1c; }
+.v04 .archive-permit::before { content: ""; position: absolute; inset: 4px; border: 1px solid #9b80543b; pointer-events: none; }
+.v04 .portal-symbol { display: block; flex: 0 0 46px; height: 46px; position: relative; border: 2px solid #934d39; border-radius: 50%; transform: rotate(-12deg); color: #934d39; }
+.v04 .portal-symbol::before { content: ""; position: absolute; inset: 3px; border: 1px solid #934d39; border-radius: 50%; }
+.v04 .portal-symbol::after { content: "准行"; position: absolute; inset: 0; display: grid; place-items: center; font-size: 16px; font-weight: 700; letter-spacing: 1px; }
+.v04 .portal-symbol i, .v04 .portal-symbol b { display: none; }
+.v04 .portal-copy { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+.v04 .portal-eyebrow { font-size: 12px; color: #705332; letter-spacing: 2px; line-height: 1; }
+.v04 .portal-copy strong { font-size: 20px; font-weight: 700; letter-spacing: 2px; line-height: 1.15; color: #352a1c; }
+.v04 .portal-hint { font-family: "PingFang SC", sans-serif; font-size: 12px; line-height: 1.1; color: #665538; }
+.v04 .portal-arrow { color: #6e5530; width: 22px; }
+.v04 .archive-bottom-code { position: absolute; top: 729px; left: 0; width: 100%; text-align: center; color: #695338; font-size: 12px; line-height: 1; letter-spacing: 2px; }

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>主神空间 · 十款副本门原型</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <main class="page">
+    <header class="heading">
+      <div><p class="eyebrow">主神空间 <span>/</span> 轮回庭院</p><h1>进入副本的门<span>十款原型</span></h1><p class="intro">黑金石雕、莲云纹与门后的异界。十种形制，放回同一座庭院。</p></div>
+      <a class="game-link" href="../../cocos/build/web-mobile/index.html" target="_blank" rel="noopener">查看现有游戏 <span aria-hidden="true">↗</span></a>
+    </header>
+    <section class="toolbar" aria-label="原型预览设置">
+      <div class="control-group" role="group" aria-label="查看方式"><span class="control-label">查看</span><div class="segmented"><button type="button" data-mode="scene" aria-pressed="true">庭院效果</button><button type="button" data-mode="asset" aria-pressed="false">素材大图</button></div></div>
+      <div class="scene-identity"><span class="small-diamond" aria-hidden="true"></span><span>轮回庭院 · 东侧副本入口</span></div>
+      <p class="toolbar-note">点选任一方案<br><span>与替换前样式比较</span></p>
+    </section>
+    <div class="collection-heading"><p><span class="small-diamond" aria-hidden="true"></span>十款独立原型</p><span id="view-description">真实庭院背景 · 人物比例参照</span></div>
+    <div class="gallery" id="gallery" aria-label="主神空间的十款副本门"></div>
+    <noscript><p class="load-error">请启用 JavaScript 查看十款副本门与对比效果。</p></noscript>
+    <p class="page-status" id="page-status" role="status" aria-live="polite"></p>
+    <footer class="footer"><p>人物与场景沿用当前主神空间，十款原型按同一比例预览。</p><p>第 7 款「万象画门」已应用到游戏，其余方案保留作对比。</p></footer>
+  </main>
+  <dialog id="detail" aria-labelledby="detail-title">
+    <header class="dialog-heading"><div><p class="eyebrow" id="detail-number">方案 01 / 10</p><h2 id="detail-title">云阙界门</h2></div><button class="close-button" id="close-detail" type="button" aria-label="关闭对比">×</button></header>
+    <p class="detail-description" id="detail-description"></p>
+    <div class="comparison"><figure><figcaption><span>新方案</span><strong id="new-label">云阙界门</strong></figcaption><div id="new-stage"></div></figure><figure><figcaption><span>替换前样式</span><strong>主神空间副本门</strong></figcaption><div id="old-stage"></div></figure></div>
+    <div class="detail-bottom"><p id="detail-note"></p><a id="asset-link" href="assets/hub-portal-01.png" target="_blank" rel="noopener">打开透明原图 ↗</a></div>
+    <nav class="detail-navigation" aria-label="切换方案"><button id="previous" type="button">← 上一款</button><span id="detail-position">01 / 10</span><button id="next" type="button">下一款 →</button></nav>
+  </dialog>
+</body>
+</html>

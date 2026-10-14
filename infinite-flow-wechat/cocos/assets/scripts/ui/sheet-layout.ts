@@ -31,6 +31,8 @@ export interface SheetLayoutFrameInput {
   readonly surfaceHeight: number;
   /** Panel kind; gallery engines ignore it, the production baseline sizes per kind. */
   readonly kind: MobilePanelKind;
+  /** CSS surface width for the production compact window. */
+  readonly viewportWidth?: number;
 }
 
 export interface SheetLayoutChrome {

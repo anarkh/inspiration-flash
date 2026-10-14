@@ -1,23 +1,61 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { build } from 'esbuild';
-import { createInitialState, DUNGEON_ORDER, DUNGEONS } from '@infinite-flow/core';
+import { createInitialState, DUNGEON_ORDER, DUNGEONS, getDerivedStats, MONSTERS } from '@infinite-flow/core';
+import { RUN_RELIC_DEFINITIONS, RUN_RELIC_IDS_BY_FRAME } from '@infinite-flow/core/run-relics';
 import { reduceGameCommand } from '@infinite-flow/application';
 import { buildGameViewModel as buildActualGameViewModel } from '@infinite-flow/presentation';
 
+const HERO_WALK_LAYOUT = JSON.parse(await readFile(new URL('../../art-source/hero-redesign/proof/production-frame-layout.json', import.meta.url), 'utf8'));
+
 const TEST_CONTROL_KEY = '__INFINITE_FLOW_BOOTSTRAP_RACE_CONTROL__';
 const MANIFEST_UUID = '3d0842ec-43f7-4b5f-961f-39edb535ccd7';
-const MANIFEST_REVISION = 'sha256:18dd6c94a24afa4ec7c0a44b9f6facf4af6ea6f0ef04e60c47ea56aeee468125';
+const MANIFEST_REVISION = 'sha256:3d2a276a8cf63784d4d67f490a5e33f66304af2267cd13eae938abe026f370df';
+const RUN_RELIC_FIXTURES = Object.keys(RUN_RELIC_DEFINITIONS).map(id => ({
+  key: `item:run_relic_${id}`, kind: 'item', entityId: `run_relic_${id}`, resourcePath: `run-relic/${id}-v1`,
+}));
+const DUNGEON_PROP_FIXTURES = ['chest', 'exit', 'event', 'trap', 'survey', 'relic', 'shrine', 'law', 'debris'].map(id => ({
+  key: `scene:dungeon_prop_${id}`, kind: 'scene', entityId: `dungeon_prop_${id}`, resourcePath: `dungeon-world/${id}-v1`,
+}));
+const HUB_PORTAL_FIXTURE = { key: 'scene:hub_dungeon_portal', kind: 'scene', entityId: 'hub_dungeon_portal', resourcePath: 'hub-courtyard/wanxiang-scroll-portal-v1' };
+const COURTYARD_WORLD_FIXTURES = [
+  { key: 'scene:hub_courtyard_walk', kind: 'scene', entityId: 'hub_courtyard_walk', resourcePath: 'hub-courtyard/walk-sanctuary-v1' },
+  HUB_PORTAL_FIXTURE,
+  ...['pillar', 'crate', 'altar', 'lamp'].map((id) => ({
+    key: `scene:courtyard_${id}`, kind: 'scene', entityId: `courtyard_${id}`, resourcePath: `hub-courtyard/${id}-v1`,
+  })),
+];
+const NPC_WORLD_FIXTURES = [
+  ['equipment', 'equipment_quartermaster'], ['supplies', 'supply_trader'],
+  ['pets', 'pet_keeper'], ['methods', 'method_master'],
+  ['bloodlines', 'bloodline_priest'], ['companions', 'companion_guide'],
+  ['tasks', 'main_god_projection'],
+].map(([panel, id]) => ({ panel, key: `npc:${id}_world`, kind: 'npc', entityId: `${id}_world`, resourcePath: `npc/${id}-world-v1` }));
+const COURTYARD_NPC_SIZES = {
+  equipment: [190, 7], supplies: [180, 5], pets: [184, 5], methods: [190, 3],
+  bloodlines: [187, 6], companions: [188, 7], tasks: [194, 6],
+};
+const MONSTER_WORLD_FIXTURES = Object.keys(MONSTERS).map((id) => ({
+  id, key: `monster:${id}_world`, kind: 'monster', entityId: `${id}_world`,
+  resourcePath: `monster-world/${id.replaceAll('_', '-')}-world-v1`,
+}));
 
 function validManifest() {
   const assets = [
     { key: 'scene:main_god_space', kind: 'scene', entityId: 'main_god_space', resourcePath: 'scene/main-god-space' },
     { key: 'dungeon:demon_tower_1', kind: 'dungeon', entityId: 'demon_tower_1', resourcePath: 'dungeon/demon-tower-1-v1' },
     { key: 'monster:fog_lesser_demon', kind: 'monster', entityId: 'fog_lesser_demon', resourcePath: 'monster/fog-lesser-demon-v1' },
-    { key: 'character:reincarnator', kind: 'character', entityId: 'reincarnator', resourcePath: 'character/reincarnator-v1' },
-    { key: 'character:reincarnator_walk', kind: 'character', entityId: 'reincarnator_walk', resourcePath: 'character/reincarnator-walk-v1' },
+    { key: 'character:reincarnator', kind: 'character', entityId: 'reincarnator', resourcePath: 'character/reincarnator-v2' },
+    { key: 'character:reincarnator_walk', kind: 'character', entityId: 'reincarnator_walk', resourcePath: 'character/reincarnator-walk-v2' },
     { key: 'npc:equipment_quartermaster', kind: 'npc', entityId: 'equipment_quartermaster', resourcePath: 'npc/equipment-quartermaster-v1' },
+    ...COURTYARD_WORLD_FIXTURES,
+    ...DUNGEON_PROP_FIXTURES,
+    { key: 'scene:dungeon_transition_gate', kind: 'scene', entityId: 'dungeon_transition_gate', resourcePath: 'dungeon-world/ruined-stone-gate-v1' },
+    ...NPC_WORLD_FIXTURES,
+    ...MONSTER_WORLD_FIXTURES,
+    ...RUN_RELIC_FIXTURES,
     ...DUNGEON_ORDER.map((dungeonId) => ({
       key: `scene:dungeon_world_${dungeonId}`,
       kind: 'scene',
@@ -25,7 +63,7 @@ function validManifest() {
       resourcePath: `dungeon-world/${dungeonId}-v1`,
     })),
   ];
-  for (let index = assets.length; index < 223; index += 1) {
+  for (let index = assets.length; index < 314; index += 1) {
     assets.push({
       key: `item:fixture_${index}`,
       kind: 'item',
@@ -36,7 +74,7 @@ function validManifest() {
   return {
     schemaVersion: 2,
     manifestRevision: MANIFEST_REVISION,
-    assetCount: 223,
+    assetCount: 314,
     assets,
   };
 }
@@ -217,7 +255,7 @@ function createController() {
         getInfoWithPath() { return null; },
         load(path, type, complete) {
           assert.equal(type, engine.ImageAsset);
-          const supplemental = path.startsWith('character/') || path.startsWith('npc/');
+          const supplemental = path.startsWith('character/') || path.startsWith('npc/') || path.startsWith('monster-world/') || path.startsWith('hub-courtyard/') || path.startsWith('run-relic/') || path === 'dungeon-world/ruined-stone-gate-v1' || DUNGEON_PROP_FIXTURES.some(asset => asset.resourcePath === path);
           const image = new engine.ImageAsset(path);
           image.onReference = (operation, handle, refCount, destroyed) => {
             (supplemental ? session.sceneImageReferenceCalls : session.imageReferenceCalls).push({
@@ -306,7 +344,7 @@ const virtualModules = new Map([
     export const input = { on() {}, off() {} };
     export const game = { on() {}, off() {} };
     export const view = { getFrameSize() { return { width: 0, height: 0 }; } };
-    export const KeyCode = { KEY_W: 87, KEY_A: 65, KEY_S: 83, KEY_D: 68, KEY_E: 69, SPACE: 32, ARROW_UP: 38, ARROW_DOWN: 40, ARROW_LEFT: 37, ARROW_RIGHT: 39 };
+    export const KeyCode = { KEY_W: 87, KEY_A: 65, KEY_S: 83, KEY_D: 68, KEY_E: 69, SPACE: 32, ESCAPE: 27, ARROW_UP: 38, ARROW_DOWN: 40, ARROW_LEFT: 37, ARROW_RIGHT: 39 };
     export class Color {
       constructor(...channels) { this.channels = channels; }
     }
@@ -322,7 +360,15 @@ const virtualModules = new Map([
     export class Sprite {
       static SizeMode = { CUSTOM: 0, RAW: 1, TRIMMED: 2 };
     }
-    export class SpriteFrame {}
+    export class SpriteFrame {
+      static createWithImage(image) {
+        const frame = new SpriteFrame();
+        frame.texture = { image };
+        frame.destroyCalls = 0;
+        return frame;
+      }
+      destroy() { this.destroyCalls += 1; return true; }
+    }
     export class UITransform {}
     export class Vec3 {}
     export class Asset {
@@ -400,7 +446,8 @@ const virtualModules = new Map([
         phase: state.phase ?? 'hub',
         visualAssetKey: state.visualAssetKey,
         tasks: [],
-        sections: [{}, { detail: state.detail ?? { kind: 'hub', entryDraft } }],
+        sections: [{}, { detail: state.detail ?? { kind: 'hub', entryDraft },
+          ...(state.loadout === undefined ? {} : { loadout: state.loadout }) }],
       };
     }
   `],
@@ -518,7 +565,10 @@ const virtualModules = new Map([
         this.sceneVisuals = new Map();
         globalThis.${TEST_CONTROL_KEY}.views.push(this);
       }
-      render() { this.renderCalls += 1; }
+      render(model, chrome, safeInsets) {
+        this.renderCalls += 1;
+        this.lastRender = { model, chrome, safeInsets };
+      }
       setSceneVisualAsset(image, status) {
         this.clearSceneVisualAsset(status.key);
         this.sceneVisuals.set(status.key, { image, status });
@@ -564,6 +614,7 @@ const virtualModules = new Map([
       }
       destroy() { this.clearVisualAsset(); this.clearSceneVisualAsset(); this.destroyCalls += 1; }
       focusPrimaryActions() {}
+      resolveCombatPresentation() {}
     }
   `],
   ['cc/env', `
@@ -630,10 +681,10 @@ const viewVirtualCc = `
   }
   export const input = globalThis.__walkingTestInput = new TestEvents();
   export const game = globalThis.__walkingTestGame = new TestEvents();
-  export const view = { getFrameSize() { return { width: 0, height: 0 }; } };
+  export const view = { getFrameSize() { return globalThis.__walkingTestFrameSize ?? { width: 0, height: 0 }; } };
   export const Input = { EventType: { KEY_DOWN: 'key-down', KEY_UP: 'key-up' } };
   export const Game = { EVENT_HIDE: 'game-hide' };
-  export const KeyCode = { KEY_W: 87, KEY_A: 65, KEY_S: 83, KEY_D: 68, KEY_E: 69, SPACE: 32, ARROW_UP: 38, ARROW_DOWN: 40, ARROW_LEFT: 37, ARROW_RIGHT: 39 };
+  export const KeyCode = { KEY_W: 87, KEY_A: 65, KEY_S: 83, KEY_D: 68, KEY_E: 69, SPACE: 32, ESCAPE: 27, ARROW_UP: 38, ARROW_DOWN: 40, ARROW_LEFT: 37, ARROW_RIGHT: 39 };
   export class EventKeyboard {}
   export class Rect { constructor(x, y, width, height) { Object.assign(this, {x, y, width, height}); } }
   export class Vec2 { constructor(x, y) { this.x = x; this.y = y; } }
@@ -650,6 +701,8 @@ const viewVirtualCc = `
   }
   export class EventTouch {}
   export class Graphics {
+    static LineCap = { ROUND: 1 };
+    static LineJoin = { ROUND: 1 };
     constructor() { this.clear(); }
     roundRect(x, y, width, height, radius) { this.roundRectCalls += 1; this.shape = { kind: 'roundRect', x, y, width, height, radius }; return this; }
     rect(x, y, width, height) { this.shape = { kind: 'rect', x, y, width, height }; return this; }
@@ -662,6 +715,13 @@ const viewVirtualCc = `
     lineTo(x, y) {
       if (this.cursor !== undefined) {
         this.segments.push({ from: this.cursor, to: { x, y } });
+      }
+      if (this.shape?.kind === 'path') this.shape.points.push({ x, y });
+      this.cursor = { x, y };
+    }
+    bezierCurveTo(c1x, c1y, c2x, c2y, x, y) {
+      if (this.cursor !== undefined) {
+        this.segments.push({ from: this.cursor, controls: [{ x: c1x, y: c1y }, { x: c2x, y: c2y }], to: { x, y } });
       }
       if (this.shape?.kind === 'path') this.shape.points.push({ x, y });
       this.cursor = { x, y };
@@ -718,11 +778,19 @@ const viewVirtualCc = `
   }
   export class Sprite {
     static SizeMode = { CUSTOM: 0, RAW: 1, TRIMMED: 2 };
-    constructor() { this.spriteFrame = null; }
+    constructor() { this.spriteFrame = null; this.trim = true; }
   }
   export class SpriteFrame {
+    static instances = [];
+    static failRectAfter;
+    set rect(value) {
+      if (SpriteFrame.failRectAfter !== undefined && --SpriteFrame.failRectAfter === 0) throw new Error('injected hero crop assignment failure');
+      this._rect = value;
+    }
+    get rect() { return this._rect; }
     static createWithImage(image) { return new SpriteFrame(image); }
     constructor(image) {
+      SpriteFrame.instances.push(this);
       this.image = image;
       this.destroyCalls = 0;
       this.texture = {
@@ -733,6 +801,7 @@ const viewVirtualCc = `
     destroy() { this.destroyCalls += 1; }
   }
   export class UITransform {
+    get contentSize() { return this.node.size; }
     setContentSize(size) { this.node.size = size; }
     convertToNodeSpaceAR(point) {
       let x = point.x, y = point.y;
@@ -753,8 +822,9 @@ const viewBundle = await build({
       export * from './InfiniteFlowView';
       export { getInfiniteFlowSceneVisualKeys } from './scene-visuals';
       export { buildWalkWorld } from './walk-world';
+      export { getDungeonHtmlRoomLayout, fitDungeonHtmlTargets } from './InfiniteFlowWalkScene';
       export { DARK_UI, paintDarkFrame } from './dark-ui';
-      export { Graphics as TestGraphics } from 'cc';
+      export { Graphics as TestGraphics, SpriteFrame as TestSpriteFrame } from 'cc';
     `,
     resolveDir: dirname(viewEntryPath),
     loader: 'ts',
@@ -783,9 +853,12 @@ const {
   InfiniteFlowView: SceneInfiniteFlowView,
   getInfiniteFlowSceneVisualKeys,
   buildWalkWorld,
+  getDungeonHtmlRoomLayout,
+  fitDungeonHtmlTargets,
   DARK_UI,
   paintDarkFrame,
   TestGraphics,
+  TestSpriteFrame,
   classifyInfiniteFlowHubActionGlyph,
   classifyInfiniteFlowExploreResultActionGlyph,
   formatInfiniteFlowHubActionLabel,
@@ -843,7 +916,7 @@ function darkContrast(foreground, background) {
   return (Math.max(...values) + 0.05) / (Math.min(...values) + 0.05);
 }
 
-function assertDarkFrameGeometry(graphics, width, height, label) {
+function assertDarkFrameGeometry(graphics, width, height, label, requireCut = true) {
   assert.ok(graphics, `${label}: native Graphics frame exists`);
   assert.equal(graphics.roundRectCalls, 0, `${label}: no rounded button frame`);
   assert.equal(graphics.circleCalls, 0, `${label}: no circular button frame`);
@@ -858,18 +931,23 @@ function assertDarkFrameGeometry(graphics, width, height, label) {
   const points = frame.shape.points;
   assert.ok(frame.shape.closed || (points[0].x === points.at(-1).x && points[0].y === points.at(-1).y),
     `${label}: the cut-corner frame path is closed`);
-  assert.ok(points.some((point, index) => {
-    const next = points[(index + 1) % points.length];
-    return point.x !== next.x && point.y !== next.y;
-  }), `${label}: diagonal corner cuts remain visible`);
+  if (requireCut) {
+    assert.ok(points.some((point, index) => {
+      const next = points[(index + 1) % points.length];
+      return point.x !== next.x && point.y !== next.y;
+    }), `${label}: diagonal corner cuts remain visible`);
+  }
   return frame;
 }
 
-function assertDarkControl(node, size, label) {
+function assertDarkControl(node, size, label, warmWalking = false) {
   assert.ok(node, `${label}: original control node exists`);
   assert.deepEqual({ ...node.size }, { width: size, height: size }, `${label}: original touch geometry remains`);
   const frame = assertDarkFrameGeometry(node.getComponent(TestGraphics), size, size, label);
-  assert.ok([DARK_UI.raised, DARK_UI.quiet, DARK_UI.goldDark, DARK_UI.redDark]
+  if (warmWalking) {
+    const [red, green, blue] = darkRgb(frame.color);
+    assert.ok(Math.max(red, green, blue) < 85 && Math.min(red, green) > blue, `${label}: warm dark controls preserve a readable subdued surface`);
+  } else assert.ok([DARK_UI.raised, DARK_UI.quiet, DARK_UI.goldDark, DARK_UI.redDark]
     .some((fill) => darkRgb(fill).every((channel, index) => channel === darkRgb(frame.color)[index])),
   `${label}: native dark control surface`);
   return frame;
@@ -891,48 +969,341 @@ for (const size of [104, 112, 120]) {
   assertDarkFrameGeometry(graphics, size, size, `shared ${size}px control`);
 }
 
-function assertDarkWalkingUi(root, model, insets) {
-  const top = 667 - insets.top, bottom = -667 + insets.bottom;
-  const controls = [
-    ['SceneCharacter', -309, top - 59], ['SceneHelp', 309, top - 59], ['SceneDetails', 309, top - 182],
-    ...(model.phase === 'explore' ? [['SceneMap', 309, top - 294], ['SceneCodex', 309, top - 406]] : []),
-    ...(model.phase === 'combat' ? [['SceneCodex', 309, top - 294]] : []),
-  ];
-  for (const [name, x, y] of controls) {
-    const node = findNode(root, name);
-    const frame = assertDarkControl(node, 104, `${model.phase}/${name}`);
-    assert.deepEqual({ ...node.position }, { x, y, z: 0 }, `${name}: original safe-area anchor remains`);
-    const label = labelComponent(findNode(node, `${name}Label`));
-    assert.ok(darkContrast(label.color, frame.color) >= 4.5, `${name}: title remains readable`);
-    const icon = findNode(node, `${name}Icon`);
-    const iconGraphics = icon?.getComponent(TestGraphics);
-    assert.ok(iconGraphics && iconGraphics.strokes.length + iconGraphics.fills.length > 0,
-      `${name}: native vector icon replaces cartoon or font glyph controls`);
-    assert.equal(collectStrings(icon).length, 0, `${name}: icon artwork is not an emoji label`);
+function assertBorderlessHudSurface(node, label) {
+  const graphics = node?.getComponent(TestGraphics);
+  assert.ok(!graphics || graphics.fills.length + graphics.strokes.length === 0,
+    `${label}: HUD surface has no background, outline or corner ornaments`);
+}
+
+function assertWorldViewport(root, model) {
+  const scene = findNode(root, 'WalkScene');
+  const viewport = findNode(root, 'WalkViewport');
+  if (model.phase === 'hub') {
+    assert.deepEqual({ ...viewport.size }, { width: 750, height: scene.size.height }, 'courtyard world viewport covers the complete game surface');
+    assert.ok(Math.abs(viewport.position.x + scene.position.x) < 1e-6 && viewport.position.y === 0 && viewport.position.z === 0,
+      'safe insets preserve the approved courtyard viewport');
+  } else {
+    assert.ok(viewport.size.width > 0 && viewport.size.width <= 750
+      && viewport.size.height > 0 && viewport.size.height < scene.size.height,
+    'the fixed dungeon viewport leaves room for the header and controls');
   }
+  assert.ok(hasComponentNamed(viewport, 'Mask'), 'walking world retains its clipping boundary');
+}
+
+// Native actor roots counter-scale the fixed affine camera. Include every parent
+// transform when checking visible bounds, text and effect anchors.
+function projectedNodePoint(node, point = { x: 0, y: 0 }) {
+  let { x, y } = point;
+  for (let current = node; current !== undefined; current = current.parent) {
+    x = x * (current.scale?.x ?? 1) + (current.position?.x ?? 0);
+    y = y * (current.scale?.y ?? 1) + (current.position?.y ?? 0);
+  }
+  return { x, y };
+}
+function projectedNodeBounds(node) {
+  assert.ok(node, 'the actual projected node must exist');
+  const lower = projectedNodePoint(node, { x: -node.size.width / 2, y: -node.size.height / 2 });
+  const upper = projectedNodePoint(node, { x: node.size.width / 2, y: node.size.height / 2 });
+  return { left: Math.min(lower.x, upper.x), right: Math.max(lower.x, upper.x),
+    bottom: Math.min(lower.y, upper.y), top: Math.max(lower.y, upper.y) };
+}
+function sceneDungeonLayout(root, model, insets) {
+  const spec = buildWalkWorld(model);
+  const scene = findNode(root, 'WalkScene');
+  const frame = globalThis.__walkingTestFrameSize ?? { width: 0, height: 0 };
+  const viewportWidth = frame.width > 0 && frame.height > 0
+    ? Math.min(frame.width, frame.height * 750 / scene.size.height) : 320;
+  const layout = getDungeonHtmlRoomLayout({ worldWidth: spec.width, worldHeight: spec.height,
+    surfaceHeight: scene.size.height, viewportWidth, safeInsets: insets });
+  return { spec, layout, transientSpec: fitDungeonHtmlTargets(spec, layout) };
+}
+function walkTowardRenderedTarget(view, root, id, radius) {
+  const actor = findNode(root, `WalkTarget:${id}`);
+  assert.ok(actor, `${id}: the actual interaction actor must exist`);
+  const target = { x: actor.position.x, y: -actor.position.y };
+  let held = new Set();
+  for (let frame = 0; frame < 600; frame += 1) {
+    const position = view.walkScene.getPosition();
+    const dx = target.x - position.x;
+    const dy = target.y - position.y;
+    const next = new Set(Math.hypot(dx, dy) <= radius * 0.5 ? [] : [
+      ...(Math.abs(dx) > 3 ? [dx < 0 ? 65 : 68] : []),
+      ...(Math.abs(dy) > 3 ? [dy < 0 ? 87 : 83] : []),
+    ]);
+    for (const code of held) if (!next.has(code)) globalThis.__walkingTestInput.emit('key-up', { keyCode: code });
+    for (const code of next) if (!held.has(code)) globalThis.__walkingTestInput.emit('key-down', { keyCode: code });
+    held = next;
+    view.tick(1 / 60);
+    if (held.size === 0) return target;
+  }
+  for (const code of held) globalThis.__walkingTestInput.emit('key-up', { keyCode: code });
+  assert.fail(`${id}: ordinary held-key walking did not reach the rendered interaction radius`);
+}
+function assertWorldImageCoverage(root, key) {
+  const scene = findNode(root, 'WalkScene');
+  const window = findNode(root, `WalkDungeonBackdropWindow:${key}`);
+  const image = findNode(root, `WalkDungeonBackdrop:${key}`);
+  assert.ok(window && image, `${key}: one dedicated environment window and image exist`);
+  assert.equal(collectNodes(root, ({ name }) => name === `WalkDungeonBackdrop:${key}`).length, 1,
+    `${key}: full coverage uses one environment image`);
+  if (key === 'scene:hub_courtyard_walk') {
+    const viewport = findNode(root, 'WalkViewport');
+    const camera = findNode(root, 'WalkCamera');
+    const zoom = camera.scale.x;
+    assert.equal(camera.scale.y, zoom, 'courtyard background and actors retain their uniform world scale');
+    assert.equal(window.parent, camera, 'courtyard artwork retains its independent scrolling-camera contract');
+    assert.ok(window.size.width * zoom >= viewport.size.width - 1e-6
+      && window.size.height * zoom >= viewport.size.height - 1e-6, `${key}: original cover window fills the courtyard`);
+    assert.ok(image.size.width >= window.size.width - 1e-6 && image.size.height >= window.size.height - 1e-6);
+    const x = camera.position.x + window.position.x * zoom;
+    const y = camera.position.y + window.position.y * zoom;
+    assert.ok(x - window.size.width * zoom / 2 <= -viewport.size.width / 2 + 1e-6
+      && x + window.size.width * zoom / 2 >= viewport.size.width / 2 - 1e-6
+      && y - window.size.height * zoom / 2 <= -viewport.size.height / 2 + 1e-6
+      && y + window.size.height * zoom / 2 >= viewport.size.height / 2 - 1e-6,
+    `${key}: scrolling cannot reveal a band outside the courtyard image`);
+    return;
+  }
+  assert.equal(window.parent, scene, `${key}: dungeon artwork is independent of the room camera`);
+  assert.deepEqual({ ...window.size }, { width: 750, height: scene.size.height },
+    `${key}: the original background extends across the complete game surface`);
+  const bounds = projectedNodeBounds(window);
+  const rootCenter = projectedNodePoint(root);
+  assert.ok(Math.abs(bounds.left - (rootCenter.x - 375)) < 0.001
+    && Math.abs(bounds.right - (rootCenter.x + 375)) < 0.001
+    && Math.abs(bounds.bottom - (rootCenter.y - scene.size.height / 2)) < 0.001
+    && Math.abs(bounds.top - (rootCenter.y + scene.size.height / 2)) < 0.001,
+  `${key}: safe insets and room fitting cannot crop the background to a square`);
+  assert.ok(image.size.width >= window.size.width - 1e-6 && image.size.height >= window.size.height - 1e-6,
+    `${key}: one cover image fills the complete background window`);
+}
+
+function hudFixtureLayout(viewportWidth) {
+  const narrow = viewportWidth <= 350;
+  return { px: 750 / viewportWidth, narrow, infoLeft: narrow ? 61 : 65,
+    infoRight: narrow ? 225 : 292, healthWidth: narrow ? 75.6 : 115.2,
+    avatarLeft: narrow ? 9 : 10, cropWidth: narrow ? 40 : 42,
+    navRight: narrow ? 1 : 3, navGap: narrow ? 0 : 2 };
+}
+
+function assertSharedHeader(root, model, insets, viewportWidth = 320) {
+  assertWorldViewport(root, model);
+  const layout = hudFixtureLayout(viewportWidth);
+  const { px, narrow } = layout;
+  const top = 667 - insets.top;
+  const hud = findNode(root, 'WalkHud');
+  const boundsOf = node => {
+    const b = absoluteNodeBounds(node);
+    return { left: (b.left + 375) / px, right: (b.right + 375) / px,
+      top: (top - b.top) / px, bottom: (top - b.bottom) / px };
+  };
+  const closeTo = (actual, expected, message) => assert.ok(Math.abs(actual - expected) < 1e-6, message);
+  assertBorderlessHudSurface(hud, 'shared role HUD');
+  assert.equal(findNode(hud, 'WalkRoleFrame'), undefined, 'shared role HUD has no decorative outline');
+  const name = findNode(hud, 'WalkRoleName');
+  assert.equal(labelComponent(name).string, '轮回者', 'all phases retain the same character name');
+  closeTo(boundsOf(name).left, layout.infoLeft, 'character name starts at the approved information column');
+  closeTo(boundsOf(name).top, 13, 'name and resources share the first row');
+  assert.equal(labelComponent(name).fontSize, (narrow ? 12 : 13) * px);
+  const currency = findNode(hud, 'WalkCurrencyReadout');
+  assert.equal(labelComponent(currency), undefined, 'currency row is a container rather than an old combined label');
+  const metrics = model.sections[1].metrics;
+  const resources = [['WalkRewardPoints', 'reward-points'], ['WalkLingyun', 'lingyun']].map(([nodeName, id]) => {
+    const node = findNode(currency, nodeName);
+    const value = findNode(node, `${nodeName}Value`);
+    assert.equal(labelComponent(value).string, metrics.find(metric => metric.id === id)?.value ?? '—', `${id}: HUD uses only the authoritative balance`);
+    assert.equal(labelComponent(value).enableWrapText, false, `${id}: balance remains on one line`);
+    assert.equal(labelComponent(value).fontSize, (narrow ? 10 : 11) * px);
+    assert.equal(node.listeners.size > 0, metrics.some(metric => metric.id === id), `${id}: only an available authoritative balance opens a resource popup`);
+    closeTo((boundsOf(node).top + boundsOf(node).bottom) / 2, 23, `${id}: resource touch region shares the name-row center`);
+    assert.equal(node.size.height, 44 * px);
+    assert.equal(nodesOverlap(name, value), false, 'resource digits cannot overlap the character name');
+    return node;
+  });
+  assert.equal(nodesOverlap(resources[0], resources[1]), false, 'resource touch regions remain separate');
+  assert.ok(boundsOf(resources[1]).right <= layout.infoRight + 1e-6, 'resources leave the right navigation column clear');
+  const avatar = findNode(hud, 'SceneCharacter');
+  assert.deepEqual({ ...avatar.size }, { width: 44 * px, height: 61 * px });
+  const avatarFrame = avatar.getComponent(TestGraphics);
+  assert.equal(avatarFrame.fills.length, 1, 'portrait keeps only the approved rectangular image backing');
+  assert.equal(avatarFrame.fills[0].shape.kind, 'rect');
+  closeTo(boundsOf(avatar).left + (narrow ? 1 : 0), layout.avatarLeft, 'visible portrait preserves the prototype left inset');
+  closeTo(boundsOf(avatar).top, 13, 'portrait aligns with the name row');
+  assert.ok(avatarFrame.strokes.every(({ shape }) => shape?.kind === 'rect'), 'portrait has no old ornamental frame or dark lower bevel');
+  assert.equal(labelComponent(findNode(avatar, 'SceneCharacterLabel')).string, '角色');
+  const art = findNode(avatar, 'WalkAvatarArt');
+  assert.ok(art, 'ready shared header displays its real portrait');
+  assert.equal(findNode(avatar, 'WalkAvatarPlaceholder'), undefined, 'ready shared header never recreates superseded avatar drawings');
+  const crop = findNode(avatar, 'WalkAvatarCrop');
+  assert.ok(hasComponentNamed(crop, 'Mask'), 'shared portrait retains the masked crop');
+  assert.deepEqual({ ...crop.size }, { width: layout.cropWidth * px, height: 59 * px });
+  assert.ok(hasComponentNamed(art, 'Sprite'));
+  const buttonSpecs = [['SceneDetails', '背包', 0, 0], ['SceneHelp', '菜单', 1, 0],
+    ...(model.phase === 'explore' ? [['SceneMap', '地图', 0, 1]] : []),
+    ...(model.phase === 'explore' || model.phase === 'combat' ? [['SceneCodex', '目标', 1, 1]] : [])];
+  const controls = [avatar, ...resources];
+  for (const [nodeName, caption, column, row] of buttonSpecs) {
+    const node = findNode(root, nodeName);
+    controls.push(node);
+    assert.deepEqual({ ...node.size }, { width: 44 * px, height: 44 * px }, `${nodeName}: phone touch size remains 44px`);
+    closeTo(boundsOf(node).right, viewportWidth - layout.navRight - (1 - column) * (44 + layout.navGap), `${nodeName}: prototype navigation column`);
+    closeTo(boundsOf(node).top, 5 + 44 * row, `${nodeName}: prototype navigation row`);
+    assertBorderlessHudSurface(node, `shared ${nodeName}`);
+    assert.equal(findNode(node, `${nodeName}Frame`), undefined);
+    assert.equal(labelComponent(findNode(node, `${nodeName}Label`)).string, caption);
+    const icon = findNode(node, `${nodeName}Icon`);
+    const graphics = icon.getComponent(TestGraphics);
+    assert.ok(graphics.strokes.length + graphics.fills.length > 0, `${nodeName}: native icon remains visible`);
+    assert.ok(graphics.lineWidth / px >= 1.5 - 1e-6, `${nodeName}: native strokes retain screen coverage`);
+    assert.equal(collectStrings(icon).length, 0, `${nodeName}: icon is not an emoji label`);
+  }
+  const relics = model.phase === 'explore' || model.phase === 'combat' ? model.sections[1].loadout?.runRelics ?? [] : [];
+  const strip = findNode(hud, 'WalkRunRelics');
+  assert.equal(Boolean(strip), relics.length > 0, 'empty acquired collection hides the entire HUD relic row');
+  if (strip) {
+    controls.push(strip);
+    assert.deepEqual({ ...strip.size }, { width: Math.max(44, relics.length * 24) * px, height: 44 * px });
+    closeTo(boundsOf(strip).left, layout.infoLeft - 3, 'single relic touch region includes the first icon padding');
+    closeTo(boundsOf(strip).top, 49, 'relic touch region remains below the name/resources row');
+    assert.ok(strip.listeners.size > 0, 'acquired relic row has one physical binding');
+    const icons = collectNodes(strip, node => node.name.startsWith('WalkRunRelicIcon:'));
+    assert.deepEqual(icons.map(node => node.name), relics.map(relic => `WalkRunRelicIcon:${relic.relicId}`), 'only acquired relics appear in their existing order');
+    for (const [index, icon] of icons.entries()) {
+      assert.deepEqual({ ...icon.size }, { width: 18 * px, height: 18 * px });
+      closeTo(boundsOf(icon).left, layout.infoLeft + index * 24, 'first relic icon aligns with health; subsequent icons keep the 6px visible gap');
+      closeTo(boundsOf(icon).top, 62, 'relic art aligns near the portrait bottom');
+    }
+    assert.ok(collectNodes(strip, node => node !== strip).every(node => node.listeners.size === 0), 'relic icons and gaps share one row binding without nested buttons');
+  }
+  for (const control of controls) {
+    assert.ok(control.size.width / px >= 44 && control.size.height / px >= 44, `${control.name}: touch area is at least 44 screen pixels`);
+    const b = absoluteNodeBounds(control);
+    assert.ok(b.left >= -375 + insets.left && b.right <= 375 - insets.right
+      && b.top <= top && b.bottom >= -667 + insets.bottom, `${control.name}: touch area stays inside the safe viewport`);
+  }
+  for (let i = 0; i < controls.length; i += 1) for (let j = i + 1; j < controls.length; j += 1) {
+    assert.equal(nodesOverlap(controls[i], controls[j]), false, `${controls[i].name}/${controls[j].name}: touch regions do not overlap`);
+  }
+  assert.equal(findNode(root, 'SceneMap') === undefined, model.phase !== 'explore');
+  const detail = model.sections[1].detail;
+  const hp = detail.kind === 'combat' ? `${detail.player.hp}/${detail.player.maxHp}` : metrics.find(({ id }) => id === 'hp')?.value;
+  assert.equal(labelComponent(findNode(hud, 'WalkPlayerStatus')).string, hp ?? '—', 'shared health label contains only the authoritative hp/maxHp digits');
+  const caption = findNode(hud, 'WalkHealthCaption');
+  assert.equal(Boolean(caption), !narrow, 'narrow HUD omits only the life caption');
+  if (caption) assert.equal(labelComponent(caption).string, '生命');
+  if (/^\d+\s*\/\s*\d+$/.test(hp ?? '')) {
+    const [current, maximum] = hp.split('/').map(Number);
+    assertSharedHeaderHealth(root, current, maximum, viewportWidth);
+  }
+}
+
+function assertCourtyardHud(root, model, insets, viewportWidth = 320) {
+  assertSharedHeader(root, model, insets, viewportWidth);
+  const px = 750 / viewportWidth;
+  const bag = findNode(root, 'SceneDetails'), menu = findNode(root, 'SceneHelp');
+  assert.ok(Math.abs((absoluteNodeBounds(menu).left - absoluteNodeBounds(bag).right) / px - hudFixtureLayout(viewportWidth).navGap) < 1e-6,
+    'bag and menu keep the approved prototype column gap');
+  const minimap = findNode(root, 'WalkMinimap');
+  assert.deepEqual({ ...minimap.size }, { width: (viewportWidth <= 380 ? 94 : 108) * px, height: 44 * px });
+  const minimapGraphics = minimap.getComponent(TestGraphics);
+  assert.equal(minimapGraphics.fills[0].shape.kind, 'rect', 'courtyard minimap keeps a plain translucent backing');
+  assert.deepEqual(minimapGraphics.fills[0].color.channels, [25, 31, 25, 152]);
+  assert.ok(minimapGraphics.strokes.every(({ shape }) => shape?.kind !== 'path'), 'courtyard minimap has no ornamental outer outline');
+  assert.ok(absoluteNodeBounds(minimap).top <= absoluteNodeBounds(menu).bottom,
+    'minimap remains below the top-row controls');
+  assert.ok(absoluteNodeBounds(minimap).right <= 375 - insets.right, 'minimap stays inside the safe viewport');
   const interact = findNode(root, 'WalkInteract');
-  assertDarkControl(interact, 120, `${model.phase}/WalkInteract`);
-  assert.deepEqual({ ...interact.position }, { x: 290, y: bottom + 79, z: 0 });
+  assert.deepEqual({ ...interact.size }, { width: 64 * px, height: 44 * px }, 'courtyard interaction is the approved 64 by 44 viewport pixels');
+  assert.ok(interact.size.width / px >= 44 && interact.size.height / px >= 44, 'small interaction control retains the 44px minimum touch area');
+  assert.equal(labelComponent(findNode(interact, 'WalkInteractLabel')).enableWrapText, false);
+  for (const name of ['WalkLocationName', 'WalkInteractionHint', 'WalkInteractionHintBacking', 'WalkJoystickStatus', 'WalkStatusLamp']) {
+    assert.equal(findNode(root, name), undefined, `${name}: approved courtyard has no scene or joystick readout`);
+  }
+}
+
+function assertSharedHeaderHealth(root, hp, maxHp, viewportWidth = 320) {
+  const hud = findNode(root, 'WalkHud');
+  const px = 750 / viewportWidth;
+  const layout = hudFixtureLayout(viewportWidth);
+  const width = layout.healthWidth * px;
+  const height = 3 * px;
+  const current = labelComponent(findNode(hud, 'WalkPlayerStatus'));
+  assert.equal(current?.string, `${hp}/${maxHp}`, 'shared header displays only the authoritative health digits');
+  assert.equal(findNode(hud, 'WalkPlayerHealthCaption'), undefined, 'shared header has no separate old life caption');
+  assert.equal(findNode(hud, 'WalkPlayerMaxHealth'), undefined, 'shared header has no separate old maximum HP label');
+  assert.equal(current.fontSize, (layout.narrow ? 11 : 12) * px, 'all phases use the prototype responsive health text size');
+  assert.deepEqual(darkRgb(current.color), [238, 229, 201], 'shared health readout retains the courtyard text color');
+  assert.equal(current.enableShadow, true, 'shared health text keeps its small native shadow on bright chapter art');
+  assert.deepEqual(darkRgb(current.shadowColor), [11, 18, 13], 'shared header uses the approved dark text shadow');
+  assert.ok(current.shadowBlur <= 3 && Math.abs(current.shadowOffset.x) <= 3 && Math.abs(current.shadowOffset.y) <= 3,
+    'shared health text shadow stays within the approved 1–3px readability range');
+  const health = findNode(hud, 'WalkPlayerHealth');
+  assert.ok(Math.abs(health.size.width - width) < 1e-6 && Math.abs(health.size.height - height) < 1e-6,
+    'all phases use the approved responsive short three-pixel track');
+  const graphics = health.getComponent(TestGraphics);
+  const track = graphics.fills[0];
+  assert.deepEqual(track.color.channels, [60, 65, 48, 255], 'shared health track matches the courtyard gray-green track');
+  assert.equal(track.shape.kind, 'rect', 'shared health track has no panel ornament');
+  assert.ok(Math.abs(track.shape.width - width) < 1e-6 && Math.abs(track.shape.height - height) < 1e-6,
+    'health updates preserve the actual track dimensions');
+  const ratio = Math.max(0, Math.min(1, hp / Math.max(1, maxHp)));
+  const fill = graphics.fills.find(({ color }) => darkRgb(color).every((value, index) => value === [157, 170, 132][index]));
+  if (ratio > 0) assert.ok(fill, 'shared health fill matches the courtyard gray-green when HP is positive');
+  if (fill) {
+    assert.equal(fill.shape.kind, 'rect');
+    assert.ok(Math.abs(fill.shape.width - width * ratio) < 1e-6, 'shared health geometry follows the authoritative value at its actual width');
+    assert.ok(Math.abs(fill.shape.height - height) < 1e-6, 'shared HP updates preserve the thin line');
+    assert.equal(fill.color.channels[3], 255);
+  }
+  assert.ok(graphics.fills.every(({ color }) => darkRgb(color).every((value, index) => value === [60, 65, 48][index])
+    || darkRgb(color).every((value, index) => value === [157, 170, 132][index])), 'HP updates preserve the shared courtyard colors');
+  assert.ok(graphics.strokes.every(({ shape }) => shape?.kind === 'rect' && Math.abs(shape.width - width) < 1e-6 && Math.abs(shape.height - height) < 1e-6),
+    'shared HP updates retain only the original thin rectangular track stroke');
+}
+
+function assertDarkWalkingUi(root, model, insets, viewportWidth = 320) {
+  if (model.phase === 'hub') { assertCourtyardHud(root, model, insets, viewportWidth); return; }
+  assertSharedHeader(root, model, insets, viewportWidth);
+  const top = 667 - insets.top, bottom = -667 + insets.bottom;
+  const px = 750 / viewportWidth;
+  const interact = findNode(root, 'WalkInteract');
+  const interactWidth = (model.phase === 'combat' ? 60 : viewportWidth <= 350 ? 64 : 68) * px;
+  const interactHeight = (model.phase === 'combat' ? 44 : viewportWidth <= 350 ? 65 : 69) * px;
+  assert.deepEqual({ ...interact.size }, { width: interactWidth, height: interactHeight }, `${model.phase}: interaction retains the HTML physical touch size`);
+  assertDarkFrameGeometry(interact.getComponent(TestGraphics), interactWidth, interactHeight, `${model.phase}/WalkInteract`, model.phase === 'explore');
+  const interactBounds = absoluteNodeBounds(interact);
+  assert.ok(interactBounds.bottom >= bottom && interactBounds.top <= bottom + 120 * px,
+    `${model.phase}: interaction fits below the fixed room`);
   const hud = findNode(root, 'WalkHud');
   const graphics = hud.getComponent(TestGraphics);
-  const hudFrame = assertDarkFrameGeometry(graphics, 750, 120, `${model.phase}/WalkHud`);
-  assert.deepEqual(darkRgb(hudFrame.color), darkRgb(DARK_UI.panel));
-  assert.deepEqual(darkRgb(labelComponent(findNode(hud, 'WalkLocationName')).color), darkRgb(DARK_UI.bone));
-  const hp = model.sections[1].detail.kind === 'combat'
-    ? `${model.sections[1].detail.player.hp}/${model.sections[1].detail.player.maxHp}`
-    : model.sections[1].metrics.find(({ id }) => id === 'hp')?.value;
-  if (/^\d+\s*\/\s*\d+$/.test(hp ?? '')) {
-    assert.ok(graphics.fills.some(({ color, shape }) => shape?.kind === 'rect'
-      && darkRgb(color).every((channel, index) => channel === darkRgb(DARK_UI.red)[index])),
-    `${model.phase}: health bar uses the shared red health accent`);
+  assert.ok(!graphics || graphics.fills.length + graphics.strokes.length === 0, `${model.phase}: HUD04 has no painted header panel`);
+  assert.equal(findNode(hud, 'WalkRoleFrame'), undefined, `${model.phase}: role outline is removed`);
+  for (const name of ['WalkLocationName', 'WalkMode']) {
+    assert.equal(findNode(root, name), undefined, `${model.phase}: HUD04 removes ${name}`);
+  }
+  assert.doesNotMatch(collectStrings(hud).join('\n'), /临时试玩|刷新丢失进度/u, 'HUD04 removes preview copy from the transparent top');
+  const risk = findNode(root, 'WalkRiskSummary');
+  if (risk !== undefined) {
+    const roleWidth = Math.min(viewportWidth - 124, 244) * px;
+    assert.deepEqual({ ...risk.size }, { width: roleWidth, height: 24 * px }, 'dungeon risk readout fits the shared role column');
+    assert.deepEqual({ ...risk.position }, { x: -375 + 10 * px + roleWidth / 2, y: top - 94 * px, z: 0 }, 'dungeon risk readout keeps its established safe-column position');
+    const readout = findNode(risk, 'WalkRiskReadout');
+    for (const icon of collectNodes(hud, node => node.name.startsWith('WalkRunRelicIcon:'))) {
+      assert.ok(absoluteNodeBounds(icon).bottom >= absoluteNodeBounds(readout).top, 'visible relic icons clear the risk text');
+    }
   }
   if (model.phase === 'combat') {
     const actionNames = new Set(model.sections[2].actions.map(({ actionId }) => `WalkCombatAction:${actionId}`));
     const actions = collectNodes(root, ({ name }) => actionNames.has(name));
     assert.ok(actions.length > 0);
-    actions.forEach((node, index) => {
-      const frame = assertDarkControl(node, 112, node.name);
-      assert.deepEqual({ ...node.position }, { x: index % 2 === 0 ? 166 : 291, y: bottom + 331 - Math.floor(index / 2) * 121, z: 0 });
+    actions.forEach((node) => {
+      const frame = assertDarkFrameGeometry(node.getComponent(TestGraphics), node.size.width, node.size.height, node.name);
+      assert.ok(node.size.width / px >= 44 && node.size.height / px >= 44, `${node.name}: the compact action retains its physical touch minimum`);
+      const action = model.sections[2].actions.find(action => node.name === `WalkCombatAction:${action.actionId}`);
+      assert.ok(action, `${node.name}: the visible control belongs to an original combat action`);
+      const bounds = absoluteNodeBounds(node);
+      assert.ok(bounds.bottom >= bottom && bounds.top <= bottom + 120 * px,
+        `${node.name}: compact combat actions fit below the fixed room`);
       assert.ok(darkContrast(labelComponent(findNode(node, `${node.name}Label`)).color, frame.color) >= 4.5);
     });
   }
@@ -979,12 +1350,75 @@ function assertDarkResultUi(root, insets) {
   });
 }
 
+// Gameplay and information fixtures use complete approved art. Asset-loading
+// cases below instantiate the unmodified real View and resolve slots explicitly.
+function supplySceneVisualFixtures(view, model, excludedKeys = []) {
+  if (!model) return;
+  const courtyardSources = {
+    'scene:courtyard_pillar': { width: 870, height: 1808 },
+    'scene:courtyard_crate': { width: 1457, height: 1080 },
+    'scene:courtyard_lamp': { width: 930, height: 1691 },
+    'scene:courtyard_altar': { width: 1500, height: 1049 },
+  };
+  for (const key of new Set(Object.values(getInfiniteFlowSceneVisualKeys(model)))) {
+    if (excludedKeys.includes(key) || view.sceneVisuals.get(key)?.frame) continue;
+    const source = key === 'character:reincarnator_walk' ? { width: 1254, height: 1254 }
+      : key === 'scene:hub_courtyard_walk' ? { width: 2172, height: 724 }
+      : key === HUB_PORTAL_FIXTURE.key ? { width: 1018, height: 1545 }
+      : courtyardSources[key] ?? (key.startsWith('scene:dungeon_world_') || key.startsWith('item:run_relic_') ? { width: 1254, height: 1254 }
+        : { width: 1024, height: 1536 });
+    view.setSceneVisualAsset(source, { key, revision: 'complete-scene-fixture' });
+  }
+}
+
+// Historical information cards accept old node-type aliases; walking fixtures
+// project the current public monster identity so world art can be required.
+function walkingExploreModel(decision, options = {}) {
+  const model = exploreModel(decision, options);
+  model.sections[1].metrics.push(
+    { id: 'reward-points', label: '奖励点', value: '85', severity: 'neutral' },
+    { id: 'lingyun', label: '灵蕴', value: '3', severity: 'neutral' },
+  );
+  if (options.currentNode === undefined) {
+    const detail = model.sections[1].detail;
+    detail.currentNode = { ...detail.currentNode, nodeType: 'monster', monsterId: 'rail_patrol_wraith' };
+    detail.map = { ...detail.map, nodes: detail.map.nodes.map(node => node.nodeId === detail.currentNode.nodeId
+      ? { ...node, nodeType: 'monster' } : node) };
+  }
+  return model;
+}
+
+class SceneFixtureView extends SceneInfiniteFlowView {
+  render(model, chrome, insets) {
+    if (chrome.sceneAssets === undefined || chrome.sceneAssets === 'ready') supplySceneVisualFixtures(this, model);
+    super.render(model, chrome, insets);
+  }
+}
+
 // Preserve the detailed-information surface's existing regression suite; scene
 // defaults and its physical interactions have their own cases below.
-class InfiniteFlowView extends SceneInfiniteFlowView {
+class InfiniteFlowView extends SceneFixtureView {
   constructor(...args) {
     super(...args);
     this.openDetails();
+  }
+}
+
+function assertSceneAssetGate(view, root, status) {
+  const panel = findNode(root, status === 'error' ? 'SceneAssetError' : 'SceneAssetLoading');
+  assert.ok(panel, `${status}: resource gate is visible`);
+  assert.ok(hasComponentNamed(panel, 'BlockInputEvents'), `${status}: loading surface consumes scene touches`);
+  assert.equal(findNode(root, 'WalkScene'), undefined, `${status}: incomplete scene cannot publish actors or controls`);
+  assert.equal(view.walkScene, undefined, `${status}: no active walking simulation`);
+  assert.equal(view.walkInput, undefined, `${status}: no walking input while assets are incomplete`);
+  assert.equal((globalThis.__walkingTestInput.listeners.get('key-down') ?? []).length, 0,
+    `${status}: keyboard listeners detach with the old scene`);
+  const retry = findNode(root, 'SceneAssetRetry');
+  assert.equal(Boolean(retry), status === 'error', 'manual retry is available only after failure');
+  if (retry) {
+    const viewportWidth = globalThis.__walkingTestFrameSize?.width ?? 320;
+    assert.ok(retry.size.width * viewportWidth / 750 >= 44 && retry.size.height * viewportWidth / 750 >= 44,
+      `${viewportWidth}px: scene retry remains at least 44 screen pixels in both dimensions`);
   }
 }
 
@@ -1148,6 +1582,26 @@ class InfiniteFlowView extends SceneInfiniteFlowView {
       `${label} player chrome hides internal tokens`,
     );
     assert.equal(JSON.stringify(chrome), before, `${label} raw activity stays unchanged`);
+  }
+  for (const [label, overrides, legacyActivity] of activityCases.filter(([label]) =>
+    ['visual-recovered', 'visual-fallback', 'memory-warning'].includes(label))) {
+    const chrome = Object.freeze({
+      modeKind: 'preview', modeLabel: 'raw preview', modeDetail: 'revision=42', sceneAssets: 'ready', ...overrides,
+    });
+    const before = JSON.stringify(chrome);
+    for (const [phase, expected] of [['hub', '主神空间已就绪'], ['explore', '探索进行中'], ['combat', '战斗进行中']]) {
+      const projected = formatInfiniteFlowPlayerChrome(chrome, phase);
+      assert.equal(projected.activityMessage, expected, `${phase}/${label}: ready art replaces stale resource activity with normal phase activity`);
+      assert.doesNotMatch(projected.activityMessage, /暂不可用|文字模式|已释放|资源.*恢复/u,
+        `${phase}/${label}: recovery cannot retain an art-failure or recovery toast`);
+      assert.equal(formatInfiniteFlowPlayerChrome({ ...chrome, modeKind: 'blocked' }, phase).activityMessage,
+        overrides.activityMessage, `${phase}/${label}: blocked diagnostics preserve the exact raw activity`);
+    }
+    assert.equal(formatInfiniteFlowPlayerChrome(chrome, 'result').activityMessage, legacyActivity,
+      `${label}: settlement keeps its existing visual diagnostics`);
+    assert.equal(formatInfiniteFlowPlayerChrome({ ...chrome, sceneAssets: undefined }, 'combat').activityMessage, legacyActivity,
+      `${label}: legacy callers without the scene gate keep their existing activity`);
+    assert.equal(JSON.stringify(chrome), before, `${label}: recovery presentation preserves raw diagnostics`);
   }
 }
 
@@ -3061,11 +3515,20 @@ function exploreModel(decision, options = {}) {
     : [...options.actions];
   let pending;
   if (options.pending) {
+    const entered = reduceGameCommand(createInitialState(), {
+      type: 'run/enter', dungeonId: DUNGEON_ORDER[0], protocolId: 'standard',
+      seeds: { rulesVersion: 1, hiddenTaskSeed: 0x1234_5678 },
+    });
+    assert.equal(entered.status, 'committed', 'equipment UI fixture enters an actual run');
+    const projected = buildActualGameViewModel({ ...entered.state, run: { ...entered.state.run,
+      pendingEquipmentOffer: { offerId: 'ui-fixture', equipmentIds: ['armor_piercing_sword'] },
+    } }, {}).sections[1].detail.pending;
     pending = {
       kind: 'equipment-offer',
       title: '装备供奉',
       message: '节点遗留的装备，二选一。',
       actionIds: ['pending.equipment:offer-1:take'],
+      equipmentOptions: [{ ...projected.equipmentOptions[0], actionId: 'pending.equipment:offer-1:take' }],
     };
     actions.push({
       actionId: 'pending.equipment:offer-1:take',
@@ -3103,6 +3566,7 @@ function exploreModel(decision, options = {}) {
             width: 3,
             height: 3,
             currentNodeId: 'rail_patrol_wraith',
+            knownEdges: [['0,0', '1,0']],
             nodes: [
               { cellId: '0,0', nodeId: 'rail_patrol_wraith', title: '轨道巡逻', nodeType: 'combat', state: 'current', stateLabel: '当前位置', stateSymbol: '◎', x: 0, y: 0, isAdjacent: false, canMove: false },
               { cellId: '1,0', nodeId: 'east_hall', title: '东侧大厅', nodeType: 'event', state: 'adjacent', stateLabel: '相邻可达', stateSymbol: '→', x: 1, y: 0, isAdjacent: true, canMove: true, moveActionId: 'map.move:east-hall' },
@@ -4562,6 +5026,7 @@ for (const [label, actionOverrides, chromeOverrides, expectedReason] of [
     width: 7,
     height: 5,
     currentNodeId: 'rail_patrol_wraith',
+    knownEdges: [['0,0', '6,0']],
     nodes: [
       { cellId: '0,0', nodeId: 'rail_patrol_wraith', title: '轨道巡逻', nodeType: 'combat', state: 'current', stateLabel: '当前位置', stateSymbol: '◎', x: 0, y: 0, isAdjacent: false, canMove: false },
       { cellId: '6,0', nodeId: 'cross_gap', title: '跨距节点', nodeType: 'event', state: 'adjacent', stateLabel: '相邻可达', stateSymbol: '→', x: 6, y: 0, isAdjacent: true, canMove: true, moveActionId: crossGapAction.actionId },
@@ -4930,6 +5395,7 @@ for (const [label, actionOverrides, chromeOverrides, expectedReason] of [
     width: 7,
     height: 5,
     currentNodeId: 'far_watch',
+    knownEdges: [],
     nodes: [
       { cellId: '0,0', nodeId: 'old_current', title: '旧位置', nodeType: 'event', state: 'cleared', stateLabel: '已清理', stateSymbol: '✓', x: 0, y: 0, isAdjacent: false, canMove: false },
       { cellId: '6,4', nodeId: 'far_watch', title: '远端观测站', nodeType: 'event', state: 'current', stateLabel: '当前位置', stateSymbol: '◎', x: 6, y: 4, isAdjacent: false, canMove: false },
@@ -5492,11 +5958,13 @@ function combatModel(context, options = {}) {
           { id: 'turn', label: '回合', value: '3', symbol: '回', severity: 'neutral' },
           { id: 'attack', label: '攻击/术强', value: '26/18', symbol: '攻', severity: 'neutral' },
           { id: 'intent', label: '敌方意图', value: '常规追击', symbol: '眼', severity: 'neutral' },
+          { id: 'reward-points', label: '奖励点', value: '85', symbol: '点', severity: 'neutral' },
+          { id: 'lingyun', label: '灵蕴', value: '3', symbol: '蕴', severity: 'neutral' },
         ],
         detail: {
           kind: 'combat',
           player: { hp: 42, maxHp: 60, hpPercent: 70 },
-          enemy: { id: 'tide_boatman', name: '潮影船夫', hp: 30, maxHp: 80, hpPercent: 37, ability: '影子先于身体压来。' },
+          enemy: { id: 'tide_boatman', name: '潮影船夫', hp: 30, maxHp: 80, hpPercent: 37, ability: '影子先于身体压来。', ...options.enemy },
           intent: options.intent ?? {
             id: 'regular-pursuit',
             name: '常规追击',
@@ -5508,6 +5976,8 @@ function combatModel(context, options = {}) {
           ...(options.boss === undefined ? {} : { boss: options.boss }),
           turn: options.turn ?? 3,
           advancedExpanded: false,
+          focus: options.focus ?? { current: 0, required: 3 },
+          guarding: options.guarding ?? false,
           chapterContext: context,
           ...(options.equipmentMemory === undefined
             ? {}
@@ -7139,7 +7609,7 @@ globalThis.wx.getDeviceInfo = () => ({ platform: 'devtools' });
   const ports = fakePorts();
   let clientOptions;
   let portsOptions;
-  client.dispatchResults.push(Promise.resolve({ status: 'committed', stateRevision: 71 }));
+  client.dispatchResults.push(Promise.resolve({ status: 'committed', events: [], stateRevision: 71 }));
   controller.portsFactories.push((api, options) => {
     portsOptions = options;
     return ports;
@@ -7421,7 +7891,7 @@ for (const settlement of ['fulfilled', 'rejected']) {
   const rendersAfterDestroy = view.renderCalls;
   const stateReadsAfterDestroy = client.getStateCalls;
   if (settlement === 'fulfilled') {
-    pendingDispatch.resolve({ status: 'committed', stateRevision: 81 });
+    pendingDispatch.resolve({ status: 'committed', events: [], stateRevision: 81 });
   } else {
     pendingDispatch.reject(new Error('synthetic devtools dispatch failure'));
   }
@@ -7850,7 +8320,7 @@ for (const settlement of ['fulfilled', 'rejected']) {
   const rendersAfterDestroy = view.renderCalls;
   const stateReadsAfterDestroy = client.getStateCalls;
   if (settlement === 'fulfilled') {
-    pendingDispatch.resolve({ status: 'committed', stateRevision: 51 });
+    pendingDispatch.resolve({ status: 'committed', events: [], stateRevision: 51 });
   } else {
     pendingDispatch.reject(new Error('synthetic commission dispatch failure'));
   }
@@ -7871,7 +8341,7 @@ installWx();
   const client = fakeClient('wx-equipment-memory-activate');
   const ports = fakePorts();
   client.dispatchResults.push(Promise.resolve({
-    status: 'committed',
+    status: 'committed', events: [],
     stateRevision: 61,
   }));
   controller.portsFactories.push(() => ports);
@@ -7984,7 +8454,7 @@ for (const settlement of ['fulfilled', 'rejected']) {
   const rendersAfterDestroy = view.renderCalls;
   const stateReadsAfterDestroy = client.getStateCalls;
   if (settlement === 'fulfilled') {
-    pendingDispatch.resolve({ status: 'committed', stateRevision: 62 });
+    pendingDispatch.resolve({ status: 'committed', events: [], stateRevision: 62 });
   } else {
     pendingDispatch.reject(new Error('synthetic equipment-memory dispatch failure'));
   }
@@ -8120,7 +8590,7 @@ for (const seedRelicId of ['mist_edge', null]) {
   const client = fakeClient(`wx-relic-seed-${seedRelicId ?? 'none'}`);
   const ports = fakePorts();
   client.dispatchResults.push(Promise.resolve({
-    status: 'committed',
+    status: 'committed', events: [],
     stateRevision: seedRelicId === null ? 22 : 21,
   }));
   controller.portsFactories.push(() => ports);
@@ -8202,7 +8672,7 @@ for (const settlement of ['fulfilled', 'rejected']) {
   const rendersAfterDestroy = view.renderCalls;
   const stateReadsAfterDestroy = client.getStateCalls;
   if (settlement === 'fulfilled') {
-    pendingDispatch.resolve({ status: 'committed', stateRevision: 23 });
+    pendingDispatch.resolve({ status: 'committed', events: [], stateRevision: 23 });
   } else {
     pendingDispatch.reject(new Error('synthetic relic-seed dispatch failure'));
   }
@@ -8297,7 +8767,7 @@ for (const settlement of ['fulfilled', 'rejected']) {
   const rendersAfterDestroy = view.renderCalls;
   const stateReadsAfterDestroy = client.getStateCalls;
   if (settlement === 'fulfilled') {
-    pendingEnterRun.resolve({ status: 'committed', stateRevision: 13 });
+    pendingEnterRun.resolve({ status: 'committed', events: [], stateRevision: 13 });
   } else {
     pendingEnterRun.reject(new Error('synthetic enter-run failure'));
   }
@@ -8341,7 +8811,7 @@ installWx();
   const activityAfterDestroy = app.activityMessage;
   const rendersAfterDestroy = view.renderCalls;
   const stateReadsAfterDestroy = client.getStateCalls;
-  pendingDispatch.resolve({ status: 'committed', stateRevision: 7 });
+  pendingDispatch.resolve({ status: 'committed', events: [], stateRevision: 7 });
   await drainMicrotasks();
   assert.equal(ports.seeds.prefillCalls, 1);
   assert.equal(app.activityMessage, activityAfterDestroy);
@@ -8359,7 +8829,7 @@ installWx();
   const client = fakeClient('wx-post-dispatch-refill-cancelled');
   const ports = fakePorts();
   client.dispatchResults.push(Promise.resolve({
-    status: 'committed',
+    status: 'committed', events: [],
     stateRevision: 11,
   }));
   controller.portsFactories.push(() => ports);
@@ -9214,15 +9684,15 @@ for (const failureKind of ['bundle', 'image']) {
 }
 
 delete globalThis.wx;
-// Three independent scene images share key leases with the legacy primary.
+// Enemy portrait, HUD portrait, world monster, player and background keep independent native leases.
 {
   const session = assetSession({ autoImages: false, autoSceneImages: false });
-  const client = fakeClient('scene-three-images');
+  const client = fakeClient('scene-four-images');
   const sceneEventOffset = controller.sceneAssetEvents.length;
   client.state = {
     phase: 'combat',
     visualAssetKey: 'monster:fog_lesser_demon',
-    detail: { kind: 'combat', chapterContext: { dungeonId: 'demon_tower_1' } },
+    detail: { kind: 'combat', enemy: { id: 'fog_lesser_demon' }, chapterContext: { dungeonId: 'demon_tower_1' } },
   };
   controller.assetSessions.push(session);
   controller.clientFactories.push(() => Promise.resolve(client));
@@ -9230,9 +9700,10 @@ delete globalThis.wx;
   app.start();
   const view = controller.views.at(-1);
   await settleUntil(
-    () => session.imageRequests.length === 2 && session.sceneImageRequests.length === 1,
-    'scene did not request exactly one monster, background and player',
+    () => session.imageRequests.length === 2 && session.sceneImageRequests.length === 5,
+    'scene did not request independent enemy/HUD portraits, world monster, background, player and four-gate art',
   );
+  assert.equal(view.lastRender.chrome.sceneAssets, 'loading', 'scene remains gated until all its independent leases settle');
   const allRequests = () => [...session.imageRequests, ...session.sceneImageRequests];
   const finish = (path) => {
     const request = allRequests().find((entry) => entry.path === path);
@@ -9240,40 +9711,74 @@ delete globalThis.wx;
     request.complete(undefined, request.image);
     return request;
   };
+  const debris = finish('dungeon-world/debris-v1');
+  const transitionGate = finish('dungeon-world/ruined-stone-gate-v1');
   const background = finish('dungeon-world/demon_tower_1-v1');
   await drainMicrotasks();
   assert.ok(view.sceneVisuals.get('scene:dungeon_world_demon_tower_1').image);
-  assert.equal(view.sceneVisuals.get('monster:fog_lesser_demon').image, undefined);
-  const player = finish('character/reincarnator-walk-v1');
+  assert.equal(view.sceneVisuals.get('monster:fog_lesser_demon_world').image, undefined);
+  const player = finish('character/reincarnator-walk-v2');
+  const playerPortrait = finish('character/reincarnator-v2');
   await drainMicrotasks();
-  const monster = finish('monster/fog-lesser-demon-v1');
+  const portrait = finish('monster/fog-lesser-demon-v1');
   await drainMicrotasks();
-  assert.equal(view.sceneVisuals.size, 3);
+  assert.equal(view.visualImage, portrait.image, 'the original portrait stays the legacy primary image');
+  assert.equal(view.sceneVisuals.get('monster:fog_lesser_demon_world').image, undefined,
+    'a loaded portrait cannot satisfy the separate world sprite request');
+  assert.equal(view.lastRender.chrome.sceneAssets, 'loading', 'ready background, player and portraits cannot bypass a pending world monster');
+  const monster = finish('monster-world/fog-lesser-demon-world-v1');
+  await drainMicrotasks();
+  assert.equal(view.sceneVisuals.size, 6);
   assert.ok([...view.sceneVisuals.values()].every(({ image }) => image));
-  assert.equal(monster.image.refCount, 1, 'legacy and scene consumers share one native lease');
+  assert.equal(view.lastRender.chrome.sceneAssets, 'ready', 'last scene image opens the readiness gate');
+  assert.equal(monster.image.refCount, 1, 'world sprite owns one native lease');
+  assert.equal(portrait.image.refCount, 1, 'legacy portrait owns a separate native lease');
+  assert.equal(playerPortrait.image.refCount, 1, 'the HUD portrait owns an independent native image lease');
+  assert.notEqual(monster.image, portrait.image, 'portrait and world art never alias their native image');
   const originalBackground = view.sceneVisuals.get('scene:dungeon_world_demon_tower_1');
   const originalPlayer = view.sceneVisuals.get('character:reincarnator_walk');
+  const originalPlayerPortrait = view.sceneVisuals.get('character:reincarnator');
+  assert.equal(originalPlayerPortrait.image, playerPortrait.image, 'combat exposes the loaded HUD portrait to its scene');
+  const originalMonster = view.sceneVisuals.get('monster:fog_lesser_demon_world');
 
   client.state = {
     phase: 'explore',
     visualAssetKey: 'dungeon:demon_tower_1',
-    detail: { kind: 'explore', map: { dungeonId: 'demon_tower_1' }, currentNode: { nodeId: 'fog_lesser_demon', nodeType: 'monster' } },
+    detail: { kind: 'explore', map: { dungeonId: 'demon_tower_1' }, currentNode: { nodeId: 'upper_fog_patrol', nodeType: 'monster', monsterId: 'fog_lesser_demon' } },
   };
   app.refreshViewModel();
-  await settleUntil(() => allRequests().length === 4, 'exploration still requests its distinct legacy primary illustration');
-  assert.equal(view.sceneVisuals.size, 2, 'exploration never invents an opponent from a map node id');
+  await settleUntil(() => allRequests().length === 16, 'exploration requests its distinct primary illustration and stone gate');
+  assert.equal(view.lastRender.chrome.sceneAssets, 'loading', 'entering another phase waits for its additional scene props');
+  assert.equal(view.sceneVisuals.size, 14, 'exploration preserves projected monster identity and adds the shared transition gate');
+  for (const prop of DUNGEON_PROP_FIXTURES.filter(({ key }) => key !== 'scene:dungeon_prop_debris')) finish(prop.resourcePath);
+  await drainMicrotasks();
+  assert.equal(view.lastRender.chrome.sceneAssets, 'ready', 'optional legacy illustration cannot block a complete walking scene');
+  assert.equal(view.sceneVisuals.get('scene:dungeon_transition_gate').image, transitionGate.image,
+    'exploration displays the gate through the existing independent image lease');
+  assert.equal(transitionGate.image.refCount, 1, 'all visible entrances share one acquired gate image');
+  assert.equal(view.sceneVisuals.get('monster:fog_lesser_demon_world'), originalMonster,
+    'combat and exploration keep the same world monster lease when identity is stable');
   assert.equal(view.sceneVisuals.get('scene:dungeon_world_demon_tower_1'), originalBackground);
   assert.equal(originalBackground.image, background.image, 'exploration keeps the same native background image');
   assert.equal(controller.sceneAssetEvents.slice(sceneEventOffset).filter((event) => event === 'display:scene:dungeon_world_demon_tower_1').length, 1,
     'stable backdrop has one display; phase change does not rebuild its image/frame slot');
   assert.equal(view.sceneVisuals.get('character:reincarnator_walk'), originalPlayer);
+  assert.equal(view.sceneVisuals.get('character:reincarnator'), originalPlayerPortrait, 'combat and exploration share the HUD portrait lease');
   assert.equal(allRequests().filter(({ path }) => path === 'dungeon-world/demon_tower_1-v1').length, 1, 'stable world background keeps its original lease');
-  assert.equal(allRequests().filter(({ path }) => path === 'character/reincarnator-walk-v1').length, 1, 'stable player keeps its original lease');
+  assert.equal(allRequests().filter(({ path }) => path === 'character/reincarnator-walk-v2').length, 1, 'stable player keeps its original lease');
   const legacyIllustration = finish('dungeon/demon-tower-1-v1');
   await drainMicrotasks();
   assert.equal(view.visualImage, legacyIllustration.image, 'legacy primary and world backdrop remain distinct image consumers');
   assert.equal(view.sceneVisuals.has('dungeon:demon_tower_1'), false, 'the old chapter illustration is not a scene background');
-  assert.equal(view.sceneVisuals.size, 2);
+  assert.equal(portrait.image.refCount, 0, 'leaving combat releases only its legacy portrait');
+  assert.equal(monster.image.refCount, 1, 'the explicit exploration monster remains live');
+  client.state.detail.currentNode = { nodeId: 'fog_lesser_demon', nodeType: 'monster' };
+  app.refreshViewModel();
+  await drainMicrotasks();
+  assert.equal(getInfiniteFlowSceneVisualKeys(app.viewModel).opponent, undefined,
+    'exploration never invents an opponent from a map node id');
+  assert.equal(view.sceneVisuals.size, 13);
+  assert.equal(transitionGate.image.refCount, 1, 'clearing a monster keeps adjacent entrance art live');
   assert.equal(monster.image.refCount, 0);
   assert.equal(background.image.refCount, 1);
   assert.equal(player.image.refCount, 1);
@@ -9284,16 +9789,27 @@ delete globalThis.wx;
     detail: { kind: 'hub', activePanel: 'equipment' },
   };
   app.refreshViewModel();
-  await settleUntil(() => allRequests().length === 6, 'hub NPC composition did not load');
-  finish('scene/main-god-space');
+  await settleUntil(() => allRequests().length === 31, 'hub portrait, background, portal, four props and seven NPC composition did not load');
+  const hubIllustration = finish('scene/main-god-space');
   finish('npc/equipment-quartermaster-v1');
+  for (const npc of NPC_WORLD_FIXTURES) finish(npc.resourcePath);
+  for (const asset of COURTYARD_WORLD_FIXTURES) finish(asset.resourcePath);
   await drainMicrotasks();
   assert.deepEqual([...view.sceneVisuals.keys()].sort(), [
-    'character:reincarnator_walk', 'npc:equipment_quartermaster', 'scene:main_god_space',
-  ]);
+    'character:reincarnator', 'character:reincarnator_walk', 'npc:equipment_quartermaster', ...COURTYARD_WORLD_FIXTURES.map(({ key }) => key),
+    ...NPC_WORLD_FIXTURES.map(({ key }) => key),
+  ].sort());
   assert.equal(view.sceneVisuals.get('character:reincarnator_walk'), originalPlayer);
+  assert.equal(view.sceneVisuals.get('character:reincarnator'), originalPlayerPortrait, 'hub retains the same HUD portrait lease on return');
+  assert.equal(allRequests().filter(({ path }) => path === 'character/reincarnator-v2').length, 1, 'phase changes never reload the shared HUD portrait');
   assert.equal(background.image.refCount, 0);
+  assert.equal(debris.image.refCount, 0, 'returning to the courtyard releases the shared dungeon debris lease');
+  for (const prop of DUNGEON_PROP_FIXTURES) {
+    assert.equal(view.sceneVisuals.has(prop.key), false, 'hub cannot retain dungeon prop slots');
+    assert.equal(allRequests().find(({ path }) => path === prop.resourcePath).image.refCount, 0, `${prop.key}: dungeon prop image released on hub return`);
+  }
   assert.equal(legacyIllustration.image.refCount, 0);
+  assert.equal(transitionGate.image.refCount, 0, 'returning to the courtyard releases the dungeon-only gate image');
   app.onDestroy();
   assert.equal(view.sceneVisuals.size, 0);
   for (const request of allRequests()) {
@@ -9301,10 +9817,262 @@ delete globalThis.wx;
     assert.equal([...session.imageReferenceCalls, ...session.sceneImageReferenceCalls].filter((call) => call.operation === 'decRef' && call.handle === request.image).length, 1,
       `${request.path} native image lease is released exactly once`);
     const key = session.manifest.assets.find((entry) => entry.resourcePath === request.path).key;
-    const detachIndex = controller.sceneAssetEvents.lastIndexOf(`${request === legacyIllustration ? 'primary.frame.destroy' : 'frame.destroy'}:${key}`);
+    const detachIndex = controller.sceneAssetEvents.lastIndexOf(`${request === legacyIllustration || request === portrait || request === hubIllustration ? 'primary.frame.destroy' : 'frame.destroy'}:${key}`);
     const releaseIndex = controller.sceneAssetEvents.lastIndexOf(`image.decRef:${request.path}`);
     assert.ok(detachIndex >= 0 && detachIndex < releaseIndex, `${key} frame is gone before its image lease`);
   }
+}
+
+// Natural settlement promotes an already acquired primary into its scene
+// background even when the primary key is unchanged from exploration.
+{
+  const entered = reduceGameCommand(createInitialState(), {
+    type: 'run/enter', dungeonId: 'demon_tower_1', protocolId: 'standard',
+    seeds: { rulesVersion: 1, hiddenTaskSeed: 0x1234_5678 },
+  });
+  assert.equal(entered.status, 'committed');
+  const session = assetSession();
+  const client = fakeClient('explore-result-cached-primary');
+  client.state = entered.state;
+  controller.actualProjection = buildActualGameViewModel;
+  controller.assetSessions.push(session);
+  controller.clientFactories.push(() => Promise.resolve(client));
+  const app = new InfiniteFlowApp();
+  try {
+    app.start();
+    const view = controller.views.at(-1);
+    await settleUntil(() => view.visualImage && view.lastRender.chrome.sceneAssets === 'ready',
+      'natural exploration images did not become ready');
+    const key = app.viewModel.visualAssetKey;
+    assert.equal(key, 'dungeon:demon_tower_1');
+    const primary = app.visualRecords.get(key);
+    const primaryImage = primary.image;
+    assert.equal(primary.acquired, true);
+    assert.notEqual(primary.sceneDisplayed, true, 'exploration uses the cached chapter image only as its primary');
+    const oldSlots = new Map(view.sceneVisuals);
+    const requests = () => [...session.imageRequests, ...session.sceneImageRequests];
+    const requestCount = requests().length;
+    const references = () => [...session.imageReferenceCalls, ...session.sceneImageReferenceCalls];
+    const result = reduceGameCommand(entered.state, { type: 'run/retreat' });
+    assert.equal(result.status, 'committed');
+    client.state = result.state;
+    app.refreshViewModel();
+    await drainMicrotasks();
+    assert.equal(app.viewModel.phase, 'result', 'real retreat projection reaches settlement');
+    assert.equal(app.viewModel.visualAssetKey, key, 'natural settlement retains the same primary key');
+    assert.equal(app.visualRecords.get(key), primary, 'settlement keeps the acquired primary record');
+    assert.equal(view.visualImage, primaryImage, 'primary native image remains live through settlement');
+    assert.equal(view.sceneVisuals.get(key)?.image, primaryImage, 'cached primary also attaches as the result background');
+    assert.equal(view.lastRender.chrome.sceneAssets, 'ready', 'cached background promotion opens the result scene gate');
+    assert.equal(requests().length, requestCount, 'promoting a cached primary never reloads any image');
+    assert.equal(primaryImage.refCount, 1, 'primary and result scene share one native image lease');
+    assert.equal(references().filter(call => call.operation === 'addRef' && call.handle === primaryImage).length, 1);
+    assert.equal(references().filter(call => call.operation === 'decRef' && call.handle === primaryImage).length, 0);
+    const desiredScene = new Set(Object.values(getInfiniteFlowSceneVisualKeys(app.viewModel)));
+    assert.deepEqual([...view.sceneVisuals.keys()].sort(), [...desiredScene].sort(), 'result retires every unused world slot');
+    for (const [oldKey, slot] of oldSlots) {
+      if (desiredScene.has(oldKey)) {
+        assert.equal(view.sceneVisuals.get(oldKey), slot, 'shared walking player keeps its existing slot');
+        continue;
+      }
+      const detach = controller.sceneAssetEvents.lastIndexOf(`frame.destroy:${oldKey}`);
+      assert.ok(detach >= 0 && !app.visualRecords.has(oldKey), `${oldKey}: settlement retires its scene frame and record`);
+      const figure = app.sheetFigureLeases.get(oldKey);
+      if (figure) {
+        assert.equal(figure.image, slot.image, 'the shared character figure keeps its existing cached image');
+        assert.equal(slot.image.refCount, 1, 'retiring a scene cannot release a live sheet figure image');
+        continue;
+      }
+      assert.equal(slot.image.refCount, 0, `${oldKey}: settlement releases the old world image`);
+      assert.equal(references().filter(call => call.operation === 'decRef' && call.handle === slot.image).length, 1);
+      const path = session.manifest.assets.find(asset => asset.key === oldKey).resourcePath;
+      const release = controller.sceneAssetEvents.lastIndexOf(`image.decRef:${path}`);
+      assert.ok(detach < release, `${oldKey}: frame detaches before the image lease`);
+    }
+    assert.equal(client.enterRunPhysicalCalls.length + client.dispatchPhysicalCalls.length, 0,
+      'resource promotion and cleanup never dispatch a gameplay action');
+    app.onDestroy();
+    assert.equal(primaryImage.refCount, 0, 'destroy releases the promoted primary lease');
+    assert.ok(requests().every(request => request.image.refCount === 0), 'destroy releases the remaining shared scene leases');
+    assert.equal(references().filter(call => call.operation === 'decRef' && call.handle === primaryImage).length, 1,
+      'primary and scene consumers release their shared image exactly once');
+  } finally {
+    delete controller.actualProjection;
+  }
+}
+
+// The selected courtyard portal has one hub-only lease, distinct from dungeon gates.
+{
+  const session = assetSession();
+  const client = fakeClient('hub-portal-lease');
+  client.state = {
+    phase: 'hub', visualAssetKey: 'scene:main_god_space',
+    detail: { kind: 'hub', activePanel: 'entry' },
+  };
+  controller.assetSessions.push(session);
+  controller.clientFactories.push(() => Promise.resolve(client));
+  const app = new InfiniteFlowApp();
+  app.start();
+  const view = controller.views.at(-1);
+  await settleUntil(() => view.sceneVisuals.get(HUB_PORTAL_FIXTURE.key)?.image, 'hub portal image did not load');
+  const portal = view.sceneVisuals.get(HUB_PORTAL_FIXTURE.key);
+  const player = view.sceneVisuals.get('character:reincarnator_walk');
+  assert.equal(portal.image.refCount, 1, 'hub owns one portal image reference');
+  assert.equal(session.sceneImageRequests.filter(({ path }) => path === HUB_PORTAL_FIXTURE.resourcePath).length, 1);
+  assert.equal(view.sceneVisuals.has('scene:dungeon_transition_gate'), false, 'the courtyard never requests dungeon stone gates');
+  app.refreshViewModel();
+  await drainMicrotasks();
+  assert.equal(view.sceneVisuals.get(HUB_PORTAL_FIXTURE.key), portal, 'same-hub refresh reuses the portal frame and image lease');
+  client.state = {
+    phase: 'explore', visualAssetKey: 'dungeon:demon_tower_1',
+    detail: { kind: 'explore', map: { dungeonId: 'demon_tower_1' }, currentNode: { nodeId: 'entrance', nodeType: 'entrance' } },
+  };
+  app.refreshViewModel();
+  await settleUntil(() => view.sceneVisuals.get('scene:dungeon_transition_gate')?.image, 'dungeon gate image did not load after leaving hub');
+  assert.equal(view.sceneVisuals.has(HUB_PORTAL_FIXTURE.key), false, 'entering a dungeon removes the hub-only portal slot');
+  assert.equal(portal.image.refCount, 0, 'entering a dungeon releases its courtyard portal image');
+  assert.equal(session.sceneImageReferenceCalls.filter(call => call.operation === 'decRef' && call.handle === portal.image).length, 1);
+  const detach = controller.sceneAssetEvents.lastIndexOf(`frame.destroy:${HUB_PORTAL_FIXTURE.key}`);
+  const release = controller.sceneAssetEvents.lastIndexOf(`image.decRef:${HUB_PORTAL_FIXTURE.resourcePath}`);
+  assert.ok(detach >= 0 && detach < release, 'hub portal frame detaches before its ImageAsset lease is released');
+  assert.equal(view.sceneVisuals.get('character:reincarnator_walk'), player, 'portal phase change preserves the shared walking player lease');
+  assert.equal(getInfiniteFlowSceneVisualKeys(app.viewModel).hubPortal, undefined);
+  app.onDestroy();
+  assert.equal(session.sceneImageReferenceCalls.filter(call => call.operation === 'decRef' && call.handle === portal.image).length, 1,
+    'later destruction cannot release the old courtyard portal twice');
+}
+
+// Acquired HUD icons participate in the scene's all-assets gate and native leases.
+{
+  const session = assetSession({ autoImages: false, autoSceneImages: false });
+  const client = fakeClient('hud-relic-last-asset');
+  const relicIds = [...RUN_RELIC_IDS_BY_FRAME.assault];
+  const run = { runId: 'hud-relic-existing-run' };
+  client.state = { phase: 'explore', visualAssetKey: 'dungeon:demon_tower_1', run,
+    detail: { kind: 'explore', map: { dungeonId: 'demon_tower_1' }, currentNode: { nodeId: 'entrance', nodeType: 'entrance' } },
+    loadout: { equipment: [], ownedEquipment: [], items: [], runRelics: relicIds.map(relicId => ({ relicId, name: RUN_RELIC_DEFINITIONS[relicId].name })) } };
+  controller.assetSessions.push(session);
+  controller.clientFactories.push(() => Promise.resolve(client));
+  const app = new InfiniteFlowApp();
+  app.start();
+  const view = controller.views.at(-1);
+  const requests = () => [...session.imageRequests, ...session.sceneImageRequests];
+  const expectedPaths = () => Object.values(getInfiniteFlowSceneVisualKeys(app.viewModel)).map(key => validManifest().assets.find(asset => asset.key === key).resourcePath);
+  await settleUntil(() => app.viewModel && expectedPaths().every(path => requests().some(request => request.path === path)), 'acquired relic scene requests did not start');
+  const icons = session.sceneImageRequests.filter(({ path }) => path.startsWith('run-relic/'));
+  assert.deepEqual(icons.map(({ path }) => path).sort(), relicIds.map(id => `run-relic/${id}-v1`).sort(), 'the App requests only acquired HUD icon art');
+  const completed = new Set();
+  const finish = request => { request.complete(undefined, request.image); completed.add(request); };
+  for (const request of requests().filter(request => request !== icons.at(-1))) finish(request);
+  await drainMicrotasks();
+  assert.equal(view.lastRender.chrome.sceneAssets, 'loading', `one pending acquired icon keeps the entire walking scene gated: ${view.lastRender.chrome.activityMessage}`);
+  finish(icons.at(-1));
+  await drainMicrotasks();
+  assert.equal(view.lastRender.chrome.sceneAssets, 'ready', 'the final acquired icon opens the complete scene');
+  const slots = relicIds.map(id => view.sceneVisuals.get(`item:run_relic_${id}`));
+  assert.ok(slots.every(slot => slot.image.refCount === 1), 'each HUD icon owns one native image lease');
+  app.refreshViewModel();
+  await drainMicrotasks();
+  assert.deepEqual(relicIds.map(id => view.sceneVisuals.get(`item:run_relic_${id}`)), slots, 'unchanged acquired icons retain their existing scene slots');
+  assert.equal(session.sceneImageRequests.filter(({ path }) => path.startsWith('run-relic/')).length, relicIds.length, 'refresh cannot reload stable acquired icons');
+  client.state = { phase: 'hub', visualAssetKey: 'scene:main_god_space', run,
+    detail: { kind: 'hub', activePanel: 'entry' }, loadout: client.state.loadout };
+  app.refreshViewModel();
+  await settleUntil(() => expectedPaths().every(path => requests().some(request => request.path === path)), 'hub scene requests did not start');
+  for (const id of relicIds) {
+    const key = `item:run_relic_${id}`;
+    const request = icons.find(({ path }) => path === `run-relic/${id}-v1`);
+    assert.equal(view.sceneVisuals.has(key), false, 'returning to the hub retires the run-only icon slot');
+    assert.equal(request.image.refCount, 0);
+    assert.equal(session.sceneImageReferenceCalls.filter(call => call.operation === 'decRef' && call.handle === request.image).length, 1);
+    const detach = controller.sceneAssetEvents.lastIndexOf(`frame.destroy:${key}`);
+    const release = controller.sceneAssetEvents.lastIndexOf(`image.decRef:${request.path}`);
+    assert.ok(detach >= 0 && detach < release, 'HUD icon frame detaches before its native image lease is released');
+  }
+  assert.equal(client.state.run, run, 'art readiness and phase cleanup preserve the existing run identity');
+  assert.equal(client.enterRunPhysicalCalls.length + client.dispatchPhysicalCalls.length, 0);
+  app.onDestroy();
+  for (const request of requests().filter(request => !completed.has(request))) finish(request);
+  await drainMicrotasks();
+  assert.equal(view.sceneVisuals.size, 0, 'late hub art cannot revive a destroyed view');
+  assert.ok(requests().every(request => request.image.refCount === 0));
+  assert.ok(icons.every(request => session.sceneImageReferenceCalls.filter(call => call.operation === 'decRef' && call.handle === request.image).length === 1), 'destroy cannot release retired HUD icon leases twice');
+}
+
+// Late approved prop images cannot revive a retired dungeon or destroyed view.
+for (const boundary of ['hub', 'destroy']) {
+  const session = assetSession({ autoImages: false, autoSceneImages: false });
+  const client = fakeClient(`dungeon-props-late-${boundary}`);
+  client.state = { phase: 'explore', visualAssetKey: 'dungeon:demon_tower_1',
+    detail: { kind: 'explore', map: { dungeonId: 'demon_tower_1' }, currentNode: { nodeId: 'entrance', nodeType: 'entrance' } } };
+  controller.assetSessions.push(session);
+  controller.clientFactories.push(() => Promise.resolve(client));
+  const app = new InfiniteFlowApp();
+  app.start();
+  const view = controller.views.at(-1);
+  const props = () => session.sceneImageRequests.filter(({ path }) => DUNGEON_PROP_FIXTURES.some(asset => asset.resourcePath === path));
+  await settleUntil(() => props().length === 9, 'every approved dungeon prop request started');
+  if (boundary === 'hub') {
+    client.state = { phase: 'hub', visualAssetKey: 'scene:main_god_space', detail: { kind: 'hub', activePanel: 'entry' } };
+    app.refreshViewModel();
+    await drainMicrotasks();
+  } else app.onDestroy();
+  for (const request of props()) request.complete(undefined, request.image);
+  await drainMicrotasks();
+  for (const prop of DUNGEON_PROP_FIXTURES) {
+    assert.equal(view.sceneVisuals.has(prop.key), false, `${boundary}: late ${prop.key} cannot recreate a slot`);
+    const request = props().find(request => request.path === prop.resourcePath);
+    assert.equal(request.image.refCount, 0, `${boundary}: stale image reference is released`);
+    assert.equal(session.sceneImageReferenceCalls.filter(call => call.operation === 'decRef' && call.handle === request.image).length, 1,
+      `${boundary}: late prop lease is released exactly once`);
+  }
+  app.onDestroy();
+  for (const request of [...session.imageRequests, ...session.sceneImageRequests].filter(request => !props().includes(request))) request.complete(undefined, request.image);
+  await drainMicrotasks();
+  assert.equal(view.sceneVisuals.size, 0);
+  assert.ok([...session.imageRequests, ...session.sceneImageRequests].every(request => request.image.refCount === 0));
+}
+
+// Actual ready prop Sprites detach before their shared frame/texture destruction.
+{
+  const entered = reduceGameCommand(createInitialState(), { type: 'run/enter', dungeonId: 'demon_tower_1', protocolId: 'standard',
+    seeds: { rulesVersion: 1, hiddenTaskSeed: 0x12345678 } });
+  assert.equal(entered.status, 'committed');
+  const reward = DUNGEONS.demon_tower_1.nodes.find(node => node.type === 'reward');
+  const model = buildActualGameViewModel({ ...entered.state, run: { ...entered.state.run, currentNodeId: reward.id } }, {});
+  const canvas = { children: [], getComponent() { return { contentSize: { width: 750, height: 1334 } }; }, addChild(child) { this.children.push(child); child.parent = this; } };
+  const view = new SceneInfiniteFlowView(canvas, { activate() { assert.fail('prop asset arrival must never dispatch a command'); } });
+  const chrome = { modeKind: 'preview', modeLabel: 'preview', modeDetail: '', activityMessage: '' };
+  const root = () => canvas.children.at(-1);
+  const keys = ['scene:dungeon_prop_chest', 'scene:dungeon_transition_gate'];
+  for (const key of keys) view.setSceneVisualAsset({ width: key.endsWith('gate') ? 1024 : 1254, height: key.endsWith('gate') ? 1536 : 1254 }, { key, revision: 'approved-prop-fixture' });
+  supplySceneVisualFixtures(view, model);
+  view.render(model, chrome, EXPLORE_INSETS_320);
+  const originalPosition = view.walkScene.getPosition();
+  const gateSlot = view.sceneVisuals.get(keys[1]);
+  const chestSlot = view.sceneVisuals.get(keys[0]);
+  const spriteOf = node => [...node.components.values()].find(component => 'spriteFrame' in component);
+  const chestSprite = spriteOf(findNode(root(), 'WalkDungeonPropSprite:chest'));
+  const gateSprites = collectNodes(root(), ({ name }) => name === 'WalkTransitionGateSprite').map(spriteOf);
+  assert.equal(collectNodes(root(), ({ name }) => name === 'WalkDungeonPropSprite:debris').length, 0,
+    'the fixed room does not reintroduce removed interior debris');
+  assert.equal(gateSprites.length, 4, 'all four room directions share the approved gate frame');
+  assert.ok(gateSprites.every(sprite => sprite.spriteFrame === gateSlot.frame && view.visualSprites.has(sprite)));
+  assert.equal(chestSprite.spriteFrame, chestSlot.frame);
+  view.setSceneVisualAssetFallback({ key: keys[0], revision: 'approved-prop-fixture', diagnostic: 'network offline' });
+  assert.equal(chestSprite.spriteFrame, null, 'prop fallback detaches its live Sprite first');
+  assert.equal(chestSlot.frame.destroyCalls, 1);
+  assert.equal(chestSlot.texture.destroyCalls, 1);
+  assert.equal(gateSlot.frame.destroyCalls, 0, 'shared gate art remains live when one object fails');
+  view.render(model, { ...chrome, sceneAssets: 'error' }, EXPLORE_INSETS_320);
+  assert.equal(findNode(root(), 'WalkDungeonPropSprite:chest'), undefined);
+  assertSceneAssetGate(view, root(), 'error');
+  assert.deepEqual(view.walkPosition, originalPosition, 'prop failure preserves feet for recovery');
+  assert.ok(gateSprites.every(sprite => sprite.spriteFrame === null), 'error gate detaches all live sprites without releasing other owned frames');
+  view.destroy();
+  assert.equal(gateSlot.frame.destroyCalls, 1, 'shared gate frame destroys exactly once');
+  assert.equal(gateSlot.texture.destroyCalls, 1, 'shared gate texture destroys exactly once');
+  assert.equal(chestSlot.frame.destroyCalls, 1, 'later teardown cannot destroy a failed prop twice');
 }
 
 // One asset recovering must preserve another asset's timer and the ready background.
@@ -9312,42 +10080,87 @@ delete globalThis.wx;
   const session = assetSession({
     imageFailuresByPath: {
       'monster/fog-lesser-demon-v1': [new Error('network offline'), undefined],
-      'character/reincarnator-walk-v1': [new Error('network offline'), undefined],
+      'monster-world/fog-lesser-demon-world-v1': [new Error('network offline'), undefined],
+      'character/reincarnator-walk-v2': [new Error('network offline'), undefined],
     },
   });
   const client = fakeClient('scene-independent-retries');
   client.state = {
     phase: 'combat',
     visualAssetKey: 'monster:fog_lesser_demon',
-    detail: { kind: 'combat', chapterContext: { dungeonId: 'demon_tower_1' } },
+    detail: { kind: 'combat', enemy: { id: 'fog_lesser_demon' }, chapterContext: { dungeonId: 'demon_tower_1' } },
   };
   controller.assetSessions.push(session);
   controller.clientFactories.push(() => Promise.resolve(client));
   const app = new InfiniteFlowApp();
   app.start();
   const view = controller.views.at(-1);
-  await settleUntil(() => retryScheduler.tasks.length === 2, 'two failed keys need independent retry timers');
+  await settleUntil(() => retryScheduler.tasks.length === 3, 'portrait, world monster and player need independent retry timers');
   const background = view.sceneVisuals.get('scene:dungeon_world_demon_tower_1');
   assert.ok(background.image);
+  assert.equal(view.lastRender.chrome.sceneAssets, 'error', 'one failed required scene key exposes the recoverable error gate');
   const retryKeys = [...app.visualKeyRetryTickets.keys()];
-  retryScheduler.runNext();
-  await drainMicrotasks();
-  assert.equal(retryScheduler.tasks.length, 1, 'first recovery does not cancel the second key timer');
-  assert.equal(app.visualKeyRetryTickets.size, 1);
-  assert.equal(view.sceneVisuals.get('scene:dungeon_world_demon_tower_1'), background);
-  assert.equal(retryKeys.filter((key) => view.sceneVisuals.get(key)?.image).length, 1);
-  app.refreshViewModel();
-  await drainMicrotasks();
-  assert.equal(retryScheduler.tasks.length, 1, 'same-key refresh cannot bypass the remaining retry');
-  retryScheduler.runNext();
-  await drainMicrotasks();
+  assert.deepEqual(retryKeys.sort(), ['monster:fog_lesser_demon', 'monster:fog_lesser_demon_world', 'character:reincarnator_walk'].sort());
+  const ready = (key) => key === 'monster:fog_lesser_demon' ? view.visualImage : view.sceneVisuals.get(key)?.image;
+  assert.ok(retryKeys.every((key) => !ready(key)), 'each failure keeps only its own visual fallback');
+  for (let recovered = 1; recovered <= 3; recovered += 1) {
+    retryScheduler.runNext();
+    await drainMicrotasks();
+    assert.equal(retryScheduler.tasks.length, 3 - recovered, 'one recovery does not cancel another key timer');
+    assert.equal(app.visualKeyRetryTickets.size, 3 - recovered);
+    assert.equal(view.sceneVisuals.get('scene:dungeon_world_demon_tower_1'), background);
+    assert.equal(retryKeys.filter(ready).length, recovered, 'one retry recovers only its own image');
+    app.refreshViewModel();
+    await drainMicrotasks();
+    assert.equal(retryScheduler.tasks.length, 3 - recovered, 'same-key refresh cannot bypass remaining retries');
+  }
   assert.equal(app.visualKeyRetryTickets.size, 0);
   assert.equal(retryScheduler.tasks.length, 0);
-  assert.ok(retryKeys.every((key) => view.sceneVisuals.get(key)?.image));
+  assert.ok(retryKeys.every(ready));
+  assert.equal(view.lastRender.chrome.sceneAssets, 'ready', 'existing automatic retries reopen the gate after all scene failures recover');
   assert.equal(session.imageRequests.filter(({ path }) => path === 'dungeon-world/demon_tower_1-v1').length, 1);
   assert.equal(session.imageRequests.filter(({ path }) => path.startsWith('dungeon/')).length, 0, 'combat never loads a legacy chapter portrait as its backdrop');
-  assert.equal(session.sceneImageRequests.length, 2);
+  assert.equal(session.sceneImageRequests.length, 7, 'player and monster world retry independently while HUD portrait and gate art stay loaded');
+  assert.equal(session.imageRequests.filter(({ path }) => path === 'monster/fog-lesser-demon-v1').length, 2);
   app.onDestroy();
+}
+
+// A failed world background retries without disturbing the three ready character images.
+{
+  const session = assetSession({ imageFailuresByPath: {
+    'dungeon-world/demon_tower_1-v1': [new Error('network offline'), undefined],
+  } });
+  const client = fakeClient('scene-background-retry');
+  client.state = {
+    phase: 'combat', visualAssetKey: 'monster:fog_lesser_demon',
+    detail: { kind: 'combat', enemy: { id: 'fog_lesser_demon' }, chapterContext: { dungeonId: 'demon_tower_1' } },
+  };
+  controller.assetSessions.push(session);
+  controller.clientFactories.push(() => Promise.resolve(client));
+  const app = new InfiniteFlowApp();
+  app.start();
+  const view = controller.views.at(-1);
+  await settleUntil(() => retryScheduler.tasks.length === 1, 'background failure needs its own retry timer');
+  const portrait = view.visualImage;
+  const monster = view.sceneVisuals.get('monster:fog_lesser_demon_world');
+  const player = view.sceneVisuals.get('character:reincarnator_walk');
+  assert.ok(portrait && monster.image && player.image, 'a failed background preserves all three character images');
+  assert.equal(view.sceneVisuals.get('scene:dungeon_world_demon_tower_1').image, undefined);
+  assert.deepEqual([...app.visualKeyRetryTickets.keys()], ['scene:dungeon_world_demon_tower_1']);
+  retryScheduler.runNext();
+  await drainMicrotasks();
+  assert.ok(view.sceneVisuals.get('scene:dungeon_world_demon_tower_1').image, 'the background recovers independently');
+  assert.equal(view.visualImage, portrait);
+  assert.equal(view.sceneVisuals.get('monster:fog_lesser_demon_world'), monster);
+  assert.equal(view.sceneVisuals.get('character:reincarnator_walk'), player);
+  assert.equal(session.sceneImageRequests.length, 5, 'background recovery does not reload HUD portrait, player, monster world or gate art');
+  assert.equal(session.imageRequests.filter(({ path }) => path === 'monster/fog-lesser-demon-v1').length, 1);
+  assert.equal(session.imageRequests.filter(({ path }) => path === 'dungeon-world/demon_tower_1-v1').length, 2);
+  assert.equal(retryScheduler.tasks.length, 0);
+  app.onDestroy();
+  assert.equal(portrait.refCount, 0);
+  assert.equal(monster.image.refCount, 0);
+  assert.equal(player.image.refCount, 0);
 }
 
 // Old scene callbacks cannot return after the desired scene changes; a common player can.
@@ -9357,32 +10170,102 @@ delete globalThis.wx;
   client.state = {
     phase: 'combat',
     visualAssetKey: 'monster:fog_lesser_demon',
-    detail: { kind: 'combat', chapterContext: { dungeonId: 'demon_tower_1' } },
+    detail: { kind: 'combat', enemy: { id: 'fog_lesser_demon' }, chapterContext: { dungeonId: 'demon_tower_1' } },
   };
   controller.assetSessions.push(session);
   controller.clientFactories.push(() => Promise.resolve(client));
   const app = new InfiniteFlowApp();
   app.start();
   const view = controller.views.at(-1);
-  await settleUntil(() => session.imageRequests.length === 2 && session.sceneImageRequests.length === 1, 'stale scene fixture did not load');
+  await settleUntil(() => session.imageRequests.length === 2 && session.sceneImageRequests.length === 5, 'stale scene fixture did not load');
   client.state = {
     phase: 'hub', visualAssetKey: 'scene:main_god_space',
     detail: { kind: 'hub', activePanel: 'entry' },
   };
   app.refreshViewModel();
   await settleUntil(() => session.imageRequests.length === 3, 'new hub image did not start');
-  const oldRequests = session.imageRequests.slice(0, 2);
+  const oldRequests = [...session.imageRequests.slice(0, 2), ...session.sceneImageRequests.filter(({ path }) => path.startsWith('monster-world/') || path === 'dungeon-world/debris-v1' || path === 'dungeon-world/ruined-stone-gate-v1')];
   for (const request of oldRequests) request.complete(undefined, request.image);
-  const player = session.sceneImageRequests[0];
+  const player = session.sceneImageRequests.find(({ path }) => path.startsWith('character/'));
   player.complete(undefined, player.image);
   const hub = session.imageRequests[2];
   hub.complete(undefined, hub.image);
   await drainMicrotasks();
   assert.ok(oldRequests.every(({ image }) => image.refCount === 0));
-  assert.deepEqual([...view.sceneVisuals.keys()].sort(), ['character:reincarnator_walk', 'scene:main_god_space']);
-  assert.equal(session.sceneImageRequests.length, 1, 'pending player request survives a phase change');
+  assert.equal(view.lastRender.chrome.sceneAssets, 'loading', 'old-phase successes cannot mark the incomplete courtyard ready');
+  assert.deepEqual([...view.sceneVisuals.keys()].sort(), ['character:reincarnator', 'character:reincarnator_walk', ...COURTYARD_WORLD_FIXTURES.map(({ key }) => key), ...NPC_WORLD_FIXTURES.map(({ key }) => key)].sort());
+  assert.equal(session.sceneImageRequests.filter(({ path }) => path === 'character/reincarnator-walk-v2').length, 1, 'pending player request survives a phase change');
+  assert.equal(session.sceneImageRequests.filter(({ path }) => path.startsWith('npc/')).length, 7, 'entry loads every world NPC before opening a shop');
   assert.equal(player.image.refCount, 1);
   app.onDestroy();
+  for (const request of session.sceneImageRequests.filter(({ path }) => path.startsWith('npc/') || path.startsWith('hub-courtyard/') || path === 'character/reincarnator-v2')) {
+    request.complete(undefined, request.image);
+  }
+  await drainMicrotasks();
+  assert.equal(view.sceneVisuals.size, 0, 'late NPC, prop and background images cannot resurrect a destroyed view');
+  assert.ok(session.sceneImageRequests.every(({ image }) => image.refCount === 0), 'pending world NPC, prop and background leases release after destroy');
+  for (const request of session.sceneImageRequests) {
+    assert.equal(session.sceneImageReferenceCalls.filter((call) => call.operation === 'decRef' && call.handle === request.image).length, 1,
+      `destroy releases each late courtyard/native image exactly once: ${request.path}`);
+  }
+}
+
+// Manual recovery replaces the visual generation, cancels automatic backoff and
+// rejects the previous attempt's late images while preserving the live run.
+delete globalThis.wx;
+{
+  const session = assetSession({ autoImages: false, autoSceneImages: false });
+  const client = fakeClient('scene-manual-retry');
+  client.state = {
+    phase: 'combat', visualAssetKey: 'monster:fog_lesser_demon',
+    run: { dungeonId: 'demon_tower_1', currentNodeId: 'upper_fog_patrol', hp: 41, seed: 0x12345678 },
+    detail: { kind: 'combat', enemy: { id: 'fog_lesser_demon' }, chapterContext: { dungeonId: 'demon_tower_1' } },
+  };
+  const runState = client.state;
+  const stateSnapshot = JSON.stringify(runState);
+  controller.assetSessions.push(session);
+  controller.clientFactories.push(() => Promise.resolve(client));
+  const app = new InfiniteFlowApp();
+  app.start();
+  const view = controller.views.at(-1);
+  await settleUntil(() => session.imageRequests.length === 2 && session.sceneImageRequests.length === 5, 'manual retry scene requests did not start');
+  const oldRequests = [...session.imageRequests, ...session.sceneImageRequests];
+  const failed = oldRequests.find(({ path }) => path === 'monster-world/fog-lesser-demon-world-v1');
+  failed.complete(new Error('network offline'), undefined);
+  await settleUntil(() => view.lastRender.chrome.sceneAssets === 'error', 'failed required art did not close the scene gate');
+  assert.equal(retryScheduler.tasks.length, 1, 'existing automatic recovery remains scheduled');
+  const cancelledRetry = retryScheduler.tasks[0];
+  const recoveredSession = assetSession({ autoImages: false, autoSceneImages: false });
+  controller.assetSessions.push(recoveredSession);
+  view.callbacks.retrySceneAssets();
+  assert.equal(retryScheduler.tasks.length, 0, 'manual retry cancels the old automatic timer');
+  assert.equal(client.state, runState, 'manual retry reuses the same authoritative run');
+  assert.equal(JSON.stringify(client.state), stateSnapshot, 'manual retry changes no run state');
+  const oldEvents = controller.sceneAssetEvents.length;
+  for (const request of oldRequests.filter(request => request !== failed)) request.complete(undefined, request.image);
+  await drainMicrotasks();
+  assert.equal(controller.sceneAssetEvents.slice(oldEvents).filter(event => event.startsWith('display:')).length, 0,
+    'late images from the failed generation cannot reopen the scene');
+  cancelledRetry.callback();
+  await settleUntil(() => recoveredSession.imageRequests.length === 2 && recoveredSession.sceneImageRequests.length === 5, 'manual retry did not start a fresh full visual generation');
+  assert.equal(view.lastRender.chrome.sceneAssets, 'loading');
+  const recoveredRequests = [...recoveredSession.imageRequests, ...recoveredSession.sceneImageRequests];
+  const last = recoveredRequests.find(({ path }) => path === 'character/reincarnator-v2');
+  for (const request of recoveredRequests.filter(request => request !== last)) request.complete(undefined, request.image);
+  await drainMicrotasks();
+  assert.equal(view.lastRender.chrome.sceneAssets, 'loading', 'manual retry still waits for the final HUD portrait');
+  last.complete(undefined, last.image);
+  await settleUntil(() => view.lastRender.chrome.sceneAssets === 'ready', 'manual recovery never reopened the complete scene');
+  assert.equal(JSON.stringify(client.state), stateSnapshot);
+  assert.equal(client.enterRunPhysicalCalls.length + client.dispatchPhysicalCalls.length, 0, 'resource retry cannot dispatch a gameplay command');
+  app.onDestroy();
+  for (const request of [...oldRequests.filter(request => request !== failed), ...recoveredRequests]) {
+    assert.equal(request.image.refCount, 0, `${request.path}: replaced/destroyed generation owns no image lease`);
+    const references = [...session.imageReferenceCalls, ...session.sceneImageReferenceCalls,
+      ...recoveredSession.imageReferenceCalls, ...recoveredSession.sceneImageReferenceCalls];
+    assert.equal(references.filter(call => call.operation === 'decRef' && call.handle === request.image).length, 1,
+      `${request.path}: manual retry releases each native image exactly once`);
+  }
 }
 
 for (const boundary of ['destroy', 'memory-warning']) {
@@ -9392,7 +10275,8 @@ for (const boundary of ['destroy', 'memory-warning']) {
   const client = fakeClient(`scene-pending-${boundary}`);
   client.state = {
     phase: 'combat', visualAssetKey: 'monster:fog_lesser_demon',
-    detail: { kind: 'combat', chapterContext: { dungeonId: 'demon_tower_1' } },
+    run: { dungeonId: 'demon_tower_1', currentNodeId: 'upper_fog_patrol', hp: 41, seed: 0x12345678 },
+    detail: { kind: 'combat', enemy: { id: 'fog_lesser_demon' }, chapterContext: { dungeonId: 'demon_tower_1' } },
   };
   let clientOptions;
   controller.assetSessions.push(session);
@@ -9404,9 +10288,12 @@ for (const boundary of ['destroy', 'memory-warning']) {
   const app = new InfiniteFlowApp();
   app.start();
   const view = controller.views.at(-1);
-  await settleUntil(() => session.imageRequests.length === 2 && session.sceneImageRequests.length === 1, 'pending scene fixture did not load');
+  await settleUntil(() => session.imageRequests.length === 2 && session.sceneImageRequests.length === 5, 'pending scene fixture did not load');
+  const runState = client.state;
+  const stateSnapshot = JSON.stringify(runState);
   if (boundary === 'destroy') app.onDestroy();
   else clientOptions.onMemoryWarning();
+  if (boundary === 'memory-warning') assert.equal(view.lastRender.chrome.sceneAssets, 'error', 'memory invalidation exposes the same manual recovery surface');
   const sceneEventsAtBoundary = controller.sceneAssetEvents.length;
   for (const request of [...session.imageRequests, ...session.sceneImageRequests]) {
     request.complete(undefined, request.image);
@@ -9418,23 +10305,835 @@ for (const boundary of ['destroy', 'memory-warning']) {
     assert.equal(request.image.refCount, 0, `${boundary} releases late ${request.path}`);
     assert.equal([...session.imageReferenceCalls, ...session.sceneImageReferenceCalls].filter((call) => call.operation === 'decRef' && call.handle === request.image).length, 1);
   }
+  if (boundary === 'memory-warning') {
+    const recovery = assetSession();
+    controller.assetSessions.push(recovery);
+    view.callbacks.retrySceneAssets();
+    await settleUntil(() => view.lastRender.chrome.sceneAssets === 'ready', 'memory retry did not restore the complete scene');
+    assert.equal(client.state, runState, 'memory recovery reuses the authoritative run');
+    assert.equal(JSON.stringify(client.state), stateSnapshot, 'memory recovery preserves chapter, seed and player state');
+    assert.equal(client.enterRunPhysicalCalls.length + client.dispatchPhysicalCalls.length, 0);
+    app.onDestroy();
+    assert.ok([...recovery.imageRequests, ...recovery.sceneImageRequests].every(({ image }) => image.refCount === 0),
+      'destroy releases every recovered scene lease');
+  }
   app.onDestroy();
 }
 
 delete globalThis.wx;
+// The real View exposes one loading/error surface with no provisional actors,
+// binds manual retry locally, and restores the prior feet only after ready art.
+{
+  const canvas = { children: [], getComponent() { return { contentSize: { width: 750, height: 1334 } }; }, addChild(child) { this.children.push(child); child.parent = this; } };
+  let retries = 0;
+  const view = new SceneInfiniteFlowView(canvas, {
+    activate() { assert.fail('resource gates cannot dispatch gameplay actions'); },
+    retrySceneAssets() { retries += 1; },
+  });
+  const chrome = { modeKind: 'preview', modeLabel: 'preview', modeDetail: '', activityMessage: '' };
+  const models = [hubModel(hubEntryActionFixtures(false)), walkingExploreModel(chapterDecisionFixture('metro_abyss')),
+    combatModel(combatChapterContextFixture())];
+  const root = () => canvas.children.at(-1);
+  for (const model of models) {
+    view.render(model, { ...chrome, sceneAssets: 'loading' }, EXPLORE_INSETS_320);
+    assertSceneAssetGate(view, root(), 'loading');
+    assert.equal(findNode(root(), 'WalkAvatarPlaceholder'), undefined);
+    assert.equal(labelComponent(findNode(root(), 'SceneAssetTitle')).string,
+      model.phase === 'hub' ? '正在进入主神空间…' : '正在进入副本…');
+    globalThis.__walkingTestInput.emit('key-down', { keyCode: 65 });
+    view.tick(1 / 60);
+    assert.equal(view.walkScene, undefined, 'loading cannot start hidden keyboard movement');
+  }
+  const model = models[1];
+  assert.throws(() => view.render(model, { ...chrome, sceneAssets: 'ready' }, EXPLORE_INSETS_320), /16-frame/u,
+    'a falsely ready fixture must fail instead of restoring vector player art');
+  assert.equal(findNode(root(), 'WalkScene'), undefined, 'missing-art invariant is checked before creating a scene graph');
+  const backgroundKey = getInfiniteFlowSceneVisualKeys(model).background;
+  supplySceneVisualFixtures(view, model, [backgroundKey]);
+  assert.throws(() => view.render(model, { ...chrome, sceneAssets: 'ready' }, EXPLORE_INSETS_320),
+    new RegExp(backgroundKey), 'a missing declared background cannot restore a vector floor');
+  assert.equal(findNode(root(), 'WalkScene'), undefined, 'scene-key invariant rejects incomplete composition before publishing nodes');
+  supplySceneVisualFixtures(view, model);
+  view.render(model, { ...chrome, sceneAssets: 'ready' }, EXPLORE_INSETS_320);
+  assert.ok(view.walkScene && view.walkInput, 'complete ready art creates the normal simulation and input');
+  globalThis.__walkingTestInput.emit('key-down', { keyCode: 65 });
+  for (let frame = 0; frame < 10; frame += 1) view.tick(1 / 60);
+  globalThis.__walkingTestInput.emit('key-up', { keyCode: 65 });
+  const feet = view.walkScene.getPosition();
+  assert.notDeepEqual(feet, buildWalkWorld(model).spawn, 'ready scene retains real movement');
+  view.clearSceneVisualAsset('character:reincarnator');
+  view.render(model, { ...chrome, sceneAssets: 'error' }, EXPLORE_INSETS_320);
+  assertSceneAssetGate(view, root(), 'error');
+  assert.deepEqual(view.walkPosition, feet, 'asset failure preserves feet for a successful retry');
+  const retry = findNode(root(), 'SceneAssetRetry');
+  emitTouch(retry, 9890);
+  assert.equal(retries, 1, 'error retry forwards exactly one local recovery callback');
+  view.render(model, { ...chrome, sceneAssets: 'loading' }, EXPLORE_INSETS_320);
+  emitTouch(retry, 9891);
+  assert.equal(retries, 1, 'retired error-page callbacks cannot start another retry');
+  supplySceneVisualFixtures(view, model);
+  view.render(model, { ...chrome, sceneAssets: 'ready' }, EXPLORE_INSETS_320);
+  assert.deepEqual(view.walkScene.getPosition(), feet, 'ready recovery resumes the same room and feet');
+  view.render(model, { ...chrome, sceneAssets: 'loading', modeKind: 'blocked' }, EXPLORE_INSETS_320);
+  assert.ok(findNode(root(), 'RuntimeBlockedOverlay'), 'runtime blockers retain priority over resource loading');
+  assert.equal(findNode(root(), 'SceneAssetLoading'), undefined);
+  const slots = [...view.sceneVisuals.values()];
+  view.destroy();
+  assert.ok(slots.every(({ frame, texture }) => frame.destroyCalls === 1 && texture.destroyCalls === 1));
+  emitTouch(retry, 9892);
+  assert.equal(retries, 1, 'destroyed resource controls remain inert');
+}
+
+// Hub world art is independent of shop selection and keeps the original feet/interaction contract.
+{
+  const canvas = { name: 'npc-world-canvas', children: [], getComponent() { return { contentSize: { width: 750, height: 1334 } }; }, addChild(child) { this.children.push(child); child.parent = this; } };
+  const view = new SceneInfiniteFlowView(canvas, { activate() { throw new Error('NPC artwork must not dispatch actions'); } });
+  const model = buildActualGameViewModel(createInitialState(), { hubPanel: 'entry' });
+  const chrome = { modeKind: 'preview', modeLabel: 'preview', modeDetail: '', activityMessage: '' };
+  const spec = buildWalkWorld(model);
+  const originalSpec = JSON.stringify(spec);
+  const root = () => canvas.children.at(-1);
+  const keys = getInfiniteFlowSceneVisualKeys(model);
+  assert.equal(keys.portrait, 'character:reincarnator', 'courtyard requests the same real HUD portrait as dungeon scenes');
+  assert.deepEqual(NPC_WORLD_FIXTURES.map(({ panel }) => keys[panel]), NPC_WORLD_FIXTURES.map(({ key }) => key),
+    'initial hub entry includes all seven loadable full-body image keys');
+  for (const [panel, portrait] of [['bloodlines', 'npc:bloodline_priest'], ['companions', 'npc:companion_guide']]) {
+    assert.equal(getInfiniteFlowSceneVisualKeys(buildActualGameViewModel(createInitialState(), { hubPanel: panel })).opponent, portrait,
+      'legacy scene selects the actual shop owner portrait');
+  }
+
+  view.render(model, { ...chrome, sceneAssets: 'loading' }, EXPLORE_INSETS_320);
+  assertSceneAssetGate(view, root(), 'loading');
+  for (const { key } of NPC_WORLD_FIXTURES) {
+    view.setSceneVisualAsset({ width: 1024, height: 1536 }, { key, revision: 'npc-world-fixture' });
+  }
+  supplySceneVisualFixtures(view, model);
+  view.render(model, chrome, EXPLORE_INSETS_320);
+  for (const { panel, key } of NPC_WORLD_FIXTURES) {
+    const actor = findNode(root(), `WalkTarget:npc:${panel}`);
+    const body = findNode(actor, 'WorldObjectBody');
+    const sprite = Array.from(body.components.values()).find((component) => 'spriteFrame' in component);
+    const target = spec.targets.find(({ id }) => id === `npc:${panel}`);
+    assert.deepEqual({ ...actor.position }, { x: target.x, y: -target.y, z: 0 }, 'sprite uses the unchanged world target feet');
+    const [height, transparentFootMargin] = COURTYARD_NPC_SIZES[panel];
+    assert.equal(body.position.y - body.size.height / 2 + transparentFootMargin, 0,
+      'transparent artwork margin is excluded so the visible NPC feet meet the target');
+    assert.ok(Math.abs(body.size.width / body.size.height - 1024 / 1536) < 1e-9, 'contain preserves the full-body proportions');
+    assert.equal(body.size.height, height, 'NPC has the exact approved courtyard sprite height');
+    assert.equal(body.getComponent(TestGraphics), null, 'loaded image replaces the fallback drawing');
+    assert.equal(sprite.spriteFrame, view.sceneVisuals.get(key).frame, 'each NPC uses its own world art');
+    assert.ok(view.visualSprites.has(sprite), 'NPC sprite participates in shared frame cleanup');
+    const name = findNode(actor, 'WalkTargetName');
+    assert.ok(name.position.y - name.size.height / 2 > body.position.y + body.size.height / 2,
+      'NPC name remains above the complete artwork');
+    assert.ok(findNode(actor, 'WalkTargetPurpose'), 'every service retains its concise purpose label');
+  }
+  assert.equal(JSON.stringify(buildWalkWorld(model)), originalSpec, 'artwork never changes NPC positions, radii or actions');
+  const first = NPC_WORLD_FIXTURES[0];
+  const firstBody = findNode(findNode(root(), `WalkTarget:npc:${first.panel}`), 'WorldObjectBody');
+  const firstSprite = Array.from(firstBody.components.values()).find((component) => 'spriteFrame' in component);
+  const firstVisual = view.sceneVisuals.get(first.key);
+  view.clearSceneVisualAsset(first.key);
+  assert.equal(firstSprite.spriteFrame, null, 'clearing a world image detaches its live Sprite before destroying the frame');
+  assert.equal(firstVisual.frame.destroyCalls, 1);
+  const supplySlot = view.sceneVisuals.get('npc:supply_trader_world');
+  view.render(model, { ...chrome, sceneAssets: 'error' }, EXPLORE_INSETS_320);
+  assertSceneAssetGate(view, root(), 'error');
+  assert.equal(supplySlot.frame.destroyCalls, 0, 'one missing world image leaves another NPC frame owned for recovery');
+  view.destroy();
+}
+
+// The approved courtyard applies the actual transparent art, physical phone HUD
+// and click routes through the real View, without bypassing its interaction gate.
+for (const viewportWidth of [320, 390]) {
+  globalThis.__walkingTestFrameSize = { width: viewportWidth, height: viewportWidth * 2 };
+  const canvas = { children: [], getComponent() { return { contentSize: { width: 750, height: 1334 } }; }, addChild(child) { this.children.push(child); child.parent = this; } };
+  const calls = [];
+  const view = new SceneInfiniteFlowView(canvas, { activate(physicalId, actionId, event) { calls.push({ physicalId, actionId, event }); } });
+  const model = buildActualGameViewModel(createInitialState(), { hubPanel: 'entry' });
+  const beforeModel = JSON.stringify(model);
+  const spec = buildWalkWorld(model);
+  const chrome = { modeKind: 'preview', modeLabel: 'preview', modeDetail: '', activityMessage: '' };
+  const insets = viewportWidth === 320 ? EXPLORE_INSETS_320 : EXPLORE_INSETS_390;
+  const root = () => canvas.children.at(-1);
+  const position = () => view.walkScene.getPosition();
+  const spriteOf = (node) => [...node.components.values()].find((component) => 'spriteFrame' in component);
+  const key = (keyCode, down) => globalThis.__walkingTestInput.emit(down ? 'key-down' : 'key-up', { keyCode });
+  const advance = (frames) => { for (let frame = 0; frame < frames; frame += 1) view.tick(1 / 60); };
+  const requireFeet = () => {
+    const point = position();
+    assert.ok(point.x >= 78 - 1e-6 && point.x <= 1122 + 1e-6 && point.y >= 434 - 1e-6 && point.y <= 652 + 1e-6);
+    for (const wall of spec.obstacles) {
+      const x = Math.max(wall.x, Math.min(point.x, wall.x + wall.width));
+      const y = Math.max(wall.y, Math.min(point.y, wall.y + wall.height));
+      assert.ok(Math.hypot(point.x - x, point.y - y) >= 14 - 1e-5, 'automatic routes retain the complete circular foot clearance');
+    }
+  };
+  const tickRoute = () => {
+    const previous = position();
+    view.tick(1 / 60);
+    const point = position();
+    assert.ok(Math.hypot((point.x - previous.x) / 260, (point.y - previous.y) / 145) <= 1 / 60 + 1e-6,
+      'automatic walking cannot snap or move faster than the approved continuous speed');
+    requireFeet();
+  };
+  const tapGround = (destination, touchId) => {
+    const viewport = findNode(root(), 'WalkViewport');
+    const camera = findNode(root(), 'WalkCamera');
+    const bounds = absoluteNodeBounds(viewport);
+    const point = {
+      x: (bounds.left + bounds.right) / 2 + camera.position.x + destination.x * camera.scale.x,
+      y: (bounds.bottom + bounds.top) / 2 + camera.position.y - destination.y * camera.scale.y,
+    };
+    const event = { getID: () => touchId, getUILocation: () => point, propagationStopped: false };
+    viewport.emit('touch-start', event);
+    viewport.emit('touch-end', event);
+  };
+
+  view.render(model, { ...chrome, sceneAssets: 'loading' }, insets);
+  assertSceneAssetGate(view, root(), 'loading');
+  const spawn = { ...spec.spawn };
+  const portalTarget = spec.targets.find(({ id }) => id === 'portal:entry');
+  assert.ok(portalTarget);
+  assert.deepEqual({ x: portalTarget.x, y: portalTarget.y, radius: portalTarget.radius }, { x: 1080, y: 466, radius: 120 },
+    'selected entrance artwork preserves the approved foot anchor and interaction radius');
+  assert.equal(findNode(root(), 'WalkHubDungeonPortalSprite'), undefined);
+  assert.equal(findNode(root(), 'WalkEnvironmentLoading'), undefined, 'one loading surface replaces old per-object fallbacks');
+  const propSources = {
+    pillar: { width: 870, height: 1808, bounds: [22, 93, 866, 1795] },
+    crate: { width: 1457, height: 1080, bounds: [143, 272, 1352, 931] },
+    lamp: { width: 930, height: 1691, bounds: [163, 69, 770, 1633] },
+    altar: { width: 1500, height: 1049, bounds: [42, 61, 1459, 980] },
+  };
+  view.setSceneVisualAsset({ width: 1254, height: 1254 }, { key: 'character:reincarnator_walk', revision: 'courtyard-fixture' });
+  view.setSceneVisualAsset({ width: 1024, height: 1536 }, { key: 'character:reincarnator', revision: 'courtyard-fixture' });
+  view.setSceneVisualAsset({ width: 2172, height: 724 }, { key: 'scene:hub_courtyard_walk', revision: 'courtyard-fixture' });
+  view.setSceneVisualAsset({ width: 1018, height: 1545 }, { key: HUB_PORTAL_FIXTURE.key, revision: 'courtyard-fixture' });
+  for (const npc of NPC_WORLD_FIXTURES) view.setSceneVisualAsset({ width: 1024, height: 1536 }, { key: npc.key, revision: 'courtyard-fixture' });
+  for (const prop of spec.props) view.setSceneVisualAsset(propSources[prop.kind], { key: prop.visualAssetKey, revision: 'courtyard-fixture' });
+  supplySceneVisualFixtures(view, model);
+  view.render(model, chrome, insets);
+  assert.deepEqual(position(), spawn, 'art arrival preserves the player feet');
+  assertCourtyardHud(root(), model, insets, viewportWidth);
+  assert.equal(findNode(root(), 'WalkEnvironmentLoading'), undefined);
+  const background = findNode(root(), 'WalkDungeonBackdrop:scene:hub_courtyard_walk');
+  assert.ok(hasComponentNamed(background.parent, 'Mask'), 'courtyard background cover is clipped to its world');
+  assert.equal(spriteOf(background).spriteFrame, view.sceneVisuals.get('scene:hub_courtyard_walk').frame);
+  assertWorldImageCoverage(root(), 'scene:hub_courtyard_walk');
+  assert.equal(findNode(root(), 'WalkCamera').scale.x, (findNode(root(), 'WalkScene').size.height - insets.top - insets.bottom) / spec.height,
+    'courtyard world zoom preserves the original HUD-safe height');
+  assert.equal(spriteOf(findNode(root(), 'WalkAvatarArt')).spriteFrame, view.sceneVisuals.get('character:reincarnator').frame,
+    'compact role header uses the existing real portrait resource');
+  const portalNode = findNode(root(), 'WalkTarget:portal:entry');
+  const portalBody = findNode(portalNode, 'WorldObjectBody');
+  const portalArt = findNode(portalBody, 'WalkHubDungeonPortalSprite');
+  const portalSprite = spriteOf(portalArt);
+  const portalSlot = view.sceneVisuals.get(HUB_PORTAL_FIXTURE.key);
+  assert.deepEqual({ ...portalNode.position }, { x: 1080, y: -466, z: 0 });
+  assert.deepEqual({ ...portalBody.scale }, { x: 1.25, y: 1.42, z: 1 }, 'existing portal body scale is unchanged');
+  assert.deepEqual({ ...portalNode.size }, { width: 160, height: 220 }, 'portal keeps its original target surface');
+  const portalTouch = findNode(portalNode, 'WalkTargetTouch');
+  assert.deepEqual({ ...portalTouch.size }, { width: 160, height: 220 });
+  assert.deepEqual({ ...portalTouch.position }, { x: 0, y: 110, z: 0 }, 'portal keeps its original touch footprint');
+  const worldWidth = portalArt.size.width * portalBody.scale.x;
+  const worldHeight = portalArt.size.height * portalBody.scale.y;
+  assert.ok(Math.abs(worldWidth / worldHeight - 1018 / 1545) < 1e-9,
+    'new portrait artwork is not stretched by the existing non-uniform body scale');
+  assert.ok(worldWidth <= 152.5 + 1e-9 && worldHeight <= 231.46 + 1e-9,
+    'complete portal artwork fits inside the original world bounds');
+  assert.ok(Math.abs((portalArt.position.y - portalArt.size.height / 2) * portalBody.scale.y + 11.36) < 1e-9,
+    'portal image bottom uses the original base at -11.36 world units');
+  assert.equal(portalSprite.spriteFrame, portalSlot.frame, 'portal uses the selected independent hub image');
+  assert.ok(view.visualSprites.has(portalSprite), 'portal frame joins the existing visual teardown lifecycle');
+  assert.equal(portalBody.getComponent(TestGraphics), null, 'loaded portal artwork replaces the old vector body');
+  const portalPurpose = findNode(portalNode, 'WalkTargetPurpose');
+  assert.ok(portalPurpose.position.y - portalPurpose.size.height / 2
+    > (portalArt.position.y + portalArt.size.height / 2) * portalBody.scale.y, 'entrance purpose stays above the entire image');
+  assert.equal(JSON.stringify(buildWalkWorld(model)), JSON.stringify(spec), 'hub art cannot change targets, commands or physical walking geometry');
+  for (const prop of spec.props) {
+    const base = findNode(root(), `WalkCourtyardProp:${prop.kind}`);
+    const art = findNode(base, `WalkCourtyardPropSprite:${prop.kind}`);
+    const source = propSources[prop.kind];
+    const [left, top, right, bottom] = source.bounds;
+    assert.deepEqual({ ...base.position }, { x: prop.x, y: -prop.y, z: 0 }, 'prop drawing and foot collision share the same world anchor');
+    const scale = art.size.width / source.width;
+    assert.ok(Math.abs(art.size.height / source.height - scale) < 1e-9, 'transparent prop source aspect ratio is preserved');
+    assert.ok(Math.abs(art.position.y + art.size.height / 2 - bottom * scale) < 1e-9,
+      'actual painted alpha bottom is anchored exactly at the prop feet');
+    assert.ok(Math.abs(art.position.x - art.size.width / 2 + (left + right) / 2 * scale) < 1e-9,
+      'actual painted alpha silhouette is centered around the prop feet');
+    assert.ok((right - left) * scale <= prop.width + 1e-6 && (bottom - top) * scale <= prop.height + 1e-6,
+      'complete prop silhouette fits its approved size without clipping');
+    const sprite = spriteOf(art);
+    const muted = spriteOf(findNode(art, 'WalkCourtyardDesaturation'));
+    assert.equal(sprite.spriteFrame, view.sceneVisuals.get(prop.visualAssetKey).frame);
+    assert.equal(muted.spriteFrame, sprite.spriteFrame, 'desaturation layer shares its prop frame');
+    assert.equal(muted.grayscale, true);
+    assert.equal(muted.color.channels[3], 117, 'courtyard preserves the approved muted palette');
+    assert.ok(view.visualSprites.has(sprite) && view.visualSprites.has(muted), 'both prop layers participate in frame teardown');
+    assert.equal(findNode(base, `WalkCourtyardPropPending:${prop.kind}`), undefined);
+  }
+  const body = findNode(root(), 'WalkPlayerBody');
+  const playerSprite = spriteOf(body);
+  assert.equal(playerSprite.trim, false, 'hero uses originalSize and calibrated offset instead of stretching the crop');
+  assert.deepEqual({ ...body.size }, { width: 172, height: 172 }, 'new hero preserves the approved courtyard body size');
+  assert.deepEqual({ ...body.position }, { x: 0, y: 78, z: 0 }, 'new hero preserves the approved courtyard body anchor');
+  assert.ok(Math.abs(body.position.y + (168 - 320.16) * body.size.height / 336) < 0.12,
+    'calibrated logical feet remain on the physical ground within a fraction of a pixel');
+  assert.equal(view.walkScene.getFacing(), 'right');
+  const heroFrames = view.sceneVisuals.get('character:reincarnator_walk').frames;
+  assert.equal(playerSprite.spriteFrame, heroFrames[8], 'courtyard starts on the right-facing idle frame');
+  const camera = findNode(root(), 'WalkCamera');
+  const initialCamera = { ...camera.position };
+  key(68, true); advance(6);
+  assert.equal(playerSprite.spriteFrame, heroFrames[8], 'nine-fps gait has not advanced after exactly 100ms');
+  advance(1); key(68, false);
+  assert.equal(playerSprite.spriteFrame, heroFrames[9], 'nine-fps gait advances at the next 60Hz frame');
+  assert.ok(camera.position.x < initialCamera.x, 'horizontal camera follows rightward walking');
+  assert.equal(camera.position.y, initialCamera.y, 'courtyard camera has no vertical following');
+  const map = findNode(root(), 'WalkMinimap');
+  const dot = findNode(map, 'WalkMinimapPlayer');
+  assert.ok(Math.abs(dot.position.x - (-map.size.width / 2 + position().x / spec.width * map.size.width)) < 1e-6,
+    'minimap player follows actual continuous movement');
+  key(65, true); advance(7); key(65, false);
+  assert.equal(view.walkScene.getFacing(), 'left');
+  key(87, true); advance(6); key(87, false);
+  assert.equal(view.walkScene.getFacing(), 'left', 'vertical movement keeps the last left-facing side');
+  assert.ok(view.sceneVisuals.get('character:reincarnator_walk').frames.slice(4, 8).includes(playerSprite.spriteFrame),
+    'depth movement keeps a frame from the last left-facing direction');
+  key(83, true); advance(6); key(83, false);
+  assert.equal(view.walkScene.getFacing(), 'left');
+  assert.equal(camera.position.y, initialCamera.y);
+  assert.equal(calls.length, 0, 'ordinary walking past nearby NPCs cannot open or dispatch interactions');
+  assert.equal(findNode(root(), 'MobileInfoSheet:npc'), undefined);
+
+  const equipment = spec.targets.find(({ id }) => id === 'npc:equipment');
+  tapGround(equipment, 7300 + viewportWidth);
+  for (let frame = 0; frame < 180; frame += 1) tickRoute();
+  assert.ok(Math.hypot(position().x - equipment.x, position().y - equipment.y) < 6,
+    'ground tap reaches its actual foot destination with collision-safe walking');
+  assert.equal(calls.length, 0, 'ground movement through NPC range does not become an automatic conversation');
+  assert.equal(findNode(root(), 'MobileInfoSheet:npc'), undefined);
+  const tasks = spec.targets.find(({ id }) => id === 'npc:tasks');
+  const targetNode = findNode(root(), 'WalkTarget:npc:tasks');
+  const beforeRoute = position();
+  emitTouch(targetNode, 7400 + viewportWidth);
+  targetNode.emit('touch-end', { getID: () => 7400 + viewportWidth, propagationStopped: false });
+  assert.deepEqual(position(), beforeRoute, 'tapping a far NPC cannot teleport the player');
+  assert.equal(calls.length, 0, 'tapping a far NPC does not dispatch before walking reaches it');
+  let frames = 0;
+  while (calls.length === 0 && frames < 360) { tickRoute(); frames += 1; }
+  assert.equal(calls.length, 1, `arrival dispatches exactly one original NPC preparation event: position=${JSON.stringify(position())} route=${labelComponent(findNode(root(), 'WalkRouteNotice')).string}`);
+  assert.equal(calls[0].event, tasks.action.event, 'arrival preserves exact projection-owned event identity');
+  assert.equal(calls[0].actionId, tasks.action.actionId);
+  assert.ok(Math.hypot(position().x - tasks.x, position().y - tasks.y) <= tasks.radius,
+    'conversation starts only after the player reaches its foot radius');
+  assert.ok(findNode(root(), 'MobileInfoSheet:npc'), 'arrival opens the original NPC information sheet');
+  const atConversation = position();
+  advance(30);
+  assert.deepEqual(position(), atConversation, 'movement listeners are paused by the original conversation sheet');
+  assert.equal(calls.length, 1, 'arrival cannot dispatch again while the sheet is open');
+  emitTouch(findNode(root(), 'MobileSheetClose'), 7500 + viewportWidth);
+  emitTouch(targetNode, 7600 + viewportWidth);
+  advance(20);
+  assert.deepEqual(position(), atConversation, 'stale NPC graph cannot start a fresh route after a modal rerender');
+  assert.equal(calls.length, 1);
+  emitTouch(findNode(root(), 'WalkTarget:npc:equipment'), 7700 + viewportWidth);
+  advance(8);
+  globalThis.__walkingTestGame.emit('game-hide');
+  const hidden = position();
+  advance(90);
+  assert.deepEqual(position(), hidden, 'hide cancels automatic routes and leaves no ghost movement');
+  assert.equal(calls.length, 1);
+
+  const altarNode = findNode(root(), 'WalkCourtyardProp:altar');
+  const altarSprites = [spriteOf(findNode(altarNode, 'WalkCourtyardPropSprite:altar')), spriteOf(findNode(altarNode, 'WalkCourtyardDesaturation'))];
+  const altarSlot = view.sceneVisuals.get('scene:courtyard_altar');
+  view.clearSceneVisualAsset('scene:courtyard_altar');
+  assert.ok(altarSprites.every((sprite) => sprite.spriteFrame === null), 'both live prop layers detach before frame destruction');
+  assert.equal(altarSlot.frame.destroyCalls, 1);
+  assert.equal(altarSlot.texture.destroyCalls, 1);
+  const livePortalSprite = spriteOf(findNode(root(), 'WalkHubDungeonPortalSprite'));
+  view.render(model, { ...chrome, sceneAssets: 'error' }, insets);
+  assertSceneAssetGate(view, root(), 'error');
+  assert.equal(findNode(root(), 'WalkCourtyardPropPending:altar'), undefined, 'failed art never recreates superseded prop drawings');
+  assert.equal(view.sceneVisuals.get('scene:courtyard_crate').frame.destroyCalls, 0, 'one failed prop preserves the other owned art');
+  assert.deepEqual(view.walkPosition, hidden, 'prop error preserves walking position for recovery');
+  view.clearSceneVisualAsset(HUB_PORTAL_FIXTURE.key);
+  assert.equal(livePortalSprite.spriteFrame, null, 'hub portal detaches its live Sprite before frame destruction');
+  assert.equal(portalSlot.frame.destroyCalls, 1);
+  assert.equal(portalSlot.texture.destroyCalls, 1);
+  view.render(model, { ...chrome, sceneAssets: 'error' }, insets);
+  assert.equal(findNode(root(), 'WalkHubDungeonPortalSprite'), undefined);
+  assertSceneAssetGate(view, root(), 'error');
+  assert.deepEqual(view.walkPosition, hidden, 'portal error preserves player position');
+  assert.equal(JSON.stringify(model), beforeModel, 'art, HUD, routes and conversations never mutate the public model');
+  const remaining = [...view.sceneVisuals.values()];
+  view.destroy();
+  for (const slot of [altarSlot, portalSlot, ...remaining]) {
+    assert.equal(slot.frame.destroyCalls, 1, 'each courtyard frame is destroyed exactly once');
+    assert.equal(slot.texture.destroyCalls, 1, 'each courtyard texture is destroyed exactly once');
+  }
+  assert.equal((globalThis.__walkingTestInput.listeners.get('key-down') ?? []).length, 0);
+  delete globalThis.__walkingTestFrameSize;
+}
+
+// Every monster keeps its own world sprite, action, rank and combat timing.
+// Dungeon feet are the view-local HTML slots; the authoritative world is unchanged.
+{
+  const canvas = { name: 'monster-world-canvas', children: [], getComponent() { return { contentSize: { width: 750, height: 1334 } }; }, addChild(child) { this.children.push(child); child.parent = this; } };
+  const view = new SceneInfiniteFlowView(canvas, { activate() { assert.fail('monster artwork must not dispatch a domain action'); } });
+  const chrome = { modeKind: 'preview', modeLabel: 'preview', modeDetail: '', activityMessage: '' };
+  const context = combatChapterContextFixture({ dungeonId: 'demon_tower_1', dungeonName: '妖雾古塔' });
+  const root = () => canvas.children.at(-1);
+  const spriteOf = (node) => [...node.components.values()].find((component) => 'spriteFrame' in component);
+  const modelFor = (id, options = {}) => combatModel(context, { ...options, enemy: { id, name: MONSTERS[id].name } });
+  const visualSlots = [];
+  const load = (key, source = { width: 1024, height: 1536 }) => {
+    view.setSceneVisualAsset(source, { key, revision: 'monster-world-fixture' });
+    const slot = view.sceneVisuals.get(key);
+    visualSlots.push(slot);
+    return slot;
+  };
+  const normal = modelFor('fog_lesser_demon');
+  view.setVisualAsset({ width: 288, height: 384 }, { key: 'monster:fog_lesser_demon', revision: 'portrait-fixture' });
+  const portraitFrame = view.visualFrame;
+  view.render(normal, { ...chrome, sceneAssets: 'loading' }, EXPLORE_INSETS_320);
+  assertSceneAssetGate(view, root(), 'loading');
+  assert.equal(findNode(root(), 'WalkMonsterSprite:monster:fog_lesser_demon_world'), undefined,
+    'the ready portrait cannot replace a missing world image');
+
+  assert.equal(MONSTER_WORLD_FIXTURES.length, 59, 'all domain monster identities have a world fixture');
+  for (const { key } of MONSTER_WORLD_FIXTURES) load(key);
+  supplySceneVisualFixtures(view, normal);
+  const distinctFrames = new Set();
+  for (const { id, key } of MONSTER_WORLD_FIXTURES) {
+    const model = modelFor(id);
+    // Deliberately stale portrait metadata must not choose the world opponent.
+    model.visualAssetKey = 'monster:fog_lesser_demon';
+    const spec = buildWalkWorld(model);
+    const originalSpec = JSON.stringify(spec);
+    const target = spec.targets.find(({ kind }) => kind === 'monster');
+    assert.equal(getInfiniteFlowSceneVisualKeys(model).opponent, key, `${id} selects its own world identity`);
+    view.render(model, chrome, EXPLORE_INSETS_320);
+    const actor = findNode(root(), `WalkTarget:monster:${id}`);
+    const body = findNode(actor, 'WorldObjectBody');
+    const art = findNode(body, `WalkMonsterSprite:${key}`);
+    const sprite = spriteOf(art);
+    const { transientSpec } = sceneDungeonLayout(root(), model, EXPLORE_INSETS_320);
+    const visibleTarget = transientSpec.targets.find(entry => entry.id === target.id);
+    assert.deepEqual({ ...actor.position }, { x: visibleTarget.x, y: -visibleTarget.y, z: 0 }, `${id} uses the HTML foot for the same world identity`);
+    assert.deepEqual({ ...body.position }, { x: 0, y: 0, z: 0 }, `${id} keeps the recoil container at its foot origin`);
+    assert.equal(art.size.width / art.size.height, 1024 / 1536, `${id} contains the full source without aspect distortion`);
+    const visibleBounds = projectedNodeBounds(art);
+    assert.ok(Math.abs((visibleBounds.top - visibleBounds.bottom) * 320 / 750 - 108) < 0.001,
+      `${id} retains the HTML monster image height after affine projection`);
+    assert.equal(art.position.y, art.size.height / 2, `${id} anchors the original file bottom at its rendered target foot`);
+    assert.equal(body.getComponent(TestGraphics), null, `${id} replaces the fallback drawing`);
+    assert.equal(sprite.sizeMode, 0, `${id} uses the explicit custom sprite dimensions`);
+    assert.equal(sprite.spriteFrame, view.sceneVisuals.get(key).frame, `${id} uses its own frame`);
+    assert.notEqual(sprite.spriteFrame, portraitFrame, `${id} never reuses the portrait frame`);
+    assert.ok(view.visualSprites.has(sprite), `${id} participates in frame cleanup`);
+    distinctFrames.add(sprite.spriteFrame);
+    assert.equal(JSON.stringify(buildWalkWorld(model)), originalSpec, `${id} art cannot change world interaction data`);
+  }
+  assert.equal(distinctFrames.size, 59, '59 monster identities use 59 independent frames');
+
+  const rankCases = [
+    { id: 'fog_lesser_demon', rank: 'normal', height: 108 },
+    { id: 'tower_butcher', rank: 'elite', height: 108 },
+    { id: 'tower_butcher', rank: 'boss', height: 108,
+      boss: { title: '古塔屠夫', phase: 'awakened', phaseLabel: '觉醒', sealName: '古塔封印' } },
+  ];
+  for (const fixture of rankCases) {
+    const model = modelFor(fixture.id, fixture.boss === undefined ? {} : { boss: fixture.boss });
+    view.render(model, chrome, EXPLORE_INSETS_320);
+    const actor = findNode(root(), `WalkTarget:monster:${fixture.id}`);
+    const body = findNode(actor, 'WorldObjectBody');
+    const art = findNode(body, `WalkMonsterSprite:monster:${fixture.id}_world`);
+    const health = findNode(actor, 'WalkEnemyHealth');
+    const healthLabel = findNode(actor, 'WalkEnemyHealthLabel');
+    const rank = findNode(actor, 'WalkEnemyRank');
+    assert.equal(buildWalkWorld(model).targets[0].rank, fixture.rank);
+    assert.equal(body.scale?.x ?? 1, 1, `${fixture.rank} keeps recoil in the original foot coordinate system`);
+    assert.equal(body.scale?.y ?? 1, 1);
+    const bounds = projectedNodeBounds(art);
+    assert.ok(Math.abs((bounds.top - bounds.bottom) * 320 / 750 - fixture.height) < 0.001,
+      `${fixture.rank} keeps the HTML image size while retaining its rank mark`);
+    assert.ok(health.position.y > 0 && health.position.y < art.size.height,
+      `${fixture.rank} health bar stays at its readable HTML body anchor`);
+    const healthLabelPosition = { ...healthLabel.position };
+    const healthLabelSize = { ...healthLabel.size };
+    assert.ok(healthLabel.position.y - healthLabel.size.height / 2 >= health.position.y + health.size.height / 2,
+      `${fixture.rank} HP digits remain fully above the health bar`);
+    assert.equal(Boolean(rank), fixture.rank !== 'normal', 'elite and boss rank marks remain distinct from ordinary enemies');
+    assert.equal(health.parent, actor, 'health stays outside the recoiling body');
+    assert.equal(healthLabel.parent, actor, 'HP digits stay outside the recoiling body');
+    assert.ok(findNode(actor, 'WalkTargetName').position.y < 0, 'monster name remains below its feet');
+    const fullHealthTrackWidth = health.getComponent(TestGraphics).fills.at(-1).shape.width
+      / (model.sections[1].detail.enemy.hpPercent / 100);
+    view.walkScene.updateCombatReadout({ enemyHp: 17 });
+    assert.equal(labelComponent(healthLabel).string, '17 / 80');
+    assert.ok(Math.abs(health.getComponent(TestGraphics).fills.at(-1).shape.width - fullHealthTrackWidth * 17 / 80) < 0.001);
+    for (const [enemyHp, width] of [[-1, 0], [81, fullHealthTrackWidth]]) {
+      view.walkScene.updateCombatReadout({ enemyHp });
+      assert.ok(Math.abs(health.getComponent(TestGraphics).fills.at(-1).shape.width - width) < 0.001, 'live health geometry clamps to its track');
+      assert.deepEqual({ ...healthLabel.position }, healthLabelPosition, 'HP updates preserve the rank-specific digit placement');
+      assert.deepEqual({ ...healthLabel.size }, healthLabelSize, 'HP updates preserve the digit bounds');
+    }
+    assert.deepEqual({ ...body.position }, { x: 0, y: 0, z: 0 }, 'HP updates cannot move the sprite container');
+  }
+
+  // Clearing/failing one slot cannot release another monster or the portrait.
+  view.render(normal, chrome, EXPLORE_INSETS_320);
+  const firstKey = 'monster:fog_lesser_demon_world';
+  const firstSprite = spriteOf(findNode(root(), `WalkMonsterSprite:${firstKey}`));
+  const firstSlot = view.sceneVisuals.get(firstKey);
+  const otherSlot = view.sceneVisuals.get('monster:tower_butcher_world');
+  view.setSceneVisualAssetFallback({ key: firstKey, revision: 'monster-world-fixture', diagnostic: 'network offline' });
+  assert.equal(firstSprite.spriteFrame, null, 'fallback detaches the live world Sprite');
+  assert.equal(view.visualSprites.has(firstSprite), false, 'fallback removes the detached Sprite from tracking');
+  assert.equal(firstSlot.frame.destroyCalls, 1);
+  assert.equal(firstSlot.texture.destroyCalls, 1);
+  assert.equal(otherSlot.frame.destroyCalls, 0, 'another monster frame remains owned');
+  assert.equal(portraitFrame.destroyCalls, 0, 'world fallback leaves the portrait intact');
+  view.render(normal, { ...chrome, sceneAssets: 'error' }, EXPLORE_INSETS_320);
+  assertSceneAssetGate(view, root(), 'error');
+  assert.equal(findNode(root(), `WalkMonsterSprite:${firstKey}`), undefined);
+  const boss = rankCases.at(-1);
+  view.setSceneVisualAssetFallback({ key: 'monster:tower_butcher_world', revision: 'monster-world-fixture', diagnostic: 'network offline' });
+  view.render(modelFor(boss.id, { boss: boss.boss }), { ...chrome, sceneAssets: 'error' }, EXPLORE_INSETS_320);
+  assertSceneAssetGate(view, root(), 'error');
+  load('monster:tower_butcher_world');
+  load(firstKey, { width: 0, height: 1536 });
+  view.render(normal, { ...chrome, sceneAssets: 'error' }, EXPLORE_INSETS_320);
+  assertSceneAssetGate(view, root(), 'error');
+  load(firstKey, { width: 1536, height: 1024 });
+  view.render(normal, chrome, EXPLORE_INSETS_320);
+  const wideArt = findNode(root(), `WalkMonsterSprite:${firstKey}`);
+  const wideBounds = projectedNodeBounds(wideArt);
+  assert.ok(Math.abs((wideBounds.top - wideBounds.bottom) * 320 / 750 - 108) < 0.001,
+    'a wide source retains the HTML image height with its complete original aspect ratio');
+  assert.equal(wideArt.size.width / wideArt.size.height, 1536 / 1024, 'a wide source keeps its aspect ratio');
+  assert.equal(wideArt.position.y, wideArt.size.height / 2);
+
+  view.render(modelFor(boss.id, { boss: boss.boss }), chrome, EXPLORE_INSETS_320);
+  const actor = findNode(root(), `WalkTarget:monster:${boss.id}`);
+  const body = findNode(actor, 'WorldObjectBody');
+  const art = findNode(body, `WalkMonsterSprite:monster:${boss.id}_world`);
+  const artPosition = { ...art.position };
+  const artSize = { ...art.size };
+  const bossHealthLabel = findNode(actor, 'WalkEnemyHealthLabel');
+  const bossHealthLabelPosition = { ...bossHealthLabel.position };
+  const bossHealthY = findNode(actor, 'WalkEnemyHealth').position.y;
+  const tick = () => view.walkScene.tick(0.1, { x: 0, y: 0 });
+  for (const boundary of ['complete', 'cancel', 'destroy']) {
+    let impacts = 0;
+    let completions = 0;
+    assert.equal(view.walkScene.startCombatAction('attack', () => { impacts += 1; }), true);
+    for (let i = 0; i < 3; i += 1) tick();
+    assert.equal(impacts, 1, 'monster art preserves the single authoritative impact');
+    assert.equal(view.walkScene.resolveCombatAction({ enemyDamage: 13, enemyHpAfterImpact: 17 }, () => { completions += 1; }), true);
+    tick();
+    assert.ok(Math.hypot(body.position.x, body.position.y) > 0, 'the world sprite container visibly recoils');
+    assert.deepEqual({ ...art.position }, artPosition, 'recoil preserves the child foot-margin offset');
+    assert.deepEqual({ ...art.size }, artSize, 'recoil preserves contain dimensions');
+    assert.equal(body.scale?.x ?? 1, 1, 'recoil preserves the fitted boss coordinate system');
+    assert.equal(findNode(actor, 'WalkEnemyHealth').position.y, bossHealthY, 'recoil cannot move the health bar');
+    assert.equal(labelComponent(bossHealthLabel).string, '17 / 80', 'impact still updates the relocated boss HP digits');
+    assert.deepEqual({ ...bossHealthLabel.position }, bossHealthLabelPosition, 'recoil and impact HP updates preserve boss digit placement');
+    if (boundary === 'complete') for (let i = 0; i < 6; i += 1) tick();
+    else if (boundary === 'cancel') view.walkScene.cancelCombatAction();
+    else view.destroy();
+    assert.deepEqual({ ...body.position }, { x: 0, y: 0, z: 0 }, `${boundary} restores the monster foot origin`);
+    assert.deepEqual({ ...bossHealthLabel.position }, bossHealthLabelPosition, `${boundary} preserves boss digit placement`);
+    assert.equal(completions, boundary === 'complete' ? 1 : 0, `${boundary} preserves completion semantics`);
+    if (boundary !== 'destroy') assert.equal(view.walkScene.isCombatAnimating(), false);
+  }
+  assert.equal(spriteOf(art).spriteFrame, null, 'destroy detaches the final world Sprite');
+  assert.ok(visualSlots.every(({ frame, texture }) => frame.destroyCalls === 1 && texture.destroyCalls === 1),
+    'all monster frames and textures, including replaced and invalid slots, release exactly once');
+  assert.equal(portraitFrame.destroyCalls, 1, 'destroy releases the independent portrait once');
+}
+
+// Failed engine property assignment releases the partial atlas instead of leaking
+// its already-created poses or leaving an unusable scene slot behind.
+{
+  const canvas = { children: [], getComponent() { return { contentSize: { width: 750, height: 1334 } }; }, addChild(child) { this.children.push(child); child.parent = this; } };
+  const view = new SceneInfiniteFlowView(canvas, { activate() {} });
+  const firstInstance = TestSpriteFrame.instances.length;
+  TestSpriteFrame.failRectAfter = 3;
+  try {
+    assert.throws(() => view.setSceneVisualAsset({ width: 1254, height: 1254 },
+      { key: 'character:reincarnator_walk', revision: 'partial-frame-failure' }), /injected hero crop assignment failure/u);
+  } finally { TestSpriteFrame.failRectAfter = undefined; }
+  const created = TestSpriteFrame.instances.slice(firstInstance);
+  assert.equal(created.length, 4, 'fixture fails after allocating the source frame and three child frames');
+  assert.ok(created.every((frame) => frame.destroyCalls === 1), 'failed source and child frames are released exactly once');
+  assert.equal(created[0].texture.destroyCalls, 1, 'failed atlas texture is released exactly once');
+  assert.equal(view.sceneVisuals.has('character:reincarnator_walk'), false, 'partial creation cannot publish an unusable atlas');
+  view.destroy();
+  assert.ok(created.every((frame) => frame.destroyCalls === 1), 'teardown cannot release failed frames a second time');
+}
+
+// Courtyard, exploration and combat share the same header at actual phone widths;
+// transparent controls still open their existing sheets without domain actions.
+for (const viewportWidth of [320, 390]) {
+  globalThis.__walkingTestFrameSize = { width: viewportWidth, height: viewportWidth * 2 };
+  const canvas = { name: `hud04-${viewportWidth}-canvas`, children: [], getComponent() { return { contentSize: { width: 750, height: 1334 } }; }, addChild(child) { this.children.push(child); child.parent = this; } };
+  const view = new SceneInfiniteFlowView(canvas, { activate() { assert.fail('HUD04 information controls must not dispatch a domain action'); } });
+  const root = () => canvas.children.at(-1);
+  const chrome = { modeKind: 'preview', modeLabel: 'preview', modeDetail: '', activityMessage: '' };
+  const insets = viewportWidth === 320 ? EXPLORE_INSETS_320 : EXPLORE_INSETS_390;
+  const explore = walkingExploreModel(chapterDecisionFixture('metro_abyss'));
+  const battle = combatModel(combatChapterContextFixture());
+  const hub = hubModel(hubEntryActionFixtures(false));
+  view.render(explore, { ...chrome, sceneAssets: 'loading' }, insets);
+  assertSceneAssetGate(view, root(), 'loading');
+  assert.equal(findNode(root(), 'WalkAvatarPlaceholder'), undefined, 'unloaded portrait stays behind the scene loading gate');
+  const portraitKey = 'character:reincarnator';
+  view.setSceneVisualAsset({ width: 1024, height: 1536 }, { key: portraitKey, revision: 'borderless-avatar-fixture' });
+  const portrait = view.sceneVisuals.get(portraitKey);
+  let courtyardGeometry;
+  for (const model of [hub, explore, battle]) {
+    assert.equal(getInfiniteFlowSceneVisualKeys(model).portrait, portraitKey, `${model.phase}: scene composition requests the HUD portrait lease`);
+    supplySceneVisualFixtures(view, model);
+    view.render(model, chrome, insets);
+    assertDarkWalkingUi(root(), model, insets, viewportWidth);
+    const avatar = findNode(root(), 'WalkAvatarArt');
+    const avatarSprite = [...avatar.components.values()].find((component) => 'spriteFrame' in component);
+    assert.equal(avatarSprite.spriteFrame, portrait.frame, `${model.phase}: the HUD displays its real character portrait fixture`);
+    assert.ok(view.visualSprites.has(avatarSprite), 'HUD portrait participates in frame teardown');
+    assert.equal(findNode(root(), 'WalkAvatarPlaceholder'), undefined, 'loaded portrait replaces its loading placeholder');
+    const geometry = Object.fromEntries(['WalkHud', 'SceneCharacter', 'WalkAvatarCrop', 'SceneCharacterLabel', 'WalkRoleName',
+      'WalkPlayerStatus', 'WalkPlayerHealth', 'WalkCurrencyReadout', 'WalkRewardPoints', 'WalkLingyun', 'SceneDetails', 'SceneDetailsLabel', 'SceneHelp', 'SceneHelpLabel'].map((name) => {
+      const node = findNode(root(), name);
+      return [name, { position: { ...node.position }, size: { ...node.size }, fontSize: labelComponent(node)?.fontSize }];
+    }));
+    if (model.phase === 'hub') courtyardGeometry = geometry;
+    else assert.deepEqual(geometry, courtyardGeometry, `${viewportWidth}px/${model.phase}: header geometry matches the courtyard exactly`);
+    const controls = [['SceneCharacter', 'character'], ['SceneHelp', 'menu'], ['SceneDetails', 'inventory'],
+      ...(model.phase === 'explore' ? [['SceneMap', 'map']] : []), ...(model.phase === 'hub' ? [] : [['SceneCodex', 'objectives']])];
+    for (const [name, panel] of controls) {
+      const before = view.walkScene.getPosition();
+      emitTouch(findNode(root(), name), 9400);
+      assert.ok(findNode(root(), `MobileInfoSheet:${panel}`), `${viewportWidth}px/${model.phase}/${name}: original sheet remains reachable`);
+      emitTouch(findNode(root(), 'MobileSheetClose'), 9401);
+      assert.deepEqual(view.walkScene.getPosition(), before, `${name}: inspecting a sheet preserves the player position`);
+    }
+    if (model.phase === 'combat') {
+      for (const playerHp of [35, 0, 60]) {
+        view.walkScene.updateCombatReadout({ playerHp });
+        assertSharedHeaderHealth(root(), playerHp, 60, viewportWidth);
+      }
+    }
+  }
+  view.destroy();
+  assert.equal(portrait.frame.destroyCalls, 1, 'shared HUD portrait frame is disposed exactly once');
+  delete globalThis.__walkingTestFrameSize;
+}
+
+// Acquired relic HUD art is a single local control: exact owned content, no
+// candidate/seed leakage, responsive icons and harmless modal lifecycle.
+for (const viewportWidth of [320, 390]) {
+  globalThis.__walkingTestFrameSize = { width: viewportWidth, height: viewportWidth * 2 };
+  const insets = viewportWidth === 320 ? EXPLORE_INSETS_320 : EXPLORE_INSETS_390;
+  const px = 750 / viewportWidth;
+  const entered = reduceGameCommand(createInitialState(), { type: 'run/enter', dungeonId: 'demon_tower_1', protocolId: 'standard',
+    seeds: { rulesVersion: 1, hiddenTaskSeed: 0x12345678 } });
+  assert.equal(entered.status, 'committed');
+  const canvas = { children: [], getComponent() { return { contentSize: { width: 750, height: 1334 } }; }, addChild(child) { this.children.push(child); child.parent = this; } };
+  let commands = 0;
+  const view = new SceneInfiniteFlowView(canvas, { activate() { commands += 1; } });
+  const chrome = { modeKind: 'preview', modeLabel: 'fixture', modeDetail: '', sceneAssets: 'ready' };
+  const root = () => canvas.children.at(-1);
+  const escapeBound = () => (globalThis.__walkingTestInput.listeners.get('key-down') ?? []).includes(view.closeHudOnEscape);
+  const spriteOf = node => [...node.components.values()].find(component => 'spriteFrame' in component);
+  const project = (frame, acquiredIds, pendingIds = []) => {
+    const state = { ...entered.state, run: { ...entered.state.run, relicState: {
+      ...entered.state.run.relicState, frame, acquiredIds, seedRelicId: RUN_RELIC_IDS_BY_FRAME[frame].at(-1),
+      ...(pendingIds.length ? { pendingDraft: { draftId: 'hud-unselected', nodeId: entered.state.run.currentNodeId, candidateIds: pendingIds } }
+        : { pendingDraft: undefined }),
+    } } };
+    return { state, model: buildActualGameViewModel(state, {}) };
+  };
+  for (const [frame, ids] of Object.entries(RUN_RELIC_IDS_BY_FRAME)) {
+    const { state, model } = project(frame, [...ids]);
+    const snapshot = JSON.stringify(state);
+    assert.deepEqual(model.sections[1].loadout.runRelics.map(relic => relic.relicId), ids, 'HUD fixture uses the real acquired-only projection');
+    supplySceneVisualFixtures(view, model);
+    view.render(model, chrome, insets);
+    assertSharedHeader(root(), model, insets, viewportWidth);
+    assert.equal(escapeBound(), false, 'HUD Escape listener is absent while no popup is open');
+    const original = view.walkScene.getPosition();
+    const strip = findNode(root(), 'WalkRunRelics');
+    for (const relic of model.sections[1].loadout.runRelics) {
+      const slot = view.sceneVisuals.get(`item:run_relic_${relic.relicId}`);
+      const spriteNode = findNode(strip, `WalkRunRelicSprite:${relic.relicId}`);
+      const sprite = spriteOf(spriteNode);
+      assert.deepEqual({ ...spriteNode.size }, { width: 16 * px, height: 16 * px });
+      assert.equal(sprite.spriteFrame, slot.frame, 'HUD uses the dedicated acquired-relic image');
+      assert.ok(view.visualSprites.has(sprite));
+    }
+    emitTouch(strip, 9800);
+    const popup = findNode(root(), 'HudRelicPopover');
+    assert.ok(popup, 'the overall HUD strip opens the owned-list popup');
+    assert.equal(escapeBound(), true, 'only an open HUD popup registers its Escape listener');
+    assert.equal(findNode(root(), 'MobileInfoSheet:inventory'), undefined, 'HUD list uses the compact popover rather than an inventory sheet');
+    assert.equal(view.walkInput, undefined, 'owned-list popup pauses movement input');
+    globalThis.__walkingTestInput.emit('key-down', { keyCode: 65 });
+    view.tick(1 / 60);
+    assert.deepEqual(view.walkScene.getPosition(), original, 'owned-list popup pauses the current world');
+    const bounds = absoluteNodeBounds(popup);
+    assert.ok(Math.abs(popup.size.width / px - 264) < 1e-6);
+    assert.ok((bounds.left + 375) / px >= 12 - 1e-6 && (375 - bounds.right) / px >= 12 - 1e-6, 'popup retains both phone edge insets');
+    const rows = collectNodes(popup, node => node.name.startsWith('HudRelicRow:'));
+    assert.deepEqual(rows.map(node => node.name), ids.map(id => `HudRelicRow:${id}`), 'popup displays the complete acquired list in its original order');
+    for (const relic of model.sections[1].loadout.runRelics) {
+      const row = findNode(popup, `HudRelicRow:${relic.relicId}`);
+      assert.equal(labelComponent(findNode(row, 'HudRelicName')).string.replaceAll('\n', ''), relic.name);
+      assert.equal(labelComponent(findNode(row, 'HudRelicEffect')).string.replaceAll('\n', ''), relic.description, 'popup preserves the exact domain description');
+      const image = findNode(row, `HudRelicIcon:${relic.relicId}`);
+      const visual = view.sceneVisuals.get(`item:run_relic_${relic.relicId}`);
+      assert.ok(image.size.width <= 30 * px + 1e-6 && image.size.height <= 30 * px + 1e-6, 'popup art stays within its compact slot');
+      assert.ok(Math.abs(image.size.width / image.size.height - visual.width / visual.height) < 1e-6, 'popup art retains its source aspect ratio');
+      assert.equal(spriteOf(image).spriteFrame, view.sceneVisuals.get(`item:run_relic_${relic.relicId}`).frame, 'HUD and popup share their scene-owned frame');
+      assert.ok(collectNodes(row, node => node !== row).every(node => node.listeners.size === 0), 'popup entries are read-only');
+    }
+    const text = collectStrings(popup).join('\n');
+    assert.doesNotMatch(text, /本局回响|已获得\s*·|自动生效|仅本局|装备|倒计时/, 'owned popup contains only icons, names, effects and close');
+    const close = findNode(popup, 'HudPopoverClose');
+    assert.ok(close.size.width / px >= 44 && close.size.height / px >= 44);
+    emitTouch(close, 9801);
+    assert.equal(findNode(root(), 'HudRelicPopover'), undefined);
+    assert.equal(escapeBound(), false, 'close removes the popup Escape listener');
+    assert.ok(view.walkInput, 'closing the popup restores movement input');
+    emitTouch(strip, 9802);
+    assert.equal(findNode(root(), 'HudRelicPopover'), undefined, 'retired strip callbacks cannot reopen a fresh scene');
+    emitTouch(findNode(root(), 'WalkRunRelics'), 9803);
+    globalThis.__walkingTestInput.emit('key-down', { keyCode: 27 });
+    assert.equal(findNode(root(), 'HudRelicPopover'), undefined, 'Escape closes only the local HUD popup');
+    assert.equal(escapeBound(), false, 'Escape removes its own popup listener');
+    emitTouch(findNode(root(), 'WalkRunRelics'), 9804);
+    emitTouch(findNode(root(), 'HudPopoverBackdrop'), 9805);
+    assert.equal(findNode(root(), 'HudRelicPopover'), undefined, 'outside touch closes the local HUD popup');
+    assert.equal(escapeBound(), false, 'outside close removes the popup Escape listener');
+    assert.deepEqual(view.walkScene.getPosition(), original);
+    assert.equal(JSON.stringify(state), snapshot, 'inspecting and closing relics cannot mutate the authoritative run');
+    assert.equal(JSON.stringify(model), JSON.stringify(buildActualGameViewModel(state, {})), 'UI does not mutate the public projection');
+    assert.equal(commands, 0, 'owned-list inspection never dispatches a domain command');
+  }
+  const { model: candidateModel } = project('assault', ['mist_edge'], ['focus_prism', 'hunter_clock']);
+  supplySceneVisualFixtures(view, candidateModel);
+  view.render(candidateModel, chrome, insets);
+  assert.ok(findNode(root(), 'MobileInfoSheet:interaction'), 'a new pending draft opens its selection once');
+  emitTouch(findNode(root(), 'MobileSheetClose'), 9809);
+  assertSharedHeader(root(), candidateModel, insets, viewportWidth);
+  assert.equal(getInfiniteFlowSceneVisualKeys(candidateModel).runRelic_focus_prism, undefined, 'unselected candidates are outside the scene lease set');
+  emitTouch(findNode(root(), 'WalkRunRelics'), 9810);
+  const candidateRows = collectNodes(findNode(root(), 'HudRelicPopover'), node => node.name.startsWith('HudRelicRow:'));
+  assert.deepEqual(candidateRows.map(node => node.name), ['HudRelicRow:mist_edge'], 'pending candidates and the archive seed do not enter the owned popup');
+  emitTouch(findNode(root(), 'HudPopoverClose'), 9811);
+  const combat = combatModel(combatChapterContextFixture());
+  combat.sections[1].loadout = candidateModel.sections[1].loadout;
+  supplySceneVisualFixtures(view, combat);
+  view.render(combat, chrome, insets);
+  assertSharedHeader(root(), combat, insets, viewportWidth);
+  emitTouch(findNode(root(), 'WalkRunRelics'), 9812);
+  assert.deepEqual(collectNodes(findNode(root(), 'HudRelicPopover'), node => node.name.startsWith('HudRelicRow:')).map(node => node.name), ['HudRelicRow:mist_edge']);
+  emitTouch(findNode(root(), 'HudPopoverClose'), 9813);
+  const { model: empty } = project('assault', [], ['mist_edge', 'focus_prism']);
+  supplySceneVisualFixtures(view, empty);
+  view.render(empty, chrome, insets);
+  assert.equal(findNode(root(), 'WalkRunRelics'), undefined, 'zero acquired relics hide the row and all empty slots');
+  const invalidCombat = buildActualGameViewModel({ ...createInitialState(), phase: 'combat' }, {});
+  assert.deepEqual(invalidCombat.sections[1].metrics, [], 'missing combat snapshot deliberately omits resource metrics');
+  supplySceneVisualFixtures(view, invalidCombat);
+  view.render(invalidCombat, chrome, insets);
+  assertSharedHeader(root(), invalidCombat, insets, viewportWidth);
+  for (const name of ['WalkRewardPoints', 'WalkLingyun']) {
+    const button = findNode(root(), name);
+    assert.equal(labelComponent(findNode(button, `${name}Value`)).string, '—', 'invalid projection retains the unavailable resource marker');
+    emitTouch(button, 9816);
+    assert.equal(findNode(root(), 'HudResourcePopover'), undefined, 'an unavailable balance has no resource popup binding');
+  }
+  const hub = buildActualGameViewModel(createInitialState(), {});
+  supplySceneVisualFixtures(view, hub);
+  view.render(hub, chrome, insets);
+  assert.equal(findNode(root(), 'WalkRunRelics'), undefined, 'hub archive seeds cannot appear as active run relics');
+  for (const [button, name, expected] of [['WalkRewardPoints', '奖励点', createInitialState().rewardPoints], ['WalkLingyun', '灵蕴', createInitialState().lingyun]]) {
+    const before = view.walkScene.getPosition();
+    emitTouch(findNode(root(), button), 9814);
+    assert.ok(findNode(root(), 'HudResourcePopover'));
+    assert.equal(labelComponent(findNode(root(), 'HudResourceValue')).string.replaceAll('\n', ''), `${name}：${expected}`);
+    emitTouch(findNode(root(), 'HudPopoverClose'), 9815);
+    assert.deepEqual(view.walkScene.getPosition(), before);
+  }
+  const ownedSlots = RUN_RELIC_FIXTURES.map(({ key }) => view.sceneVisuals.get(key));
+  view.destroy();
+  assert.ok(ownedSlots.every(slot => slot.frame.destroyCalls === 1 && slot.texture.destroyCalls === 1), 'shared HUD/popover relic resources release once at destruction');
+  assert.equal((globalThis.__walkingTestInput.listeners.get('key-down') ?? []).length, 0, 'destroy removes walking and Escape input listeners');
+  assert.equal(commands, 0);
+  delete globalThis.__walkingTestFrameSize;
+}
+
 // Walking presentation: continuous, local-only locomotion through the real View.
 // Combat and interactions still pass existing actions across the application boundary.
 {
   const canvasSize = { width: 750, height: 1334 };
   const canvas = { name: 'walking-canvas', children: [], getComponent() { return { contentSize: canvasSize }; }, addChild(child) { this.children.push(child); child.parent = this; } };
   const calls = [];
-  const view = new SceneInfiniteFlowView(canvas, { activate(physicalId, actionId, event) { calls.push({ physicalId, actionId, event }); } });
+  const view = new SceneFixtureView(canvas, { activate(physicalId, actionId, event) { calls.push({ physicalId, actionId, event }); } });
   const chrome = { modeKind: 'preview', modeLabel: 'preview', modeDetail: '', activityMessage: '' };
   const atlasKey = 'character:reincarnator_walk';
   view.setSceneVisualAsset({ width: 1254, height: 1254 }, { key: atlasKey, revision: 'fixture' });
+  view.setSceneVisualAsset({ width: 1018, height: 1545 }, { key: HUB_PORTAL_FIXTURE.key, revision: 'fixture' });
   const atlas = view.sceneVisuals.get(atlasKey);
   assert.equal(atlas.frames.length, 16);
   assert.ok(atlas.frames.every((frame) => frame.texture === atlas.texture), 'all sixteen directions/steps share one GPU texture');
+  assert.equal(new Set(atlas.frames.map((frame) => JSON.stringify(frame.rect))).size, 16,
+    'each direction and step samples its own crop');
+  for (let index = 0; index < atlas.frames.length; index += 1) {
+    const frame = atlas.frames[index];
+    const rect = frame.rect;
+    assert.ok([rect.x, rect.y, rect.width, rect.height].every(Number.isInteger)
+      && rect.x >= 0 && rect.y >= 0 && rect.width > 0 && rect.height > 0
+      && rect.x + rect.width <= 1254 && rect.y + rect.height <= 1254,
+    `hero frame ${index}: source crop stays inside the approved image`);
+    assert.deepEqual({ ...frame.originalSize }, { width: 336, height: 336 },
+      'every pose uses one logical canvas instead of scaling to its own alpha bounds');
+    assert.ok(Number.isFinite(frame.offset.x) && Number.isFinite(frame.offset.y),
+      'each pose has a finite foot-alignment offset');
+    assert.equal(frame.packable, false, 'runtime packing cannot relocate an explicit crop');
+    const measured = HERO_WALK_LAYOUT.frames[index];
+    assert.deepEqual([rect.x, rect.y, rect.width, rect.height], measured.rect,
+      `hero frame ${index}: engine samples the independently measured production crop`);
+    const [left, top, right, bottom] = HERO_WALK_LAYOUT.bboxAlpha128Exclusive[index];
+    assert.ok(left >= rect.x && top >= rect.y && right <= rect.x + rect.width && bottom <= rect.y + rect.height,
+      `hero frame ${index}: crop preserves the complete measured opaque silhouette`);
+    const logicalFootX = frame.originalSize.width / 2 + frame.offset.x + measured.foot[0] - rect.x - rect.width / 2;
+    const logicalFootY = frame.originalSize.height / 2 - frame.offset.y + measured.foot[1] - rect.y - rect.height / 2;
+    assert.ok(Math.abs(logicalFootX - 168) < 1e-6 && Math.abs(logicalFootY - 320.16) < 1e-6,
+      `hero frame ${index}: visible source feet share one logical ground point`);
+    for (const previous of atlas.frames.slice(0, index)) {
+      const other = previous.rect;
+      assert.ok(rect.x + rect.width <= other.x || other.x + other.width <= rect.x
+        || rect.y + rect.height <= other.y || other.y + other.height <= rect.y,
+      `hero frame ${index}: source crops cannot sample neighboring poses`);
+    }
+  }
+  const instancesBeforeMismatch = TestSpriteFrame.instances.length;
+  const portalBeforeMismatch = view.sceneVisuals.get(HUB_PORTAL_FIXTURE.key);
+  for (const image of [{ width: 1253, height: 1254 }, { width: 1254, height: 1253 }, { width: 2508, height: 2508 }]) {
+    assert.throws(() => view.setSceneVisualAsset(image, { key: atlasKey, revision: 'invalid-size' }), /1254/u,
+      'a mismatched image must explicitly fail instead of slicing the wrong layout');
+    assert.equal(view.sceneVisuals.get(atlasKey), atlas, 'invalid replacements preserve the current usable hero atlas');
+    assert.equal(TestSpriteFrame.instances.length, instancesBeforeMismatch, 'invalid sizes allocate no new frames or textures');
+    assert.equal(atlas.frame.destroyCalls, 0, 'rejected replacement leaves the atlas owner live');
+    assert.ok(atlas.frames.every((frame) => frame.destroyCalls === 0), 'rejected replacement leaves all poses live');
+    assert.equal(atlas.texture.destroyCalls, 0, 'rejected replacement preserves the shared texture');
+    assert.equal(view.sceneVisuals.get(HUB_PORTAL_FIXTURE.key), portalBeforeMismatch, 'invalid hero art cannot clear another scene slot');
+  }
   const root = () => canvas.children.at(-1);
   const pos = () => view.walkScene.getPosition();
   const key = (code, down) => globalThis.__walkingTestInput.emit(down ? 'key-down' : 'key-up', { keyCode: code });
@@ -9442,7 +11141,8 @@ delete globalThis.wx;
   const model = hubModel(hubEntryActionFixtures(false));
   // Keep the walking boundary fixture explicit: service options own the same
   // immutable actions as the projection, while entering remains a footer action.
-  const dungeonService = buildActualGameViewModel(createInitialState(), { hubPanel: 'entry' }).sections[1].detail.entryServices.find(service => service.id === 'dungeon');
+  const actualEntryServices = buildActualGameViewModel(createInitialState(), { hubPanel: 'entry' }).sections[1].detail.entryServices;
+  const dungeonService = actualEntryServices.find(service => service.id === 'dungeon');
   model.sections[1].detail.entryServices = [dungeonService, {
     id: 'protocol', name: '探索协议', summary: '标准探索',
     options: model.sections[2].actions.filter(action => action.actionId.startsWith('hub.entry.protocol:')).map(action => ({
@@ -9450,9 +11150,10 @@ delete globalThis.wx;
       description: action.disabledReason ?? '确认入场前可调整本次探索协议。',
       selected: action.actionId === 'hub.entry.protocol:standard', action,
     })),
-  }];
+  }, actualEntryServices.find(service => service.id === 'relic-frame')];
   const domainSnapshot = JSON.stringify(model);
   view.render(model, chrome, EXPLORE_INSETS_320);
+  assert.ok(findNode(root(), 'WalkHubDungeonPortalSprite'), 'physical portal action coverage runs with the selected artwork loaded');
   assertDarkWalkingUi(root(), model, EXPLORE_INSETS_320);
   assert.ok(findNode(root(), 'WalkViewport'));
   canvasSize.height = 421.875;
@@ -9463,19 +11164,26 @@ delete globalThis.wx;
   view.tick(0);
   assert.equal(root().scale.x, 1, 'returning to portrait restores the design scale');
   assert.ok(findNode(root(), 'WalkPlayerBody'));
-  assert.equal(findNode(root(), 'WalkTargetNameBacking'), undefined, 'hub labels keep their existing presentation');
-  assert.equal(findNode(root(), 'WalkInteractionHintBacking'), undefined, 'hub movement hint is unchanged');
+  assert.equal(collectNodes(root(), ({ name }) => name === 'WalkTargetName').length, 8,
+    'all seven hub NPCs and the portal retain their readable labels');
+  assert.equal(collectNodes(root(), ({ name }) => name === 'WalkTargetPurpose').length, 8,
+    'all seven NPCs and the portal retain their purpose labels');
+  for (const name of ['WalkInteractionHint', 'WalkInteractionHintBacking', 'WalkLocationName', 'WalkStatusLamp', 'WalkJoystickStatus']) {
+    assert.equal(findNode(root(), name), undefined, `approved courtyard removes ${name}`);
+  }
+  assert.doesNotMatch(collectStrings(root()).join('\n'), /主神空间|轮回庭院|(?:\bE\b|Space).*交谈|摇杆/iu,
+    'the default courtyard has no scene title or joystick instruction readout');
   assert.equal(findNode(root(), 'Deck'), undefined, 'default is the walkable world, not an information deck');
   const initialRoot = root();
   const initial = pos();
   key(87, true);
   advance();
   key(87, false);
-  assert.ok(pos().y < initial.y - 100, 'held W moves continuously upward');
-  assert.equal(view.walkScene.getFacing(), 'up');
+  assert.ok(pos().y < initial.y - 70, 'held W moves continuously upward through the shallow lane');
+  assert.equal(view.walkScene.getFacing(), 'right', 'upward depth movement preserves the initial right-facing side view');
   assert.equal(root(), initialRoot, 'movement does not recreate the scene graph');
   const playerSprite = Array.from(findNode(root(), 'WalkPlayerBody').components.values()).find((component) => 'spriteFrame' in component);
-  assert.equal(playerSprite.spriteFrame.rect.y, 3 * 1254 / 4, 'north motion selects back-facing atlas row');
+  assert.ok(atlas.frames.slice(8, 12).includes(playerSprite.spriteFrame), 'north motion keeps a right-facing frame');
   const stopped = pos();
   advance(12);
   assert.deepEqual(pos(), stopped, 'key release stops movement');
@@ -9484,6 +11192,12 @@ delete globalThis.wx;
   key(65, true); advance(15); key(65, false);
   assert.ok(pos().x < initial.x - 50, 'A moves left');
   assert.equal(view.walkScene.getFacing(), 'left');
+  key(87, true); advance(6); key(87, false);
+  assert.equal(view.walkScene.getFacing(), 'left', 'depth movement preserves the last left-facing side');
+  assert.ok(view.sceneVisuals.get('character:reincarnator_walk').frames.slice(4, 8).includes(playerSprite.spriteFrame),
+    'depth movement keeps a frame from the last left-facing direction');
+  key(83, true); advance(6); key(83, false);
+  assert.equal(view.walkScene.getFacing(), 'left', 'downward depth movement also preserves the last side');
   key(68, true); advance(15); key(68, false);
   assert.ok(Math.abs(pos().x - initial.x) < 0.01, 'D moves right');
   assert.equal(calls.length, 0, 'walking itself is never a domain command');
@@ -9496,7 +11210,7 @@ delete globalThis.wx;
   const beforeJoystick = pos();
   joystick.emit('touch-start', touch);
   advance(20);
-  assert.ok(pos().y < beforeJoystick.y - 65, 'held physical joystick moves the avatar');
+  assert.ok(pos().y < beforeJoystick.y - 45, 'held physical joystick moves the avatar at the approved depth speed');
   joystick.emit('touch-cancel', touch);
   const cancelled = pos();
   advance(10);
@@ -9508,58 +11222,68 @@ delete globalThis.wx;
   assert.deepEqual(pos(), cancelled, 'hide clears held keys and prevents ghost movement');
 
   // Walk into the portal's interaction radius; no teleport or direct target activation.
-  key(87, true);
-  advance(220);
-  key(87, false);
-  assert.ok(pos().y >= 54 && pos().y <= 250, 'walk reaches north portal but cannot leave perimeter');
+  key(83, true); advance(20); key(83, false);
+  key(68, true); advance(120); key(68, false);
+  key(87, true); advance(30); key(87, false);
+  assert.ok(pos().x >= 1000 && pos().x <= 1122 && pos().y >= 434 && pos().y <= 500,
+    'walking reaches the right-side portal while keeping whole feet within the floor');
   const beforeInteraction = calls.length;
+  key(69, true); advance(3); key(69, false);
+  key(32, true); advance(3); key(32, false);
+  assert.equal(calls.length, beforeInteraction, 'E and Space never dispatch interaction actions');
+  assert.equal(findNode(root(), 'MobileInfoSheet:entry'), undefined, 'E and Space do not open the nearby portal');
   emitTouch(findNode(root(), 'WalkInteract'), 901);
   const enter = model.sections[2].actions.find((action) => action.actionId === 'hub.entry.confirm');
   assert.equal(calls.length, beforeInteraction, 'approaching the portal opens its chapter directory, never auto-enters');
   assert.ok(findNode(root(), 'MobileInfoSheet:entry'));
-  assert.equal(findNode(root(), 'MobileSheetEntryConfirm'), undefined, 'chapter directory cannot enter before a chapter is opened');
-  assert.equal(findNode(root(), 'MobileSheetEntryService:protocol'), undefined, 'default portal starts with chapters, not configuration services');
+  assert.ok(findNode(root(), 'MobileSheetEntryConfirm'), 'chapter directory immediately exposes its fixed entry button');
+  assert.equal(findNode(root(), 'MobileSheetEntrySettings'), undefined, 'settings starts collapsed over the chapter page');
   assert.equal(dungeonService.options.length, 19);
   for (const option of dungeonService.options) assert.ok(findNode(root(), `MobileSheetEntryDungeon:${option.id}`), 'all 19 chapters are immediately reachable');
   const dungeonScroll = () => Array.from(findNode(root(), 'MobileSheetEntryDungeonScroll').components.values()).find(component => typeof component.getScrollOffset === 'function');
   dungeonScroll().scrollToOffset({ x: 0, y: 180 });
   const currentChapter = dungeonService.options.find(option => option.selected);
   emitTouch(findNode(root(), `MobileSheetEntryDungeon:${currentChapter.id}`), 902);
-  assert.equal(calls.length, beforeInteraction, 'current chapter opens configuration without dispatching selection or entry');
-  assert.ok(findNode(root(), 'MobileSheetEntryService:protocol'));
-  assert.equal(view.mobileSheet.entryDungeonScrollOffset, 180, 'configuration retains the separate chapter list position');
-  emitTouch(findNode(root(), 'MobileSheetEntryBack'), 903);
-  assert.equal(dungeonScroll().getScrollOffset().y, 180, 'back restores the chapter directory scroll position');
+  assert.equal(calls.length, beforeInteraction, 'touching the current chapter dispatches neither selection nor entry');
+  assert.equal(findNode(root(), 'MobileSheetEntrySettings'), undefined, 'touching the current chapter stays on the same page');
+  assert.equal(dungeonScroll().getScrollOffset().y, 180, 'current chapter touch preserves chapter scroll');
   const otherChapter = dungeonService.options.find(option => !option.selected);
   const staleChapterRow = findNode(root(), `MobileSheetEntryDungeon:${otherChapter.id}`);
   emitTouch(staleChapterRow, 904);
-  assert.equal(calls.length, beforeInteraction + 1, 'another chapter forwards one preparation selection');
+  staleChapterRow.emit('touch-end', { getID: () => 904, propagationStopped: false });
+  assert.equal(calls.length, beforeInteraction + 1, 'duplicate chapter touch forwards exactly one preparation selection');
   assert.equal(calls.at(-1).event, otherChapter.action.event, 'chapter selection preserves its exact projection-owned event');
-  assert.equal(view.mobileSheet.entryView, 'configuration', 'chapter selection switches the host sheet before dispatch');
-  assert.equal(view.mobileSheet.entryDungeonScrollOffset, 180, 'chapter selection preserves directory position across host refresh');
-  // The host renders the projection after a local selection; refresh must not
-  // recapture the old directory scroll as the new configuration scroll.
+  assert.ok(!view.mobileSheet.entrySettingsOpen, 'chapter selection stays on the directory with settings collapsed');
+  // A host refresh after selection must preserve the independent chapter offset.
   view.render(model, chrome, EXPLORE_INSETS_320);
-  assert.ok(findNode(root(), 'MobileSheetEntryService:protocol'));
-  assert.equal(view.mobileSheet.catalogScrollOffset, 0, 'new configuration starts at the top after host refresh');
+  assert.equal(dungeonScroll().getScrollOffset().y, 180, 'chapter selection preserves directory position across host refresh');
+  assert.ok(findNode(root(), 'MobileSheetEntryConfirm'), 'host refresh keeps the entry footer immediately available');
   emitTouch(staleChapterRow, 905);
-  assert.equal(calls.length, beforeInteraction + 1, 'a chapter callback from the old directory cannot dispatch again');
-  emitTouch(findNode(root(), 'MobileSheetEntryBack'), 906);
-  assert.equal(dungeonScroll().getScrollOffset().y, 180, 'back after a dispatched chapter selection restores the same list position');
-  emitTouch(findNode(root(), `MobileSheetEntryDungeon:${currentChapter.id}`), 907);
+  assert.equal(calls.length, beforeInteraction + 1, 'a chapter callback from the old render cannot dispatch again');
   const beforeEntryConfirmation = calls.length;
   const staleEntryConfirm = findNode(root(), 'MobileSheetEntryConfirm');
-  emitTouch(findNode(root(), 'MobileSheetEntryService:protocol'), 902);
-  assert.ok(findNode(root(), 'MobileSheetEntryOption:hub.entry.protocol:standard'), 'portal service opens its options in the list');
-  emitTouch(findNode(root(), 'MobileSheetEntryOption:hub.entry.protocol:standard'), 903);
+  emitTouch(findNode(root(), 'MobileSheetEntrySettingsToggle'), 906);
+  assert.equal(view.mobileSheet.entrySettingsOpen, true, 'settings toggle expands upward on the same sheet');
+  assert.ok(findNode(root(), 'MobileSheetEntrySettings'));
+  assert.ok(findNode(root(), `MobileSheetEntryDungeon:${currentChapter.id}`), 'settings overlay retains chapter cards');
+  assert.equal(dungeonScroll().getScrollOffset().y, 180, 'settings leaves the directory scroll untouched');
+  assert.ok(findNode(root(), 'MobileSheetEntryOption:hub.entry.protocol:standard'), 'settings immediately exposes protocol choices');
+  emitTouch(findNode(root(), 'MobileSheetEntryOption:hub.entry.protocol:standard'), 907);
   assert.equal(calls.length, beforeEntryConfirmation, 'reading or touching the selected entry protocol is not confirmation');
-  emitTouch(staleEntryConfirm, 903);
-  assert.equal(calls.length, beforeEntryConfirmation, 'service refresh invalidates the stale entry confirmation callback');
+  emitTouch(staleEntryConfirm, 908);
+  assert.equal(calls.length, beforeEntryConfirmation, 'settings refresh invalidates the stale entry confirmation callback');
+  const echoDescription = findNode(root(), 'MobileSheetEntryFrameDescription');
+  assert.equal(collectStrings(echoDescription).length, 1, 'settings has one compact echo direction description');
+  assert.equal(collectStrings(echoDescription)[0].includes('\n'), false, 'echo direction remains one line');
+  emitTouch(findNode(root(), 'MobileSheetEntrySettingsToggle'), 909);
+  assert.equal(view.mobileSheet.entrySettingsOpen, false, 'settings toggle collapses in place');
+  assert.equal(findNode(root(), 'MobileSheetEntrySettings'), undefined);
+  assert.equal(dungeonScroll().getScrollOffset().y, 180, 'closing settings preserves chapter scroll');
   const entryConfirm = findNode(root(), 'MobileSheetEntryConfirm');
-  assert.ok(collectStrings(entryConfirm).includes('确认入场'));
+  assert.ok(collectStrings(entryConfirm).includes('进入副本'));
   assert.ok(findNode(findNode(root(), 'MobileSheetEntryFooter'), 'MobileSheetEntryConfirm'), 'entry confirmation remains in its fixed footer');
-  emitTouch(entryConfirm, 904);
-  entryConfirm.emit('touch-end', { getID: () => 904, propagationStopped: false });
+  emitTouch(entryConfirm, 910);
+  entryConfirm.emit('touch-end', { getID: () => 910, propagationStopped: false });
   assert.equal(calls.length, beforeEntryConfirmation + 1, 'duplicate entry touch-end dispatches exactly one request');
   assert.equal(calls.at(-1).event, enter.event, 'explicit portal confirmation dispatches the exact entry action');
   emitTouch(findNode(root(), 'MobileSheetClose'), 905);
@@ -9592,9 +11316,17 @@ delete globalThis.wx;
   }
   const staleInteraction = findNode(root(), 'WalkInteract');
 
-  const explore = exploreModel(chapterDecisionFixture('metro_abyss'));
+  const explore = walkingExploreModel(chapterDecisionFixture('metro_abyss'));
   view.render(explore, chrome, EXPLORE_INSETS_320);
   assertDarkWalkingUi(root(), explore, EXPLORE_INSETS_320);
+  const dungeonBody = findNode(root(), 'WalkPlayerBody');
+  const dungeonSprite = Array.from(dungeonBody.components.values()).find((component) => 'spriteFrame' in component);
+  assert.equal(dungeonSprite.trim, false, 'dungeon actor uses the same logical frame canvas');
+  assert.equal(dungeonSprite.spriteFrame, atlas.frames[0], 'dungeon spawn starts on the down-facing idle frame');
+  assert.equal(dungeonBody.size.width, dungeonBody.size.height, 'dungeon hero preserves the square atlas aspect ratio');
+  assert.equal(dungeonBody.position.x, 0, 'dungeon hero remains centered over its original feet');
+  assert.ok(Math.abs(dungeonBody.position.y + (168 - 320.16) * dungeonBody.size.height / 336) < 0.3,
+    'dungeon visible feet stay on the collision anchor');
   assert.deepEqual(pos(), { x: 500, y: 700 }, 'entering a different room creates a visible spawn clear of the southern door');
   assert.equal(findNode(root(), 'Deck'), undefined, 'phase changes return to gameplay');
   const callsBeforeStale = calls.length;
@@ -9619,20 +11351,27 @@ delete globalThis.wx;
   key(87, true); advance(); key(87, false);
   assert.deepEqual(pos(), busyPos, 'busy/blocked surface cannot keep walking');
 
-  const pendingModel = exploreModel(chapterDecisionFixture('metro_abyss'), { pending: true });
+  const pendingModel = walkingExploreModel(chapterDecisionFixture('metro_abyss'), { pending: true });
   view.render(pendingModel, chrome, EXPLORE_INSETS_320);
-  key(87, true); advance(57); key(87, false);
+  assert.ok(findNode(root(), 'MobileInfoSheet:interaction'), 'a new equipment offer opens its sheet before nearby interaction');
+  emitTouch(findNode(root(), 'MobileSheetClose'), 91250);
+  const pendingSpec = buildWalkWorld(pendingModel);
+  const pendingTarget = pendingSpec.targets.find(entry => entry.id === `node:${pendingModel.sections[1].detail.currentNode.nodeId}`);
+  walkTowardRenderedTarget(view, root(), pendingTarget.id, pendingTarget.radius);
   const beforeChoice = calls.length;
   emitTouch(findNode(root(), 'WalkInteract'), 913);
   assert.ok(findNode(root(), 'MobileInfoSheet:interaction'));
   assert.equal(calls.length, beforeChoice, 'even a single pending choice requires player input');
   const pendingAction = pendingModel.sections[2].actions.find((action) => action.actionId === 'pending.equipment:offer-1:take');
-  emitTouch(findNode(root(), `MobileSheetAction:${pendingAction.actionId}`), 914);
-  assert.equal(calls.length, beforeChoice, 'opening pending action details does not execute it');
-  const staleChoice = findNode(root(), `MobileSheetExecute:${pendingAction.actionId}`);
+  emitTouch(findNode(root(), 'MobileSheetEquipmentOffer:armor_piercing_sword'), 914);
+  assert.equal(calls.length, beforeChoice, 'selecting the equipment card remains local');
+  assert.equal(view.mobileSheet.selectedActionId, pendingAction.actionId, 'card selection keeps the pending action ID');
+  const staleChoice = findNode(root(), 'MobileSheetEquipmentClaim');
   emitTouch(staleChoice, 915);
+  staleChoice.emit('touch-end', { getID: () => 915, propagationStopped: false });
+  assert.equal(calls.length, beforeChoice + 1, 'duplicate equipment claim touch-end dispatches only once');
   assert.equal(calls.at(-1).event, pendingAction.event);
-  const resolvedModel = exploreModel(chapterDecisionFixture('metro_abyss'), {
+  const resolvedModel = walkingExploreModel(chapterDecisionFixture('metro_abyss'), {
     currentNode: { ...pendingModel.sections[1].detail.currentNode, cleared: true },
   });
   const atChoice = pos();
@@ -9660,20 +11399,46 @@ delete globalThis.wx;
   view.render(battle, chrome, EXPLORE_INSETS_390);
   assertDarkWalkingUi(root(), battle, EXPLORE_INSETS_390);
   assert.ok(findNode(root(), 'WalkCombatAction:combat.action:attack'));
+  const beforeCombatDispatch = calls.length;
   emitTouch(findNode(root(), 'WalkCombatAction:combat.action:attack'), 905);
+  assert.equal(calls.length, beforeCombatDispatch, 'combat selection does not dispatch before its windup');
+  assert.equal(view.walkScene.isCombatAnimating(), true, 'combat starts its visual windup before dispatch');
+  const windupPosition = pos();
+  key(68, true);
+  advance(12);
+  key(68, false);
+  assert.deepEqual(pos(), windupPosition, 'movement stays locked during combat windup');
+  assert.equal(calls.length, beforeCombatDispatch, 'windup does not dispatch before the impact frame');
+  advance(6);
+  assert.equal(calls.length, beforeCombatDispatch + 1, 'impact dispatches exactly one combat command');
   assert.equal(calls.at(-1).event, battle.sections[2].actions[0].event, 'spatial combat keeps original action semantics');
+  view.resolveCombatPresentation('combat.action:attack', [{ stage: 'impact', playerHp: 42, enemyHp: 17 }, { stage: 'counter', playerHp: 35, enemyHp: 17, guarded: false }]);
+  assertSharedHeaderHealth(root(), 42, 60); // Impact preserves the pre-counter player HP and the approved thin line.
+  assert.equal(labelComponent(findNode(root(), 'WalkEnemyHealthLabel')).string, '17 / 80', 'impact displays the authoritative enemy HP');
+  const resolvedBattle = structuredClone(battle);
+  resolvedBattle.sections[1].detail.player = { hp: 35, maxHp: 60, hpPercent: 58 };
+  resolvedBattle.sections[1].detail.enemy.hp = 17;
+  resolvedBattle.sections[1].detail.enemy.hpPercent = 21;
+  resolvedBattle.sections[1].detail.turn = 4;
+  view.render(resolvedBattle, chrome, EXPLORE_INSETS_390);
+  advance(27);
+  assertSharedHeaderHealth(root(), 42, 60); // Queued result cannot reveal counter damage early.
+  advance(10);
+  assertSharedHeaderHealth(root(), 35, 60); // Counter impact displays its authoritative player HP without restoring the old HUD.
+  advance(33);
+  assert.equal(view.walkScene.isCombatAnimating(), false, 'actual result playback completes before walking resumes');
   const battlePos = pos();
   key(68, true); advance(12); key(68, false);
   assert.ok(pos().x > battlePos.x + 40, 'combat avatar remains controllable');
-  const unavailable = { ...battle.sections[2].actions[0], actionId: 'combat.action:art', label: '术法攻击',
+  const unavailable = { ...battle.sections[2].actions[0], actionId: 'combat.action:art', combatAction: 'art', label: '术法攻击',
     enabled: false, event: undefined, disabledReason: '术法尚未就绪。' };
   const unavailableBattle = combatModel(combatChapterContextFixture(), { actions: [unavailable] });
   view.render(unavailableBattle, chrome, EXPLORE_INSETS_390);
   const beforeUnavailable = calls.length;
-  emitTouch(findNode(root(), 'WalkCombatAction:combat.action:art'), 917);
+  emitTouch(findNode(root(), 'WalkCombatChoice:spells'), 917);
   assert.ok(findNode(root(), 'MobileInfoSheet:menu'));
   assert.match(collectStrings(root()).join('\n'), /术法尚未就绪/);
-  emitTouch(findNode(root(), 'MobileSheetExecute:combat.action:art'), 918);
+  emitTouch(findNode(root(), 'MobileSheetAction:combat.action:art'), 918);
   assert.equal(calls.length, beforeUnavailable, 'disabled combat skills are inspectable but never executable');
   emitTouch(findNode(root(), 'MobileSheetClose'), 919);
   view.render(battle, { ...chrome, activityMessage: '规则拒绝：combat.action:attack' }, EXPLORE_INSETS_390);
@@ -9686,7 +11451,7 @@ delete globalThis.wx;
   assert.equal(labelComponent(findNode(root(), 'WalkFeedback')).string,
     '行动失败 · 请稍后重试', 'walking sanitizes raw action failures');
   assert.ok(!collectStrings(root()).join('\n').includes('private-storage-details'));
-  assert.equal(findNode(root(), 'WalkDamage'), undefined, 'failure does not replay old damage numbers');
+  assert.equal(labelComponent(findNode(root(), 'WalkDamage')).string, '', 'failure does not replay old damage numbers');
   view.render(resultModel(), chrome, EXPLORE_INSETS_320);
   assertDarkResultUi(root(), EXPLORE_INSETS_320);
   const beforePending = calls.length;
@@ -9701,9 +11466,420 @@ delete globalThis.wx;
   moving.tick(1, { x: 0, y: -1 });
   assert.deepEqual(moving.getPosition(), destroyedPosition);
   assert.ok(atlas.frames.every((frame) => frame.destroyCalls === 1), 'all animation frames released exactly once');
+  assert.equal(atlas.frame.destroyCalls, 1, 'source atlas frame released exactly once');
   assert.equal(atlas.texture.destroyCalls, 1, 'atlas texture released only once');
   assert.equal((globalThis.__walkingTestInput.listeners.get('key-down') ?? []).length, 0, 'no global input listener survives destroy');
 }
+
+// Equipment is permanent at claim time. Real View callbacks must use the chosen
+// original action exactly once, then allow manual wearing from the same run bag.
+const beforeEquipmentFrameSize = globalThis.__walkingTestFrameSize;
+for (const viewportWidth of [320, 390]) {
+  globalThis.__walkingTestFrameSize = { width: viewportWidth, height: viewportWidth === 320 ? 568 : 844 };
+  const entered = reduceGameCommand(createInitialState(), {
+    type: 'run/enter', dungeonId: DUNGEON_ORDER[0], protocolId: 'standard',
+    seeds: { rulesVersion: 1, hiddenTaskSeed: 0x1234_abcd },
+  });
+  assert.equal(entered.status, 'committed', 'permanent equipment UI lifecycle enters a real run');
+  let state = { ...entered.state, run: { ...entered.state.run, pendingEquipmentOffer: {
+    offerId: `permanent-equipment-view-${viewportWidth}`, equipmentIds: ['mist_hood', 'spirit_robe', 'bone_spear'],
+  } } };
+  let model = buildActualGameViewModel(state, {});
+  const originalEquipped = { ...state.equipped };
+  const calls = [];
+  const canvas = { name: `permanent-equipment-${viewportWidth}`, children: [], getComponent() { return { contentSize: { width: 750, height: 1334 } }; }, addChild(child) { this.children.push(child); child.parent = this; } };
+  const insets = viewportWidth === 320 ? EXPLORE_INSETS_320 : EXPLORE_INSETS_390;
+  const chrome = { modeKind: 'preview', modeLabel: '', modeDetail: '' };
+  const root = () => canvas.children.at(-1);
+  let completeClaim;
+  const view = new SceneFixtureView(canvas, {
+    activate(physicalId, actionId, event) {
+      calls.push({ physicalId, actionId, event });
+      assert.equal(event.kind, 'command', 'equipment UI dispatches a real domain command');
+      const commit = () => {
+        const result = reduceGameCommand(state, event.command);
+        assert.equal(result.status, 'committed', `equipment UI ${event.command.type} commits`);
+        state = result.state;
+        model = buildActualGameViewModel(state, {});
+        view.render(model, chrome, insets);
+      };
+      if (event.command.type === 'node/resolve-equipment-loot') {
+        assert.equal(completeClaim, undefined, 'only one equipment claim can be in flight');
+        completeClaim = () => {
+          completeClaim = undefined;
+          delete chrome.busyActionId;
+          commit();
+        };
+        chrome.busyActionId = actionId;
+        view.render(model, chrome, insets);
+      } else commit();
+    },
+  });
+  view.render(model, chrome, insets);
+  assert.ok(findNode(root(), 'MobileInfoSheet:interaction'), 'a new equipment offer automatically opens its choice sheet');
+  const options = model.sections[1].detail.pending.equipmentOptions;
+  assert.equal(collectNodes(root(), node => node.name.startsWith('MobileSheetEquipmentOffer:')).length, 3,
+    `${viewportWidth}px: real View shows all three claim candidates together`);
+  assert.equal(labelComponent(findNode(root(), 'MobileSheetTitle')).string, '选择一件装备');
+  assert.equal(labelComponent(findNode(root(), 'EquipmentOfferKicker')).string, '精英战利品 · 3 选 1');
+  assert.equal(collectNodes(root(), node => node.name === 'MobileSheetEquipmentClaim').length, 1,
+    'equipment choice has exactly one claim control');
+  assert.ok(collectStrings(findNode(root(), 'MobileSheetEquipmentClaim')).includes('收入背包'));
+  const retiredFirstCard = findNode(root(), `MobileSheetEquipmentOffer:${options[0].equipmentId}`);
+  const retiredInitialClaim = findNode(root(), 'MobileSheetEquipmentClaim');
+  const beforeSelection = JSON.stringify(state);
+  for (const [index, optionIndex] of [0, 1, 2, 0, 2, 1].entries()) {
+    const option = options[optionIndex];
+    emitTouch(findNode(root(), `MobileSheetEquipmentOffer:${option.equipmentId}`), 12000 + viewportWidth + index);
+    assert.equal(view.mobileSheet.selectedActionId, option.actionId, 'every candidate switches only the local selection');
+    assert.equal(labelComponent(findNode(root(), 'EquipmentOfferDetailName')).string, option.name);
+    assert.equal(collectNodes(root(), node => node.name === 'EquipmentOfferSelected').length, 1);
+    assert.equal(calls.length, 0, 'switching across all three cards never dispatches a command');
+    assert.equal(JSON.stringify(state), beforeSelection, 'candidate inspection preserves the domain state');
+  }
+  const selectedActionId = view.mobileSheet.selectedActionId;
+  emitTouch(retiredFirstCard, 12100 + viewportWidth);
+  emitTouch(retiredInitialClaim, 12200 + viewportWidth);
+  assert.equal(calls.length, 0, 'selection refresh retires prior card and claim callbacks');
+  assert.equal(view.mobileSheet.selectedActionId, selectedActionId, 'retired candidate cannot replace the current selection');
+  emitTouch(findNode(root(), 'MobileSheetClose'), 12210 + viewportWidth);
+  assert.equal(findNode(root(), 'MobileInfoSheet:interaction'), undefined, 'X dismisses the current equipment offer');
+  view.render(model, chrome, insets);
+  assert.equal(findNode(root(), 'MobileInfoSheet:interaction'), undefined, 'the same offer does not immediately reopen after X');
+  const originalTarget = buildWalkWorld(model).targets.find(entry => entry.id === `node:${state.run.currentNodeId}`);
+  const target = walkTowardRenderedTarget(view, root(), originalTarget.id, originalTarget.radius);
+  const nearbyPosition = view.walkScene.getPosition();
+  assert.ok(Math.hypot(nearbyPosition.x - target.x, nearbyPosition.y - target.y) <= originalTarget.radius,
+    'real walking reaches the current equipment interaction radius');
+  emitTouch(findNode(root(), 'WalkInteract'), 12220 + viewportWidth);
+  assert.ok(findNode(root(), 'MobileInfoSheet:interaction'), 'WalkInteract deliberately reopens the closed offer');
+  assert.equal(view.mobileSheet.selectedActionId, selectedActionId, 'reopening the same offer preserves its chosen candidate');
+  const beforeOfferReplacement = findNode(root(), 'MobileSheetEquipmentClaim');
+  state = { ...state, run: { ...state.run, pendingEquipmentOffer: {
+    ...state.run.pendingEquipmentOffer, offerId: `replacement-equipment-view-${viewportWidth}`,
+  } } };
+  model = buildActualGameViewModel(state, {});
+  view.render(model, chrome, insets);
+  assert.ok(findNode(root(), 'MobileInfoSheet:interaction'), 'a replacement offer automatically opens its fresh choice');
+  assert.notEqual(view.mobileSheet.selectedActionId, selectedActionId, 'a new offer cannot reuse the previous offer selection');
+  assert.equal(view.mobileSheet.selectedActionId, undefined, 'a replacement offer waits for its own explicit candidate selection');
+  assert.equal(findNode(root(), 'EquipmentOfferDetailName'), undefined, 'an unselected replacement never previews an implicit choice');
+  assert.equal(findNode(root(), 'MobileSheetEquipmentClaim').listeners.size, 0, 'an unselected replacement has no claim binding');
+  emitTouch(beforeOfferReplacement, 12230 + viewportWidth);
+  assert.equal(calls.length, 0, 'a replaced offer cannot dispatch its retired claim');
+  emitTouch(findNode(root(), 'MobileSheetEquipmentOffer:spirit_robe'), 12240 + viewportWidth);
+  const claim = model.sections[2].actions.find(action => action.actionId === view.mobileSheet.selectedActionId);
+  assert.equal(claim.event.command.equipmentId, 'spirit_robe', 'selected card determines its original claim command');
+  const priorBlockedClaim = findNode(root(), 'MobileSheetEquipmentClaim');
+  view.render(model, { ...chrome, modeKind: 'blocked', blockingMessage: 'storage unavailable' }, insets);
+  assert.ok(findNode(root(), 'RuntimeBlockedOverlay'), 'blocked mode replaces the sheet with its existing blocking overlay');
+  emitTouch(priorBlockedClaim, 12350 + viewportWidth);
+  assert.equal(calls.length, 0, 'blocked real View cannot claim equipment');
+  view.render(model, chrome, insets);
+  const claimNode = findNode(root(), 'MobileSheetEquipmentClaim');
+  const avatar = view.walkScene.getPosition();
+  const claimTouchId = 12400 + viewportWidth;
+  emitTouch(claimNode, claimTouchId);
+  claimNode.emit('touch-end', { getID: () => claimTouchId, propagationStopped: false });
+  assert.equal(calls.length, 1, 'duplicate touch-end makes one real equipment claim');
+  assert.equal(calls[0].event, claim.event, 'real View dispatches the selected original claim event');
+  assert.equal(typeof completeClaim, 'function', 'claim stays pending until its asynchronous completion');
+  assert.ok(!state.ownedEquipment.includes('spirit_robe'), 'in-flight dispatch does not optimistically grant equipment');
+  assert.ok(state.run.pendingEquipmentOffer, 'in-flight dispatch preserves the unresolved offer');
+  assert.ok(collectStrings(findNode(root(), 'MobileSheetEquipmentClaim')).includes('正在收入背包'));
+  const inFlightSelection = view.mobileSheet.selectedActionId;
+  for (const [index, node] of [
+    ...model.sections[1].detail.pending.equipmentOptions.map(option => findNode(root(), `MobileSheetEquipmentOffer:${option.equipmentId}`)),
+    findNode(root(), 'MobileSheetClose'), findNode(root(), 'MobileSheetEquipmentClaim'),
+    findNode(root(), 'MobileSheetBackdrop'), findNode(root(), 'SceneDetails'), findNode(root(), 'WalkInteract'),
+  ].entries()) {
+    emitTouch(node, 12420 + viewportWidth + index);
+    assert.ok(findNode(root(), 'MobileInfoSheet:interaction'), 'busy card/X/CTA/outside touches cannot dismiss the offer');
+    assert.equal(view.mobileSheet.selectedActionId, inFlightSelection, 'busy touches cannot change the selected candidate');
+    assert.equal(calls.length, 1, 'busy touches cannot dispatch a second command');
+  }
+  completeClaim();
+  assert.ok(state.ownedEquipment.includes('spirit_robe'), 'claim immediately creates permanent ownership');
+  assert.deepEqual(state.equipped, originalEquipped, 'claim leaves wearing under player control');
+  assert.equal(findNode(root(), 'MobileInfoSheet:interaction'), undefined, 'resolved equipment offer closes its interaction sheet');
+  assert.equal(collectNodes(root(), node => node.name.startsWith('MobileInfoSheet:')).length, 0,
+    'successful claim returns directly to exploration without an inventory or result modal');
+  assert.equal(view.mobileSheet, undefined, 'a resolved offer leaves no cached interaction state');
+  assert.equal(view.equipmentOfferSelection, undefined, 'pending disappearance clears the candidate selection cache');
+  assert.deepEqual(view.walkScene.getPosition(), avatar, 'claim preserves exploration position');
+  assert.equal(labelComponent(findNode(root(), 'WalkFeedback')).string, '已收入背包 · 灵纹软甲');
+  const permanentlyOwned = [...state.ownedEquipment];
+  const permanentLevels = { ...state.equipmentLevels };
+  emitTouch(claimNode, 12500 + viewportWidth);
+  assert.equal(calls.length, 1, 'resolved claim callback is retired');
+
+  emitTouch(findNode(root(), 'SceneDetails'), 12600 + viewportWidth);
+  assert.ok(findNode(root(), 'MobileSheetInventoryRack'), 'opening the existing bag still defaults to its supply grid');
+  assert.equal(collectNodes(root(), node => node.name.startsWith('MobileSheetInventoryEquipment:')).length, 0,
+    'owned equipment appears only after choosing the existing equipment tab');
+  emitTouch(findNode(root(), 'MobileSheetTab:equipment'), 12700 + viewportWidth);
+  emitTouch(findNode(root(), 'MobileSheetInventoryEquipment:spirit_robe'), 12800 + viewportWidth);
+  const owned = model.sections[1].loadout.ownedEquipment.find(entry => entry.equipmentId === 'spirit_robe');
+  const equipNode = findNode(root(), 'MobileSheetTipEquip:spirit_robe');
+  assert.ok(equipNode, 'the just-acquired item has an immediate wearing control in exploration');
+  const beforeHp = state.player.hp;
+  const equipTouchId = 12900 + viewportWidth;
+  emitTouch(equipNode, equipTouchId);
+  equipNode.emit('touch-end', { getID: () => equipTouchId, propagationStopped: false });
+  assert.equal(calls.length, 2, 'duplicate touch-end makes one manual equipment command');
+  assert.equal(calls[1].event, owned.equipAction.event, 'real inventory tooltip dispatches its exact projected wearing event');
+  assert.equal(state.equipped.armor, 'spirit_robe', 'the exploration command wears the just-claimed equipment');
+  assert.equal(state.player.hp, beforeHp, 'manual wearing never heals the player');
+  assert.deepEqual(state.ownedEquipment, permanentlyOwned, 'manual wearing preserves every permanently owned item');
+  assert.deepEqual(state.equipmentLevels, permanentLevels, 'manual wearing preserves every equipment level');
+  emitTouch(equipNode, 13000 + viewportWidth);
+  assert.equal(calls.length, 2, 'rendering the newly worn item retires its old wearing callback');
+  const equippedButton = findNode(root(), 'MobileSheetTipEquip:spirit_robe');
+  assert.ok(collectStrings(equippedButton).includes('已装备'), 'a worn owned item explains its disabled wearing command');
+  emitTouch(equippedButton, 13050 + viewportWidth);
+  assert.equal(calls.length, 2, 'the worn item cannot dispatch another wearing command');
+  emitTouch(findNode(root(), 'MobileSheetTipClose'), 13100 + viewportWidth);
+  emitTouch(findNode(root(), `MobileSheetInventoryEquipment:${originalEquipped.armor}`), 13200 + viewportWidth);
+  for (const runtime of [{ ...chrome, busyActionId: 'inventory-equipment' }, { ...chrome, modeKind: 'blocked', blockingMessage: 'storage unavailable' }]) {
+    const priorEquip = findNode(root(), `MobileSheetTipEquip:${originalEquipped.armor}`);
+    view.render(model, runtime, insets);
+    const locked = findNode(root(), `MobileSheetTipEquip:${originalEquipped.armor}`);
+    if (locked) emitTouch(locked, 13300 + viewportWidth);
+    else assert.ok(findNode(root(), 'RuntimeBlockedOverlay'), 'blocked mode retains its blocking overlay');
+    emitTouch(priorEquip, 13350 + viewportWidth);
+    assert.equal(calls.length, 2, 'busy/blocked real View cannot switch the owned equipment');
+  }
+  view.render(model, chrome, insets);
+  const originalArmor = model.sections[1].loadout.ownedEquipment.find(entry => entry.equipmentId === originalEquipped.armor);
+  const switchBack = findNode(root(), `MobileSheetTipEquip:${originalEquipped.armor}`);
+  const switchBackTouchId = 13400 + viewportWidth;
+  emitTouch(switchBack, switchBackTouchId);
+  switchBack.emit('touch-end', { getID: () => switchBackTouchId, propagationStopped: false });
+  assert.equal(calls.length, 3, 'switching back from the same inventory makes one manual wearing command');
+  assert.equal(calls[2].event, originalArmor.equipAction.event, 'switching back dispatches the original armor wearing event');
+  assert.deepEqual(state.equipped, originalEquipped, 'the player can switch back to the original armor');
+  assert.deepEqual(state.ownedEquipment, permanentlyOwned, 'switching back retains the complete owned equipment collection');
+  assert.deepEqual(state.equipmentLevels, permanentLevels, 'switching back retains every equipment level');
+  assert.ok(findNode(root(), 'MobileInfoSheet:inventory'), 'wearing changes stay in the same inventory sheet');
+  emitTouch(findNode(root(), 'MobileSheetTipClose'), 13500 + viewportWidth);
+  emitTouch(findNode(root(), 'MobileSheetInventoryEquipment:spirit_robe'), 13600 + viewportWidth);
+  assert.ok(findNode(root(), 'MobileSheetTipEquip:spirit_robe'), 'the replaced acquired armor remains readable and wearable');
+  const replacedArmorTip = collectStrings(findNode(root(), 'MobileSheetTip')).join('').replace(/\s+/gu, '');
+  assert.ok(replacedArmorTip.includes(owned.baseStatsReadout.replace(/\s+/gu, '')),
+    'the replaced armor still shows its actual owned stats across wrapped tooltip lines');
+  assert.equal(calls.length, 3, 'reading the replaced armor issues no additional command');
+  view.destroy();
+}
+globalThis.__walkingTestFrameSize = beforeEquipmentFrameSize;
+
+// Reward collection and its optional relic draft share one interaction surface.
+// Real commands generate 1/2/3 candidates; local card selection never grants them.
+const beforeRewardFrameSize = globalThis.__walkingTestFrameSize;
+for (const viewportWidth of [320, 390]) {
+  globalThis.__walkingTestFrameSize = { width: viewportWidth, height: viewportWidth === 320 ? 568 : 844 };
+  for (const candidateCount of [1, 2, 3, 0]) {
+    const initial = createInitialState();
+    const hub = { ...initial, preparedRelicFrame: 'assault', ...(candidateCount === 3 ? {
+      ownedEquipment: [...initial.ownedEquipment, 'armor_piercing_sword'],
+      equipmentLevels: { ...initial.equipmentLevels, armor_piercing_sword: 2 },
+      equipped: { ...initial.equipped, weapon: 'armor_piercing_sword' },
+    } : {}) };
+    const entered = reduceGameCommand(hub, {
+      type: 'run/enter', dungeonId: 'demon_tower_1', protocolId: 'standard',
+      seeds: { rulesVersion: 1, hiddenTaskSeed: 0x1234_abcd },
+    });
+    assert.equal(entered.status, 'committed', 'reward lifecycle enters a real run');
+    if (candidateCount === 3) assert.ok(entered.state.run.relicConduitSourceEquipmentIds.includes('armor_piercing_sword'),
+      'real entry freezes the matching Lv2 weapon conduit for three candidates');
+    const nodeId = candidateCount === 0 ? 'north_supply_niche' : 'watch_post_cache';
+    let state = { ...entered.state, run: { ...entered.state.run, currentNodeId: nodeId, relicState: {
+      ...entered.state.run.relicState,
+      acquiredIds: candidateCount === 1 ? ['focus_prism', 'hunter_clock'] : candidateCount === 2 ? ['hunter_clock'] : [],
+    } } };
+    let model = buildActualGameViewModel(state, {});
+    const chrome = { modeKind: 'preview', modeLabel: '', modeDetail: '' };
+    const insets = viewportWidth === 320 ? EXPLORE_INSETS_320 : EXPLORE_INSETS_390;
+    const canvas = { name: `reward-relic-${viewportWidth}-${candidateCount}`, children: [], getComponent() { return { contentSize: { width: 750, height: 1334 } }; }, addChild(child) { this.children.push(child); child.parent = this; } };
+    const root = () => canvas.children.at(-1);
+    const calls = [];
+    let completeCommand;
+    const view = new SceneFixtureView(canvas, {
+      activate(physicalId, actionId, event) {
+        assert.equal(event.kind, 'command', 'reward lifecycle dispatches its original domain command');
+        assert.ok(['node/collect-reward', 'node/resolve-relic-draft'].includes(event.command.type));
+        assert.equal(completeCommand, undefined, 'only one reward lifecycle command can be in flight');
+        calls.push({ physicalId, actionId, event });
+        completeCommand = () => {
+          completeCommand = undefined;
+          delete chrome.busyActionId;
+          const snapshot = JSON.stringify(state);
+          const result = reduceGameCommand(state, event.command);
+          assert.equal(result.status, 'committed', `${event.command.type} commits through the real reducer`);
+          assert.equal(JSON.stringify(state), snapshot, 'the command preserves its input fixture');
+          state = result.state;
+          model = buildActualGameViewModel(state, {});
+          supplySceneVisualFixtures(view, model);
+          view.render(model, chrome, insets);
+        };
+        chrome.busyActionId = actionId;
+        view.render(model, chrome, insets);
+      },
+    });
+    const touchBase = 14000 + viewportWidth + candidateCount * 100;
+    const assertBusyLocks = (nodeNames, expectedCalls) => {
+      const selectedActionId = view.mobileSheet.selectedActionId;
+      const snapshot = JSON.stringify(state);
+      for (const [index, name] of [...nodeNames, 'MobileSheetClose', 'MobileSheetBackdrop', 'SceneDetails', 'WalkInteract'].entries()) {
+        const target = findNode(root(), name);
+        assert.ok(target, `${name}: busy fixture retains the actual control`);
+        emitTouch(target, touchBase + 40 + index);
+        assert.ok(findNode(root(), 'MobileInfoSheet:interaction'), 'busy reward/relic controls cannot close the interaction');
+        assert.equal(view.mobileSheet.selectedActionId, selectedActionId, 'busy controls cannot change the local choice');
+        assert.equal(calls.length, expectedCalls, 'busy controls cannot submit a duplicate reward or relic command');
+        assert.equal(JSON.stringify(state), snapshot, 'busy controls leave all authoritative rewards and candidates unchanged');
+      }
+    };
+    supplySceneVisualFixtures(view, model);
+    view.render(model, chrome, insets);
+    const originalTarget = buildWalkWorld(model).targets.find(entry => entry.id === `node:${nodeId}`);
+    const target = walkTowardRenderedTarget(view, root(), originalTarget.id, originalTarget.radius);
+    const avatar = view.walkScene.getPosition();
+    assert.ok(Math.hypot(avatar.x - target.x, avatar.y - target.y) <= originalTarget.radius,
+      'real walking approaches the reward before opening its interaction');
+    emitTouch(findNode(root(), 'WalkInteract'), touchBase);
+    assert.ok(findNode(root(), 'MobileInfoSheet:interaction'));
+    assert.ok(findNode(root(), 'RewardChestImage'), 'the reward opens directly with its chest and actual contents');
+    assert.equal(collectNodes(root(), node => node.name.startsWith('MobileSheetExecute:')).length, 0,
+      'reward collection omits the old generic action confirmation step');
+    const preview = model.sections[1].detail.rewardPreview;
+    assert.equal(preview.nodeId, nodeId);
+    const rewardAction = model.sections[2].actions.find(action => action.actionId === preview.actionId);
+    const blockedRewardClaim = findNode(root(), 'MobileSheetRewardClaim');
+    const blockedRewardSnapshot = JSON.stringify(state);
+    view.render(model, { ...chrome, modeKind: 'blocked', blockingMessage: 'storage unavailable' }, insets);
+    assert.ok(findNode(root(), 'RuntimeBlockedOverlay'));
+    emitTouch(blockedRewardClaim, touchBase + 4);
+    assert.equal(calls.length, 0, 'blocked mode retires the previous reward claim callback');
+    assert.equal(JSON.stringify(state), blockedRewardSnapshot, 'a blocked reward claim preserves the uncollected node');
+    view.render(model, chrome, insets);
+    const rewardClaim = findNode(root(), 'MobileSheetRewardClaim');
+    assert.equal(collectNodes(root(), node => node.name === 'MobileSheetRewardClaim').length, 1);
+    assert.ok(collectStrings(rewardClaim).includes('领取奖励'));
+    for (const entry of preview.items) {
+      const card = findNode(root(), `MobileSheetRewardItem:${entry.itemId}`);
+      assert.ok(card, 'reward contents come from the actual immutable-transition preview');
+      assert.ok(findNode(card, `RewardItemIcon:${entry.itemId}`));
+      assert.equal(labelComponent(findNode(card, 'RewardItemValue')).string, `×${entry.count}`);
+    }
+    const beforeReward = { rewardPoints: state.rewardPoints, lingyun: state.lingyun, inventory: { ...state.inventory }, hp: state.player.hp };
+    emitTouch(rewardClaim, touchBase + 1);
+    rewardClaim.emit('touch-end', { getID: () => touchBase + 1, propagationStopped: false });
+    assert.equal(calls.length, 1, 'duplicate reward touch-end dispatches one collection');
+    assert.equal(calls[0].event, rewardAction.event, 'reward CTA uses its exact projected collection event');
+    assert.equal(state.rewardPoints, beforeReward.rewardPoints, 'in-flight collection does not optimistically grant currency');
+    assert.ok(!state.run.clearedNodeIds.includes(nodeId), 'in-flight collection leaves the node unclaimed');
+    assert.ok(collectStrings(findNode(root(), 'MobileSheetRewardClaim')).includes('正在领取'));
+    assertBusyLocks(['MobileSheetRewardClaim', ...preview.items.map(entry => `MobileSheetRewardItem:${entry.itemId}`)], 1);
+    completeCommand();
+    assert.ok(state.run.clearedNodeIds.includes(nodeId), 'the real collection clears the reward node');
+    assert.equal(state.rewardPoints, beforeReward.rewardPoints + preview.rewardPoints);
+    assert.equal(state.lingyun, beforeReward.lingyun + preview.lingyun);
+    assert.equal(state.player.hp, beforeReward.hp + preview.healing);
+    for (const entry of preview.items) assert.equal(state.inventory[entry.itemId], (beforeReward.inventory[entry.itemId] ?? 0) + entry.count);
+    emitTouch(rewardClaim, touchBase + 2);
+    assert.equal(calls.length, 1, 'the resolved reward callback cannot collect the node twice');
+    if (candidateCount === 0) {
+      assert.equal(state.run.relicState.pendingDraft, undefined, 'an ordinary reward generates no relic draft');
+      assert.equal(collectNodes(root(), node => node.name.startsWith('MobileInfoSheet:')).length, 0,
+        'an ordinary reward closes directly to exploration without a second modal');
+      assert.deepEqual(view.walkScene.getPosition(), avatar);
+      view.destroy();
+      continue;
+    }
+    const draft = state.run.relicState.pendingDraft;
+    const choices = model.sections[1].detail.pending.relicOptions;
+    assert.equal(choices.length, candidateCount, `${viewportWidth}px: core generates ${candidateCount} actual candidates`);
+    assert.deepEqual(choices.map(choice => choice.relicId), draft.candidateIds, 'the UI preserves the actual draft candidate order');
+    assert.ok(findNode(root(), 'MobileInfoSheet:interaction'), 'collection continues in the same interaction kind for its relic choice');
+    assert.equal(findNode(root(), 'MobileSheetRewardClaim'), undefined, 'the collected reward cannot be submitted from the relic step');
+    assert.equal(labelComponent(findNode(root(), 'MobileSheetTitle')).string, '选择一份回响');
+    assert.equal(labelComponent(findNode(root(), 'RelicDraftReceiptState')).string, '✓ 物资已领取');
+    const receipt = labelComponent(findNode(root(), 'RelicDraftReceiptValues')).string.replace(/\s+/gu, '');
+    assert.ok(receipt.includes(`奖励点+${preview.rewardPoints}`));
+    for (const entry of preview.items) assert.ok(receipt.includes(`${entry.name}×${entry.count}`.replace(/\s+/gu, '')));
+    const initialRelicClaim = findNode(root(), 'MobileSheetRelicClaim');
+    assert.ok(collectStrings(initialRelicClaim).includes('请选择一份回响'));
+    emitTouch(initialRelicClaim, touchBase + 3);
+    assert.equal(calls.length, 1, 'a fresh relic draft requires an explicit local choice before submitting');
+    const beforeRelic = JSON.stringify(state);
+    for (const [index, choice] of choices.entries()) {
+      const card = findNode(root(), `MobileSheetRelicOffer:${choice.relicId}`);
+      assert.ok(findNode(card, `RelicOfferIcon:${choice.relicId}`));
+      assert.equal(labelComponent(findNode(card, 'RelicOfferName')).string.replace(/\s+/gu, ''), choice.name.replace(/\s+/gu, ''));
+      assert.equal(labelComponent(findNode(card, 'RelicOfferEffect')).string.replace(/\s+/gu, ''), choice.description.replace(/\s+/gu, ''));
+      emitTouch(card, touchBase + 10 + index);
+      assert.equal(view.mobileSheet.selectedActionId, choice.actionId, 'relic cards switch only the local selection');
+      assert.equal(calls.length, 1);
+      assert.equal(JSON.stringify(state), beforeRelic, 'reading candidates does not acquire or activate a relic');
+    }
+    const selected = choices.find(choice => choice.relicId === 'mist_edge');
+    assert.ok(selected, 'the real candidate-pool fixture leaves mist edge available');
+    emitTouch(findNode(root(), 'MobileSheetRelicOffer:mist_edge'), touchBase + 20);
+    assert.equal(collectNodes(root(), node => node.name === 'RelicOfferSelected').length, 1);
+    assert.ok(collectStrings(findNode(root(), 'MobileSheetRelicClaim')).includes(`获得${selected.name}`));
+    emitTouch(findNode(root(), 'MobileSheetClose'), touchBase + 21);
+    assert.equal(findNode(root(), 'MobileInfoSheet:interaction'), undefined, 'closing an unresolved relic draft returns to exploration');
+    assert.equal(JSON.stringify(state), beforeRelic, 'closing cannot skip, collect again or choose a relic');
+    view.render(model, chrome, insets);
+    assert.equal(findNode(root(), 'MobileInfoSheet:interaction'), undefined, 'the same closed draft does not immediately reopen');
+    emitTouch(findNode(root(), 'WalkInteract'), touchBase + 22);
+    assert.ok(findNode(root(), 'MobileInfoSheet:interaction'), 'nearby interaction reopens the actual unresolved draft');
+    assert.equal(view.mobileSheet.selectedActionId, selected.actionId, 'reopening preserves the selected actual candidate');
+    assert.equal(calls.length, 1, 'closing and reopening the relic choice never submits a domain command');
+    const relicAction = model.sections[2].actions.find(action => action.actionId === selected.actionId);
+    const blockedRelicClaim = findNode(root(), 'MobileSheetRelicClaim');
+    const blockedRelicCard = findNode(root(), `MobileSheetRelicOffer:${choices.at(-1).relicId}`);
+    view.render(model, { ...chrome, modeKind: 'blocked', blockingMessage: 'storage unavailable' }, insets);
+    assert.ok(findNode(root(), 'RuntimeBlockedOverlay'));
+    emitTouch(blockedRelicClaim, touchBase + 25);
+    emitTouch(blockedRelicCard, touchBase + 26);
+    assert.equal(calls.length, 1, 'blocked mode retires previous relic claim and card callbacks');
+    assert.equal(view.mobileSheet.selectedActionId, selected.actionId, 'blocked card callbacks cannot change the cached choice');
+    assert.equal(JSON.stringify(state), beforeRelic, 'blocked callbacks preserve the unresolved draft and collected rewards');
+    view.render(model, chrome, insets);
+    const relicClaim = findNode(root(), 'MobileSheetRelicClaim');
+    const statsBefore = getDerivedStats(state);
+    const inventoryBefore = { ...state.inventory };
+    const currencyBefore = state.rewardPoints;
+    const acquiredBefore = [...state.run.relicState.acquiredIds];
+    emitTouch(relicClaim, touchBase + 23);
+    relicClaim.emit('touch-end', { getID: () => touchBase + 23, propagationStopped: false });
+    assert.equal(calls.length, 2, 'duplicate relic touch-end submits one selection');
+    assert.equal(calls[1].event, relicAction.event, 'relic CTA uses its original draftId/relicId event');
+    assert.ok(!state.run.relicState.acquiredIds.includes('mist_edge'), 'in-flight selection does not optimistically activate the relic');
+    assert.ok(collectStrings(findNode(root(), 'MobileSheetRelicClaim')).includes('正在获得'));
+    assertBusyLocks(['MobileSheetRelicClaim', ...choices.map(choice => `MobileSheetRelicOffer:${choice.relicId}`)], 2);
+    completeCommand();
+    assert.equal(state.run.relicState.pendingDraft, undefined, 'the real selection resolves the blocking draft');
+    assert.deepEqual(state.run.relicState.acquiredIds, [...acquiredBefore, 'mist_edge']);
+    assert.equal(getDerivedStats(state).attack, statsBefore.attack + 6, 'the acquired mist edge activates its actual attack effect');
+    assert.equal(getDerivedStats(state).artPower, statsBefore.artPower + 4, 'the acquired mist edge activates its actual art effect');
+    assert.deepEqual(model.sections[1].loadout.runRelics.map(relic => relic.relicId), state.run.relicState.acquiredIds,
+      'the run inventory exposes the complete acquired-only relic list');
+    assert.ok(findNode(root(), 'WalkRunRelics'), 'a resolved relic appears on the active run HUD');
+    assert.equal(collectNodes(root(), node => node.name.startsWith('MobileInfoSheet:')).length, 0,
+      'relic acquisition closes directly to exploration without a second result modal');
+    assert.equal(labelComponent(findNode(root(), 'WalkFeedback')).string, `${selected.name} · 本局生效`,
+      'resolved relic feedback names the acquired choice and its active run scope');
+    assert.equal(state.rewardPoints, currencyBefore, 'relic selection cannot collect the reward a second time');
+    assert.deepEqual(state.inventory, inventoryBefore, 'relic selection does not duplicate the collected materials');
+    assert.deepEqual(view.walkScene.getPosition(), avatar);
+    emitTouch(relicClaim, touchBase + 24);
+    assert.equal(calls.length, 2, 'a resolved draft retires its selection callback');
+    view.destroy();
+  }
+}
+globalThis.__walkingTestFrameSize = beforeRewardFrameSize;
 
 // The real View renders every chapter as a dedicated environment, not a differently
 // labelled copy of the hub. These are projection fixtures, not chapter completion evidence.
@@ -9721,18 +11897,12 @@ delete globalThis.wx;
     { x: 0, y: 960, width: 1000, height: 40 },
     { x: 0, y: 40, width: 40, height: 920 },
     { x: 960, y: 40, width: 40, height: 920 },
-    { x: 235, y: 260, width: 70, height: 100 },
-    { x: 695, y: 260, width: 70, height: 100 },
-    { x: 235, y: 620, width: 70, height: 100 },
-    { x: 695, y: 620, width: 70, height: 100 },
   ];
   const expectedCombatObstacles = [
     { x: 0, y: 0, width: 1280, height: 40 },
     { x: 0, y: 960, width: 1280, height: 40 },
     { x: 0, y: 40, width: 40, height: 920 },
     { x: 1240, y: 40, width: 40, height: 920 },
-    { x: 220, y: 270, width: 85, height: 120 },
-    { x: 975, y: 620, width: 85, height: 120 },
   ];
   const chrome = { modeKind: 'preview', modeLabel: 'preview', modeDetail: '', activityMessage: '' };
   const spriteComponent = (node) => [...node.components.values()].find((component) => 'spriteFrame' in component);
@@ -9740,7 +11910,16 @@ delete globalThis.wx;
     assert.equal(collectNodes(root, ({ name }) => /^(WalkStoneFloor|WalkFloorMotif:|WalkChapterProp:|WalkWall:|WalkBrazier:)/.test(name)).length, 0,
       'a dungeon must not paint the old hall, central emblem, icon pillars or braziers over its environment');
   };
-  const assertDungeonTextBackings = (root, phase, insets) => {
+  const assertNoBoundaryFills = (root, spec) => {
+    for (const [index, obstacle] of spec.obstacles.entries()) {
+      if (obstacle.width <= 140 && obstacle.height <= 140) continue;
+      const footprint = findNode(root, `WalkObstacleFootprint:${index}`);
+      assert.ok(footprint, 'world boundary keeps its original collision/depth node');
+      const graphics = footprint.getComponent(TestGraphics);
+      assert.ok(!graphics || graphics.fills.length === 0, 'world boundary collisions must not paint dark bands over the full-screen environment');
+    }
+  };
+  const assertDungeonTextBackings = (root) => {
     const assertBacking = (backing, label) => {
       assert.ok(backing, `${label.name}: bright chapter environments need a readable backing`);
       assert.ok(hasComponentNamed(backing, 'Graphics'));
@@ -9756,13 +11935,12 @@ delete globalThis.wx;
     assert.ok(labels.length > 0, 'chapter fixture contains at least one named world target');
     assert.equal(collectNodes(root, ({ name }) => name === 'WalkTargetNameBacking').length, labels.length);
     for (const label of labels) {
-      assert.deepEqual({ ...label.position }, { x: 0, y: -26, z: 0 }, 'world-name coordinates remain unchanged');
+      assert.ok(label.position.x === 0 && label.position.y < 0,
+        'HTML object names remain centered below their rendered target feet');
       assertBacking(findNode(label.parent, 'WalkTargetNameBacking'), label);
     }
-    const hint = findNode(root, 'WalkInteractionHint');
-    assert.deepEqual({ ...hint.position }, { x: 0, y: -667 + insets.bottom + (phase === 'combat' ? 416 : 253), z: 0 }, 'interaction hint stays at its original safe-area coordinate');
-    assert.deepEqual({ ...hint.size }, { width: 685, height: 51 });
-    assertBacking(findNode(root, 'WalkInteractionHintBacking'), hint);
+    assert.equal(findNode(root, 'WalkInteractionHint'), undefined, 'dungeon controls omit the movement and nearby-interaction tip');
+    assert.equal(findNode(root, 'WalkInteractionHintBacking'), undefined, 'the removed dungeon tip leaves no empty backing');
   };
   const assertBackground = (root, key, source, frame, width, height) => {
     const window = findNode(root, `WalkDungeonBackdropWindow:${key}`);
@@ -9770,13 +11948,18 @@ delete globalThis.wx;
     assert.ok(window, `${key}: world clipping window exists`);
     assert.ok(backdrop, `${key}: dedicated environment sprite exists`);
     assert.ok(hasComponentNamed(window, 'Mask'), `${key}: excess cover artwork must be clipped`);
-    assert.equal(window.parent, findNode(root, 'WalkCamera'), `${key}: artwork moves with the real world camera`);
-    assert.equal(findNode(root, 'WalkPlayer').parent.parent, window.parent,
-      `${key}: the player and environment share the same coordinate system`);
-    assert.deepEqual({ ...window.size }, { width, height });
-    assert.deepEqual({ ...window.position }, { x: width / 2, y: -height / 2, z: 0 });
+    assert.equal(window.parent, findNode(root, 'WalkScene'), `${key}: artwork covers the screen independently of the fixed world camera`);
+    assert.notEqual(findNode(root, 'WalkPlayer').parent.parent, window.parent,
+      `${key}: the actor projection cannot resize or move the environment`);
+    const scene = findNode(root, 'WalkScene');
+    const { width: backgroundWidth, height: backgroundHeight } = window.size;
+    assert.deepEqual({ ...window.size }, { width: 750, height: scene.size.height },
+      `${key}: the cover window spans HUD, room and bottom controls`);
+    assert.ok(Math.abs(window.position.x + scene.position.x) < 0.001, `${key}: full background cancels only the scene's safe-area offset`);
+    assert.equal(window.position.y, 0);
+    assert.equal(window.position.z, 0);
     assert.equal(backdrop.parent, window);
-    const scale = Math.max(width / source.width, height / source.height);
+    const scale = Math.max(backgroundWidth / source.width, backgroundHeight / source.height);
     assert.equal(backdrop.size.width, source.width * scale);
     assert.equal(backdrop.size.height, source.height * scale);
     assert.equal(backdrop.size.width / backdrop.size.height, source.width / source.height,
@@ -9784,6 +11967,7 @@ delete globalThis.wx;
     assert.equal(spriteComponent(backdrop).spriteFrame, frame, `${key}: renderer uses the loaded frame exactly`);
     assert.equal(findNode(root, 'WalkEnvironmentLoading'), undefined, `${key}: a loaded background removes loading status`);
     assert.equal(findNode(root, 'WalkDungeonBackdropPending'), undefined);
+    assertWorldImageCoverage(root, key);
     assertNoHubDecor(root);
     return spriteComponent(backdrop);
   };
@@ -9801,63 +11985,72 @@ delete globalThis.wx;
     backgroundKeys.add(getInfiniteFlowSceneVisualKeys(model).background);
     assert.equal(getInfiniteFlowSceneVisualKeys(model).background, key);
     assert.equal(getInfiniteFlowSceneVisualKeys(model).player, 'character:reincarnator_walk');
-    assert.equal(getInfiniteFlowSceneVisualKeys(model).opponent, undefined);
+    const entryDetail = model.sections[1].detail;
+    const entryMonster = entryDetail.currentNode.nodeType === 'monster' && !entryDetail.currentNode.cleared
+      && entryDetail.pending === undefined ? entryDetail.currentNode.monsterId : undefined;
+    assert.equal(getInfiniteFlowSceneVisualKeys(model).opponent,
+      entryMonster === undefined ? undefined : `monster:${entryMonster}_world`,
+      `${dungeonId}: the entry room requests only its explicitly visible monster`);
     const spec = buildWalkWorld(model);
     assert.deepEqual(spec.obstacles, expectedExploreObstacles, `${dungeonId}: background replacement cannot move collisions`);
     const canvas = { children: [], getComponent() { return { contentSize: { width: 750, height: 1334 } }; }, addChild(child) { this.children.push(child); child.parent = this; } };
     const view = new SceneInfiniteFlowView(canvas, { activate() { assert.fail('background rendering or walking dispatched a domain command'); } });
     const root = () => canvas.children.at(-1);
     view.setSceneVisualAsset({ width: 720, height: 180 }, { key: `dungeon:${dungeonId}`, revision: 'legacy-fixture' });
-    view.render(model, chrome, EXPLORE_INSETS_320);
-    assert.ok(findNode(root(), 'WalkDungeonFloor'));
-    assert.ok(findNode(root(), 'WalkDungeonBackdropPending'));
-    assert.equal(labelComponent(findNode(root(), 'WalkEnvironmentLoading')).string, '场景加载中…',
-      `${dungeonId}: the legacy illustration is not a finished environment substitute`);
+    view.render(model, { ...chrome, sceneAssets: 'loading' }, EXPLORE_INSETS_320);
+    assertSceneAssetGate(view, root(), 'loading');
+    assert.equal(findNode(root(), 'WalkDungeonBackdropPending'), undefined, 'incomplete background uses the single loading surface');
     assert.equal(findNode(root(), `WalkDungeonBackdrop:${key}`), undefined);
     assertNoHubDecor(root());
+    const source = [{ width: 1254, height: 1254 }, { width: 720, height: 180 }, { width: 180, height: 720 }][index % 3];
+    view.setSceneVisualAsset(source, { key, revision: 'environment-fixture' });
+    supplySceneVisualFixtures(view, model);
+    const visual = view.sceneVisuals.get(key);
+    view.render(model, chrome, EXPLORE_INSETS_320);
     for (const [obstacleIndex, obstacle] of spec.obstacles.entries()) {
       const footprint = findNode(root(), `WalkObstacleFootprint:${obstacleIndex}`);
-      assert.ok(footprint, `${dungeonId}: every invisible collision must have a visible footprint`);
+      assert.ok(footprint, `${dungeonId}: every collision keeps its original world/depth node`);
       assert.deepEqual({ ...footprint.position }, { x: obstacle.x + obstacle.width / 2, y: -(obstacle.y + obstacle.height), z: 0 });
       assert.deepEqual({ ...footprint.size }, { width: obstacle.width, height: obstacle.height + 8 });
     }
+    assertNoBoundaryFills(root(), spec);
     globalThis.__walkingTestInput.emit('key-down', { keyCode: 65 });
     for (let frame = 0; frame < 90; frame += 1) view.tick(1 / 60);
     globalThis.__walkingTestInput.emit('key-up', { keyCode: 65 });
     const collisionPosition = view.walkScene.getPosition();
-    assert.ok(Math.abs(collisionPosition.x - 319) < 0.01, `${dungeonId}: avatar still stops 14px outside the original southwest obstacle`);
+    assert.ok(Math.abs(collisionPosition.x - 170) < 0.01, `${dungeonId}: 90 leftward frames still move 330 original world units`);
     assert.equal(collisionPosition.y, 700);
 
-    const source = [{ width: 1254, height: 1254 }, { width: 720, height: 180 }, { width: 180, height: 720 }][index % 3];
-    view.setSceneVisualAsset(source, { key, revision: 'environment-fixture' });
-    const visual = view.sceneVisuals.get(key);
     view.render(model, chrome, EXPLORE_INSETS_320);
-    assert.deepEqual(view.walkScene.getPosition(), collisionPosition, `${dungeonId}: image arrival cannot teleport the avatar`);
+    assert.deepEqual(view.walkScene.getPosition(), collisionPosition, `${dungeonId}: ready-scene refresh cannot teleport the avatar`);
     const firstSprite = assertBackground(root(), key, source, visual.frame, 1000, 1000);
     assertDarkWalkingUi(root(), model, EXPLORE_INSETS_320);
-    assertDungeonTextBackings(root(), 'explore', EXPLORE_INSETS_320);
+    assertDungeonTextBackings(root());
     assert.ok(view.visualSprites.has(firstSprite), `${dungeonId}: the frame is tracked for safe teardown`);
     assert.equal(JSON.stringify(model), snapshot, `${dungeonId}: image/render operations leave the public VM unchanged`);
 
     const combat = combatModel(combatChapterContextFixture({ dungeonId, dungeonName: DUNGEONS[dungeonId].name }));
     combat.visualAssetKey = 'monster:fog_lesser_demon';
     assert.equal(getInfiniteFlowSceneVisualKeys(combat).background, key);
-    assert.equal(getInfiniteFlowSceneVisualKeys(combat).opponent, combat.visualAssetKey,
-      `${dungeonId}: backdrop routing does not change enemy image routing`);
+    assert.equal(getInfiniteFlowSceneVisualKeys(combat).opponent, `monster:${combat.sections[1].detail.enemy.id}_world`,
+      `${dungeonId}: backdrop routing preserves the enemy world identity independently of its portrait`);
     assert.deepEqual(buildWalkWorld(combat).obstacles, expectedCombatObstacles);
+    supplySceneVisualFixtures(view, combat);
     view.render(combat, chrome, EXPLORE_INSETS_390);
+    assertNoBoundaryFills(root(), buildWalkWorld(combat));
     assert.deepEqual(view.walkScene.getPosition(), { x: 440, y: 700 });
     const combatSprite = assertBackground(root(), key, source, visual.frame, 1280, 1000);
     assertDarkWalkingUi(root(), combat, EXPLORE_INSETS_390);
-    assertDungeonTextBackings(root(), 'combat', EXPLORE_INSETS_390);
+    assertDungeonTextBackings(root());
     assert.equal(visual.frame.destroyCalls, 0, 'explore/combat reuse the same live background frame');
     view.clearSceneVisualAsset(key);
     assert.equal(combatSprite.spriteFrame, null, 'the live sprite detaches before its frame is disposed');
     assert.equal(view.visualSprites.has(combatSprite), false, 'cleared background sprites leave the tracked set');
     assert.equal(visual.frame.destroyCalls, 1, 'clearing an environment destroys its frame exactly once');
     assert.equal(visual.texture.destroyCalls, 1, 'clearing an environment destroys its texture exactly once');
-    view.render(combat, chrome, EXPLORE_INSETS_390);
-    assert.ok(findNode(root(), 'WalkEnvironmentLoading'), 'a cleared image is honestly pending again');
+    view.render(combat, { ...chrome, sceneAssets: 'error' }, EXPLORE_INSETS_390);
+    assertSceneAssetGate(view, root(), 'error');
+    assert.equal(findNode(root(), 'WalkEnvironmentLoading'), undefined, 'a cleared background cannot restore old per-object drawings');
     assertNoHubDecor(root());
     view.destroy();
     assert.equal(visual.frame.destroyCalls, 1);
@@ -9868,14 +12061,466 @@ delete globalThis.wx;
   delete contextlessCombat.sections[1].detail.chapterContext;
   assert.equal(getInfiniteFlowSceneVisualKeys(contextlessCombat).background, undefined,
     'missing chapter context cannot guess a dungeon from the enemy identity');
-  assert.equal(getInfiniteFlowSceneVisualKeys(contextlessCombat).opponent, contextlessCombat.visualAssetKey);
+  assert.equal(getInfiniteFlowSceneVisualKeys(contextlessCombat).opponent,
+    `monster:${contextlessCombat.sections[1].detail.enemy.id}_world`,
+    'contextless combat still uses its authoritative monster identity');
+  const legacyCanvas = { children: [], getComponent() { return { contentSize: { width: 750, height: 1334 } }; },
+    addChild(child) { this.children.push(child); child.parent = this; } };
+  const legacyView = new SceneFixtureView(legacyCanvas, { activate() { assert.fail('legacy plain-floor rendering cannot dispatch a command'); } });
+  try {
+    legacyView.render(contextlessCombat, chrome, EXPLORE_INSETS_320);
+    const legacyRoot = legacyCanvas.children.at(-1);
+    const floor = findNode(legacyRoot, 'WalkDungeonFloor');
+    assert.ok(floor?.getComponent(TestGraphics)?.fills.length > 0, 'legacy combat without a declared environment retains its plain floor');
+    assert.equal(collectNodes(legacyRoot, node => node.name.startsWith('WalkDungeonBackdrop:')).length, 0,
+      'legacy plain-floor mode does not guess or attach an unrelated chapter image');
+    assert.ok(findNode(legacyRoot, 'WalkPlayerBody'), 'legacy contextless combat still publishes the actual player');
+  } finally { legacyView.destroy(); }
   const hub = hubModel(hubEntryActionFixtures(false));
   hub.visualAssetKey = 'scene:main_god_space';
-  assert.equal(getInfiniteFlowSceneVisualKeys(hub).background, 'scene:main_god_space');
+  assert.equal(getInfiniteFlowSceneVisualKeys(hub).background, 'scene:hub_courtyard_walk');
+  assert.equal(getInfiniteFlowSceneVisualKeys(hub).hubPortal, HUB_PORTAL_FIXTURE.key);
+  assert.equal(getInfiniteFlowSceneVisualKeys(contextlessCombat).hubPortal, undefined, 'combat never requests courtyard portal artwork');
   const result = resultModel();
   result.visualAssetKey = 'dungeon:metro_abyss';
   assert.equal(getInfiniteFlowSceneVisualKeys(result).background, result.visualAssetKey,
     'settlement artwork is not silently changed by the walk-world rollout');
+  assert.equal(getInfiniteFlowSceneVisualKeys(result).hubPortal, undefined, 'settlement never requests courtyard portal artwork');
+}
+
+// Exercise the actual scene tree, background, local target clone and interaction
+// binding. Fixtures enter combat through the real reducer without touching a save.
+let dungeonRoomFitCases = 0;
+let dungeonRoomEffectAnchorCases = 0;
+let dungeonCombatHudClearanceCases = 0;
+let dungeonHtmlGoldenCases = 0;
+let dungeonHtmlInteractionCases = 0;
+let dungeonMultiNeighborCases = 0;
+{
+  const priorFrameSize = globalThis.__walkingTestFrameSize;
+  const entered = reduceGameCommand(createInitialState(), {
+    type: 'run/enter', dungeonId: DUNGEON_ORDER[0], protocolId: 'standard',
+    seeds: { rulesVersion: 1, hiddenTaskSeed: 0x1234_5678 },
+  });
+  assert.equal(entered.status, 'committed');
+  const fighting = reduceGameCommand(entered.state, { type: 'run/select-node', nodeId: entered.state.run.currentNodeId });
+  assert.equal(fighting.status, 'committed');
+  const models = [buildActualGameViewModel(entered.state, {}), buildActualGameViewModel(fighting.state, {})];
+  const chrome = { modeKind: 'preview', modeLabel: 'preview', modeDetail: '', activityMessage: '' };
+  const inside = (inner, outer, label) => assert.ok(inner.left >= outer.left - 0.01
+    && inner.right <= outer.right + 0.01 && inner.bottom >= outer.bottom - 0.01
+    && inner.top <= outer.top + 0.01, `${label}: full visible bounds ${JSON.stringify(inner)} fit the reserved room ${JSON.stringify(outer)}`);
+  const close = (actual, expected, label, tolerance = 0.001) =>
+    assert.ok(Math.abs(actual - expected) <= tolerance, `${label}: expected ${expected}, received ${actual}`);
+  const assertCloneContract = (original, fitted, label) => {
+    assert.notEqual(fitted, original, `${label}: layout uses a transient world view`);
+    assert.notEqual(fitted.targets, original.targets, `${label}: target feet use an independent array`);
+    for (const key of Object.keys(original).filter(key => key !== 'targets')) {
+      assert.equal(fitted[key], original[key], `${label}: ${key} stays identical to the authoritative world`);
+    }
+    assert.equal(fitted.targets.length, original.targets.length, `${label}: no side neighbor is omitted`);
+    for (const [index, target] of original.targets.entries()) {
+      const projected = fitted.targets[index];
+      assert.notEqual(projected, target);
+      for (const key of Object.keys(target).filter(key => key !== 'x' && key !== 'y')) {
+        assert.equal(projected[key], target[key], `${label}/${target.id}: ${key} retains its original identity/value`);
+      }
+    }
+  };
+  // Independent values measured from prototype CSS (image bottom edges).
+  const htmlFeet = {
+    320: { north: [160, 202], south: [160, 422], west: [40, 305], east: [280, 312], main: [160, 335] },
+    390: { north: [195, 232], south: [195, 678], west: [42, 447], east: [348, 455], main: [195, 421.32] },
+  };
+  for (const [width, height] of [[320, 568], [390, 844]]) {
+    const px = 750 / width;
+    const layout = getDungeonHtmlRoomLayout({ worldWidth: 1000, worldHeight: 1000,
+      surfaceHeight: height * px, viewportWidth: width, safeInsets: { top: 0, right: 0, bottom: 0, left: 0 } });
+    for (const [slot, [expectedX, expectedY]] of Object.entries(htmlFeet[width])) {
+      close(width / 2 + layout.targetFeet[slot].x / px, expectedX, `${width}px HTML ${slot} x`);
+      close(height / 2 - layout.targetFeet[slot].y / px, expectedY, `${width}px HTML ${slot} image bottom`);
+      const world = layout.unproject(layout.targetFeet[slot]);
+      const screen = layout.project(world);
+      close(screen.x, layout.targetFeet[slot].x, `${width}px ${slot} inverse x`);
+      close(screen.y, layout.targetFeet[slot].y, `${width}px ${slot} inverse y`);
+      dungeonHtmlGoldenCases += 1;
+    }
+    // Multiple real direction targets retain distinct destinations and command
+    // objects. The local clone may spread their feet without inventing actions.
+    const base = buildWalkWorld(models[0]);
+    const gate = base.targets.find(target => target.kind === 'transition');
+    const multi = { ...base, targets: [...base.targets.filter(target => target.doorSide !== 'north'),
+      ...Array.from({ length: 3 }, (_, index) => ({ ...gate, id: `multi:${index}`, doorSide: 'north',
+        destinationNodeId: `neighbor:${index}`, radius: 110 + index,
+        action: { ...models[0].sections[2].actions[0], actionId: `move:${index}`,
+          event: { kind: 'command', command: { type: 'run/move', nodeId: `neighbor:${index}` } } },
+        ...(index === 2 ? { disabledReason: '尚未开放' } : {}) }))] };
+    const snapshot = JSON.stringify(multi);
+    const fitted = fitDungeonHtmlTargets(multi, layout);
+    assertCloneContract(multi, fitted, `${width}px multi north neighbor`);
+    const northern = fitted.targets.filter(target => target.doorSide === 'north');
+    assert.equal(northern.length, 3);
+    assert.equal(new Set(northern.map(target => target.x)).size, 3, 'same-side neighbors have separate rendered feet');
+    assert.deepEqual(northern.map(target => target.action.event.command.nodeId), ['neighbor:0', 'neighbor:1', 'neighbor:2']);
+    assert.equal(JSON.stringify(multi), snapshot, 'spreading neighbors leaves the original world untouched');
+    dungeonMultiNeighborCases += 1;
+  }
+  try {
+    for (const [viewportWidth, viewportHeight] of [[320, 568], [390, 844]]) {
+      globalThis.__walkingTestFrameSize = { width: viewportWidth, height: viewportHeight };
+      const surfaceHeight = Math.max(1334, viewportHeight * 750 / viewportWidth);
+      const pixel = Math.max(750 / viewportWidth, surfaceHeight / viewportHeight);
+      for (const [insetKind, insets] of [
+        ['none', { top: 0, right: 0, bottom: 0, left: 0 }],
+        ['safe', { top: 44 * pixel, right: 3 * pixel, bottom: 34 * pixel, left: 7 * pixel }],
+      ]) for (const model of models) {
+        const label = `${viewportWidth}x${viewportHeight}/${insetKind}/${model.phase}`;
+        const snapshot = JSON.stringify(model);
+        const sourceSpec = buildWalkWorld(model);
+        const specSnapshot = JSON.stringify(sourceSpec);
+        const canvas = { name: `html-room-${label}`, children: [],
+          getComponent() { return { contentSize: { width: 750, height: surfaceHeight } }; },
+          addChild(child) { this.children.push(child); child.parent = this; } };
+        const calls = [];
+        const view = new SceneFixtureView(canvas, { activate(physicalId, actionId, event) { calls.push({ physicalId, actionId, event }); } });
+        try {
+          view.render(model, chrome, insets);
+          const root = () => canvas.children.at(-1);
+          const scene = findNode(root(), 'WalkScene');
+          const camera = findNode(root(), 'WalkCamera');
+          const { spec, layout, transientSpec } = sceneDungeonLayout(root(), model, insets);
+          assertCloneContract(spec, transientSpec, label);
+          const lower = projectedNodePoint(scene, { x: layout.roomRect.x, y: layout.roomRect.y });
+          const upper = projectedNodePoint(scene, { x: layout.roomRect.x + layout.roomRect.width, y: layout.roomRect.y + layout.roomRect.height });
+          const room = { left: lower.x, bottom: lower.y, right: upper.x, top: upper.y };
+          inside(room, { left: -375 + insets.left, right: 375 - insets.right,
+            bottom: -surfaceHeight / 2 + insets.bottom + 120 * pixel,
+            top: surfaceHeight / 2 - insets.top - 136 * pixel }, label);
+          assert.equal(camera.scale.x, layout.scale.x, `${label}: horizontal movement uses the fixed affine axis`);
+          assert.equal(camera.scale.y, layout.scale.y, `${label}: depth movement uses the fixed affine axis`);
+          assert.deepEqual(layout.cameraPoint, { x: spec.width / 2, y: spec.height / 2 });
+          assertWorldImageCoverage(root(), getInfiniteFlowSceneVisualKeys(model).background);
+          const bg = findNode(root(), `WalkDungeonBackdrop:${getInfiniteFlowSceneVisualKeys(model).background}`);
+          const backgroundBoundsBefore = projectedNodeBounds(bg);
+          for (const target of transientSpec.targets) {
+            const actor = findNode(root(), `WalkTarget:${target.id}`);
+            assert.deepEqual({ ...actor.position }, { x: target.x, y: -target.y, z: 0 },
+              `${label}/${target.id}: visual and nearest-target feet share the transient world coordinate`);
+            close(actor.scale.x * camera.scale.x, 1, `${label}/${target.id}: sprite/text horizontal counter-scale`);
+            close(actor.scale.y * camera.scale.y, 1, `${label}/${target.id}: sprite/text vertical counter-scale`);
+            const actualFoot = projectedNodePoint(actor);
+            const expectedFoot = projectedNodePoint(scene, layout.project(target));
+            close(actualFoot.x, expectedFoot.x, `${label}/${target.id}: projected foot x`);
+            close(actualFoot.y, expectedFoot.y, `${label}/${target.id}: projected foot y`);
+            if (target.doorSide === undefined) {
+              const main = projectedNodePoint(scene, layout.targetFeet.main);
+              close(actualFoot.x, main.x, `${label}: central target occupies the HTML main slot`);
+              close(actualFoot.y, main.y, `${label}: central target occupies the HTML main slot`);
+            }
+          }
+          const sprites = collectNodes(root(), node => node.name === 'WalkTransitionGateSprite'
+            || node.name.startsWith('WalkMonsterSprite:') || node.name === 'WalkPlayerBody');
+          assert.equal(sprites.filter(node => node.name === 'WalkTransitionGateSprite').length, 4, `${label}: all four gate directions remain visible`);
+          assert.ok(sprites.some(node => node.name.startsWith('WalkMonsterSprite:')));
+          for (const node of sprites) {
+            const bounds = projectedNodeBounds(node);
+            inside(bounds, room, `${label}/${node.name}`);
+            const sprite = [...node.components.values()].find(component => 'spriteFrame' in component);
+            assert.ok(sprite?.spriteFrame, `${label}/${node.name}: approved art remains attached`);
+            const source = sprite.spriteFrame.originalSize ?? sprite.spriteFrame.rect ?? sprite.spriteFrame.image;
+            close((bounds.right - bounds.left) / (bounds.top - bounds.bottom), source.width / source.height,
+              `${label}/${node.name}: the complete source keeps its original aspect ratio`);
+            const height = (bounds.top - bounds.bottom) / pixel;
+            if (node.name === 'WalkTransitionGateSprite') close(height, viewportWidth === 320 ? 60 : 90, `${label}: HTML gate height`);
+            else if (node.name.startsWith('WalkMonsterSprite:')) close(height, viewportWidth === 320 ? 108 : 158, `${label}: HTML monster height`);
+            else close(height * 308 / 336, viewportWidth === 320 ? 50 : 65, `${label}: HTML visible hero height`);
+            if (node.name !== 'WalkPlayerBody') {
+              const foot = projectedNodePoint(node.parent.parent);
+              close(bounds.bottom, foot.y, `${label}/${node.name}: original image bottom is on its target foot`);
+            }
+          }
+          for (const node of collectNodes(root(), node => node.name === 'WalkTargetName' || node.name === 'WalkTransitionState')) {
+            inside(projectedNodeBounds(node), room, `${label}/${node.parent.name}/${node.name}`);
+            const fontScale = projectedNodePoint(node, { x: 0, y: labelComponent(node).fontSize }).y - projectedNodePoint(node).y;
+            assert.ok(fontScale / pixel >= 9 - 0.001, `${label}/${node.name}: world text remains readable without affine distortion`);
+          }
+          const cameraBefore = { ...camera.position };
+          const positionBefore = view.walkScene.getPosition();
+          const playerScreenBefore = projectedNodePoint(findNode(root(), 'WalkPlayer'));
+          view.walkScene.tick(0.1, { x: 1, y: 0 });
+          const horizontalPosition = view.walkScene.getPosition();
+          const playerScreenAfter = projectedNodePoint(findNode(root(), 'WalkPlayer'));
+          close(horizontalPosition.x - positionBefore.x, 22, `${label}: movement uses the original world speed`);
+          assert.equal(horizontalPosition.y, positionBefore.y);
+          close(playerScreenAfter.x - playerScreenBefore.x, 22 * layout.scale.x, `${label}: horizontal movement is a straight affine axis`);
+          close(playerScreenAfter.y, playerScreenBefore.y, `${label}: rightward walking cannot drift in depth`);
+          view.walkScene.tick(0.1, { x: 0, y: -1 });
+          const positionAfter = view.walkScene.getPosition();
+          const verticalScreenAfter = projectedNodePoint(findNode(root(), 'WalkPlayer'));
+          close(horizontalPosition.y - positionAfter.y, 22, `${label}: vertical movement keeps the original world speed`);
+          assert.equal(positionAfter.x, horizontalPosition.x);
+          close(verticalScreenAfter.x, playerScreenAfter.x, `${label}: depth walking cannot drift horizontally`);
+          close(verticalScreenAfter.y - playerScreenAfter.y, 22 * layout.scale.y, `${label}: depth movement is a straight affine axis`);
+          assert.deepEqual({ ...camera.position }, cameraBefore, `${label}: the fixed camera never follows the avatar`);
+          assert.deepEqual(projectedNodeBounds(bg), backgroundBoundsBefore, `${label}: walking cannot resize or move the original background`);
+          assert.deepEqual({ ...findNode(root(), 'WalkPlayer').position }, { x: positionAfter.x, y: -positionAfter.y, z: 0 });
+          view.render(model, chrome, insets);
+          assert.deepEqual(view.walkScene.getPosition(), positionAfter, `${label}: same-world refresh retains the exact live world position`);
+          assert.deepEqual({ ...findNode(root(), 'WalkCamera').position }, cameraBefore, `${label}: refresh retains the fixed projection`);
+          if (model.phase === 'combat') {
+            const north = transientSpec.targets.find(target => target.doorSide === 'north');
+            const northActor = findNode(root(), `WalkTarget:${north.id}`);
+            const northState = findNode(northActor, 'WalkTransitionState');
+            const northernCaptionBounds = projectedNodeBounds(northState);
+            const assertCombatHudClearsNorth = (stage) => {
+              for (const name of ['WalkEnemyHealth', 'WalkEnemyHealthLabel']) {
+                const bounds = projectedNodeBounds(findNode(root(), name));
+                inside(bounds, room, `${label}/${stage}/${name}`);
+                assert.ok(bounds.top < northernCaptionBounds.bottom - 0.001,
+                  `${label}/${stage}/${name}: projected top ${bounds.top} stays below north caption bottom ${northernCaptionBounds.bottom}`);
+              }
+              dungeonCombatHudClearanceCases += 1;
+            };
+            assertCombatHudClearsNorth('initial');
+            view.walkScene.updateCombatReadout({ enemyHp: 17 });
+            assert.equal(labelComponent(findNode(root(), 'WalkEnemyHealthLabel')).string,
+              `17 / ${model.sections[1].detail.enemy.maxHp}`, `${label}: the live enemy HP readout remains authoritative`);
+            assertCombatHudClearsNorth('live HP update');
+            const mask = findNode(root(), 'WalkCombatEffectsViewport');
+            assert.ok(hasComponentNamed(mask, 'Mask'), `${label}: effects retain native clipping`);
+            const maskBounds = projectedNodeBounds(mask);
+            for (const edge of ['left', 'right', 'bottom', 'top']) close(maskBounds[edge], room[edge], `${label}: effect clip shares room ${edge}`);
+            const playerBody = findNode(root(), 'WalkPlayerBody');
+            const playerCenter = projectedNodePoint(playerBody);
+            const playerBodyPosition = { ...playerBody.position };
+            assert.equal(view.walkScene.startCombatAction('guard', () => {}), true);
+            const effect = findNode(root(), 'WalkCombatEffects');
+            const shield = effect.getComponent(TestGraphics).segments[0];
+            assert.ok(shield, `${label}: native guard effect is drawn`);
+            const guardAnchor = projectedNodePoint(effect, { x: shield.from.x, y: shield.from.y - 57 });
+            close(guardAnchor.x, playerCenter.x, `${label}: guard begins at the projected player body`);
+            close(guardAnchor.y, playerCenter.y, `${label}: guard follows the projected body offset`, 3 * pixel);
+            view.walkScene.cancelCombatAction();
+            let impacts = 0;
+            assert.equal(view.walkScene.startCombatAction('attack', () => { impacts += 1; }), true);
+            for (let frame = 0; frame < 3; frame += 1) view.walkScene.tick(0.1, { x: 0, y: 0 });
+            assert.equal(impacts, 1, `${label}: original effect impact is delivered once`);
+            assert.equal(view.walkScene.resolveCombatAction({ enemyDamage: 13 }, () => {}), true);
+            const damage = findNode(root(), 'WalkDamage');
+            assert.equal(labelComponent(damage).string, '−13');
+            const enemyAnchor = projectedNodePoint(damage, { x: 0, y: -60 });
+            const enemyArt = collectNodes(root(), node => node.name.startsWith('WalkMonsterSprite:'))[0];
+            const enemyCenter = projectedNodePoint(enemyArt);
+            close(enemyAnchor.x, enemyCenter.x, `${label}: damage begins at the projected enemy body`);
+            close(enemyAnchor.y, enemyCenter.y, `${label}: damage follows the projected image body offset`, 3 * pixel);
+            inside({ left: enemyAnchor.x, right: enemyAnchor.x, bottom: enemyAnchor.y, top: enemyAnchor.y }, room,
+              `${label}: damage remains inside the effect clip`);
+            view.walkScene.cancelCombatAction();
+            assert.deepEqual({ ...playerBody.position }, playerBodyPosition, `${label}: cancelled recoil restores the player's body offset`);
+            assert.deepEqual({ ...enemyArt.parent.position }, { x: 0, y: 0, z: 0 }, `${label}: cancelled recoil restores the enemy's foot origin`);
+            assert.deepEqual(view.walkScene.getPosition(), positionAfter, `${label}: effect recoil never changes saved walking coordinates`);
+            dungeonRoomEffectAnchorCases += 1;
+          }
+          assert.equal(calls.length, 0, `${label}: rendering, walking and isolated effects cannot manufacture a domain command`);
+          const currentTarget = transientSpec.targets.find(target => target.kind === 'monster');
+          walkTowardRenderedTarget(view, root(), currentTarget.id, currentTarget.radius);
+          const marker = findNode(root(), 'WalkTargetMarker');
+          const actor = findNode(root(), `WalkTarget:${currentTarget.id}`);
+          assert.deepEqual({ ...marker.position }, { ...actor.position }, `${label}: proximity marker names the same rendered target foot`);
+          assert.deepEqual(projectedNodePoint(marker), projectedNodePoint(actor), `${label}: proximity marker has no screen drift`);
+          emitTouch(findNode(root(), 'WalkInteract'), 16000 + dungeonHtmlInteractionCases);
+          if (model.phase === 'combat') for (let frame = 0; frame < 3; frame += 1) view.tick(0.1);
+          assert.equal(calls.length, 1, `${label}: deliberate proximity interaction dispatches exactly one original action`);
+          assert.equal(calls[0].actionId, currentTarget.action.actionId, `${label}: the target retains the authoritative action ID`);
+          assert.equal(calls[0].event, currentTarget.action.event, `${label}: the target retains the authoritative event object`);
+          view.walkScene.cancelCombatAction();
+          dungeonHtmlInteractionCases += 1;
+          assert.equal(JSON.stringify(model), snapshot, `${label}: presentation keeps the authoritative model unchanged`);
+          assert.equal(JSON.stringify(buildWalkWorld(model)), specSnapshot, `${label}: rendering cannot alter the authoritative world spec`);
+          dungeonRoomFitCases += 1;
+        } finally { view.destroy(); }
+      }
+    }
+  } finally { globalThis.__walkingTestFrameSize = priorFrameSize; }
+  assert.equal(dungeonRoomFitCases, 8);
+  assert.equal(dungeonRoomEffectAnchorCases, 4);
+  assert.equal(dungeonCombatHudClearanceCases, 8);
+  assert.equal(dungeonHtmlGoldenCases, 10);
+  assert.equal(dungeonHtmlInteractionCases, 8);
+  assert.equal(dungeonMultiNeighborCases, 2);
+}
+
+// The compact frame is shared by every sheet family. Exercise the real host
+// binding layer as well as geometry: retired close nodes must never close a
+// replacement sheet, and local dismissal must never dispatch a game command.
+let compactModalCloseCases = 0;
+{
+  const initialState = createInitialState();
+  const entered = reduceGameCommand(initialState, {
+    type: 'run/enter', dungeonId: DUNGEON_ORDER[0], protocolId: 'standard',
+    seeds: { rulesVersion: 1, hiddenTaskSeed: 0x1234_5678 },
+  });
+  assert.equal(entered.status, 'committed');
+  const battle = reduceGameCommand(entered.state, { type: 'run/select-node', nodeId: entered.state.run.currentNodeId });
+  assert.equal(battle.status, 'committed');
+  const result = reduceGameCommand(entered.state, { type: 'run/retreat' });
+  assert.equal(result.status, 'committed');
+  const hub = buildActualGameViewModel(initialState, { hubPanel: 'entry' });
+  const explore = buildActualGameViewModel(entered.state, {});
+  const modalModels = [
+    ['character', hub], ['inventory', hub], ['map', explore], ['objectives', explore], ['log', explore],
+    ['menu', buildActualGameViewModel(battle.state, {})], ['interaction', explore], ['entry', hub],
+    ['npc', buildActualGameViewModel(initialState, { hubPanel: 'supplies' })], ['help', explore],
+    ['result', buildActualGameViewModel(result.state, {})],
+  ];
+  const priorFrame = globalThis.__walkingTestFrameSize;
+  try {
+    for (const viewportWidth of [320, 390]) {
+      const viewportHeight = viewportWidth === 320 ? 568 : 844;
+      globalThis.__walkingTestFrameSize = { width: viewportWidth, height: viewportHeight };
+      const surfaceHeight = Math.max(1334, viewportHeight * 750 / viewportWidth);
+      const unit = Math.max(750 / viewportWidth, surfaceHeight / viewportHeight);
+      const insets = { top: 44 * unit, right: 0, bottom: 34 * unit, left: 0 };
+      for (const [kind, model] of modalModels) {
+        const snapshot = JSON.stringify(model);
+        const canvas = { name: `compact-modal-${viewportWidth}-${kind}`, children: [],
+          getComponent() { return { contentSize: { width: 750, height: surfaceHeight } }; },
+          addChild(child) { this.children.push(child); child.parent = this; } };
+        let delegateCalls = 0;
+        const view = new SceneFixtureView(canvas, { activate() { delegateCalls += 1; } });
+        const chrome = { modeKind: 'preview', modeLabel: '', modeDetail: '' };
+        const root = () => canvas.children.at(-1);
+        view.render(model, chrome, insets);
+        view.openMobilePanel(kind);
+        const panel = findNode(root(), `MobileInfoSheet:${kind}`);
+        assert.ok(panel, `${viewportWidth}px/${kind}: real host renders the requested sheet`);
+        assert.ok(panel.size.width / unit <= 304 + 0.6 && panel.size.width / unit <= viewportWidth - 40 + 0.6,
+          `${viewportWidth}px/${kind}: compact width leaves physical side margins`);
+        assert.ok(panel.size.height / unit <= 464 + 0.6
+          && panel.size.height <= surfaceHeight - insets.top - insets.bottom - 88 * unit + 0.6,
+          `${viewportWidth}px/${kind}: frame remains inside the safe vertical surface`);
+        assert.ok(hasComponentNamed(panel, 'BlockInputEvents'), `${kind}: sheet blocks world input`);
+        const header = findNode(panel, 'MobileSheetTitleBand');
+        assert.ok(Math.abs(header.size.height / unit - 48) < 0.6, `${kind}: header is compact at both widths`);
+        const close = findNode(panel, 'MobileSheetClose');
+        assert.ok(Math.abs(close.size.width / unit - 44) < 0.6 && Math.abs(close.size.height / unit - 44) < 0.6,
+          `${kind}: close retains its complete physical touch region`);
+        const firstTouch = 14000 + compactModalCloseCases * 10;
+        emitTouch(close, firstTouch);
+        close.emit('touch-end', { getID: () => firstTouch, propagationStopped: false });
+        assert.equal(findNode(root(), `MobileInfoSheet:${kind}`), undefined, `${kind}: X dismisses exactly the local sheet`);
+        assert.equal(delegateCalls, 0, `${kind}: closing never dispatches a domain action`);
+        view.openMobilePanel(kind);
+        const replacementRoot = root();
+        emitTouch(close, firstTouch + 1);
+        assert.equal(root(), replacementRoot, `${kind}: a retired close callback cannot rebuild the current host`);
+        assert.ok(findNode(root(), `MobileInfoSheet:${kind}`), `${kind}: retired close cannot dismiss a replacement sheet`);
+        const currentClose = findNode(root(), 'MobileSheetClose');
+        view.destroy();
+        const retiredChildCount = canvas.children.length;
+        emitTouch(currentClose, firstTouch + 2);
+        assert.equal(canvas.children.length, retiredChildCount, `${kind}: destroyed host stays inert`);
+        assert.equal(delegateCalls, 0, `${kind}: stale callbacks never dispatch a domain action`);
+        assert.equal(JSON.stringify(model), snapshot, `${kind}: local sheet lifecycle preserves the projected model`);
+        compactModalCloseCases += 1;
+      }
+    }
+  } finally {
+    globalThis.__walkingTestFrameSize = priorFrame;
+  }
+}
+// Independent host overlays share the compact frame and preserve full help and
+// diagnostic documents. Their clip regions, footer controls and scroll content
+// must remain reachable at both phone widths.
+let compactOverlayCases = 0;
+{
+  const initialState = createInitialState();
+  const hub = buildActualGameViewModel(initialState, {});
+  const helpEntry = hub.sections[4].entries[1];
+  assert.ok(helpEntry, 'real help catalogue supplies an interior topic');
+  const help = buildActualGameViewModel(initialState, { activeHelpId: helpEntry.id });
+  const diagnostic = Array.from({ length: 24 }, (_, index) => `诊断边界 ${index + 1}：storage=unavailable command=persist`).join('\n');
+  const priorFrame = globalThis.__walkingTestFrameSize;
+  try {
+    for (const viewportWidth of [320, 390]) {
+      const viewportHeight = viewportWidth === 320 ? 568 : 844;
+      globalThis.__walkingTestFrameSize = { width: viewportWidth, height: viewportHeight };
+      const surfaceHeight = Math.max(1334, viewportHeight * 750 / viewportWidth);
+      const unit = Math.max(750 / viewportWidth, surfaceHeight / viewportHeight);
+      const insets = { top: 44 * unit, right: 0, bottom: 34 * unit, left: 0 };
+      for (const [kind, model, chrome, panelName, blockerName, scrollName] of [
+        ['boot', undefined, { modeKind: 'boot', modeLabel: 'bootstrap', modeDetail: diagnostic }, 'RuntimeDiagnostic', 'RuntimeDiagnosticBlocker', 'DiagnosticScroll'],
+        ['blocked', hub, { modeKind: 'blocked', modeLabel: 'storage', modeDetail: '', blockingMessage: diagnostic }, 'RuntimeDiagnostic', 'RuntimeDiagnosticBlocker', 'DiagnosticScroll'],
+        ['loading', hub, { modeKind: 'preview', modeLabel: '', modeDetail: '', sceneAssets: 'loading' }, 'SceneAssetLoading', 'SceneAssetOverlayBlocker', undefined],
+        ['error', hub, { modeKind: 'preview', modeLabel: '', modeDetail: '', sceneAssets: 'error' }, 'SceneAssetError', 'SceneAssetOverlayBlocker', undefined],
+        ['help', help, { modeKind: 'preview', modeLabel: '', modeDetail: '' }, 'HelpDialog', 'HelpOverlayBlocker', 'HelpScroll'],
+      ]) {
+        const canvas = { name: `compact-overlay-${viewportWidth}-${kind}`, children: [],
+          getComponent() { return { contentSize: { width: 750, height: surfaceHeight } }; },
+          addChild(child) { this.children.push(child); child.parent = this; } };
+        const view = new SceneFixtureView(canvas, {
+          activate() { assert.fail('rendering compact overlays cannot dispatch actions'); },
+          retrySceneAssets() { assert.fail('rendering recovery controls cannot start a retry'); },
+        });
+        view.render(model, chrome, insets);
+        const root = canvas.children.at(-1);
+        const panel = findNode(root, panelName);
+        assert.ok(panel, `${viewportWidth}px/${kind}: real host overlay exists`);
+        assert.ok(hasComponentNamed(findNode(root, blockerName), 'BlockInputEvents'), `${kind}: overlay consumes world input`);
+        const bounds = absoluteNodeBounds(panel);
+        assert.ok(panel.size.width / unit <= 304 + 0.6 && panel.size.width / unit <= viewportWidth - 40 + 0.6,
+          `${kind}: compact overlay retains physical side margins`);
+        assert.ok(panel.size.height / unit <= 464 + 0.6
+          && panel.size.height <= surfaceHeight - insets.top - insets.bottom - 88 * unit + 0.6,
+          `${kind}: compact overlay fits the safe vertical surface`);
+        assert.ok(bounds.top <= surfaceHeight / 2 - insets.top + 0.6
+          && bounds.bottom >= -surfaceHeight / 2 + insets.bottom - 0.6,
+          `${kind}: overlay remains inside actual safe bounds`);
+        if (scrollName) {
+          const scroll = findNode(panel, scrollName);
+          const scrollView = [...scroll.components.values()].find(component => typeof component.getScrollOffset === 'function');
+          assert.ok(scrollView && hasComponentNamed(scroll, 'Mask'), `${kind}: long document has a real clipped ScrollView`);
+          assert.equal(scrollView.content, findNode(scroll, `${scrollName}Content`), `${kind}: scroll owns the complete document`);
+          assert.ok(scroll.size.height / unit <= 300 + 0.6 && scrollView.content.size.height >= scroll.size.height,
+            `${kind}: compact clip retains overflow content`);
+          const clipBounds = absoluteNodeBounds(scroll);
+          assert.ok(clipBounds.left >= bounds.left && clipBounds.right <= bounds.right
+            && clipBounds.top <= bounds.top && clipBounds.bottom >= bounds.bottom, `${kind}: document clip remains in its frame`);
+          if (scrollView.content.size.height > scroll.size.height) {
+            const thumb = findNode(scroll, `${scrollName}Thumb`);
+            const initialY = thumb.position.y;
+            scrollView.scrollToOffset({ x: 0, y: scrollView.content.size.height - scroll.size.height });
+            assert.ok(thumb.position.y < initialY, `${kind}: overflow scrolling updates its thumb`);
+          }
+        }
+        if (kind === 'boot' || kind === 'blocked') {
+          assert.equal(labelComponent(findNode(panel, 'DiagnosticBody')).string, diagnostic,
+            `${kind}: compact diagnostic preserves every original line`);
+        }
+        if (kind === 'help') {
+          assert.equal(collectNodes(panel, node => node.name.startsWith('HelpScrollSection:')).length, 4,
+            'help keeps overview, mechanics, advice and readouts in one scrolling document');
+          const close = findNode(panel, 'CloseHelp');
+          assert.ok(Math.abs(close.size.width / unit - 44) < 0.6 && Math.abs(close.size.height / unit - 44) < 0.6,
+            'help title close retains a 44px physical target');
+        }
+        for (const name of kind === 'help' ? ['PreviousTopic', 'NextTopic'] : kind === 'error' ? ['SceneAssetRetry'] : []) {
+          const target = findNode(panel, name);
+          const plate = findNode(target, `${name}Plate`);
+          assert.ok(target.size.width / unit >= 44 && Math.abs(target.size.height / unit - 44) < 0.6,
+            `${name}: compact footer remains physically tappable`);
+          assert.ok(plate.size.width / unit <= 148 + 0.6 && Math.abs(plate.size.height / unit - 32) < 0.6,
+            `${name}: button separates compact appearance from its touch region`);
+          assert.equal(nodesOverlap(target, findNode(panel, scrollName ?? 'SceneAssetDetail')), false,
+            `${name}: button never covers the document clip or loading detail`);
+        }
+        view.destroy();
+        compactOverlayCases += 1;
+      }
+    }
+  } finally {
+    globalThis.__walkingTestFrameSize = priorFrame;
+  }
 }
 delete globalThis.__walkingTestInput;
 delete globalThis.__walkingTestGame;
@@ -9883,6 +12528,18 @@ delete globalThis.__walkingTestGame;
 delete globalThis[TEST_CONTROL_KEY];
 console.log(JSON.stringify({
   status: 'COCOS_BOOTSTRAP_RACE_VALID',
+  compactModalViewports: [320, 390],
+  compactModalFamilies: 11,
+  compactModalCloseCases,
+  compactOverlayCases,
+  permanentEquipmentViewports: [320, 390],
+  dungeonRoomFitViewports: ['320x568', '390x844'],
+  dungeonRoomFitCases,
+  dungeonRoomEffectAnchorCases,
+  dungeonCombatHudClearanceCases,
+  dungeonHtmlGoldenCases,
+  dungeonHtmlInteractionCases,
+  dungeonMultiNeighborCases,
   // 71 pre-existing scenarios plus 9 newly added WeChat DevTools NON_RELEASE
   // blocks (case a, getSystemInfoSync fallback, case b platforms loop, case b
   // malformed/throwing, case c boundary-wins, case d diagnostics, case e prefill
@@ -9898,7 +12555,40 @@ console.log(JSON.stringify({
   // variants, lawless fail-closed, 320x568/390x844 reachability, danger law
   // rendering, no non-combat commands, post-destroy inertness). Every NON_RELEASE
   // scenario also proves zero wx.getStorageSync/setStorageSync calls.
-  scenarios: 91,
+  // World art blocks cover independent identity, feet anchors, rank, recoil and frame cleanup.
+  // Two courtyard blocks exercise the complete physical HUD, art and routes at 320/390px.
+  // The hub portal lease block adds hub-only lifetime and frame-before-image disposal coverage.
+  // Hero atlas failure block covers partial-frame allocation cleanup.
+  // Two HUD04 blocks exercise transparent dungeon controls and dynamic player HP at 320/390px.
+  // Manual resource recovery and real View gating add two blocks; existing scene
+  // lease/memory cases additionally exercise aggregate loading/ready/error state.
+  // Two acquired-relic blocks cover HUD/popover content and lifecycle at 320/390px;
+  // one additional App block covers final-icon gating and phase/destroy image leases.
+  // Two permanent-equipment blocks cover claim, immediate ownership and manual
+  // inventory wearing, including duplicate touches, stale callbacks and runtime locks.
+  // Two reward/relic blocks cover real one/two/three-candidate drafts and ordinary
+  // claims, asynchronous locks, close/reopen selection and immediate active effects.
+  // Twenty-two compact-sheet blocks cover every family at both phone widths,
+  // local-only close, repeated touch-end, retired callbacks and post-destroy inertness.
+  // Ten compact host-overlay blocks cover help, boot/blocked diagnostics and
+  // scene loading/failure at both widths, including complete scroll documents.
+  // One natural explore-to-result block promotes an unchanged cached primary
+  // into a scene background without reloading or leaking retired world leases.
+  // Eight HTML-room blocks cover both phases and inset states, original world
+  // movement, full-screen backgrounds, four visible gates, uniform art/text,
+  // proximity/action identity and aligned effects. Eight combat HP layout checks
+  // keep the enemy track/digits below the north caption before and after live HP
+  // updates. Ten independent HTML golden
+  // feet and two multi-neighbor fixtures cover slot accuracy and retained actions.
+  scenarios: 153,
+  dungeonPropSprites: DUNGEON_PROP_FIXTURES.length,
+  hubDungeonPortalSprites: 1,
+  hubNpcWorldSprites: NPC_WORLD_FIXTURES.length,
+  courtyardPropSprites: 4,
+  courtyardViewports: [320, 390],
+  hud04Viewports: [320, 390],
+  rewardRelicViewports: [320, 390],
+  monsterWorldSprites: MONSTER_WORLD_FIXTURES.length,
   dedicatedDungeonBackgrounds: 19,
   darkUiBodyContrastPairs: 15,
   darkUiMinimumBodyContrast: Number(darkUiMinimumBodyContrast.toFixed(3)),

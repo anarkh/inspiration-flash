@@ -1,0 +1,213 @@
+{
+  "drawSequence": [
+    "01",
+    "10",
+    "05",
+    "03",
+    "04",
+    "09",
+    "08",
+    "02",
+    "06",
+    "07"
+  ],
+  "uniqueDraws": 10,
+  "favoriteReload": "true",
+  "compare": [
+    {
+      "hp": "37/102",
+      "percent": "36.27450980392157%",
+      "style": "01"
+    },
+    {
+      "hp": "37/102",
+      "percent": "36.27450980392157%",
+      "style": "10"
+    }
+  ],
+  "menuActions": [
+    {
+      "action": "character",
+      "title": "角色",
+      "modal": true,
+      "closed": true,
+      "focusRestored": true
+    },
+    {
+      "action": "menu",
+      "title": "菜单",
+      "modal": true,
+      "closed": true,
+      "focusRestored": true
+    },
+    {
+      "action": "bag",
+      "title": "背包",
+      "modal": true,
+      "closed": true,
+      "focusRestored": true
+    },
+    {
+      "action": "map",
+      "title": "地图",
+      "modal": true,
+      "closed": true,
+      "focusRestored": true
+    },
+    {
+      "action": "quests",
+      "title": "目标",
+      "modal": true,
+      "closed": true,
+      "focusRestored": true
+    }
+  ],
+  "mobile320": [
+    {
+      "documentWidth": 305,
+      "id": "01",
+      "minTouch": 45.546661376953125,
+      "stageWidth": 305,
+      "textOverflow": [],
+      "viewport": 320
+    },
+    {
+      "documentWidth": 305,
+      "id": "02",
+      "minTouch": 45.546630859375,
+      "stageWidth": 305,
+      "textOverflow": [],
+      "viewport": 320
+    },
+    {
+      "documentWidth": 305,
+      "id": "03",
+      "minTouch": 44.73332214355469,
+      "stageWidth": 305,
+      "textOverflow": [],
+      "viewport": 320
+    },
+    {
+      "documentWidth": 305,
+      "id": "04",
+      "minTouch": 45.546669006347656,
+      "stageWidth": 305,
+      "textOverflow": [],
+      "viewport": 320
+    },
+    {
+      "documentWidth": 305,
+      "id": "05",
+      "minTouch": 45.546630859375,
+      "stageWidth": 305,
+      "textOverflow": [],
+      "viewport": 320
+    },
+    {
+      "documentWidth": 305,
+      "id": "06",
+      "minTouch": 45.54667663574219,
+      "stageWidth": 305,
+      "textOverflow": [],
+      "viewport": 320
+    },
+    {
+      "documentWidth": 305,
+      "id": "07",
+      "minTouch": 44.73332977294922,
+      "stageWidth": 305,
+      "textOverflow": [],
+      "viewport": 320
+    },
+    {
+      "documentWidth": 305,
+      "id": "08",
+      "minTouch": 44.73333358764648,
+      "stageWidth": 305,
+      "textOverflow": [],
+      "viewport": 320
+    },
+    {
+      "documentWidth": 305,
+      "id": "09",
+      "minTouch": 44.73333358764648,
+      "stageWidth": 305,
+      "textOverflow": [],
+      "viewport": 320
+    },
+    {
+      "documentWidth": 305,
+      "id": "10",
+      "minTouch": 44.73332214355469,
+      "stageWidth": 305,
+      "textOverflow": [],
+      "viewport": 320
+    }
+  ],
+  "mobile390": {
+    "buttons": [
+      {
+        "h": 68,
+        "label": "角色",
+        "textOverflow": false,
+        "w": 55
+      },
+      {
+        "h": 68,
+        "label": "菜单",
+        "textOverflow": false,
+        "w": 55
+      },
+      {
+        "h": 72,
+        "label": "背包",
+        "textOverflow": false,
+        "w": 55
+      },
+      {
+        "h": 72,
+        "label": "地图",
+        "textOverflow": false,
+        "w": 55
+      },
+      {
+        "h": 72,
+        "label": "目标",
+        "textOverflow": false,
+        "w": 55
+      }
+    ],
+    "documentWidth": 375,
+    "viewport": 390
+  },
+  "sceneChange": "梦境档案馆",
+  "baseline": {
+    "shown": "current",
+    "favoriteDisabled": true
+  },
+  "mineScene": "星坠矿井",
+  "emptyFavorites": true,
+  "overviewCount": 10,
+  "compareAlignment": {
+    "left": 58.5,
+    "right": 466.5,
+    "topDifference": 0,
+    "viewport": 930
+  },
+  "generatedAt": "2026-10-09T03:43:51.618Z",
+  "url": "http://127.0.0.1:8125/prototype/hud-menu-draw/#01",
+  "runtimeLogs": [],
+  "images": [
+    {
+      "complete": true,
+      "url": "../../cocos/assets/resources/dungeon-world/ruined-stone-gate-v1.png",
+      "width": 1073
+    },
+    {
+      "complete": true,
+      "url": "../../cocos/assets/resources/monster-world/fog-lesser-demon-world-v1.png",
+      "width": 1024
+    }
+  ],
+  "boundary": "Standalone HTML/CSS prototype. No Cocos production changes or gameplay acceptance."
+}

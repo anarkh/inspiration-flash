@@ -1,0 +1,5 @@
+
+> infinite-flow-wechat@0.1.1 cocos:race:test
+> node cocos/headless/bootstrap-race.self-check.mjs
+
+{"status":"COCOS_BOOTSTRAP_RACE_VALID","compactModalViewports":[320,390],"compactModalFamilies":11,"compactModalCloseCases":22,"compactOverlayCases":10,"permanentEquipmentViewports":[320,390],"dungeonRoomFitViewports":["320x568","390x844"],"dungeonRoomFitCases":8,"dungeonRoomEffectAnchorCases":4,"scenarios":153,"dungeonPropSprites":9,"hubDungeonPortalSprites":1,"hubNpcWorldSprites":7,"courtyardPropSprites":4,"courtyardViewports":[320,390],"hud04Viewports":[320,390],"rewardRelicViewports":[320,390],"monsterWorldSprites":59,"dedicatedDungeonBackgrounds":19,"darkUiBodyContrastPairs":15,"darkUiMinimumBodyContrast":4.735,"darkUiControlSizes":[104,112,120]}

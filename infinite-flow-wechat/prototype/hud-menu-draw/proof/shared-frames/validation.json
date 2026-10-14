@@ -1,0 +1,280 @@
+{
+  "schemaVersion": 1,
+  "verifiedAt": "2026-10-09T07:23:53.200Z",
+  "request": "Unify dungeon and courtyard HUD frames using courtyard style; remove character panel black backing.",
+  "scope": [
+    "top HUD frame styling",
+    "transparent character and portrait backing",
+    "shared gray-green health colors"
+  ],
+  "sourceSha256": "92ceb5ec82ba054f5ea79e73626102e7caf411cd2e598c9f3407dc33163dab57",
+  "build": {
+    "engine": "Cocos Creator 3.8.8",
+    "target": "Web Mobile",
+    "completedLocal": "2026-10-09 15:19:49 +08:00",
+    "exitCode": 36,
+    "completed": true
+  },
+  "checks": {
+    "headlessTypecheck": true,
+    "creatorTypecheck": true,
+    "bootstrapScenarios": 103,
+    "diffWhitespace": true,
+    "characterAndAvatarFillsZero": true,
+    "blackLowerBevelRemoved": true
+  },
+  "actualEngine": {
+    "input": "CUA physical touch",
+    "entries": [
+      {
+        "phase": "hub",
+        "width": 390,
+        "height": 844,
+        "name": "SceneCharacter",
+        "panel": "character",
+        "touch": [
+          48.999999999999986,
+          53.000000000000455
+        ],
+        "positionStable": true,
+        "domainStable": true
+      },
+      {
+        "phase": "hub",
+        "width": 390,
+        "height": 844,
+        "name": "SceneDetails",
+        "panel": "inventory",
+        "touch": [
+          43.999999999999886,
+          44
+        ],
+        "positionStable": true,
+        "domainStable": true
+      },
+      {
+        "phase": "hub",
+        "width": 390,
+        "height": 844,
+        "name": "SceneHelp",
+        "panel": "menu",
+        "touch": [
+          43.999999999999886,
+          44
+        ],
+        "positionStable": true,
+        "domainStable": true
+      },
+      {
+        "phase": "hub",
+        "width": 320,
+        "height": 568,
+        "name": "SceneCharacter",
+        "panel": "character",
+        "touch": [
+          49.000000000000014,
+          53
+        ],
+        "positionStable": true,
+        "domainStable": true
+      },
+      {
+        "phase": "hub",
+        "width": 320,
+        "height": 568,
+        "name": "SceneDetails",
+        "panel": "inventory",
+        "touch": [
+          44.000000000000114,
+          44
+        ],
+        "positionStable": true,
+        "domainStable": true
+      },
+      {
+        "phase": "hub",
+        "width": 320,
+        "height": 568,
+        "name": "SceneHelp",
+        "panel": "menu",
+        "touch": [
+          44.000000000000114,
+          44
+        ],
+        "positionStable": true,
+        "domainStable": true
+      },
+      {
+        "phase": "explore",
+        "width": 390,
+        "height": 844,
+        "name": "SceneCharacter",
+        "panel": "character",
+        "touch": [
+          57.20000000000003,
+          57.20000000000004
+        ],
+        "positionStable": true,
+        "domainStable": true
+      },
+      {
+        "phase": "explore",
+        "width": 390,
+        "height": 844,
+        "name": "SceneHelp",
+        "panel": "menu",
+        "touch": [
+          68.6400000000001,
+          44.72000000000003
+        ],
+        "positionStable": true,
+        "domainStable": true
+      },
+      {
+        "phase": "explore",
+        "width": 390,
+        "height": 844,
+        "name": "SceneDetails",
+        "panel": "inventory",
+        "touch": [
+          68.6400000000001,
+          44.72000000000003
+        ],
+        "positionStable": true,
+        "domainStable": true
+      },
+      {
+        "phase": "explore",
+        "width": 390,
+        "height": 844,
+        "name": "SceneMap",
+        "panel": "map",
+        "touch": [
+          68.6400000000001,
+          44.72000000000003
+        ],
+        "positionStable": true,
+        "domainStable": true
+      },
+      {
+        "phase": "explore",
+        "width": 390,
+        "height": 844,
+        "name": "SceneCodex",
+        "panel": "objectives",
+        "touch": [
+          68.6400000000001,
+          44.72000000000048
+        ],
+        "positionStable": true,
+        "domainStable": true
+      },
+      {
+        "phase": "explore",
+        "width": 320,
+        "height": 568,
+        "name": "SceneCharacter",
+        "panel": "character",
+        "touch": [
+          46.83658170914548,
+          46.83658170914566
+        ],
+        "positionStable": true,
+        "domainStable": true
+      },
+      {
+        "phase": "explore",
+        "width": 320,
+        "height": 568,
+        "name": "SceneHelp",
+        "panel": "menu",
+        "touch": [
+          56.203898050974544,
+          44.00000000000023
+        ],
+        "positionStable": true,
+        "domainStable": true
+      },
+      {
+        "phase": "explore",
+        "width": 320,
+        "height": 568,
+        "name": "SceneDetails",
+        "panel": "inventory",
+        "touch": [
+          56.203898050974544,
+          44
+        ],
+        "positionStable": true,
+        "domainStable": true
+      },
+      {
+        "phase": "explore",
+        "width": 320,
+        "height": 568,
+        "name": "SceneMap",
+        "panel": "map",
+        "touch": [
+          56.203898050974544,
+          44
+        ],
+        "positionStable": true,
+        "domainStable": true
+      },
+      {
+        "phase": "explore",
+        "width": 320,
+        "height": 568,
+        "name": "SceneCodex",
+        "panel": "objectives",
+        "touch": [
+          56.203898050974544,
+          44
+        ],
+        "positionStable": true,
+        "domainStable": true
+      }
+    ],
+    "combat": [
+      {
+        "stage": "before",
+        "phase": "combat",
+        "status": "生命 102/102"
+      },
+      {
+        "stage": "after-attack-1",
+        "phase": "combat",
+        "status": "生命 92/102",
+        "animating": false
+      },
+      {
+        "stage": "after-attack-2",
+        "phase": "combat",
+        "status": "生命 87/102",
+        "animating": false
+      },
+      {
+        "stage": "victory-return",
+        "phase": "explore",
+        "status": "生命 102/102",
+        "animating": false,
+        "cleared": true
+      }
+    ],
+    "browserErrors": 0
+  },
+  "screenshots": [
+    "hub-390.png",
+    "hub-320.png",
+    "hub-top.png",
+    "explore-390.png",
+    "explore-320.png",
+    "explore-top.png",
+    "combat-390.png"
+  ],
+  "boundaries": {
+    "localOnly": true,
+    "wechatDeviceVerified": false,
+    "published": false
+  }
+}

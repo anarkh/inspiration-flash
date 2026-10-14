@@ -1,6 +1,7 @@
 import { reduceGameCommand, type GameCommand } from '@infinite-flow/application';
 import { DUNGEON_ORDER, createInitialState, type GameState, type ItemId } from '@infinite-flow/core';
 import {
+  buildGameViewModel,
   buildHubOwnedLoadoutViewModel,
   type HubShopRowViewModel, type ViewActionModel
 } from '../src/index.js';
@@ -115,3 +116,55 @@ function verifyOwnedLoadout(): void {
 }
 
 verifyOwnedLoadout();
+
+function verifyCharacterCarrySlots(): void {
+  const initial = createInitialState();
+  const empty = buildGameViewModel(initial).sections[1].loadout!;
+  assert(empty.carrySlots.length === 3, 'ordinary equipment must expose three general carry slots');
+  assert(empty.carrySlots.every((slot, index) => slot.id === `general-${index}` && slot.label === '通用槽' && slot.category === 'any' && !slot.itemId), 'empty general slots retain stable identities and category');
+
+  const supplyMixed: GameState = {
+    ...initial,
+    preparedItemIds: ['healing_pill', 'thunder_talisman', 'armor_patch', 'dispel_talisman', 'focus_incense'],
+  };
+  const normalized = buildGameViewModel(supplyMixed).sections[1].loadout!;
+  assert(normalized.carrySlots.map((slot) => slot.itemId ?? '-').join(',') === 'thunder_talisman,dispel_talisman,-', 'legacy supplies must not occupy carry slots');
+  assert(normalized.carriedCount === 2, 'supply items must not inflate the carried count');
+  assert(normalized.items.filter((item) => item.itemGroup === 'supply').every((item) => !item.carried), 'supply stock stays outside the carry selection');
+
+  const rigState: GameState = {
+    ...initial,
+    equipped: { ...initial.equipped, weapon: 'frame_engraver', waist: 'rift_belt', charm: 'void_lantern' },
+    ownedEquipment: [...initial.ownedEquipment, 'frame_engraver', 'rift_belt', 'void_lantern'],
+    equipmentLevels: { ...initial.equipmentLevels, frame_engraver: 1, rift_belt: 1, void_lantern: 1 },
+    preparedItemIds: ['thunder_talisman', 'dispel_talisman', 'gate_sigil', 'echo_coin', 'capture_net', 'spirit_bait'],
+  };
+  const before = JSON.stringify(rigState);
+  const rigSlots = buildGameViewModel(rigState).sections[1].loadout!.carrySlots;
+  assert(rigSlots.length === 6, 'equipped rigs add slots to the three general slots');
+  assert(rigSlots.slice(0, 3).map((slot) => slot.itemId).join(',') === 'echo_coin,capture_net,spirit_bait', 'general slots must use the unmatched items after core rig allocation');
+  assert(rigSlots.slice(3).map((slot) => slot.id).join(',') === 'frame_engraver_combat_rig,rift_belt_portal_rig,void_lantern_any_rig', 'rig slots preserve active equipment source order');
+  assert(rigSlots.slice(3).map((slot) => slot.label).join(',') === '战斗专用槽,传送专用槽,通用挂载槽', 'rig labels describe their actual restrictions');
+  assert(rigSlots.slice(3).map((slot) => `${slot.category}:${slot.itemId}`).join(',') === 'combat:thunder_talisman,portal:gate_sigil,any:dispel_talisman', 'exact-category rigs must receive matching items before the any rig');
+  assert(JSON.stringify(rigState) === before, 'slot projection must not mutate source state');
+  assert(Object.isFrozen(rigSlots) && rigSlots.every(Object.isFrozen), 'slot snapshots must be deeply frozen');
+
+  const sparseSlots = buildGameViewModel({ ...rigState, preparedItemIds: ['thunder_talisman'] }).sections[1].loadout!.carrySlots;
+  assert(sparseSlots[3]?.itemId === 'thunder_talisman' && !sparseSlots[4]?.itemId && !sparseSlots[5]?.itemId, 'unused specialized and any rig slots remain visible and empty');
+
+  const explored = commit(rigState, {
+    type: 'run/enter', dungeonId: 'demon_tower_1', protocolId: 'standard',
+    seeds: { rulesVersion: 1, hiddenTaskSeed: 0x1234_5678 },
+  });
+  const select = buildGameViewModel(explored).sections[2].actions.find((action) => action.actionId === 'node.select:fog_lesser_demon');
+  assert(select?.enabled && select.event?.kind === 'command', 'first node must offer combat entry');
+  const combat = commit(explored, select.event.command);
+  const result = commit(explored, { type: 'run/retreat' });
+  for (const state of [explored, combat, result]) {
+    const view = buildGameViewModel(state, { hubPanel: 'supplies' });
+    assert(JSON.stringify(view.sections[1].loadout!.carrySlots) === JSON.stringify(rigSlots), `${state.phase} must preserve the carry slot snapshot`);
+    assert(!view.sections[2].actions.some((action) => action.event?.kind === 'command' && action.event.command.type === 'hub/configure-tactical-loadout'), `${state.phase} must not offer carry configuration`);
+  }
+}
+
+verifyCharacterCarrySlots();

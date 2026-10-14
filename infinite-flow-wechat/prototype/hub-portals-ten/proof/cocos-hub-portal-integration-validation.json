@@ -1,0 +1,87 @@
+{
+  "status": "PASS",
+  "selectedPrototype": "07 万象画门",
+  "scope": "Main god space courtyard dungeon entrance only",
+  "asset": {
+    "key": "scene:hub_dungeon_portal",
+    "kind": "scene",
+    "entityId": "hub_dungeon_portal",
+    "resourcePath": "hub-courtyard/wanxiang-scroll-portal-v1",
+    "resourceFile": "hub-courtyard/wanxiang-scroll-portal-v1.png",
+    "sourceFile": "infinite-flow-wechat/prototype/hub-portals-ten/assets/hub-portal-07.png",
+    "sourceFormat": "png",
+    "targetFormat": "png",
+    "cocosImageImport": "supported",
+    "alt": "主神空间万象画门：旧金画轴展开山水异境，透明独立副本入口",
+    "role": "scene",
+    "width": 1018,
+    "height": 1545,
+    "fit": "contain",
+    "source": "project-original-generated",
+    "sourceRevision": 1,
+    "sourceSha256": "e77658a165eab7c3fe527b309909bca1d0be7c4fddd4ab5d4c75905a33927d4e",
+    "targetSha256": "e77658a165eab7c3fe527b309909bca1d0be7c4fddd4ab5d4c75905a33927d4e",
+    "transformation": {
+      "operation": "byte-copy",
+      "tool": "node:fs.copyFileSync",
+      "version": "v26.7.0",
+      "targetDimensions": {
+        "width": 1018,
+        "height": 1545
+      }
+    }
+  },
+  "manifestRevision": "sha256:0e230421bc675abb93291c3d57e155184e038f0b18e6f6e1e1919a72100fe698",
+  "assetCount": 296,
+  "prior295EntriesUnchanged": true,
+  "byteExactCopy": true,
+  "build": {
+    "creator": "3.8.8",
+    "exitCode": 36,
+    "successLog": "/tmp/infinite-flow-hub-portal-07-20261008/creator-build.log",
+    "builtSourceContainsNewSpriteAndRevision": true
+  },
+  "checks": [
+    "assets verification 296 PNG",
+    "bundle self-check",
+    "editor config compose 57 assertions / 10 suites",
+    "bootstrap 97 scenarios",
+    "walk 44 checks",
+    "sheet 1979 VMs / 54603 original actions",
+    "Cocos headless and Creator typechecks",
+    "source boundaries 7 roots"
+  ],
+  "browser": [
+    {
+      "viewport": {
+        "width": 320,
+        "height": 568,
+        "deviceScaleFactor": 1
+      },
+      "manifest": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/build/web-mobile-canvas-smoke/2026-10-08T06-45-08-952Z-320x568-65908/manifest.json",
+      "flowCount": 21,
+      "browserFailureCount": 0,
+      "combatOutcome": "victory-returned-to-explore",
+      "physicalAttackCount": 3,
+      "screenshot": "cocos-hub-portal-320.png",
+      "cleanup": "natural exit verified",
+      "exitCode": 0
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "deviceScaleFactor": 1
+      },
+      "manifest": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/build/web-mobile-canvas-smoke/2026-10-08T06-45-08-689Z-390x844-65879/manifest.json",
+      "flowCount": 21,
+      "browserFailureCount": 0,
+      "combatOutcome": "victory-returned-to-explore",
+      "physicalAttackCount": 3,
+      "screenshot": "cocos-hub-portal-390.png",
+      "cleanup": "natural exit verified",
+      "exitCode": 0
+    }
+  ],
+  "boundary": "Local Cocos Web preview; not WeChat physical-device or published release."
+}

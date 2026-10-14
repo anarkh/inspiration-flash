@@ -1,0 +1,20 @@
+{
+  "entityId": "primal_curator",
+  "status": "completed",
+  "path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/art-source/monster-world/primal-curator-world-v1.png",
+  "sourcePath": "/Users/bytedance/.codex/generated_images/01a0ecb5-b61f-7980-bbe9-6b90c378b641/exec-50a64573-9933-4dff-8d1f-3a71c75e13b6.png",
+  "referencePath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/monster/primal-curator-v1.png",
+  "width": 1024,
+  "height": 1536,
+  "mode": "RGBA",
+  "alpha": {
+    "min": 0,
+    "max": 254,
+    "transparentPixels": 729285,
+    "totalPixels": 1572864
+  },
+  "visualCheck": "Full body, hood, feet and spiral specimen rack fully visible; grounded charcoal and aged bronze style preserves reference identity.",
+  "tool": "built-in imagegen",
+  "promptSource": "art-source/monster-world/prompts.json",
+  "promptComposition": "sharedPrompt + Subject: + asset.subject"
+}

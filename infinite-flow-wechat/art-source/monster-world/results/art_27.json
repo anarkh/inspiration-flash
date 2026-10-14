@@ -1,0 +1,27 @@
+{
+  "entityId": "phase_hunter_drone",
+  "key": "monster:phase_hunter_drone_world",
+  "status": "completed",
+  "path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/art-source/monster-world/phase-hunter-drone-world-v1.png",
+  "sourcePath": "/Users/bytedance/.codex/generated_images/01a0ecb7-683f-7fd2-bc60-3399cd765add/exec-6839f8e2-9750-4786-b21e-5766611bba30.png",
+  "referencePath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/monster/phase-hunter-drone-v1.png",
+  "promptSource": "art-source/monster-world/prompts.json:sharedPrompt + subject",
+  "tool": "built-in imagegen",
+  "width": 1024,
+  "height": 1536,
+  "mode": "RGBA",
+  "alpha": {
+    "min": 0,
+    "max": 254,
+    "transparentPixels": 1073353,
+    "semiTransparentPixels": 499511,
+    "opaquePixels": 0,
+    "transparentRatio": 0.6824194590250651
+  },
+  "visualInspection": {
+    "passed": true,
+    "notes": "Complete recognizable winged drone with cyan core, twin spike cannons and phase shields; weathered dark-metal surface. No text or frame."
+  },
+  "sha256": "bc311e99cec93e2567f2ce28ecc0a2059ea81fd41aa8285d2c26c26e1d5ee6c4",
+  "rawCopyVerified": true
+}

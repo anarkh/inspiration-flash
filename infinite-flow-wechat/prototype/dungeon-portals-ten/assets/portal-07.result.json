@@ -1,0 +1,24 @@
+{
+  "id": "portal-07",
+  "title": "悬符结界",
+  "tool": "image_gen.imagegen",
+  "transparent_background": true,
+  "source_path": "/Users/bytedance/.codex/generated_images/01a11978-834a-79a3-85fb-08271558cdce/exec-87386513-ab4a-4927-8c43-67ec16f676f4.png",
+  "saved_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/dungeon-portals-ten/assets/portal-07.png",
+  "prompt_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/dungeon-portals-ten/assets/portal-07.prompt.txt",
+  "source_sha256": "913b4d2b4bc2ce31dc6ce4794f663ecaa79468804fbc3f1842e2185cffafab77",
+  "saved_sha256": "913b4d2b4bc2ce31dc6ce4794f663ecaa79468804fbc3f1842e2185cffafab77",
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGBA",
+  "alpha_extrema": [
+    0,
+    254
+  ],
+  "fully_transparent_pixels": 856362,
+  "partially_transparent_pixels": 716502,
+  "opaque_pixels": 0,
+  "byte_for_byte_copy": true,
+  "post_processing": "none",
+  "visual_review": "Exactly three faded ochre talismans and broad broken wood posts. Grey-white mist is visually denser than the prompt requested, especially along both sides, but the alpha and opening remain transparent."
+}

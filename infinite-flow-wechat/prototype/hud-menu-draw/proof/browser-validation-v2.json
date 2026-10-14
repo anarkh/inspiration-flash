@@ -1,0 +1,414 @@
+{
+  "revision": 2,
+  "models": "gpt-6.1-sol ultra",
+  "layouts": [
+    {
+      "character": {
+        "border": "0px",
+        "color": "rgba(0, 0, 0, 0)",
+        "image": "none",
+        "shadow": "none"
+      },
+      "glyphSizes": [
+        32,
+        32,
+        30,
+        30,
+        30
+      ],
+      "id": "01",
+      "minTouch": 44.7332763671875,
+      "pageWidth": 305,
+      "readoutOverflow": false,
+      "textOutsideButtons": [],
+      "top": {
+        "border": "0px",
+        "color": "rgba(0, 0, 0, 0)",
+        "image": "none",
+        "shadow": "none"
+      },
+      "viewport": 320,
+      "vitals": {
+        "border": "0px",
+        "color": "rgba(0, 0, 0, 0)",
+        "image": "none",
+        "shadow": "none"
+      }
+    },
+    {
+      "character": {
+        "border": "0px",
+        "color": "rgba(0, 0, 0, 0)",
+        "image": "none",
+        "shadow": "none"
+      },
+      "glyphSizes": [
+        32,
+        32,
+        32,
+        32,
+        32
+      ],
+      "id": "02",
+      "minTouch": 44.7332763671875,
+      "pageWidth": 305,
+      "readoutOverflow": false,
+      "textOutsideButtons": [],
+      "top": {
+        "border": "0px",
+        "color": "rgba(0, 0, 0, 0)",
+        "image": "none",
+        "shadow": "none"
+      },
+      "viewport": 320,
+      "vitals": {
+        "border": "0px",
+        "color": "rgba(0, 0, 0, 0)",
+        "image": "none",
+        "shadow": "none"
+      }
+    },
+    {
+      "character": {
+        "border": "0px",
+        "color": "rgba(0, 0, 0, 0)",
+        "image": "none",
+        "shadow": "none"
+      },
+      "glyphSizes": [
+        32,
+        32,
+        32,
+        32,
+        32
+      ],
+      "id": "03",
+      "minTouch": 44.73332214355469,
+      "pageWidth": 305,
+      "readoutOverflow": false,
+      "textOutsideButtons": [],
+      "top": {
+        "border": "0px",
+        "color": "rgba(0, 0, 0, 0)",
+        "image": "none",
+        "shadow": "none"
+      },
+      "viewport": 320,
+      "vitals": {
+        "border": "0px",
+        "color": "rgba(0, 0, 0, 0)",
+        "image": "none",
+        "shadow": "none"
+      }
+    },
+    {
+      "character": {
+        "border": "0px",
+        "color": "rgba(0, 0, 0, 0)",
+        "image": "none",
+        "shadow": "none"
+      },
+      "glyphSizes": [
+        32,
+        32,
+        32,
+        32,
+        32
+      ],
+      "id": "04",
+      "minTouch": 44.7332763671875,
+      "pageWidth": 305,
+      "readoutOverflow": false,
+      "textOutsideButtons": [],
+      "top": {
+        "border": "0px",
+        "color": "rgba(0, 0, 0, 0)",
+        "image": "none",
+        "shadow": "none"
+      },
+      "viewport": 320,
+      "vitals": {
+        "border": "0px",
+        "color": "rgba(0, 0, 0, 0)",
+        "image": "none",
+        "shadow": "none"
+      }
+    },
+    {
+      "character": {
+        "border": "0px",
+        "color": "rgba(0, 0, 0, 0)",
+        "image": "none",
+        "shadow": "none"
+      },
+      "glyphSizes": [
+        34,
+        34,
+        34,
+        34,
+        34
+      ],
+      "id": "05",
+      "minTouch": 44.73332214355469,
+      "pageWidth": 305,
+      "readoutOverflow": false,
+      "textOutsideButtons": [],
+      "top": {
+        "border": "0px",
+        "color": "rgba(0, 0, 0, 0)",
+        "image": "none",
+        "shadow": "none"
+      },
+      "viewport": 320,
+      "vitals": {
+        "border": "0px",
+        "color": "rgba(0, 0, 0, 0)",
+        "image": "none",
+        "shadow": "none"
+      }
+    },
+    {
+      "character": {
+        "border": "0px",
+        "color": "rgba(0, 0, 0, 0)",
+        "image": "none",
+        "shadow": "none"
+      },
+      "glyphSizes": [
+        30,
+        30,
+        30,
+        30,
+        30
+      ],
+      "id": "06",
+      "minTouch": 44.7332763671875,
+      "pageWidth": 305,
+      "readoutOverflow": false,
+      "textOutsideButtons": [],
+      "top": {
+        "border": "0px",
+        "color": "rgba(0, 0, 0, 0)",
+        "image": "none",
+        "shadow": "none"
+      },
+      "viewport": 320,
+      "vitals": {
+        "border": "0px",
+        "color": "rgba(0, 0, 0, 0)",
+        "image": "none",
+        "shadow": "none"
+      }
+    },
+    {
+      "character": {
+        "border": "0px",
+        "color": "rgba(0, 0, 0, 0)",
+        "image": "none",
+        "shadow": "none"
+      },
+      "glyphSizes": [
+        32,
+        32,
+        30,
+        30,
+        30
+      ],
+      "id": "07",
+      "minTouch": 44.7332763671875,
+      "pageWidth": 305,
+      "readoutOverflow": false,
+      "textOutsideButtons": [],
+      "top": {
+        "border": "0px",
+        "color": "rgba(0, 0, 0, 0)",
+        "image": "none",
+        "shadow": "none"
+      },
+      "viewport": 320,
+      "vitals": {
+        "border": "0px",
+        "color": "rgba(0, 0, 0, 0)",
+        "image": "none",
+        "shadow": "none"
+      }
+    },
+    {
+      "character": {
+        "border": "0px",
+        "color": "rgba(0, 0, 0, 0)",
+        "image": "none",
+        "shadow": "none"
+      },
+      "glyphSizes": [
+        32,
+        32,
+        32,
+        32,
+        32
+      ],
+      "id": "08",
+      "minTouch": 44.7332763671875,
+      "pageWidth": 305,
+      "readoutOverflow": false,
+      "textOutsideButtons": [],
+      "top": {
+        "border": "0px",
+        "color": "rgba(0, 0, 0, 0)",
+        "image": "none",
+        "shadow": "none"
+      },
+      "viewport": 320,
+      "vitals": {
+        "border": "0px",
+        "color": "rgba(0, 0, 0, 0)",
+        "image": "none",
+        "shadow": "none"
+      }
+    },
+    {
+      "character": {
+        "border": "0px",
+        "color": "rgba(0, 0, 0, 0)",
+        "image": "none",
+        "shadow": "none"
+      },
+      "glyphSizes": [
+        30,
+        30,
+        0,
+        0,
+        0
+      ],
+      "id": "09",
+      "minTouch": 44.7332763671875,
+      "pageWidth": 305,
+      "readoutOverflow": false,
+      "textOutsideButtons": [],
+      "top": {
+        "border": "0px",
+        "color": "rgba(0, 0, 0, 0)",
+        "image": "none",
+        "shadow": "none"
+      },
+      "viewport": 320,
+      "vitals": {
+        "border": "0px",
+        "color": "rgba(0, 0, 0, 0)",
+        "image": "none",
+        "shadow": "none"
+      }
+    },
+    {
+      "character": {
+        "border": "0px",
+        "color": "rgba(0, 0, 0, 0)",
+        "image": "none",
+        "shadow": "none"
+      },
+      "glyphSizes": [
+        30,
+        30,
+        30,
+        30,
+        30
+      ],
+      "id": "10",
+      "minTouch": 44.7332763671875,
+      "pageWidth": 305,
+      "readoutOverflow": false,
+      "textOutsideButtons": [],
+      "top": {
+        "border": "0px",
+        "color": "rgba(0, 0, 0, 0)",
+        "image": "none",
+        "shadow": "none"
+      },
+      "viewport": 320,
+      "vitals": {
+        "border": "0px",
+        "color": "rgba(0, 0, 0, 0)",
+        "image": "none",
+        "shadow": "none"
+      }
+    }
+  ],
+  "vertical03": [
+    {
+      "label": "角色",
+      "overflow": false
+    },
+    {
+      "label": "菜单",
+      "overflow": false
+    },
+    {
+      "label": "背包",
+      "overflow": false
+    },
+    {
+      "label": "地图",
+      "overflow": false
+    },
+    {
+      "label": "目标",
+      "overflow": false
+    }
+  ],
+  "archive390": {
+    "hp": "37/102",
+    "minTouch": 55,
+    "textOverflow": false,
+    "title": "梦境档案馆",
+    "topBackground": "rgba(0, 0, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box"
+  },
+  "drawSequence": [
+    "01",
+    "06",
+    "07",
+    "02",
+    "08",
+    "03",
+    "04",
+    "10",
+    "09",
+    "05"
+  ],
+  "favoritePersisted": "true",
+  "menuActions": [
+    {
+      "kind": "character",
+      "title": "角色",
+      "closed": true,
+      "focusRestored": true
+    },
+    {
+      "kind": "menu",
+      "title": "菜单",
+      "closed": true,
+      "focusRestored": true
+    },
+    {
+      "kind": "bag",
+      "title": "背包",
+      "closed": true,
+      "focusRestored": true
+    },
+    {
+      "kind": "map",
+      "title": "地图",
+      "closed": true,
+      "focusRestored": true
+    },
+    {
+      "kind": "quests",
+      "title": "目标",
+      "closed": true,
+      "focusRestored": true
+    }
+  ],
+  "generatedAt": "2026-10-09T04:08:27.208Z",
+  "url": "http://127.0.0.1:8125/prototype/hud-menu-draw/#01",
+  "logs": [],
+  "boundary": "Second-round standalone HTML prototypes; no production Cocos changes."
+}

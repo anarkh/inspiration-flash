@@ -1,0 +1,131 @@
+{
+  "batch": 2,
+  "tool": "built-in imagegen",
+  "status": "paused_for_new_session",
+  "completedCount": 9,
+  "results": [
+    {
+      "entityId": "paradox_bailiff",
+      "sourceFile": "paradox-bailiff-world-v1.png",
+      "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a0ec84-66ff-72b1-930d-67c0ed16b012/exec-37513df6-e3d2-48f8-8693-dc82dd87d828.png",
+      "status": "complete"
+    },
+    {
+      "entityId": "zero_sum_auditor",
+      "sourceFile": "zero-sum-auditor-world-v1.png",
+      "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a0ec84-66ff-72b1-930d-67c0ed16b012/exec-dfc10aca-8f08-47d5-9d39-7f110abadf9d.png",
+      "status": "complete"
+    },
+    {
+      "entityId": "entropy_deckhand",
+      "sourceFile": "entropy-deckhand-world-v1.png",
+      "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a0ec84-66ff-72b1-930d-67c0ed16b012/exec-76428bfc-f687-466b-b64d-27c692605959.png",
+      "status": "complete"
+    },
+    {
+      "entityId": "dissipation_navigator",
+      "sourceFile": "dissipation-navigator-world-v1.png",
+      "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a0ec84-66ff-72b1-930d-67c0ed16b012/exec-7ad5c1da-fe12-4632-b133-0d4fb4ad6ad9.png",
+      "status": "complete"
+    },
+    {
+      "entityId": "last_helmsman",
+      "sourceFile": "last-helmsman-world-v1.png",
+      "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a0ec84-66ff-72b1-930d-67c0ed16b012/exec-ee1fe40b-da07-483a-a5c7-13492c1682a5.png",
+      "status": "complete"
+    },
+    {
+      "entityId": "parallax_hunter",
+      "sourceFile": "parallax-hunter-world-v1.png",
+      "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a0ec84-66ff-72b1-930d-67c0ed16b012/exec-2174c83c-4ce0-4b99-98fe-9710706d557a.png",
+      "status": "complete"
+    },
+    {
+      "entityId": "mirror_chorus",
+      "sourceFile": "mirror-chorus-world-v1.png",
+      "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a0ec84-66ff-72b1-930d-67c0ed16b012/exec-548424f2-73c4-4ade-a578-dbd2163c3008.png",
+      "status": "complete"
+    },
+    {
+      "entityId": "nameless_reflection",
+      "sourceFile": "nameless-reflection-world-v1.png",
+      "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a0ec84-66ff-72b1-930d-67c0ed16b012/exec-dbb6f264-d902-44d6-8ed1-55cb2e527f32.png",
+      "status": "complete"
+    },
+    {
+      "entityId": "erasure_copyist",
+      "sourceFile": "erasure-copyist-world-v1.png",
+      "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a0ec84-66ff-72b1-930d-67c0ed16b012/exec-6d1b7423-b2e7-49ab-9285-3032bff6854e.png",
+      "status": "complete"
+    }
+  ],
+  "remaining": [
+    {
+      "entityId": "palimpsest_censor",
+      "sourceFile": "palimpsest-censor-world-v1.png",
+      "status": "pending"
+    },
+    {
+      "entityId": "last_redactor",
+      "sourceFile": "last-redactor-world-v1.png",
+      "status": "pending"
+    },
+    {
+      "entityId": "reserve_bailiff",
+      "sourceFile": "reserve-bailiff-world-v1.png",
+      "status": "pending"
+    },
+    {
+      "entityId": "inheritance_mimic",
+      "sourceFile": "inheritance-mimic-world-v1.png",
+      "status": "pending"
+    },
+    {
+      "entityId": "estate_auctioneer",
+      "sourceFile": "estate-auctioneer-world-v1.png",
+      "status": "pending"
+    },
+    {
+      "entityId": "gene_stalker",
+      "sourceFile": "gene-stalker-world-v1.png",
+      "status": "pending"
+    },
+    {
+      "entityId": "mutation_guardian",
+      "sourceFile": "mutation-guardian-world-v1.png",
+      "status": "pending"
+    },
+    {
+      "entityId": "primal_curator",
+      "sourceFile": "primal-curator-world-v1.png",
+      "status": "pending"
+    },
+    {
+      "entityId": "frequency_leech",
+      "sourceFile": "frequency-leech-world-v1.png",
+      "status": "pending"
+    },
+    {
+      "entityId": "dead_air_mimic",
+      "sourceFile": "dead-air-mimic-world-v1.png",
+      "status": "pending"
+    },
+    {
+      "entityId": "broadcast_warden",
+      "sourceFile": "broadcast-warden-world-v1.png",
+      "status": "pending"
+    }
+  ],
+  "validation": {
+    "checked": "All completed images visually inspected for full body, unique identity and shared dark style. PNG alpha verified using Pillow; originals copied byte-for-byte.",
+    "dimensions": [
+      1024,
+      1536
+    ],
+    "alphaExtrema": [
+      0,
+      254
+    ]
+  },
+  "notes": "No imagegen calls are in flight. Resume only remaining entries; original portraits unchanged."
+}

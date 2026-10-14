@@ -1,0 +1,1036 @@
+{
+  "verifiedAt": "2026-10-09T10:05:49.866Z",
+  "target": "Cocos Creator 3.8.8 Web Mobile",
+  "preview": "http://127.0.0.1:8125/cocos/build/web-mobile/index.html",
+  "allSixViewportsCovered": true,
+  "evidence": [
+    {
+      "phase": "hub",
+      "viewport": {
+        "canvasHeight": 844,
+        "canvasWidth": 390,
+        "devicePixelRatio": 1,
+        "height": 844,
+        "width": 390
+      },
+      "worldViewport": {
+        "found": true,
+        "hasTouch": true,
+        "height": 1623.076923076923,
+        "name": "WalkViewport",
+        "screenHeight": 844,
+        "screenWidth": 390,
+        "width": 750,
+        "x": 195,
+        "y": 422
+      },
+      "backgroundWindow": {
+        "found": true,
+        "hasTouch": false,
+        "height": 797.1037305210136,
+        "name": "WalkDungeonBackdropWindow:scene:hub_courtyard_walk",
+        "screenHeight": 844,
+        "screenWidth": 1270.6,
+        "width": 1200,
+        "x": 195,
+        "y": 422
+      },
+      "actorScale": {
+        "x": 2.036217948717949,
+        "y": 2.036217948717949
+      },
+      "actorPosition": {
+        "x": 600,
+        "y": 550
+      },
+      "header": [
+        {
+          "height": 123.07692307692308,
+          "name": "WalkHud",
+          "present": true,
+          "width": 469.2307692307692,
+          "x": -121.15384615384616,
+          "y": 635.9230769230769
+        },
+        {
+          "height": 101.92307692307692,
+          "name": "SceneCharacter",
+          "present": true,
+          "width": 94.23076923076924,
+          "x": -177.8846153846154,
+          "y": 0
+        },
+        {
+          "height": 98.07692307692308,
+          "name": "WalkAvatarCrop",
+          "present": true,
+          "width": 90.3846153846154,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "fontSize": 25,
+          "height": 32.69230769230769,
+          "label": "轮回者",
+          "name": "WalkRoleName",
+          "present": true,
+          "width": 319.2307692307692,
+          "x": 42.30769230769231,
+          "y": 38.46153846153846
+        },
+        {
+          "fontSize": 19.23076923076923,
+          "height": 28.846153846153847,
+          "label": "生命 102/102",
+          "name": "WalkPlayerStatus",
+          "present": true,
+          "width": 319.2307692307692,
+          "x": 42.30769230769231,
+          "y": 5.769230769230769
+        },
+        {
+          "height": 7.6923076923076925,
+          "name": "WalkPlayerHealth",
+          "present": true,
+          "width": 319.2307692307692,
+          "x": 42.30769230769231,
+          "y": -13.461538461538462
+        },
+        {
+          "fontSize": 19.23076923076923,
+          "height": 26.923076923076923,
+          "label": "奖励点 850   灵韵 1",
+          "name": "WalkCurrencyReadout",
+          "present": true,
+          "width": 319.2307692307692,
+          "x": 42.30769230769231,
+          "y": -38.46153846153846
+        },
+        {
+          "height": 84.61538461538461,
+          "name": "SceneDetails",
+          "present": true,
+          "width": 84.61538461538461,
+          "x": 217.3076923076923,
+          "y": 655.1538461538462
+        },
+        {
+          "height": 84.61538461538461,
+          "name": "SceneHelp",
+          "present": true,
+          "width": 84.61538461538461,
+          "x": 313.46153846153845,
+          "y": 655.1538461538462
+        },
+        {
+          "name": "SceneMap",
+          "present": false
+        },
+        {
+          "name": "SceneCodex",
+          "present": false
+        },
+        {
+          "name": "WalkRiskSummary",
+          "present": false
+        }
+      ],
+      "portrait": {
+        "crop": {
+          "height": 98.07692307692308,
+          "width": 90.3846153846154
+        },
+        "frames": [],
+        "imageUuid": "2a0017c1-1814-4582-8bf6-b333c60640c7",
+        "placeholder": false,
+        "portraitPresent": true
+      },
+      "backgroundReady": true
+    },
+    {
+      "phase": "hub",
+      "viewport": {
+        "canvasHeight": 568,
+        "canvasWidth": 320,
+        "devicePixelRatio": 1,
+        "height": 568,
+        "width": 320
+      },
+      "worldViewport": {
+        "found": true,
+        "hasTouch": true,
+        "height": 1334,
+        "name": "WalkViewport",
+        "screenHeight": 568,
+        "screenWidth": 319.34032983508257,
+        "width": 750,
+        "x": 160,
+        "y": 284
+      },
+      "backgroundWindow": {
+        "found": true,
+        "hasTouch": false,
+        "height": 816.0407816482583,
+        "name": "WalkDungeonBackdropWindow:scene:hub_courtyard_walk",
+        "screenHeight": 568,
+        "screenWidth": 835.2523738130933,
+        "width": 1200,
+        "x": 160,
+        "y": 284
+      },
+      "actorScale": {
+        "x": 1.6347222222222222,
+        "y": 1.6347222222222222
+      },
+      "actorPosition": {
+        "x": 600,
+        "y": 550
+      },
+      "header": [
+        {
+          "height": 150.30985915492957,
+          "name": "WalkHud",
+          "present": true,
+          "width": 458.7746478873239,
+          "x": -122.12676056338027,
+          "y": 472.6619718309859
+        },
+        {
+          "height": 124.47535211267603,
+          "name": "SceneCharacter",
+          "present": true,
+          "width": 115.08098591549296,
+          "x": -160.1038732394366,
+          "y": 0
+        },
+        {
+          "height": 119.7781690140845,
+          "name": "WalkAvatarCrop",
+          "present": true,
+          "width": 110.3838028169014,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "fontSize": 30.53169014084507,
+          "height": 39.92605633802817,
+          "label": "轮回者",
+          "name": "WalkRoleName",
+          "present": true,
+          "width": 275.5845070422535,
+          "x": 51.66901408450704,
+          "y": 46.97183098591549
+        },
+        {
+          "fontSize": 23.485915492957744,
+          "height": 35.228873239436616,
+          "label": "生命 102/102",
+          "name": "WalkPlayerStatus",
+          "present": true,
+          "width": 275.5845070422535,
+          "x": 51.66901408450704,
+          "y": 7.045774647887324
+        },
+        {
+          "height": 9.394366197183098,
+          "name": "WalkPlayerHealth",
+          "present": true,
+          "width": 275.5845070422535,
+          "x": 51.66901408450704,
+          "y": -16.44014084507042
+        },
+        {
+          "fontSize": 21.137323943661972,
+          "height": 32.88028169014084,
+          "label": "奖励点 850   灵韵 1",
+          "name": "WalkCurrencyReadout",
+          "present": true,
+          "width": 275.5845070422535,
+          "x": 51.66901408450704,
+          "y": -46.97183098591549
+        },
+        {
+          "height": 103.33802816901408,
+          "name": "SceneDetails",
+          "present": true,
+          "width": 103.33802816901408,
+          "x": 182.4154929577465,
+          "y": 496.1478873239437
+        },
+        {
+          "height": 103.33802816901408,
+          "name": "SceneHelp",
+          "present": true,
+          "width": 103.33802816901408,
+          "x": 299.84507042253523,
+          "y": 496.1478873239437
+        },
+        {
+          "name": "SceneMap",
+          "present": false
+        },
+        {
+          "name": "SceneCodex",
+          "present": false
+        },
+        {
+          "name": "WalkRiskSummary",
+          "present": false
+        }
+      ],
+      "portrait": {
+        "crop": {
+          "height": 119.7781690140845,
+          "width": 110.3838028169014
+        },
+        "frames": [],
+        "imageUuid": "2a0017c1-1814-4582-8bf6-b333c60640c7",
+        "placeholder": false,
+        "portraitPresent": true
+      },
+      "backgroundReady": true
+    },
+    {
+      "phase": "explore",
+      "viewport": {
+        "canvasHeight": 844,
+        "canvasWidth": 390,
+        "devicePixelRatio": 1,
+        "height": 844,
+        "width": 390
+      },
+      "worldViewport": {
+        "found": true,
+        "hasTouch": false,
+        "height": 1623.076923076923,
+        "name": "WalkViewport",
+        "screenHeight": 844,
+        "screenWidth": 390,
+        "width": 750,
+        "x": 195,
+        "y": 422
+      },
+      "backgroundWindow": {
+        "found": true,
+        "hasTouch": false,
+        "height": 1475.5244755244755,
+        "name": "WalkDungeonBackdropWindow:scene:dungeon_world_demon_tower_1",
+        "screenHeight": 843.9999999999997,
+        "screenWidth": 572,
+        "width": 1000,
+        "x": 195,
+        "y": 422.0000000000001
+      },
+      "actorScale": {
+        "x": 1.1,
+        "y": 1.1
+      },
+      "actorPosition": {
+        "x": 500,
+        "y": 700
+      },
+      "header": [
+        {
+          "height": 123.07692307692308,
+          "name": "WalkHud",
+          "present": true,
+          "width": 469.2307692307692,
+          "x": -121.15384615384616,
+          "y": 635.9230769230769
+        },
+        {
+          "height": 101.92307692307692,
+          "name": "SceneCharacter",
+          "present": true,
+          "width": 94.23076923076924,
+          "x": -177.8846153846154,
+          "y": 0
+        },
+        {
+          "height": 98.07692307692308,
+          "name": "WalkAvatarCrop",
+          "present": true,
+          "width": 90.3846153846154,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "fontSize": 25,
+          "height": 32.69230769230769,
+          "label": "轮回者",
+          "name": "WalkRoleName",
+          "present": true,
+          "width": 319.2307692307692,
+          "x": 42.30769230769231,
+          "y": 38.46153846153846
+        },
+        {
+          "fontSize": 19.23076923076923,
+          "height": 28.846153846153847,
+          "label": "生命 102/102",
+          "name": "WalkPlayerStatus",
+          "present": true,
+          "width": 319.2307692307692,
+          "x": 42.30769230769231,
+          "y": 5.769230769230769
+        },
+        {
+          "height": 7.6923076923076925,
+          "name": "WalkPlayerHealth",
+          "present": true,
+          "width": 319.2307692307692,
+          "x": 42.30769230769231,
+          "y": -13.461538461538462
+        },
+        {
+          "fontSize": 19.23076923076923,
+          "height": 26.923076923076923,
+          "label": "奖励点 850   灵韵 1",
+          "name": "WalkCurrencyReadout",
+          "present": true,
+          "width": 319.2307692307692,
+          "x": 42.30769230769231,
+          "y": -38.46153846153846
+        },
+        {
+          "height": 84.61538461538461,
+          "name": "SceneDetails",
+          "present": true,
+          "width": 84.61538461538461,
+          "x": 217.3076923076923,
+          "y": 655.1538461538462
+        },
+        {
+          "height": 84.61538461538461,
+          "name": "SceneHelp",
+          "present": true,
+          "width": 84.61538461538461,
+          "x": 313.46153846153845,
+          "y": 655.1538461538462
+        },
+        {
+          "height": 84.61538461538461,
+          "name": "SceneMap",
+          "present": true,
+          "width": 84.61538461538461,
+          "x": 217.3076923076923,
+          "y": 559
+        },
+        {
+          "height": 84.61538461538461,
+          "name": "SceneCodex",
+          "present": true,
+          "width": 84.61538461538461,
+          "x": 313.46153846153845,
+          "y": 559
+        },
+        {
+          "height": 46.15384615384615,
+          "name": "WalkRiskSummary",
+          "present": true,
+          "width": 469.2307692307692,
+          "x": -121.15384615384616,
+          "y": 539.7692307692307
+        }
+      ],
+      "portrait": {
+        "crop": {
+          "height": 98.07692307692308,
+          "width": 90.3846153846154
+        },
+        "frames": [],
+        "imageUuid": "2a0017c1-1814-4582-8bf6-b333c60640c7",
+        "placeholder": false,
+        "portraitPresent": true
+      },
+      "backgroundReady": true,
+      "boundaries": [
+        {
+          "graphics": false,
+          "name": "WalkObstacleFootprint:0"
+        },
+        {
+          "graphics": false,
+          "name": "WalkObstacleFootprint:2"
+        },
+        {
+          "graphics": false,
+          "name": "WalkObstacleFootprint:3"
+        },
+        {
+          "graphics": false,
+          "name": "WalkObstacleFootprint:1"
+        }
+      ]
+    },
+    {
+      "phase": "explore",
+      "viewport": {
+        "canvasHeight": 568,
+        "canvasWidth": 320,
+        "devicePixelRatio": 1,
+        "height": 568,
+        "width": 320
+      },
+      "worldViewport": {
+        "found": true,
+        "hasTouch": false,
+        "height": 1334,
+        "name": "WalkViewport",
+        "screenHeight": 568,
+        "screenWidth": 319.34032983508257,
+        "width": 750,
+        "x": 160,
+        "y": 284
+      },
+      "backgroundWindow": {
+        "found": true,
+        "hasTouch": false,
+        "height": 1212.7272727272723,
+        "name": "WalkDungeonBackdropWindow:scene:dungeon_world_demon_tower_1",
+        "screenHeight": 568,
+        "screenWidth": 468.3658170914543,
+        "width": 1000,
+        "x": 160.00000000000003,
+        "y": 284.0000000000001
+      },
+      "actorScale": {
+        "x": 1.1,
+        "y": 1.1
+      },
+      "actorPosition": {
+        "x": 500,
+        "y": 700
+      },
+      "header": [
+        {
+          "height": 150.30985915492957,
+          "name": "WalkHud",
+          "present": true,
+          "width": 458.7746478873239,
+          "x": -122.12676056338027,
+          "y": 472.6619718309859
+        },
+        {
+          "height": 124.47535211267603,
+          "name": "SceneCharacter",
+          "present": true,
+          "width": 115.08098591549296,
+          "x": -160.1038732394366,
+          "y": 0
+        },
+        {
+          "height": 119.7781690140845,
+          "name": "WalkAvatarCrop",
+          "present": true,
+          "width": 110.3838028169014,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "fontSize": 30.53169014084507,
+          "height": 39.92605633802817,
+          "label": "轮回者",
+          "name": "WalkRoleName",
+          "present": true,
+          "width": 275.5845070422535,
+          "x": 51.66901408450704,
+          "y": 46.97183098591549
+        },
+        {
+          "fontSize": 23.485915492957744,
+          "height": 35.228873239436616,
+          "label": "生命 102/102",
+          "name": "WalkPlayerStatus",
+          "present": true,
+          "width": 275.5845070422535,
+          "x": 51.66901408450704,
+          "y": 7.045774647887324
+        },
+        {
+          "height": 9.394366197183098,
+          "name": "WalkPlayerHealth",
+          "present": true,
+          "width": 275.5845070422535,
+          "x": 51.66901408450704,
+          "y": -16.44014084507042
+        },
+        {
+          "fontSize": 21.137323943661972,
+          "height": 32.88028169014084,
+          "label": "奖励点 850   灵韵 1",
+          "name": "WalkCurrencyReadout",
+          "present": true,
+          "width": 275.5845070422535,
+          "x": 51.66901408450704,
+          "y": -46.97183098591549
+        },
+        {
+          "height": 103.33802816901408,
+          "name": "SceneDetails",
+          "present": true,
+          "width": 103.33802816901408,
+          "x": 182.4154929577465,
+          "y": 496.1478873239437
+        },
+        {
+          "height": 103.33802816901408,
+          "name": "SceneHelp",
+          "present": true,
+          "width": 103.33802816901408,
+          "x": 299.84507042253523,
+          "y": 496.1478873239437
+        },
+        {
+          "height": 103.33802816901408,
+          "name": "SceneMap",
+          "present": true,
+          "width": 103.33802816901408,
+          "x": 182.4154929577465,
+          "y": 378.71830985915494
+        },
+        {
+          "height": 103.33802816901408,
+          "name": "SceneCodex",
+          "present": true,
+          "width": 103.33802816901408,
+          "x": 299.84507042253523,
+          "y": 378.71830985915494
+        },
+        {
+          "height": 56.36619718309859,
+          "name": "WalkRiskSummary",
+          "present": true,
+          "width": 458.7746478873239,
+          "x": -122.12676056338027,
+          "y": 355.2323943661972
+        }
+      ],
+      "portrait": {
+        "crop": {
+          "height": 119.7781690140845,
+          "width": 110.3838028169014
+        },
+        "frames": [],
+        "imageUuid": "2a0017c1-1814-4582-8bf6-b333c60640c7",
+        "placeholder": false,
+        "portraitPresent": true
+      },
+      "backgroundReady": true,
+      "boundaries": [
+        {
+          "graphics": false,
+          "name": "WalkObstacleFootprint:0"
+        },
+        {
+          "graphics": false,
+          "name": "WalkObstacleFootprint:2"
+        },
+        {
+          "graphics": false,
+          "name": "WalkObstacleFootprint:3"
+        },
+        {
+          "graphics": false,
+          "name": "WalkObstacleFootprint:1"
+        }
+      ]
+    },
+    {
+      "phase": "combat",
+      "viewport": {
+        "canvasHeight": 844,
+        "canvasWidth": 390,
+        "devicePixelRatio": 1,
+        "height": 844,
+        "width": 390
+      },
+      "worldViewport": {
+        "found": true,
+        "hasTouch": false,
+        "height": 1623.076923076923,
+        "name": "WalkViewport",
+        "screenHeight": 844,
+        "screenWidth": 390,
+        "width": 750,
+        "x": 195,
+        "y": 422
+      },
+      "backgroundWindow": {
+        "found": true,
+        "hasTouch": false,
+        "height": 1475.5244755244755,
+        "name": "WalkDungeonBackdropWindow:scene:dungeon_world_demon_tower_1",
+        "screenHeight": 843.9999999999997,
+        "screenWidth": 732.1600000000001,
+        "width": 1280,
+        "x": 183.55999999999997,
+        "y": 422.0000000000001
+      },
+      "actorScale": {
+        "x": 1.1,
+        "y": 1.1
+      },
+      "actorPosition": {
+        "x": 440,
+        "y": 700
+      },
+      "header": [
+        {
+          "height": 123.07692307692308,
+          "name": "WalkHud",
+          "present": true,
+          "width": 469.2307692307692,
+          "x": -121.15384615384616,
+          "y": 635.9230769230769
+        },
+        {
+          "height": 101.92307692307692,
+          "name": "SceneCharacter",
+          "present": true,
+          "width": 94.23076923076924,
+          "x": -177.8846153846154,
+          "y": 0
+        },
+        {
+          "height": 98.07692307692308,
+          "name": "WalkAvatarCrop",
+          "present": true,
+          "width": 90.3846153846154,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "fontSize": 25,
+          "height": 32.69230769230769,
+          "label": "轮回者",
+          "name": "WalkRoleName",
+          "present": true,
+          "width": 319.2307692307692,
+          "x": 42.30769230769231,
+          "y": 38.46153846153846
+        },
+        {
+          "fontSize": 19.23076923076923,
+          "height": 28.846153846153847,
+          "label": "生命 102/102",
+          "name": "WalkPlayerStatus",
+          "present": true,
+          "width": 319.2307692307692,
+          "x": 42.30769230769231,
+          "y": 5.769230769230769
+        },
+        {
+          "height": 7.6923076923076925,
+          "name": "WalkPlayerHealth",
+          "present": true,
+          "width": 319.2307692307692,
+          "x": 42.30769230769231,
+          "y": -13.461538461538462
+        },
+        {
+          "fontSize": 19.23076923076923,
+          "height": 26.923076923076923,
+          "label": "奖励点 850   灵韵 1",
+          "name": "WalkCurrencyReadout",
+          "present": true,
+          "width": 319.2307692307692,
+          "x": 42.30769230769231,
+          "y": -38.46153846153846
+        },
+        {
+          "height": 84.61538461538461,
+          "name": "SceneDetails",
+          "present": true,
+          "width": 84.61538461538461,
+          "x": 217.3076923076923,
+          "y": 655.1538461538462
+        },
+        {
+          "height": 84.61538461538461,
+          "name": "SceneHelp",
+          "present": true,
+          "width": 84.61538461538461,
+          "x": 313.46153846153845,
+          "y": 655.1538461538462
+        },
+        {
+          "name": "SceneMap",
+          "present": false
+        },
+        {
+          "height": 84.61538461538461,
+          "name": "SceneCodex",
+          "present": true,
+          "width": 84.61538461538461,
+          "x": 313.46153846153845,
+          "y": 559
+        },
+        {
+          "height": 46.15384615384615,
+          "name": "WalkRiskSummary",
+          "present": true,
+          "width": 469.2307692307692,
+          "x": -121.15384615384616,
+          "y": 539.7692307692307
+        }
+      ],
+      "portrait": {
+        "crop": {
+          "height": 98.07692307692308,
+          "width": 90.3846153846154
+        },
+        "frames": [],
+        "imageUuid": "2a0017c1-1814-4582-8bf6-b333c60640c7",
+        "placeholder": false,
+        "portraitPresent": true
+      },
+      "backgroundReady": true,
+      "boundaries": [
+        {
+          "graphics": false,
+          "name": "WalkObstacleFootprint:0"
+        },
+        {
+          "graphics": false,
+          "name": "WalkObstacleFootprint:2"
+        },
+        {
+          "graphics": false,
+          "name": "WalkObstacleFootprint:3"
+        },
+        {
+          "graphics": false,
+          "name": "WalkObstacleFootprint:1"
+        }
+      ]
+    },
+    {
+      "phase": "combat",
+      "viewport": {
+        "canvasHeight": 568,
+        "canvasWidth": 320,
+        "devicePixelRatio": 1,
+        "height": 568,
+        "width": 320
+      },
+      "worldViewport": {
+        "found": true,
+        "hasTouch": false,
+        "height": 1334,
+        "name": "WalkViewport",
+        "screenHeight": 568,
+        "screenWidth": 319.34032983508257,
+        "width": 750,
+        "x": 160,
+        "y": 284
+      },
+      "backgroundWindow": {
+        "found": true,
+        "hasTouch": false,
+        "height": 1212.7272727272723,
+        "name": "WalkDungeonBackdropWindow:scene:dungeon_world_demon_tower_1",
+        "screenHeight": 568,
+        "screenWidth": 599.5082458770617,
+        "width": 1280,
+        "x": 150.63268365817092,
+        "y": 284.0000000000001
+      },
+      "actorScale": {
+        "x": 1.1,
+        "y": 1.1
+      },
+      "actorPosition": {
+        "x": 440,
+        "y": 700
+      },
+      "header": [
+        {
+          "height": 150.30985915492957,
+          "name": "WalkHud",
+          "present": true,
+          "width": 458.7746478873239,
+          "x": -122.12676056338027,
+          "y": 472.6619718309859
+        },
+        {
+          "height": 124.47535211267603,
+          "name": "SceneCharacter",
+          "present": true,
+          "width": 115.08098591549296,
+          "x": -160.1038732394366,
+          "y": 0
+        },
+        {
+          "height": 119.7781690140845,
+          "name": "WalkAvatarCrop",
+          "present": true,
+          "width": 110.3838028169014,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "fontSize": 30.53169014084507,
+          "height": 39.92605633802817,
+          "label": "轮回者",
+          "name": "WalkRoleName",
+          "present": true,
+          "width": 275.5845070422535,
+          "x": 51.66901408450704,
+          "y": 46.97183098591549
+        },
+        {
+          "fontSize": 23.485915492957744,
+          "height": 35.228873239436616,
+          "label": "生命 102/102",
+          "name": "WalkPlayerStatus",
+          "present": true,
+          "width": 275.5845070422535,
+          "x": 51.66901408450704,
+          "y": 7.045774647887324
+        },
+        {
+          "height": 9.394366197183098,
+          "name": "WalkPlayerHealth",
+          "present": true,
+          "width": 275.5845070422535,
+          "x": 51.66901408450704,
+          "y": -16.44014084507042
+        },
+        {
+          "fontSize": 21.137323943661972,
+          "height": 32.88028169014084,
+          "label": "奖励点 850   灵韵 1",
+          "name": "WalkCurrencyReadout",
+          "present": true,
+          "width": 275.5845070422535,
+          "x": 51.66901408450704,
+          "y": -46.97183098591549
+        },
+        {
+          "height": 103.33802816901408,
+          "name": "SceneDetails",
+          "present": true,
+          "width": 103.33802816901408,
+          "x": 182.4154929577465,
+          "y": 496.1478873239437
+        },
+        {
+          "height": 103.33802816901408,
+          "name": "SceneHelp",
+          "present": true,
+          "width": 103.33802816901408,
+          "x": 299.84507042253523,
+          "y": 496.1478873239437
+        },
+        {
+          "name": "SceneMap",
+          "present": false
+        },
+        {
+          "height": 103.33802816901408,
+          "name": "SceneCodex",
+          "present": true,
+          "width": 103.33802816901408,
+          "x": 299.84507042253523,
+          "y": 378.71830985915494
+        },
+        {
+          "height": 56.36619718309859,
+          "name": "WalkRiskSummary",
+          "present": true,
+          "width": 458.7746478873239,
+          "x": -122.12676056338027,
+          "y": 355.2323943661972
+        }
+      ],
+      "portrait": {
+        "crop": {
+          "height": 119.7781690140845,
+          "width": 110.3838028169014
+        },
+        "frames": [],
+        "imageUuid": "2a0017c1-1814-4582-8bf6-b333c60640c7",
+        "placeholder": false,
+        "portraitPresent": true
+      },
+      "backgroundReady": true,
+      "boundaries": [
+        {
+          "graphics": false,
+          "name": "WalkObstacleFootprint:0"
+        },
+        {
+          "graphics": false,
+          "name": "WalkObstacleFootprint:2"
+        },
+        {
+          "graphics": false,
+          "name": "WalkObstacleFootprint:3"
+        },
+        {
+          "graphics": false,
+          "name": "WalkObstacleFootprint:1"
+        }
+      ]
+    }
+  ],
+  "combat": {
+    "phase": "combat",
+    "playerHp": 92,
+    "enemyHp": 24,
+    "status": "生命 92/102",
+    "animating": false
+  },
+  "interaction": {
+    "hubMovementAndPortal": true,
+    "exploreMovementAndEncounter": true,
+    "characterPanel320": true,
+    "combatAttack": true
+  },
+  "consoleErrors": [],
+  "wechatDeviceVerified": false,
+  "sourceSha256": {
+    "cocos/assets/scripts/ui/InfiniteFlowWalkScene.ts": "3456174cdd9350888afa79074f5a38164cae846a04a82f7021d4c9221e94b102",
+    "cocos/headless/bootstrap-race.self-check.mjs": "56a496c41d7dbcacec7200666392414dcc2ca00f52477a87a4421a44d37328c5",
+    "cocos/README.md": "aef1b2a190397e53bde38e5e77a0cec4e5aaf3f752ac021dbb51eba200478a68"
+  },
+  "checks": {
+    "cocosRaceScenarios": 103,
+    "cocosRacePassed": true,
+    "headlessTypecheckPassed": true,
+    "creatorTypecheckPassed": true,
+    "webMobileBuildPassed": true,
+    "scopedDiffCheckPassed": true
+  },
+  "screenshots": {
+    "combat-320.png": {
+      "bytes": 348756,
+      "sha256": "32c2eb6b59789bf4806332e8b18c93ffdaccbec350c6fe53d15fc2ea0fa9635b"
+    },
+    "combat-390.png": {
+      "bytes": 589259,
+      "sha256": "30e9757eb6c2cb8fe01ad925ba281392ad18e308156f25c55a93a01642850c84"
+    },
+    "combat-after-hit-320.png": {
+      "bytes": 349064,
+      "sha256": "071bbf65bbd7ce0edaf28539508c398b4c33be9a089fefc06fbdf880f54956e3"
+    },
+    "explore-320.png": {
+      "bytes": 356037,
+      "sha256": "391816167e3bc18116b54432451d99bdffda476eeae30f2ace64313821fb2f4a"
+    },
+    "explore-390.png": {
+      "bytes": 601103,
+      "sha256": "79a2451f71d7534da431030db0b27d1042c53227eee8ad7f09436510fb197a7c"
+    },
+    "hub-320.png": {
+      "bytes": 308589,
+      "sha256": "bbe5c4c89183bebd13def04df690e74bdb3cdb66fe2c7e1486fa09c48edb73fd"
+    },
+    "hub-390.png": {
+      "bytes": 507734,
+      "sha256": "c7eba825405e1bec03015dee03c422b7d912af21f77d6c0ca354ddeafc6082b0"
+    }
+  }
+}

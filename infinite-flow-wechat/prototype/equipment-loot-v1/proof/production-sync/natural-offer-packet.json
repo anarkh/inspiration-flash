@@ -1,0 +1,364 @@
+{
+  "storage": {
+    "infinite-flow:save": "{\"checksum\":\"sha256:89354e44bad5c9b8212d742f9baebc35205e325a25c8090f74f3e0c9f03391cb\",\"checksumRulesVersion\":1,\"commandLedger\":{\"epoch\":\"equipment-loot-fixture-20261012\",\"highWatermark\":8,\"receipts\":[{\"commandId\":\"equipment-loot-fixture-20261012:1\",\"eventDigest\":\"sha256:6e84e585d093625516b6cb089ce43bde326ecf3ca881f12c47f4979422b0a242\",\"ledgerRevision\":1,\"outcome\":\"committed\",\"stateRevision\":1},{\"commandId\":\"equipment-loot-fixture-20261012:2\",\"eventDigest\":\"sha256:c28ddb4bbe2cf187a52a6b131a53587f02ed4e9de4649ec1faaa9d77dbb41aac\",\"ledgerRevision\":2,\"outcome\":\"committed\",\"stateRevision\":2},{\"commandId\":\"equipment-loot-fixture-20261012:3\",\"eventDigest\":\"sha256:3938735df91ac99da14d25886d2fcb286f19c333aef925e0b7d825fcca1d898f\",\"ledgerRevision\":3,\"outcome\":\"committed\",\"stateRevision\":3},{\"commandId\":\"equipment-loot-fixture-20261012:4\",\"eventDigest\":\"sha256:24c77715794e09e7de9e29ff6a5311fb9d1974226f0d892994e26673efff8a5f\",\"ledgerRevision\":4,\"outcome\":\"committed\",\"stateRevision\":4},{\"commandId\":\"equipment-loot-fixture-20261012:5\",\"eventDigest\":\"sha256:54a6765cc42e31695d89f115cd42d7688a7a3f258e1578aea2e2821d5772f842\",\"ledgerRevision\":5,\"outcome\":\"committed\",\"stateRevision\":5},{\"commandId\":\"equipment-loot-fixture-20261012:6\",\"eventDigest\":\"sha256:7d441cfaa6f285506d09850d8f14256bddc95f4fc18dee46e16ea7bef61a67c3\",\"ledgerRevision\":6,\"outcome\":\"committed\",\"stateRevision\":6},{\"commandId\":\"equipment-loot-fixture-20261012:7\",\"eventDigest\":\"sha256:bed73811b281c18bbbee312ecad315f8cf4f95ca0921226cca069d7843f3cf9c\",\"ledgerRevision\":7,\"outcome\":\"committed\",\"stateRevision\":7},{\"commandId\":\"equipment-loot-fixture-20261012:8\",\"eventDigest\":\"sha256:5b6f3e0f7b0cf6aeffbb5fde58ef4a1138c908efd09ff8558eb37f83489c439a\",\"ledgerRevision\":8,\"outcome\":\"committed\",\"stateRevision\":8}]},\"contentVersion\":\"web-oracle-2645f02\",\"ledgerRevision\":8,\"savedAt\":0,\"schemaVersion\":2,\"state\":{\"archivedRelicIds\":[],\"bloodlineRanks\":{},\"claimedDirectiveIds\":[],\"claimedTaskIds\":[],\"combat\":{\"companionAssistUsed\":false,\"damageTakenAtStart\":19,\"effects\":{},\"guarding\":false,\"log\":[\"剔骨塔卒出现：生命高于一半时防御更高。\"],\"methodTechniqueUsedIds\":[],\"monsterHp\":66,\"monsterId\":\"tower_butcher\",\"nodeId\":\"tower_butcher_patrol\",\"turn\":1,\"weaponFocus\":0},\"companionRanks\":{},\"completedDungeonIds\":[],\"enteredDungeonIds\":[\"demon_tower_1\"],\"equipmentAttunements\":{},\"equipmentLevels\":{\"patched_belt\":1,\"patched_boots\":1,\"patched_coat\":1,\"patched_gloves\":1,\"patched_headwrap\":1,\"plain_charm\":1,\"training_blade\":1},\"equipmentMemories\":{},\"equipmentRolls\":{},\"equipmentTemperRanks\":{},\"equipped\":{\"armor\":\"patched_coat\",\"charm\":\"plain_charm\",\"feet\":\"patched_boots\",\"hands\":\"patched_gloves\",\"head\":\"patched_headwrap\",\"waist\":\"patched_belt\",\"weapon\":\"training_blade\"},\"infernoProgress\":{},\"inventory\":{\"armor_patch\":0,\"capture_net\":0,\"causal_seal\":0,\"chronal_glass\":0,\"combat_reel\":0,\"cracked_core\":0,\"cycle_imprint\":0,\"demon_bone\":1,\"dispel_talisman\":0,\"echo_coin\":0,\"entropy_crystal\":0,\"focus_incense\":0,\"gate_sigil\":0,\"genesis_serum\":0,\"healing_pill\":0,\"hidden_stone\":0,\"legacy_scrip\":0,\"medicine_ash\":0,\"method_page\":0,\"mirror_shell\":0,\"observation_shard\":0,\"phase_glass\":0,\"redaction_ink\":0,\"rescue_badge\":0,\"rift_dust\":0,\"silence_core\":0,\"spirit_bait\":0,\"star_iron\":0,\"thunder_talisman\":0,\"truth_fragment\":0},\"learnedMethods\":[],\"lingyun\":1,\"log\":[\"遭遇剔骨塔卒，进入回合战斗。\",\"你移动到剔骨巡卒。\",\"你移动到坠落行囊。\",\"灰坑回声爆发，你承受 19 点伤害。 探索结算追加 30 点奖励。\",\"发现隐藏任务「巡雾问井」。继续探索，任务线索会在地图中显现。\",\"你移动到灰坑回声。\",\"雾中妖鬼倒下，160 点奖励、妖骨 x1进入战利品袋。\",\"你发动攻击，造成 42 点伤害。\",\"遭遇雾中妖鬼，进入回合战斗。\",\"副本开启：妖塔一层。妖雾封住石阶，塔内每一层都在测试准备是否足够。 当前难度：普通。 本轮回响偏向：强攻。\",\"白光散去，你站在主神空间。兑换碑、功法碑和三道副本门同时亮起。\"],\"methodRanks\":{},\"ownedCompanions\":[],\"ownedEquipment\":[\"training_blade\",\"patched_headwrap\",\"patched_coat\",\"patched_gloves\",\"patched_boots\",\"patched_belt\",\"plain_charm\"],\"ownedPets\":[],\"petLevels\":{},\"phase\":\"combat\",\"player\":{\"base\":{\"agility\":20,\"body\":40,\"luck\":1,\"spirit\":2},\"hp\":601,\"maxHp\":620},\"preparedItemIds\":[],\"preparedRelicFrame\":\"assault\",\"rewardPoints\":1040,\"run\":{\"broadcastEntryPassives\":{\"anechoicMantle\":false,\"deadAirHeadset\":false,\"hushblade\":false,\"lastChannelBeacon\":false},\"capturedPetIds\":[],\"captures\":0,\"carriedEquipmentRolls\":{},\"clearedNodeIds\":[\"fog_lesser_demon\",\"ash_pit_trap\"],\"currentNodeId\":\"tower_butcher_patrol\",\"damageTaken\":19,\"discoveredNodeIds\":[\"broken_sigil_reward\",\"fog_lesser_demon\",\"blood_rune_trap\",\"ash_pit_trap\",\"demon_bone_cache\",\"fallen_pack_reward\",\"tower_butcher_patrol\",\"risky_font_trap\"],\"dungeonId\":\"demon_tower_1\",\"entryFlowVersion\":2,\"equipmentMemorySnapshot\":{\"activeEntries\":[],\"rulesVersion\":1},\"escortEntryGear\":{\"blackboxBeacon\":false,\"evacuationPlate\":false,\"rescueCarbine\":false,\"triageVisor\":false},\"eventLog\":[],\"explorationRewardVersion\":1,\"falseTestimonyEntryGear\":{\"appealSeal\":false,\"crossExaminerSabre\":false,\"custodyShell\":false,\"forensicVisor\":false},\"fieldSurveyState\":{\"frozenSources\":[],\"resolvedSurveys\":[],\"rulesVersion\":1},\"hiddenTaskSeed\":305441741,\"lawState\":{\"clearedNodeIds\":[\"fog_lesser_demon\",\"ash_pit_trap\"],\"combatOpenings\":{\"fog_lesser_demon\":{\"isBoss\":false,\"style\":\"force\"}},\"combatVictoryNodeIds\":[\"fog_lesser_demon\"],\"dungeonId\":\"demon_tower_1\",\"law\":{\"fogPressure\":1,\"kind\":\"demon_tower\"},\"resolvedEventIds\":[],\"rulesVersion\":1},\"lootBag\":{\"equipmentIds\":[],\"items\":{\"demon_bone\":1},\"lingyun\":0,\"rewardPoints\":190},\"lootOffersMade\":0,\"methodSnapshots\":[],\"permanentlyOwnedEquipmentIds\":[],\"pressureState\":{\"clearedNodeCount\":2,\"rulesVersion\":1},\"protocol\":{\"id\":\"standard\",\"rulesVersion\":1},\"pursuitState\":{\"contacts\":0,\"dungeonId\":\"demon_tower_1\",\"graceMoves\":0,\"nodeId\":null,\"repelledReason\":null,\"rewardGranted\":false,\"rulesVersion\":1,\"status\":\"disabled\"},\"relicConduitSourceEquipmentIds\":[],\"relicState\":{\"acquiredIds\":[],\"frame\":\"assault\",\"processedDraftIds\":[],\"rulesVersion\":1},\"resolvedEventIds\":[],\"routeContractState\":{\"completedTargetCount\":0,\"contractId\":\"tower_mist_watch\",\"dungeonId\":\"demon_tower_1\",\"rulesVersion\":1,\"status\":\"active\"},\"soulSkillState\":{\"chargesRemaining\":0,\"frozenSkillIds\":[],\"readySkillIds\":[],\"rulesVersion\":1,\"usedRechargeIds\":[]},\"tacticalLoadout\":{\"itemIds\":[],\"rulesVersion\":1},\"usedItems\":[]}},\"stateRevision\":8}",
+    "infinite-flow:installation-epoch:v1": "equipment-loot-fixture-20261012",
+    "infinite-flow:save:backup": "{\"checksum\":\"sha256:3eaff05b3327ad0f64402494303727bcdd2d23def3af091a19790af3dea431df\",\"checksumRulesVersion\":1,\"commandLedger\":{\"epoch\":\"equipment-loot-fixture-20261012\",\"highWatermark\":7,\"receipts\":[{\"commandId\":\"equipment-loot-fixture-20261012:1\",\"eventDigest\":\"sha256:6e84e585d093625516b6cb089ce43bde326ecf3ca881f12c47f4979422b0a242\",\"ledgerRevision\":1,\"outcome\":\"committed\",\"stateRevision\":1},{\"commandId\":\"equipment-loot-fixture-20261012:2\",\"eventDigest\":\"sha256:c28ddb4bbe2cf187a52a6b131a53587f02ed4e9de4649ec1faaa9d77dbb41aac\",\"ledgerRevision\":2,\"outcome\":\"committed\",\"stateRevision\":2},{\"commandId\":\"equipment-loot-fixture-20261012:3\",\"eventDigest\":\"sha256:3938735df91ac99da14d25886d2fcb286f19c333aef925e0b7d825fcca1d898f\",\"ledgerRevision\":3,\"outcome\":\"committed\",\"stateRevision\":3},{\"commandId\":\"equipment-loot-fixture-20261012:4\",\"eventDigest\":\"sha256:24c77715794e09e7de9e29ff6a5311fb9d1974226f0d892994e26673efff8a5f\",\"ledgerRevision\":4,\"outcome\":\"committed\",\"stateRevision\":4},{\"commandId\":\"equipment-loot-fixture-20261012:5\",\"eventDigest\":\"sha256:54a6765cc42e31695d89f115cd42d7688a7a3f258e1578aea2e2821d5772f842\",\"ledgerRevision\":5,\"outcome\":\"committed\",\"stateRevision\":5},{\"commandId\":\"equipment-loot-fixture-20261012:6\",\"eventDigest\":\"sha256:7d441cfaa6f285506d09850d8f14256bddc95f4fc18dee46e16ea7bef61a67c3\",\"ledgerRevision\":6,\"outcome\":\"committed\",\"stateRevision\":6},{\"commandId\":\"equipment-loot-fixture-20261012:7\",\"eventDigest\":\"sha256:bed73811b281c18bbbee312ecad315f8cf4f95ca0921226cca069d7843f3cf9c\",\"ledgerRevision\":7,\"outcome\":\"committed\",\"stateRevision\":7}]},\"contentVersion\":\"web-oracle-2645f02\",\"ledgerRevision\":7,\"savedAt\":0,\"schemaVersion\":2,\"state\":{\"archivedRelicIds\":[],\"bloodlineRanks\":{},\"claimedDirectiveIds\":[],\"claimedTaskIds\":[],\"companionRanks\":{},\"completedDungeonIds\":[],\"enteredDungeonIds\":[\"demon_tower_1\"],\"equipmentAttunements\":{},\"equipmentLevels\":{\"patched_belt\":1,\"patched_boots\":1,\"patched_coat\":1,\"patched_gloves\":1,\"patched_headwrap\":1,\"plain_charm\":1,\"training_blade\":1},\"equipmentMemories\":{},\"equipmentRolls\":{},\"equipmentTemperRanks\":{},\"equipped\":{\"armor\":\"patched_coat\",\"charm\":\"plain_charm\",\"feet\":\"patched_boots\",\"hands\":\"patched_gloves\",\"head\":\"patched_headwrap\",\"waist\":\"patched_belt\",\"weapon\":\"training_blade\"},\"infernoProgress\":{},\"inventory\":{\"armor_patch\":0,\"capture_net\":0,\"causal_seal\":0,\"chronal_glass\":0,\"combat_reel\":0,\"cracked_core\":0,\"cycle_imprint\":0,\"demon_bone\":1,\"dispel_talisman\":0,\"echo_coin\":0,\"entropy_crystal\":0,\"focus_incense\":0,\"gate_sigil\":0,\"genesis_serum\":0,\"healing_pill\":0,\"hidden_stone\":0,\"legacy_scrip\":0,\"medicine_ash\":0,\"method_page\":0,\"mirror_shell\":0,\"observation_shard\":0,\"phase_glass\":0,\"redaction_ink\":0,\"rescue_badge\":0,\"rift_dust\":0,\"silence_core\":0,\"spirit_bait\":0,\"star_iron\":0,\"thunder_talisman\":0,\"truth_fragment\":0},\"learnedMethods\":[],\"lingyun\":1,\"log\":[\"你移动到剔骨巡卒。\",\"你移动到坠落行囊。\",\"灰坑回声爆发，你承受 19 点伤害。 探索结算追加 30 点奖励。\",\"发现隐藏任务「巡雾问井」。继续探索，任务线索会在地图中显现。\",\"你移动到灰坑回声。\",\"雾中妖鬼倒下，160 点奖励、妖骨 x1进入战利品袋。\",\"你发动攻击，造成 42 点伤害。\",\"遭遇雾中妖鬼，进入回合战斗。\",\"副本开启：妖塔一层。妖雾封住石阶，塔内每一层都在测试准备是否足够。 当前难度：普通。 本轮回响偏向：强攻。\",\"白光散去，你站在主神空间。兑换碑、功法碑和三道副本门同时亮起。\"],\"methodRanks\":{},\"ownedCompanions\":[],\"ownedEquipment\":[\"training_blade\",\"patched_headwrap\",\"patched_coat\",\"patched_gloves\",\"patched_boots\",\"patched_belt\",\"plain_charm\"],\"ownedPets\":[],\"petLevels\":{},\"phase\":\"explore\",\"player\":{\"base\":{\"agility\":20,\"body\":40,\"luck\":1,\"spirit\":2},\"hp\":601,\"maxHp\":620},\"preparedItemIds\":[],\"preparedRelicFrame\":\"assault\",\"rewardPoints\":1040,\"run\":{\"broadcastEntryPassives\":{\"anechoicMantle\":false,\"deadAirHeadset\":false,\"hushblade\":false,\"lastChannelBeacon\":false},\"capturedPetIds\":[],\"captures\":0,\"carriedEquipmentRolls\":{},\"clearedNodeIds\":[\"fog_lesser_demon\",\"ash_pit_trap\"],\"currentNodeId\":\"tower_butcher_patrol\",\"damageTaken\":19,\"discoveredNodeIds\":[\"broken_sigil_reward\",\"fog_lesser_demon\",\"blood_rune_trap\",\"ash_pit_trap\",\"demon_bone_cache\",\"fallen_pack_reward\",\"tower_butcher_patrol\",\"risky_font_trap\"],\"dungeonId\":\"demon_tower_1\",\"entryFlowVersion\":2,\"equipmentMemorySnapshot\":{\"activeEntries\":[],\"rulesVersion\":1},\"escortEntryGear\":{\"blackboxBeacon\":false,\"evacuationPlate\":false,\"rescueCarbine\":false,\"triageVisor\":false},\"eventLog\":[],\"explorationRewardVersion\":1,\"falseTestimonyEntryGear\":{\"appealSeal\":false,\"crossExaminerSabre\":false,\"custodyShell\":false,\"forensicVisor\":false},\"fieldSurveyState\":{\"frozenSources\":[],\"resolvedSurveys\":[],\"rulesVersion\":1},\"hiddenTaskSeed\":305441741,\"lawState\":{\"clearedNodeIds\":[\"fog_lesser_demon\",\"ash_pit_trap\"],\"combatOpenings\":{\"fog_lesser_demon\":{\"isBoss\":false,\"style\":\"force\"}},\"combatVictoryNodeIds\":[\"fog_lesser_demon\"],\"dungeonId\":\"demon_tower_1\",\"law\":{\"fogPressure\":1,\"kind\":\"demon_tower\"},\"resolvedEventIds\":[],\"rulesVersion\":1},\"lootBag\":{\"equipmentIds\":[],\"items\":{\"demon_bone\":1},\"lingyun\":0,\"rewardPoints\":190},\"lootOffersMade\":0,\"methodSnapshots\":[],\"permanentlyOwnedEquipmentIds\":[],\"pressureState\":{\"clearedNodeCount\":2,\"rulesVersion\":1},\"protocol\":{\"id\":\"standard\",\"rulesVersion\":1},\"pursuitState\":{\"contacts\":0,\"dungeonId\":\"demon_tower_1\",\"graceMoves\":0,\"nodeId\":null,\"repelledReason\":null,\"rewardGranted\":false,\"rulesVersion\":1,\"status\":\"disabled\"},\"relicConduitSourceEquipmentIds\":[],\"relicState\":{\"acquiredIds\":[],\"frame\":\"assault\",\"processedDraftIds\":[],\"rulesVersion\":1},\"resolvedEventIds\":[],\"routeContractState\":{\"completedTargetCount\":0,\"contractId\":\"tower_mist_watch\",\"dungeonId\":\"demon_tower_1\",\"rulesVersion\":1,\"status\":\"active\"},\"soulSkillState\":{\"chargesRemaining\":0,\"frozenSkillIds\":[],\"readySkillIds\":[],\"rulesVersion\":1,\"usedRechargeIds\":[]},\"tacticalLoadout\":{\"itemIds\":[],\"rulesVersion\":1},\"usedItems\":[]}},\"stateRevision\":7}"
+  },
+  "durability": "write-through",
+  "state": {
+    "archivedRelicIds": [],
+    "bloodlineRanks": {},
+    "claimedDirectiveIds": [],
+    "claimedTaskIds": [],
+    "combat": {
+      "companionAssistUsed": false,
+      "damageTakenAtStart": 19,
+      "effects": {},
+      "guarding": false,
+      "log": [
+        "剔骨塔卒出现：生命高于一半时防御更高。"
+      ],
+      "methodTechniqueUsedIds": [],
+      "monsterHp": 66,
+      "monsterId": "tower_butcher",
+      "nodeId": "tower_butcher_patrol",
+      "turn": 1,
+      "weaponFocus": 0
+    },
+    "companionRanks": {},
+    "completedDungeonIds": [],
+    "enteredDungeonIds": [
+      "demon_tower_1"
+    ],
+    "equipmentAttunements": {},
+    "equipmentLevels": {
+      "patched_belt": 1,
+      "patched_boots": 1,
+      "patched_coat": 1,
+      "patched_gloves": 1,
+      "patched_headwrap": 1,
+      "plain_charm": 1,
+      "training_blade": 1
+    },
+    "equipmentMemories": {},
+    "equipmentRolls": {},
+    "equipmentTemperRanks": {},
+    "equipped": {
+      "armor": "patched_coat",
+      "charm": "plain_charm",
+      "feet": "patched_boots",
+      "hands": "patched_gloves",
+      "head": "patched_headwrap",
+      "waist": "patched_belt",
+      "weapon": "training_blade"
+    },
+    "infernoProgress": {},
+    "inventory": {
+      "armor_patch": 0,
+      "capture_net": 0,
+      "causal_seal": 0,
+      "chronal_glass": 0,
+      "combat_reel": 0,
+      "cracked_core": 0,
+      "cycle_imprint": 0,
+      "demon_bone": 1,
+      "dispel_talisman": 0,
+      "echo_coin": 0,
+      "entropy_crystal": 0,
+      "focus_incense": 0,
+      "gate_sigil": 0,
+      "genesis_serum": 0,
+      "healing_pill": 0,
+      "hidden_stone": 0,
+      "legacy_scrip": 0,
+      "medicine_ash": 0,
+      "method_page": 0,
+      "mirror_shell": 0,
+      "observation_shard": 0,
+      "phase_glass": 0,
+      "redaction_ink": 0,
+      "rescue_badge": 0,
+      "rift_dust": 0,
+      "silence_core": 0,
+      "spirit_bait": 0,
+      "star_iron": 0,
+      "thunder_talisman": 0,
+      "truth_fragment": 0
+    },
+    "learnedMethods": [],
+    "lingyun": 1,
+    "log": [
+      "遭遇剔骨塔卒，进入回合战斗。",
+      "你移动到剔骨巡卒。",
+      "你移动到坠落行囊。",
+      "灰坑回声爆发，你承受 19 点伤害。 探索结算追加 30 点奖励。",
+      "发现隐藏任务「巡雾问井」。继续探索，任务线索会在地图中显现。",
+      "你移动到灰坑回声。",
+      "雾中妖鬼倒下，160 点奖励、妖骨 x1进入战利品袋。",
+      "你发动攻击，造成 42 点伤害。",
+      "遭遇雾中妖鬼，进入回合战斗。",
+      "副本开启：妖塔一层。妖雾封住石阶，塔内每一层都在测试准备是否足够。 当前难度：普通。 本轮回响偏向：强攻。",
+      "白光散去，你站在主神空间。兑换碑、功法碑和三道副本门同时亮起。"
+    ],
+    "methodRanks": {},
+    "ownedCompanions": [],
+    "ownedEquipment": [
+      "training_blade",
+      "patched_headwrap",
+      "patched_coat",
+      "patched_gloves",
+      "patched_boots",
+      "patched_belt",
+      "plain_charm"
+    ],
+    "ownedPets": [],
+    "petLevels": {},
+    "phase": "combat",
+    "player": {
+      "base": {
+        "agility": 20,
+        "body": 40,
+        "luck": 1,
+        "spirit": 2
+      },
+      "hp": 601,
+      "maxHp": 620
+    },
+    "preparedItemIds": [],
+    "preparedRelicFrame": "assault",
+    "rewardPoints": 1040,
+    "run": {
+      "broadcastEntryPassives": {
+        "anechoicMantle": false,
+        "deadAirHeadset": false,
+        "hushblade": false,
+        "lastChannelBeacon": false
+      },
+      "capturedPetIds": [],
+      "captures": 0,
+      "carriedEquipmentRolls": {},
+      "clearedNodeIds": [
+        "fog_lesser_demon",
+        "ash_pit_trap"
+      ],
+      "currentNodeId": "tower_butcher_patrol",
+      "damageTaken": 19,
+      "discoveredNodeIds": [
+        "broken_sigil_reward",
+        "fog_lesser_demon",
+        "blood_rune_trap",
+        "ash_pit_trap",
+        "demon_bone_cache",
+        "fallen_pack_reward",
+        "tower_butcher_patrol",
+        "risky_font_trap"
+      ],
+      "dungeonId": "demon_tower_1",
+      "entryFlowVersion": 2,
+      "equipmentMemorySnapshot": {
+        "activeEntries": [],
+        "rulesVersion": 1
+      },
+      "escortEntryGear": {
+        "blackboxBeacon": false,
+        "evacuationPlate": false,
+        "rescueCarbine": false,
+        "triageVisor": false
+      },
+      "eventLog": [],
+      "explorationRewardVersion": 1,
+      "falseTestimonyEntryGear": {
+        "appealSeal": false,
+        "crossExaminerSabre": false,
+        "custodyShell": false,
+        "forensicVisor": false
+      },
+      "fieldSurveyState": {
+        "frozenSources": [],
+        "resolvedSurveys": [],
+        "rulesVersion": 1
+      },
+      "hiddenTaskSeed": 305441741,
+      "lawState": {
+        "clearedNodeIds": [
+          "fog_lesser_demon",
+          "ash_pit_trap"
+        ],
+        "combatOpenings": {
+          "fog_lesser_demon": {
+            "isBoss": false,
+            "style": "force"
+          }
+        },
+        "combatVictoryNodeIds": [
+          "fog_lesser_demon"
+        ],
+        "dungeonId": "demon_tower_1",
+        "law": {
+          "fogPressure": 1,
+          "kind": "demon_tower"
+        },
+        "resolvedEventIds": [],
+        "rulesVersion": 1
+      },
+      "lootBag": {
+        "equipmentIds": [],
+        "items": {
+          "demon_bone": 1
+        },
+        "lingyun": 0,
+        "rewardPoints": 190
+      },
+      "lootOffersMade": 0,
+      "methodSnapshots": [],
+      "permanentlyOwnedEquipmentIds": [],
+      "pressureState": {
+        "clearedNodeCount": 2,
+        "rulesVersion": 1
+      },
+      "protocol": {
+        "id": "standard",
+        "rulesVersion": 1
+      },
+      "pursuitState": {
+        "contacts": 0,
+        "dungeonId": "demon_tower_1",
+        "graceMoves": 0,
+        "nodeId": null,
+        "repelledReason": null,
+        "rewardGranted": false,
+        "rulesVersion": 1,
+        "status": "disabled"
+      },
+      "relicConduitSourceEquipmentIds": [],
+      "relicState": {
+        "acquiredIds": [],
+        "frame": "assault",
+        "processedDraftIds": [],
+        "rulesVersion": 1
+      },
+      "resolvedEventIds": [],
+      "routeContractState": {
+        "completedTargetCount": 0,
+        "contractId": "tower_mist_watch",
+        "dungeonId": "demon_tower_1",
+        "rulesVersion": 1,
+        "status": "active"
+      },
+      "soulSkillState": {
+        "chargesRemaining": 0,
+        "frozenSkillIds": [],
+        "readySkillIds": [],
+        "rulesVersion": 1,
+        "usedRechargeIds": []
+      },
+      "tacticalLoadout": {
+        "itemIds": [],
+        "rulesVersion": 1
+      },
+      "usedItems": []
+    }
+  },
+  "remainingSeeds": [
+    1164413355,
+    2309737967,
+    270544960
+  ],
+  "localUiState": {},
+  "walk": {
+    "key": "",
+    "position": null
+  },
+  "revision": {
+    "durableRevision": 8,
+    "ledgerRevision": 8,
+    "acceptingInput": true
+  },
+  "fixture": {
+    "kind": "isolated-natural-elite-equipment-offer",
+    "epoch": "equipment-loot-fixture-20261012",
+    "schemaVersion": 2,
+    "contentVersion": "web-oracle-2645f02",
+    "boost": {
+      "body": 40,
+      "agility": 20,
+      "hp": "filled once before the run from official derived maxHp"
+    },
+    "untouched": [
+      "ownedEquipment",
+      "equipmentLevels",
+      "equipped",
+      "pendingEquipmentOffer",
+      "monster hp",
+      "map nodes",
+      "cleared nodes"
+    ],
+    "provenance": "Initial hub passed decodeWebV1, createGameSession encoded schema2 checksum, createInfiniteFlowClient restored it. All route actions used actual client commands.",
+    "commands": [
+      {
+        "type": "run/enter",
+        "dungeonId": "demon_tower_1",
+        "protocolId": "standard",
+        "seeds": {
+          "rulesVersion": 1,
+          "hiddenTaskSeed": 305441741
+        }
+      },
+      {
+        "type": "run/select-node",
+        "nodeId": "fog_lesser_demon"
+      },
+      {
+        "type": "combat/act",
+        "action": "attack"
+      },
+      {
+        "type": "run/move",
+        "nodeId": "ash_pit_trap"
+      },
+      {
+        "type": "node/handle-trap",
+        "choice": "risk"
+      },
+      {
+        "type": "run/move",
+        "nodeId": "fallen_pack_reward"
+      },
+      {
+        "type": "run/move",
+        "nodeId": "tower_butcher_patrol"
+      },
+      {
+        "type": "run/select-node",
+        "nodeId": "tower_butcher_patrol"
+      }
+    ],
+    "seedValues": [
+      305441741,
+      1164413355,
+      2309737967,
+      270544960
+    ],
+    "expected": {
+      "nextUiCommand": {
+        "type": "combat/act",
+        "action": "attack"
+      },
+      "offerId": "dungeon-loot:demon_tower_1:tower_butcher_patrol",
+      "equipmentIds": [
+        "bone_spear",
+        "mist_hood",
+        "spirit_robe"
+      ],
+      "recommendedClaim": {
+        "type": "node/resolve-equipment-loot",
+        "equipmentId": "spirit_robe"
+      },
+      "recommendedEquip": {
+        "type": "hub/equip-equipment",
+        "equipmentId": "spirit_robe"
+      }
+    },
+    "boundary": "This test packet is separate from real player saves; the elite killing attack is not executed in the exported packet."
+  }
+}

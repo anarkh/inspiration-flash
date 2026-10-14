@@ -1,0 +1,10 @@
+Use case: stylized-concept
+Asset type: one isolated game-world survey prop sprite for an HTML style prototype.
+Primary request: a low compact ancient dungeon surveying bench: one worn charcoal-gray rectangular stone plinth with a few small broken dull mineral samples on top, an old small brass mechanical measuring instrument resembling a practical caliper or dividers mounted on a simple stand, and one unobtrusive folded scrap of blank aged paper. Humble functional archaeology and mineral surveying station, not a magical altar.
+Reference role: previously inspected demon_tower_1-v1 dungeon scene and altar-v1 ancient courtyard altar are STYLE REFERENCES ONLY, not edit targets. Match their muted realistic hand-painted dark stone, worn iron, tactile surface detail and subtle aged brass. Do not copy either composition.
+Style/medium: believable Chinese dark fantasy environment art, realistic hand-painted game illustration with fine weathering, subdued brushwork and natural material lighting. Not cartoon, not flat vector, not photoreal product photography, not a shiny 3D toy.
+Composition/framing: only ONE assembled low surveying station, centered, slightly elevated 3/4 top-down game camera around 35 degrees, visible bench top and front edge; occupies about 76% of a square canvas; entire instrument, bench corners and all base feet intact, ample transparent padding. No floor plane. No detached extras.
+Lighting/mood: soft desaturated cool overhead light, modest highlights, solid readable silhouette.
+Color palette/materials: chipped dark gray stone, old dull ochre brass with patina, dark iron fittings, a few gray ore chips, muted blank parchment. No luminous crystals, low saturation.
+Scene/backdrop: genuinely transparent background with real alpha, including outside the object and in open spaces. Only a subtle small contact shadow if needed, no scene.
+Constraints: no text, no letters, no UI, no label, no border, no logo, no watermark, no colored glow, no neon, no white background, no backdrop, no checkerboard painted into the image. Make a finished independent sprite, not a sheet. Keep full footprint inside the canvas.

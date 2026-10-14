@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>精英装备 · 交互原型</title>
+  <link rel="stylesheet" href="style.css?v=2">
+</head>
+<body>
+  <header class="board-header"><span>无限流 / 界面提案</span><span>精英装备 · 02</span></header>
+  <main class="board">
+    <section class="preview-column" aria-label="装备选择交互预览">
+      <div class="toolbar"><span>游戏内效果</span><div class="size-switch" role="group" aria-label="预览尺寸"><button type="button" data-size="390" aria-pressed="true">390 × 844</button><button type="button" data-size="320" aria-pressed="false">320 × 568</button></div></div>
+      <div class="game-stage" id="stage">
+        <div class="world" id="world">
+          <div class="world-scene" aria-hidden="true"></div>
+          <div class="hud"><div class="portrait"><img src="../../cocos/assets/resources/character/reincarnator-v2.png" alt=""></div><div class="hero-info"><strong>轮回者</strong><span>妖塔一层 · 探索中</span></div><button type="button" id="backpack" class="backpack-button">背包</button></div>
+          <div class="world-cache equipment-cache" aria-hidden="true"><img src="../../cocos/assets/resources/equipment/armor-piercing-sword-v1.png" alt=""><span>精英战利品</span></div>
+          <div class="world-bottom"><div class="joystick" aria-hidden="true"><i></i></div><button type="button" id="interact">选装备</button></div>
+          <div class="world-receipt" id="world-receipt" hidden role="status"></div>
+        </div>
+        <div class="scrim" id="scrim"></div>
+        <section id="reward-dialog" class="reward-dialog equipment-dialog" role="dialog" aria-modal="false" aria-labelledby="dialog-title"></section>
+      </div>
+      <p class="preview-caption" id="preview-caption" role="status">示例选中破甲剑 · 尚未领取</p>
+    </section>
+    <aside class="design-notes">
+      <div class="eyebrow">精英装备 / 交互提案</div>
+      <h1>三件同屏选，<br>收下继续走。</h1>
+      <p class="intro">点击图片看属性，<br>选好收下后继续探索。</p>
+      <ol class="design-flow">
+        <li><span>01</span><div><h2>选图片，属性就在下面</h2><p>三件装备同屏比较，点击即可切换。<br>基础属性与固定词缀分开显示。</p></div></li>
+        <li><span>02</span><div><h2>一键入背包，立即拥有</h2><p>领取后直接回到探索，<br>装备永久归你，可立即穿戴。</p></div></li>
+        <li><span>03</span><div><h2>同一个背包，同一种操作</h2><p>补给品、装备、本局遗物按游戏分页。<br>点装备格子打开属性浮层，在浮层内穿戴。</p></div></li>
+      </ol>
+      <div class="proposal-boundary"><span>与游戏背包对齐的交互演示</span><p>相同的分页、装备格子、属性浮层和穿戴操作。<br>使用游戏装备数据与规则，演示进度独立，<br>不读取或修改你的游戏存档。</p></div>
+      <button type="button" id="reset" class="reset-button">重置演示 ↺</button>
+    </aside>
+  </main>
+  <script type="module" src="app.js?v=2"></script>
+</body>
+</html>

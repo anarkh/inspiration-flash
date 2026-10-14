@@ -1,0 +1,423 @@
+{
+  "status": "PASS",
+  "imageCount": 26,
+  "allRawCopies": true,
+  "assets": [
+    {
+      "file": "bastion-chitin-proposed.png",
+      "sha256": "9a571e47a73e3dee8a1724860cf36e0c42b0483035c82b54298c69bee6e1917b",
+      "nativeSource": "/Users/bytedance/.codex/generated_images/01a11a7c-803f-7e42-ae58-600fd952bc99/exec-1a65ba2a-4c70-4667-bbaa-3d81f1add456.png",
+      "byteExact": true,
+      "mode": "RGBA",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "httpStatus": 200
+    },
+    {
+      "file": "beast-taming-proposed.png",
+      "sha256": "d38e051e0f5602acc0238f1ea488c833ed61bbe94dcb35d98e63fbfef1ef9a25",
+      "nativeSource": "/Users/bytedance/.codex/generated_images/01a11a7b-99d5-77d1-a3e5-13194bd9d124/exec-8d94ad4a-ff73-4e53-9997-135c79deaf52.png",
+      "byteExact": true,
+      "mode": "RGBA",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "httpStatus": 200
+    },
+    {
+      "file": "chest-proposed.png",
+      "sha256": "d5abfec22278040a8a276832d7a2009d5e2044536ba9f31346317f6dc47695a5",
+      "nativeSource": "/Users/bytedance/.codex/generated_images/01a11a76-dc3c-73c0-8915-07f6602050d2/exec-8d4c68df-e998-4070-a966-d9c9e1c08399.png",
+      "byteExact": true,
+      "mode": "RGBA",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "httpStatus": 200
+    },
+    {
+      "file": "cloud-step-proposed.png",
+      "sha256": "b6bce8615c31b315f893d95c45b399b5dd3968565a5a930a6b9b97b70181a30e",
+      "nativeSource": "/Users/bytedance/.codex/generated_images/01a11a7a-74a8-79e2-bb93-ae502b1f51a4/exec-819ed85b-44be-4947-beb7-f25744207ea3.png",
+      "byteExact": true,
+      "mode": "RGBA",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "httpStatus": 200
+    },
+    {
+      "file": "debris-proposed.png",
+      "sha256": "d0dea6331d34acd63b0c7da6f74ae8fc5dd1223a02fec0cd947bb4de7fce8371",
+      "nativeSource": "/Users/bytedance/.codex/generated_images/01a11a78-3f97-74f1-849e-afaa38c3eb20/exec-bcbae936-5592-4a51-bb53-4a374dce022a.png",
+      "byteExact": true,
+      "mode": "RGBA",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "httpStatus": 200
+    },
+    {
+      "file": "event-proposed.png",
+      "sha256": "351c5b7cbe3752612e078154c1ddc479f34d8714a6b0727134964f980c0cc9ed",
+      "nativeSource": "/Users/bytedance/.codex/generated_images/01a11a77-f98c-7880-9848-c083d1566b40/exec-b8e54359-a1cb-48ad-a116-93e5790007d8.png",
+      "byteExact": true,
+      "mode": "RGBA",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "httpStatus": 200
+    },
+    {
+      "file": "exit-proposed.png",
+      "sha256": "81b674164ee006184f36559629092dee769dc78e8a30c1ed154e423cd0c645f9",
+      "nativeSource": "/Users/bytedance/.codex/generated_images/01a11a76-dc3c-73c0-8915-07f6602050d2/exec-790d7081-8cc6-4782-ac72-13984a102ca2.png",
+      "byteExact": true,
+      "mode": "RGBA",
+      "dimensions": [
+        1145,
+        1374
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "httpStatus": 200
+    },
+    {
+      "file": "forensic-visor-proposed.png",
+      "sha256": "164d5a3293f2be13845aaed76efd8e51388ebb85a4fe20756d4a28d5e326b8da",
+      "nativeSource": "/Users/bytedance/.codex/generated_images/01a11a7d-425a-7370-9917-c0504c44d8b6/exec-76092223-3fb4-4031-995f-517008e5d06e.png",
+      "byteExact": true,
+      "mode": "RGBA",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "httpStatus": 200
+    },
+    {
+      "file": "gate-sense-proposed.png",
+      "sha256": "e697e7079cac7f5baa47d158126585dee45835d6a4690eab81be2cfc5c668581",
+      "nativeSource": "/Users/bytedance/.codex/generated_images/01a11a7a-74a8-79e2-bb93-ae502b1f51a4/exec-91588247-10de-4765-bde2-d6117084d12b.png",
+      "byteExact": true,
+      "mode": "RGBA",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "httpStatus": 200
+    },
+    {
+      "file": "guide-portrait-proposed.png",
+      "sha256": "82989830693f0666bcfe18cc4d8fccdcb86bdc9beaaa97a34ee54eb05fe09c25",
+      "nativeSource": "/Users/bytedance/.codex/generated_images/01a11a7e-b40b-7051-86fd-a63a9f96eecb/exec-94f5db81-510f-4587-893e-5a3729d18ed9.png",
+      "byteExact": true,
+      "mode": "RGB",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alphaExtrema": [
+        255,
+        255
+      ],
+      "httpStatus": 200
+    },
+    {
+      "file": "hero-portrait-proposed.png",
+      "sha256": "3350c54b38817f003ffbe4acb914c502f9d2c0fef82384b4c68b766b24c456af",
+      "nativeSource": "/Users/bytedance/.codex/generated_images/01a11a7e-5d1e-74d2-81a8-13be6d5ba1a4/exec-a7ba61f6-df72-4b1f-9eca-59d4949e1afb.png",
+      "byteExact": true,
+      "mode": "RGB",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alphaExtrema": [
+        255,
+        255
+      ],
+      "httpStatus": 200
+    },
+    {
+      "file": "iron-body-proposed.png",
+      "sha256": "9637c4b4d1258819769ecbc7d4e538693282e4bea78a9f8df7555221de8f65ab",
+      "nativeSource": "/Users/bytedance/.codex/generated_images/01a11a7a-2823-7e13-8a49-e0fb2e22b941/exec-3a6f6456-3848-4f02-9c0c-f7383c2504a7.png",
+      "byteExact": true,
+      "mode": "RGBA",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "httpStatus": 200
+    },
+    {
+      "file": "law-proposed.png",
+      "sha256": "16ec2a64c56a4a53879bcef9e43d260469a4dc369d7508744973e1a76918cd23",
+      "nativeSource": "/Users/bytedance/.codex/generated_images/01a11a79-03d8-7af0-baf3-b546c9d3d6ad/exec-b823e415-0204-4660-9ebf-b648d0037fd5.png",
+      "byteExact": true,
+      "mode": "RGBA",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "httpStatus": 200
+    },
+    {
+      "file": "mirror-banner-proposed.png",
+      "sha256": "6da074afcd4e0bb6eb8436caf285964d143d84b9bb9ab085e244faf21dfd7d42",
+      "nativeSource": "/Users/bytedance/.codex/generated_images/01a11a80-a384-7912-8c60-58411ef032bf/exec-1439c627-e1bf-4df5-8eb2-18e11481caa7.png",
+      "byteExact": true,
+      "mode": "RGB",
+      "dimensions": [
+        2172,
+        724
+      ],
+      "alphaExtrema": [
+        255,
+        255
+      ],
+      "httpStatus": 200
+    },
+    {
+      "file": "mist-breathing-proposed.png",
+      "sha256": "fee646891c9b7872ae1ec5bf3a13e4b4773eb43b6454023e06fcee602356b6ef",
+      "nativeSource": "/Users/bytedance/.codex/generated_images/01a11a7a-2823-7e13-8a49-e0fb2e22b941/exec-38e065aa-1da0-41a5-9553-705ef697eec8.png",
+      "byteExact": true,
+      "mode": "RGBA",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "httpStatus": 200
+    },
+    {
+      "file": "phoenix-ember-proposed.png",
+      "sha256": "e176580c531b22261c6af7137253b4806e77bee2a9eb3dfe636c2599cdebb599",
+      "nativeSource": "/Users/bytedance/.codex/generated_images/01a11a7c-803f-7e42-ae58-600fd952bc99/exec-5d32459d-bd13-42fb-80b9-67433630f787.png",
+      "byteExact": true,
+      "mode": "RGBA",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "httpStatus": 200
+    },
+    {
+      "file": "rebirth-amulet-proposed.png",
+      "sha256": "f048795bad3b3c6a1fed13ccf1cce52620c71f491c88f49662fabdf918656f01",
+      "nativeSource": "/Users/bytedance/.codex/generated_images/01a11a7d-9083-7bf2-abd5-da2349928f0d/exec-5a19eae6-ed8e-4302-8e2d-4810271a4cb1.png",
+      "byteExact": true,
+      "mode": "RGBA",
+      "dimensions": [
+        1122,
+        1402
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "httpStatus": 200
+    },
+    {
+      "file": "relic-proposed.png",
+      "sha256": "5533b22ce3a44154262b3fe81e0fa81f17f0ec3f4c3385bc6df9c247b67e9359",
+      "nativeSource": "/Users/bytedance/.codex/generated_images/01a11a79-03d8-7af0-baf3-b546c9d3d6ad/exec-b4bebe5b-61c9-4422-a5d1-3b4f49676eed.png",
+      "byteExact": true,
+      "mode": "RGBA",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "httpStatus": 200
+    },
+    {
+      "file": "shrine-proposed.png",
+      "sha256": "6552dc80311d080afa82871c116c90939d84af9cf676a85ea1c325c708ab30a1",
+      "nativeSource": "/Users/bytedance/.codex/generated_images/01a11a79-03d8-7af0-baf3-b546c9d3d6ad/exec-e11493d9-99fd-4209-a1c2-e2bfbc41fa30.png",
+      "byteExact": true,
+      "mode": "RGBA",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "httpStatus": 200
+    },
+    {
+      "file": "star-core-method-proposed.png",
+      "sha256": "20749ad83ad69787f4517d2c2fedcc103ebe5389432ec56519fe446d25501f78",
+      "nativeSource": "/Users/bytedance/.codex/generated_images/01a11a7b-2889-72b1-967f-192809cd9aeb/exec-edb3c253-aa49-48bf-b726-bc1e417efe4e.png",
+      "byteExact": true,
+      "mode": "RGBA",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "httpStatus": 200
+    },
+    {
+      "file": "survey-proposed.png",
+      "sha256": "7a41a55d8c139bf035cf6a7623e9314acf8d882ff4887cd6e78c31fbc35b2f90",
+      "nativeSource": "/Users/bytedance/.codex/generated_images/01a11a77-f98c-7880-9848-c083d1566b40/exec-b5d66f34-54b3-4cfd-8fde-852b8ba2b42d.png",
+      "byteExact": true,
+      "mode": "RGBA",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "httpStatus": 200
+    },
+    {
+      "file": "titan-marrow-proposed.png",
+      "sha256": "8858a2b1df6c9b2248acc7a18ea58f1e3031c53cf96bb9b3fd0746834d88e2c1",
+      "nativeSource": "/Users/bytedance/.codex/generated_images/01a11a7c-3597-7643-8845-5edf557722e9/exec-60fcac32-9bfe-489d-ab13-591b15c85844.png",
+      "byteExact": true,
+      "mode": "RGBA",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "httpStatus": 200
+    },
+    {
+      "file": "trap-proposed.png",
+      "sha256": "e48901773ef4f794848b43adc7d19042617167157bdb620db9932e871def1931",
+      "nativeSource": "/Users/bytedance/.codex/generated_images/01a11a77-f98c-7880-9848-c083d1566b40/exec-73047c0f-3de0-4ba1-9038-9604d159527e.png",
+      "byteExact": true,
+      "mode": "RGBA",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "httpStatus": 200
+    },
+    {
+      "file": "triage-visor-proposed.png",
+      "sha256": "5d662827b0cca639cc1e40ed63dc9dc3d1eb1521c8cdbf611fb2511a8e606ea9",
+      "nativeSource": "/Users/bytedance/.codex/generated_images/01a11a7d-425a-7370-9917-c0504c44d8b6/exec-0ec54b29-a63a-4de3-99af-ddaa08cb86f9.png",
+      "byteExact": true,
+      "mode": "RGBA",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "httpStatus": 200
+    },
+    {
+      "file": "void-heart-proposed.png",
+      "sha256": "bdfbea5b45d0eefb465100bc1be99f42875361fd5093828712b197356df3a5d1",
+      "nativeSource": "/Users/bytedance/.codex/generated_images/01a11a7b-2889-72b1-967f-192809cd9aeb/exec-fd4a0f60-91b5-4cc3-b231-6b1da8d2cb57.png",
+      "byteExact": true,
+      "mode": "RGBA",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "httpStatus": 200
+    },
+    {
+      "file": "void-symbiote-proposed.png",
+      "sha256": "72888c3a04bfaad75230b216e0b067bdc67f7b944b963e64e1622239bb5958ef",
+      "nativeSource": "/Users/bytedance/.codex/generated_images/01a11a7c-3597-7643-8845-5edf557722e9/exec-2dbe08e5-aec2-4685-919c-ba079bb9877f.png",
+      "byteExact": true,
+      "mode": "RGBA",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "httpStatus": 200
+    }
+  ]
+}

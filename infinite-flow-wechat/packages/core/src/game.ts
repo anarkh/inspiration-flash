@@ -1018,6 +1018,8 @@ export type DungeonRun = {
   eventLog: string[];
   lootBag: RunLootBag<ItemId, EquipmentId>;
   lootOffersMade: number;
+  /** Equipment pickups already made permanent; the loot bag remains a run history. */
+  permanentlyOwnedEquipmentIds?: EquipmentId[];
   tacticalLoadout?: TacticalLoadoutSnapshot;
   fieldSurveyState?: FieldSurveyRunState;
   equipmentHunt?: EquipmentHuntRunState;
@@ -1993,6 +1995,24 @@ function normalizeHealth(state: GameState, healDelta = 0): GameState {
       hp: nextHp,
       maxHp: nextMaxHp
     }
+  };
+}
+
+/** Equipment changes update the cap without restoring health during a run. */
+function normalizeEquipmentHealth(state: GameState): GameState {
+  const maxHp = getDerivedStats(state).maxHp;
+  return {
+    ...state,
+    player: { ...state.player, hp: clampHp(state.player.hp, maxHp), maxHp }
+  };
+}
+
+/** Combat recovery uses the settled maximum, independently of healing modifiers. */
+function restoreHealthAfterCombat(state: GameState): GameState {
+  const maxHp = getDerivedStats(state).maxHp;
+  return {
+    ...state,
+    player: { ...state.player, hp: maxHp, maxHp }
   };
 }
 
@@ -5519,6 +5539,10 @@ export function buyEquipment(
 }
 
 export function equipEquipment(state: GameState, equipmentId: EquipmentId): GameState {
+  if (state.phase !== 'hub' && state.phase !== 'explore') {
+    return appendLog(state, '只能在主神空间或探索间隙手动穿戴装备。');
+  }
+  state = promoteRunEquipmentOwnership(state);
   if (isEquipmentCommissionSealed(state, equipmentId)) {
     return appendLog(state, `${EQUIPMENT[equipmentId].name}正在装备封存委托中，无法装备。`);
   }
@@ -5526,7 +5550,7 @@ export function equipEquipment(state: GameState, equipmentId: EquipmentId): Game
 
   const equipment = EQUIPMENT[equipmentId];
   return appendLog(
-    normalizeHealth({
+    normalizeEquipmentHealth({
       ...state,
       equipped: {
         ...state.equipped,
@@ -6003,6 +6027,7 @@ export function enterDungeon(
       eventLog: [],
       lootBag: createEmptyRunLootBag<ItemId, EquipmentId>(),
       lootOffersMade: 0,
+      permanentlyOwnedEquipmentIds: [],
       tacticalLoadout,
       fieldSurveyState,
       ...(equipmentHunt === undefined ? {} : { equipmentHunt }),
@@ -7172,6 +7197,7 @@ function resolvePortal(
         eventLog: [],
         lootBag: settledSourceRun?.lootBag ?? createEmptyRunLootBag<ItemId, EquipmentId>(),
         lootOffersMade: settledSourceRun?.lootOffersMade ?? 0,
+        permanentlyOwnedEquipmentIds: [...(settledSourceRun?.permanentlyOwnedEquipmentIds ?? [])],
         tacticalLoadout: settledSourceRun?.tacticalLoadout,
         fieldSurveyState: settledSourceRun?.fieldSurveyState,
         ...(equipmentHunt === undefined ? {} : { equipmentHunt }),
@@ -7194,6 +7220,7 @@ function resolvePortal(
         protocol: transportedProtocol,
         ...(transportedInfernoMap === undefined ? {} : { infernoMap: transportedInfernoMap }),
         carriedEquipmentRolls: settledSourceRun?.carriedEquipmentRolls ?? {},
+        lastEquipmentRollSettlement: settledSourceRun?.lastEquipmentRollSettlement,
         ...(settledSourceRun?.pressureState === undefined
           ? {}
           : { pressureState: settledSourceRun.pressureState }),
@@ -7864,7 +7891,7 @@ function applyEncounterEquipmentLoot(
     },
     statusLine: infernoTier === undefined
       ? '首领/精英装备已显现，必须选取一件装备或放弃后才能继续。'
-      : `炼狱第 ${infernoTier} 层词条装备已显现；可选择重复底材，通关后按真实战力与综合词条裁决。`
+      : `炼狱第 ${infernoTier} 层词条装备已显现；可选择重复底材，领取时按真实战力与综合词条保留更强结果。`
   };
 }
 
@@ -7883,6 +7910,7 @@ function applyBossVictoryReward(state: GameState, nodeId: string): { state: Game
 }
 
 export function resolveEquipmentLoot(state: GameState, equipmentId?: EquipmentId): GameState {
+  state = promoteRunEquipmentOwnership(state);
   const offer = state.run?.pendingEquipmentOffer;
   if (!state.run || !offer) return appendLog(state, '当前没有待处理的精英装备。');
 
@@ -7903,16 +7931,7 @@ export function resolveEquipmentLoot(state: GameState, equipmentId?: EquipmentId
   if (!offer.equipmentIds.includes(equipmentId)) return appendLog(state, '这件装备不在当前精英战利品中。');
   const selectedRoll = offer.equipmentRolls?.[equipmentId];
 
-  const selectionLog =
-    selectedRoll
-      ? `你选择了${EQUIPMENT[equipmentId].name}（炼狱第 ${selectedRoll.sourceTier} 层，词条评分 ${getEquipmentRollScore(selectedRoll)}）；成功通关后将与装备架中的同名底材比较，按真实战力与综合词条保留更强结果。`
-      : offer.guaranteedEquipmentId === undefined
-      ? `你选择了${EQUIPMENT[equipmentId].name}，通关后才能带回主神空间。`
-      : equipmentId === offer.guaranteedEquipmentId
-        ? `追猎目标${EQUIPMENT[equipmentId].name}已装入战利品袋，通关后才能带回主神空间。`
-        : `你放弃追猎目标，改选${EQUIPMENT[equipmentId].name}；通关后才能带回主神空间。`;
-
-  return appendLog(
+  const claimedState = grantPermanentRunEquipment(
     {
       ...state,
       run: {
@@ -7927,8 +7946,21 @@ export function resolveEquipmentLoot(state: GameState, equipmentId?: EquipmentId
         pendingEquipmentOffer: undefined
       }
     },
-    selectionLog
+    equipmentId,
+    selectedRoll
   );
+  const rollSettlement = selectedRoll ? claimedState.run?.lastEquipmentRollSettlement : undefined;
+  const selectionLog = selectedRoll
+    ? rollSettlement?.outcome === 'salvaged'
+      ? `${EQUIPMENT[equipmentId].name}的本次词条未超过已拥有结果，已分解为 ${rollSettlement.salvageRewardPoints} 点未结算奖励；原装备永久保留。`
+      : `你选择了${EQUIPMENT[equipmentId].name}（炼狱第 ${selectedRoll.sourceTier} 层，词条评分 ${getEquipmentRollScore(selectedRoll)}）；${rollSettlement?.outcome === 'upgraded' ? '更强词条已替换同名底材' : '装备已永久收入背包'}，可立即手动穿戴。`
+    : offer.guaranteedEquipmentId === undefined
+      ? `你选择了${EQUIPMENT[equipmentId].name}，已永久收入背包，可立即手动穿戴。`
+      : equipmentId === offer.guaranteedEquipmentId
+        ? `追猎目标${EQUIPMENT[equipmentId].name}已永久收入背包，可立即手动穿戴。`
+        : `你放弃追猎目标，改选${EQUIPMENT[equipmentId].name}；装备已永久收入背包，可立即手动穿戴。`;
+
+  return appendLog(claimedState, selectionLog);
 }
 
 function signalCurrentCombatOpening(
@@ -8020,7 +8052,7 @@ function finishCombatVictory(state: GameState, monster: MonsterDefinition): Game
   });
 
   return appendLog(
-    markNodeCleared(
+    restoreHealthAfterCombat(markNodeCleared(
       {
         ...encounterLoot.state,
         phase: 'explore',
@@ -8028,7 +8060,7 @@ function finishCombatVictory(state: GameState, monster: MonsterDefinition): Game
       },
       nodeId,
       combatDamageTaken
-    ),
+    )),
     `${monster.name}倒下，${combatRewardText}进入战利品袋。${explorationRewardLine ? ` ${explorationRewardLine}` : ''}${statusLines ? ` ${statusLines}` : ''}`
   );
 }
@@ -8216,8 +8248,14 @@ export function getRunLootSettlementPreview(
   return modernLootSecured
     ? settledLoot
     : {
-        retained: createEmptyRunLootBag<ItemId, EquipmentId>(),
-        lost: settleRunLoot(state.run.lootBag, 'cleared').retained
+        retained: {
+          ...createEmptyRunLootBag<ItemId, EquipmentId>(),
+          equipmentIds: [...state.run.lootBag.equipmentIds]
+        },
+        lost: {
+          ...settleRunLoot(state.run.lootBag, 'cleared').retained,
+          equipmentIds: []
+        }
       };
 }
 
@@ -8309,88 +8347,80 @@ export function evaluateEquipmentRollCandidate(
   };
 }
 
-function settleRunLootState(state: GameState, exitStatus: RunExitStatus): GameState {
+/** Make one pickup permanent. Each new offer is handled once when its pending offer is cleared. */
+function grantPermanentRunEquipment(
+  state: GameState,
+  equipmentId: EquipmentId,
+  candidate?: EquipmentRoll
+): GameState {
+  if (!state.run) throw new Error('Permanent equipment pickups require an active run.');
+  const alreadyOwned = state.ownedEquipment.includes(equipmentId);
+  const equipmentLevels = { ...state.equipmentLevels };
+  if (!alreadyOwned) equipmentLevels[equipmentId] = 1;
+  const equipmentRolls = { ...(state.equipmentRolls ?? {}) };
+  let rollSettlement = state.run.lastEquipmentRollSettlement;
+  let salvageRewardPoints = 0;
+  let equippedRollChanged = false;
+
+  if (candidate) {
+    const current = equipmentRolls[equipmentId];
+    const comparison = evaluateEquipmentRollCandidate(
+      { ...state, equipmentLevels, equipmentRolls }, equipmentId, candidate
+    );
+    const keepCandidate = !alreadyOwned || comparison.comparison > 0;
+    if (keepCandidate) {
+      equipmentRolls[equipmentId] = candidate;
+      equippedRollChanged = state.equipped[EQUIPMENT[equipmentId].slot] === equipmentId;
+    } else {
+      salvageRewardPoints = getInfernoTierModifiers(candidate.sourceTier).duplicateSalvageRewardPoints;
+    }
+    rollSettlement = {
+      equipmentId,
+      roll: candidate,
+      outcome: keepCandidate ? alreadyOwned ? 'upgraded' : 'acquired' : 'salvaged',
+      ...(current === undefined ? {} : { previousItemPower: current.itemPower }),
+      salvageRewardPoints
+    };
+  }
+
+  let granted: GameState = {
+    ...state,
+    ownedEquipment: alreadyOwned ? state.ownedEquipment : [...state.ownedEquipment, equipmentId],
+    equipmentLevels,
+    equipmentRolls,
+    run: {
+      ...state.run,
+      permanentlyOwnedEquipmentIds: Array.from(new Set([
+        ...(state.run.permanentlyOwnedEquipmentIds ?? []), equipmentId
+      ])),
+      lastEquipmentRollSettlement: rollSettlement
+    }
+  };
+  if (salvageRewardPoints > 0) granted = applyRunReward(granted, { rewardPoints: salvageRewardPoints });
+  return equippedRollChanged ? normalizeEquipmentHealth(granted) : granted;
+}
+
+/**
+ * Upgrade legacy run pickups in memory without changing loadout or reprocessing
+ * persisted pickups. Loot ids and carried rolls remain available to run reports.
+ */
+export function promoteRunEquipmentOwnership(state: GameState): GameState {
+  const run = state.run;
+  if (!run) return state;
+  let promoted = state;
+  for (const equipmentId of run.lootBag.equipmentIds) {
+    if (run.permanentlyOwnedEquipmentIds?.includes(equipmentId)) continue;
+    promoted = grantPermanentRunEquipment(promoted, equipmentId, run.carriedEquipmentRolls?.[equipmentId]);
+  }
+  return promoted;
+}
+
+function settleRunLootState(source: GameState, exitStatus: RunExitStatus): GameState {
+  const state = promoteRunEquipmentOwnership(source);
   if (!state.run) return state;
 
   const settlement = getRunLootSettlementPreview(state, exitStatus);
   if (!settlement) return state;
-  const acquiredEquipmentIds = settlement.retained.equipmentIds.filter(
-    (equipmentId) => !state.ownedEquipment.includes(equipmentId)
-  );
-  const equipmentLevels = { ...state.equipmentLevels };
-  for (const equipmentId of acquiredEquipmentIds) equipmentLevels[equipmentId] = 1;
-  const equipmentRolls: Partial<Record<EquipmentId, EquipmentRoll>> = {
-    ...(state.equipmentRolls ?? {})
-  };
-  let equipmentRollSettlement: EquipmentRollSettlement | undefined;
-  let equippedRollChanged = false;
-  let duplicateSalvageRewardPoints = 0;
-  for (const equipmentId of settlement.retained.equipmentIds) {
-    const candidate = state.run.carriedEquipmentRolls?.[equipmentId];
-    if (!candidate) continue;
-    const current = equipmentRolls[equipmentId];
-    const alreadyOwned = state.ownedEquipment.includes(equipmentId);
-    const currentlyEquipped =
-      state.equipped[EQUIPMENT[equipmentId].slot] === equipmentId;
-    const candidateEvaluation = evaluateEquipmentRollCandidate(
-      { ...state, equipmentLevels, equipmentRolls },
-      equipmentId,
-      candidate
-    );
-    const shouldKeepCandidate =
-      !alreadyOwned ||
-      candidateEvaluation.comparison > 0;
-    if (shouldKeepCandidate) {
-      equipmentRolls[equipmentId] = candidate;
-      if (alreadyOwned && currentlyEquipped) equippedRollChanged = true;
-      equipmentRollSettlement = {
-        equipmentId,
-        roll: candidate,
-        outcome: alreadyOwned ? 'upgraded' : 'acquired',
-        ...(current === undefined ? {} : { previousItemPower: current.itemPower }),
-        salvageRewardPoints: 0
-      };
-    } else {
-      const salvageRewardPoints = getInfernoTierModifiers(
-        candidate.sourceTier
-      ).duplicateSalvageRewardPoints;
-      duplicateSalvageRewardPoints += salvageRewardPoints;
-      equipmentRollSettlement = {
-        equipmentId,
-        roll: candidate,
-        outcome: 'salvaged',
-        ...(current === undefined ? {} : { previousItemPower: current.itemPower }),
-        salvageRewardPoints
-      };
-    }
-  }
-  const equipped = { ...state.equipped };
-  const autoEquippedEquipmentIds: EquipmentId[] = [];
-  if (state.run.entryFlowVersion === 2 && exitStatus === 'cleared') {
-    for (const equipmentId of acquiredEquipmentIds) {
-      const slot = EQUIPMENT[equipmentId].slot;
-      const currentPower = getPlayerPower({
-        ...state,
-        equipmentLevels,
-        equipmentRolls,
-        equipped
-      });
-      const candidateEquipped = {
-        ...equipped,
-        [slot]: equipmentId
-      };
-      const candidatePower = getPlayerPower({
-        ...state,
-        equipmentLevels,
-        equipmentRolls,
-        equipped: candidateEquipped
-      });
-      if (candidatePower > currentPower) {
-        equipped[slot] = equipmentId;
-        autoEquippedEquipmentIds.push(equipmentId);
-      }
-    }
-  }
   const lostDurableItems = { ...settlement.lost.items };
   delete lostDurableItems.legacy_scrip;
   const retainedLegacyScrip = settlement.retained.items.legacy_scrip ?? 0;
@@ -8399,37 +8429,24 @@ function settleRunLootState(state: GameState, exitStatus: RunExitStatus): GameSt
     retainedLegacyScrip > 0 ? { legacy_scrip: retainedLegacyScrip } : undefined
   );
 
-  const settledState: GameState = {
+  return {
     ...state,
-    rewardPoints: Math.max(
-      0,
-      state.rewardPoints - settlement.lost.rewardPoints + duplicateSalvageRewardPoints
-    ),
+    rewardPoints: Math.max(0, state.rewardPoints - settlement.lost.rewardPoints),
     lingyun: Math.max(0, state.lingyun - settlement.lost.lingyun),
     inventory: settledInventory,
-    ownedEquipment: [...state.ownedEquipment, ...acquiredEquipmentIds],
-    equipmentLevels,
-    equipmentRolls,
-    equipped,
     run: {
       ...state.run,
       lootBag: createEmptyRunLootBag<ItemId, EquipmentId>(),
       carriedEquipmentRolls: {},
       pendingEquipmentOffer: undefined,
       lastLootSettlement: settlement,
-      lastAutoEquippedEquipmentIds: autoEquippedEquipmentIds,
-      lastEquipmentRollSettlement: equipmentRollSettlement
+      lastAutoEquippedEquipmentIds: []
     }
   };
-
-  return state.run.entryFlowVersion === 2 &&
-    exitStatus === 'cleared' &&
-    (autoEquippedEquipmentIds.length > 0 || equippedRollChanged)
-    ? normalizeHealth(settledState)
-    : settledState;
 }
 
-function resolveRunEconomySettlement(state: GameState, exitStatus: RunExitStatus, reason: string): GameState {
+function resolveRunEconomySettlement(source: GameState, exitStatus: RunExitStatus, reason: string): GameState {
+  const state = promoteRunEquipmentOwnership(source);
   if (state.phase === 'result' && state.lastOutcome) return appendLog(state, '本轮副本已经结算，主神不会重复发放恢复奖励。');
   if (!state.run) return appendLog(state, '当前没有可结算的副本进度。');
 
@@ -8489,7 +8506,7 @@ function resolveRunEconomySettlement(state: GameState, exitStatus: RunExitStatus
     lootSecurity.enabled &&
     exitStatus !== 'cleared' &&
     !lootSecurity.secured
-      ? ` 未清理满 ${lootSecurity.requiredNodeCount} 个非出口节点，战利品袋尚未固化，本轮袋中收益全部遗失。`
+      ? ` 未清理满 ${lootSecurity.requiredNodeCount} 个非出口节点，战利品袋尚未固化，本轮袋中奖励点和物资全部遗失，已领取装备永久保留。`
       : lootSecurity.enabled && exitStatus !== 'cleared'
         ? ' 本轮仅按战利品袋比例回收，不叠加额外撤退或濒死奖励。'
         : '';
@@ -8521,7 +8538,9 @@ function resolveRunEconomySettlement(state: GameState, exitStatus: RunExitStatus
     ? appendLog(loggedState, equipmentMemoryResult.settlementLog)
     : loggedState;
   const pursuitLog = getPursuitSettlementLog(pursuitResult.settlement);
-  return pursuitLog ? appendSecondaryLog(memoryLoggedState, pursuitLog) : memoryLoggedState;
+  const settledState = pursuitLog ? appendSecondaryLog(memoryLoggedState, pursuitLog) : memoryLoggedState;
+  // A lethal escape already clears combat, but retains the combat phase until settlement.
+  return state.phase === 'combat' ? restoreHealthAfterCombat(settledState) : settledState;
 }
 
 function getCombatEffectAction(action: CombatAction, damageKind: CombatDamageKind): CombatEffectAction | undefined {
@@ -8717,7 +8736,7 @@ export function capturePet(state: GameState, petId: PetId): GameState {
   });
 
   return appendLog(
-    normalizeHealth(markNodeCleared(encounterLoot.state, nodeId, combatDamageTaken)),
+    restoreHealthAfterCombat(markNodeCleared(encounterLoot.state, nodeId, combatDamageTaken)),
     `${captureEffect.statusLines.join('')}${ITEMS[captureItem].name}收束灵光，${pet.name}被捕获并进入出战位，${captureRewardText}进入战利品袋。${explorationRewardLine ? ` ${explorationRewardLine}` : ''}${statusLines ? ` ${statusLines}` : ''}`
   );
 }
@@ -9137,7 +9156,10 @@ export function getCurrentBloodlineSurgeStatus(state: GameState): CurrentBloodli
   return { ...base, available: true };
 }
 
-export function useBloodlineSurge(state: GameState): GameState {
+export function useBloodlineSurge(
+  state: GameState,
+  observer?: CombatPresentationObserver
+): GameState {
   const status = getCurrentBloodlineSurgeStatus(state);
   if (!status.available || !status.snapshot || !status.effect || !state.combat) return state;
   const definition = getBloodlineDefinition(status.snapshot.bloodlineId);
@@ -9176,6 +9198,7 @@ export function useBloodlineSurge(state: GameState): GameState {
     line
   );
 
+  observeCombatPresentation(observer, 'impact', nextState, nextState.combat!);
   if (monsterHp <= 0) {
     const monster = getCombatEncounterProfile(nextState)?.monster ?? MONSTERS[state.combat.monsterId];
     return finishCombatVictory(nextState, monster);
@@ -9335,7 +9358,31 @@ function applyContinuingCombatFocus(
   };
 }
 
-export function performCombatAction(state: GameState, action: CombatAction): GameState {
+/** Transient display snapshots. These values are not part of GameState or saves. */
+export type CombatPresentationFrame = Readonly<{
+  stage: 'impact' | 'counter';
+  playerHp: number;
+  enemyHp: number;
+  guarded?: boolean;
+}>;
+
+export type CombatPresentationObserver = (frame: CombatPresentationFrame) => void;
+
+function observeCombatPresentation(
+  observer: CombatPresentationObserver | undefined,
+  stage: CombatPresentationFrame['stage'],
+  state: GameState,
+  combat: CombatState,
+  guarded = combat.guarding
+): void {
+  observer?.(Object.freeze({ stage, playerHp: state.player.hp, enemyHp: combat.monsterHp, guarded }));
+}
+
+export function performCombatAction(
+  state: GameState,
+  action: CombatAction,
+  observer?: CombatPresentationObserver
+): GameState {
   if (state.phase !== 'combat' || !state.combat) return appendLog(state, '当前没有战斗。');
   if (action === 'art' && !isCurrentDungeonFeatureAvailable(state, 'method')) {
     return appendLog(state, '梦档案馆已封存功法，本场暂时无法运转术法。');
@@ -9353,7 +9400,10 @@ export function performCombatAction(state: GameState, action: CombatAction): Gam
     : undefined;
   if (directAction && openingReplay?.enabled && !openingReplay.boss && openingReplay.route === 'sequence') {
     state = releaseCombatReplay(state, COMBAT_REPLAY_ROUTE_PERCENT.sequence).state;
-    if ((state.combat?.monsterHp ?? 1) <= 0) return finishCombatVictory(state, monster);
+    if (state.combat && state.combat.monsterHp <= 0) {
+      observeCombatPresentation(observer, 'impact', state, state.combat);
+      return finishCombatVictory(state, monster);
+    }
   }
   const directMultiplier = directAction ? getBossReplayDirectMultiplier(state, directAction) : 1;
   if (!state.combat) return appendLog(state, '当前没有战斗。');
@@ -9387,6 +9437,7 @@ export function performCombatAction(state: GameState, action: CombatAction): Gam
     );
     nextState = resolveCombatReplayAfterDirectAction(nextState, action);
     nextCombat = nextState.combat ?? nextCombat;
+    observeCombatPresentation(observer, 'impact', nextState, nextCombat);
     if ((nextCombat.monsterHp ?? 1) <= 0) return finishCombatVictory(nextState, monster);
     const replayBeforeCounter = normalizeCombatReplayCombatState(nextCombat.combatReplayState);
     if (replayBeforeCounter?.boss && replayBeforeCounter.route !== 'afterbeat') {
@@ -9401,6 +9452,7 @@ export function performCombatAction(state: GameState, action: CombatAction): Gam
       directMultiplier
     );
     afterMonster = releasePendingAfterbeat(afterMonster);
+    observeCombatPresentation(observer, 'counter', afterMonster, afterMonster.combat!, nextCombat.guarding);
     if (afterMonster.player.hp <= 0) {
       return resolveRunFailure(afterMonster, `${monster.name}把你逼到濒死，主神强制回收。`);
     }
@@ -9445,12 +9497,14 @@ export function performCombatAction(state: GameState, action: CombatAction): Gam
       log: [...effects.statusLines, ...effects.nextCombat.log].slice(0, 8)
     };
 
+    observeCombatPresentation(observer, 'impact', nextState, nextCombat);
     const afterMonster = monsterAttack(
       { ...nextState, combat: nextCombat },
       monster,
       nextCombat,
       effects.damageToPlayer
     );
+    observeCombatPresentation(observer, 'counter', afterMonster, afterMonster.combat!, nextCombat.guarding);
     if (afterMonster.player.hp <= 0) {
       return resolveRunFailure(afterMonster, `${monster.name}把你逼到濒死，主神强制回收。`);
     }
@@ -9506,6 +9560,7 @@ export function performCombatAction(state: GameState, action: CombatAction): Gam
           ? `你借云隙步游斗拉开距离，只付出 ${escapeDamage} 点擦伤代价撤出战斗节点。`
           : '你付出轻伤代价，撤出战斗节点。';
       const damagedState = applyPlayerDamage(state, escapeDamage);
+      observeCombatPresentation(observer, 'impact', damagedState, state.combat);
 
       if (damagedState.player.hp <= 0) {
         return resolveRunFailure(
@@ -9518,11 +9573,11 @@ export function performCombatAction(state: GameState, action: CombatAction): Gam
       }
 
       return appendLog(
-        {
+        restoreHealthAfterCombat({
           ...damagedState,
           phase: 'explore',
           combat: undefined
-        },
+        }),
         `${statusPrefix}${escapeLine}`
       );
     }
@@ -9536,12 +9591,14 @@ export function performCombatAction(state: GameState, action: CombatAction): Gam
       log: [...effects.statusLines, ...effects.nextCombat.log].slice(0, 8)
     };
 
+    observeCombatPresentation(observer, 'impact', nextState, nextCombat);
     const afterMonster = monsterAttack(
       { ...nextState, combat: nextCombat },
       monster,
       nextCombat,
       effects.damageToPlayer
     );
+    observeCombatPresentation(observer, 'counter', afterMonster, afterMonster.combat!, nextCombat.guarding);
     if (afterMonster.player.hp <= 0) {
       return resolveRunFailure(afterMonster, `${monster.name}截断退路，主神强制回收。`);
     }
@@ -9643,6 +9700,7 @@ export function performCombatAction(state: GameState, action: CombatAction): Gam
     nextCombat = nextState.combat ?? nextCombat;
   }
 
+  observeCombatPresentation(observer, 'impact', nextState, nextCombat);
   if ((nextState.combat?.monsterHp ?? monsterHp) <= 0) {
     return finishCombatVictory(appendLog(nextState, actionLine), monster);
   }
@@ -9655,6 +9713,7 @@ export function performCombatAction(state: GameState, action: CombatAction): Gam
   const retaliationMonster = getCombatEncounterProfile(nextState)?.monster ?? monster;
   let afterMonster = monsterAttack(nextState, retaliationMonster, nextCombat, effects.damageToPlayer);
   afterMonster = releasePendingAfterbeat(afterMonster);
+  observeCombatPresentation(observer, 'counter', afterMonster, afterMonster.combat!, nextCombat.guarding);
   if (afterMonster.player.hp <= 0) {
     return resolveRunFailure(
       appendLog(afterMonster, actionLine),
@@ -9776,6 +9835,7 @@ function advanceEquipmentCommissionOnExit(state: GameState, dungeonId: DungeonId
 }
 
 export function resolveExit(state: GameState): GameState {
+  state = promoteRunEquipmentOwnership(state);
   if (getCurrentEquipmentSoulSkillRunState(state)?.pendingRecharge) {
     return appendLog(state, SOUL_RECHARGE_PENDING_BLOCK_MESSAGE);
   }
@@ -10087,8 +10147,8 @@ export function resolveExit(state: GameState): GameState {
     equipmentMemoryResult.state,
     economy
       ? isRepeatClear
-        ? `${node.title}亮起，已通关副本复刷结算：${RUN_ECONOMY_OUTCOME_LABELS[economy.outcome]}，倍率 ${economy.rewardMultiplier}x。${protocolLog}${pressureLog}${routeContractLog}${materialLog}${bankedEquipmentCount ? ` 带回 ${bankedEquipmentCount} 件装备。` : ''}`
-        : `${node.title}亮起，首次通关结算：${RUN_ECONOMY_OUTCOME_LABELS[economy.outcome]}，倍率 ${economy.rewardMultiplier}x。${protocolLog}${pressureLog}${routeContractLog}${materialLog}${bankedEquipmentCount ? ` 带回 ${bankedEquipmentCount} 件装备。` : ''}`
+        ? `${node.title}亮起，已通关副本复刷结算：${RUN_ECONOMY_OUTCOME_LABELS[economy.outcome]}，倍率 ${economy.rewardMultiplier}x。${protocolLog}${pressureLog}${routeContractLog}${materialLog}${bankedEquipmentCount ? ` 本轮领取的 ${bankedEquipmentCount} 件装备已永久保留。` : ''}`
+        : `${node.title}亮起，首次通关结算：${RUN_ECONOMY_OUTCOME_LABELS[economy.outcome]}，倍率 ${economy.rewardMultiplier}x。${protocolLog}${pressureLog}${routeContractLog}${materialLog}${bankedEquipmentCount ? ` 本轮领取的 ${bankedEquipmentCount} 件装备已永久保留。` : ''}`
       : isRepeatClear
         ? `${node.title}亮起，已通关副本重复探索完成。${routeContractLog}`
         : `${node.title}亮起，你首次通关本轮副本探索。${routeContractLog}`

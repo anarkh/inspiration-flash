@@ -1,0 +1,65 @@
+{
+  "scenes": [
+    {
+      "id": "01",
+      "eBadges": 0,
+      "worldTargets": 8,
+      "thumbnailPassed": true
+    },
+    {
+      "id": "02",
+      "eBadges": 0,
+      "worldTargets": 8,
+      "thumbnailPassed": true
+    },
+    {
+      "id": "03",
+      "eBadges": 0,
+      "worldTargets": 8,
+      "thumbnailPassed": true
+    },
+    {
+      "id": "04",
+      "eBadges": 0,
+      "worldTargets": 8,
+      "thumbnailPassed": true
+    },
+    {
+      "id": "05",
+      "eBadges": 0,
+      "worldTargets": 8,
+      "thumbnailPassed": true
+    },
+    {
+      "id": "06",
+      "eBadges": 0,
+      "worldTargets": 8,
+      "thumbnailPassed": true
+    },
+    {
+      "id": "07",
+      "eBadges": 0,
+      "worldTargets": 8,
+      "thumbnailPassed": true
+    },
+    {
+      "id": "08",
+      "eBadges": 0,
+      "worldTargets": 8,
+      "thumbnailPassed": true
+    },
+    {
+      "id": "09",
+      "eBadges": 0,
+      "worldTargets": 8,
+      "thumbnailPassed": true
+    },
+    {
+      "id": "10",
+      "eBadges": 0,
+      "worldTargets": 8,
+      "thumbnailPassed": true
+    }
+  ],
+  "eKeyBindingRemoved": true
+}

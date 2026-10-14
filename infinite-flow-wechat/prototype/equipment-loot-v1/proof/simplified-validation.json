@@ -1,0 +1,161 @@
+{
+  "capturedAt": "2026-10-12T09:49:12.633Z",
+  "selection390": {
+    "buttons": [
+      {
+        "disabled": false,
+        "height": 44,
+        "text": "×",
+        "width": 44
+      },
+      {
+        "disabled": false,
+        "height": 137.1484375,
+        "text": "雾行兜帽Lv.1 · 头部",
+        "width": 104
+      },
+      {
+        "disabled": false,
+        "height": 137.1484375,
+        "text": "灵纹软甲Lv.1 · 护甲",
+        "width": 104
+      },
+      {
+        "disabled": false,
+        "height": 137.1484375,
+        "text": "破甲剑Lv.1 · 武器",
+        "width": 104
+      },
+      {
+        "disabled": false,
+        "height": 44,
+        "text": "收入战利品袋→",
+        "width": 326
+      }
+    ],
+    "caption": "待领取 · 当前选中破甲剑",
+    "detail": "破甲剑Lv.1 · 武器基础属性攻击 +9速度 +1固定词缀破甲锋线攻击 +2",
+    "dialog": {
+      "height": 372.046875,
+      "horizontalOverflow": false,
+      "insideStage": true,
+      "scrollOverflow": false,
+      "width": 356
+    },
+    "hidden": false,
+    "images": [
+      {
+        "loaded": true,
+        "src": "../../cocos/assets/resources/character/reincarnator-v2.png"
+      },
+      {
+        "loaded": true,
+        "src": "../../cocos/assets/resources/equipment/armor-piercing-sword-v1.png"
+      },
+      {
+        "loaded": true,
+        "src": "../../cocos/assets/resources/equipment/mist-hood-v1.png"
+      },
+      {
+        "loaded": true,
+        "src": "../../cocos/assets/resources/equipment/spirit-robe-v1.png"
+      },
+      {
+        "loaded": true,
+        "src": "../../cocos/assets/resources/equipment/armor-piercing-sword-v1.png"
+      }
+    ],
+    "pageOverflow": false,
+    "selected": "armor_piercing_sword",
+    "stage": {
+      "height": 844,
+      "width": 390
+    },
+    "title": "选择一件装备"
+  },
+  "selection320": {
+    "buttons": [
+      {
+        "disabled": false,
+        "height": 44,
+        "text": "×",
+        "width": 44
+      },
+      {
+        "disabled": false,
+        "height": 121.09375,
+        "text": "雾行兜帽Lv.1 · 头部",
+        "width": 87.328125
+      },
+      {
+        "disabled": false,
+        "height": 121.09375,
+        "text": "灵纹软甲Lv.1 · 护甲",
+        "width": 87.3359375
+      },
+      {
+        "disabled": false,
+        "height": 121.09375,
+        "text": "破甲剑Lv.1 · 武器",
+        "width": 87.3359375
+      },
+      {
+        "disabled": false,
+        "height": 44,
+        "text": "收入战利品袋→",
+        "width": 272
+      }
+    ],
+    "caption": "待领取 · 当前选中破甲剑",
+    "detail": "破甲剑Lv.1 · 武器基础属性攻击 +9速度 +1固定词缀破甲锋线攻击 +2",
+    "dialog": {
+      "height": 331.890625,
+      "horizontalOverflow": false,
+      "insideStage": true,
+      "scrollOverflow": false,
+      "width": 298
+    },
+    "hidden": false,
+    "images": [
+      {
+        "loaded": true,
+        "src": "../../cocos/assets/resources/character/reincarnator-v2.png"
+      },
+      {
+        "loaded": true,
+        "src": "../../cocos/assets/resources/equipment/armor-piercing-sword-v1.png"
+      },
+      {
+        "loaded": true,
+        "src": "../../cocos/assets/resources/equipment/mist-hood-v1.png"
+      },
+      {
+        "loaded": true,
+        "src": "../../cocos/assets/resources/equipment/spirit-robe-v1.png"
+      },
+      {
+        "loaded": true,
+        "src": "../../cocos/assets/resources/equipment/armor-piercing-sword-v1.png"
+      }
+    ],
+    "pageOverflow": false,
+    "selected": "armor_piercing_sword",
+    "stage": {
+      "height": 568,
+      "width": 320
+    },
+    "title": "选择一件装备"
+  },
+  "afterClaim": {
+    "claimDisabled": true,
+    "receipt": "已领取 · 灵纹软甲",
+    "removedTextAbsent": true,
+    "visibleDialogs": 0,
+    "worldInteractive": true
+  },
+  "hood": "雾行兜帽Lv.1 · 头部基础属性心神 +1速度 +1陷阱感知 +3固定词缀雾听预兆陷阱感知 +2",
+  "robe": "灵纹软甲Lv.1 · 护甲基础属性生命上限 +18防御 +3术法 +2固定词缀灵纹避险陷阱感知 +2",
+  "sword": "破甲剑Lv.1 · 武器基础属性攻击 +9速度 +1固定词缀破甲锋线攻击 +2",
+  "consoleErrors": [],
+  "scope": "Prototype UI simplification only; equipment destination decision deferred; no game state changes."
+}

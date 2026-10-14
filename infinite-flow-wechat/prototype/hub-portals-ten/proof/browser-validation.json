@@ -1,0 +1,130 @@
+{
+  "status": "PASS",
+  "url": "http://127.0.0.1:8125/prototype/hub-portals-ten/index.html",
+  "target": "主神空间轮回庭院的副本入口",
+  "dialogSequence": [
+    {
+      "currentSrc": "assets/current-hub-portal.svg",
+      "link": "assets/hub-portal-01.png",
+      "newSrc": "assets/hub-portal-01.png",
+      "position": "01 / 10",
+      "title": "云阙界门"
+    },
+    {
+      "currentSrc": "assets/current-hub-portal.svg",
+      "link": "assets/hub-portal-02.png",
+      "newSrc": "assets/hub-portal-02.png",
+      "position": "02 / 10",
+      "title": "轮回月门"
+    },
+    {
+      "currentSrc": "assets/current-hub-portal.svg",
+      "link": "assets/hub-portal-03.png",
+      "newSrc": "assets/hub-portal-03.png",
+      "position": "03 / 10",
+      "title": "星环天仪"
+    },
+    {
+      "currentSrc": "assets/current-hub-portal.svg",
+      "link": "assets/hub-portal-04.png",
+      "newSrc": "assets/hub-portal-04.png",
+      "position": "04 / 10",
+      "title": "莲台光隙"
+    },
+    {
+      "currentSrc": "assets/current-hub-portal.svg",
+      "link": "assets/hub-portal-05.png",
+      "newSrc": "assets/hub-portal-05.png",
+      "position": "05 / 10",
+      "title": "双碑云界"
+    },
+    {
+      "currentSrc": "assets/current-hub-portal.svg",
+      "link": "assets/hub-portal-06.png",
+      "newSrc": "assets/hub-portal-06.png",
+      "position": "06 / 10",
+      "title": "悬镜玄关"
+    },
+    {
+      "currentSrc": "assets/current-hub-portal.svg",
+      "link": "assets/hub-portal-07.png",
+      "newSrc": "assets/hub-portal-07.png",
+      "position": "07 / 10",
+      "title": "万象画门"
+    },
+    {
+      "currentSrc": "assets/current-hub-portal.svg",
+      "link": "assets/hub-portal-08.png",
+      "newSrc": "assets/hub-portal-08.png",
+      "position": "08 / 10",
+      "title": "鎏金重扉"
+    },
+    {
+      "currentSrc": "assets/current-hub-portal.svg",
+      "link": "assets/hub-portal-09.png",
+      "newSrc": "assets/hub-portal-09.png",
+      "position": "09 / 10",
+      "title": "天阶引渡"
+    },
+    {
+      "currentSrc": "assets/current-hub-portal.svg",
+      "link": "assets/hub-portal-10.png",
+      "newSrc": "assets/hub-portal-10.png",
+      "position": "10 / 10",
+      "title": "龙纹天枢"
+    }
+  ],
+  "viewports": [
+    {
+      "allImagesLoaded": true,
+      "cards": 10,
+      "height": 568,
+      "minimumControlHeight": 44,
+      "scrollWidth": 305,
+      "width": 320
+    },
+    {
+      "allImagesLoaded": true,
+      "cards": 10,
+      "height": 844,
+      "minimumControlHeight": 44,
+      "scrollWidth": 375,
+      "width": 390
+    },
+    {
+      "columns": "274.328px 274.336px 274.336px",
+      "height": 828,
+      "scrollWidth": 915,
+      "width": 930
+    },
+    {
+      "allImagesLoaded": true,
+      "columns": "220.195px 220.203px 220.195px 220.203px 220.195px",
+      "height": 800,
+      "scrollWidth": 1265,
+      "width": 1280
+    }
+  ],
+  "initial": {
+    "allImagesLoaded": true,
+    "background": "url(\"http://127.0.0.1:8125/cocos/assets/resources/hub-courtyard/walk-sanctuary-v1.png\")",
+    "cards": 10,
+    "overflow": false
+  },
+  "previousWrap": "10 / 10",
+  "close": {
+    "closed": true,
+    "focus": "01 云阙界门，对比主神空间现用门"
+  },
+  "assetMode": {
+    "allImagesLoaded": true,
+    "count": 10
+  },
+  "mobileDialog": {
+    "open": true,
+    "scrollWidth": 338,
+    "title": "悬镜玄关",
+    "width": 355
+  },
+  "logs": []
+}

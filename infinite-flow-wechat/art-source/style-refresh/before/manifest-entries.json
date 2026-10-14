@@ -1,0 +1,553 @@
+{
+  "manifestRevision": "sha256:0e230421bc675abb93291c3d57e155184e038f0b18e6f6e1e1919a72100fe698",
+  "assets": [
+    {
+      "key": "item:method_mist_breathing",
+      "kind": "item",
+      "entityId": "method_mist_breathing",
+      "resourcePath": "item/mist-breathing-v1",
+      "resourceFile": "item/mist-breathing-v1.png",
+      "sourceFile": "infinite-flow-wechat/prototype/npc-grid/assets/methods/mist-breathing-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "吐纳诀",
+      "role": "icon",
+      "width": 256,
+      "height": 256,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "41aa9253cb4cd66d184c6531846e370a7f5569e96f472e0220d607321754705b",
+      "targetSha256": "57fbc5e27003314db50117f5ba90136c8c7c19e905be54d354a1a8f2908150b0",
+      "transformation": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "sourceDimensions": {
+          "width": 1254,
+          "height": 1254
+        },
+        "targetDimensions": {
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "key": "item:method_iron_body",
+      "kind": "item",
+      "entityId": "method_iron_body",
+      "resourcePath": "item/iron-body-v1",
+      "resourceFile": "item/iron-body-v1.png",
+      "sourceFile": "infinite-flow-wechat/prototype/npc-grid/assets/methods/iron-body-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "铁衣诀",
+      "role": "icon",
+      "width": 256,
+      "height": 256,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "4551c1c9de98dd81fbbf2c1bc7b4809e5ee5e93ec64a96ab16d71ea8179d4b70",
+      "targetSha256": "023f75ad072a17efa4d3489be24801874a28e7142afa70e5d445ba6ceb69bed3",
+      "transformation": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "sourceDimensions": {
+          "width": 1254,
+          "height": 1254
+        },
+        "targetDimensions": {
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "key": "item:method_cloud_step",
+      "kind": "item",
+      "entityId": "method_cloud_step",
+      "resourcePath": "item/cloud-step-v1",
+      "resourceFile": "item/cloud-step-v1.png",
+      "sourceFile": "infinite-flow-wechat/prototype/npc-grid/assets/methods/cloud-step-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "云隙步",
+      "role": "icon",
+      "width": 256,
+      "height": 256,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "24727be23ecedda64a3463a4128935a68d9e66bdd3c808a80c3eb3de0cae45a7",
+      "targetSha256": "52aa01ec1ab10b90d27aa5462b509901c2f205cecfb4ef7fccfb8e81799935ab",
+      "transformation": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "sourceDimensions": {
+          "width": 1254,
+          "height": 1254
+        },
+        "targetDimensions": {
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "key": "item:method_gate_sense",
+      "kind": "item",
+      "entityId": "method_gate_sense",
+      "resourcePath": "item/gate-sense-v1",
+      "resourceFile": "item/gate-sense-v1.png",
+      "sourceFile": "infinite-flow-wechat/prototype/npc-grid/assets/methods/gate-sense-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "观门法",
+      "role": "icon",
+      "width": 256,
+      "height": 256,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "e179d97d1f661b7506d2d517b14ac3c9843347b7147e95bb6b2c27d5d492c874",
+      "targetSha256": "b06877ccaf9f1d36ac37759ccc78402e3a323f96bf73bc57aea4033168e4badf",
+      "transformation": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "sourceDimensions": {
+          "width": 1254,
+          "height": 1254
+        },
+        "targetDimensions": {
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "key": "item:method_star_core_method",
+      "kind": "item",
+      "entityId": "method_star_core_method",
+      "resourcePath": "item/star-core-method-v1",
+      "resourceFile": "item/star-core-method-v1.png",
+      "sourceFile": "infinite-flow-wechat/prototype/npc-grid/assets/methods/star-core-method-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "星核炼息",
+      "role": "icon",
+      "width": 256,
+      "height": 256,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "bf749663e13294174b77df56ea788aefc986ad74718a743e85d5c7197cd2b30b",
+      "targetSha256": "65333453624c3b93f3d1cb2aa631807ad33b9cfc1ce81e294955dff2a5112977",
+      "transformation": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "sourceDimensions": {
+          "width": 1254,
+          "height": 1254
+        },
+        "targetDimensions": {
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "key": "item:method_beast_taming",
+      "kind": "item",
+      "entityId": "method_beast_taming",
+      "resourcePath": "item/beast-taming-v1",
+      "resourceFile": "item/beast-taming-v1.png",
+      "sourceFile": "infinite-flow-wechat/prototype/npc-grid/assets/methods/beast-taming-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "御灵印",
+      "role": "icon",
+      "width": 256,
+      "height": 256,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "17d57df54e487aab875a5494573cbce53055587b94cca521fd92c7c316015980",
+      "targetSha256": "434d1b93c72b171f12b613f6568dfbfe17a81f46e5c48e6de5f6fc38962dbc4e",
+      "transformation": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "sourceDimensions": {
+          "width": 1254,
+          "height": 1254
+        },
+        "targetDimensions": {
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "key": "item:method_void_heart",
+      "kind": "item",
+      "entityId": "method_void_heart",
+      "resourcePath": "item/void-heart-v1",
+      "resourceFile": "item/void-heart-v1.png",
+      "sourceFile": "infinite-flow-wechat/prototype/npc-grid/assets/methods/void-heart-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "虚心诀",
+      "role": "icon",
+      "width": 256,
+      "height": 256,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "84cfdf4b1d6e8a2aecf7f13b44ffddcb796e526e8d7750d55db94e9400f9b043",
+      "targetSha256": "c0eed361268d86a740c64cd396a68fab43bbd55b92febbe224118ba1d95e600b",
+      "transformation": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "sourceDimensions": {
+          "width": 1254,
+          "height": 1254
+        },
+        "targetDimensions": {
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "key": "item:bloodline_titan_marrow",
+      "kind": "item",
+      "entityId": "bloodline_titan_marrow",
+      "resourcePath": "item/titan-marrow-v1",
+      "resourceFile": "item/titan-marrow-v1.png",
+      "sourceFile": "infinite-flow-wechat/prototype/npc-grid/assets/bloodlines/titan-marrow-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "巨灵骨髓",
+      "role": "icon",
+      "width": 256,
+      "height": 256,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "739d26d27037fb914b893b297184944177a2cfc58b8e4bbe324d1c0922a513e8",
+      "targetSha256": "170d50df809e85fdb892f07e8b30917c964cd87d8a5206223bb452ce7c2a8616",
+      "transformation": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "sourceDimensions": {
+          "width": 1254,
+          "height": 1254
+        },
+        "targetDimensions": {
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "key": "item:bloodline_void_symbiote",
+      "kind": "item",
+      "entityId": "bloodline_void_symbiote",
+      "resourcePath": "item/void-symbiote-v1",
+      "resourceFile": "item/void-symbiote-v1.png",
+      "sourceFile": "infinite-flow-wechat/prototype/npc-grid/assets/bloodlines/void-symbiote-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "虚界共生体",
+      "role": "icon",
+      "width": 256,
+      "height": 256,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "108560b57a8173203141910ef7747db5973aa47e43c0879ac1d3c1bb7456cb06",
+      "targetSha256": "180acb015974649484e54d0207574af95a33f733bbb8f965ba789161eeb9d68d",
+      "transformation": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "sourceDimensions": {
+          "width": 1254,
+          "height": 1254
+        },
+        "targetDimensions": {
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "key": "item:bloodline_bastion_chitin",
+      "kind": "item",
+      "entityId": "bloodline_bastion_chitin",
+      "resourcePath": "item/bastion-chitin-v1",
+      "resourceFile": "item/bastion-chitin-v1.png",
+      "sourceFile": "infinite-flow-wechat/prototype/npc-grid/assets/bloodlines/bastion-chitin-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "界壁甲质",
+      "role": "icon",
+      "width": 256,
+      "height": 256,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "295ff576edbcd55f73bcaf80551fe3dba0bafdf4e024355e87e72d19df214c24",
+      "targetSha256": "e5ab9f8287342b1d35936851167fe65eecfb220a72da533ece8bd3502a802351",
+      "transformation": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "sourceDimensions": {
+          "width": 1254,
+          "height": 1254
+        },
+        "targetDimensions": {
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "key": "item:bloodline_phoenix_ember",
+      "kind": "item",
+      "entityId": "bloodline_phoenix_ember",
+      "resourcePath": "item/phoenix-ember-v1",
+      "resourceFile": "item/phoenix-ember-v1.png",
+      "sourceFile": "infinite-flow-wechat/prototype/npc-grid/assets/bloodlines/phoenix-ember-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "涅槃余烬",
+      "role": "icon",
+      "width": 256,
+      "height": 256,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "9338d0a1b2dce92c75583c1f04dc74509414c05aa8760658c4ae9d6cdc314da0",
+      "targetSha256": "feb7db36549cf8a926441e0045c0a01e35c14c4c96861e8c400621e9d183fabf",
+      "transformation": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "sourceDimensions": {
+          "width": 1254,
+          "height": 1254
+        },
+        "targetDimensions": {
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "key": "equipment:rebirth_amulet",
+      "kind": "equipment",
+      "entityId": "rebirth_amulet",
+      "resourcePath": "equipment/rebirth-amulet-v1",
+      "resourceFile": "equipment/rebirth-amulet-v1.png",
+      "sourceFile": "infinite-flow/public/assets/equipment/rebirth-amulet-v1.png",
+      "webSourcePath": "/assets/equipment/rebirth-amulet-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "黑曜外壳包裹暗红胚心的复燃胚核",
+      "role": "icon",
+      "width": 160,
+      "height": 200,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "e17603d858f086d7c0d16df96dcc754b60af3c75e2edd64345ad24c316202526",
+      "targetSha256": "e17603d858f086d7c0d16df96dcc754b60af3c75e2edd64345ad24c316202526",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "version": "macOS 26.5.1 (25F80)",
+        "targetDimensions": {
+          "width": 160,
+          "height": 200
+        }
+      }
+    },
+    {
+      "key": "equipment:triage_visor",
+      "kind": "equipment",
+      "entityId": "triage_visor",
+      "resourcePath": "equipment/triage-visor-v1",
+      "resourceFile": "equipment/triage-visor-v1.png",
+      "sourceFile": "infinite-flow/public/assets/equipment/triage-visor-v1.png",
+      "webSourcePath": "/assets/equipment/triage-visor-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "分光镜片映出警示灯的分诊目镜",
+      "role": "icon",
+      "width": 160,
+      "height": 200,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "7030bf9d44b3d447b8fa4057b7295d9764c7c4ef9740345a70932fe17bf086d1",
+      "targetSha256": "7030bf9d44b3d447b8fa4057b7295d9764c7c4ef9740345a70932fe17bf086d1",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "version": "macOS 26.5.1 (25F80)",
+        "targetDimensions": {
+          "width": 160,
+          "height": 200
+        }
+      }
+    },
+    {
+      "key": "equipment:forensic_visor",
+      "kind": "equipment",
+      "entityId": "forensic_visor",
+      "resourcePath": "equipment/forensic-visor-v1",
+      "resourceFile": "equipment/forensic-visor-v1.png",
+      "sourceFile": "infinite-flow/public/assets/equipment/forensic-visor-v1.png",
+      "webSourcePath": "/assets/equipment/forensic-visor-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "双镜片投射取证扫描线的溯证目镜",
+      "role": "icon",
+      "width": 160,
+      "height": 200,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "093163d0f926ef04302a291db35542bd31f52adc3f140faf06c09fc788b96e33",
+      "targetSha256": "093163d0f926ef04302a291db35542bd31f52adc3f140faf06c09fc788b96e33",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "version": "macOS 26.5.1 (25F80)",
+        "targetDimensions": {
+          "width": 160,
+          "height": 200
+        }
+      }
+    },
+    {
+      "key": "character:reincarnator",
+      "kind": "character",
+      "entityId": "reincarnator",
+      "resourcePath": "character/reincarnator-v1",
+      "resourceFile": "character/reincarnator-v1.png",
+      "sourceFile": "infinite-flow/public/assets/characters/reincarnator-v1.png",
+      "webSourcePath": "/assets/characters/reincarnator-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "身穿修补战术护甲、携带符箓与短刃的轮回者",
+      "role": "portrait",
+      "width": 768,
+      "height": 768,
+      "fit": "cover",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "163ccf26c4d7fe88b8f4421f6967ee6cf043e4bf7e43c26d4bce421e40656601",
+      "targetSha256": "163ccf26c4d7fe88b8f4421f6967ee6cf043e4bf7e43c26d4bce421e40656601",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "version": "macOS 26.5.1 (25F80)",
+        "targetDimensions": {
+          "width": 768,
+          "height": 768
+        }
+      }
+    },
+    {
+      "key": "npc:companion_guide",
+      "kind": "npc",
+      "entityId": "companion_guide",
+      "resourcePath": "npc/companion-guide-v1",
+      "resourceFile": "npc/companion-guide-v1.png",
+      "sourceFile": "infinite-flow-wechat/prototype/npc-grid/assets/npc/companion-guide-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "同行引路人",
+      "role": "portrait",
+      "width": 256,
+      "height": 256,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "164bcdd3bc07ca1b77e4a7eb01fdc3e674ca8cdcc676f8065f437595f3d46734",
+      "targetSha256": "8fb59292f405c79905563a8c1e44ad2c4751b9cd70f54fdd3e8dbf28f81387f2",
+      "transformation": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "sourceDimensions": {
+          "width": 1254,
+          "height": 1254
+        },
+        "targetDimensions": {
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "key": "dungeon:mirror_cycle_city",
+      "kind": "dungeon",
+      "entityId": "mirror_cycle_city",
+      "resourcePath": "dungeon/mirror-cycle-city",
+      "resourceFile": "dungeon/mirror-cycle-city.png",
+      "sourceFile": "infinite-flow/public/mirror-cycle-city.svg",
+      "webSourcePath": "/mirror-cycle-city.svg",
+      "sourceFormat": "svg",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "轮回城现实与镜像双相街区",
+      "role": "banner",
+      "width": 720,
+      "height": 180,
+      "fit": "cover",
+      "source": "project-original-svg",
+      "sourceRevision": 1,
+      "sourceSha256": "49913a3a74e0d752288de4f631436f5927b1c06ef638bbc16bd36a35cc3095b3",
+      "targetSha256": "7e82295cfbb86c1d8babd7433d1a2ff8a908e57381ac63292947dcaa17ac3f80",
+      "transformation": {
+        "operation": "rasterize-svg-to-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "platform": "macOS 26.5.1 (25F80)",
+        "command": "sips -s format png <sourceFile> --out <resourceFile>",
+        "targetDimensions": {
+          "width": 720,
+          "height": 180
+        }
+      }
+    }
+  ]
+}

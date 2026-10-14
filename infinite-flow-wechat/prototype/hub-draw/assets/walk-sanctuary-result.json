@@ -1,0 +1,17 @@
+{
+  "tool": "image_gen.imagegen",
+  "mode": "built-in",
+  "prompt": "Use case: stylized-concept\nAsset type: panoramic horizontal scrolling stage backdrop for an original Chinese dark-fantasy infinite-flow survival RPG HTML walking prototype.\n\nPrimary request: Generate one extremely wide landscape panorama, 3072x1024 pixels, width-to-height ratio exactly 3:1 if possible. A horizontal action RPG game-stage set for an Eastern reincarnation sanctuary. Original artwork; do not copy existing Dungeon Fighter Online art or any other game's assets.\n\nCamera/composition: Standing eye-level, frontal three-quarter stage presentation, NOT a top-down map and NOT an elevated courtyard view. The stage expands strongly from left to right across the full panorama. Its depth is shallow and natural: a broad walkable strip facing the viewer, never a long hallway receding toward a distant vanishing point. Upper 55 percent shows the black-and-old-gold Eastern sanctuary back wall and colonnade, with distant architectural housing for a mysterious main-god projection. Lower 45 percent is broad, shallow, continuous stone-slab floor. The complete composition must read as a side-scrolling 2.5D action RPG theatrical environment.\n\nScene/style: Hand-painted 2D game scenery, original Chinese Eastern dark reincarnation fantasy. Weathered charcoal stone walls, aged bronze and muted old-gold details, orderly broad rear columns integrated into the back wall. Restrained architecture and painterly surfaces. The back wall and repeated architectural bays span the full horizontal width.\n\nWalkable floor: empty, broad, open, uninterrupted, gently illuminated gray stone paving extending across the entire width from left to right. Natural shallow floor perspective; sufficient readable floor space to separately place seven NPC sprites and a playable character later. No large columns, obstacles, props, or obstructions on the foreground floor; columns belong principally to the rear wall.\n\nLighting/palette: low-saturation gold and gray light, muted charcoal and aged bronze, solemn quiet atmosphere. Floor is readable and lighter than the wall, never pure black. Grounded painted illustration, not photographic and not neon/cyberpunk.\n\nConstraints: environment only. No people, characters, creatures, monsters, NPCs, text, letters, numbers, signs, door labels, interaction circles, glowing interaction markers, interface, HUD, buttons, cards, logos or watermark. No camera looking down from above. No corridor leading into deep distance. Opaque background.",
+  "source_path": "/Users/bytedance/.codex/generated_images/01a0f036-1b26-7610-918c-a77f1c16e005/exec-8d1c5a29-8e47-42a7-910c-399483f6aef0.png",
+  "final_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-draw/assets/walk-sanctuary-v1.png",
+  "dimensions": {
+    "width": 2172,
+    "height": 724
+  },
+  "aspect_ratio": 3.0,
+  "hash": {
+    "algorithm": "sha256",
+    "value": "22cf1dfe40d3fb5452e4863d251324bf2bc4361a338a7c7f83aeece655bcbb08"
+  },
+  "postprocessing": "none; byte-for-byte copy"
+}

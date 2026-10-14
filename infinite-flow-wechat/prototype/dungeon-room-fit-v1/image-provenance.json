@@ -1,0 +1,21 @@
+{
+  "output": "single-screen-room-v1.png",
+  "dimensions": [
+    853,
+    1844
+  ],
+  "type": "generated UI image prototype",
+  "references": [
+    "existing Cocos game screenshot",
+    "fog-lesser-demon-world-v1.png",
+    "ruined-stone-gate-v1.png"
+  ],
+  "confirmedVisuals": [
+    "one central monster",
+    "four cardinal door openings visible simultaneously",
+    "player below center",
+    "HUD and controls separate from room",
+    "closed west route marked"
+  ],
+  "integration": "not integrated; no live game command or reload"
+}

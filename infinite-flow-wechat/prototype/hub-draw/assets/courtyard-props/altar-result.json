@@ -1,0 +1,61 @@
+{
+  "asset": "altar-v1",
+  "method": "built-in image_gen.imagegen; initial generate then one composition edit",
+  "tool": "image_gen.imagegen",
+  "transparentBackground": true,
+  "referenceRole": "style only",
+  "referencePath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-draw/assets/walk-sanctuary-v1.png",
+  "prompt": "Use case: precise-object-edit.\nAsset type: transparent Chinese ritual courtyard game prop sprite.\nEdit target: the attached isolated stone incense altar PNG.\nChange ONLY its composition/framing and broad proportions: preserve this same altar design, centered single small bronze incense burner, weathered matte charcoal stone, old bronze lotus/cloud reliefs, moss/verdigris traces, subdued overhead lighting, front slight three-quarter camera and genuine transparent alpha. Make the complete visible altar silhouette narrower and taller so its TOTAL visible width:height including the incense burner and stone feet is approximately 120:84 (1.43:1), instead of the current visible silhouette roughly 2.1:1. It should still read as a broad ceremonial altar, with a slightly taller stone front body. Tighten the framing so the main opaque object occupies approximately 90% of both canvas width AND canvas height, with about 5% transparent margin on all sides. The highest burner/incense tip must be near 5% from canvas top and the stone feet near 95% of canvas height; leftmost/rightmost altar edges near 5%/95% canvas width. Keep complete feet visible, bottom center foot anchor.\nDo not add objects, architecture, background, floor, ground slab, shadow plane, text, characters, glow, neon, floating crystals or decorative clutter. No topdown/isometric view. Do not draw a checkerboard. Keep outside fully transparent, with clean alpha edges and no faint stray pixels at the canvas boundaries.",
+  "initialPrompt": "Use case: stylized-concept.\nAsset type: one original transparent game prop sprite for a 2.5D Chinese fantasy ritual courtyard HTML prototype, final displayed size about 120 x 84 pixels.\nPrimary request: create ONE low broad ancient Chinese ceremonial incense altar/table.\nReference role: the already-viewed courtyard image is STYLE ONLY. Match its matte painterly weathered charcoal stone, softly worn antique gold and bronze reliefs, restrained gray-brown palette and diffuse overhead light. Do not recreate, edit, include or place any part of its backdrop.\nSubject: a solid weathered charcoal-gray carved stone altar with thin old bronze lotus/cloud relief edging. A single small bronze incense burner is centered on the altar top with just tiny dim amber embers. Subdued moss and verdigris patina in a few crevices. The stone foot base rests low at the center groundline.\nComposition/framing: entire single altar isolated, centered and tightly framed with approximately 5% genuine transparent margins. A broad total silhouette with width-to-height about 120:84. 2.5D FRONT view at a slight three-quarter angle, showing only a shallow top plane and a little side depth; camera mostly faces the broad altar front. Make the carved front, broad slab-like tabletop, compact incense burner, and low solid foot base readable at thumbnail size.\nStyle/medium: painterly game art with convincing aged stone and antique metal, matte grounded materials, crisp readable silhouette with natural textured edges, subdued and solemn.\nLighting: diffuse overhead light with soft muted warm highlights and gentle visible volume, no dramatic glow.\nScene/backdrop: genuine transparent alpha everywhere outside the altar, without an environmental background or ground plane.\nConstraints: no floor, no background slab, no surrounding architecture, no characters, no humans, no UI, no text, no letters, no watermark. No bright hologram, no floating crystals, no neon, no colorful decorative clutter. No overhead/topdown/isometric view. Do not draw a checkerboard or colored background. Preserve original transparent alpha.",
+  "prompts": [
+    "Use case: stylized-concept.\nAsset type: one original transparent game prop sprite for a 2.5D Chinese fantasy ritual courtyard HTML prototype, final displayed size about 120 x 84 pixels.\nPrimary request: create ONE low broad ancient Chinese ceremonial incense altar/table.\nReference role: the already-viewed courtyard image is STYLE ONLY. Match its matte painterly weathered charcoal stone, softly worn antique gold and bronze reliefs, restrained gray-brown palette and diffuse overhead light. Do not recreate, edit, include or place any part of its backdrop.\nSubject: a solid weathered charcoal-gray carved stone altar with thin old bronze lotus/cloud relief edging. A single small bronze incense burner is centered on the altar top with just tiny dim amber embers. Subdued moss and verdigris patina in a few crevices. The stone foot base rests low at the center groundline.\nComposition/framing: entire single altar isolated, centered and tightly framed with approximately 5% genuine transparent margins. A broad total silhouette with width-to-height about 120:84. 2.5D FRONT view at a slight three-quarter angle, showing only a shallow top plane and a little side depth; camera mostly faces the broad altar front. Make the carved front, broad slab-like tabletop, compact incense burner, and low solid foot base readable at thumbnail size.\nStyle/medium: painterly game art with convincing aged stone and antique metal, matte grounded materials, crisp readable silhouette with natural textured edges, subdued and solemn.\nLighting: diffuse overhead light with soft muted warm highlights and gentle visible volume, no dramatic glow.\nScene/backdrop: genuine transparent alpha everywhere outside the altar, without an environmental background or ground plane.\nConstraints: no floor, no background slab, no surrounding architecture, no characters, no humans, no UI, no text, no letters, no watermark. No bright hologram, no floating crystals, no neon, no colorful decorative clutter. No overhead/topdown/isometric view. Do not draw a checkerboard or colored background. Preserve original transparent alpha.",
+    "Use case: precise-object-edit.\nAsset type: transparent Chinese ritual courtyard game prop sprite.\nEdit target: the attached isolated stone incense altar PNG.\nChange ONLY its composition/framing and broad proportions: preserve this same altar design, centered single small bronze incense burner, weathered matte charcoal stone, old bronze lotus/cloud reliefs, moss/verdigris traces, subdued overhead lighting, front slight three-quarter camera and genuine transparent alpha. Make the complete visible altar silhouette narrower and taller so its TOTAL visible width:height including the incense burner and stone feet is approximately 120:84 (1.43:1), instead of the current visible silhouette roughly 2.1:1. It should still read as a broad ceremonial altar, with a slightly taller stone front body. Tighten the framing so the main opaque object occupies approximately 90% of both canvas width AND canvas height, with about 5% transparent margin on all sides. The highest burner/incense tip must be near 5% from canvas top and the stone feet near 95% of canvas height; leftmost/rightmost altar edges near 5%/95% canvas width. Keep complete feet visible, bottom center foot anchor.\nDo not add objects, architecture, background, floor, ground slab, shadow plane, text, characters, glow, neon, floating crystals or decorative clutter. No topdown/isometric view. Do not draw a checkerboard. Keep outside fully transparent, with clean alpha edges and no faint stray pixels at the canvas boundaries."
+  ],
+  "source_path": "/Users/bytedance/.codex/generated_images/01a0f0f5-478d-7721-a587-0572b7ff4616/exec-212655d8-c650-44ef-ba40-9b6bd1fc0d4a.png",
+  "final_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-draw/assets/courtyard-props/altar-v1.png",
+  "generatedPath": "/Users/bytedance/.codex/generated_images/01a0f0f5-478d-7721-a587-0572b7ff4616/exec-212655d8-c650-44ef-ba40-9b6bd1fc0d4a.png",
+  "finalSavedPath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-draw/assets/courtyard-props/altar-v1.png",
+  "path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-draw/assets/courtyard-props/altar-v1.png",
+  "initialGeneratedPath": "/Users/bytedance/.codex/generated_images/01a0f0f5-478d-7721-a587-0572b7ff4616/exec-420c3d40-5c1b-4d1a-a679-b97f3b8aad0d.png",
+  "sha256": "9531faf0c42c8bfad183e382f3b30e57e4a8f8b049cf044fd71e5bddc14ad258",
+  "width": 1500,
+  "height": 1049,
+  "dimensions": {
+    "width": 1500,
+    "height": 1049
+  },
+  "mode": "RGBA",
+  "alphaBBox": [
+    0,
+    13,
+    1478,
+    1049
+  ],
+  "alpha_bbox": [
+    0,
+    13,
+    1478,
+    1049
+  ],
+  "alphaBBox32": [
+    42,
+    61,
+    1459,
+    980
+  ],
+  "alpha_bbox_32": [
+    42,
+    61,
+    1459,
+    980
+  ],
+  "alphaBBoxThreshold": ">0",
+  "alphaBBox32Threshold": ">=32",
+  "bboxCoordinateConvention": "[left, top, right, bottom], right and bottom exclusive",
+  "transparentPercent": 44.30702256116937,
+  "transparent_percent": 44.30702256116937,
+  "transparencyMetric": "percent of pixels with alpha exactly 0",
+  "visibleWidthHeightRatio32": 1.5418933623503808,
+  "finalFilePreservedByteForByte": true,
+  "visualInspection": "Viewed original generated PNG after composition edit. Readable broad altar, low stone feet, single centered bronze burner, muted charcoal stone/old bronze, no floor/background/UI/text. Main opaque silhouette has approx 3% side and 6% top/bottom margins; alpha>=32 bbox recommended for fitting due to faint tool edge pixels."
+}

@@ -1,0 +1,18 @@
+{
+  "tool": "image_gen.imagegen (built-in)",
+  "prompt": "Use case: stylized-concept. Asset type: main-god-space backdrop for a Chinese infinite-flow survival RPG mobile game prototype. Original Chinese infinite-flow survival RPG main-god space, a silent hovering void platform made of black obsidian and worn brass surrounded by mysterious ink-black mist. Hand-painted grounded dark fantasy plus restrained retro-science-fiction, portrait 1024x1536, elevated near-orthographic 30-degree mobile RPG camera. Broad open platform floor at center and foreground with thin antique brass orbital inlay and muted cyan edge light, two far peripheral architectural ribs, a small distant cyan-gold circular portal/rift suspended on the upper-center axis, restrained dim star glimmers only in the far background, no busy space galaxy. Framing like a mystical station / abstract courtyard; not a sci-fi city, not neon. Middle 60% must be open usable painted floor for overlaid NPC sprites and UI. No characters, no people, no NPCs/monsters, no cards/buttons/HUD, no text/letters/numbers/watermark. Palette charcoal / aged bronze / desaturated teal, soft readable paint detail, grounded materials, not photographic.",
+  "transparent_background": false,
+  "originalPath": "/Users/bytedance/.codex/generated_images/01a0f036-e69a-79e2-8ade-a385e831d542/exec-c38e26de-b94a-4e6b-a5c5-7b6b4b1457ba.png",
+  "copiedPath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-draw/assets/void-v1.png",
+  "dimensions": {
+    "width": 1024,
+    "height": 1536
+  },
+  "hash": {
+    "algorithm": "sha256",
+    "value": "2a012b29a542936df6ceaa22e1efb094144a94845740f12d341ef680491d6fb6"
+  },
+  "bytes": 2835631,
+  "inspection": "Original hand-painted dark fantasy obsidian platform with bronze orbital floor inlays, broad open NPC floor, two peripheral ribs and distant cyan portal. No people, NPCs, text or HUD.",
+  "postprocessing": "none; byte-for-byte copy"
+}

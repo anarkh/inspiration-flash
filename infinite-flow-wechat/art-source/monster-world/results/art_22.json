@@ -1,0 +1,35 @@
+{
+  "entityId": "cue_stalker",
+  "path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/art-source/monster-world/cue-stalker-world-v1.png",
+  "sourcePath": "/Users/bytedance/.codex/generated_images/01a0ecb6-967d-7e92-b255-ae5e6b543445/exec-c2d0d343-0685-4c0c-bfe9-b37fe0c2c968.png",
+  "referencePath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/monster/cue-stalker-v1.png",
+  "width": 1024,
+  "height": 1536,
+  "mode": "RGBA",
+  "alpha": {
+    "extrema": [
+      0,
+      254
+    ],
+    "fullyTransparentPixels": 1039509,
+    "fullyTransparentRatio": 0.6609020233154297,
+    "nonzeroPixels": 533355,
+    "hasTransparency": true,
+    "bbox": [
+      0,
+      19,
+      1024,
+      1536
+    ],
+    "cornerValues": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "tool": "built-in imagegen",
+  "promptSource": "art-source/monster-world/prompts.json sharedPrompt + subject",
+  "visualCheck": "Full creature visible, clapperboard jaws and filmstrip tentacles preserved; dark painted bronze and charcoal materials, no floor or text.",
+  "status": "complete"
+}

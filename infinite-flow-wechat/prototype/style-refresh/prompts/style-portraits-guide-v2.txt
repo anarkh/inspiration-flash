@@ -1,0 +1,8 @@
+Use case: style-transfer
+Asset type: one square companion character portrait for a hand-painted dark fantasy game.
+Primary request: Make a single directed refinement to IMAGE 1, the elderly woman guide: repaint the face and hair into visible hand-painted realistic game concept illustration so the entire image matches the painterly language of IMAGE 2. IMAGE 2 is STYLE ONLY. Do not borrow its young male identity, clothing, colors, pose, or objects.
+Edit target: IMAGE 1 guide portrait. Preserve her exact identity, elderly age, facial feature proportions and kind slight smile, head angle, gray-white long braid, brown worn cloak, olive scarf, aged-brass compass brooch, composition and square framing.
+Style reference: IMAGE 2 hero portrait shows the coherent painted concept-art treatment desired. Use its deliberate broad modeled brush planes and broken painted edges across FACE as well as cloth. Express the woman's wrinkles and elderly anatomy with painterly strokes and shadow planes. Remove photographic skin pores, camera-like skin microtexture, glossy highlights, and fine photographic strand rendering. Paint hair in grouped gray-white strands and broken brushstrokes.
+Keep: elderly woman visibly 65–75 with weathered face; do not beautify, smooth away age or make young. Preserve gray-brown and muted olive palette with old gold. Dark soft brown-charcoal backdrop, gentle soft light. One woman only.
+Avoid: any photo or photography finish, photorealistic pores, glossy skin, young face, anime, flat cartoon, extra objects, text, UI, border, watermark. No alteration of clothing, jewelry, identity, pose or framing.
+Output: exactly one opaque square 1:1 portrait image.

@@ -1,0 +1,99 @@
+.v02 {
+  --orbit-jade: #7bc8c2;
+  --orbit-gold: #ccb689;
+  position: relative;
+  width: 390px;
+  height: 740px;
+  overflow: hidden;
+  isolation: isolate;
+  color: #e1f1e9;
+  background: #0b171c;
+  font-family: "Songti SC", "STSong", serif;
+}
+.v02 .scene-background { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; opacity: .66; z-index: -5; }
+.v02 .orbit-shade { position: absolute; inset: 0; z-index: -4; background: radial-gradient(ellipse at 50% 47%, #183d422d 0%, #08192270 55%, #071318e8 100%), linear-gradient(180deg, #08151de5, transparent 34%, #08151d8c 78%, #07141cf0); }
+.v02 .orbit-stars { position: absolute; inset: 0; pointer-events: none; z-index: -2; }
+.v02 .orbit-stars i { position: absolute; width: 2px; height: 2px; border-radius: 50%; background: #c6eee9a0; box-shadow: 0 0 5px #b0eee6; }
+.v02 .orbit-stars i:nth-child(1) { left: 30px; top: 167px; }
+.v02 .orbit-stars i:nth-child(2) { left: 318px; top: 137px; }
+.v02 .orbit-stars i:nth-child(3) { left: 347px; top: 514px; }
+.v02 .orbit-stars i:nth-child(4) { left: 42px; top: 577px; }
+.v02 .orbit-stars i:nth-child(5) { left: 278px; top: 599px; }
+.v02 .orbit-stars i:nth-child(6) { left: 244px; top: 112px; }
+.v02 .scene-header { position: absolute; top: 22px; left: 23px; right: 19px; height: 60px; display: flex; align-items: center; gap: 12px; padding: 0; border: 0; background: none; box-shadow: none; }
+.v02 .avatar-button { flex: 0 0 56px; width: 56px; height: 56px; padding: 3px; border: 1px solid #7bc8c285; border-radius: 50%; position: relative; background: #15303985; color: #def1e7; overflow: hidden; }
+.v02 .avatar-button img { display: block; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; object-position: center 25%; }
+.v02 .avatar-button span { display: none; }
+.v02 .scene-identity { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 4px; }
+.v02 .scene-place { font-size: 17px; line-height: 22px; letter-spacing: 3px; font-weight: 500; }
+.v02 .scene-health { color: #b9d0ca; font: 12px/17px sans-serif; }
+.v02 .scene-health b { margin-left: 6px; color: #f0f8e8; font-weight: 600; }
+.v02 .scene-health > span { margin-left: 2px; color: #96aba7; }
+.v02 .hp-track { display: block; width: 124px; height: 2px; margin: 0; border: 0; background: #23424a; }
+.v02 .hp-track i { display: block; width: 100%; height: 100%; background: linear-gradient(90deg, #518b8d, #b0ded0); }
+.v02 .scene-menu { width: 56px; height: 56px; padding: 16px; border: 0; border-radius: 50%; background: none; color: #b8d1c9; }
+.v02 .scene-menu svg { width: 24px; height: 24px; }
+.v02 .scene-resources { position: absolute; top: 97px; left: 91px; display: flex; gap: 24px; padding: 0; border: 0; background: none; color: #a6beb8; font: 12px/18px sans-serif; }
+.v02 .scene-resources b { margin-left: 5px; color: #dbcaa0; font-weight: 600; font-variant-numeric: tabular-nums; }
+.v02 .orbit-heading { position: absolute; top: 129px; left: 74px; right: 74px; display: flex; align-items: center; gap: 14px; color: #c5dacf; }
+.v02 .orbit-heading span { flex: none; font-size: 15px; line-height: 24px; letter-spacing: 5px; }
+.v02 .orbit-heading i { position: relative; flex: 1; height: 1px; background: #a2c4b44f; }
+.v02 .orbit-heading i::after { content: ""; position: absolute; top: -2px; width: 4px; height: 4px; border: 1px solid #cdbb8982; transform: rotate(45deg); }
+.v02 .orbit-heading i:first-child::after { left: 0; }
+.v02 .orbit-heading i:last-child::after { right: 0; }
+.v02 .orbit-track { position: absolute; left: 55px; top: 216px; width: 280px; height: 280px; border: 1px solid #7bc8c267; border-radius: 50%; box-shadow: 0 0 20px #4b93951c, inset 0 0 20px #4b93951a; pointer-events: none; z-index: -1; }
+.v02 .orbit-track::before { content: ""; position: absolute; inset: -15px; border: 1px solid #c2ad7340; border-radius: 50%; }
+.v02 .orbit-track::after { content: ""; position: absolute; inset: 17px; border: 1px dashed #6a9b9748; border-radius: 50%; }
+.v02 .orbit-track > i { position: absolute; inset: 35px; border: 1px solid #7bc8c222; border-radius: 50%; }
+.v02 .orbit-track > i:nth-child(2) { inset: 56px; }
+.v02 .orbit-track > i:nth-child(3) { inset: -7px; border: 0; background: repeating-conic-gradient(from 1deg, #ccb68978 0deg 1deg, transparent 1deg 15deg); mask: radial-gradient(circle, transparent 69%, #000 69% 70%, transparent 70%); }
+.v02 .orbit-track > b { position: absolute; top: 50%; left: -9px; width: 6px; height: 6px; transform: rotate(45deg); border: 1px solid #dbc293a0; background: #1d3a3e; }
+.v02 .orbit-track > b:last-child { left: auto; right: -9px; }
+.v02 .orbit-meridians { position: absolute; left: 77px; top: 238px; width: 236px; height: 236px; pointer-events: none; z-index: -2; }
+.v02 .orbit-meridians i { position: absolute; left: 50%; top: 0; width: 1px; height: 100%; background: linear-gradient(transparent, #78b8b33a 20%, #78b8b337 80%, transparent); }
+.v02 .orbit-meridians i:nth-child(2) { transform: rotate(60deg); }
+.v02 .orbit-meridians i:nth-child(3) { transform: rotate(120deg); }
+.v02 .orbit-core { position: absolute; left: 118px; top: 284px; width: 154px; height: 192px; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; color: #cceae1; }
+.v02 .orbit-core .portal-symbol { position: relative; display: block; flex: none; width: 96px; height: 96px; margin: 0 0 12px; border: 1px solid #81d4caad; border-radius: 50%; background: radial-gradient(circle, #b0f0d28a, #528d9148 23%, #0c252d82 53%, #0b1c228a 68%); box-shadow: 0 0 28px #5fc8c13c, inset 0 0 17px #87d8c23d; transform: none; }
+.v02 .orbit-core .portal-symbol::after { content: ""; position: absolute; inset: -7px; border: 1px solid #b8a76e88; border-radius: 50%; }
+.v02 .orbit-core .portal-symbol i { position: absolute; inset: 17px; display: block; border: 1px solid #a4dfd0bc; border-radius: 0; transform: rotate(45deg); }
+.v02 .orbit-core .portal-symbol i:nth-child(2) { inset: 29px; transform: rotate(0); }
+.v02 .orbit-core .portal-symbol i:nth-child(3) { inset: 41px; transform: rotate(45deg); border: 0; background: #e1f9d2; box-shadow: 0 0 12px #d4f2d0; }
+.v02 .orbit-core .portal-symbol b { position: absolute; inset: 8px; border: 1px dashed #6cc9c95e; border-radius: 50%; transform: none; background: none; box-shadow: none; }
+.v02 .orbit-core .portal-copy { display: flex; align-items: center; flex-direction: column; gap: 5px; text-shadow: 0 2px 7px #021219; }
+.v02 .orbit-core .portal-eyebrow { font-size: 12px; line-height: 16px; letter-spacing: 4px; color: #a7c9bd; }
+.v02 .orbit-core strong { font-size: 18px; line-height: 24px; font-weight: 500; letter-spacing: 3px; color: #e4efcf; }
+.v02 .orbit-core .portal-hint { font: 12px/17px sans-serif; white-space: nowrap; color: #b3c8bd; letter-spacing: 0; }
+.v02 .orbit-core .portal-arrow { display: none; }
+.v02 .orbit-seats { position: absolute; inset: 0; pointer-events: none; }
+.v02 .service { position: absolute; width: 82px; height: 118px; display: block; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; text-align: center; color: #e1eee1; pointer-events: auto; }
+.v02 .service::before { content: ""; position: absolute; left: 3px; top: 0; width: 76px; height: 76px; border: 1px solid #adbc8d9c; border-radius: 50%; background: #0b242cee; box-shadow: 0 0 12px #67a5a524; }
+.v02 .service::after { content: ""; position: absolute; left: 8px; top: 5px; width: 66px; height: 66px; border: 1px solid #7bc8c244; border-radius: 50%; pointer-events: none; }
+.v02 .service .svc-art { position: absolute; left: 10px; top: 7px; width: 62px; height: 62px; object-fit: contain; object-position: center; border: 0; border-radius: 50%; filter: saturate(.78); }
+.v02 .service .svc-copy { position: absolute; left: -10px; right: -10px; top: 80px; display: flex; flex-direction: column; gap: 1px; align-items: center; padding: 0; text-shadow: 0 1px 4px #031017, 0 0 7px #031017; }
+.v02 .service .svc-title { display: block; font-size: 13px; line-height: 17px; letter-spacing: 1px; white-space: nowrap; }
+.v02 .service .svc-purpose { display: block; font: 12px/16px sans-serif; color: #adc1b8; white-space: nowrap; }
+.v02 .service .svc-icon { display: none; }
+.v02 .service-methods { left: 154px; top: 164px; }
+.v02 .service-bloodlines { left: 278px; top: 229px; }
+.v02 .service-companions { left: 290px; top: 363px; }
+.v02 .service-tasks { left: 229px; top: 484px; }
+.v02 .service-pets { left: 79px; top: 484px; }
+.v02 .service-supplies { left: 18px; top: 363px; }
+.v02 .service-equipment { left: 30px; top: 229px; }
+.v02 .orbit-player-disc { position: absolute; left: 150px; top: 633px; width: 90px; height: 15px; border: 1px solid #7bc8c256; border-radius: 50%; background: radial-gradient(ellipse, #86cac936, transparent 75%); pointer-events: none; }
+.v02 .orbit-walker { position: absolute; left: 165px; top: 560px; width: 60px; height: 112px; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; color: #a9c9bf; }
+.v02 .orbit-walker .walker-art { position: absolute; left: -10px; top: 0; width: 80px; height: 80px; filter: drop-shadow(0 3px 6px #050f16); }
+.v02 .orbit-walker .player-name { position: absolute; left: 0; right: 0; bottom: 7px; padding: 0; border: 0; background: none; font-size: 12px; line-height: 18px; letter-spacing: 3px; }
+.v02 .orbit-tools { position: absolute; left: 30px; right: 30px; top: 676px; height: 56px; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #6baca840; }
+.v02 .scene-utility { width: 88px; height: 56px; display: flex; align-items: center; justify-content: center; gap: 9px; padding: 0; border: 0; border-radius: 0; background: none; color: #d1e0ce; box-shadow: none; font-size: 14px; }
+.v02 .scene-utility svg { width: 20px; height: 20px; color: #8dc7bb; }
+.v02 .orbit-tool-mark { width: 35px; height: 35px; display: grid; place-items: center; color: #789b906f; pointer-events: none; }
+.v02 .orbit-tool-mark svg { width: 26px; height: 26px; }
+.v02 button:focus-visible { outline: 2px solid #b0e9d8; outline-offset: 3px; }
+.v02 .service:hover::before, .v02 .service:focus-visible::before { border-color: #e3d59a; box-shadow: 0 0 16px #94d6c74f; }
+.v02 .service:hover, .v02 .orbit-core:hover, .v02 .scene-utility:hover { background: none; }
+.v02 .scene-utility:hover, .v02 .scene-menu:hover { color: #f4f5dc; }
+@media (prefers-reduced-motion: reduce) {
+  .v02 *, .v02 *::before, .v02 *::after { animation: none !important; transition: none !important; }
+}

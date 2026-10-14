@@ -1,0 +1,48 @@
+{
+  "tool": "image_gen.imagegen",
+  "mode": "built-in",
+  "assetId": "courtyard-pillar-v1",
+  "prompt": "Use case: precise-object-edit\nAsset type: transparent ceremonial stone pillar game sprite.\nEdit target: the referenced isolated column PNG. Keep its original ancient Chinese Eastern fantasy design, charcoal weathered stone, subdued old gold/bronze cloud and lotus relief, matte painterly texture, front slight three-quarter view, soft upper front-left lighting, and genuine transparent background.\nSingle correction: make the whole standing pillar proportionally lower and broader, with the actual visible silhouette width-to-height ratio near 72:150 (about 0.48). Shorten the long middle shaft by about one third while preserving its artistic carved stone identity, and subtly broaden its shoulder cap and own stone foot. The complete visible stone object should occupy about 90 percent of both canvas width and canvas height, centered with about 5 percent clean fully transparent margins on all four sides. The base remains flat, grounded and bottom centered.\nThis is one low ceremonial courtyard column/stela, readable at 72 by 150 game pixels. Preserve the existing subdued matte stone lighting and small desaturated moss at the foot. Do not add new objects, scenery, a floor, a platform, cast shadow, people, UI, text, writing, logos or watermark. No neon, no floating crystal, no magical glow. Preserve real alpha transparency everywhere outside the single stone item.",
+  "initial_prompt": "Use case: stylized-concept\nAsset type: one transparent game sprite for the original Chinese Eastern reincarnation courtyard in a 2.5D HTML RPG prototype.\nPrimary request: create one original upright single low ceremonial stone column or stela, a ground-standing courtyard prop. The previously viewed walk-sanctuary-v1.png panorama is a STYLE reference only: match its matte hand-painted soft texture, dark charcoal weathered stone, aged bronze and muted old-gold ornament, solemn low-saturation lighting. Generate only the new isolated stone sprite, never the backdrop.\nSubject: one tall narrow carved stone courtyard column, silhouette width-to-height about 72:150. Ancient Chinese Eastern reincarnation sanctuary character, subtly tapering stone shaft, shallow ceremonial cap, own modest stone foot. Thin aged gold/bronze relief trims, restrained cloud and lotus motifs. Slight desaturated moss or verdigris just at the foot. Painterly organic weathered contours rather than a plain modern rectangular block.\nComposition/framing: 2.5D standing frontal view with a slight three-quarter angle so a shallow top and side are visible. Whole complete item centered, tightly framed with about 5 percent transparent margins. Flat grounded base centered near the bottom. Readable at a final in-game size of 72 by 150 pixels; polished painterly details with a clear stable silhouette.\nLighting/mood: softly lit from upper front-left, muted warm-gray highlights and restrained old-gold accents, gentle painted shade matching the provided courtyard; no harsh photographic rendering.\nConstraints: genuinely transparent RGBA background, only one column and its own stone foot, no surrounding floor, no platform or floor slab, no scenery, no humans, no UI, no text, letters or writing, no logos or watermark. No neon, no floating crystals, no luminous magical effects. No ground shadow extending beyond the stone foot.",
+  "style_reference": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-draw/assets/walk-sanctuary-v1.png",
+  "edit_reference": "/Users/bytedance/.codex/generated_images/01a0f0f4-7faf-7a83-bccf-71f8e2909dc9/exec-06b21ecb-6499-4b6d-8e85-5ff504179e76.png",
+  "source_path": "/Users/bytedance/.codex/generated_images/01a0f0f4-7faf-7a83-bccf-71f8e2909dc9/exec-e4f65634-03da-44be-9e3e-a011310938fd.png",
+  "generatedPath": "/Users/bytedance/.codex/generated_images/01a0f0f4-7faf-7a83-bccf-71f8e2909dc9/exec-e4f65634-03da-44be-9e3e-a011310938fd.png",
+  "final_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-draw/assets/courtyard-props/pillar-v1.png",
+  "finalSavedPath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-draw/assets/courtyard-props/pillar-v1.png",
+  "path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-draw/assets/courtyard-props/pillar-v1.png",
+  "dimensions": {
+    "width": 870,
+    "height": 1808
+  },
+  "color_mode": "RGBA",
+  "sha256": "9c0509f4d3157d178605940cd96ff4c39088e03222cf76a472dfde53dc430875",
+  "hash": {
+    "algorithm": "sha256",
+    "value": "9c0509f4d3157d178605940cd96ff4c39088e03222cf76a472dfde53dc430875"
+  },
+  "alpha_bbox": [
+    0,
+    90,
+    870,
+    1797
+  ],
+  "alpha_bbox_32": [
+    22,
+    93,
+    866,
+    1795
+  ],
+  "alpha_bbox_coordinate_format": "[left, top, right, bottom], right and bottom exclusive",
+  "alpha_bbox_32_threshold": "alpha >= 32",
+  "transparent_percent": 43.020928694944566,
+  "transparent_percent_definition": "Percentage of pixels with alpha exactly 0",
+  "visible_silhouette_aspect_ratio": 0.49588719153936545,
+  "transparent_background": true,
+  "postprocessing": "none; byte-for-byte copy of selected built-in imagegen PNG",
+  "validation": {
+    "visual_inspection": "view_image; single upright stone column with own stone foot, charcoal weathered stone, aged gold relief, moss, no backdrop/text/UI",
+    "alpha_channel": "RGBA with true transparent pixels",
+    "copied_bytes_equal": true
+  }
+}

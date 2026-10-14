@@ -1,0 +1,539 @@
+{
+  "revision": 1,
+  "tool": "built-in imagegen",
+  "direction": "Grounded dark infinite-flow survival RPG; preserve unique chapter identities",
+  "sharedPrompt": "Create a production-ready single full-body idle enemy sprite for an original Chinese infinite-flow survival RPG. Grounded hand-painted dark fantasy with restrained retro science-fiction, matching detailed 2D adult-proportioned RPG characters. Use the reference only to preserve creature identity, signature equipment and materials; recompose as a complete isolated full-body world figure. Slight elevated 25-degree near-orthographic camera, facing viewer/down-screen, entire head through feet or lowest appendage visible, threatening restrained idle pose. Center on a 1024x1536 portrait canvas, top at 7 percent, foot baseline at 93 percent, at least 10 percent side padding; keep all limbs, horns and props inside frame. TRUE transparent alpha background, no floor, no mist backdrop, no vignette, no panel, no frame, no text or watermark. Crisp readable silhouette at small mobile size, weathered charcoal and muted old-bronze materials, bone-white edge highlights and sparse oxidized-cyan or restrained chapter accent glow. Soft top-left illumination and clear outline on dark stone. Each monster retains its own anatomy and distinctive props. No chibi or cartoon, no generic demon substitution, no large bloom, no decorative ground shadow.",
+  "assets": [
+    {
+      "key": "monster:fog_lesser_demon_world",
+      "entityId": "fog_lesser_demon",
+      "slug": "fog-lesser-demon",
+      "reference": "cocos/assets/resources/monster/fog-lesser-demon-v1.png",
+      "subject": "从灰雾中显形的雾中妖鬼",
+      "sourceFile": "fog-lesser-demon-world-v1.png",
+      "batch": 1
+    },
+    {
+      "key": "monster:tower_butcher_world",
+      "entityId": "tower_butcher",
+      "slug": "tower-butcher",
+      "reference": "cocos/assets/resources/monster/tower-butcher-v1.png",
+      "subject": "披挂骨甲与重刃的剔骨塔卒",
+      "sourceFile": "tower-butcher-world-v1.png",
+      "batch": 1
+    },
+    {
+      "key": "monster:tide_boatman_world",
+      "entityId": "tide_boatman",
+      "slug": "tide-boatman",
+      "reference": "cocos/assets/resources/monster/tide-boatman-v1.png",
+      "subject": "提灯涉水而来的潮影船夫",
+      "sourceFile": "tide-boatman-world-v1.png",
+      "batch": 1
+    },
+    {
+      "key": "monster:mirror_thread_spider_world",
+      "entityId": "mirror_thread_spider",
+      "slug": "mirror-thread-spider",
+      "reference": "cocos/assets/resources/monster/mirror-thread-spider-v1.png",
+      "subject": "以镜面长足织出银丝的镜丝织蛛",
+      "sourceFile": "mirror-thread-spider-world-v1.png",
+      "batch": 1
+    },
+    {
+      "key": "monster:rail_wraith_world",
+      "entityId": "rail_wraith",
+      "slug": "rail-wraith",
+      "reference": "cocos/assets/resources/monster/rail-wraith-v1.png",
+      "subject": "断轨与电弧环绕的断轨怨影",
+      "sourceFile": "rail-wraith-world-v1.png",
+      "batch": 1
+    },
+    {
+      "key": "monster:mine_shell_guard_world",
+      "entityId": "mine_shell_guard",
+      "slug": "mine-shell-guard",
+      "reference": "cocos/assets/resources/monster/mine-shell-guard-v1.png",
+      "subject": "披覆星矿晶壳的矿壳守卫",
+      "sourceFile": "mine-shell-guard-world-v1.png",
+      "batch": 1
+    },
+    {
+      "key": "monster:spark_imp_world",
+      "entityId": "spark_imp",
+      "slug": "spark-imp",
+      "reference": "cocos/assets/resources/monster/spark-imp-v1.png",
+      "subject": "由炭火与恶意凝成的跳火小鬼",
+      "sourceFile": "spark-imp-world-v1.png",
+      "batch": 1
+    },
+    {
+      "key": "monster:portal_molt_beast_world",
+      "entityId": "portal_molt_beast",
+      "slug": "portal-molt-beast",
+      "reference": "cocos/assets/resources/monster/portal-molt-beast-v1.png",
+      "subject": "甲壳沿界隙裂开的裂门蜕兽",
+      "sourceFile": "portal-molt-beast-world-v1.png",
+      "batch": 1
+    },
+    {
+      "key": "monster:plague_orderly_world",
+      "entityId": "plague_orderly",
+      "slug": "plague-orderly",
+      "reference": "cocos/assets/resources/monster/plague-orderly-v1.png",
+      "subject": "携带锈蚀医疗工具的锈疫护工",
+      "sourceFile": "plague-orderly-world-v1.png",
+      "batch": 1
+    },
+    {
+      "key": "monster:pulse_doctor_world",
+      "entityId": "pulse_doctor",
+      "slug": "pulse-doctor",
+      "reference": "cocos/assets/resources/monster/pulse-doctor-v1.png",
+      "subject": "操纵脉冲器械的脉冲医师",
+      "sourceFile": "pulse-doctor-world-v1.png",
+      "batch": 1
+    },
+    {
+      "key": "monster:ash_duelist_world",
+      "entityId": "ash_duelist",
+      "slug": "ash-duelist",
+      "reference": "cocos/assets/resources/monster/ash-duelist-v1.png",
+      "subject": "甲片间燃着余烬的灰烬斗士",
+      "sourceFile": "ash-duelist-world-v1.png",
+      "batch": 1
+    },
+    {
+      "key": "monster:furnace_judge_world",
+      "entityId": "furnace_judge",
+      "slug": "furnace-judge",
+      "reference": "cocos/assets/resources/monster/furnace-judge-v1.png",
+      "subject": "执掌炽热裁决刃的炉心裁判",
+      "sourceFile": "furnace-judge-world-v1.png",
+      "batch": 1
+    },
+    {
+      "key": "monster:paper_librarian_world",
+      "entityId": "paper_librarian",
+      "slug": "paper-librarian",
+      "reference": "cocos/assets/resources/monster/paper-librarian-v1.png",
+      "subject": "空白书页环绕的无面纸面馆主",
+      "sourceFile": "paper-librarian-world-v1.png",
+      "batch": 1
+    },
+    {
+      "key": "monster:dream_jailer_world",
+      "entityId": "dream_jailer",
+      "slug": "dream-jailer",
+      "reference": "cocos/assets/resources/monster/dream-jailer-v1.png",
+      "subject": "拖曳梦锁与封存笼的梦牢看守",
+      "sourceFile": "dream-jailer-world-v1.png",
+      "batch": 1
+    },
+    {
+      "key": "monster:void_knight_world",
+      "entityId": "void_knight",
+      "slug": "void-knight",
+      "reference": "cocos/assets/resources/monster/void-knight-v1.png",
+      "subject": "甲片悬浮于界隙之间的虚界骑士",
+      "sourceFile": "void-knight-world-v1.png",
+      "batch": 1
+    },
+    {
+      "key": "monster:main_god_echo_world",
+      "entityId": "main_god_echo",
+      "slug": "main-god-echo",
+      "reference": "cocos/assets/resources/monster/main-god-echo-v1.png",
+      "subject": "由黑曜碎面与扫描环构成的主神残响",
+      "sourceFile": "main-god-echo-world-v1.png",
+      "batch": 1
+    },
+    {
+      "key": "monster:clockwork_scout_world",
+      "entityId": "clockwork_scout",
+      "slug": "clockwork-scout",
+      "reference": "cocos/assets/resources/monster/clockwork-scout-v1.png",
+      "subject": "拖曳时序残影的发条侦察兵",
+      "sourceFile": "clockwork-scout-world-v1.png",
+      "batch": 1
+    },
+    {
+      "key": "monster:epoch_sentinel_world",
+      "entityId": "epoch_sentinel",
+      "slug": "epoch-sentinel",
+      "reference": "cocos/assets/resources/monster/epoch-sentinel-v1.png",
+      "subject": "背负纪元环与冲击残响的纪元哨卫",
+      "sourceFile": "epoch-sentinel-world-v1.png",
+      "batch": 1
+    },
+    {
+      "key": "monster:zero_hour_regent_world",
+      "entityId": "zero_hour_regent",
+      "slug": "zero-hour-regent",
+      "reference": "cocos/assets/resources/monster/zero-hour-regent-v1.png",
+      "subject": "过去与未来重影交叠的零时摄政",
+      "sourceFile": "zero-hour-regent-world-v1.png",
+      "batch": 1
+    },
+    {
+      "key": "monster:verdict_usher_world",
+      "entityId": "verdict_usher",
+      "slug": "verdict-usher",
+      "reference": "cocos/assets/resources/monster/verdict-usher-v1.png",
+      "subject": "手持悬浮裁决武器的裁决执事",
+      "sourceFile": "verdict-usher-world-v1.png",
+      "batch": 1
+    },
+    {
+      "key": "monster:paradox_bailiff_world",
+      "entityId": "paradox_bailiff",
+      "slug": "paradox-bailiff",
+      "reference": "cocos/assets/resources/monster/paradox-bailiff-v1.png",
+      "subject": "因果位置彼此倒置的悖论法警",
+      "sourceFile": "paradox-bailiff-world-v1.png",
+      "batch": 2
+    },
+    {
+      "key": "monster:zero_sum_auditor_world",
+      "entityId": "zero_sum_auditor",
+      "slug": "zero-sum-auditor",
+      "reference": "cocos/assets/resources/monster/zero-sum-auditor-v1.png",
+      "subject": "双侧衡臂汇入黑曜核心的零和审计官",
+      "sourceFile": "zero-sum-auditor-world-v1.png",
+      "batch": 2
+    },
+    {
+      "key": "monster:entropy_deckhand_world",
+      "entityId": "entropy_deckhand",
+      "slug": "entropy-deckhand",
+      "reference": "cocos/assets/resources/monster/entropy-deckhand-v1.png",
+      "subject": "失序结晶缠身的熵舱水手",
+      "sourceFile": "entropy-deckhand-world-v1.png",
+      "batch": 2
+    },
+    {
+      "key": "monster:dissipation_navigator_world",
+      "entityId": "dissipation_navigator",
+      "slug": "dissipation-navigator",
+      "reference": "cocos/assets/resources/monster/dissipation-navigator-v1.png",
+      "subject": "与破损星盘融合的耗散领航员",
+      "sourceFile": "dissipation-navigator-world-v1.png",
+      "batch": 2
+    },
+    {
+      "key": "monster:last_helmsman_world",
+      "entityId": "last_helmsman",
+      "slug": "last-helmsman",
+      "reference": "cocos/assets/resources/monster/last-helmsman-v1.png",
+      "subject": "与崩解舵轮融为一体的终末舵手",
+      "sourceFile": "last-helmsman-world-v1.png",
+      "batch": 2
+    },
+    {
+      "key": "monster:parallax_hunter_world",
+      "entityId": "parallax_hunter",
+      "slug": "parallax-hunter",
+      "reference": "cocos/assets/resources/monster/parallax-hunter-v1.png",
+      "subject": "本体与镜像彼此错位的视差猎手",
+      "sourceFile": "parallax-hunter-world-v1.png",
+      "batch": 2
+    },
+    {
+      "key": "monster:mirror_chorus_world",
+      "entityId": "mirror_chorus",
+      "slug": "mirror-chorus",
+      "reference": "cocos/assets/resources/monster/mirror-chorus-v1.png",
+      "subject": "多重镜像躯干交叠的镜群合唱者",
+      "sourceFile": "mirror-chorus-world-v1.png",
+      "batch": 2
+    },
+    {
+      "key": "monster:nameless_reflection_world",
+      "entityId": "nameless_reflection",
+      "slug": "nameless-reflection",
+      "reference": "cocos/assets/resources/monster/nameless-reflection-v1.png",
+      "subject": "身披黑曜镜甲的无名镜王",
+      "sourceFile": "nameless-reflection-world-v1.png",
+      "batch": 2
+    },
+    {
+      "key": "monster:erasure_copyist_world",
+      "entityId": "erasure_copyist",
+      "slug": "erasure-copyist",
+      "reference": "cocos/assets/resources/monster/erasure-copyist-v1.png",
+      "subject": "空白书页环绕的删界抄写员",
+      "sourceFile": "erasure-copyist-world-v1.png",
+      "batch": 2
+    },
+    {
+      "key": "monster:palimpsest_censor_world",
+      "entityId": "palimpsest_censor",
+      "slug": "palimpsest-censor",
+      "reference": "cocos/assets/resources/monster/palimpsest-censor-v1.png",
+      "subject": "以覆写书页作盾的覆页裁定者",
+      "sourceFile": "palimpsest-censor-world-v1.png",
+      "batch": 2
+    },
+    {
+      "key": "monster:last_redactor_world",
+      "entityId": "last_redactor",
+      "slug": "last-redactor",
+      "reference": "cocos/assets/resources/monster/last-redactor-v1.png",
+      "subject": "手持巨型删界笔的终稿删界官",
+      "sourceFile": "last-redactor-world-v1.png",
+      "batch": 2
+    },
+    {
+      "key": "monster:reserve_bailiff_world",
+      "entityId": "reserve_bailiff",
+      "slug": "reserve-bailiff",
+      "reference": "cocos/assets/resources/monster/reserve-bailiff-v1.png",
+      "subject": "账本锁链缠腕的底价执役",
+      "sourceFile": "reserve-bailiff-world-v1.png",
+      "batch": 2
+    },
+    {
+      "key": "monster:inheritance_mimic_world",
+      "entityId": "inheritance_mimic",
+      "slug": "inheritance-mimic",
+      "reference": "cocos/assets/resources/monster/inheritance-mimic-v1.png",
+      "subject": "遗物与面孔不断变形的遗产拟形体",
+      "sourceFile": "inheritance-mimic-world-v1.png",
+      "batch": 2
+    },
+    {
+      "key": "monster:estate_auctioneer_world",
+      "entityId": "estate_auctioneer",
+      "slug": "estate-auctioneer",
+      "reference": "cocos/assets/resources/monster/estate-auctioneer-v1.png",
+      "subject": "巨槌与手臂融合的遗产执槌人",
+      "sourceFile": "estate-auctioneer-world-v1.png",
+      "batch": 2
+    },
+    {
+      "key": "monster:gene_stalker_world",
+      "entityId": "gene_stalker",
+      "slug": "gene-stalker",
+      "reference": "cocos/assets/resources/monster/gene-stalker-v1.png",
+      "subject": "血清瓶嵌入肋骨的基因猎犬",
+      "sourceFile": "gene-stalker-world-v1.png",
+      "batch": 2
+    },
+    {
+      "key": "monster:mutation_guardian_world",
+      "entityId": "mutation_guardian",
+      "slug": "mutation-guardian",
+      "reference": "cocos/assets/resources/monster/mutation-guardian-v1.png",
+      "subject": "活性甲壳与血清罐共生的变异守库体",
+      "sourceFile": "mutation-guardian-world-v1.png",
+      "batch": 2
+    },
+    {
+      "key": "monster:primal_curator_world",
+      "entityId": "primal_curator",
+      "slug": "primal-curator",
+      "reference": "cocos/assets/resources/monster/primal-curator-v1.png",
+      "subject": "托起螺旋样本架的原型典藏官",
+      "sourceFile": "primal-curator-world-v1.png",
+      "batch": 2
+    },
+    {
+      "key": "monster:frequency_leech_world",
+      "entityId": "frequency_leech",
+      "slug": "frequency-leech",
+      "reference": "cocos/assets/resources/monster/frequency-leech-v1.png",
+      "subject": "波形触须贯穿胸口的频段寄生体",
+      "sourceFile": "frequency-leech-world-v1.png",
+      "batch": 2
+    },
+    {
+      "key": "monster:dead_air_mimic_world",
+      "entityId": "dead_air_mimic",
+      "slug": "dead-air-mimic",
+      "reference": "cocos/assets/resources/monster/dead-air-mimic-v1.png",
+      "subject": "磁带环缠绕玻璃耳面的死频拟声体",
+      "sourceFile": "dead-air-mimic-world-v1.png",
+      "batch": 2
+    },
+    {
+      "key": "monster:broadcast_warden_world",
+      "entityId": "broadcast_warden",
+      "slug": "broadcast-warden",
+      "reference": "cocos/assets/resources/monster/broadcast-warden-v1.png",
+      "subject": "以锁频盾护身的广播守卫",
+      "sourceFile": "broadcast-warden-world-v1.png",
+      "batch": 2
+    },
+    {
+      "key": "monster:last_broadcaster_world",
+      "entityId": "last_broadcaster",
+      "slug": "last-broadcaster",
+      "reference": "cocos/assets/resources/monster/last-broadcaster-v1.png",
+      "subject": "与三座中继桅杆融合的末频道播音主",
+      "sourceFile": "last-broadcaster-world-v1.png",
+      "batch": 3
+    },
+    {
+      "key": "monster:mimic_survivor_world",
+      "entityId": "mimic_survivor",
+      "slug": "mimic-survivor",
+      "reference": "cocos/assets/resources/monster/mimic-survivor-v1.png",
+      "subject": "皮下浮现第二张脸的拟声幸存者",
+      "sourceFile": "mimic-survivor-world-v1.png",
+      "batch": 3
+    },
+    {
+      "key": "monster:rogue_sentry_world",
+      "entityId": "rogue_sentry",
+      "slug": "rogue-sentry",
+      "reference": "cocos/assets/resources/monster/rogue-sentry-v1.png",
+      "subject": "三段充能灯亮起的失控哨戒炮",
+      "sourceFile": "rogue-sentry-world-v1.png",
+      "batch": 3
+    },
+    {
+      "key": "monster:shelter_enforcer_world",
+      "entityId": "shelter_enforcer",
+      "slug": "shelter-enforcer",
+      "reference": "cocos/assets/resources/monster/shelter-enforcer-v1.png",
+      "subject": "路障与注射器构成双臂的避难所执行体",
+      "sourceFile": "shelter-enforcer-world-v1.png",
+      "batch": 3
+    },
+    {
+      "key": "monster:evacuation_horror_world",
+      "entityId": "evacuation_horror",
+      "slug": "evacuation-horror",
+      "reference": "cocos/assets/resources/monster/evacuation-horror-v1.png",
+      "subject": "担架与撤离束带扭结成的撤离畸变体",
+      "sourceFile": "evacuation-horror-world-v1.png",
+      "batch": 3
+    },
+    {
+      "key": "monster:shelter_overseer_world",
+      "entityId": "shelter_overseer",
+      "slug": "shelter-overseer",
+      "reference": "cocos/assets/resources/monster/shelter-overseer-v1.png",
+      "subject": "监控屏与警报号角组成的失联总控",
+      "sourceFile": "shelter-overseer-world-v1.png",
+      "batch": 3
+    },
+    {
+      "key": "monster:hostile_witness_world",
+      "entityId": "hostile_witness",
+      "slug": "hostile-witness",
+      "reference": "cocos/assets/resources/monster/hostile-witness-v1.png",
+      "subject": "被锁在证词架上的敌意证人",
+      "sourceFile": "hostile-witness-world-v1.png",
+      "batch": 3
+    },
+    {
+      "key": "monster:archive_censor_world",
+      "entityId": "archive_censor",
+      "slug": "archive-censor",
+      "reference": "cocos/assets/resources/monster/archive-censor-v1.png",
+      "subject": "档案盒吞没空白证页的档案删录官",
+      "sourceFile": "archive-censor-world-v1.png",
+      "batch": 3
+    },
+    {
+      "key": "monster:perjury_hound_world",
+      "entityId": "perjury_hound",
+      "slug": "perjury-hound",
+      "reference": "cocos/assets/resources/monster/perjury-hound-v1.png",
+      "subject": "由案卷与铁骨缝合的伪证猎犬",
+      "sourceFile": "perjury-hound-world-v1.png",
+      "batch": 3
+    },
+    {
+      "key": "monster:false_testimony_judge_world",
+      "entityId": "false_testimony_judge",
+      "slug": "false-testimony-judge",
+      "reference": "cocos/assets/resources/monster/false-testimony-judge-v1.png",
+      "subject": "胸嵌三盏裁定灯的伪证主审",
+      "sourceFile": "false-testimony-judge-world-v1.png",
+      "batch": 3
+    },
+    {
+      "key": "monster:cue_stalker_world",
+      "entityId": "cue_stalker",
+      "slug": "cue-stalker",
+      "reference": "cocos/assets/resources/monster/cue-stalker-v1.png",
+      "subject": "沿起拍光束扑出的场记潜猎者",
+      "sourceFile": "cue-stalker-world-v1.png",
+      "batch": 3
+    },
+    {
+      "key": "monster:continuity_editor_world",
+      "entityId": "continuity_editor",
+      "slug": "continuity-editor",
+      "reference": "cocos/assets/resources/monster/continuity-editor-v1.png",
+      "subject": "双手形似剪刀的连续性剪辑师",
+      "sourceFile": "continuity-editor-world-v1.png",
+      "batch": 3
+    },
+    {
+      "key": "monster:retake_double_world",
+      "entityId": "retake_double",
+      "slug": "retake-double",
+      "reference": "cocos/assets/resources/monster/retake-double-v1.png",
+      "subject": "双躯共用一条脊柱的重拍替身",
+      "sourceFile": "retake-double-world-v1.png",
+      "batch": 3
+    },
+    {
+      "key": "monster:final_cut_director_world",
+      "entityId": "final_cut_director",
+      "slug": "final-cut-director",
+      "reference": "cocos/assets/resources/monster/final-cut-director-v1.png",
+      "subject": "冻结画框环绕头部的终剪导演",
+      "sourceFile": "final-cut-director-world-v1.png",
+      "batch": 3
+    },
+    {
+      "key": "monster:sweep_sentinel_world",
+      "entityId": "sweep_sentinel",
+      "slug": "sweep-sentinel",
+      "reference": "cocos/assets/resources/monster/sweep-sentinel-v1.png",
+      "subject": "扇形视锥扫过黑甲的扫视哨兵",
+      "sourceFile": "sweep-sentinel-world-v1.png",
+      "batch": 3
+    },
+    {
+      "key": "monster:phase_hunter_drone_world",
+      "entityId": "phase_hunter_drone",
+      "slug": "phase-hunter-drone",
+      "reference": "cocos/assets/resources/monster/phase-hunter-drone-v1.png",
+      "subject": "双相护盾包围核心的相位猎杀无人机",
+      "sourceFile": "phase-hunter-drone-world-v1.png",
+      "batch": 3
+    },
+    {
+      "key": "monster:blindspot_auditor_world",
+      "entityId": "blindspot_auditor",
+      "slug": "blindspot-auditor",
+      "reference": "cocos/assets/resources/monster/blindspot-auditor-v1.png",
+      "subject": "以空白账本覆面的盲区审计官",
+      "sourceFile": "blindspot-auditor-world-v1.png",
+      "batch": 3
+    },
+    {
+      "key": "monster:exposure_double_world",
+      "entityId": "exposure_double",
+      "slug": "exposure-double",
+      "reference": "cocos/assets/resources/monster/exposure-double-v1.png",
+      "subject": "正反重影同时过曝的曝光替身",
+      "sourceFile": "exposure-double-world-v1.png",
+      "batch": 3
+    },
+    {
+      "key": "monster:all_sight_warden_world",
+      "entityId": "all_sight_warden",
+      "slug": "all-sight-warden",
+      "reference": "cocos/assets/resources/monster/all-sight-warden-v1.png",
+      "subject": "观测透镜环绕核心的万目监察者",
+      "sourceFile": "all-sight-warden-world-v1.png",
+      "batch": 3
+    }
+  ]
+}

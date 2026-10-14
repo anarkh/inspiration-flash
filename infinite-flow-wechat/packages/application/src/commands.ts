@@ -510,6 +510,7 @@ const COMBAT_COMMANDS: ReadonlySet<GameCommandType> = new Set([
 
 export function getGameCommandAllowedPhases(command: GameCommand): readonly Phase[] {
   if (command.type === 'game/new') return ['hub', 'explore', 'combat', 'result'];
+  if (command.type === 'hub/equip-equipment') return ['hub', 'explore'];
   if (HUB_COMMANDS.has(command.type)) return ['hub'];
   if (command.type === 'node/use-soul-skill' || command.type === 'run/retreat') {
     return ['explore', 'combat'];

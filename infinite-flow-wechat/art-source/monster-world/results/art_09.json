@@ -1,0 +1,27 @@
+{
+  "entityId": "verdict_usher",
+  "key": "monster:verdict_usher_world",
+  "path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/art-source/monster-world/verdict-usher-world-v1.png",
+  "sourcePath": "/Users/bytedance/.codex/generated_images/01a0ecb4-6fc8-7871-b16c-c531aa431041/exec-7397322d-07dc-4056-aaf3-96a5d4cc9c9d.png",
+  "referencePath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/monster/verdict-usher-v1.png",
+  "tool": "built-in imagegen",
+  "promptSource": "art-source/monster-world/prompts.json: sharedPrompt + subject",
+  "width": 1024,
+  "height": 1536,
+  "mode": "RGBA",
+  "alpha": {
+    "min": 0,
+    "max": 254,
+    "transparentPixels": 988208,
+    "partialPixels": 584656,
+    "opaquePixels": 0,
+    "transparentFraction": 0.6282857259114584,
+    "bbox": [
+      65,
+      34,
+      986,
+      1502
+    ]
+  },
+  "visualCheck": "Full body and all three floating judgment weapons visible; charcoal and old-bronze armor with small cyan accents; reference identity preserved; transparent corners verified."
+}

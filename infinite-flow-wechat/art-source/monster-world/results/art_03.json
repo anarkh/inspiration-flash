@@ -1,0 +1,22 @@
+{
+  "entityId": "dream_jailer",
+  "key": "monster:dream_jailer_world",
+  "status": "generated",
+  "path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/art-source/monster-world/dream-jailer-world-v1.png",
+  "sourcePath": "/Users/bytedance/.codex/generated_images/01a0ecb3-803f-72a3-a501-e492273f5f2b/exec-512277a3-d3e9-412a-85ca-82ebc7fdca51.png",
+  "referencePath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/monster/dream-jailer-v1.png",
+  "width": 1024,
+  "height": 1536,
+  "mode": "RGBA",
+  "alpha": {
+    "min": 0,
+    "max": 254,
+    "transparentFraction": 0.4961051940917969,
+    "under16Fraction": 0.5163122812906901,
+    "over240Fraction": 0.47118568420410156
+  },
+  "visualCheck": "Full head, both feet, chains and sealed cage visible; reference identity and dark charcoal, bronze and cyan palette preserved. True alpha verified.",
+  "tool": "built-in imagegen",
+  "promptSet": "art-source/monster-world/prompts.json sharedPrompt + dream_jailer subject",
+  "rawPngPreserved": true
+}

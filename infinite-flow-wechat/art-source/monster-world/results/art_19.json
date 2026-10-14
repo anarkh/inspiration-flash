@@ -1,0 +1,27 @@
+{
+  "entityId": "dead_air_mimic",
+  "key": "monster:dead_air_mimic_world",
+  "path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/art-source/monster-world/dead-air-mimic-world-v1.png",
+  "sourcePath": "/Users/bytedance/.codex/generated_images/01a0ecb6-0dac-7072-a170-1e437db2238c/exec-0f30923e-34bf-4df6-9040-2e1268d71fc7.png",
+  "referencePath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/monster/dead-air-mimic-v1.png",
+  "width": 1024,
+  "height": 1536,
+  "mode": "RGBA",
+  "alpha": {
+    "min": 0,
+    "max": 254,
+    "transparentPixels": 1035392,
+    "nonzeroPixels": 537472,
+    "cornerAlpha": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "rawCopySha256": "0a85825e729f5ca2a0fce69674b2b5038c38731ca145beb07de8b5eea918f6c2",
+  "generationMode": "built-in imagegen",
+  "promptSource": "art-source/monster-world/prompts.json:sharedPrompt + subject",
+  "visualCheck": "Complete full-body figure with glass ear face, winding tape loops, dark bronze materials, all feet and appendages inside image.",
+  "status": "complete"
+}

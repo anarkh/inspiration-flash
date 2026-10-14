@@ -1,0 +1,189 @@
+[
+  {
+    "flow": "natural-watch-post-cache",
+    "input": "actual pointer events",
+    "checks": [
+      "claim +70 points/+1 medicine ash",
+      "unselected confirmation inert",
+      "selection is local only",
+      "close/reopen selection retained",
+      "one confirm activates attack +6/art +4",
+      "resolved popup closes"
+    ],
+    "final": {
+      "acquired": [
+        "mist_edge"
+      ],
+      "art": 17,
+      "ash": 1,
+      "attack": 25,
+      "balance": 1080,
+      "closed": true,
+      "revision": 9
+    }
+  },
+  {
+    "flow": "natural-north-supply-niche",
+    "input": "actual pointer events",
+    "checks": [
+      "claim +80 points/+1 dispel talisman",
+      "no relic draft",
+      "popup closes"
+    ],
+    "final": {
+      "balance": 1280,
+      "closed": true,
+      "dispel": 1,
+      "receipt": {
+        "actionId": "node.reward:north_supply_niche",
+        "healing": 0,
+        "items": [
+          {
+            "count": 1,
+            "description": "抵消一次符文或机关陷阱。",
+            "itemId": "dispel_talisman",
+            "name": "破禁符",
+            "visualAssetKey": "item:dispel_talisman"
+          }
+        ],
+        "lingyun": 0,
+        "nodeId": "north_supply_niche",
+        "rewardPoints": 80
+      },
+      "revision": 16
+    }
+  },
+  {
+    "flow": "help",
+    "input": "actual pointer/drag events",
+    "checks": [
+      "full text scroll moves",
+      "next and previous topic work",
+      "close returns help directory",
+      "domain revision unchanged"
+    ],
+    "scroll": {
+      "offset": 231.65956478873244,
+      "revision": 16,
+      "topic": "difficulty"
+    },
+    "nextTopic": "playerPower",
+    "final": {
+      "revision": 16,
+      "sheet": "help"
+    }
+  },
+  {
+    "flow": "natural-retreat-result",
+    "input": "actual pointer/drag events",
+    "checks": [
+      "original retreat confirmation required",
+      "one domain command",
+      "cached cover becomes ready result backdrop"
+    ],
+    "final": {
+      "assets": "ready",
+      "hasCachedResultBackdrop": true,
+      "phase": "result",
+      "revision": 17
+    }
+  },
+  {
+    "flow": "character-equipment-tip",
+    "input": "actual pointer events",
+    "checks": [
+      "existing equipment attributes shown",
+      "tip bounded and scrollable",
+      "close returns character",
+      "domain unchanged"
+    ],
+    "measure": {
+      "closed": false,
+      "content": 80,
+      "revision": 7,
+      "scroll": 80,
+      "tip": {
+        "id": "training_blade",
+        "kind": "equip"
+      }
+    },
+    "final": {
+      "kind": "character",
+      "revision": 7
+    }
+  },
+  {
+    "flow": "hud-relic-popover",
+    "input": "actual pointer events",
+    "checks": [
+      "scene-owned relic image",
+      "264px compact popup",
+      "close returns scene",
+      "domain unchanged"
+    ],
+    "measure": {
+      "closeLabel": "×",
+      "height": 101,
+      "image": true,
+      "ratio": 1,
+      "revision": 9,
+      "scroll": 41,
+      "sourceRatio": 1,
+      "width": 264
+    },
+    "final": {
+      "closed": true,
+      "revision": 9
+    }
+  },
+  {
+    "flow": "scene-retry",
+    "input": "actual pointer events on renderer error fixture",
+    "checks": [
+      "existing retry callback reloads actual resource pipeline",
+      "scene becomes ready",
+      "domain revision unchanged"
+    ],
+    "final": {
+      "assets": "ready",
+      "phase": "explore",
+      "revision": 9
+    }
+  },
+  {
+    "flow": "scene-retry-figure-leases",
+    "input": "actual pointer events on renderer error fixture",
+    "checks": [
+      "cached handoff reserves native ownership before await",
+      "retry keeps both actual relic images valid and published",
+      "scene becomes ready",
+      "domain revision remains 9"
+    ],
+    "final": {
+      "lease": {
+        "before": 3,
+        "key": "character:reincarnator",
+        "reserved": 4,
+        "valid": true
+      },
+      "assets": "ready",
+      "images": [
+        {
+          "height": 1254,
+          "key": "item:run_relic_mist_edge",
+          "nativeValid": true,
+          "published": true,
+          "width": 1254
+        },
+        {
+          "height": 1254,
+          "key": "item:run_relic_focus_prism",
+          "nativeValid": true,
+          "published": true,
+          "width": 1254
+        }
+      ],
+      "revision": 9
+    }
+  }
+]

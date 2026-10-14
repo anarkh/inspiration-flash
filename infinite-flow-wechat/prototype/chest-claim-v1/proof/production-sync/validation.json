@@ -1,0 +1,126 @@
+{
+  "date": "2026-10-12",
+  "target": "Cocos Creator 3.8.8 web-mobile",
+  "build": "web-mobile-chest-claim-20261012",
+  "scope": "Real game reward claim and run relic choice UI",
+  "buildLog": "/tmp/infinite-flow-chest-claim-sync-20261012/creator-build-final.log",
+  "engineBuilt": true,
+  "wechatDeviceTested": false,
+  "browser": [
+    {
+      "width": 320,
+      "height": 568,
+      "naturalReplay": true,
+      "watch": {
+        "rewardPointDelta": 70,
+        "medicineAshDelta": 1,
+        "acquired": [
+          "mist_edge"
+        ],
+        "pending": null,
+        "attackDelta": 6,
+        "artPowerDelta": 4,
+        "revision": {
+          "acceptingInput": true,
+          "durableRevision": 9,
+          "ledgerRevision": 9
+        }
+      },
+      "ordinary": {
+        "rewardPointDelta": 80,
+        "dispelTalismanDelta": 1,
+        "pending": null,
+        "claimButtonAbsent": true,
+        "relicButtonAbsent": true,
+        "revision": {
+          "acceptingInput": true,
+          "durableRevision": 16,
+          "ledgerRevision": 16
+        }
+      }
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "naturalReplay": true,
+      "watch": {
+        "rewardPointDelta": 70,
+        "medicineAshDelta": 1,
+        "acquired": [
+          "mist_edge"
+        ],
+        "pending": null,
+        "attackDelta": 6,
+        "artPowerDelta": 4,
+        "revision": {
+          "acceptingInput": true,
+          "durableRevision": 9,
+          "ledgerRevision": 9
+        }
+      },
+      "ordinary": {
+        "rewardPointDelta": 80,
+        "dispelTalismanDelta": 1,
+        "pending": null,
+        "claimButtonAbsent": true,
+        "relicButtonAbsent": true,
+        "revision": {
+          "acceptingInput": true,
+          "durableRevision": 16,
+          "ledgerRevision": 16
+        }
+      }
+    }
+  ],
+  "selectedCardDidNotCommit": true,
+  "closeReopenSelectionPreserved": true,
+  "ordinaryFormalSaveMatchesState": true,
+  "browserErrors": [],
+  "liveUpgrade": {
+    "acquired": [],
+    "claimButtonAbsent": true,
+    "newRelicCards": [
+      "MobileSheetRelicOffer:mist_edge",
+      "MobileSheetRelicOffer:focus_prism"
+    ],
+    "pending": {
+      "candidateIds": [
+        "mist_edge",
+        "focus_prism"
+      ],
+      "draftId": "demon_tower_1:echo:1",
+      "nodeId": "watch_post_cache"
+    },
+    "positionPreserved": true,
+    "revision": {
+      "acceptingInput": true,
+      "durableRevision": 9,
+      "ledgerRevision": 9
+    },
+    "revisionPreserved": true,
+    "seedsPreserved": true,
+    "statePreserved": true,
+    "storagePreserved": true,
+    "browserErrors": [],
+    "screenshot": "live-preserved-relic-390.jpg"
+  },
+  "checks": {
+    "sheet": {
+      "passed": true,
+      "rewardCases": 8,
+      "relicCards": 12,
+      "widths": [
+        320,
+        390
+      ]
+    },
+    "race": {
+      "passed": true,
+      "scenarios": 112
+    },
+    "presentationTests": true,
+    "typechecks": true,
+    "sourceVerify": true,
+    "sceneVerify": true
+  }
+}

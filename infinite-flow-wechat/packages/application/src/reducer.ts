@@ -65,6 +65,8 @@ import {
   useEquipmentSoulSkill,
   useMethodTechnique,
   usePortal,
+  type CombatPresentationFrame,
+  type CombatPresentationObserver,
   type DungeonId,
   type GameState,
   type Phase
@@ -128,6 +130,11 @@ export type GameDomainEvent =
       action: string;
       turnBefore: number;
       turnAfter: number;
+    }>
+  | Readonly<{
+      type: 'combat.presentation-resolved';
+      action: string;
+      frames: readonly CombatPresentationFrame[];
     }>
   | Readonly<{ type: 'boss.awakened'; nodeId: string }>
   | Readonly<{ type: 'combat.finished'; nodeId: string; result: 'victory' | 'escaped' | 'failed' }>
@@ -317,7 +324,11 @@ function preflightCommand(state: GameState, command: GameCommand): GameCommandRe
   return undefined;
 }
 
-function applyDomainCommand(state: GameState, command: GameCommand): GameState {
+function applyDomainCommand(
+  state: GameState,
+  command: GameCommand,
+  combatObserver?: CombatPresentationObserver
+): GameState {
   switch (command.type) {
     case 'game/new':
       return createInitialState();
@@ -445,7 +456,7 @@ function applyDomainCommand(state: GameState, command: GameCommand): GameState {
     case 'law/select-panopticon-route':
       return selectPanopticonRoute(state, command.route);
     case 'combat/act':
-      return performCombatAction(state, command.action);
+      return performCombatAction(state, command.action, combatObserver);
     case 'combat/capture':
       return capturePet(state, command.petId);
     case 'combat/use-method-technique':
@@ -453,7 +464,7 @@ function applyDomainCommand(state: GameState, command: GameCommand): GameState {
     case 'combat/use-companion-assist':
       return useCompanionAssist(state);
     case 'combat/use-bloodline-surge':
-      return useBloodlineSurge(state);
+      return useBloodlineSurge(state, combatObserver);
     case 'run/retreat':
       return resolveRetreat(state);
     case 'run/resolve-exit':
@@ -469,7 +480,12 @@ function applyDomainCommand(state: GameState, command: GameCommand): GameState {
   }
 }
 
-function deriveEvents(before: GameState, after: GameState, command: GameCommand): GameDomainEvent[] {
+function deriveEvents(
+  before: GameState,
+  after: GameState,
+  command: GameCommand,
+  combatFrames: readonly CombatPresentationFrame[]
+): GameDomainEvent[] {
   const events: GameDomainEvent[] = [{
     type: 'command.applied',
     commandType: command.type,
@@ -516,6 +532,18 @@ function deriveEvents(before: GameState, after: GameState, command: GameCommand)
       turnBefore: before.combat.turn,
       turnAfter: after.combat?.turn ?? before.combat.turn + 1
     });
+  }
+
+  if (combatFrames.length > 0) {
+    const action = command.type === 'combat/act' ? command.action
+      : command.type === 'combat/use-method-technique' ? `method:${command.methodId ?? 'active'}`
+        : command.type === 'node/use-soul-skill' ? `soul:${command.skillId}`
+          : command.type === 'combat/use-companion-assist' ? 'companion' : 'bloodline';
+    events.push(Object.freeze({
+      type: 'combat.presentation-resolved',
+      action,
+      frames: Object.freeze([...combatFrames])
+    }));
   }
 
   if (before.combat?.bossPhase === 'sealed' && after.combat?.bossPhase === 'awakened') {
@@ -586,8 +614,9 @@ export function reduceGameCommand(
   if (preflight) return preflight;
 
   let nextState: GameState;
+  const combatFrames: CombatPresentationFrame[] = [];
   try {
-    nextState = applyDomainCommand(state, command);
+    nextState = applyDomainCommand(state, command, frame => combatFrames.push(frame));
   } catch (cause) {
     const message = cause instanceof Error ? cause.message : 'The domain transition threw an unknown error.';
     return reject(readonlyState, command.type, 'domain-rejected', message);
@@ -603,6 +632,21 @@ export function reduceGameCommand(
     );
   }
 
+  // These support actions never retaliate or settle combat. Capture their real
+  // resulting HP once; bloodline damage uses the core observer before settlement.
+  if (state.combat && nextState.combat && (
+    command.type === 'combat/use-method-technique'
+    || command.type === 'combat/use-companion-assist'
+    || command.type === 'node/use-soul-skill'
+  )) {
+    combatFrames.push(Object.freeze({
+      stage: 'impact',
+      playerHp: nextState.player.hp,
+      enemyHp: nextState.combat.monsterHp,
+      guarded: nextState.combat.guarding
+    }));
+  }
+
   const outcome: CommittedGameCommandOutcome = {
     status: 'committed',
     commandType: command.type,
@@ -613,7 +657,7 @@ export function reduceGameCommand(
   return {
     status: 'committed',
     state: nextState,
-    events: deriveEvents(state, nextState, command),
+    events: deriveEvents(state, nextState, command, combatFrames),
     outcome
   };
 }

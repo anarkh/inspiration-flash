@@ -1,0 +1,51 @@
+{
+  "asset": "courtyard-lantern",
+  "generator": "built-in image_gen.imagegen",
+  "use_case": "stylized-concept",
+  "prompt": "Use case: stylized-concept\nAsset type: original transparent 2.5D game prop sprite for the HTML game prototype 轮回庭院.\nInput image: the provided sanctuary image is a STYLE REFERENCE ONLY. Create a NEW isolated lantern; do not recreate, crop, or include the sanctuary scene.\nScene/backdrop: genuinely transparent alpha background, no floor or backdrop.\nSubject: exactly one slender ancient Chinese stone courtyard lantern. A tall narrow weathered charcoal-stone shaft on a short, stepped stone pedestal, supporting a compact antique bronze octagonal lantern housing and a small pagoda-shaped roof. Old-gold edges, restrained carved cloud motif, tiny warm amber inner light, subtle moss and verdigris only near the bottom. Matte old stone and bronze.\nStyle/medium: mature hand-painted Chinese fantasy game art with the same dark charcoal stone, soft worn old-gold trim, restrained warm lighting, believable textured brushwork and architectural material treatment as the style reference. Detailed but with clear large forms that remain legible when displayed at 46 by 118 pixels.\nComposition/framing: one complete object centered, front view with a slight three-quarter perspective, showing a shallow top and one shallow side. Tall narrow silhouette with object width to height approximately 46:118 (0.39). Use a tall narrow portrait canvas fit around the object, roughly 5% transparent margin on every side. Do not cut off the roof or base. The flat stone foot meets a low centered ground line at the bottom of the sprite. Minimize empty canvas around this object.\nLighting/mood: soft top-left ambient illumination matching the reference. Only a small controlled warm amber glow inside the lantern; no external flare.\nConstraints: retain genuinely transparent alpha, including around the foot. No additional objects, no backdrop, no floor tile, no broad cast shadow, no humans, no UI, no text, no letters, no watermark.\nAvoid: neon cyan light, bright blue effects, flares, floating crystals, modern industrial torch, glossy plastic, cartoon styling, oversized roof, ornate dangling extensions. Antique stone courtyard lantern.",
+  "reference_style_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-draw/assets/walk-sanctuary-v1.png",
+  "transparent_background": true,
+  "source_path": "/Users/bytedance/.codex/generated_images/01a0f0f5-a599-7cc2-ac1f-57b98c7d608c/exec-3b1d67e2-38d4-4acf-a25a-6adc9dac72a2.png",
+  "final_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-draw/assets/courtyard-props/lamp-v1.png",
+  "generatedPath": "/Users/bytedance/.codex/generated_images/01a0f0f5-a599-7cc2-ac1f-57b98c7d608c/exec-3b1d67e2-38d4-4acf-a25a-6adc9dac72a2.png",
+  "finalSavedPath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-draw/assets/courtyard-props/lamp-v1.png",
+  "path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-draw/assets/courtyard-props/lamp-v1.png",
+  "dimensions": {
+    "width": 930,
+    "height": 1691
+  },
+  "mode": "RGBA",
+  "alpha_bbox": [
+    0,
+    49,
+    898,
+    1667
+  ],
+  "alpha_bbox_gt0": [
+    0,
+    49,
+    898,
+    1667
+  ],
+  "alpha_bbox_ge32": [
+    163,
+    69,
+    770,
+    1633
+  ],
+  "transparent_percent": 73.13570261282057,
+  "nonopaque_percent": 99.96865124027903,
+  "alpha_extrema": [
+    0,
+    255
+  ],
+  "sha256": "1a4a2543634ce44bdd344802fd803751b29c68c57f5ffbf17963df334f4307d3",
+  "source_sha256": "1a4a2543634ce44bdd344802fd803751b29c68c57f5ffbf17963df334f4307d3",
+  "byte_for_byte_copy": true,
+  "bbox_convention": "[left, top, right, bottom], right and bottom exclusive",
+  "alpha_bbox_ge32_dimensions": {
+    "width": 607,
+    "height": 1564
+  },
+  "visual_inspection": "One complete stone courtyard lantern; restrained warm amber inner light; matte charcoal stone, bronze and old-gold trim; isolated transparent sprite. No backdrop, floor, text or UI. Original tool PNG retained without raster edits."
+}

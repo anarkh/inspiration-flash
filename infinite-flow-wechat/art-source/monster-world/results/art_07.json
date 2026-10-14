@@ -1,0 +1,22 @@
+{
+  "entityId": "epoch_sentinel",
+  "key": "monster:epoch_sentinel_world",
+  "path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/art-source/monster-world/epoch-sentinel-world-v1.png",
+  "relativePath": "art-source/monster-world/epoch-sentinel-world-v1.png",
+  "sourcePath": "/Users/bytedance/.codex/generated_images/01a0ecb4-2266-7ab2-8eea-d47ef8aae7d8/exec-24cf5c1f-93fb-41cf-ad1f-f2e877cb359c.png",
+  "referencePath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/monster/epoch-sentinel-v1.png",
+  "width": 1024,
+  "height": 1536,
+  "mode": "RGBA",
+  "alpha": {
+    "min": 0,
+    "max": 254,
+    "transparentPixels": 759719,
+    "nonzeroPixels": 813145,
+    "fullyOpaquePixels": 0
+  },
+  "tool": "built-in imagegen",
+  "promptSource": "art-source/monster-world/prompts.json",
+  "promptComposition": "sharedPrompt + Subject: asset.subject",
+  "visualCheck": "Full body visible; epoch ring, weathered charcoal and bronze armor, cyan impact arm retained; grounded adult proportions."
+}

@@ -1,0 +1,26 @@
+{
+  "concept_id": "10",
+  "title": "龙纹天枢",
+  "generator": "built-in image_gen",
+  "source_path": "/Users/bytedance/.codex/generated_images/01a11978-ca69-7a43-9d84-74a21482996f/exec-9913cefa-d061-4e50-9b98-ad3fca41769f.png",
+  "output_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-portals-ten/assets/hub-portal-10.png",
+  "prompt_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-portals-ten/assets/hub-portal-10.prompt.txt",
+  "transparent_background_requested": true,
+  "copy_method": "source bytes exact copy; no post-processing",
+  "sha256": "6f2ee6721c035965684af0146e50dd4ed4f1aee66557940eeeaec821a08fad86",
+  "source_sha256": "6f2ee6721c035965684af0146e50dd4ed4f1aee66557940eeeaec821a08fad86",
+  "width": 1018,
+  "height": 1545,
+  "image_mode": "RGBA",
+  "alpha_extrema": [
+    0,
+    255
+  ],
+  "visible_bbox": [
+    0,
+    43,
+    966,
+    1487
+  ],
+  "fully_transparent_pixel_count": 596354
+}

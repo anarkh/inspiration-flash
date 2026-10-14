@@ -1,0 +1,19 @@
+{
+  "status": "design_candidate_not_integrated",
+  "nativeSource": "/Users/bytedance/.codex/generated_images/01a0ecb0-503e-7a81-95d1-22b8b154881e/exec-82f434ba-800c-4bda-93d0-5abfdf5b47e7.png",
+  "output": "reincarnator-walk-v2-candidate.png",
+  "size": [
+    1254,
+    1254
+  ],
+  "mode": "RGBA",
+  "sha256": "f9dd1e181090e9fc6714f043a94826a1d5137dd77a81eb661703f8d9e2e9ea90",
+  "alpha128BoundingBox": [
+    182,
+    12,
+    1105,
+    1232
+  ],
+  "editedPixels": false,
+  "prompt": "prompts/walk-v2-candidate-revision.txt"
+}

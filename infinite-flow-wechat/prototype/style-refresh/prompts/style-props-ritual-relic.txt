@@ -1,0 +1,8 @@
+Use case: stylized-concept
+Asset type: One isolated transparent PNG world prop for a Chinese dark fantasy dungeon HTML art proposal.
+Primary request: A single ancient relic pedestal, a squat solid worn grey-black stone plinth with a small cluster of weathered smoky pale quartz embedded directly in its cracked top. Crystal fragments feel like excavated mineral relics, not magical neon. Nothing floating.
+Style/medium: Detailed realistic hand-painted game environment asset, restrained texture and natural material detail, matching a dark ruined Chinese temple dungeon of cold grey flagstones, old stone stairs, aged iron and tarnished gold accents.
+Composition: Lightly elevated three-quarter top-down game camera, see the top and front with one side; entire object including all footings visible. Compact readable single silhouette centered in a square image with 12% transparent padding. No scattered objects separate from pedestal.
+Materials: rough chipped ash-grey stone, dark iron band around a small recessed mount, tiny oxidized old gold inlays, subtle mineral facets. Low saturation, muted contrast, soft diffuse cold overhead light with gentle warm reflection. No self-illumination.
+Background: genuinely transparent alpha, no scene, no ground plane, no baked background or checkerboard. Preserve fine edges and opaque stone.
+Avoid: cartoon, vector flat fill, low-poly, bright blue crystals, purple/pink neon, glow aura, energy rings, floating objects, text, letters, symbols resembling readable script, UI, frame, logo, watermark, multiple asset sheet.

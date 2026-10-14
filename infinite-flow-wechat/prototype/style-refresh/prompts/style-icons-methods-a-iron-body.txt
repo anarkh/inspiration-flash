@@ -1,0 +1,10 @@
+Use case: stylized-concept
+Asset type: a SINGLE transparent inventory icon for a dark Chinese fantasy survival game, readable at 48 px.
+Primary request: redesign the Iron Body cultivation skill as ONE old iron gauntlet clenched into a compact fist, knuckles pointing slightly up and toward the viewer, short wrist cuff. Authentic worn blunt metal finger plates, visible sturdy silhouette and modest old bronze fasteners. The visual message is physical resilience and tempering, not electricity or sorcery. Do not include an arm beyond the short cuff.
+Style/medium: realistically hand-painted game prop, earthy old physical object, tangible rubbed dark iron and aged leather, restrained texture and soft brushwork; believable volume like an archaeological relic. Keep the visual simplicity of an inventory object.
+Composition/framing: square image, whole isolated object, centered, slight three-quarter frontal view. Object occupies about 75% of canvas height and 60% width; clear breathing room on all sides, no cropped edges. One clear fist silhouette at 48 px.
+Lighting/mood: soft warm grey overhead light, quiet and grounded, rich but readable midtones, restrained metal highlights, no bloom and no illuminated contour.
+Color palette: desaturated gunmetal grey, small areas of worn brown leather and dull bronze, dust and scratches; no saturated gold, cyan or blue.
+Scene/backdrop: actually transparent background with alpha, no scene, no floor plane, no dark square backdrop, no decorative frame.
+Text: none.
+Constraints: ONE gauntlet only. No smoke, aura, magical ring, luminous inscription, lightning, sparks or detached debris; no graphic outline, no filigree pattern covering the fist, no cartoon hand, no text, no watermark.

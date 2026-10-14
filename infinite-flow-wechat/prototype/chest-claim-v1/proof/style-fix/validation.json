@@ -1,0 +1,185 @@
+{
+  "date": "2026-10-12",
+  "build": "web-mobile-relic-style-20261012",
+  "engine": "Cocos Creator 3.8.8",
+  "wechatDeviceTested": false,
+  "changes": [
+    "Relic-only aspect-preserving contain image fit",
+    "Shared status and count row",
+    "Centered single card limited to 184 CSS px; aligned 2/3 choice grids",
+    "Consistent card padding and visible selected badge",
+    "Number and punctuation aware card wrapping"
+  ],
+  "viewports": [
+    {
+      "width": 320,
+      "height": 568,
+      "cards": [
+        {
+          "card": {
+            "height": 500.09859154929575,
+            "width": 321.6056338028169,
+            "x": -170.19718309859155,
+            "y": 7.045774647887356
+          },
+          "name": "MobileSheetRelicOffer:mist_edge",
+          "original": {
+            "height": 1254,
+            "width": 1254
+          },
+          "ratioPreserved": true,
+          "slot": {
+            "height": 284.0281690140845,
+            "width": 284.0281690140845,
+            "x": 0,
+            "y": 89.24647887323943
+          },
+          "sprite": {
+            "height": 284.0281690140845,
+            "width": 284.0281690140845,
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "card": {
+            "height": 500.09859154929575,
+            "width": 321.6056338028169,
+            "x": 170.19718309859155,
+            "y": 7.045774647887356
+          },
+          "name": "MobileSheetRelicOffer:focus_prism",
+          "original": {
+            "height": 1254,
+            "width": 1254
+          },
+          "ratioPreserved": true,
+          "slot": {
+            "height": 284.0281690140845,
+            "width": 284.0281690140845,
+            "x": 0,
+            "y": 89.24647887323943
+          },
+          "sprite": {
+            "height": 284.0281690140845,
+            "width": 284.0281690140845,
+            "x": 0,
+            "y": 0
+          }
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "cards": [
+        {
+          "card": {
+            "height": 403.84615384615387,
+            "width": 323.3076923076923,
+            "x": -169.34615384615384,
+            "y": 5.769230769230745
+          },
+          "name": "MobileSheetRelicOffer:mist_edge",
+          "original": {
+            "height": 1254,
+            "width": 1254
+          },
+          "ratioPreserved": true,
+          "slot": {
+            "height": 261.53846153846155,
+            "width": 261.53846153846155,
+            "x": 0,
+            "y": 55.769230769230774
+          },
+          "sprite": {
+            "height": 261.53846153846155,
+            "width": 261.53846153846155,
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "card": {
+            "height": 403.84615384615387,
+            "width": 323.3076923076923,
+            "x": 169.34615384615384,
+            "y": 5.769230769230745
+          },
+          "name": "MobileSheetRelicOffer:focus_prism",
+          "original": {
+            "height": 1254,
+            "width": 1254
+          },
+          "ratioPreserved": true,
+          "slot": {
+            "height": 261.53846153846155,
+            "width": 261.53846153846155,
+            "x": 0,
+            "y": 55.769230769230774
+          },
+          "sprite": {
+            "height": 261.53846153846155,
+            "width": 261.53846153846155,
+            "x": 0,
+            "y": 0
+          }
+        }
+      ]
+    }
+  ],
+  "testCopy": {
+    "closeReopenPreservedSelection": true,
+    "attackDelta": 6,
+    "artPowerDelta": 4,
+    "acquired": [
+      "mist_edge"
+    ],
+    "sheetClosed": true,
+    "formalStateEquals": true,
+    "consoleErrors": []
+  },
+  "liveUpgrade": {
+    "acquired": [],
+    "pending": {
+      "candidateIds": [
+        "mist_edge",
+        "focus_prism"
+      ],
+      "draftId": "demon_tower_1:echo:1",
+      "nodeId": "watch_post_cache"
+    },
+    "positionPreserved": true,
+    "revision": {
+      "acceptingInput": true,
+      "durableRevision": 9,
+      "ledgerRevision": 9
+    },
+    "revisionPreserved": true,
+    "seedsPreserved": true,
+    "selected": "pending.relic:demon_tower_1:echo:1:mist_edge",
+    "selectionPreserved": true,
+    "statePreserved": true,
+    "storagePreserved": true,
+    "consoleErrors": [],
+    "screenshot": "live-selected-390.jpg"
+  },
+  "checks": {
+    "typecheck": true,
+    "creatorTypecheck": true,
+    "sourceBoundaries": true,
+    "scene": true,
+    "sheet": {
+      "passed": true,
+      "candidateCards": 12,
+      "rewardCases": 8,
+      "sourceAspectRatio": "1024:1536",
+      "log": "/tmp/infinite-flow-relic-sheet-punctuation-20261012.log"
+    },
+    "race": {
+      "passed": true,
+      "scenarios": 112,
+      "log": "/tmp/infinite-flow-relic-style-20261012/race.log"
+    }
+  }
+}

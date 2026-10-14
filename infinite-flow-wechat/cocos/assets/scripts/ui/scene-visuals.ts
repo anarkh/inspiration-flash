@@ -1,38 +1,110 @@
-import type { GameViewModel, HubPanel } from '@infinite-flow/presentation';
+import type { GameViewModel, HubCatalogPanel, HubPanel } from '@infinite-flow/presentation';
+import type { RunRelicId } from '@infinite-flow/core/run-relics';
 import { getDungeonWorldBackgroundKey } from './dungeon-world-theme';
+
+export const INFINITE_FLOW_DUNGEON_TRANSITION_GATE_VISUAL_KEY = 'scene:dungeon_transition_gate';
+export const INFINITE_FLOW_HUB_DUNGEON_PORTAL_VISUAL_KEY = 'scene:hub_dungeon_portal';
+export const INFINITE_FLOW_DUNGEON_PROP_VISUAL_KEYS = Object.freeze({
+  propChest: 'scene:dungeon_prop_chest',
+  propExit: 'scene:dungeon_prop_exit',
+  propEvent: 'scene:dungeon_prop_event',
+  propTrap: 'scene:dungeon_prop_trap',
+  propSurvey: 'scene:dungeon_prop_survey',
+  propRelic: 'scene:dungeon_prop_relic',
+  propShrine: 'scene:dungeon_prop_shrine',
+  propLaw: 'scene:dungeon_prop_law',
+  propDebris: 'scene:dungeon_prop_debris',
+});
 
 const HUB_OPPONENTS: Readonly<Partial<Record<HubPanel, string>>> = Object.freeze({
   equipment: 'npc:equipment_quartermaster',
   supplies: 'npc:supply_trader',
   pets: 'npc:pet_keeper',
   methods: 'npc:method_master',
-  bloodlines: 'npc:main_god_projection',
-  companions: 'npc:main_god_projection',
+  bloodlines: 'npc:bloodline_priest',
+  companions: 'npc:companion_guide',
   tasks: 'npc:main_god_projection',
 });
+
+/** Separate full-body world art from the existing shop portraits. */
+const HUB_NPC_WORLD_VISUAL_KEYS: Readonly<Record<HubCatalogPanel, string>> = Object.freeze({
+  equipment: 'npc:equipment_quartermaster_world',
+  supplies: 'npc:supply_trader_world',
+  pets: 'npc:pet_keeper_world',
+  methods: 'npc:method_master_world',
+  bloodlines: 'npc:bloodline_priest_world',
+  companions: 'npc:companion_guide_world',
+  tasks: 'npc:main_god_projection_world',
+});
+
+export function getInfiniteFlowNpcWorldVisualKey(targetId: string): string | undefined {
+  return Object.entries(HUB_NPC_WORLD_VISUAL_KEYS)
+    .find(([panel]) => targetId === `npc:${panel}`)?.[1];
+}
+
+export function getInfiniteFlowMonsterWorldVisualKey(monsterId: string): string {
+  return `monster:${monsterId}_world`;
+}
+
+export function getInfiniteFlowRunRelicVisualKey(relicId: RunRelicId): string {
+  return `item:run_relic_${relicId}`;
+}
 
 /** Cocos-only visual composition from the existing public presentation model. */
 export function getInfiniteFlowSceneVisualKeys(model: GameViewModel): Readonly<{
   background?: string;
   player: string;
+  portrait?: string;
   opponent?: string;
-}> {
+  transitionGate?: string;
+  hubPortal?: string;
+} & Partial<Record<HubCatalogPanel | keyof typeof INFINITE_FLOW_DUNGEON_PROP_VISUAL_KEYS | `runRelic_${RunRelicId}`, string>>> {
   const detail = model.sections[1]?.detail;
+  const runRelicVisuals: Partial<Record<`runRelic_${RunRelicId}`, string>> = {};
+  if (detail?.kind === 'explore' || detail?.kind === 'combat') {
+    for (const relic of model.sections[1].loadout?.runRelics ?? []) {
+      runRelicVisuals[`runRelic_${relic.relicId}`] = getInfiniteFlowRunRelicVisualKey(relic.relicId);
+    }
+  }
   let background = model.visualAssetKey as string | undefined;
   let opponent: string | undefined;
   if (detail?.kind === 'combat') {
     background = detail.chapterContext === undefined
       ? undefined
       : getDungeonWorldBackgroundKey(detail.chapterContext.dungeonId);
-    opponent = model.visualAssetKey;
+    opponent = getInfiniteFlowMonsterWorldVisualKey(detail.enemy.id);
   } else if (detail?.kind === 'explore') {
     background = getDungeonWorldBackgroundKey(detail.map.dungeonId);
+    if (detail.currentNode.nodeType === 'monster' && !detail.currentNode.cleared
+      && detail.pending === undefined && detail.currentNode.monsterId !== undefined) {
+      opponent = getInfiniteFlowMonsterWorldVisualKey(detail.currentNode.monsterId);
+    }
   } else if (detail?.kind === 'hub') {
     opponent = HUB_OPPONENTS[detail.activePanel];
+    background = 'scene:hub_courtyard_walk';
   }
   return {
+    // Acquired HUD icons share the scene's load gate, retry, and release lease.
+    ...runRelicVisuals,
     ...(background === undefined ? {} : { background }),
     player: 'character:reincarnator_walk',
+    ...(detail?.kind === 'hub' || detail?.kind === 'explore' || detail?.kind === 'combat'
+      ? { portrait: 'character:reincarnator' } : {}),
     ...(opponent === undefined ? {} : { opponent }),
+    ...(detail?.kind === 'explore' || detail?.kind === 'combat'
+      ? { transitionGate: INFINITE_FLOW_DUNGEON_TRANSITION_GATE_VISUAL_KEY } : {}),
+    // Resource ownership follows scene entry/exit via App's Object.values() lease.
+    ...(detail?.kind === 'explore' ? INFINITE_FLOW_DUNGEON_PROP_VISUAL_KEYS : {}),
+    ...(detail?.kind === 'combat' ? { propDebris: INFINITE_FLOW_DUNGEON_PROP_VISUAL_KEYS.propDebris } : {}),
+    // App loads and releases Object.values() of this object. Request every world
+    // actor on entry, before any NPC panel has been selected.
+    ...(detail?.kind === 'hub' ? HUB_NPC_WORLD_VISUAL_KEYS : {}),
+    ...(detail?.kind === 'hub' ? {
+      hubPortal: INFINITE_FLOW_HUB_DUNGEON_PORTAL_VISUAL_KEY,
+      courtyardPillar: 'scene:courtyard_pillar',
+      courtyardCrate: 'scene:courtyard_crate',
+      courtyardAltar: 'scene:courtyard_altar',
+      courtyardLamp: 'scene:courtyard_lamp',
+    } : {}),
   };
 }

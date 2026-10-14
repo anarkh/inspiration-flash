@@ -1,0 +1,133 @@
+{
+  "date": "2026-10-08",
+  "registeredAssetCount": 296,
+  "reviewedAllRegisteredThumbnails": true,
+  "title": "优先补齐副本物件，再统一零散旧素材",
+  "intro": "以当前轮回庭院、人物和万象画门为基准：低饱和、写实绘画、旧金与石材、克制的局部发光。无限流副本可保留现代和科幻题材，题材不同不等于画风不合格。",
+  "method": "已浏览 296 项注册素材缩略图，放大核对重点原图，结合素材使用映射和程序绘制调用。本轮实景证据为 2026-10-08 当前构建的 Web 截图；未重新通关全部章节。只新增本排查页与清单，未修改游戏代码、素材或存档。",
+  "findings": [
+    {
+      "id": "world-props",
+      "priority": "P1",
+      "title": "副本交互物仍是平涂几何图形",
+      "issue": "宝箱、陷阱、事件牌、勘探、遗物、共鸣祭坛、法则书台及副本 portal / exit，仍以矩形、三角和椭圆拼成，缺少与场景一致的材质、光照。",
+      "action": "优先补齐宝箱和出口的独立素材，再覆盖六种事件物件；保留交互脚点。",
+      "evidence": "正式渲染分支已确认；本轮未逐一进入每类房间截图。新万象画门、房间切换石门及其加载替身不计入。",
+      "sources": [
+        "cocos/assets/scripts/ui/InfiniteFlowWalkScene.ts:699",
+        "cocos/assets/scripts/ui/InfiniteFlowWalkScene.ts:858"
+      ],
+      "assets": []
+    },
+    {
+      "id": "debris",
+      "priority": "P1",
+      "title": "副本障碍物仍是几何碎石",
+      "issue": "灰绿色平面多边形叠在写实石堆附近，形成明显的平涂与写实混用。",
+      "action": "换成与章节地面匹配的小型碎石、铁板或纸堆素材，保持碰撞范围。",
+      "evidence": "最新 390px 游戏截图和程序绘制代码均确认；截图右侧两处可直接看到。",
+      "sources": [
+        "cocos/assets/scripts/ui/InfiniteFlowWalkScene.ts:343"
+      ],
+      "assets": [],
+      "screenshots": [
+        "../../cocos/build/web-mobile-canvas-smoke/2026-10-08T06-45-08-689Z-390x844-65879/14a-available-stone-gate.png"
+      ]
+    },
+    {
+      "id": "mirror-banner",
+      "priority": "P1",
+      "title": "轮回城镜像横幅仍是旧扁平插画",
+      "issue": "青粉色底、几何楼房、亮黄线条，与同章的新写实背景差异最大。",
+      "action": "按现有镜相城市背景重做或复用视觉；结算会用 cover 放大裁切横幅，需要同时检查构图。",
+      "evidence": "原图目检 + result 正式渲染调用链确认；本轮未跑该章结算截图。",
+      "sources": [
+        "packages/presentation/src/view-model.ts:3974",
+        "cocos/assets/scripts/ui/InfiniteFlowScene.ts:133",
+        "cocos/assets/scripts/ui/InfiniteFlowScene.ts:403"
+      ],
+      "assets": [
+        "dungeon:mirror_cycle_city",
+        "scene:dungeon_world_mirror_cycle_city"
+      ]
+    },
+    {
+      "id": "method-bloodline",
+      "priority": "P1",
+      "title": "功法、血统 11 张图标需要统一",
+      "issue": "7 张功法与 4 张血统采用更亮的描边、紫蓝橙发光和夸张插画构图，与旧铁、药瓶、符纸等低饱和实物图标不一致。最明显是云隙步、星核炼息、虚心诀、虚界共生体、涅槃余烬。",
+      "action": "统一主体占比、背景、材质和发光面积，保留能力识别色。",
+      "evidence": "11 张原图已目检，并确认在正式功法、血统目录使用。",
+      "sources": [
+        "packages/core/src/game-assets.ts:375",
+        "packages/presentation/src/hub-shop.ts:206"
+      ],
+      "assets": [
+        "item:method_cloud_step",
+        "item:method_star_core_method",
+        "item:method_void_heart",
+        "item:bloodline_void_symbiote",
+        "item:bloodline_phoenix_ember",
+        "item:focus_incense"
+      ]
+    },
+    {
+      "id": "equipment-fragments",
+      "priority": "P1 · 素材质量",
+      "title": "部分后期装备图标带有相邻素材残片",
+      "issue": "分诊目镜下缘、溯证目镜下缘、复燃胚核右下角可见不属于主体的残片，破坏单一物件的完整性。",
+      "action": "修正源单图边界或重新导出干净的单物件；同一后期 atlas 的其他图标也应检查。",
+      "evidence": "三张原文件逐张确认，源单图与 Cocos 目标哈希一致；不是 Cocos 导入造成。",
+      "sources": [
+        "cocos/assets/config/asset-manifest.json:3482",
+        "cocos/assets/config/asset-manifest.json:3692",
+        "cocos/assets/config/asset-manifest.json:3812"
+      ],
+      "assets": [
+        "equipment:triage_visor",
+        "equipment:forensic_visor",
+        "equipment:rebirth_amulet"
+      ]
+    },
+    {
+      "id": "portraits",
+      "priority": "P2",
+      "title": "少数人物肖像的质感与场景立绘有差异",
+      "issue": "主角头像更偏暗色战术肖像；三位同伴及血脉祭司、同行引路人的肖像更偏摄影式人物头像。多数旧 NPC 的衣装能与新立绘对应，不建议整批重做。",
+      "action": "先统一主角在面板与场景里的形象，再协调少数肖像的皮肤质感、景深、背景与画法；保留无限流角色的现代服饰设定。",
+      "evidence": "原图目检 + 头像、人物面板、同伴目录和商店映射确认。此项为视觉统一建议，严重程度低于几何物件和旧横幅。",
+      "sources": [
+        "cocos/assets/scripts/ui/InfiniteFlowWalkScene.ts:911",
+        "cocos/assets/scripts/ui/InfiniteFlowInfoSheet.ts:678",
+        "packages/presentation/src/hub-shop.ts:239"
+      ],
+      "assets": [
+        "character:reincarnator",
+        "character:companion_zhou_yingxue",
+        "npc:companion_guide",
+        "npc:companion_guide_world"
+      ]
+    },
+    {
+      "id": "hud",
+      "priority": "P2 · 绘制规范",
+      "title": "主城与副本 HUD、摇杆有两套样式",
+      "issue": "主城是蓝灰半透明框和青色透明摇杆，副本是暖黑切角框和金色实心摇杆，同一控件跨场景的颜色和体量变化较大。",
+      "action": "统一色板、刻线、透明度；菜单、地图和提示图标可继续使用矢量，不必全部换成图片。",
+      "evidence": "当前庭院、战斗截图和正常绘制分支均确认。",
+      "sources": [
+        "cocos/assets/scripts/ui/InfiniteFlowWalkScene.ts:902",
+        "cocos/assets/scripts/ui/InfiniteFlowWalkScene.ts:1140",
+        "cocos/assets/scripts/ui/dark-ui.ts:3"
+      ],
+      "assets": [],
+      "screenshots": [
+        "../hub-portals-ten/proof/cocos-hub-portal-390.png",
+        "../../cocos/build/web-mobile-canvas-smoke/2026-10-08T06-45-08-689Z-390x844-65879/12-combat.png"
+      ]
+    }
+  ],
+  "retain": "当前庭院、柱箱祭台灯、万象画门、房间切换石门、19 张副本世界背景、59 张怪物世界立绘、6 张灵宠及多数装备和材料，整体画法相容，不建议批量重做。相位猎杀无人机的青色能量较强，可结合科幻章节继续观察，暂不列为必须替换。",
+  "exclude": "旧主神大厅背景、无正常商店映射的 forge_smith、旧详情模式中的怪物肖像、未选的九款传送门、仅加载或失败时出现的程序替身，均不按当前正常游戏画面的缺陷处理。",
+  "order": "副本宝箱、出口、碎石与事件物件 → 镜像城横幅和装备残片 → 功法血统图标 → 少数肖像与 HUD。"
+}

@@ -197,7 +197,7 @@ export function settleRunLoot<ItemId extends string, EquipmentId extends string>
     };
   }
 
-  // Retreat keeps half of stackable loot, while failure only recovers 20% of reward points.
+  // Equipment pickups are permanent. Retreat keeps half of stackable loot, while failure only recovers 20% of reward points.
   const rewardPointRatio = exitStatus === 'retreated' ? 0.5 : 0.2;
   const stackableRatio = exitStatus === 'retreated' ? 0.5 : 0;
   const retainedItems = createEmptyLootItems<ItemId>();
@@ -218,13 +218,13 @@ export function settleRunLoot<ItemId extends string, EquipmentId extends string>
       rewardPoints: retainedRewardPoints,
       lingyun: retainedLingyun,
       items: retainedItems,
-      equipmentIds: []
+      equipmentIds: [...normalizedBag.equipmentIds]
     },
     lost: {
       rewardPoints: normalizedBag.rewardPoints - retainedRewardPoints,
       lingyun: normalizedBag.lingyun - retainedLingyun,
       items: lostItems,
-      equipmentIds: [...normalizedBag.equipmentIds]
+      equipmentIds: []
     }
   };
 }

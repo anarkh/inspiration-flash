@@ -1,0 +1,170 @@
+.walk-scene{position:absolute;inset:0;overflow:hidden;isolation:isolate;container-type:inline-size;background:#15171a;color:#eee8d9;font-family:var(--font,ui-sans-serif,system-ui,sans-serif);--walk-accent:#c6a773;--walk-glow:#8bd3db;--walk-floor-tint:#1c201f;--walk-stone-light:#73675a;--walk-stone-dark:#292b2c;--walk-backdrop-filter:none;--walk-gate-filter:none}
+.walk-scene *{box-sizing:border-box}
+.walk-scene button{font:inherit;-webkit-tap-highlight-color:transparent}
+.walk-scene button:focus-visible{outline:2px solid #ffdc95;outline-offset:4px}
+.walk-scene .walk-viewport{position:relative;width:100%;height:100%;overflow:hidden;outline:0;touch-action:none;cursor:default}
+.walk-scene .walk-viewport:focus-visible{box-shadow:inset 0 0 0 2px #e8c78899}
+.walk-scene .walk-world{position:absolute;top:0;left:0;transform-origin:top left;will-change:transform;overflow:hidden;isolation:isolate;user-select:none}
+.walk-scene .walk-background{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;object-position:50% 50%;filter:var(--walk-backdrop-filter);pointer-events:none;z-index:0}
+.walk-scene .walk-distance-haze{position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,#080b1620 0%,transparent 34%,#0c141518 55%,#11161110 100%)}
+.walk-scene .walk-floor{position:absolute;left:0;right:0;top:420px;height:300px;z-index:2;pointer-events:none;background:linear-gradient(180deg,transparent,#0e151215 67%,#0b0e1540);border-top:1px solid #c3b89809}
+.walk-scene .walk-floor>i{position:absolute;inset:7px 0 0;background:linear-gradient(180deg,transparent,#111c2410);pointer-events:none}
+.walk-scene .walk-world-edge{position:absolute;top:380px;bottom:0;width:64px;z-index:3;pointer-events:none;background:linear-gradient(90deg,#090e1599,transparent)}
+.walk-scene .edge-left{left:0}
+.walk-scene .edge-right{right:0;transform:scaleX(-1)}
+.walk-scene .walk-foreground{position:absolute;left:0;right:0;bottom:0;height:58px;z-index:69000;pointer-events:none;background:linear-gradient(transparent,#06090e69)}
+.walk-scene .walk-destination-marker{position:absolute;width:36px;height:17px;border:1px solid #e0d2a4ad;border-radius:50%;transform:translate(-50%,-50%);background:radial-gradient(ellipse,#dfc98a19,transparent 65%);box-shadow:0 0 8px #dcc88e22;pointer-events:none;z-index:4}
+.walk-scene .walk-destination-marker:before,.walk-scene .walk-destination-marker:after{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#e0d2a4ab}
+.walk-scene .walk-destination-marker:before{width:12px;height:1px}
+.walk-scene .walk-destination-marker:after{width:1px;height:6px}
+.walk-scene .walk-actor{position:absolute;padding:0;margin:0;border:0;background:none;color:inherit;transform:translate(-50%,-100%);overflow:visible;isolation:isolate}
+.walk-scene .walk-npc{width:148px;height:190px;text-align:center;cursor:pointer}
+.walk-scene .walk-npc-art{position:absolute;left:50%;bottom:calc(0px - var(--npc-foot-trim,6px));height:var(--npc-height,190px);width:auto;max-width:none;transform:translateX(-50%);filter:drop-shadow(0 4px 2px #0008);pointer-events:none}
+.walk-scene .walk-actor-shadow{position:absolute;left:50%;bottom:-7px;width:82px;height:18px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(ellipse,#030508b3 0%,#03050870 48%,transparent 76%);pointer-events:none;z-index:-1}
+.walk-scene .walk-npc-copy{position:absolute;left:50%;top:-42px;transform:translateX(-50%);white-space:nowrap;pointer-events:none;filter:drop-shadow(0 2px 2px #000)}
+.walk-scene .walk-npc-name{display:block;color:#efdeb0;font-size:14px;line-height:20px;font-family:var(--serif,"Songti SC",serif);letter-spacing:1px;text-shadow:0 1px 4px #000,1px 0 2px #000,-1px 0 2px #000}
+.walk-scene .walk-npc-purpose{display:block;color:#cec8b7;font-size:11px;line-height:17px;text-shadow:0 1px 3px #000,1px 0 2px #000,-1px 0 2px #000}
+.walk-scene .walk-npc:hover .walk-npc-name,.walk-scene .walk-npc.is-near .walk-npc-name,.walk-scene .walk-npc[data-near=true] .walk-npc-name{color:#fff3ca}
+.walk-scene .walk-actor.is-near .walk-actor-shadow,.walk-scene .walk-actor[data-near=true] .walk-actor-shadow{background:radial-gradient(ellipse,#f4d18820,transparent 70%);box-shadow:0 0 0 1px #cbb07255}
+.walk-scene .walk-player{width:172px;height:172px;pointer-events:none}
+.walk-scene .walk-player-sprite{position:absolute;left:0;bottom:-8px;width:172px;height:172px;background-image:url('../../art-source/reincarnator-walk-v1.png');background-size:400% 400%;background-position:0 66.6666667%;background-repeat:no-repeat;filter:drop-shadow(0 4px 2px #0007);will-change:transform}
+.walk-scene .walk-player-shadow{position:absolute;left:50%;bottom:-8px;width:62px;height:15px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(ellipse,#03070aca 0%,#03070a70 45%,transparent 75%);opacity:.65;z-index:-1}
+.walk-scene .walk-player-name{position:absolute;left:50%;top:-15px;transform:translateX(-50%);white-space:nowrap;font-size:12px;line-height:18px;color:#bef1d9;letter-spacing:1px;text-shadow:0 2px 3px #000,1px 0 2px #000,-1px 0 2px #000}
+.walk-scene .walk-portal{width:160px;height:220px;cursor:pointer;filter:var(--walk-gate-filter)}
+.walk-scene .walk-portal .walk-actor-shadow{width:162px;height:34px;bottom:-18px;background:radial-gradient(ellipse,#72e3d92b,#06131e7a 51%,transparent 76%)}
+.walk-scene .walk-gate-base{position:absolute;bottom:-4px;left:-6px;right:-6px;height:27px;background:linear-gradient(160deg,#756d5d,#363735 44%,#1b2427 75%);clip-path:polygon(12% 0,88% 0,100% 57%,94% 90%,6% 90%,0 57%);box-shadow:0 3px 2px #0008}
+.walk-scene .walk-gate-frame{position:absolute;left:15px;right:15px;top:0;bottom:4px;border:14px solid #514b40;border-bottom-width:11px;border-radius:65px 65px 8px 8px;background:#132e3555;box-shadow:inset 0 0 0 3px #b09b674d,inset 0 0 27px #68d4ca73,0 0 0 2px #272a29,3px 0 0 5px #1b2426,0 0 28px #65ccbc26}
+.walk-scene .walk-gate-frame:before,.walk-scene .walk-gate-frame:after{content:"";position:absolute;top:56px;bottom:-4px;width:10px;border-top:7px solid #b1a17b;border-bottom:12px solid #928362;background:linear-gradient(90deg,#272d2d,#81775f,#454b47);box-shadow:1px 0 3px #0008}
+.walk-scene .walk-gate-frame:before{left:-18px}
+.walk-scene .walk-gate-frame:after{right:-18px}
+.walk-scene .walk-gate-core{position:absolute;inset:2px 2px -1px;border-radius:50px 50px 0 0;background:radial-gradient(ellipse at 50% 28%,#bff8e061,transparent 34%),repeating-linear-gradient(112deg,transparent 0 12px,#76d4d315 14px,transparent 17px),linear-gradient(#5cc6cd1c,#09253ca6 55%,#89efdc55);box-shadow:inset 0 0 15px #adffea59;overflow:hidden}
+.walk-scene .walk-gate-core:before{content:"";position:absolute;inset:7% 13%;border:1px solid #9bffe24f;border-radius:50%;box-shadow:0 0 14px #8fdbd866;transform:rotate(12deg)}
+.walk-scene .walk-gate-core:after{content:"";position:absolute;width:38px;height:115px;top:37px;left:30px;background:linear-gradient(180deg,transparent,#a5fbe782,transparent);filter:blur(9px);transform:rotate(17deg)}
+.walk-scene .walk-gate-rune{position:absolute;width:7px;height:7px;border:1px solid #d8cf9f;transform:rotate(45deg);background:#83d8c65a;box-shadow:0 0 7px #a3ebd5b8}
+.walk-scene .rune-one{top:72px;left:-11px}
+.walk-scene .rune-two{top:124px;right:-11px}
+.walk-scene .walk-gate-keystone{position:absolute;left:37px;top:-22px;width:26px;height:30px;background:linear-gradient(90deg,#595246,#a79b72,#55554b);clip-path:polygon(0 0,100% 0,84% 100%,16% 100%);box-shadow:0 3px 4px #0009}
+.walk-scene .walk-gate-copy{position:absolute;left:50%;top:-56px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:4px;white-space:nowrap;text-shadow:0 2px 3px #000,1px 0 2px #000,-1px 0 2px #000;pointer-events:none}
+.walk-scene .walk-gate-copy strong{font:500 17px/22px var(--serif,"Songti SC",serif);letter-spacing:2px;color:#f1e5b7}
+.walk-scene .walk-gate-copy>span{font-size:11px;color:#b4d8d2}
+.walk-scene .walk-prop{width:0;height:0;pointer-events:none}
+.walk-scene .walk-prop-art{position:absolute;left:0;bottom:0;width:var(--prop-width,72px);height:var(--prop-height,140px);transform:translateX(-50%);filter:drop-shadow(3px 4px 2px #0004)}
+.walk-scene .walk-prop-art i{position:absolute;display:block}
+.walk-scene .walk-prop-sprite{position:absolute;left:var(--prop-sprite-left);bottom:var(--prop-sprite-bottom);width:var(--prop-sprite-width);height:var(--prop-sprite-height);max-width:none;filter:var(--walk-backdrop-filter);pointer-events:none}
+.walk-scene .walk-prop-shadow{position:absolute;left:0;bottom:-9px;width:85px;height:20px;transform:translateX(-50%);background:radial-gradient(ellipse,#0009,transparent 74%);border-radius:50%;z-index:-1}
+.walk-scene .walk-pillar-cap{left:0;right:0;top:0;height:17%;background:linear-gradient(140deg,var(--walk-stone-light),#514c43 47%,#272b2c 48%);clip-path:polygon(17% 0,85% 0,100% 28%,89% 78%,11% 78%,0 28%);border-bottom:4px solid #b39b6855}
+.walk-scene .walk-pillar-shaft{left:20%;right:20%;top:12%;bottom:10%;background:linear-gradient(90deg,#272d2e,var(--walk-stone-light) 28%,#54534b 46%,var(--walk-stone-dark) 82%);border-left:2px solid #c5b2831c;border-right:3px solid #101a21;clip-path:polygon(3% 0,98% 0,91% 100%,8% 100%)}
+.walk-scene .walk-pillar-shaft:after{content:"";position:absolute;inset:17% 22% 16%;border-left:1px solid #d4c19026;border-right:1px solid #070e1480;background:linear-gradient(90deg,#0000,#07132333)}
+.walk-scene .walk-pillar-foot{left:2%;right:2%;height:18%;bottom:-1%;background:linear-gradient(160deg,#7c705a,#4c4d48 40%,#1c252a 41%);clip-path:polygon(18% 0,82% 0,100% 67%,88% 100%,12% 100%,0 67%)}
+.walk-scene .walk-prop-crate .walk-prop-shadow{width:100px;height:23px}
+.walk-scene .walk-crate-front{left:0;right:21%;top:21%;bottom:0;background:repeating-linear-gradient(90deg,#51452f 0 16%,#302e24 17% 18%,#625137 19% 31%);border:4px solid #2d2c27;box-shadow:inset 0 0 0 2px #a58c4c3d}
+.walk-scene .walk-crate-front:before{content:"";position:absolute;inset:17% -4px 58%;background:linear-gradient(#a08452,#4f432f);border:1px solid #252d27;box-shadow:0 28px 0 0 #4e422f;transform:rotate(-36deg)}
+.walk-scene .walk-crate-front:after{content:"";position:absolute;left:44%;top:1px;bottom:1px;width:7px;background:linear-gradient(90deg,#43443c,#858274,#3c423d);border:1px solid #292e2b}
+.walk-scene .walk-crate-top{left:0;right:0;top:0;height:23%;background:repeating-linear-gradient(0deg,#766344 0 19%,#302d257d 20% 23%,#655338 24% 41%);clip-path:polygon(21% 0,100% 0,79% 100%,0 100%);border-top:3px solid #b2935355}
+.walk-scene .walk-crate-side{right:0;top:0;bottom:0;width:23%;background:repeating-linear-gradient(180deg,#3d392a 0 16%,#202821 17% 18%,#4b402b 19% 31%);clip-path:polygon(100% 0,100% 79%,0 100%,0 21%);border-right:4px solid #282c24}
+.walk-scene .walk-lamp-foot{bottom:0;left:7%;right:7%;height:10%;background:linear-gradient(150deg,#8a7850,#343b33 61%,#172728);clip-path:polygon(21% 0,78% 0,100% 76%,78% 100%,22% 100%,0 76%)}
+.walk-scene .walk-lamp-stem{left:40%;right:40%;top:22%;bottom:8%;background:linear-gradient(90deg,#2d342d,#a4905e 35%,#343c33);border:1px solid #111f21}
+.walk-scene .walk-lamp-bowl{top:15%;left:7%;right:7%;height:18%;background:linear-gradient(#9c8e60,#353a2e 65%,#1b2c2a);clip-path:polygon(0 0,100% 0,77% 82%,23% 82%);border-top:3px solid #d4b572}
+.walk-scene .walk-lamp-flame{left:27%;right:27%;height:25%;top:0;background:radial-gradient(ellipse at 50% 70%,#fff2b1 0 16%,#ebba6d 30%,#c16c3866 56%,transparent 75%);filter:drop-shadow(0 0 12px #f5b4588c);clip-path:polygon(50% 0,77% 37%,93% 70%,69% 100%,26% 100%,7% 74%,32% 32%)}
+.walk-scene .walk-prop-altar .walk-prop-shadow{width:140px;height:26px}
+.walk-scene .walk-altar-slab{left:0;right:0;top:32%;height:26%;background:linear-gradient(170deg,#8e856b,#454c43 44%,#182931 48%,#293b3b);clip-path:polygon(14% 0,86% 0,100% 37%,92% 100%,8% 100%,0 37%);border-bottom:3px solid #b7a46466;z-index:2}
+.walk-scene .walk-altar-plinth{left:14%;right:14%;bottom:0;height:49%;background:linear-gradient(90deg,#293737,#676851 37%,#2d3c3b 78%);clip-path:polygon(7% 0,93% 0,86% 73%,100% 100%,0 100%,14% 73%);border-bottom:5px solid #16262c}
+.walk-scene .walk-altar-plinth:after{content:"";position:absolute;left:27%;right:27%;top:17%;height:33%;border:1px solid #bfa97b5c;background:#1b33376b;transform:rotate(-3deg)}
+.walk-scene .walk-altar-light{left:37%;right:37%;height:38%;top:0;background:linear-gradient(125deg,#def8d6,var(--walk-glow) 40%,#263e47 78%);clip-path:polygon(50% 0,89% 40%,68% 100%,30% 100%,8% 40%);filter:drop-shadow(0 0 15px var(--walk-glow));z-index:3}
+.walk-scene .walk-hud{position:absolute;top:14px;left:16px;right:16px;z-index:1000;display:flex;justify-content:space-between;gap:16px;pointer-events:none}
+.walk-scene .walk-role-status{display:flex;gap:11px;align-items:center;pointer-events:auto;padding:5px 15px 5px 5px;border-left:2px solid var(--walk-accent);background:linear-gradient(90deg,#0c151bea,#111a24a6 79%,transparent);min-height:64px}
+.walk-scene .walk-avatar{width:49px;height:53px;position:relative;flex-shrink:0;overflow:hidden;padding:0;border:1px solid #a1936d;background:#1c2629}
+.walk-scene .walk-avatar img{position:absolute;left:0;top:0;width:48px;height:53px;object-fit:cover;object-position:50% 17%}
+.walk-scene .walk-avatar span{position:absolute;left:0;right:0;bottom:0;background:#0e171cec;font-size:10px;line-height:15px;text-align:center;color:#e6d8ac}
+.walk-scene .walk-vitals{min-width:168px;font-size:11px;color:#c8c7b9;line-height:16px;text-shadow:0 1px 2px #000}
+.walk-scene .walk-vitals>div{display:flex;gap:15px;align-items:baseline;line-height:17px}
+.walk-scene .walk-vitals strong{font-size:13px;color:#f1e7cb;font-weight:550;letter-spacing:1px}
+.walk-scene .walk-vitals>div>span{color:#bfb79e;font-size:10px}
+.walk-scene .walk-health-label{font-size:10px;display:flex;justify-content:space-between;color:#c2beb0;margin-top:1px}
+.walk-scene .walk-health-label b{font-weight:450;color:#eee5c9}
+.walk-scene .walk-health-track{display:block;height:4px;background:linear-gradient(90deg,#984739,#c67e5b);border:1px solid #de916e57;box-shadow:0 0 0 1px #0d1720;margin:1px 0 4px}
+.walk-scene .walk-vitals p{margin:0;display:flex;flex-wrap:nowrap;gap:16px;font-size:10px;line-height:14px;white-space:nowrap;color:#a9b0ad}
+.walk-scene .walk-vitals p b{font-weight:450;color:#e9d391;padding-left:5px}
+.walk-scene .walk-hud-tools{display:flex;align-items:flex-start;gap:7px;pointer-events:auto}
+.walk-scene .walk-hud-tools button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:48px;min-height:48px;border:1px solid #97865c77;background:#111b23cf;color:#d7c69b}
+.walk-scene .walk-hud-tools button:hover{border-color:var(--walk-accent);background:#28322fe6}
+.walk-scene .walk-hud-tools button svg{width:19px;height:19px}
+.walk-scene .walk-hud-tools button span{font-size:10px;line-height:13px}
+.walk-scene .walk-map-wrap{position:absolute;right:16px;top:68px;z-index:990;width:174px;pointer-events:none}
+.walk-scene .walk-mini-map{position:relative;width:100%;height:56px;border:1px solid #bac1a33d;border-top-color:#bac1a322;background:linear-gradient(180deg,#0a182099,#172321ba);box-shadow:inset 0 0 10px #0c0f16aa}
+.walk-scene .walk-mini-lane{position:absolute;left:2.7%;right:2.7%;top:58.3%;bottom:7.5%;background:#adbcba0b;border:1px solid #9faea419}
+.walk-scene .walk-mini-target{position:absolute;width:4px;height:4px;transform:translate(-50%,-50%);border-radius:50%;background:#c6b88a;box-shadow:0 0 3px #f5d98a77}
+.walk-scene .walk-mini-portal{width:6px;height:6px;background:#98ecdf;box-shadow:0 0 5px #7febff;transform:translate(-50%,-50%) rotate(45deg);border-radius:0}
+.walk-scene .walk-mini-player{position:absolute;width:5px;height:5px;background:#fff5be;border:1px solid #fff9df;box-shadow:0 0 0 2px #dcbb5666;transform:translate(-50%,-50%);border-radius:50%}
+.walk-scene .walk-joystick{position:absolute;left:18px;bottom:19px;z-index:1000;width:110px;height:110px;border:1px solid #dddfc648;border-radius:50%;background:radial-gradient(circle,#6580841a 0 27%,#26394710 28% 53%,#afb4a412 54% 58%,transparent 59%);box-shadow:inset 0 0 17px #101a2440,0 2px 9px #050a121a;touch-action:none;cursor:grab}
+.walk-scene .walk-joystick:active{cursor:grabbing;border-color:#eee2ba88}
+.walk-scene .walk-joystick-cross{position:absolute;inset:20px;border:1px solid #c7d1be13;border-radius:50%;pointer-events:none}
+.walk-scene .walk-joystick-cross:before,.walk-scene .walk-joystick-cross:after{content:"";position:absolute;background:#d0dfce24;left:50%;top:50%;transform:translate(-50%,-50%)}
+.walk-scene .walk-joystick-cross:before{width:1px;height:78px}
+.walk-scene .walk-joystick-cross:after{width:78px;height:1px}
+.walk-scene .walk-joystick [data-stick]{position:absolute;left:50%;top:50%;width:44px;height:44px;margin:-22px 0 0 -22px;border:1px solid #d3ceb582;border-radius:50%;background:radial-gradient(circle at 35% 29%,#8d9e934f,#364e55a6 56%,#1c303ea6);box-shadow:0 3px 7px #0004,inset 0 0 0 3px #e3dfad0b;pointer-events:none;will-change:transform}
+.walk-scene .walk-tutorial{position:absolute;bottom:24px;left:150px;right:118px;z-index:995;font-size:11px;line-height:19px;color:#dddccb;text-shadow:0 2px 4px #000;pointer-events:none;margin:0}
+.walk-scene .walk-tutorial span{color:#abbcb9}
+.walk-scene .walk-actions{position:absolute;right:18px;bottom:23px;z-index:1000;display:flex;align-items:flex-end;gap:8px}
+.walk-scene .walk-actions button{min-height:48px;min-width:48px;border:1px solid #b7aa7c87;background:linear-gradient(180deg,#1c3032e0,#101d27ed);color:#ebdfbc;box-shadow:0 3px 9px #0004;display:flex;align-items:center;justify-content:center;gap:8px;padding:9px 12px}
+.walk-scene .walk-actions button:hover{border-color:#ebd59a;background:#263b3ceb}
+.walk-scene .walk-actions button:disabled{cursor:default;opacity:.62;border-color:#819b9a4d;box-shadow:none}
+.walk-scene .walk-actions .walk-interact{width:64px;height:44px;min-width:64px;min-height:44px;gap:3px;padding:8px 4px}
+.walk-scene .walk-interact svg{width:14px;height:14px;color:var(--walk-accent);flex-shrink:0}
+.walk-scene .walk-actions button>span{font-size:11px;line-height:16px;white-space:nowrap}
+.walk-scene.walk-theme-01{--walk-backdrop-filter:sepia(.12) saturate(.82);--walk-stone-light:#827460;--walk-stone-dark:#323436}
+.walk-scene.walk-theme-02{--walk-backdrop-filter:hue-rotate(-7deg) saturate(.8) brightness(.98);--walk-glow:#a2ecde;--walk-stone-light:#63878a;--walk-stone-dark:#2c414a;--walk-gate-filter:hue-rotate(-8deg)}
+.walk-scene.walk-theme-03{--walk-backdrop-filter:sepia(.16) saturate(.87);--walk-stone-light:#867354;--walk-stone-dark:#3b362a;--walk-glow:#e4bc78;--walk-gate-filter:hue-rotate(29deg) saturate(.75)}
+.walk-scene.walk-theme-04{--walk-backdrop-filter:sepia(.34) saturate(.73) brightness(.87);--walk-stone-light:#9d8958;--walk-stone-dark:#34382c;--walk-glow:#dccc8b;--walk-gate-filter:sepia(.32) saturate(.76)}
+.walk-scene.walk-theme-05{--walk-backdrop-filter:saturate(.6) brightness(.73) contrast(1.08);--walk-stone-light:#615e55;--walk-stone-dark:#252d30;--walk-glow:#d5d89b;--walk-gate-filter:sepia(.13) brightness(.95)}
+.walk-scene.walk-theme-06{--walk-backdrop-filter:sepia(.2) saturate(.75);--walk-stone-light:#8b8157;--walk-stone-dark:#293f3c;--walk-glow:#d2d38b;--walk-gate-filter:sepia(.27) saturate(.71)}
+.walk-scene.walk-theme-07{--walk-backdrop-filter:saturate(.82) hue-rotate(-9deg) brightness(1.1);--walk-stone-light:#81a8a7;--walk-stone-dark:#263e4c;--walk-glow:#b7ffef;--walk-gate-filter:brightness(1.15)}
+.walk-scene.walk-theme-08{--walk-backdrop-filter:sepia(.19) saturate(.88) brightness(1.04);--walk-stone-light:#9a8866;--walk-stone-dark:#353b33;--walk-glow:#d0e1ac;--walk-gate-filter:sepia(.15)}
+.walk-scene.walk-theme-09{--walk-backdrop-filter:hue-rotate(-3deg) saturate(.7) brightness(.9) contrast(1.07);--walk-stone-light:#6d929c;--walk-stone-dark:#243642;--walk-glow:#81e7ec;--walk-gate-filter:hue-rotate(-12deg)}
+.walk-scene.walk-theme-10{--walk-backdrop-filter:saturate(.54) hue-rotate(4deg) brightness(.94);--walk-stone-light:#7d8877;--walk-stone-dark:#33403c;--walk-glow:#bedcca;--walk-gate-filter:saturate(.73)}
+.walk-scene.walk-theme-03 .walk-lamp-flame{filter:drop-shadow(0 0 22px #f5a350bd)}
+.walk-scene.walk-theme-07 .walk-lamp-flame,.walk-scene.walk-theme-09 .walk-lamp-flame{background:radial-gradient(ellipse at 50% 70%,#e6fff2 0 16%,#9ae9d6 30%,#6cbbb466 56%,transparent 75%);filter:drop-shadow(0 0 15px #9ef7eab0)}
+.walk-scene.walk-theme-05 .walk-pillar-cap{border-bottom-color:#c8b98733}
+.walk-scene.walk-theme-10 .walk-floor{background:linear-gradient(180deg,transparent,#14312b13 67%,#0b15194a)}
+.walk-scene.is-thumbnail{container-type:normal}
+.walk-scene.is-thumbnail .walk-viewport{pointer-events:none}
+.walk-scene.is-thumbnail .walk-npc-name{font-size:18px;line-height:24px}
+.walk-scene.is-thumbnail .walk-npc-purpose,.walk-scene.is-thumbnail .walk-player-name{display:none}
+.walk-scene.is-thumbnail .walk-npc-copy{top:-27px}
+.walk-scene.is-thumbnail .walk-gate-copy strong{font-size:22px}
+.walk-scene.is-thumbnail .walk-gate-copy>span{display:none}
+@container (max-width:760px){
+  .walk-scene .walk-tutorial{font-size:10px;line-height:17px;bottom:27px}
+  .walk-scene .walk-actions{right:14px;bottom:19px}
+  .walk-scene .walk-map-wrap{width:142px}
+}
+@container (max-width:520px){
+  .walk-scene .walk-hud{left:10px;right:10px;top:12px;gap:10px}
+  .walk-scene .walk-role-status{width:calc(100% - 104px);max-width:244px;min-width:0;gap:7px;padding-right:8px}
+  .walk-scene .walk-vitals{flex:1;min-width:0}
+  .walk-scene .walk-vitals>div{gap:11px}
+  .walk-scene .walk-vitals p{gap:9px;font-size:10px}
+  .walk-scene .walk-vitals p b{padding-left:3px}
+  .walk-scene .walk-hud-tools{position:absolute;right:0;top:0;display:grid;grid-template-columns:44px 44px;gap:6px}
+  .walk-scene .walk-hud-tools>button{width:44px;min-height:44px}
+  .walk-scene .walk-map-wrap{width:108px;top:62px;right:10px}
+  .walk-scene .walk-mini-map{height:44px}
+  .walk-scene .walk-joystick{left:18px;bottom:22px;width:110px;height:110px}
+  .walk-scene .walk-actions{right:18px;bottom:24px}
+  .walk-scene .walk-tutorial{display:none;left:18px;right:18px;bottom:164px;max-width:none;text-align:center;font-size:10px;line-height:18px;color:#d1d4c7}
+  .walk-scene .walk-tutorial>span:first-child{display:inline}
+}
+@container (max-width:380px){
+  .walk-scene .walk-vitals p{gap:6px;font-size:9px}
+  .walk-scene .walk-vitals p b{padding-left:2px}
+  .walk-scene .walk-vitals>div{gap:8px}
+  .walk-scene .walk-vitals strong{font-size:12px}
+  .walk-scene .walk-map-wrap{right:10px;width:94px}
+  .walk-scene .walk-tutorial{font-size:9px;line-height:17px}
+}
+@container (max-width:340px){
+  .walk-scene .walk-health-label{font-size:9px;line-height:13px}
+  .walk-scene .walk-joystick{left:12px;bottom:16px}
+  .walk-scene .walk-actions{right:12px;bottom:16px}
+  .walk-scene .walk-tutorial{left:14px;right:14px;bottom:156px}
+}

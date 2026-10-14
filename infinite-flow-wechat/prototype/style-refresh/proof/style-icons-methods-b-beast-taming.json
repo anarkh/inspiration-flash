@@ -1,0 +1,43 @@
+{
+  "asset": "beast-taming-proposed.png",
+  "generator": "built-in image_gen",
+  "generation_calls": 1,
+  "source_path": "/Users/bytedance/.codex/generated_images/01a11a7b-99d5-77d1-a3e5-13194bd9d124/exec-8d94ad4a-ff73-4e53-9997-135c79deaf52.png",
+  "destination_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/assets/beast-taming-proposed.png",
+  "copied_original_bytes": true,
+  "sha256": "d38e051e0f5602acc0238f1ea488c833ed61bbe94dcb35d98e63fbfef1ef9a25",
+  "source_sha256": "d38e051e0f5602acc0238f1ea488c833ed61bbe94dcb35d98e63fbfef1ef9a25",
+  "dimensions": [
+    1254,
+    1254
+  ],
+  "mode": "RGBA",
+  "alpha": {
+    "present": true,
+    "extrema": [
+      0,
+      255
+    ],
+    "transparent_pixels": 911993,
+    "opaque_pixels": 162,
+    "partial_alpha_pixels": 660361,
+    "nontransparent_bbox": [
+      0,
+      23,
+      1230,
+      1254
+    ],
+    "visible_bbox_alpha_ge_128": [
+      175,
+      63,
+      1060,
+      1175
+    ],
+    "nearly_opaque_pixels_alpha_ge_250": 609824
+  },
+  "original_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/item/beast-taming-v1.png",
+  "style_reference_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/item/focus-incense-v1.png",
+  "prompt_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/prompts/style-icons-methods-b-beast-taming.txt",
+  "prompt": "Use case: style-transfer\nAsset type: transparent inventory icon proposal for a Chinese dark fantasy mobile game, readable at 48 px\nPrimary request: Redesign the beast-taming seal from reference image 1 as a small timeworn jade beast-head contract seal with one old cord knot, with the grounded, restrained hand-painted material treatment of reference image 2.\nInput images: Image 1 is the subject reference, a beast-head seal icon; preserve the idea of a carved beast head and cord binding but simplify its shape. Image 2 is the style reference, an aged bronze incense burner with subdued painterly textures; follow its material realism, quiet lighting and low saturation, do not depict the incense burner.\nScene/backdrop: Genuinely transparent background, clean isolated object, no ground, no scenery, no frame, no background shadow.\nSubject: A single coherent aged jade beast-head contract seal in a three-quarter view, compact dark gray-green weathered jade, softly worn carving of a dignified small guardian beast face, attached old dark brown cord knot and a discreet dull bronze fastening. The carving and cord must read as one collectible object.\nStyle/medium: Realistic hand-painted game inventory illustration with natural worn materials and restrained edges. No photographic look, no cartoon outline.\nComposition/framing: Square canvas, one centered object occupies approximately 70 to 80 percent of width and height with transparent breathing room on all sides. Full silhouette visible, designed to remain understandable at 48 px.\nLighting/mood: Quiet soft warm side light, limited highlights, ambient shaded crevices, no magical glow.\nColor palette: Low saturation stone gray-green jade, dark brown cord, very restrained aged brass detail, warm charcoal shadows.\nMaterials/textures: Patinated jade with fine chips and rubbed high points, frayed old cord, tarnished bronze. Simplify tiny ornament to preserve small-size readability.\nConstraints: Exactly one icon and one subject, no other props, preserve actual alpha transparency. No text, no numbers, no symbols floating around it, no borders, no watermark.\nAvoid: Bright cyan or turquoise cord, cyan emissions, bright glowing eyes, neon, saturated gold, oversharp glossy 3D, anime, comic contours, sticker border, checkerboard drawn into the image, scenery, crop, detached fragments.\n",
+  "visual_inspection": "Single coherent gray-green jade beast-head contract seal, weathered brown cord knot and muted bronze. Full silhouette and true transparency; no cyan glow, lettering, scenery or neighboring fragments. Vertical extent exceeds requested 80 percent; proposal remains unmodified as generated."
+}

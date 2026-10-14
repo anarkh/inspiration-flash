@@ -1,0 +1,1395 @@
+{
+  "revision": "icons-only-40",
+  "layouts": [
+    {
+      "buttons": [
+        {
+          "action": "character",
+          "buttonHeight": 44.7332763671875,
+          "buttonWidth": 44.73333358764648,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "角色"
+        },
+        {
+          "action": "menu",
+          "buttonHeight": 43.9993896484375,
+          "buttonWidth": 53.67999267578125,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "菜单"
+        },
+        {
+          "action": "bag",
+          "buttonHeight": 43.99945068359375,
+          "buttonWidth": 53.67999267578125,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "背包"
+        },
+        {
+          "action": "map",
+          "buttonHeight": 43.9993896484375,
+          "buttonWidth": 53.67999267578125,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "地图"
+        },
+        {
+          "action": "quests",
+          "buttonHeight": 43.99945068359375,
+          "buttonWidth": 53.67999267578125,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "目标"
+        }
+      ],
+      "id": "01",
+      "noOverflow": true,
+      "railOrder": [
+        "menu",
+        "bag",
+        "map",
+        "quests"
+      ],
+      "viewport": 320
+    },
+    {
+      "buttons": [
+        {
+          "action": "character",
+          "buttonHeight": 44.73333740234375,
+          "buttonWidth": 44.73333358764648,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "角色"
+        },
+        {
+          "action": "menu",
+          "buttonHeight": 43.9993896484375,
+          "buttonWidth": 53.67999267578125,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "菜单"
+        },
+        {
+          "action": "bag",
+          "buttonHeight": 43.99945068359375,
+          "buttonWidth": 53.67999267578125,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "背包"
+        },
+        {
+          "action": "map",
+          "buttonHeight": 43.9993896484375,
+          "buttonWidth": 53.67999267578125,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "地图"
+        },
+        {
+          "action": "quests",
+          "buttonHeight": 43.99945068359375,
+          "buttonWidth": 53.67999267578125,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "目标"
+        }
+      ],
+      "id": "02",
+      "noOverflow": true,
+      "railOrder": [
+        "menu",
+        "bag",
+        "map",
+        "quests"
+      ],
+      "viewport": 320
+    },
+    {
+      "buttons": [
+        {
+          "action": "character",
+          "buttonHeight": 44.73333740234375,
+          "buttonWidth": 44.73333358764648,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "角色"
+        },
+        {
+          "action": "menu",
+          "buttonHeight": 43.9993896484375,
+          "buttonWidth": 53.67999267578125,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "菜单"
+        },
+        {
+          "action": "bag",
+          "buttonHeight": 43.99945068359375,
+          "buttonWidth": 53.67999267578125,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "背包"
+        },
+        {
+          "action": "map",
+          "buttonHeight": 43.9993896484375,
+          "buttonWidth": 53.67999267578125,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "地图"
+        },
+        {
+          "action": "quests",
+          "buttonHeight": 43.99945068359375,
+          "buttonWidth": 53.67999267578125,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "目标"
+        }
+      ],
+      "id": "03",
+      "noOverflow": true,
+      "railOrder": [
+        "menu",
+        "bag",
+        "map",
+        "quests"
+      ],
+      "viewport": 320
+    },
+    {
+      "buttons": [
+        {
+          "action": "character",
+          "buttonHeight": 44.7332763671875,
+          "buttonWidth": 44.73332977294922,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "角色"
+        },
+        {
+          "action": "menu",
+          "buttonHeight": 43.9993896484375,
+          "buttonWidth": 53.67999267578125,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "菜单"
+        },
+        {
+          "action": "bag",
+          "buttonHeight": 43.99945068359375,
+          "buttonWidth": 53.67999267578125,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "背包"
+        },
+        {
+          "action": "map",
+          "buttonHeight": 43.9993896484375,
+          "buttonWidth": 53.67999267578125,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "地图"
+        },
+        {
+          "action": "quests",
+          "buttonHeight": 43.99945068359375,
+          "buttonWidth": 53.67999267578125,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "目标"
+        }
+      ],
+      "id": "04",
+      "noOverflow": true,
+      "railOrder": [
+        "menu",
+        "bag",
+        "map",
+        "quests"
+      ],
+      "viewport": 320
+    },
+    {
+      "buttons": [
+        {
+          "action": "character",
+          "buttonHeight": 44.73333740234375,
+          "buttonWidth": 44.73332977294922,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "角色"
+        },
+        {
+          "action": "menu",
+          "buttonHeight": 43.9993896484375,
+          "buttonWidth": 53.67999267578125,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "菜单"
+        },
+        {
+          "action": "bag",
+          "buttonHeight": 43.99945068359375,
+          "buttonWidth": 53.67999267578125,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "背包"
+        },
+        {
+          "action": "map",
+          "buttonHeight": 43.9993896484375,
+          "buttonWidth": 53.67999267578125,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "地图"
+        },
+        {
+          "action": "quests",
+          "buttonHeight": 43.99945068359375,
+          "buttonWidth": 53.67999267578125,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "目标"
+        }
+      ],
+      "id": "05",
+      "noOverflow": true,
+      "railOrder": [
+        "menu",
+        "bag",
+        "map",
+        "quests"
+      ],
+      "viewport": 320
+    },
+    {
+      "buttons": [
+        {
+          "action": "character",
+          "buttonHeight": 44.7332763671875,
+          "buttonWidth": 44.73333358764648,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "角色"
+        },
+        {
+          "action": "menu",
+          "buttonHeight": 43.9993896484375,
+          "buttonWidth": 53.67999267578125,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "菜单"
+        },
+        {
+          "action": "bag",
+          "buttonHeight": 43.99945068359375,
+          "buttonWidth": 53.67999267578125,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "背包"
+        },
+        {
+          "action": "map",
+          "buttonHeight": 43.9993896484375,
+          "buttonWidth": 53.67999267578125,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "地图"
+        },
+        {
+          "action": "quests",
+          "buttonHeight": 43.99945068359375,
+          "buttonWidth": 53.67999267578125,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "目标"
+        }
+      ],
+      "id": "06",
+      "noOverflow": true,
+      "railOrder": [
+        "menu",
+        "bag",
+        "map",
+        "quests"
+      ],
+      "viewport": 320
+    },
+    {
+      "buttons": [
+        {
+          "action": "character",
+          "buttonHeight": 44.7332763671875,
+          "buttonWidth": 44.73332977294922,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "角色"
+        },
+        {
+          "action": "menu",
+          "buttonHeight": 43.9993896484375,
+          "buttonWidth": 53.67999267578125,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "菜单"
+        },
+        {
+          "action": "bag",
+          "buttonHeight": 43.99945068359375,
+          "buttonWidth": 53.67999267578125,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "背包"
+        },
+        {
+          "action": "map",
+          "buttonHeight": 43.9993896484375,
+          "buttonWidth": 53.67999267578125,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "地图"
+        },
+        {
+          "action": "quests",
+          "buttonHeight": 43.99945068359375,
+          "buttonWidth": 53.67999267578125,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "目标"
+        }
+      ],
+      "id": "07",
+      "noOverflow": true,
+      "railOrder": [
+        "menu",
+        "bag",
+        "map",
+        "quests"
+      ],
+      "viewport": 320
+    },
+    {
+      "buttons": [
+        {
+          "action": "character",
+          "buttonHeight": 44.7332763671875,
+          "buttonWidth": 44.73332977294922,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "角色"
+        },
+        {
+          "action": "menu",
+          "buttonHeight": 43.9993896484375,
+          "buttonWidth": 53.67999267578125,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "菜单"
+        },
+        {
+          "action": "bag",
+          "buttonHeight": 43.99945068359375,
+          "buttonWidth": 53.67999267578125,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "背包"
+        },
+        {
+          "action": "map",
+          "buttonHeight": 43.9993896484375,
+          "buttonWidth": 53.67999267578125,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "地图"
+        },
+        {
+          "action": "quests",
+          "buttonHeight": 43.99945068359375,
+          "buttonWidth": 53.67999267578125,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "目标"
+        }
+      ],
+      "id": "08",
+      "noOverflow": true,
+      "railOrder": [
+        "menu",
+        "bag",
+        "map",
+        "quests"
+      ],
+      "viewport": 320
+    },
+    {
+      "buttons": [
+        {
+          "action": "character",
+          "buttonHeight": 44.7332763671875,
+          "buttonWidth": 44.73332977294922,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "角色"
+        },
+        {
+          "action": "menu",
+          "buttonHeight": 43.9993896484375,
+          "buttonWidth": 53.67999267578125,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "菜单"
+        },
+        {
+          "action": "bag",
+          "buttonHeight": 43.99945068359375,
+          "buttonWidth": 53.67999267578125,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "背包"
+        },
+        {
+          "action": "map",
+          "buttonHeight": 43.9993896484375,
+          "buttonWidth": 53.67999267578125,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "地图"
+        },
+        {
+          "action": "quests",
+          "buttonHeight": 43.99945068359375,
+          "buttonWidth": 53.67999267578125,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "目标"
+        }
+      ],
+      "id": "09",
+      "noOverflow": true,
+      "railOrder": [
+        "menu",
+        "bag",
+        "map",
+        "quests"
+      ],
+      "viewport": 320
+    },
+    {
+      "buttons": [
+        {
+          "action": "character",
+          "buttonHeight": 44.7332763671875,
+          "buttonWidth": 44.73332977294922,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "角色"
+        },
+        {
+          "action": "menu",
+          "buttonHeight": 43.9993896484375,
+          "buttonWidth": 53.67999267578125,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "菜单"
+        },
+        {
+          "action": "bag",
+          "buttonHeight": 43.99945068359375,
+          "buttonWidth": 53.67999267578125,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "背包"
+        },
+        {
+          "action": "map",
+          "buttonHeight": 43.9993896484375,
+          "buttonWidth": 53.67999267578125,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "地图"
+        },
+        {
+          "action": "quests",
+          "buttonHeight": 43.99945068359375,
+          "buttonWidth": 53.67999267578125,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "目标"
+        }
+      ],
+      "id": "10",
+      "noOverflow": true,
+      "railOrder": [
+        "menu",
+        "bag",
+        "map",
+        "quests"
+      ],
+      "viewport": 320
+    },
+    {
+      "buttons": [
+        {
+          "action": "character",
+          "buttonHeight": 55,
+          "buttonWidth": 55,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "角色"
+        },
+        {
+          "action": "menu",
+          "buttonHeight": 44,
+          "buttonWidth": 66,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "菜单"
+        },
+        {
+          "action": "bag",
+          "buttonHeight": 44,
+          "buttonWidth": 66,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "背包"
+        },
+        {
+          "action": "map",
+          "buttonHeight": 44,
+          "buttonWidth": 66,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "地图"
+        },
+        {
+          "action": "quests",
+          "buttonHeight": 44,
+          "buttonWidth": 66,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "目标"
+        }
+      ],
+      "id": "01",
+      "noOverflow": true,
+      "railOrder": [
+        "menu",
+        "bag",
+        "map",
+        "quests"
+      ],
+      "viewport": 390
+    },
+    {
+      "buttons": [
+        {
+          "action": "character",
+          "buttonHeight": 55,
+          "buttonWidth": 55,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "角色"
+        },
+        {
+          "action": "menu",
+          "buttonHeight": 44,
+          "buttonWidth": 66,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "菜单"
+        },
+        {
+          "action": "bag",
+          "buttonHeight": 44,
+          "buttonWidth": 66,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "背包"
+        },
+        {
+          "action": "map",
+          "buttonHeight": 44,
+          "buttonWidth": 66,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "地图"
+        },
+        {
+          "action": "quests",
+          "buttonHeight": 44,
+          "buttonWidth": 66,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "目标"
+        }
+      ],
+      "id": "02",
+      "noOverflow": true,
+      "railOrder": [
+        "menu",
+        "bag",
+        "map",
+        "quests"
+      ],
+      "viewport": 390
+    },
+    {
+      "buttons": [
+        {
+          "action": "character",
+          "buttonHeight": 55,
+          "buttonWidth": 55,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "角色"
+        },
+        {
+          "action": "menu",
+          "buttonHeight": 44,
+          "buttonWidth": 66,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "菜单"
+        },
+        {
+          "action": "bag",
+          "buttonHeight": 44,
+          "buttonWidth": 66,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "背包"
+        },
+        {
+          "action": "map",
+          "buttonHeight": 44,
+          "buttonWidth": 66,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "地图"
+        },
+        {
+          "action": "quests",
+          "buttonHeight": 44,
+          "buttonWidth": 66,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "目标"
+        }
+      ],
+      "id": "03",
+      "noOverflow": true,
+      "railOrder": [
+        "menu",
+        "bag",
+        "map",
+        "quests"
+      ],
+      "viewport": 390
+    },
+    {
+      "buttons": [
+        {
+          "action": "character",
+          "buttonHeight": 55,
+          "buttonWidth": 55,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "角色"
+        },
+        {
+          "action": "menu",
+          "buttonHeight": 44,
+          "buttonWidth": 66,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "菜单"
+        },
+        {
+          "action": "bag",
+          "buttonHeight": 44,
+          "buttonWidth": 66,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "背包"
+        },
+        {
+          "action": "map",
+          "buttonHeight": 44,
+          "buttonWidth": 66,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "地图"
+        },
+        {
+          "action": "quests",
+          "buttonHeight": 44,
+          "buttonWidth": 66,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "目标"
+        }
+      ],
+      "id": "04",
+      "noOverflow": true,
+      "railOrder": [
+        "menu",
+        "bag",
+        "map",
+        "quests"
+      ],
+      "viewport": 390
+    },
+    {
+      "buttons": [
+        {
+          "action": "character",
+          "buttonHeight": 55,
+          "buttonWidth": 55,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "角色"
+        },
+        {
+          "action": "menu",
+          "buttonHeight": 44,
+          "buttonWidth": 66,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "菜单"
+        },
+        {
+          "action": "bag",
+          "buttonHeight": 44,
+          "buttonWidth": 66,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "背包"
+        },
+        {
+          "action": "map",
+          "buttonHeight": 44,
+          "buttonWidth": 66,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "地图"
+        },
+        {
+          "action": "quests",
+          "buttonHeight": 44,
+          "buttonWidth": 66,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "目标"
+        }
+      ],
+      "id": "05",
+      "noOverflow": true,
+      "railOrder": [
+        "menu",
+        "bag",
+        "map",
+        "quests"
+      ],
+      "viewport": 390
+    },
+    {
+      "buttons": [
+        {
+          "action": "character",
+          "buttonHeight": 55,
+          "buttonWidth": 55,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "角色"
+        },
+        {
+          "action": "menu",
+          "buttonHeight": 44,
+          "buttonWidth": 66,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "菜单"
+        },
+        {
+          "action": "bag",
+          "buttonHeight": 44,
+          "buttonWidth": 66,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "背包"
+        },
+        {
+          "action": "map",
+          "buttonHeight": 44,
+          "buttonWidth": 66,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "地图"
+        },
+        {
+          "action": "quests",
+          "buttonHeight": 44,
+          "buttonWidth": 66,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "目标"
+        }
+      ],
+      "id": "06",
+      "noOverflow": true,
+      "railOrder": [
+        "menu",
+        "bag",
+        "map",
+        "quests"
+      ],
+      "viewport": 390
+    },
+    {
+      "buttons": [
+        {
+          "action": "character",
+          "buttonHeight": 55,
+          "buttonWidth": 55,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "角色"
+        },
+        {
+          "action": "menu",
+          "buttonHeight": 44,
+          "buttonWidth": 66,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "菜单"
+        },
+        {
+          "action": "bag",
+          "buttonHeight": 44,
+          "buttonWidth": 66,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "背包"
+        },
+        {
+          "action": "map",
+          "buttonHeight": 44,
+          "buttonWidth": 66,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "地图"
+        },
+        {
+          "action": "quests",
+          "buttonHeight": 44,
+          "buttonWidth": 66,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "目标"
+        }
+      ],
+      "id": "07",
+      "noOverflow": true,
+      "railOrder": [
+        "menu",
+        "bag",
+        "map",
+        "quests"
+      ],
+      "viewport": 390
+    },
+    {
+      "buttons": [
+        {
+          "action": "character",
+          "buttonHeight": 55,
+          "buttonWidth": 55,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "角色"
+        },
+        {
+          "action": "menu",
+          "buttonHeight": 44,
+          "buttonWidth": 66,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "菜单"
+        },
+        {
+          "action": "bag",
+          "buttonHeight": 44,
+          "buttonWidth": 66,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "背包"
+        },
+        {
+          "action": "map",
+          "buttonHeight": 44,
+          "buttonWidth": 66,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "地图"
+        },
+        {
+          "action": "quests",
+          "buttonHeight": 44,
+          "buttonWidth": 66,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "目标"
+        }
+      ],
+      "id": "08",
+      "noOverflow": true,
+      "railOrder": [
+        "menu",
+        "bag",
+        "map",
+        "quests"
+      ],
+      "viewport": 390
+    },
+    {
+      "buttons": [
+        {
+          "action": "character",
+          "buttonHeight": 55,
+          "buttonWidth": 55,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "角色"
+        },
+        {
+          "action": "menu",
+          "buttonHeight": 44,
+          "buttonWidth": 66,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "菜单"
+        },
+        {
+          "action": "bag",
+          "buttonHeight": 44,
+          "buttonWidth": 66,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "背包"
+        },
+        {
+          "action": "map",
+          "buttonHeight": 44,
+          "buttonWidth": 66,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "地图"
+        },
+        {
+          "action": "quests",
+          "buttonHeight": 44,
+          "buttonWidth": 66,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "目标"
+        }
+      ],
+      "id": "09",
+      "noOverflow": true,
+      "railOrder": [
+        "menu",
+        "bag",
+        "map",
+        "quests"
+      ],
+      "viewport": 390
+    },
+    {
+      "buttons": [
+        {
+          "action": "character",
+          "buttonHeight": 55,
+          "buttonWidth": 55,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "角色"
+        },
+        {
+          "action": "menu",
+          "buttonHeight": 44,
+          "buttonWidth": 66,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "菜单"
+        },
+        {
+          "action": "bag",
+          "buttonHeight": 44,
+          "buttonWidth": 66,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "背包"
+        },
+        {
+          "action": "map",
+          "buttonHeight": 44,
+          "buttonWidth": 66,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "地图"
+        },
+        {
+          "action": "quests",
+          "buttonHeight": 44,
+          "buttonWidth": 66,
+          "centered": true,
+          "glyphHeight": 40,
+          "glyphVisible": true,
+          "glyphWidth": 40,
+          "hiddenLabel": true,
+          "name": "目标"
+        }
+      ],
+      "id": "10",
+      "noOverflow": true,
+      "railOrder": [
+        "menu",
+        "bag",
+        "map",
+        "quests"
+      ],
+      "viewport": 390
+    }
+  ],
+  "dialogs": [
+    {
+      "kind": "character",
+      "opened": true,
+      "restored": true
+    },
+    {
+      "kind": "menu",
+      "opened": true,
+      "restored": true
+    },
+    {
+      "kind": "bag",
+      "opened": true,
+      "restored": true
+    },
+    {
+      "kind": "map",
+      "opened": true,
+      "restored": true
+    },
+    {
+      "kind": "quests",
+      "opened": true,
+      "restored": true
+    }
+  ],
+  "logs": [],
+  "finalCopy": "生命悬在左上场景中，细线向右舒展，右侧四个入口收成连续的图标。",
+  "pass": true
+}

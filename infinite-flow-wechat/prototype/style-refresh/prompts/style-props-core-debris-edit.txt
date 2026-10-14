@@ -1,0 +1,6 @@
+Use case: background-extraction
+Asset type: transparent-background dark fantasy dungeon rubble obstacle sprite.
+Edit target: the supplied low pile of weathered dark grey temple rubble with sparse moss.
+Change only the background and outer edge treatment: remove the broad grey-white translucent halo, outer glow, fog, cast shadow, gradient background, and every stray translucent pixel surrounding the stone silhouette. All exterior space must be genuinely fully transparent. Use crisp natural antialiased cutout edges, with no soft feathering beyond one or two edge pixels.
+Preserve exactly: the same complete stone pile, original layout and camera angle, every stone and tiny outer fragment, colours, brightness, surface textures, moss, carvings, size, framing, contact footprint and all bottom edges. Keep interior crevice shadows that are inside the stone pile. Do not remove rubble or crop any stones. Do not add any new objects. Do not add a floor, platform, scenery, reflection, drop shadow, glow, checkerboard, text or UI.
+Output: the unchanged isolated stone rubble pile on a true alpha transparent background, clean for direct compositing onto a dungeon floor.

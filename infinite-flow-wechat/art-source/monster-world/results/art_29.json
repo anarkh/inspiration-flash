@@ -1,0 +1,26 @@
+{
+  "entityId": "exposure_double",
+  "path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/art-source/monster-world/exposure-double-world-v1.png",
+  "sourcePath": "/Users/bytedance/.codex/generated_images/01a0ecb7-baa9-7e40-8c26-3da3fb22d36b/exec-714339e7-4f6b-45bf-9dfd-9c559d6a44f2.png",
+  "referencePath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/monster/exposure-double-v1.png",
+  "width": 1024,
+  "height": 1536,
+  "mode": "RGBA",
+  "alpha": {
+    "min": 0,
+    "max": 254,
+    "transparentPixels": 762415,
+    "transparentFraction": 0.48473040262858075,
+    "nonzeroBoundingBox": [
+      0,
+      19,
+      1004,
+      1536
+    ]
+  },
+  "originalBytesPreserved": true,
+  "sha256": "373cc2210bfb3644476f0576b726928d815eee07493e8522f45d80e0b1a8a805",
+  "tool": "built-in imagegen",
+  "promptSource": "art-source/monster-world/prompts.json: sharedPrompt + exposure_double.subject",
+  "visualInspection": "Full-body figure visible with feet and all props inside canvas; preserved paired overexposed spectral heads, central shutter aperture, charcoal robes and old-bronze details."
+}

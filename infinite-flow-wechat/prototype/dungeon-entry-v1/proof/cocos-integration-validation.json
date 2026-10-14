@@ -1,0 +1,1975 @@
+{
+  "scope": "Local Cocos Creator 3.8.8 Web-Mobile debug build; not a WeChat device or release build",
+  "url": "http://127.0.0.1:8125/cocos/build/web-mobile-dungeon-entry/index.html",
+  "validatedAt": "2026-10-12T06:51:42.912Z",
+  "view390": {
+    "cardCount": 19,
+    "cards": [
+      {
+        "box": {
+          "bottom": 219.32000000000005,
+          "height": 84.00000000000011,
+          "left": 22.879999999999992,
+          "right": 361.12,
+          "top": 135.31999999999994,
+          "width": 338.24
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:demon_tower_1"
+      },
+      {
+        "box": {
+          "bottom": 311.31999999999994,
+          "height": 83.99999999999989,
+          "left": 22.879999999999992,
+          "right": 361.12,
+          "top": 227.32000000000005,
+          "width": 338.24
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:metro_abyss"
+      },
+      {
+        "box": {
+          "bottom": 403.3199999999998,
+          "height": 83.99999999999977,
+          "left": 22.879999999999992,
+          "right": 361.12,
+          "top": 319.32000000000005,
+          "width": 338.24
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:starfall_mine"
+      },
+      {
+        "box": {
+          "bottom": 495.3200000000001,
+          "height": 83.99999999999994,
+          "left": 22.879999999999992,
+          "right": 361.12,
+          "top": 411.3200000000001,
+          "width": 338.24
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:rust_hospital"
+      },
+      {
+        "box": {
+          "bottom": 587.32,
+          "height": 83.99999999999994,
+          "left": 22.879999999999992,
+          "right": 361.12,
+          "top": 503.3200000000001,
+          "width": 338.24
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:ash_arena"
+      },
+      {
+        "box": {
+          "bottom": 679.32,
+          "height": 84,
+          "left": 22.879999999999992,
+          "right": 361.12,
+          "top": 595.32,
+          "width": 338.24
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:dream_archive"
+      },
+      {
+        "box": {
+          "bottom": 771.3199999999999,
+          "height": 83.99999999999989,
+          "left": 22.879999999999992,
+          "right": 361.12,
+          "top": 687.32,
+          "width": 338.24
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:void_citadel"
+      },
+      {
+        "box": {
+          "bottom": 863.32,
+          "height": 84,
+          "left": 22.879999999999992,
+          "right": 361.12,
+          "top": 779.32,
+          "width": 338.24
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:temporal_observatory"
+      },
+      {
+        "box": {
+          "bottom": 955.3200000000002,
+          "height": 84.00000000000011,
+          "left": 22.879999999999992,
+          "right": 361.12,
+          "top": 871.32,
+          "width": 338.24
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:causal_clearinghouse"
+      },
+      {
+        "box": {
+          "bottom": 1047.32,
+          "height": 83.99999999999989,
+          "left": 22.879999999999992,
+          "right": 361.12,
+          "top": 963.32,
+          "width": 338.24
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:entropy_ark"
+      },
+      {
+        "box": {
+          "bottom": 1139.32,
+          "height": 84,
+          "left": 22.879999999999992,
+          "right": 361.12,
+          "top": 1055.32,
+          "width": 338.24
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:mirror_cycle_city"
+      },
+      {
+        "box": {
+          "bottom": 1231.32,
+          "height": 84,
+          "left": 22.879999999999992,
+          "right": 361.12,
+          "top": 1147.32,
+          "width": 338.24
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:redaction_scriptorium"
+      },
+      {
+        "box": {
+          "bottom": 1323.32,
+          "height": 83.99999999999977,
+          "left": 22.879999999999992,
+          "right": 361.12,
+          "top": 1239.3200000000002,
+          "width": 338.24
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:legacy_auction_court"
+      },
+      {
+        "box": {
+          "bottom": 1415.32,
+          "height": 84,
+          "left": 22.879999999999992,
+          "right": 361.12,
+          "top": 1331.32,
+          "width": 338.24
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:genesis_vault"
+      },
+      {
+        "box": {
+          "bottom": 1507.3200000000002,
+          "height": 84.00000000000023,
+          "left": 22.879999999999992,
+          "right": 361.12,
+          "top": 1423.32,
+          "width": 338.24
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:silent_broadcast_tower"
+      },
+      {
+        "box": {
+          "bottom": 1599.3199999999997,
+          "height": 83.99999999999977,
+          "left": 22.879999999999992,
+          "right": 361.12,
+          "top": 1515.32,
+          "width": 338.24
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:lost_shelter"
+      },
+      {
+        "box": {
+          "bottom": 1691.3200000000002,
+          "height": 84,
+          "left": 22.879999999999992,
+          "right": 361.12,
+          "top": 1607.3200000000002,
+          "width": 338.24
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:false_testimony_court"
+      },
+      {
+        "box": {
+          "bottom": 1783.3200000000004,
+          "height": 84.00000000000023,
+          "left": 22.879999999999992,
+          "right": 361.12,
+          "top": 1699.3200000000002,
+          "width": 338.24
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:combat_replay_stage"
+      },
+      {
+        "box": {
+          "bottom": 1875.32,
+          "height": 84,
+          "left": 22.879999999999992,
+          "right": 361.12,
+          "top": 1791.3200000000002,
+          "width": 338.24
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:panopticon_city"
+      }
+    ],
+    "confirm": {
+      "bottom": 779.12,
+      "height": 44,
+      "left": 241.11999999999995,
+      "right": 367.12,
+      "top": 735.12,
+      "width": 126.00000000000006
+    },
+    "confirmEnabled": true,
+    "domain": "assault",
+    "footer": {
+      "bottom": 795.12,
+      "height": 108,
+      "left": 22.879999999999992,
+      "right": 367.12,
+      "top": 687.12,
+      "width": 344.24
+    },
+    "fullyVisible": 6,
+    "images": 19,
+    "list": {
+      "bottom": 687.12,
+      "height": 551.8000000000001,
+      "left": 22.879999999999992,
+      "right": 367.12,
+      "top": 135.31999999999994,
+      "width": 344.24
+    },
+    "notice": "已选择 · 可直接进入",
+    "phase": "hub",
+    "selected": {
+      "dungeonId": "demon_tower_1",
+      "protocolId": "standard"
+    },
+    "settings": null,
+    "sheet": {
+      "kind": "entry",
+      "page": 0
+    }
+  },
+  "view320": {
+    "cardCount": 19,
+    "cards": [
+      {
+        "box": {
+          "bottom": 187.32533733133437,
+          "height": 69.99999999999994,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 117.32533733133442,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:demon_tower_1"
+      },
+      {
+        "box": {
+          "bottom": 263.3253373313344,
+          "height": 70.00000000000006,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 193.32533733133437,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:metro_abyss"
+      },
+      {
+        "box": {
+          "bottom": 339.32533733133437,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 269.32533733133437,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:starfall_mine"
+      },
+      {
+        "box": {
+          "bottom": 415.3253373313344,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 345.32533733133437,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:rust_hospital"
+      },
+      {
+        "box": {
+          "bottom": 491.3253373313344,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 421.3253373313344,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:ash_arena"
+      },
+      {
+        "box": {
+          "bottom": 567.3253373313344,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 497.3253373313344,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:dream_archive"
+      },
+      {
+        "box": {
+          "bottom": 643.3253373313344,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 573.3253373313344,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:void_citadel"
+      },
+      {
+        "box": {
+          "bottom": 719.3253373313344,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 649.3253373313344,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:temporal_observatory"
+      },
+      {
+        "box": {
+          "bottom": 795.3253373313344,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 725.3253373313344,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:causal_clearinghouse"
+      },
+      {
+        "box": {
+          "bottom": 871.3253373313344,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 801.3253373313344,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:entropy_ark"
+      },
+      {
+        "box": {
+          "bottom": 947.3253373313344,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 877.3253373313344,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:mirror_cycle_city"
+      },
+      {
+        "box": {
+          "bottom": 1023.3253373313344,
+          "height": 70.00000000000011,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 953.3253373313344,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:redaction_scriptorium"
+      },
+      {
+        "box": {
+          "bottom": 1099.3253373313346,
+          "height": 70.00000000000023,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 1029.3253373313344,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:legacy_auction_court"
+      },
+      {
+        "box": {
+          "bottom": 1175.3253373313344,
+          "height": 70.00000000000023,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 1105.325337331334,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:genesis_vault"
+      },
+      {
+        "box": {
+          "bottom": 1251.3253373313344,
+          "height": 69.99999999999977,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 1181.3253373313346,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:silent_broadcast_tower"
+      },
+      {
+        "box": {
+          "bottom": 1327.3253373313344,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 1257.3253373313344,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:lost_shelter"
+      },
+      {
+        "box": {
+          "bottom": 1403.3253373313346,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 1333.3253373313346,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:false_testimony_court"
+      },
+      {
+        "box": {
+          "bottom": 1479.3253373313346,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 1409.3253373313346,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:combat_replay_stage"
+      },
+      {
+        "box": {
+          "bottom": 1555.3253373313344,
+          "height": 70.00000000000023,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 1485.325337331334,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:panopticon_city"
+      }
+    ],
+    "confirm": {
+      "bottom": 511.976011994003,
+      "height": 44,
+      "left": 190.9355322338831,
+      "right": 300.93553223388307,
+      "top": 467.976011994003,
+      "width": 109.99999999999996
+    },
+    "confirmEnabled": true,
+    "domain": "assault",
+    "footer": {
+      "bottom": 527.976011994003,
+      "height": 107.99999999999989,
+      "left": 19.064467766116948,
+      "right": 300.93553223388307,
+      "top": 419.9760119940031,
+      "width": 281.87106446776613
+    },
+    "fullyVisible": 4,
+    "images": 19,
+    "list": {
+      "bottom": 419.9760119940031,
+      "height": 302.6506746626687,
+      "left": 19.064467766116948,
+      "right": 300.93553223388307,
+      "top": 117.32533733133442,
+      "width": 281.87106446776613
+    },
+    "notice": "已选择 · 可直接进入",
+    "phase": "hub",
+    "selected": {
+      "dungeonId": "demon_tower_1",
+      "protocolId": "standard"
+    },
+    "settings": null,
+    "sheet": {
+      "entryDungeonScrollOffset": 0,
+      "entrySettingsOpen": false,
+      "entrySettingsScrollOffset": 0,
+      "kind": "entry",
+      "page": 0
+    }
+  },
+  "settings390": {
+    "cardCount": 19,
+    "cards": [
+      {
+        "box": {
+          "bottom": 219.32000000000005,
+          "height": 84.00000000000011,
+          "left": 22.879999999999992,
+          "right": 361.12,
+          "top": 135.31999999999994,
+          "width": 338.24
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:demon_tower_1"
+      },
+      {
+        "box": {
+          "bottom": 311.31999999999994,
+          "height": 83.99999999999989,
+          "left": 22.879999999999992,
+          "right": 361.12,
+          "top": 227.32000000000005,
+          "width": 338.24
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:metro_abyss"
+      },
+      {
+        "box": {
+          "bottom": 403.3199999999998,
+          "height": 83.99999999999977,
+          "left": 22.879999999999992,
+          "right": 361.12,
+          "top": 319.32000000000005,
+          "width": 338.24
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:starfall_mine"
+      },
+      {
+        "box": {
+          "bottom": 495.3200000000001,
+          "height": 83.99999999999994,
+          "left": 22.879999999999992,
+          "right": 361.12,
+          "top": 411.3200000000001,
+          "width": 338.24
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:rust_hospital"
+      },
+      {
+        "box": {
+          "bottom": 587.32,
+          "height": 83.99999999999994,
+          "left": 22.879999999999992,
+          "right": 361.12,
+          "top": 503.3200000000001,
+          "width": 338.24
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:ash_arena"
+      },
+      {
+        "box": {
+          "bottom": 679.32,
+          "height": 84,
+          "left": 22.879999999999992,
+          "right": 361.12,
+          "top": 595.32,
+          "width": 338.24
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:dream_archive"
+      },
+      {
+        "box": {
+          "bottom": 771.3199999999999,
+          "height": 83.99999999999989,
+          "left": 22.879999999999992,
+          "right": 361.12,
+          "top": 687.32,
+          "width": 338.24
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:void_citadel"
+      },
+      {
+        "box": {
+          "bottom": 863.32,
+          "height": 84,
+          "left": 22.879999999999992,
+          "right": 361.12,
+          "top": 779.32,
+          "width": 338.24
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:temporal_observatory"
+      },
+      {
+        "box": {
+          "bottom": 955.3200000000002,
+          "height": 84.00000000000011,
+          "left": 22.879999999999992,
+          "right": 361.12,
+          "top": 871.32,
+          "width": 338.24
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:causal_clearinghouse"
+      },
+      {
+        "box": {
+          "bottom": 1047.32,
+          "height": 83.99999999999989,
+          "left": 22.879999999999992,
+          "right": 361.12,
+          "top": 963.32,
+          "width": 338.24
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:entropy_ark"
+      },
+      {
+        "box": {
+          "bottom": 1139.32,
+          "height": 84,
+          "left": 22.879999999999992,
+          "right": 361.12,
+          "top": 1055.32,
+          "width": 338.24
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:mirror_cycle_city"
+      },
+      {
+        "box": {
+          "bottom": 1231.32,
+          "height": 84,
+          "left": 22.879999999999992,
+          "right": 361.12,
+          "top": 1147.32,
+          "width": 338.24
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:redaction_scriptorium"
+      },
+      {
+        "box": {
+          "bottom": 1323.32,
+          "height": 83.99999999999977,
+          "left": 22.879999999999992,
+          "right": 361.12,
+          "top": 1239.3200000000002,
+          "width": 338.24
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:legacy_auction_court"
+      },
+      {
+        "box": {
+          "bottom": 1415.32,
+          "height": 84,
+          "left": 22.879999999999992,
+          "right": 361.12,
+          "top": 1331.32,
+          "width": 338.24
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:genesis_vault"
+      },
+      {
+        "box": {
+          "bottom": 1507.3200000000002,
+          "height": 84.00000000000023,
+          "left": 22.879999999999992,
+          "right": 361.12,
+          "top": 1423.32,
+          "width": 338.24
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:silent_broadcast_tower"
+      },
+      {
+        "box": {
+          "bottom": 1599.3199999999997,
+          "height": 83.99999999999977,
+          "left": 22.879999999999992,
+          "right": 361.12,
+          "top": 1515.32,
+          "width": 338.24
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:lost_shelter"
+      },
+      {
+        "box": {
+          "bottom": 1691.3200000000002,
+          "height": 84,
+          "left": 22.879999999999992,
+          "right": 361.12,
+          "top": 1607.3200000000002,
+          "width": 338.24
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:false_testimony_court"
+      },
+      {
+        "box": {
+          "bottom": 1783.3200000000004,
+          "height": 84.00000000000023,
+          "left": 22.879999999999992,
+          "right": 361.12,
+          "top": 1699.3200000000002,
+          "width": 338.24
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:combat_replay_stage"
+      },
+      {
+        "box": {
+          "bottom": 1875.32,
+          "height": 84,
+          "left": 22.879999999999992,
+          "right": 361.12,
+          "top": 1791.3200000000002,
+          "width": 338.24
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:panopticon_city"
+      }
+    ],
+    "confirm": {
+      "bottom": 779.12,
+      "height": 44,
+      "left": 241.11999999999995,
+      "right": 367.12,
+      "top": 735.12,
+      "width": 126.00000000000006
+    },
+    "confirmEnabled": true,
+    "domain": "assault",
+    "footer": {
+      "bottom": 795.12,
+      "height": 108,
+      "left": 22.879999999999992,
+      "right": 367.12,
+      "top": 687.12,
+      "width": 344.24
+    },
+    "frameDescription": "偏向输出与战斗收益",
+    "fullyVisible": 6,
+    "images": 19,
+    "list": {
+      "bottom": 687.12,
+      "height": 551.8000000000001,
+      "left": 22.879999999999992,
+      "right": 367.12,
+      "top": 135.31999999999994,
+      "width": 344.24
+    },
+    "notice": "已选择 · 可直接进入",
+    "phase": "hub",
+    "selected": {
+      "dungeonId": "demon_tower_1",
+      "protocolId": "standard"
+    },
+    "settings": {
+      "bottom": 687.1199999999999,
+      "height": 300.49999999999994,
+      "left": 22.879999999999992,
+      "right": 367.12,
+      "top": 386.61999999999995,
+      "width": 344.24
+    },
+    "sheet": {
+      "entryDungeonScrollOffset": 0,
+      "entrySettingsOpen": true,
+      "kind": "entry",
+      "page": 0
+    }
+  },
+  "settings320": {
+    "cardCount": 19,
+    "cards": [
+      {
+        "box": {
+          "bottom": 187.32533733133437,
+          "height": 69.99999999999994,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 117.32533733133442,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:demon_tower_1"
+      },
+      {
+        "box": {
+          "bottom": 263.3253373313344,
+          "height": 70.00000000000006,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 193.32533733133437,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:metro_abyss"
+      },
+      {
+        "box": {
+          "bottom": 339.32533733133437,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 269.32533733133437,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:starfall_mine"
+      },
+      {
+        "box": {
+          "bottom": 415.3253373313344,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 345.32533733133437,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:rust_hospital"
+      },
+      {
+        "box": {
+          "bottom": 491.3253373313344,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 421.3253373313344,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:ash_arena"
+      },
+      {
+        "box": {
+          "bottom": 567.3253373313344,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 497.3253373313344,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:dream_archive"
+      },
+      {
+        "box": {
+          "bottom": 643.3253373313344,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 573.3253373313344,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:void_citadel"
+      },
+      {
+        "box": {
+          "bottom": 719.3253373313344,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 649.3253373313344,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:temporal_observatory"
+      },
+      {
+        "box": {
+          "bottom": 795.3253373313344,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 725.3253373313344,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:causal_clearinghouse"
+      },
+      {
+        "box": {
+          "bottom": 871.3253373313344,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 801.3253373313344,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:entropy_ark"
+      },
+      {
+        "box": {
+          "bottom": 947.3253373313344,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 877.3253373313344,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:mirror_cycle_city"
+      },
+      {
+        "box": {
+          "bottom": 1023.3253373313344,
+          "height": 70.00000000000011,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 953.3253373313344,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:redaction_scriptorium"
+      },
+      {
+        "box": {
+          "bottom": 1099.3253373313346,
+          "height": 70.00000000000023,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 1029.3253373313344,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:legacy_auction_court"
+      },
+      {
+        "box": {
+          "bottom": 1175.3253373313344,
+          "height": 70.00000000000023,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 1105.325337331334,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:genesis_vault"
+      },
+      {
+        "box": {
+          "bottom": 1251.3253373313344,
+          "height": 69.99999999999977,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 1181.3253373313346,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:silent_broadcast_tower"
+      },
+      {
+        "box": {
+          "bottom": 1327.3253373313344,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 1257.3253373313344,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:lost_shelter"
+      },
+      {
+        "box": {
+          "bottom": 1403.3253373313346,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 1333.3253373313346,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:false_testimony_court"
+      },
+      {
+        "box": {
+          "bottom": 1479.3253373313346,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 1409.3253373313346,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:combat_replay_stage"
+      },
+      {
+        "box": {
+          "bottom": 1555.3253373313344,
+          "height": 70.00000000000023,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 1485.325337331334,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:panopticon_city"
+      }
+    ],
+    "confirm": {
+      "bottom": 511.976011994003,
+      "height": 44,
+      "left": 190.9355322338831,
+      "right": 300.93553223388307,
+      "top": 467.976011994003,
+      "width": 109.99999999999996
+    },
+    "confirmEnabled": true,
+    "domain": "assault",
+    "footer": {
+      "bottom": 527.976011994003,
+      "height": 107.99999999999989,
+      "left": 19.064467766116948,
+      "right": 300.93553223388307,
+      "top": 419.9760119940031,
+      "width": 281.87106446776613
+    },
+    "frameDescription": "偏向输出与战斗收益",
+    "fullyVisible": 4,
+    "images": 19,
+    "list": {
+      "bottom": 419.9760119940031,
+      "height": 302.6506746626687,
+      "left": 19.064467766116948,
+      "right": 300.93553223388307,
+      "top": 117.32533733133442,
+      "width": 281.87106446776613
+    },
+    "notice": "已选择 · 可直接进入",
+    "phase": "hub",
+    "selected": {
+      "dungeonId": "demon_tower_1",
+      "protocolId": "standard"
+    },
+    "settings": {
+      "bottom": 419.9760119940031,
+      "height": 300.5000000000001,
+      "left": 19.064467766116948,
+      "right": 300.93553223388307,
+      "top": 119.476011994003,
+      "width": 281.87106446776613
+    },
+    "sheet": {
+      "entryDungeonScrollOffset": 1.1368683772161605e-13,
+      "entrySettingsOpen": true,
+      "entrySettingsScrollOffset": 0,
+      "kind": "entry",
+      "page": 0
+    }
+  },
+  "frames": [
+    {
+      "id": "bulwark",
+      "description": "偏向防御、恢复与陷阱减伤",
+      "domain": "bulwark"
+    },
+    {
+      "id": "wayfinder",
+      "description": "偏向探索、传送与节点收益",
+      "domain": "wayfinder"
+    },
+    {
+      "id": "assault",
+      "description": "偏向输出与战斗收益",
+      "domain": "assault"
+    }
+  ],
+  "locked320": {
+    "cardCount": 19,
+    "cards": [
+      {
+        "box": {
+          "bottom": 187.32533733133437,
+          "height": 69.99999999999994,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 117.32533733133442,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:demon_tower_1"
+      },
+      {
+        "box": {
+          "bottom": 263.3253373313344,
+          "height": 70.00000000000006,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 193.32533733133437,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:metro_abyss"
+      },
+      {
+        "box": {
+          "bottom": 339.32533733133437,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 269.32533733133437,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:starfall_mine"
+      },
+      {
+        "box": {
+          "bottom": 415.3253373313344,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 345.32533733133437,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:rust_hospital"
+      },
+      {
+        "box": {
+          "bottom": 491.3253373313344,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 421.3253373313344,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:ash_arena"
+      },
+      {
+        "box": {
+          "bottom": 567.3253373313344,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 497.3253373313344,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:dream_archive"
+      },
+      {
+        "box": {
+          "bottom": 643.3253373313344,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 573.3253373313344,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:void_citadel"
+      },
+      {
+        "box": {
+          "bottom": 719.3253373313344,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 649.3253373313344,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:temporal_observatory"
+      },
+      {
+        "box": {
+          "bottom": 795.3253373313344,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 725.3253373313344,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:causal_clearinghouse"
+      },
+      {
+        "box": {
+          "bottom": 871.3253373313344,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 801.3253373313344,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:entropy_ark"
+      },
+      {
+        "box": {
+          "bottom": 947.3253373313344,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 877.3253373313344,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:mirror_cycle_city"
+      },
+      {
+        "box": {
+          "bottom": 1023.3253373313344,
+          "height": 70.00000000000011,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 953.3253373313344,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:redaction_scriptorium"
+      },
+      {
+        "box": {
+          "bottom": 1099.3253373313346,
+          "height": 70.00000000000023,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 1029.3253373313344,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:legacy_auction_court"
+      },
+      {
+        "box": {
+          "bottom": 1175.3253373313344,
+          "height": 70.00000000000023,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 1105.325337331334,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:genesis_vault"
+      },
+      {
+        "box": {
+          "bottom": 1251.3253373313344,
+          "height": 69.99999999999977,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 1181.3253373313346,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:silent_broadcast_tower"
+      },
+      {
+        "box": {
+          "bottom": 1327.3253373313344,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 1257.3253373313344,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:lost_shelter"
+      },
+      {
+        "box": {
+          "bottom": 1403.3253373313346,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 1333.3253373313346,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:false_testimony_court"
+      },
+      {
+        "box": {
+          "bottom": 1479.3253373313346,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 1409.3253373313346,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:combat_replay_stage"
+      },
+      {
+        "box": {
+          "bottom": 1555.3253373313344,
+          "height": 70.00000000000023,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 1485.325337331334,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:panopticon_city"
+      }
+    ],
+    "confirm": {
+      "bottom": 511.976011994003,
+      "height": 43.99999999999994,
+      "left": 190.9355322338831,
+      "right": 300.93553223388307,
+      "top": 467.97601199400304,
+      "width": 109.99999999999996
+    },
+    "confirmEnabled": false,
+    "domain": "assault",
+    "footer": {
+      "bottom": 527.9760119940031,
+      "height": 144.00000000000006,
+      "left": 19.064467766116948,
+      "right": 300.93553223388307,
+      "top": 383.97601199400304,
+      "width": 281.87106446776613
+    },
+    "fullyVisible": 3,
+    "images": 19,
+    "list": {
+      "bottom": 383.976011994003,
+      "height": 266.65067466266856,
+      "left": 19.064467766116948,
+      "right": 300.93553223388307,
+      "top": 117.32533733133442,
+      "width": 281.87106446776613
+    },
+    "notice": "需要先完成并领取主线任务「妖塔\n一层主线」，才能解锁镜潮地铁。\n当前战力 167，距离推荐 185 还\n差 18",
+    "phase": "hub",
+    "selected": {
+      "dungeonId": "metro_abyss",
+      "protocolId": "standard"
+    },
+    "settings": null,
+    "sheet": {
+      "entryDungeonScrollOffset": 1.1368683772161605e-13,
+      "entrySettingsOpen": false,
+      "entrySettingsScrollOffset": 0,
+      "kind": "entry",
+      "page": 0
+    }
+  },
+  "scroll320": {
+    "cardCount": 19,
+    "cards": [
+      {
+        "box": {
+          "bottom": -1004.878556521739,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": -1074.878556521739,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:demon_tower_1"
+      },
+      {
+        "box": {
+          "bottom": -928.878556521739,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": -998.878556521739,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:metro_abyss"
+      },
+      {
+        "box": {
+          "bottom": -852.878556521739,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": -922.878556521739,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:starfall_mine"
+      },
+      {
+        "box": {
+          "bottom": -776.8785565217393,
+          "height": 69.99999999999977,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": -846.878556521739,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:rust_hospital"
+      },
+      {
+        "box": {
+          "bottom": -700.878556521739,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": -770.878556521739,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:ash_arena"
+      },
+      {
+        "box": {
+          "bottom": -624.878556521739,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": -694.878556521739,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:dream_archive"
+      },
+      {
+        "box": {
+          "bottom": -548.878556521739,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": -618.878556521739,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:void_citadel"
+      },
+      {
+        "box": {
+          "bottom": -472.878556521739,
+          "height": 70.00000000000006,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": -542.878556521739,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:temporal_observatory"
+      },
+      {
+        "box": {
+          "bottom": -396.87855652173903,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": -466.87855652173903,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:causal_clearinghouse"
+      },
+      {
+        "box": {
+          "bottom": -320.87855652173903,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": -390.87855652173903,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:entropy_ark"
+      },
+      {
+        "box": {
+          "bottom": -244.87855652173903,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": -314.87855652173903,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:mirror_cycle_city"
+      },
+      {
+        "box": {
+          "bottom": -168.87855652173914,
+          "height": 69.99999999999989,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": -238.87855652173903,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:redaction_scriptorium"
+      },
+      {
+        "box": {
+          "bottom": -92.87855652173904,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": -162.87855652173903,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:legacy_auction_court"
+      },
+      {
+        "box": {
+          "bottom": -16.878556521739142,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": -86.87855652173914,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:genesis_vault"
+      },
+      {
+        "box": {
+          "bottom": 59.12144347826097,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": -10.878556521739029,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:silent_broadcast_tower"
+      },
+      {
+        "box": {
+          "bottom": 135.12144347826086,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 65.12144347826086,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:lost_shelter"
+      },
+      {
+        "box": {
+          "bottom": 211.12144347826097,
+          "height": 70.00000000000006,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 141.12144347826091,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:false_testimony_court"
+      },
+      {
+        "box": {
+          "bottom": 287.1214434782611,
+          "height": 70.00000000000006,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 217.12144347826103,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:combat_replay_stage"
+      },
+      {
+        "box": {
+          "bottom": 363.12144347826097,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 293.12144347826097,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:panopticon_city"
+      }
+    ],
+    "confirm": {
+      "bottom": 511.976011994003,
+      "height": 44,
+      "left": 190.9355322338831,
+      "right": 300.93553223388307,
+      "top": 467.976011994003,
+      "width": 109.99999999999996
+    },
+    "confirmEnabled": true,
+    "domain": "assault",
+    "footer": {
+      "bottom": 527.976011994003,
+      "height": 107.99999999999989,
+      "left": 19.064467766116948,
+      "right": 300.93553223388307,
+      "top": 419.9760119940031,
+      "width": 281.87106446776613
+    },
+    "fullyVisible": 3,
+    "images": 19,
+    "list": {
+      "bottom": 419.9760119940031,
+      "height": 302.6506746626687,
+      "left": 19.064467766116948,
+      "right": 300.93553223388307,
+      "top": 117.32533733133442,
+      "width": 281.87106446776613
+    },
+    "notice": "已选择 · 可直接进入",
+    "phase": "hub",
+    "selected": {
+      "dungeonId": "demon_tower_1",
+      "protocolId": "standard"
+    },
+    "settings": null,
+    "sheet": {
+      "entryDungeonScrollOffset": 0,
+      "entrySettingsOpen": false,
+      "entrySettingsScrollOffset": 0,
+      "kind": "entry",
+      "page": 0
+    }
+  },
+  "lastLocked320": {
+    "cardCount": 19,
+    "cards": [
+      {
+        "box": {
+          "bottom": -990.0239718140928,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": -1060.0239718140929,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:demon_tower_1"
+      },
+      {
+        "box": {
+          "bottom": -914.0239718140932,
+          "height": 69.99999999999977,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": -984.0239718140928,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:metro_abyss"
+      },
+      {
+        "box": {
+          "bottom": -838.023971814093,
+          "height": 69.99999999999989,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": -908.0239718140928,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:starfall_mine"
+      },
+      {
+        "box": {
+          "bottom": -762.0239718140931,
+          "height": 69.99999999999977,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": -832.0239718140929,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:rust_hospital"
+      },
+      {
+        "box": {
+          "bottom": -686.0239718140931,
+          "height": 69.99999999999977,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": -756.0239718140929,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:ash_arena"
+      },
+      {
+        "box": {
+          "bottom": -610.0239718140929,
+          "height": 70.00000000000023,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": -680.0239718140931,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:dream_archive"
+      },
+      {
+        "box": {
+          "bottom": -534.0239718140929,
+          "height": 70.00000000000034,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": -604.0239718140932,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:void_citadel"
+      },
+      {
+        "box": {
+          "bottom": -458.0239718140929,
+          "height": 70.00000000000023,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": -528.0239718140931,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:temporal_observatory"
+      },
+      {
+        "box": {
+          "bottom": -382.0239718140929,
+          "height": 70.00000000000011,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": -452.023971814093,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:causal_clearinghouse"
+      },
+      {
+        "box": {
+          "bottom": -306.023971814093,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": -376.023971814093,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:entropy_ark"
+      },
+      {
+        "box": {
+          "bottom": -230.023971814093,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": -300.023971814093,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:mirror_cycle_city"
+      },
+      {
+        "box": {
+          "bottom": -154.023971814093,
+          "height": 69.99999999999989,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": -224.02397181409287,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:redaction_scriptorium"
+      },
+      {
+        "box": {
+          "bottom": -78.02397181409287,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": -148.02397181409287,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:legacy_auction_court"
+      },
+      {
+        "box": {
+          "bottom": -2.023971814092988,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": -72.02397181409299,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:genesis_vault"
+      },
+      {
+        "box": {
+          "bottom": 73.97602818590707,
+          "height": 70.00000000000006,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 3.976028185907012,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:silent_broadcast_tower"
+      },
+      {
+        "box": {
+          "bottom": 149.97602818590696,
+          "height": 70,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 79.97602818590696,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:lost_shelter"
+      },
+      {
+        "box": {
+          "bottom": 225.97602818590707,
+          "height": 70.00000000000006,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 155.976028185907,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:false_testimony_court"
+      },
+      {
+        "box": {
+          "bottom": 301.9760281859071,
+          "height": 69.99999999999994,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 231.9760281859072,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:combat_replay_stage"
+      },
+      {
+        "box": {
+          "bottom": 377.976028185907,
+          "height": 70.00000000000006,
+          "left": 19.064467766116948,
+          "right": 294.93553223388307,
+          "top": 307.976028185907,
+          "width": 275.87106446776613
+        },
+        "hasImage": true,
+        "id": "MobileSheetEntryDungeon:panopticon_city"
+      }
+    ],
+    "confirm": {
+      "bottom": 511.976011994003,
+      "height": 43.99999999999994,
+      "left": 190.9355322338831,
+      "right": 300.93553223388307,
+      "top": 467.97601199400304,
+      "width": 109.99999999999996
+    },
+    "confirmEnabled": false,
+    "domain": "assault",
+    "footer": {
+      "bottom": 527.9760119940031,
+      "height": 144.00000000000006,
+      "left": 19.064467766116948,
+      "right": 300.93553223388307,
+      "top": 383.97601199400304,
+      "width": 281.87106446776613
+    },
+    "fullyVisible": 3,
+    "images": 19,
+    "list": {
+      "bottom": 383.976011994003,
+      "height": 266.65067466266856,
+      "left": 19.064467766116948,
+      "right": 300.93553223388307,
+      "top": 117.32533733133442,
+      "width": 281.87106446776613
+    },
+    "notice": "需要先完成并领取主线任务「战痕\n复演场主线」，才能解锁天幕监察\n城。当前战力 167，距离推荐 13\n50 还差 1183",
+    "phase": "hub",
+    "selected": {
+      "dungeonId": "panopticon_city",
+      "protocolId": "standard"
+    },
+    "settings": null,
+    "sheet": {
+      "entryDungeonScrollOffset": 2799.999990140845,
+      "entrySettingsOpen": false,
+      "entrySettingsScrollOffset": 0,
+      "kind": "entry",
+      "page": 0
+    }
+  },
+  "entered": {
+    "dungeon": "demon_tower_1",
+    "entrySheetClosed": true,
+    "frame": "bulwark",
+    "phase": "explore"
+  },
+  "errors": [],
+  "checks": [
+    "npm run build",
+    "Cocos headless and Creator typecheck",
+    "presentation tests",
+    "source and scene verify",
+    "cocos:sheet:test (1992 VM, 1121 chapters, 240 services, 673 options)",
+    "cocos:race:test (108 scenarios)",
+    "real Cocos Creator build and physical browser input"
+  ]
+}

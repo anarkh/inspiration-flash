@@ -1,0 +1,169 @@
+{
+  "button": {
+    "height": 44,
+    "label": "E · 与修行导师交谈",
+    "text": "交谈",
+    "width": 88
+  },
+  "talkTitle": "修行导师",
+  "noJump": {
+    "c": {
+      "foot": {
+        "facing": "right",
+        "footX": "600",
+        "footY": "550",
+        "motion": "idle",
+        "player": ""
+      },
+      "spriteTranslate": ""
+    },
+    "space": {
+      "foot": {
+        "facing": "right",
+        "footX": "600",
+        "footY": "550",
+        "motion": "idle",
+        "player": ""
+      },
+      "spriteTranslate": ""
+    }
+  },
+  "keyboard": {
+    "walk": {
+      "facing": "right",
+      "footX": "604.0559999999978",
+      "footY": "550",
+      "motion": "walk",
+      "player": ""
+    },
+    "shift": {
+      "facing": "right",
+      "footX": "604.0559999999978",
+      "footY": "550",
+      "motion": "walk",
+      "player": ""
+    },
+    "double": {
+      "facing": "right",
+      "footX": "612.7659999999978",
+      "footY": "550",
+      "motion": "walk",
+      "player": ""
+    }
+  },
+  "clickedNpc": {
+    "player": {
+      "facing": "right",
+      "footX": "637.4737779847782",
+      "footY": "568.7040795249567",
+      "motion": "paused",
+      "player": ""
+    },
+    "title": "血脉祭司"
+  },
+  "mobile320": {
+    "button": {
+      "height": 44,
+      "inside": true,
+      "text": "交谈",
+      "width": 88
+    },
+    "joystick": {
+      "x": 76,
+      "y": 634.8984375
+    },
+    "overflow": false,
+    "player": {
+      "facing": "right",
+      "footX": "600",
+      "footY": "550",
+      "motion": "idle",
+      "player": ""
+    },
+    "removed": 0,
+    "viewport": [
+      320,
+      740
+    ]
+  },
+  "stickAfter": {
+    "player": {
+      "facing": "right",
+      "footX": "618.1480000000038",
+      "footY": "550.0430015625002",
+      "motion": "idle",
+      "player": ""
+    },
+    "stick": "0px"
+  },
+  "stickIdle": {
+    "player": {
+      "facing": "right",
+      "footX": "618.1480000000038",
+      "footY": "550.0430015625002",
+      "motion": "idle",
+      "player": ""
+    },
+    "stick": "0px"
+  },
+  "mobile390": {
+    "button": {
+      "height": 44,
+      "inside": true,
+      "text": "交谈",
+      "width": 88
+    },
+    "overflow": false,
+    "removed": 0,
+    "viewport": [
+      390,
+      844
+    ]
+  },
+  "final": {
+    "actions": 1,
+    "button": {
+      "height": 44,
+      "label": "E · 与修行导师交谈",
+      "text": "交谈",
+      "width": 88
+    },
+    "overflow": false,
+    "paintedProps": [
+      {
+        "loaded": true,
+        "src": "assets/courtyard-props/altar-v1.png"
+      },
+      {
+        "loaded": true,
+        "src": "assets/courtyard-props/lamp-v1.png"
+      },
+      {
+        "loaded": true,
+        "src": "assets/courtyard-props/crate-v1.png"
+      },
+      {
+        "loaded": true,
+        "src": "assets/courtyard-props/pillar-v1.png"
+      }
+    ],
+    "player": {
+      "facing": "right",
+      "footX": "600",
+      "footY": "550",
+      "motion": "idle",
+      "player": ""
+    },
+    "removed": 0,
+    "shadowOpacity": "0.65",
+    "sheetClosed": true,
+    "tools": 2,
+    "url": "http://127.0.0.1:8125/prototype/hub-draw/#10",
+    "viewport": [
+      930,
+      828
+    ]
+  },
+  "console": [],
+  "modelsPassed": 12
+}

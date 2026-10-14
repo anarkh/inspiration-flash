@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <title>妖塔 · 全屏背景与四向门 / HTML 原型</title>
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <main class="workspace">
+    <section class="preview" aria-label="妖塔房间交互原型">
+      <div class="game-stage" id="game-stage" data-size="390" tabindex="0" aria-label="妖塔原型，WASD 或方向键移动，E 互动">
+        <img class="scene-background world-background" src="../../cocos/assets/resources/dungeon-world/demon_tower_1-v1.png" alt="铺满整个屏幕的妖塔石殿背景" draggable="false">
+
+        <header class="hud-header">
+          <button class="portrait-button" type="button" data-interface="角色" aria-label="角色详情">
+            <img src="../../cocos/assets/resources/character/reincarnator-v2.png" alt="轮回者头像" draggable="false"><span>角色</span>
+          </button>
+          <div class="vitals">
+            <div class="name-line">
+              <span class="character-name">轮回者</span>
+              <button class="resource resource-reward" type="button" data-interface="轮回点" aria-label="轮回点 1155">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="m12 7 4 5-4 5-4-5Z"/></svg><span>1155</span>
+              </button>
+              <button class="resource resource-jade" type="button" data-interface="灵蕴" aria-label="灵蕴 1">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 6 4 1 8-7 6-7-6 1-8Z"/><path d="m12 7 3 5-3 5-3-5Z"/></svg><span>1</span>
+              </button>
+            </div>
+            <p class="health-number">生命 <strong>102<span>/102</span></strong></p>
+            <div class="health-track" role="meter" aria-label="生命" aria-valuemin="0" aria-valuemax="102" aria-valuenow="102"><span></span></div>
+          </div>
+          <nav class="hud-navigation" aria-label="游戏入口">
+            <button type="button" class="hud-entry" data-interface="背包"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="m17 13-4-6 11 2 11-2-4 6M16 17h16M17 19C9 27 8 32 11 39c5 6 21 6 26 0 3-7 2-12-6-20M18 15l-7 4m19-4 7 5M24 18v10"/></svg><span>背包</span></button>
+            <button type="button" class="hud-entry" data-interface="菜单"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 11C18 8 12 7 6 9v31c6-2 12-1 18 2 6-3 12-4 18-2V9c-6-2-12-1-18 2Zm0 0v31M12 17l6 2m-6 7 6 2m12-9 6-2m-6 11 6-2"/></svg><span>菜单</span></button>
+            <button type="button" class="hud-entry" data-interface="地图"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="m7 9 11 4 12-5 11 4v29l-11-4-12 5-11-4Zm11 4v29M30 8v29m-8-17 4-5 8 6"/><circle cx="26" cy="20" r="2"/></svg><span>地图</span></button>
+            <button type="button" class="hud-entry" data-interface="目标"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M12 10h23v31H12Zm4 0V6h15v4M17 20h13m-13 7h13m-13 7h8M9 15H6v27h23v-1"/></svg><span>目标</span></button>
+          </nav>
+        </header>
+        <p class="scene-law">侵蚀：稳定 <span>·</span> 法则：警戒</p>
+
+        <div class="room-area" id="room-area" aria-label="四向门布局">
+          <button class="door door-north" type="button" data-door="north" data-name="北门" aria-label="北门，路线未知">
+            <img src="../../cocos/assets/resources/dungeon-world/ruined-stone-gate-v1.png" alt="" draggable="false"><span class="node-name">北门</span>
+          </button>
+          <button class="door door-west" type="button" data-door="west" data-name="西门" aria-label="西门，封闭">
+            <span class="door-art"><img src="../../cocos/assets/resources/dungeon-world/ruined-stone-gate-v1.png" alt="" draggable="false"><span class="gate-bars" aria-hidden="true"></span><svg class="gate-lock" viewBox="0 0 24 28" aria-hidden="true"><rect x="3" y="11" width="18" height="14" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4M12 17v4"/></svg></span><span class="node-name">西门</span><span class="door-state">封闭</span>
+          </button>
+          <button class="door door-east" type="button" data-door="east" data-name="东门" aria-label="东门，可通行，原型演示">
+            <img src="../../cocos/assets/resources/dungeon-world/ruined-stone-gate-v1.png" alt="" draggable="false"><span class="node-name">东门</span>
+          </button>
+          <button class="door door-south" type="button" data-door="south" data-name="南门" aria-label="南门，可通行，原型演示">
+            <img src="../../cocos/assets/resources/dungeon-world/ruined-stone-gate-v1.png" alt="" draggable="false"><span class="node-name">南门</span>
+          </button>
+          <button class="monster-node" id="monster-node" type="button" aria-label="雾中妖鬼，靠近后可互动">
+            <img src="../../cocos/assets/resources/monster-world/fog-lesser-demon-world-v1.png" alt="雾中妖鬼" draggable="false"><span class="node-name">雾中妖鬼</span>
+          </button>
+        </div>
+        <div class="hero" id="hero" role="img" aria-label="轮回者，站在雾中妖鬼下方"><div class="hero-sprite" id="hero-sprite"></div></div>
+
+        <div class="world-controls">
+          <button class="joystick" id="joystick" type="button" aria-label="拖动摇杆移动角色"><span class="joystick-knob" id="joystick-knob"></span></button>
+          <button class="interact-button" id="interact" type="button" aria-label="互动，先靠近目标">
+            <svg viewBox="0 0 40 34" aria-hidden="true"><path d="M5 3h29v21H20l-8 6v-6H5Zm7 7h15m-15 6h8"/></svg><span>互动</span>
+          </button>
+        </div>
+        <p class="game-toast" id="game-toast" role="status" hidden></p>
+        <span class="prototype-mark">HTML 原型 · 示例状态</span>
+        <button type="button" class="mobile-notes-button" id="mobile-notes-button" aria-label="查看原型说明" aria-expanded="false" aria-controls="design-notes">说明</button>
+      </div>
+    </section>
+    <aside class="design-notes" id="design-notes" aria-label="原型说明">
+      <div class="notes-heading"><p class="eyebrow">妖塔 · 房间布局 / V2</p><h1>背景铺满屏幕<br>四向门独立入屏</h1><button type="button" class="close-notes" id="close-notes" aria-label="关闭原型说明">×</button></div>
+      <p class="notes-intro">保留现有妖塔背景。门、怪物和角色浮在场景上；<br>人物移动时，背景与四向门保持固定。</p>
+      <div class="size-switch" aria-label="预览尺寸"><button type="button" data-size="390" aria-pressed="true">390 × 844</button><button type="button" data-size="320" aria-pressed="false">320 × 568</button></div>
+      <dl class="design-rules">
+        <div><dt>背景</dt><dd>原图等比铺满，从 HUD 一直延伸到屏幕底部。</dd></div>
+        <div><dt>四向门</dt><dd>北、南门在上下边缘，东西门在两侧；门和名称完整可见。</dd></div>
+        <div><dt>角色</dt><dd>拖动摇杆，或使用 WASD / 方向键。靠近目标后点互动，或按 E。</dd></div>
+      </dl>
+      <p class="prototype-note">此页仅演示布局与本地反馈。示例数值固定为生命 102/102、轮回点 1155、灵蕴 1，不读取游戏进度。</p>
+      <details class="reference"><summary>查看上一版构图参考</summary><a href="../dungeon-room-fit-v1/single-screen-room-v1.png" target="_blank" rel="noopener"><img src="../dungeon-room-fit-v1/single-screen-room-v1.png" alt="上一版确认的四向门构图参考，中央为雾中妖鬼，下方为轮回者"></a><p>保留四门、中央怪物与下方角色的构图；背景沿用现有妖塔素材。</p></details>
+      <button type="button" class="reset-button" id="reset-position">重置角色位置</button>
+      <p class="desktop-status" id="desktop-status" role="status">可点击门查看反馈，或靠近目标后互动。</p>
+    </aside>
+  </main>
+</body>
+</html>

@@ -1145,6 +1145,91 @@ async function checkAssets(): Promise<void> {
     'unowned direct release is an idempotent no-op',
   );
 
+  // A cached preload still yields before returning its lease. Reserving that
+  // lease must protect the native image while the previous consumer releases it.
+  {
+    const key = 'item:handoff';
+    const group = 'handoff';
+    const createFixture = () => {
+      const nativeHandle = { destroyed: false };
+      const handoffLoader = new FakeAssetLoader();
+      handoffLoader.source.set('item/handoff', nativeHandle);
+      const release = handoffLoader.release.bind(handoffLoader);
+      handoffLoader.release = (handle): void => {
+        if (handle !== nativeHandle) throw new Error('Unexpected handoff image release');
+        release(handle);
+        nativeHandle.destroyed = true;
+      };
+      const port = new ManifestCocosAssetPort({
+        manifest: {
+          manifestRevision: 'sha256:cached-handoff',
+          assets: [{ key, kind: 'item', resourcePath: 'item/handoff', groups: [group] }],
+        },
+        loader: handoffLoader,
+        fallbackFactory: (kind) => ({ fallback: kind }),
+      });
+      return { nativeHandle, handoffLoader, port };
+    };
+    for (const previous of ['direct', 'group'] as const) {
+      const { nativeHandle, handoffLoader, port } = createFixture();
+      if (previous === 'direct') assert((await port.preloadKey(key)).ok, 'initial direct lease succeeds');
+      else equal((await port.preload(group)).failures.length, 0, 'initial group lease succeeds');
+      const next = port.preloadKey(key);
+      if (previous === 'direct') port.releaseKey(key);
+      else port.release(group);
+      // The pending caller owns no releasable direct lease until it succeeds.
+      port.releaseKey(key);
+      equal(nativeHandle.destroyed, false, `${previous} to direct handoff keeps the cached image alive in the same turn`);
+      equal(handoffLoader.released.length, 0, 'handoff never releases an image before its new lease settles');
+      equal(handoffLoader.loadedPaths.length, 1, 'cached handoff does not repeat the native load');
+      const acquired = await next;
+      assert(acquired.ok && acquired.value.nativeHandle === nativeHandle, 'handoff returns the same cached native image');
+      equal(nativeHandle.destroyed, false, 'the returned handoff image is usable');
+      port.releaseKey(key);
+      equal(nativeHandle.destroyed, true, 'the final direct release frees the handed-off image');
+      equal(handoffLoader.released.length, 1, 'handoff frees the image exactly once');
+      port.releaseKey(key);
+      equal(handoffLoader.released.length, 1, 'an unowned release cannot free the image twice');
+    }
+    {
+      const { nativeHandle, handoffLoader, port } = createFixture();
+      assert((await port.preloadKey(key)).ok, 'initial direct lease succeeds before group handoff');
+      const acquiring = port.preload(group);
+      port.releaseKey(key);
+      equal(nativeHandle.destroyed, false, 'direct to group handoff keeps the cached image alive in the same turn');
+      equal(handoffLoader.released.length, 0, 'pending group acquisition prevents an early native release');
+      equal(handoffLoader.loadedPaths.length, 1, 'cached group acquisition never repeats the native load');
+      equal((await acquiring).failures.length, 0, 'cached group acquisition succeeds');
+      const resolved = port.resolve(key);
+      assert(resolved.ok && resolved.value.nativeHandle === nativeHandle && !nativeHandle.destroyed,
+        'settled group resolves the same usable cached native image');
+      port.release(group);
+      equal(nativeHandle.destroyed, true, 'the final group release frees the handed-off image');
+      equal(handoffLoader.released.length, 1, 'direct to group handoff frees the image exactly once');
+    }
+    for (const failedConsumer of ['direct', 'group'] as const) {
+      const { nativeHandle, handoffLoader, port } = createFixture();
+      handoffLoader.failures.set('item/handoff', { code: 'offline', retryable: true });
+      if (failedConsumer === 'direct') {
+        const failed = await port.preloadKey(key);
+        assert(!failed.ok && failed.code === 'offline', 'failed direct reservation preserves the classified failure');
+        port.releaseKey(key);
+      } else {
+        equal((await port.preload(group)).failures[0]?.code, 'offline', 'failed group reservation preserves the classified failure');
+        port.release(group);
+      }
+      equal(handoffLoader.released.length, 0, 'failed reservations never release an unacquired native image');
+      handoffLoader.failures.delete('item/handoff');
+      const retried = await port.preloadKey(key);
+      assert(retried.ok && retried.value.nativeHandle === nativeHandle, 'retry after a failed reservation acquires the real image');
+      port.releaseKey(key);
+      equal(nativeHandle.destroyed, true, 'failed reservation rollback leaves no phantom reference after retry');
+      equal(handoffLoader.released.length, 1, 'retry needs exactly one final native release');
+      port.releaseKey(key);
+      equal(handoffLoader.released.length, 1, 'failed reservation never becomes an extra direct lease');
+    }
+  }
+
   const deferredLoader = new DeferredAssetLoader();
   const reacquiredHandle = { name: 'reacquired' };
   const reacquiredAssets = new ManifestCocosAssetPort({
