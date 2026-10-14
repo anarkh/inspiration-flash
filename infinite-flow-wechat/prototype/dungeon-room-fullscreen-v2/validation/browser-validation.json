@@ -1,0 +1,383 @@
+{
+  "layouts": [
+    {
+      "background": {
+        "box": {
+          "h": 568,
+          "w": 320,
+          "x": 0,
+          "y": 0
+        },
+        "clipPath": "none",
+        "complete": true,
+        "filter": "none",
+        "naturalH": 1254,
+        "naturalW": 1254,
+        "objectFit": "cover",
+        "src": "../../cocos/assets/resources/dungeon-world/demon_tower_1-v1.png"
+      },
+      "controls": [
+        {
+          "box": {
+            "h": 85,
+            "w": 85,
+            "x": 17,
+            "y": 465.5
+          },
+          "inside": true,
+          "name": "#joystick"
+        },
+        {
+          "box": {
+            "h": 65,
+            "w": 64,
+            "x": 239,
+            "y": 475.5
+          },
+          "inside": true,
+          "name": "#interact"
+        }
+      ],
+      "controlsStyle": {
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "doors": [
+        {
+          "box": {
+            "h": 80,
+            "w": 66,
+            "x": 127,
+            "y": 142
+          },
+          "hit44": true,
+          "image": {
+            "h": 60,
+            "w": 43.9453125,
+            "x": 138.0234375,
+            "y": 142
+          },
+          "inside": true,
+          "side": "north"
+        },
+        {
+          "box": {
+            "h": 94,
+            "w": 66,
+            "x": 7,
+            "y": 245
+          },
+          "hit44": true,
+          "image": {
+            "h": 60,
+            "w": 43.9453125,
+            "x": 18.0234375,
+            "y": 245
+          },
+          "inside": true,
+          "side": "west"
+        },
+        {
+          "box": {
+            "h": 80,
+            "w": 66,
+            "x": 247,
+            "y": 252
+          },
+          "hit44": true,
+          "image": {
+            "h": 60,
+            "w": 43.9453125,
+            "x": 258.0234375,
+            "y": 252
+          },
+          "inside": true,
+          "side": "east"
+        },
+        {
+          "box": {
+            "h": 80,
+            "w": 66,
+            "x": 127,
+            "y": 362
+          },
+          "hit44": true,
+          "image": {
+            "h": 60,
+            "w": 43.9453125,
+            "x": 138.0234375,
+            "y": 362
+          },
+          "inside": true,
+          "side": "south"
+        }
+      ],
+      "hero": {
+        "box": {
+          "h": 50,
+          "w": 22.5625,
+          "x": 88.1640625,
+          "y": 336.328125
+        },
+        "inside": true
+      },
+      "images": [],
+      "monster": {
+        "box": {
+          "h": 108,
+          "w": 72,
+          "x": 124,
+          "y": 227
+        },
+        "inside": true
+      },
+      "roomStyle": {
+        "background": "rgba(0, 0, 0, 0)",
+        "border": "0px",
+        "overflow": "visible"
+      },
+      "scroll": {
+        "h": 568,
+        "w": 320
+      },
+      "stage": {
+        "h": 568,
+        "w": 320,
+        "x": 0,
+        "y": 0
+      },
+      "viewport": {
+        "h": 568,
+        "w": 320
+      }
+    },
+    {
+      "background": {
+        "box": {
+          "h": 844,
+          "w": 390,
+          "x": 0,
+          "y": 0
+        },
+        "clipPath": "none",
+        "complete": true,
+        "filter": "none",
+        "naturalH": 1254,
+        "naturalW": 1254,
+        "objectFit": "cover",
+        "src": "../../cocos/assets/resources/dungeon-world/demon_tower_1-v1.png"
+      },
+      "controls": [
+        {
+          "box": {
+            "h": 92,
+            "w": 92,
+            "x": 18,
+            "y": 738
+          },
+          "inside": true,
+          "name": "#joystick"
+        },
+        {
+          "box": {
+            "h": 69,
+            "w": 68,
+            "x": 305,
+            "y": 749.5
+          },
+          "inside": true,
+          "name": "#interact"
+        }
+      ],
+      "controlsStyle": {
+        "background": "rgba(0, 0, 0, 0)"
+      },
+      "doors": [
+        {
+          "box": {
+            "h": 112,
+            "w": 78,
+            "x": 156,
+            "y": 142
+          },
+          "hit44": true,
+          "image": {
+            "h": 90,
+            "w": 65.9140625,
+            "x": 162.0390625,
+            "y": 142
+          },
+          "inside": true,
+          "side": "north"
+        },
+        {
+          "box": {
+            "h": 128,
+            "w": 78,
+            "x": 3,
+            "y": 357
+          },
+          "hit44": true,
+          "image": {
+            "h": 90,
+            "w": 65.9140625,
+            "x": 9.0390625,
+            "y": 357
+          },
+          "inside": true,
+          "side": "west"
+        },
+        {
+          "box": {
+            "h": 112,
+            "w": 78,
+            "x": 309,
+            "y": 365
+          },
+          "hit44": true,
+          "image": {
+            "h": 90,
+            "w": 65.9140625,
+            "x": 315.0390625,
+            "y": 365
+          },
+          "inside": true,
+          "side": "east"
+        },
+        {
+          "box": {
+            "h": 112,
+            "w": 78,
+            "x": 156,
+            "y": 588
+          },
+          "hit44": true,
+          "image": {
+            "h": 90,
+            "w": 65.9140625,
+            "x": 162.0390625,
+            "y": 588
+          },
+          "inside": true,
+          "side": "south"
+        }
+      ],
+      "hero": {
+        "box": {
+          "h": 65,
+          "w": 29.328125,
+          "x": 180.65625,
+          "y": 486.9765625
+        },
+        "inside": true
+      },
+      "images": [],
+      "monster": {
+        "box": {
+          "h": 158,
+          "w": 105.328125,
+          "x": 142.3359375,
+          "y": 263.3125
+        },
+        "inside": true
+      },
+      "roomStyle": {
+        "background": "rgba(0, 0, 0, 0)",
+        "border": "0px",
+        "overflow": "visible"
+      },
+      "scroll": {
+        "h": 844,
+        "w": 390
+      },
+      "stage": {
+        "h": 844,
+        "w": 390,
+        "x": 0,
+        "y": 0
+      },
+      "viewport": {
+        "h": 844,
+        "w": 390
+      }
+    }
+  ],
+  "overlapChecks": {
+    "northMonster": false,
+    "heroSouth": false,
+    "heroMonsterArt": false,
+    "heroMonsterCaption": false
+  },
+  "images": [
+    {
+      "loaded": true,
+      "src": "../../cocos/assets/resources/dungeon-world/demon_tower_1-v1.png"
+    },
+    {
+      "loaded": true,
+      "src": "../../cocos/assets/resources/character/reincarnator-v2.png"
+    },
+    {
+      "loaded": true,
+      "src": "../../cocos/assets/resources/dungeon-world/ruined-stone-gate-v1.png"
+    },
+    {
+      "loaded": true,
+      "src": "../../cocos/assets/resources/dungeon-world/ruined-stone-gate-v1.png"
+    },
+    {
+      "loaded": true,
+      "src": "../../cocos/assets/resources/dungeon-world/ruined-stone-gate-v1.png"
+    },
+    {
+      "loaded": true,
+      "src": "../../cocos/assets/resources/dungeon-world/ruined-stone-gate-v1.png"
+    },
+    {
+      "loaded": true,
+      "src": "../../cocos/assets/resources/monster-world/fog-lesser-demon-world-v1.png"
+    },
+    {
+      "loaded": true,
+      "src": "../dungeon-room-fit-v1/single-screen-room-v1.png"
+    }
+  ],
+  "movement": {
+    "input": "actual held joystick pointer",
+    "before": {
+      "bottom": 385.671875,
+      "height": 0,
+      "left": 99.1953125,
+      "right": 99.1953125,
+      "top": 385.671875,
+      "width": 0,
+      "x": 99.1953125,
+      "y": 385.671875
+    },
+    "after": {
+      "bottom": 385.671875,
+      "height": 0,
+      "left": 164.53125,
+      "right": 164.53125,
+      "top": 385.671875,
+      "width": 0,
+      "x": 164.53125,
+      "y": 385.671875
+    },
+    "heroMoved": true,
+    "backgroundFixed": true,
+    "doorsFixed": true
+  },
+  "westFeedback": {
+    "message": "西门封闭，无法通行。",
+    "visible": true
+  },
+  "nearFeedback": {
+    "message": "已靠近雾中妖鬼。此处只演示互动，不开始战斗。",
+    "visible": true
+  },
+  "notesOpen": {
+    "expanded": "true",
+    "visible": true
+  },
+  "consoleErrors": []
+}

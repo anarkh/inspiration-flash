@@ -1,0 +1,10 @@
+Use case: stylized-concept
+Asset type: one isolated game-world event prop sprite for an HTML style prototype.
+Primary request: a small old Chinese wooden notice board on two weathered upright posts with complete low stone footings, a modest broken tiled canopy, and a few torn aged paper slips pinned to the board. A faded dark-red irregular seal mark on one paper; papers contain no legible letters, no characters and no invented writing. Compact practical ruin object.
+Reference role: previously inspected demon_tower_1-v1 dungeon scene and altar-v1 ancient courtyard altar are STYLE REFERENCES ONLY, not edit targets. Match their muted realistic hand-painted dark stone, worn materials and subtle aged brass. Do not copy either composition.
+Style/medium: believable Chinese dark fantasy environment art, realistic hand-painted game illustration with fine wood grain and weathering, subdued brushwork and natural material lighting. Not cartoon, not flat vector, not photoreal product photography, not a shiny 3D toy.
+Composition/framing: only ONE complete notice board, centered, slightly elevated 3/4 top-down game camera around 35 degrees, readable front board and top of canopy; occupies about 78% of a square canvas; all posts, canopy corners and the two stone footings intact, ample transparent padding. No ground plane. No detached extras.
+Lighting/mood: soft desaturated cool overhead light, modest highlights, solid readable silhouette.
+Color palette/materials: dark charcoal brown splintered old timber, charcoal-gray chipped stone footings, dirty muted parchment, one restrained oxblood red smudge, old black iron pins. Low saturation.
+Scene/backdrop: genuinely transparent background with real alpha, including outside the object and between the posts. Only a subtle small contact shadow if needed, no scene.
+Constraints: no text, no letters, no readable characters, no UI, no label, no border, no logo, no watermark, no colored glow, no neon, no white background, no backdrop, no checkerboard painted into the image. Make a finished independent sprite, not a sheet. Keep full footprint inside the canvas.

@@ -1,0 +1,32 @@
+{
+  "entityId": "frequency_leech",
+  "status": "complete",
+  "path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/art-source/monster-world/frequency-leech-world-v1.png",
+  "relativePath": "art-source/monster-world/frequency-leech-world-v1.png",
+  "sourcePath": "/Users/bytedance/.codex/generated_images/01a0ecb5-e134-74b1-b76f-9fe271d8ebce/exec-083652d5-1f6d-4bed-9cc7-fe7ce501631d.png",
+  "referencePath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/monster/frequency-leech-v1.png",
+  "promptSource": "art-source/monster-world/prompts.json:sharedPrompt + subject",
+  "generationTool": "built-in imagegen",
+  "dimensions": {
+    "width": 1024,
+    "height": 1536
+  },
+  "mode": "RGBA",
+  "alpha": {
+    "present": true,
+    "extrema": [
+      0,
+      254
+    ],
+    "transparentPixels": 917040,
+    "transparentFraction": 0.583038330078125,
+    "nearTransparentFractionBelow16": 0.6532618204752604,
+    "cornerValues": [
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "visualCheck": "Full-body skeletal frequency parasite; preserved grille face, antenna backpack and cyan waveform chest tendrils; complete head-to-toes silhouette. Transparent alpha verified. Original generated PNG copied without image edits."
+}

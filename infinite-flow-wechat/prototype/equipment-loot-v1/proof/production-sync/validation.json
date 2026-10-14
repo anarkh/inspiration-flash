@@ -1,0 +1,121 @@
+{
+  "status": "passed",
+  "date": "2026-10-12",
+  "build": "cocos/build/web-mobile-equipment-claim-20261012",
+  "scope": "Production Cocos game in local Web Mobile, isolated test state; existing inventory rendering and commands unchanged",
+  "fixture": {
+    "source": "natural-offer-packet.json",
+    "initialPlayerBoost": {
+      "body": 40,
+      "agility": 20
+    },
+    "preparedWithRealClientCommands": 8,
+    "startsBeforeEliteVictory": true,
+    "pendingOfferInjected": false,
+    "enemy": "tower_butcher",
+    "naturallyGeneratedCandidates": [
+      "bone_spear",
+      "mist_hood",
+      "spirit_robe"
+    ]
+  },
+  "browser": {
+    "viewports": [
+      {
+        "width": 320,
+        "height": 568,
+        "checks": {
+          "claimClearsOffer": true,
+          "claimGrantsExactlyOne": true,
+          "claimedAtLevelOne": true,
+          "claimDoesNotEquip": true,
+          "positionPreserved": true,
+          "wearsChosenItem": true,
+          "wearDoesNotHeal": true,
+          "formalMatchesOwnership": true,
+          "formalMatchesWearing": true,
+          "swapsBack": true,
+          "allOwnedPreserved": true,
+          "allLevelsPreserved": true
+        },
+        "ownedBefore": 7,
+        "ownedAfter": 8,
+        "wearHp": 620,
+        "wearMaxHp": 628,
+        "revisions": {
+          "beforeClaim": 9,
+          "afterClaim": 10,
+          "afterEquip": 11,
+          "afterSwap": 12
+        }
+      },
+      {
+        "width": 390,
+        "height": 844,
+        "checks": {
+          "claimClearsOffer": true,
+          "claimGrantsExactlyOne": true,
+          "claimedAtLevelOne": true,
+          "claimDoesNotEquip": true,
+          "positionPreserved": true,
+          "wearsChosenItem": true,
+          "wearDoesNotHeal": true,
+          "formalMatchesOwnership": true,
+          "formalMatchesWearing": true,
+          "swapsBack": true,
+          "allOwnedPreserved": true,
+          "allLevelsPreserved": true
+        },
+        "ownedBefore": 7,
+        "ownedAfter": 8,
+        "wearHp": 620,
+        "wearMaxHp": 628,
+        "revisions": {
+          "beforeClaim": 9,
+          "afterClaim": 10,
+          "afterEquip": 11,
+          "afterSwap": 12
+        }
+      }
+    ],
+    "closeAndReopenPreservesSelection320": true,
+    "closedOfferDoesNotAutoReopen320": true,
+    "claimReturnsDirectlyToExploration": true,
+    "storageRestore": {
+      "armor": "spirit_robe",
+      "ownedCount": 8,
+      "revision": {
+        "acceptingInput": true,
+        "durableRevision": 13,
+        "ledgerRevision": 13
+      },
+      "sameState": true
+    },
+    "consoleErrors": []
+  },
+  "checks": [
+    "npm run build",
+    "Cocos headless typecheck",
+    "Creator typecheck",
+    "source:verify",
+    "scene:verify",
+    "cocos:sheet:test",
+    "cocos:race:test: 110 scenarios"
+  ],
+  "creator": {
+    "logFinished": true,
+    "processExitCode": 36,
+    "outputVerifiedInActualBrowser": true
+  },
+  "screenshots": [
+    "offer-320.png",
+    "claimed-320.png",
+    "equipped-320.png",
+    "offer-390.png",
+    "equipped-390.png"
+  ],
+  "limitations": [
+    "Local Web Mobile verification only; no WeChat device or release validation",
+    "Preview uses memory storage; refreshing the page resets its current progress"
+  ]
+}

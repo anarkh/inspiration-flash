@@ -1,0 +1,25 @@
+{
+  "entityId": "void_knight",
+  "key": "monster:void_knight_world",
+  "status": "complete",
+  "path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/art-source/monster-world/void-knight-world-v1.png",
+  "sourcePath": "/Users/bytedance/.codex/generated_images/01a0ecb3-a83c-7150-97e6-f486242698d8/exec-8ebb3aff-d8d5-4f4e-92b9-8eb11d73b4d6.png",
+  "referencePath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/monster/void-knight-v1.png",
+  "width": 1024,
+  "height": 1536,
+  "mode": "RGBA",
+  "alpha": {
+    "extrema": [
+      0,
+      254
+    ],
+    "transparentPixels": 941030,
+    "nontransparentPixels": 631834,
+    "partiallyTransparentPixels": 631834
+  },
+  "sha256": "276d33eccc530a33580da5af858a49ef4277a337a67aa9fbaecdc9fe356c5439",
+  "rawCopyUnmodified": true,
+  "visualCheck": "Full helmet, limbs, feet and sword visible; charcoal and bronze armor, cyan floating fragments retained. No frame or text.",
+  "tool": "built-in imagegen",
+  "promptSource": "art-source/monster-world/prompts.json: sharedPrompt + void_knight.subject"
+}

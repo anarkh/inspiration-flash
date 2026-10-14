@@ -1,0 +1,27 @@
+{
+  "entityId": "blindspot_auditor",
+  "status": "generated",
+  "tool": "built-in imagegen",
+  "path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/art-source/monster-world/blindspot-auditor-world-v1.png",
+  "sourcePath": "/Users/bytedance/.codex/generated_images/01a0ecb7-9077-77b0-9e51-db67ae007077/exec-2c2d9921-e63e-49f9-b07c-8c94c9bfa03c.png",
+  "referencePath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/monster/blindspot-auditor-v1.png",
+  "promptSource": "art-source/monster-world/prompts.json sharedPrompt + subject",
+  "width": 1024,
+  "height": 1536,
+  "mode": "RGBA",
+  "alpha": {
+    "min": 0,
+    "max": 254,
+    "transparentPixels": 722811,
+    "totalPixels": 1572864,
+    "corners": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "sha256": "1479a32fa5353fbd7a01bd8aef7a82463ba6d98681bd30189bcb68c4adfc178a",
+  "originalBytesPreserved": true,
+  "visualCheck": "Full-body six-armed auditor; blank ledger face, chains, pen, hanging vessels and red sensor retained; feet and props visible; dark charcoal and old-bronze style; alpha background confirmed."
+}

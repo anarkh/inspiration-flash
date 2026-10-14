@@ -1,0 +1,34 @@
+{
+  "asset_id": "hub-portal-03",
+  "tool": "image_gen.imagegen",
+  "transparent_background": true,
+  "source_path": "/Users/bytedance/.codex/generated_images/01a11977-eba6-7053-8b04-432632e1d812/exec-005ee014-4feb-4e39-85f5-344b35712c5a.png",
+  "output_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-portals-ten/assets/hub-portal-03.png",
+  "sha256": "507a899fc459927f2d68ff381baa2a1e2584177434d2243e86ac5089b348bd17",
+  "source_sha256": "507a899fc459927f2d68ff381baa2a1e2584177434d2243e86ac5089b348bd17",
+  "width": 1190,
+  "height": 1322,
+  "mode": "RGBA",
+  "alpha_extrema": [
+    0,
+    255
+  ],
+  "alpha_zero_pixels": 786656,
+  "alpha_opaque_pixels": 1550,
+  "alpha_partial_pixels": 784974,
+  "alpha_near_opaque_pixels": 722713,
+  "alpha_corners": [
+    0,
+    0,
+    0,
+    0
+  ],
+  "bbox_alpha8": [
+    1,
+    1,
+    1189,
+    1310
+  ],
+  "copied_without_postprocessing": true,
+  "prompt_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-portals-ten/assets/hub-portal-03.prompt.txt"
+}

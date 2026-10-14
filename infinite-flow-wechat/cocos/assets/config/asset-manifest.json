@@ -1,31 +1,31 @@
 {
   "schemaVersion": 2,
-  "manifestRevision": "sha256:18dd6c94a24afa4ec7c0a44b9f6facf4af6ea6f0ef04e60c47ea56aeee468125",
+  "manifestRevision": "sha256:3d2a276a8cf63784d4d67f490a5e33f66304af2267cd13eae938abe026f370df",
   "sourceManifest": {
     "path": "infinite-flow/src/game-assets.ts",
     "version": 1,
     "commit": "2645f0232542684d27de1abc321bb26913320420"
   },
   "resourceRoot": "cocos/assets/resources",
-  "assetCount": 223,
-  "derivedAssetCount": 18,
+  "assetCount": 314,
+  "derivedAssetCount": 5,
   "kindCounts": {
     "character": 5,
-    "npc": 8,
-    "monster": 59,
+    "npc": 15,
+    "monster": 118,
     "equipment": 65,
     "pet": 6,
-    "item": 41,
+    "item": 50,
     "dungeon": 19,
-    "scene": 20
+    "scene": 36
   },
   "formatCounts": {
     "source": {
-      "png": 221,
-      "svg": 2
+      "png": 313,
+      "svg": 1
     },
     "target": {
-      "png": 223
+      "png": 314
     }
   },
   "assets": [
@@ -33,29 +33,27 @@
       "key": "character:reincarnator",
       "kind": "character",
       "entityId": "reincarnator",
-      "resourcePath": "character/reincarnator-v1",
-      "resourceFile": "character/reincarnator-v1.png",
-      "sourceFile": "infinite-flow/public/assets/characters/reincarnator-v1.png",
-      "webSourcePath": "/assets/characters/reincarnator-v1.png",
+      "resourcePath": "character/reincarnator-v2",
+      "resourceFile": "character/reincarnator-v2.png",
+      "sourceFile": "infinite-flow-wechat/prototype/style-refresh/assets/hero-portrait-proposed.png",
       "sourceFormat": "png",
       "targetFormat": "png",
       "cocosImageImport": "supported",
-      "alt": "身穿修补战术护甲、携带符箓与短刃的轮回者",
+      "alt": "黑发束髻、青灰衣与旧金肩甲的轮回者肖像",
       "role": "portrait",
-      "width": 768,
-      "height": 768,
+      "width": 1254,
+      "height": 1254,
       "fit": "cover",
       "source": "project-original-generated",
-      "sourceRevision": 1,
-      "sourceSha256": "163ccf26c4d7fe88b8f4421f6967ee6cf043e4bf7e43c26d4bce421e40656601",
-      "targetSha256": "163ccf26c4d7fe88b8f4421f6967ee6cf043e4bf7e43c26d4bce421e40656601",
+      "sourceRevision": 2,
+      "sourceSha256": "3350c54b38817f003ffbe4acb914c502f9d2c0fef82384b4c68b766b24c456af",
+      "targetSha256": "3350c54b38817f003ffbe4acb914c502f9d2c0fef82384b4c68b766b24c456af",
       "transformation": {
         "operation": "byte-copy",
         "tool": "cp",
-        "version": "macOS 26.5.1 (25F80)",
         "targetDimensions": {
-          "width": 768,
-          "height": 768
+          "width": 1254,
+          "height": 1254
         }
       }
     },
@@ -63,25 +61,24 @@
       "key": "character:reincarnator_walk",
       "kind": "character",
       "entityId": "reincarnator_walk",
-      "resourcePath": "character/reincarnator-walk-v1",
-      "resourceFile": "character/reincarnator-walk-v1.png",
-      "sourceFile": "infinite-flow-wechat/art-source/reincarnator-walk-v1.png",
+      "resourcePath": "character/reincarnator-walk-v2",
+      "resourceFile": "character/reincarnator-walk-v2.png",
+      "sourceFile": "infinite-flow-wechat/art-source/hero-redesign/reincarnator-walk-v2.png",
       "sourceFormat": "png",
       "targetFormat": "png",
       "cocosImageImport": "supported",
-      "alt": "轮回者朝下、左、右、上的四方向全身行走图集，每行四帧",
+      "alt": "束发、青灰围巾与旧铜单肩甲的成年轮回者四方向行走图集，每行四帧",
       "role": "sprite-sheet",
       "width": 1254,
       "height": 1254,
       "fit": "contain",
       "source": "project-original-generated",
-      "sourceRevision": 1,
-      "sourceSha256": "60ab8c83067b17079d4eed210a1764bef65af66cca2585afffbe61472f1548a9",
-      "targetSha256": "60ab8c83067b17079d4eed210a1764bef65af66cca2585afffbe61472f1548a9",
+      "sourceRevision": 2,
+      "sourceSha256": "897deadd34e18c9e3c8e7d52461a8fddac5272503696e263cee2e7baec6bb918",
+      "targetSha256": "897deadd34e18c9e3c8e7d52461a8fddac5272503696e263cee2e7baec6bb918",
       "transformation": {
         "operation": "byte-copy",
         "tool": "cp",
-        "version": "macOS 26.5.1 (25F80)",
         "targetDimensions": {
           "width": 1254,
           "height": 1254
@@ -3482,29 +3479,27 @@
       "key": "equipment:rebirth_amulet",
       "kind": "equipment",
       "entityId": "rebirth_amulet",
-      "resourcePath": "equipment/rebirth-amulet-v1",
-      "resourceFile": "equipment/rebirth-amulet-v1.png",
-      "sourceFile": "infinite-flow/public/assets/equipment/rebirth-amulet-v1.png",
-      "webSourcePath": "/assets/equipment/rebirth-amulet-v1.png",
+      "resourcePath": "equipment/rebirth-amulet-v2",
+      "resourceFile": "equipment/rebirth-amulet-v2.png",
+      "sourceFile": "infinite-flow-wechat/prototype/style-refresh/assets/rebirth-amulet-proposed.png",
       "sourceFormat": "png",
       "targetFormat": "png",
       "cocosImageImport": "supported",
       "alt": "黑曜外壳包裹暗红胚心的复燃胚核",
       "role": "icon",
-      "width": 160,
-      "height": 200,
+      "width": 1122,
+      "height": 1402,
       "fit": "contain",
       "source": "project-original-generated",
-      "sourceRevision": 1,
-      "sourceSha256": "e17603d858f086d7c0d16df96dcc754b60af3c75e2edd64345ad24c316202526",
-      "targetSha256": "e17603d858f086d7c0d16df96dcc754b60af3c75e2edd64345ad24c316202526",
+      "sourceRevision": 2,
+      "sourceSha256": "f048795bad3b3c6a1fed13ccf1cce52620c71f491c88f49662fabdf918656f01",
+      "targetSha256": "f048795bad3b3c6a1fed13ccf1cce52620c71f491c88f49662fabdf918656f01",
       "transformation": {
         "operation": "byte-copy",
         "tool": "cp",
-        "version": "macOS 26.5.1 (25F80)",
         "targetDimensions": {
-          "width": 160,
-          "height": 200
+          "width": 1122,
+          "height": 1402
         }
       }
     },
@@ -3692,29 +3687,27 @@
       "key": "equipment:triage_visor",
       "kind": "equipment",
       "entityId": "triage_visor",
-      "resourcePath": "equipment/triage-visor-v1",
-      "resourceFile": "equipment/triage-visor-v1.png",
-      "sourceFile": "infinite-flow/public/assets/equipment/triage-visor-v1.png",
-      "webSourcePath": "/assets/equipment/triage-visor-v1.png",
+      "resourcePath": "equipment/triage-visor-v2",
+      "resourceFile": "equipment/triage-visor-v2.png",
+      "sourceFile": "infinite-flow-wechat/prototype/style-refresh/assets/triage-visor-proposed.png",
       "sourceFormat": "png",
       "targetFormat": "png",
       "cocosImageImport": "supported",
       "alt": "分光镜片映出警示灯的分诊目镜",
       "role": "icon",
-      "width": 160,
-      "height": 200,
+      "width": 1254,
+      "height": 1254,
       "fit": "contain",
       "source": "project-original-generated",
-      "sourceRevision": 1,
-      "sourceSha256": "7030bf9d44b3d447b8fa4057b7295d9764c7c4ef9740345a70932fe17bf086d1",
-      "targetSha256": "7030bf9d44b3d447b8fa4057b7295d9764c7c4ef9740345a70932fe17bf086d1",
+      "sourceRevision": 2,
+      "sourceSha256": "5d662827b0cca639cc1e40ed63dc9dc3d1eb1521c8cdbf611fb2511a8e606ea9",
+      "targetSha256": "5d662827b0cca639cc1e40ed63dc9dc3d1eb1521c8cdbf611fb2511a8e606ea9",
       "transformation": {
         "operation": "byte-copy",
         "tool": "cp",
-        "version": "macOS 26.5.1 (25F80)",
         "targetDimensions": {
-          "width": 160,
-          "height": 200
+          "width": 1254,
+          "height": 1254
         }
       }
     },
@@ -3812,29 +3805,27 @@
       "key": "equipment:forensic_visor",
       "kind": "equipment",
       "entityId": "forensic_visor",
-      "resourcePath": "equipment/forensic-visor-v1",
-      "resourceFile": "equipment/forensic-visor-v1.png",
-      "sourceFile": "infinite-flow/public/assets/equipment/forensic-visor-v1.png",
-      "webSourcePath": "/assets/equipment/forensic-visor-v1.png",
+      "resourcePath": "equipment/forensic-visor-v2",
+      "resourceFile": "equipment/forensic-visor-v2.png",
+      "sourceFile": "infinite-flow-wechat/prototype/style-refresh/assets/forensic-visor-proposed.png",
       "sourceFormat": "png",
       "targetFormat": "png",
       "cocosImageImport": "supported",
       "alt": "双镜片投射取证扫描线的溯证目镜",
       "role": "icon",
-      "width": 160,
-      "height": 200,
+      "width": 1254,
+      "height": 1254,
       "fit": "contain",
       "source": "project-original-generated",
-      "sourceRevision": 1,
-      "sourceSha256": "093163d0f926ef04302a291db35542bd31f52adc3f140faf06c09fc788b96e33",
-      "targetSha256": "093163d0f926ef04302a291db35542bd31f52adc3f140faf06c09fc788b96e33",
+      "sourceRevision": 2,
+      "sourceSha256": "164d5a3293f2be13845aaed76efd8e51388ebb85a4fe20756d4a28d5e326b8da",
+      "targetSha256": "164d5a3293f2be13845aaed76efd8e51388ebb85a4fe20756d4a28d5e326b8da",
       "transformation": {
         "operation": "byte-copy",
         "tool": "cp",
-        "version": "macOS 26.5.1 (25F80)",
         "targetDimensions": {
-          "width": 160,
-          "height": 200
+          "width": 1254,
+          "height": 1254
         }
       }
     },
@@ -5072,31 +5063,27 @@
       "key": "dungeon:mirror_cycle_city",
       "kind": "dungeon",
       "entityId": "mirror_cycle_city",
-      "resourcePath": "dungeon/mirror-cycle-city",
-      "resourceFile": "dungeon/mirror-cycle-city.png",
-      "sourceFile": "infinite-flow/public/mirror-cycle-city.svg",
-      "webSourcePath": "/mirror-cycle-city.svg",
-      "sourceFormat": "svg",
+      "resourcePath": "dungeon/mirror-cycle-city-v2",
+      "resourceFile": "dungeon/mirror-cycle-city-v2.png",
+      "sourceFile": "infinite-flow-wechat/prototype/style-refresh/assets/mirror-banner-proposed.png",
+      "sourceFormat": "png",
       "targetFormat": "png",
       "cocosImageImport": "supported",
       "alt": "轮回城现实与镜像双相街区",
       "role": "banner",
-      "width": 720,
-      "height": 180,
+      "width": 2172,
+      "height": 724,
       "fit": "cover",
-      "source": "project-original-svg",
-      "sourceRevision": 1,
-      "sourceSha256": "49913a3a74e0d752288de4f631436f5927b1c06ef638bbc16bd36a35cc3095b3",
-      "targetSha256": "7e82295cfbb86c1d8babd7433d1a2ff8a908e57381ac63292947dcaa17ac3f80",
+      "source": "project-original-generated",
+      "sourceRevision": 2,
+      "sourceSha256": "6da074afcd4e0bb6eb8436caf285964d143d84b9bb9ab085e244faf21dfd7d42",
+      "targetSha256": "6da074afcd4e0bb6eb8436caf285964d143d84b9bb9ab085e244faf21dfd7d42",
       "transformation": {
-        "operation": "rasterize-svg-to-png",
-        "tool": "sips",
-        "version": "sips-316",
-        "platform": "macOS 26.5.1 (25F80)",
-        "command": "sips -s format png <sourceFile> --out <resourceFile>",
+        "operation": "byte-copy",
+        "tool": "cp",
         "targetDimensions": {
-          "width": 720,
-          "height": 180
+          "width": 2172,
+          "height": 724
         }
       }
     },
@@ -6227,32 +6214,27 @@
       "key": "item:method_mist_breathing",
       "kind": "item",
       "entityId": "method_mist_breathing",
-      "resourcePath": "item/mist-breathing-v1",
-      "resourceFile": "item/mist-breathing-v1.png",
-      "sourceFile": "infinite-flow-wechat/prototype/npc-grid/assets/methods/mist-breathing-v1.png",
+      "resourcePath": "item/mist-breathing-v2",
+      "resourceFile": "item/mist-breathing-v2.png",
+      "sourceFile": "infinite-flow-wechat/prototype/style-refresh/assets/mist-breathing-proposed.png",
       "sourceFormat": "png",
       "targetFormat": "png",
       "cocosImageImport": "supported",
       "alt": "吐纳诀",
       "role": "icon",
-      "width": 256,
-      "height": 256,
+      "width": 1254,
+      "height": 1254,
       "fit": "contain",
       "source": "project-original-generated",
-      "sourceRevision": 1,
-      "sourceSha256": "41aa9253cb4cd66d184c6531846e370a7f5569e96f472e0220d607321754705b",
-      "targetSha256": "57fbc5e27003314db50117f5ba90136c8c7c19e905be54d354a1a8f2908150b0",
+      "sourceRevision": 2,
+      "sourceSha256": "fee646891c9b7872ae1ec5bf3a13e4b4773eb43b6454023e06fcee602356b6ef",
+      "targetSha256": "fee646891c9b7872ae1ec5bf3a13e4b4773eb43b6454023e06fcee602356b6ef",
       "transformation": {
-        "operation": "resize-png",
-        "tool": "sips",
-        "version": "sips-316",
-        "sourceDimensions": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "targetDimensions": {
           "width": 1254,
           "height": 1254
-        },
-        "targetDimensions": {
-          "width": 256,
-          "height": 256
         }
       }
     },
@@ -6260,32 +6242,27 @@
       "key": "item:method_iron_body",
       "kind": "item",
       "entityId": "method_iron_body",
-      "resourcePath": "item/iron-body-v1",
-      "resourceFile": "item/iron-body-v1.png",
-      "sourceFile": "infinite-flow-wechat/prototype/npc-grid/assets/methods/iron-body-v1.png",
+      "resourcePath": "item/iron-body-v2",
+      "resourceFile": "item/iron-body-v2.png",
+      "sourceFile": "infinite-flow-wechat/prototype/style-refresh/assets/iron-body-proposed.png",
       "sourceFormat": "png",
       "targetFormat": "png",
       "cocosImageImport": "supported",
       "alt": "铁衣诀",
       "role": "icon",
-      "width": 256,
-      "height": 256,
+      "width": 1254,
+      "height": 1254,
       "fit": "contain",
       "source": "project-original-generated",
-      "sourceRevision": 1,
-      "sourceSha256": "4551c1c9de98dd81fbbf2c1bc7b4809e5ee5e93ec64a96ab16d71ea8179d4b70",
-      "targetSha256": "023f75ad072a17efa4d3489be24801874a28e7142afa70e5d445ba6ceb69bed3",
+      "sourceRevision": 2,
+      "sourceSha256": "9637c4b4d1258819769ecbc7d4e538693282e4bea78a9f8df7555221de8f65ab",
+      "targetSha256": "9637c4b4d1258819769ecbc7d4e538693282e4bea78a9f8df7555221de8f65ab",
       "transformation": {
-        "operation": "resize-png",
-        "tool": "sips",
-        "version": "sips-316",
-        "sourceDimensions": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "targetDimensions": {
           "width": 1254,
           "height": 1254
-        },
-        "targetDimensions": {
-          "width": 256,
-          "height": 256
         }
       }
     },
@@ -6293,32 +6270,27 @@
       "key": "item:method_cloud_step",
       "kind": "item",
       "entityId": "method_cloud_step",
-      "resourcePath": "item/cloud-step-v1",
-      "resourceFile": "item/cloud-step-v1.png",
-      "sourceFile": "infinite-flow-wechat/prototype/npc-grid/assets/methods/cloud-step-v1.png",
+      "resourcePath": "item/cloud-step-v2",
+      "resourceFile": "item/cloud-step-v2.png",
+      "sourceFile": "infinite-flow-wechat/prototype/style-refresh/assets/cloud-step-proposed.png",
       "sourceFormat": "png",
       "targetFormat": "png",
       "cocosImageImport": "supported",
       "alt": "云隙步",
       "role": "icon",
-      "width": 256,
-      "height": 256,
+      "width": 1254,
+      "height": 1254,
       "fit": "contain",
       "source": "project-original-generated",
-      "sourceRevision": 1,
-      "sourceSha256": "24727be23ecedda64a3463a4128935a68d9e66bdd3c808a80c3eb3de0cae45a7",
-      "targetSha256": "52aa01ec1ab10b90d27aa5462b509901c2f205cecfb4ef7fccfb8e81799935ab",
+      "sourceRevision": 2,
+      "sourceSha256": "b6bce8615c31b315f893d95c45b399b5dd3968565a5a930a6b9b97b70181a30e",
+      "targetSha256": "b6bce8615c31b315f893d95c45b399b5dd3968565a5a930a6b9b97b70181a30e",
       "transformation": {
-        "operation": "resize-png",
-        "tool": "sips",
-        "version": "sips-316",
-        "sourceDimensions": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "targetDimensions": {
           "width": 1254,
           "height": 1254
-        },
-        "targetDimensions": {
-          "width": 256,
-          "height": 256
         }
       }
     },
@@ -6326,32 +6298,27 @@
       "key": "item:method_gate_sense",
       "kind": "item",
       "entityId": "method_gate_sense",
-      "resourcePath": "item/gate-sense-v1",
-      "resourceFile": "item/gate-sense-v1.png",
-      "sourceFile": "infinite-flow-wechat/prototype/npc-grid/assets/methods/gate-sense-v1.png",
+      "resourcePath": "item/gate-sense-v2",
+      "resourceFile": "item/gate-sense-v2.png",
+      "sourceFile": "infinite-flow-wechat/prototype/style-refresh/assets/gate-sense-proposed.png",
       "sourceFormat": "png",
       "targetFormat": "png",
       "cocosImageImport": "supported",
       "alt": "观门法",
       "role": "icon",
-      "width": 256,
-      "height": 256,
+      "width": 1254,
+      "height": 1254,
       "fit": "contain",
       "source": "project-original-generated",
-      "sourceRevision": 1,
-      "sourceSha256": "e179d97d1f661b7506d2d517b14ac3c9843347b7147e95bb6b2c27d5d492c874",
-      "targetSha256": "b06877ccaf9f1d36ac37759ccc78402e3a323f96bf73bc57aea4033168e4badf",
+      "sourceRevision": 2,
+      "sourceSha256": "e697e7079cac7f5baa47d158126585dee45835d6a4690eab81be2cfc5c668581",
+      "targetSha256": "e697e7079cac7f5baa47d158126585dee45835d6a4690eab81be2cfc5c668581",
       "transformation": {
-        "operation": "resize-png",
-        "tool": "sips",
-        "version": "sips-316",
-        "sourceDimensions": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "targetDimensions": {
           "width": 1254,
           "height": 1254
-        },
-        "targetDimensions": {
-          "width": 256,
-          "height": 256
         }
       }
     },
@@ -6359,32 +6326,27 @@
       "key": "item:method_star_core_method",
       "kind": "item",
       "entityId": "method_star_core_method",
-      "resourcePath": "item/star-core-method-v1",
-      "resourceFile": "item/star-core-method-v1.png",
-      "sourceFile": "infinite-flow-wechat/prototype/npc-grid/assets/methods/star-core-method-v1.png",
+      "resourcePath": "item/star-core-method-v2",
+      "resourceFile": "item/star-core-method-v2.png",
+      "sourceFile": "infinite-flow-wechat/prototype/style-refresh/assets/star-core-method-proposed.png",
       "sourceFormat": "png",
       "targetFormat": "png",
       "cocosImageImport": "supported",
       "alt": "星核炼息",
       "role": "icon",
-      "width": 256,
-      "height": 256,
+      "width": 1254,
+      "height": 1254,
       "fit": "contain",
       "source": "project-original-generated",
-      "sourceRevision": 1,
-      "sourceSha256": "bf749663e13294174b77df56ea788aefc986ad74718a743e85d5c7197cd2b30b",
-      "targetSha256": "65333453624c3b93f3d1cb2aa631807ad33b9cfc1ce81e294955dff2a5112977",
+      "sourceRevision": 2,
+      "sourceSha256": "20749ad83ad69787f4517d2c2fedcc103ebe5389432ec56519fe446d25501f78",
+      "targetSha256": "20749ad83ad69787f4517d2c2fedcc103ebe5389432ec56519fe446d25501f78",
       "transformation": {
-        "operation": "resize-png",
-        "tool": "sips",
-        "version": "sips-316",
-        "sourceDimensions": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "targetDimensions": {
           "width": 1254,
           "height": 1254
-        },
-        "targetDimensions": {
-          "width": 256,
-          "height": 256
         }
       }
     },
@@ -6392,32 +6354,27 @@
       "key": "item:method_beast_taming",
       "kind": "item",
       "entityId": "method_beast_taming",
-      "resourcePath": "item/beast-taming-v1",
-      "resourceFile": "item/beast-taming-v1.png",
-      "sourceFile": "infinite-flow-wechat/prototype/npc-grid/assets/methods/beast-taming-v1.png",
+      "resourcePath": "item/beast-taming-v2",
+      "resourceFile": "item/beast-taming-v2.png",
+      "sourceFile": "infinite-flow-wechat/prototype/style-refresh/assets/beast-taming-proposed.png",
       "sourceFormat": "png",
       "targetFormat": "png",
       "cocosImageImport": "supported",
       "alt": "御灵印",
       "role": "icon",
-      "width": 256,
-      "height": 256,
+      "width": 1254,
+      "height": 1254,
       "fit": "contain",
       "source": "project-original-generated",
-      "sourceRevision": 1,
-      "sourceSha256": "17d57df54e487aab875a5494573cbce53055587b94cca521fd92c7c316015980",
-      "targetSha256": "434d1b93c72b171f12b613f6568dfbfe17a81f46e5c48e6de5f6fc38962dbc4e",
+      "sourceRevision": 2,
+      "sourceSha256": "d38e051e0f5602acc0238f1ea488c833ed61bbe94dcb35d98e63fbfef1ef9a25",
+      "targetSha256": "d38e051e0f5602acc0238f1ea488c833ed61bbe94dcb35d98e63fbfef1ef9a25",
       "transformation": {
-        "operation": "resize-png",
-        "tool": "sips",
-        "version": "sips-316",
-        "sourceDimensions": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "targetDimensions": {
           "width": 1254,
           "height": 1254
-        },
-        "targetDimensions": {
-          "width": 256,
-          "height": 256
         }
       }
     },
@@ -6425,32 +6382,27 @@
       "key": "item:method_void_heart",
       "kind": "item",
       "entityId": "method_void_heart",
-      "resourcePath": "item/void-heart-v1",
-      "resourceFile": "item/void-heart-v1.png",
-      "sourceFile": "infinite-flow-wechat/prototype/npc-grid/assets/methods/void-heart-v1.png",
+      "resourcePath": "item/void-heart-v2",
+      "resourceFile": "item/void-heart-v2.png",
+      "sourceFile": "infinite-flow-wechat/prototype/style-refresh/assets/void-heart-proposed.png",
       "sourceFormat": "png",
       "targetFormat": "png",
       "cocosImageImport": "supported",
       "alt": "虚心诀",
       "role": "icon",
-      "width": 256,
-      "height": 256,
+      "width": 1254,
+      "height": 1254,
       "fit": "contain",
       "source": "project-original-generated",
-      "sourceRevision": 1,
-      "sourceSha256": "84cfdf4b1d6e8a2aecf7f13b44ffddcb796e526e8d7750d55db94e9400f9b043",
-      "targetSha256": "c0eed361268d86a740c64cd396a68fab43bbd55b92febbe224118ba1d95e600b",
+      "sourceRevision": 2,
+      "sourceSha256": "bdfbea5b45d0eefb465100bc1be99f42875361fd5093828712b197356df3a5d1",
+      "targetSha256": "bdfbea5b45d0eefb465100bc1be99f42875361fd5093828712b197356df3a5d1",
       "transformation": {
-        "operation": "resize-png",
-        "tool": "sips",
-        "version": "sips-316",
-        "sourceDimensions": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "targetDimensions": {
           "width": 1254,
           "height": 1254
-        },
-        "targetDimensions": {
-          "width": 256,
-          "height": 256
         }
       }
     },
@@ -6458,32 +6410,27 @@
       "key": "item:bloodline_titan_marrow",
       "kind": "item",
       "entityId": "bloodline_titan_marrow",
-      "resourcePath": "item/titan-marrow-v1",
-      "resourceFile": "item/titan-marrow-v1.png",
-      "sourceFile": "infinite-flow-wechat/prototype/npc-grid/assets/bloodlines/titan-marrow-v1.png",
+      "resourcePath": "item/titan-marrow-v2",
+      "resourceFile": "item/titan-marrow-v2.png",
+      "sourceFile": "infinite-flow-wechat/prototype/style-refresh/assets/titan-marrow-proposed.png",
       "sourceFormat": "png",
       "targetFormat": "png",
       "cocosImageImport": "supported",
       "alt": "巨灵骨髓",
       "role": "icon",
-      "width": 256,
-      "height": 256,
+      "width": 1254,
+      "height": 1254,
       "fit": "contain",
       "source": "project-original-generated",
-      "sourceRevision": 1,
-      "sourceSha256": "739d26d27037fb914b893b297184944177a2cfc58b8e4bbe324d1c0922a513e8",
-      "targetSha256": "170d50df809e85fdb892f07e8b30917c964cd87d8a5206223bb452ce7c2a8616",
+      "sourceRevision": 2,
+      "sourceSha256": "8858a2b1df6c9b2248acc7a18ea58f1e3031c53cf96bb9b3fd0746834d88e2c1",
+      "targetSha256": "8858a2b1df6c9b2248acc7a18ea58f1e3031c53cf96bb9b3fd0746834d88e2c1",
       "transformation": {
-        "operation": "resize-png",
-        "tool": "sips",
-        "version": "sips-316",
-        "sourceDimensions": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "targetDimensions": {
           "width": 1254,
           "height": 1254
-        },
-        "targetDimensions": {
-          "width": 256,
-          "height": 256
         }
       }
     },
@@ -6491,32 +6438,27 @@
       "key": "item:bloodline_void_symbiote",
       "kind": "item",
       "entityId": "bloodline_void_symbiote",
-      "resourcePath": "item/void-symbiote-v1",
-      "resourceFile": "item/void-symbiote-v1.png",
-      "sourceFile": "infinite-flow-wechat/prototype/npc-grid/assets/bloodlines/void-symbiote-v1.png",
+      "resourcePath": "item/void-symbiote-v2",
+      "resourceFile": "item/void-symbiote-v2.png",
+      "sourceFile": "infinite-flow-wechat/prototype/style-refresh/assets/void-symbiote-proposed.png",
       "sourceFormat": "png",
       "targetFormat": "png",
       "cocosImageImport": "supported",
       "alt": "虚界共生体",
       "role": "icon",
-      "width": 256,
-      "height": 256,
+      "width": 1254,
+      "height": 1254,
       "fit": "contain",
       "source": "project-original-generated",
-      "sourceRevision": 1,
-      "sourceSha256": "108560b57a8173203141910ef7747db5973aa47e43c0879ac1d3c1bb7456cb06",
-      "targetSha256": "180acb015974649484e54d0207574af95a33f733bbb8f965ba789161eeb9d68d",
+      "sourceRevision": 2,
+      "sourceSha256": "72888c3a04bfaad75230b216e0b067bdc67f7b944b963e64e1622239bb5958ef",
+      "targetSha256": "72888c3a04bfaad75230b216e0b067bdc67f7b944b963e64e1622239bb5958ef",
       "transformation": {
-        "operation": "resize-png",
-        "tool": "sips",
-        "version": "sips-316",
-        "sourceDimensions": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "targetDimensions": {
           "width": 1254,
           "height": 1254
-        },
-        "targetDimensions": {
-          "width": 256,
-          "height": 256
         }
       }
     },
@@ -6524,32 +6466,27 @@
       "key": "item:bloodline_bastion_chitin",
       "kind": "item",
       "entityId": "bloodline_bastion_chitin",
-      "resourcePath": "item/bastion-chitin-v1",
-      "resourceFile": "item/bastion-chitin-v1.png",
-      "sourceFile": "infinite-flow-wechat/prototype/npc-grid/assets/bloodlines/bastion-chitin-v1.png",
+      "resourcePath": "item/bastion-chitin-v2",
+      "resourceFile": "item/bastion-chitin-v2.png",
+      "sourceFile": "infinite-flow-wechat/prototype/style-refresh/assets/bastion-chitin-proposed.png",
       "sourceFormat": "png",
       "targetFormat": "png",
       "cocosImageImport": "supported",
       "alt": "界壁甲质",
       "role": "icon",
-      "width": 256,
-      "height": 256,
+      "width": 1254,
+      "height": 1254,
       "fit": "contain",
       "source": "project-original-generated",
-      "sourceRevision": 1,
-      "sourceSha256": "295ff576edbcd55f73bcaf80551fe3dba0bafdf4e024355e87e72d19df214c24",
-      "targetSha256": "e5ab9f8287342b1d35936851167fe65eecfb220a72da533ece8bd3502a802351",
+      "sourceRevision": 2,
+      "sourceSha256": "9a571e47a73e3dee8a1724860cf36e0c42b0483035c82b54298c69bee6e1917b",
+      "targetSha256": "9a571e47a73e3dee8a1724860cf36e0c42b0483035c82b54298c69bee6e1917b",
       "transformation": {
-        "operation": "resize-png",
-        "tool": "sips",
-        "version": "sips-316",
-        "sourceDimensions": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "targetDimensions": {
           "width": 1254,
           "height": 1254
-        },
-        "targetDimensions": {
-          "width": 256,
-          "height": 256
         }
       }
     },
@@ -6557,32 +6494,27 @@
       "key": "item:bloodline_phoenix_ember",
       "kind": "item",
       "entityId": "bloodline_phoenix_ember",
-      "resourcePath": "item/phoenix-ember-v1",
-      "resourceFile": "item/phoenix-ember-v1.png",
-      "sourceFile": "infinite-flow-wechat/prototype/npc-grid/assets/bloodlines/phoenix-ember-v1.png",
+      "resourcePath": "item/phoenix-ember-v2",
+      "resourceFile": "item/phoenix-ember-v2.png",
+      "sourceFile": "infinite-flow-wechat/prototype/style-refresh/assets/phoenix-ember-proposed.png",
       "sourceFormat": "png",
       "targetFormat": "png",
       "cocosImageImport": "supported",
       "alt": "涅槃余烬",
       "role": "icon",
-      "width": 256,
-      "height": 256,
+      "width": 1254,
+      "height": 1254,
       "fit": "contain",
       "source": "project-original-generated",
-      "sourceRevision": 1,
-      "sourceSha256": "9338d0a1b2dce92c75583c1f04dc74509414c05aa8760658c4ae9d6cdc314da0",
-      "targetSha256": "feb7db36549cf8a926441e0045c0a01e35c14c4c96861e8c400621e9d183fabf",
+      "sourceRevision": 2,
+      "sourceSha256": "e176580c531b22261c6af7137253b4806e77bee2a9eb3dfe636c2599cdebb599",
+      "targetSha256": "e176580c531b22261c6af7137253b4806e77bee2a9eb3dfe636c2599cdebb599",
       "transformation": {
-        "operation": "resize-png",
-        "tool": "sips",
-        "version": "sips-316",
-        "sourceDimensions": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "targetDimensions": {
           "width": 1254,
           "height": 1254
-        },
-        "targetDimensions": {
-          "width": 256,
-          "height": 256
         }
       }
     },
@@ -6722,32 +6654,2648 @@
       "key": "npc:companion_guide",
       "kind": "npc",
       "entityId": "companion_guide",
-      "resourcePath": "npc/companion-guide-v1",
-      "resourceFile": "npc/companion-guide-v1.png",
-      "sourceFile": "infinite-flow-wechat/prototype/npc-grid/assets/npc/companion-guide-v1.png",
+      "resourcePath": "npc/companion-guide-v2",
+      "resourceFile": "npc/companion-guide-v2.png",
+      "sourceFile": "infinite-flow-wechat/prototype/style-refresh/assets/guide-portrait-proposed.png",
       "sourceFormat": "png",
       "targetFormat": "png",
       "cocosImageImport": "supported",
-      "alt": "同行引路人",
+      "alt": "灰白长辫、旧褐披袍的年长同行引路人肖像",
       "role": "portrait",
-      "width": 256,
-      "height": 256,
+      "width": 1254,
+      "height": 1254,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 2,
+      "sourceSha256": "82989830693f0666bcfe18cc4d8fccdcb86bdc9beaaa97a34ee54eb05fe09c25",
+      "targetSha256": "82989830693f0666bcfe18cc4d8fccdcb86bdc9beaaa97a34ee54eb05fe09c25",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "targetDimensions": {
+          "width": 1254,
+          "height": 1254
+        }
+      }
+    },
+    {
+      "key": "npc:equipment_quartermaster_world",
+      "kind": "npc",
+      "entityId": "equipment_quartermaster_world",
+      "resourcePath": "npc/equipment-quartermaster-world-v1",
+      "resourceFile": "npc/equipment-quartermaster-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/npc-world/equipment-quartermaster-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "管理模块武器的装备商人的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
-      "sourceSha256": "164bcdd3bc07ca1b77e4a7eb01fdc3e674ca8cdcc676f8065f437595f3d46734",
-      "targetSha256": "8fb59292f405c79905563a8c1e44ad2c4751b9cd70f54fdd3e8dbf28f81387f2",
+      "sourceSha256": "600c1db0b1242d1d14b75f3dad405c9db8b3c98fdc5a011da61b48e030b19a6a",
+      "targetSha256": "600c1db0b1242d1d14b75f3dad405c9db8b3c98fdc5a011da61b48e030b19a6a",
       "transformation": {
-        "operation": "resize-png",
-        "tool": "sips",
-        "version": "sips-316",
-        "sourceDimensions": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "version": "macOS 26.5.1 (25F80)",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "npc:supply_trader_world",
+      "kind": "npc",
+      "entityId": "supply_trader_world",
+      "resourcePath": "npc/supply-trader-world-v1",
+      "resourceFile": "npc/supply-trader-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/npc-world/supply-trader-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "携带药箱与符包的补给商人的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "3fe50e3533cab3ec7fc9ae811d01629c93bd62c9d213796f3f40e18a043c0680",
+      "targetSha256": "3fe50e3533cab3ec7fc9ae811d01629c93bd62c9d213796f3f40e18a043c0680",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "version": "macOS 26.5.1 (25F80)",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "npc:pet_keeper_world",
+      "kind": "npc",
+      "entityId": "pet_keeper_world",
+      "resourcePath": "npc/pet-keeper-world-v1",
+      "resourceFile": "npc/pet-keeper-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/npc-world/pet-keeper-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "照料契约灵宠的宠物商人的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "25c3ac6ece564578fa244114413e664c8c571981e2be3d21afa257b33a5e90b1",
+      "targetSha256": "25c3ac6ece564578fa244114413e664c8c571981e2be3d21afa257b33a5e90b1",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "version": "macOS 26.5.1 (25F80)",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "npc:method_master_world",
+      "kind": "npc",
+      "entityId": "method_master_world",
+      "resourcePath": "npc/method-master-world-v1",
+      "resourceFile": "npc/method-master-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/npc-world/method-master-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "手持功法玉简的功法大师的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "4056498566b9fa1a2206531801c4be0a96fe86334e583c064bd1b29d27f134d4",
+      "targetSha256": "4056498566b9fa1a2206531801c4be0a96fe86334e583c064bd1b29d27f134d4",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "version": "macOS 26.5.1 (25F80)",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "npc:bloodline_priest_world",
+      "kind": "npc",
+      "entityId": "bloodline_priest_world",
+      "resourcePath": "npc/bloodline-priest-world-v1",
+      "resourceFile": "npc/bloodline-priest-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/npc-world/bloodline-priest-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "血脉祭司的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "a1a33bb684a5b9ef5073d997b48af2890f698b3007213bddb4024590e1a78a79",
+      "targetSha256": "a1a33bb684a5b9ef5073d997b48af2890f698b3007213bddb4024590e1a78a79",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "version": "macOS 26.5.1 (25F80)",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "npc:companion_guide_world",
+      "kind": "npc",
+      "entityId": "companion_guide_world",
+      "resourcePath": "npc/companion-guide-world-v1",
+      "resourceFile": "npc/companion-guide-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/npc-world/companion-guide-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "同行引路人的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "ac300ce9281c14a454e861427a4b5683b3239bea75301f5e63e67ba894a4b976",
+      "targetSha256": "ac300ce9281c14a454e861427a4b5683b3239bea75301f5e63e67ba894a4b976",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "version": "macOS 26.5.1 (25F80)",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "npc:main_god_projection_world",
+      "kind": "npc",
+      "entityId": "main_god_projection_world",
+      "resourcePath": "npc/main-god-projection-world-v1",
+      "resourceFile": "npc/main-god-projection-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/npc-world/main-god-projection-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "由旧金扫描线构成的主神投影的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "66b0690c093cc055b81d9f5a69b6b1f3df87fafaa4c7f9b601e532fd8270e107",
+      "targetSha256": "66b0690c093cc055b81d9f5a69b6b1f3df87fafaa4c7f9b601e532fd8270e107",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "version": "macOS 26.5.1 (25F80)",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:fog_lesser_demon_world",
+      "kind": "monster",
+      "entityId": "fog_lesser_demon_world",
+      "resourcePath": "monster-world/fog-lesser-demon-world-v1",
+      "resourceFile": "monster-world/fog-lesser-demon-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/fog-lesser-demon-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "从灰雾中显形的雾中妖鬼的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "367aa3b9c405e650082109596b74e83a710c1555e87814018d6f1b6a75d1fce2",
+      "targetSha256": "367aa3b9c405e650082109596b74e83a710c1555e87814018d6f1b6a75d1fce2",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:tower_butcher_world",
+      "kind": "monster",
+      "entityId": "tower_butcher_world",
+      "resourcePath": "monster-world/tower-butcher-world-v1",
+      "resourceFile": "monster-world/tower-butcher-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/tower-butcher-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "披挂骨甲与重刃的剔骨塔卒的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "b3fe1465174f62417f04cc7d8f664a927e257639f70fa2d96159bd731f0819da",
+      "targetSha256": "b3fe1465174f62417f04cc7d8f664a927e257639f70fa2d96159bd731f0819da",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:tide_boatman_world",
+      "kind": "monster",
+      "entityId": "tide_boatman_world",
+      "resourcePath": "monster-world/tide-boatman-world-v1",
+      "resourceFile": "monster-world/tide-boatman-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/tide-boatman-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "提灯涉水而来的潮影船夫的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "7bc59ac3685183d88408593c7b6556045923fe1f9ff250c007388b50b9dd3821",
+      "targetSha256": "7bc59ac3685183d88408593c7b6556045923fe1f9ff250c007388b50b9dd3821",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:mirror_thread_spider_world",
+      "kind": "monster",
+      "entityId": "mirror_thread_spider_world",
+      "resourcePath": "monster-world/mirror-thread-spider-world-v1",
+      "resourceFile": "monster-world/mirror-thread-spider-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/mirror-thread-spider-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "以镜面长足织出银丝的镜丝织蛛的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "6105abb9cab2f0550f46e3e1c1279fce92b3f0c44c4089bce25687bf21635b73",
+      "targetSha256": "6105abb9cab2f0550f46e3e1c1279fce92b3f0c44c4089bce25687bf21635b73",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:rail_wraith_world",
+      "kind": "monster",
+      "entityId": "rail_wraith_world",
+      "resourcePath": "monster-world/rail-wraith-world-v1",
+      "resourceFile": "monster-world/rail-wraith-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/rail-wraith-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "断轨与电弧环绕的断轨怨影的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "21c5331d529e97b5b80e9d9d2ddd766e5eb309a7fbab979a4a6cad9b782df346",
+      "targetSha256": "21c5331d529e97b5b80e9d9d2ddd766e5eb309a7fbab979a4a6cad9b782df346",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:mine_shell_guard_world",
+      "kind": "monster",
+      "entityId": "mine_shell_guard_world",
+      "resourcePath": "monster-world/mine-shell-guard-world-v1",
+      "resourceFile": "monster-world/mine-shell-guard-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/mine-shell-guard-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "披覆星矿晶壳的矿壳守卫的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "05af5c5e9d5e5ad077bf6c0e388d10557815b91552c3882126161808eaf859d1",
+      "targetSha256": "05af5c5e9d5e5ad077bf6c0e388d10557815b91552c3882126161808eaf859d1",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:spark_imp_world",
+      "kind": "monster",
+      "entityId": "spark_imp_world",
+      "resourcePath": "monster-world/spark-imp-world-v1",
+      "resourceFile": "monster-world/spark-imp-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/spark-imp-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "由炭火与恶意凝成的跳火小鬼的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "b4c0e13944f1b97163bbdd6a7cf6845a74b479cfa777b0c1e868bf1fac1c364d",
+      "targetSha256": "b4c0e13944f1b97163bbdd6a7cf6845a74b479cfa777b0c1e868bf1fac1c364d",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:portal_molt_beast_world",
+      "kind": "monster",
+      "entityId": "portal_molt_beast_world",
+      "resourcePath": "monster-world/portal-molt-beast-world-v1",
+      "resourceFile": "monster-world/portal-molt-beast-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/portal-molt-beast-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "甲壳沿界隙裂开的裂门蜕兽的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "3d621e28829bb99a1deff29d66b6ace27b68b14ff27c3162a683949038c81907",
+      "targetSha256": "3d621e28829bb99a1deff29d66b6ace27b68b14ff27c3162a683949038c81907",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:plague_orderly_world",
+      "kind": "monster",
+      "entityId": "plague_orderly_world",
+      "resourcePath": "monster-world/plague-orderly-world-v1",
+      "resourceFile": "monster-world/plague-orderly-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/plague-orderly-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "携带锈蚀医疗工具的锈疫护工的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "3be4cec5bb12f4a3f1e1f247206a81e88e65553b2d84ca212f771552a258f8c0",
+      "targetSha256": "3be4cec5bb12f4a3f1e1f247206a81e88e65553b2d84ca212f771552a258f8c0",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:pulse_doctor_world",
+      "kind": "monster",
+      "entityId": "pulse_doctor_world",
+      "resourcePath": "monster-world/pulse-doctor-world-v1",
+      "resourceFile": "monster-world/pulse-doctor-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/pulse-doctor-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "操纵脉冲器械的脉冲医师的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "0b687fb84d42dd06a56d8ff18b4ae16c181cbbfedf3742df1fe4c19fe9947114",
+      "targetSha256": "0b687fb84d42dd06a56d8ff18b4ae16c181cbbfedf3742df1fe4c19fe9947114",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:ash_duelist_world",
+      "kind": "monster",
+      "entityId": "ash_duelist_world",
+      "resourcePath": "monster-world/ash-duelist-world-v1",
+      "resourceFile": "monster-world/ash-duelist-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/ash-duelist-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "甲片间燃着余烬的灰烬斗士的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "98f9d941d03fe81e67e0e486393bb1b6725a8f3eaf45666207086b6586e2c4ce",
+      "targetSha256": "98f9d941d03fe81e67e0e486393bb1b6725a8f3eaf45666207086b6586e2c4ce",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:furnace_judge_world",
+      "kind": "monster",
+      "entityId": "furnace_judge_world",
+      "resourcePath": "monster-world/furnace-judge-world-v1",
+      "resourceFile": "monster-world/furnace-judge-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/furnace-judge-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "执掌炽热裁决刃的炉心裁判的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "95c80d176bbf6fe68b1288f86002f6b88e60b54bc1f834714880f800926f202c",
+      "targetSha256": "95c80d176bbf6fe68b1288f86002f6b88e60b54bc1f834714880f800926f202c",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:paper_librarian_world",
+      "kind": "monster",
+      "entityId": "paper_librarian_world",
+      "resourcePath": "monster-world/paper-librarian-world-v1",
+      "resourceFile": "monster-world/paper-librarian-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/paper-librarian-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "空白书页环绕的无面纸面馆主的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "1a1797147d7eeda7e540124c35305f4bfb71cd0d184849770353d3e2d35d964d",
+      "targetSha256": "1a1797147d7eeda7e540124c35305f4bfb71cd0d184849770353d3e2d35d964d",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:dream_jailer_world",
+      "kind": "monster",
+      "entityId": "dream_jailer_world",
+      "resourcePath": "monster-world/dream-jailer-world-v1",
+      "resourceFile": "monster-world/dream-jailer-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/dream-jailer-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "拖曳梦锁与封存笼的梦牢看守的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "30ceda9444d5f8d74a7bf58bd077da57c127748d118649652b4284797d1e37a5",
+      "targetSha256": "30ceda9444d5f8d74a7bf58bd077da57c127748d118649652b4284797d1e37a5",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:void_knight_world",
+      "kind": "monster",
+      "entityId": "void_knight_world",
+      "resourcePath": "monster-world/void-knight-world-v1",
+      "resourceFile": "monster-world/void-knight-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/void-knight-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "甲片悬浮于界隙之间的虚界骑士的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "276d33eccc530a33580da5af858a49ef4277a337a67aa9fbaecdc9fe356c5439",
+      "targetSha256": "276d33eccc530a33580da5af858a49ef4277a337a67aa9fbaecdc9fe356c5439",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:main_god_echo_world",
+      "kind": "monster",
+      "entityId": "main_god_echo_world",
+      "resourcePath": "monster-world/main-god-echo-world-v1",
+      "resourceFile": "monster-world/main-god-echo-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/main-god-echo-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "由黑曜碎面与扫描环构成的主神残响的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "358586e9764810cabfe76c1ed3925e208a918e7e4949a71ff00fbae96904c8e7",
+      "targetSha256": "358586e9764810cabfe76c1ed3925e208a918e7e4949a71ff00fbae96904c8e7",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:clockwork_scout_world",
+      "kind": "monster",
+      "entityId": "clockwork_scout_world",
+      "resourcePath": "monster-world/clockwork-scout-world-v1",
+      "resourceFile": "monster-world/clockwork-scout-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/clockwork-scout-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "拖曳时序残影的发条侦察兵的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "71df096de0ea3403dff66280ae30222642970e0adce690a9426be83c76b3849e",
+      "targetSha256": "71df096de0ea3403dff66280ae30222642970e0adce690a9426be83c76b3849e",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:epoch_sentinel_world",
+      "kind": "monster",
+      "entityId": "epoch_sentinel_world",
+      "resourcePath": "monster-world/epoch-sentinel-world-v1",
+      "resourceFile": "monster-world/epoch-sentinel-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/epoch-sentinel-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "背负纪元环与冲击残响的纪元哨卫的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "4604d86f40abafcfefcf2bcaa4790054cf8ea9a0e61e059b2bd3c6d87618f450",
+      "targetSha256": "4604d86f40abafcfefcf2bcaa4790054cf8ea9a0e61e059b2bd3c6d87618f450",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:zero_hour_regent_world",
+      "kind": "monster",
+      "entityId": "zero_hour_regent_world",
+      "resourcePath": "monster-world/zero-hour-regent-world-v1",
+      "resourceFile": "monster-world/zero-hour-regent-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/zero-hour-regent-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "过去与未来重影交叠的零时摄政的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "51e199c78a354b104f2842e48b448e9a3cbef1379d61adc31a59d1f717312809",
+      "targetSha256": "51e199c78a354b104f2842e48b448e9a3cbef1379d61adc31a59d1f717312809",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:verdict_usher_world",
+      "kind": "monster",
+      "entityId": "verdict_usher_world",
+      "resourcePath": "monster-world/verdict-usher-world-v1",
+      "resourceFile": "monster-world/verdict-usher-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/verdict-usher-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "手持悬浮裁决武器的裁决执事的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "5a489936532fce957d06c8f8f0f19965587d8407b7cb5e04821e8a2a774fd0d7",
+      "targetSha256": "5a489936532fce957d06c8f8f0f19965587d8407b7cb5e04821e8a2a774fd0d7",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:paradox_bailiff_world",
+      "kind": "monster",
+      "entityId": "paradox_bailiff_world",
+      "resourcePath": "monster-world/paradox-bailiff-world-v1",
+      "resourceFile": "monster-world/paradox-bailiff-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/paradox-bailiff-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "因果位置彼此倒置的悖论法警的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "df87b90ff7e132da62a5ac4f53b498083d448745909d979923e3ebaf74bbb540",
+      "targetSha256": "df87b90ff7e132da62a5ac4f53b498083d448745909d979923e3ebaf74bbb540",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:zero_sum_auditor_world",
+      "kind": "monster",
+      "entityId": "zero_sum_auditor_world",
+      "resourcePath": "monster-world/zero-sum-auditor-world-v1",
+      "resourceFile": "monster-world/zero-sum-auditor-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/zero-sum-auditor-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "双侧衡臂汇入黑曜核心的零和审计官的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "707775f549bb04889cf9c29a9afe1e363507c95268fea52816d9f8c8f6369dbe",
+      "targetSha256": "707775f549bb04889cf9c29a9afe1e363507c95268fea52816d9f8c8f6369dbe",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:entropy_deckhand_world",
+      "kind": "monster",
+      "entityId": "entropy_deckhand_world",
+      "resourcePath": "monster-world/entropy-deckhand-world-v1",
+      "resourceFile": "monster-world/entropy-deckhand-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/entropy-deckhand-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "失序结晶缠身的熵舱水手的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "6059c5fa0d85800dd3ded7a981bc98b20b71df1f0250140e874e2c3277f5908a",
+      "targetSha256": "6059c5fa0d85800dd3ded7a981bc98b20b71df1f0250140e874e2c3277f5908a",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:dissipation_navigator_world",
+      "kind": "monster",
+      "entityId": "dissipation_navigator_world",
+      "resourcePath": "monster-world/dissipation-navigator-world-v1",
+      "resourceFile": "monster-world/dissipation-navigator-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/dissipation-navigator-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "与破损星盘融合的耗散领航员的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "a7043e7acdda0dd766fdeb912d59925c2bbc09ffdec2388dc549f3fb2ecc8408",
+      "targetSha256": "a7043e7acdda0dd766fdeb912d59925c2bbc09ffdec2388dc549f3fb2ecc8408",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:last_helmsman_world",
+      "kind": "monster",
+      "entityId": "last_helmsman_world",
+      "resourcePath": "monster-world/last-helmsman-world-v1",
+      "resourceFile": "monster-world/last-helmsman-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/last-helmsman-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "与崩解舵轮融为一体的终末舵手的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "b7a8780302bf9e69f33e98a345aba57ba5b74b0ef2c36f6be2d4463510400273",
+      "targetSha256": "b7a8780302bf9e69f33e98a345aba57ba5b74b0ef2c36f6be2d4463510400273",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:parallax_hunter_world",
+      "kind": "monster",
+      "entityId": "parallax_hunter_world",
+      "resourcePath": "monster-world/parallax-hunter-world-v1",
+      "resourceFile": "monster-world/parallax-hunter-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/parallax-hunter-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "本体与镜像彼此错位的视差猎手的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "75d6f5a993be6e30a2245d284643a187c38b8f8b0b231248fa9e727bab97d114",
+      "targetSha256": "75d6f5a993be6e30a2245d284643a187c38b8f8b0b231248fa9e727bab97d114",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:mirror_chorus_world",
+      "kind": "monster",
+      "entityId": "mirror_chorus_world",
+      "resourcePath": "monster-world/mirror-chorus-world-v1",
+      "resourceFile": "monster-world/mirror-chorus-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/mirror-chorus-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "多重镜像躯干交叠的镜群合唱者的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "a3b9922ffe18effcdd382c3ea06d36a2d774de2dba8e49c759b27e0a97fc6222",
+      "targetSha256": "a3b9922ffe18effcdd382c3ea06d36a2d774de2dba8e49c759b27e0a97fc6222",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:nameless_reflection_world",
+      "kind": "monster",
+      "entityId": "nameless_reflection_world",
+      "resourcePath": "monster-world/nameless-reflection-world-v1",
+      "resourceFile": "monster-world/nameless-reflection-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/nameless-reflection-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "身披黑曜镜甲的无名镜王的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "b535a15bbd74b97c1afb82ab610695dc55943dd8f3cf85241c48689446c8538c",
+      "targetSha256": "b535a15bbd74b97c1afb82ab610695dc55943dd8f3cf85241c48689446c8538c",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:erasure_copyist_world",
+      "kind": "monster",
+      "entityId": "erasure_copyist_world",
+      "resourcePath": "monster-world/erasure-copyist-world-v1",
+      "resourceFile": "monster-world/erasure-copyist-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/erasure-copyist-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "空白书页环绕的删界抄写员的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "931bc0af0062f16c07289c13b3c9b8957671165a7e096efd0674bf20be2a7102",
+      "targetSha256": "931bc0af0062f16c07289c13b3c9b8957671165a7e096efd0674bf20be2a7102",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:palimpsest_censor_world",
+      "kind": "monster",
+      "entityId": "palimpsest_censor_world",
+      "resourcePath": "monster-world/palimpsest-censor-world-v1",
+      "resourceFile": "monster-world/palimpsest-censor-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/palimpsest-censor-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "以覆写书页作盾的覆页裁定者的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "165a2f385de943a0177ee0f9fd9ae4a07e0ec5f9bf0b3f836a67a4ce6d5b3a25",
+      "targetSha256": "165a2f385de943a0177ee0f9fd9ae4a07e0ec5f9bf0b3f836a67a4ce6d5b3a25",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:last_redactor_world",
+      "kind": "monster",
+      "entityId": "last_redactor_world",
+      "resourcePath": "monster-world/last-redactor-world-v1",
+      "resourceFile": "monster-world/last-redactor-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/last-redactor-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "手持巨型删界笔的终稿删界官的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "d6262237f24862d61728cc0edc5fc4155039871a8fcdae0045881381655f33f5",
+      "targetSha256": "d6262237f24862d61728cc0edc5fc4155039871a8fcdae0045881381655f33f5",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:reserve_bailiff_world",
+      "kind": "monster",
+      "entityId": "reserve_bailiff_world",
+      "resourcePath": "monster-world/reserve-bailiff-world-v1",
+      "resourceFile": "monster-world/reserve-bailiff-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/reserve-bailiff-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "账本锁链缠腕的底价执役的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "ec60af0020ce626145dff3e0a5a501bded0c7daf9c470fb7842e2e72d41d6e58",
+      "targetSha256": "ec60af0020ce626145dff3e0a5a501bded0c7daf9c470fb7842e2e72d41d6e58",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:inheritance_mimic_world",
+      "kind": "monster",
+      "entityId": "inheritance_mimic_world",
+      "resourcePath": "monster-world/inheritance-mimic-world-v1",
+      "resourceFile": "monster-world/inheritance-mimic-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/inheritance-mimic-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "遗物与面孔不断变形的遗产拟形体的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "b5ca9bbd6eb12b68583b33060b0bffea0ba858da67caf26cf152737be513a7b6",
+      "targetSha256": "b5ca9bbd6eb12b68583b33060b0bffea0ba858da67caf26cf152737be513a7b6",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:estate_auctioneer_world",
+      "kind": "monster",
+      "entityId": "estate_auctioneer_world",
+      "resourcePath": "monster-world/estate-auctioneer-world-v1",
+      "resourceFile": "monster-world/estate-auctioneer-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/estate-auctioneer-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "巨槌与手臂融合的遗产执槌人的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "9bce1b908d081d12ca9c787fa956ca520b30018a795580bf107680fc80f2a800",
+      "targetSha256": "9bce1b908d081d12ca9c787fa956ca520b30018a795580bf107680fc80f2a800",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:gene_stalker_world",
+      "kind": "monster",
+      "entityId": "gene_stalker_world",
+      "resourcePath": "monster-world/gene-stalker-world-v1",
+      "resourceFile": "monster-world/gene-stalker-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/gene-stalker-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "血清瓶嵌入肋骨的基因猎犬的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "061efbb8d6347196f045b7a53e780e7690b973f216ddb68b85a78b653518230c",
+      "targetSha256": "061efbb8d6347196f045b7a53e780e7690b973f216ddb68b85a78b653518230c",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:mutation_guardian_world",
+      "kind": "monster",
+      "entityId": "mutation_guardian_world",
+      "resourcePath": "monster-world/mutation-guardian-world-v1",
+      "resourceFile": "monster-world/mutation-guardian-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/mutation-guardian-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "活性甲壳与血清罐共生的变异守库体的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "91aca446f2e3b37f930acbca05ff166cf2d48b6bcab668e52064389b1b320666",
+      "targetSha256": "91aca446f2e3b37f930acbca05ff166cf2d48b6bcab668e52064389b1b320666",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:primal_curator_world",
+      "kind": "monster",
+      "entityId": "primal_curator_world",
+      "resourcePath": "monster-world/primal-curator-world-v1",
+      "resourceFile": "monster-world/primal-curator-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/primal-curator-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "托起螺旋样本架的原型典藏官的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "f4b07d8a2b6b0805cee0c5d1110b9390eb47e027fdd3920ba0ba47f5c76c317f",
+      "targetSha256": "f4b07d8a2b6b0805cee0c5d1110b9390eb47e027fdd3920ba0ba47f5c76c317f",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:frequency_leech_world",
+      "kind": "monster",
+      "entityId": "frequency_leech_world",
+      "resourcePath": "monster-world/frequency-leech-world-v1",
+      "resourceFile": "monster-world/frequency-leech-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/frequency-leech-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "波形触须贯穿胸口的频段寄生体的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "aade2832f8071dc3e76c119f5ec28b08bc08a8de93383c4d64a512840aee08ec",
+      "targetSha256": "aade2832f8071dc3e76c119f5ec28b08bc08a8de93383c4d64a512840aee08ec",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:dead_air_mimic_world",
+      "kind": "monster",
+      "entityId": "dead_air_mimic_world",
+      "resourcePath": "monster-world/dead-air-mimic-world-v1",
+      "resourceFile": "monster-world/dead-air-mimic-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/dead-air-mimic-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "磁带环缠绕玻璃耳面的死频拟声体的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "0a85825e729f5ca2a0fce69674b2b5038c38731ca145beb07de8b5eea918f6c2",
+      "targetSha256": "0a85825e729f5ca2a0fce69674b2b5038c38731ca145beb07de8b5eea918f6c2",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:broadcast_warden_world",
+      "kind": "monster",
+      "entityId": "broadcast_warden_world",
+      "resourcePath": "monster-world/broadcast-warden-world-v1",
+      "resourceFile": "monster-world/broadcast-warden-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/broadcast-warden-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "以锁频盾护身的广播守卫的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "c314843a99318ef6fc3b3e5f145f038b10374aaa92461eaf4b27ac80aafec32b",
+      "targetSha256": "c314843a99318ef6fc3b3e5f145f038b10374aaa92461eaf4b27ac80aafec32b",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:last_broadcaster_world",
+      "kind": "monster",
+      "entityId": "last_broadcaster_world",
+      "resourcePath": "monster-world/last-broadcaster-world-v1",
+      "resourceFile": "monster-world/last-broadcaster-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/last-broadcaster-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "与三座中继桅杆融合的末频道播音主的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "160ec6d9b9c26b5456a64494b20dfce481d88aaa708116f3eade247e3e5b526c",
+      "targetSha256": "160ec6d9b9c26b5456a64494b20dfce481d88aaa708116f3eade247e3e5b526c",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:mimic_survivor_world",
+      "kind": "monster",
+      "entityId": "mimic_survivor_world",
+      "resourcePath": "monster-world/mimic-survivor-world-v1",
+      "resourceFile": "monster-world/mimic-survivor-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/mimic-survivor-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "皮下浮现第二张脸的拟声幸存者的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "8e6ad4ab9fc8fe3af8c6432754f03948ef3081bf5dfd8bbbaab38e2779d17782",
+      "targetSha256": "8e6ad4ab9fc8fe3af8c6432754f03948ef3081bf5dfd8bbbaab38e2779d17782",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:rogue_sentry_world",
+      "kind": "monster",
+      "entityId": "rogue_sentry_world",
+      "resourcePath": "monster-world/rogue-sentry-world-v1",
+      "resourceFile": "monster-world/rogue-sentry-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/rogue-sentry-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "三段充能灯亮起的失控哨戒炮的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "a72552210bf4296278840181b814f2a5d076b9fa4ec005e0051b5416ed0a81f2",
+      "targetSha256": "a72552210bf4296278840181b814f2a5d076b9fa4ec005e0051b5416ed0a81f2",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:shelter_enforcer_world",
+      "kind": "monster",
+      "entityId": "shelter_enforcer_world",
+      "resourcePath": "monster-world/shelter-enforcer-world-v1",
+      "resourceFile": "monster-world/shelter-enforcer-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/shelter-enforcer-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "路障与注射器构成双臂的避难所执行体的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "1046bffa3e90682aed702858996c4927d58533b22386e673f290235bf7f6b90f",
+      "targetSha256": "1046bffa3e90682aed702858996c4927d58533b22386e673f290235bf7f6b90f",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:evacuation_horror_world",
+      "kind": "monster",
+      "entityId": "evacuation_horror_world",
+      "resourcePath": "monster-world/evacuation-horror-world-v1",
+      "resourceFile": "monster-world/evacuation-horror-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/evacuation-horror-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "担架与撤离束带扭结成的撤离畸变体的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "a85738b093153d1f3487732d116df2f0d9d552120eac6ff707c80a7c53bc7e27",
+      "targetSha256": "a85738b093153d1f3487732d116df2f0d9d552120eac6ff707c80a7c53bc7e27",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:shelter_overseer_world",
+      "kind": "monster",
+      "entityId": "shelter_overseer_world",
+      "resourcePath": "monster-world/shelter-overseer-world-v1",
+      "resourceFile": "monster-world/shelter-overseer-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/shelter-overseer-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "监控屏与警报号角组成的失联总控的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "ce0f34eeaae109f745a45e48d82521cd0ba1abd9af7311a5608352bd1c2776a5",
+      "targetSha256": "ce0f34eeaae109f745a45e48d82521cd0ba1abd9af7311a5608352bd1c2776a5",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:hostile_witness_world",
+      "kind": "monster",
+      "entityId": "hostile_witness_world",
+      "resourcePath": "monster-world/hostile-witness-world-v1",
+      "resourceFile": "monster-world/hostile-witness-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/hostile-witness-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "被锁在证词架上的敌意证人的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "ffee3a3fd8f8d7d88b566569584b4ace34d017185ffc98f55cdce0b55b484711",
+      "targetSha256": "ffee3a3fd8f8d7d88b566569584b4ace34d017185ffc98f55cdce0b55b484711",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:archive_censor_world",
+      "kind": "monster",
+      "entityId": "archive_censor_world",
+      "resourcePath": "monster-world/archive-censor-world-v1",
+      "resourceFile": "monster-world/archive-censor-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/archive-censor-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "档案盒吞没空白证页的档案删录官的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "bdc16b6c31691fee293c9050e370a024712847ab580d89f81b7c50cedc846438",
+      "targetSha256": "bdc16b6c31691fee293c9050e370a024712847ab580d89f81b7c50cedc846438",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:perjury_hound_world",
+      "kind": "monster",
+      "entityId": "perjury_hound_world",
+      "resourcePath": "monster-world/perjury-hound-world-v1",
+      "resourceFile": "monster-world/perjury-hound-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/perjury-hound-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "由案卷与铁骨缝合的伪证猎犬的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "7dcc8259e7f8bb669f4857dbec5281334c0e67147ef45c9ee9cf18a82d3c8763",
+      "targetSha256": "7dcc8259e7f8bb669f4857dbec5281334c0e67147ef45c9ee9cf18a82d3c8763",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:false_testimony_judge_world",
+      "kind": "monster",
+      "entityId": "false_testimony_judge_world",
+      "resourcePath": "monster-world/false-testimony-judge-world-v1",
+      "resourceFile": "monster-world/false-testimony-judge-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/false-testimony-judge-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "胸嵌三盏裁定灯的伪证主审的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "303979858cd84ca32181f0c2951c6dff69d4a450e2efc7b365577838b84ea146",
+      "targetSha256": "303979858cd84ca32181f0c2951c6dff69d4a450e2efc7b365577838b84ea146",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:cue_stalker_world",
+      "kind": "monster",
+      "entityId": "cue_stalker_world",
+      "resourcePath": "monster-world/cue-stalker-world-v1",
+      "resourceFile": "monster-world/cue-stalker-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/cue-stalker-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "沿起拍光束扑出的场记潜猎者的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "875be82938e4450157038743e415d8ec44b5a577d98287aef6e1365a1cda6bef",
+      "targetSha256": "875be82938e4450157038743e415d8ec44b5a577d98287aef6e1365a1cda6bef",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:continuity_editor_world",
+      "kind": "monster",
+      "entityId": "continuity_editor_world",
+      "resourcePath": "monster-world/continuity-editor-world-v1",
+      "resourceFile": "monster-world/continuity-editor-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/continuity-editor-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "双手形似剪刀的连续性剪辑师的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "35b0e7338e475334196602e280655781f12bb38f832bb05f02c36eac646e6f4b",
+      "targetSha256": "35b0e7338e475334196602e280655781f12bb38f832bb05f02c36eac646e6f4b",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:retake_double_world",
+      "kind": "monster",
+      "entityId": "retake_double_world",
+      "resourcePath": "monster-world/retake-double-world-v1",
+      "resourceFile": "monster-world/retake-double-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/retake-double-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "双躯共用一条脊柱的重拍替身的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "c180bc6dfe295aec674107969a06d28f2f046781ba276368635f538f3ae14699",
+      "targetSha256": "c180bc6dfe295aec674107969a06d28f2f046781ba276368635f538f3ae14699",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:final_cut_director_world",
+      "kind": "monster",
+      "entityId": "final_cut_director_world",
+      "resourcePath": "monster-world/final-cut-director-world-v1",
+      "resourceFile": "monster-world/final-cut-director-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/final-cut-director-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "冻结画框环绕头部的终剪导演的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "e7e0c07d6a42e5db7436842275c101a255997ea2835ee08b0ded37572b37dbd5",
+      "targetSha256": "e7e0c07d6a42e5db7436842275c101a255997ea2835ee08b0ded37572b37dbd5",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:sweep_sentinel_world",
+      "kind": "monster",
+      "entityId": "sweep_sentinel_world",
+      "resourcePath": "monster-world/sweep-sentinel-world-v1",
+      "resourceFile": "monster-world/sweep-sentinel-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/sweep-sentinel-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "扇形视锥扫过黑甲的扫视哨兵的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "05cbb0cad7586a76ace689dd5b0a04513b2378b34a2cb4bbd53743536dfa17bb",
+      "targetSha256": "05cbb0cad7586a76ace689dd5b0a04513b2378b34a2cb4bbd53743536dfa17bb",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:phase_hunter_drone_world",
+      "kind": "monster",
+      "entityId": "phase_hunter_drone_world",
+      "resourcePath": "monster-world/phase-hunter-drone-world-v1",
+      "resourceFile": "monster-world/phase-hunter-drone-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/phase-hunter-drone-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "双相护盾包围核心的相位猎杀无人机的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "bc311e99cec93e2567f2ce28ecc0a2059ea81fd41aa8285d2c26c26e1d5ee6c4",
+      "targetSha256": "bc311e99cec93e2567f2ce28ecc0a2059ea81fd41aa8285d2c26c26e1d5ee6c4",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:blindspot_auditor_world",
+      "kind": "monster",
+      "entityId": "blindspot_auditor_world",
+      "resourcePath": "monster-world/blindspot-auditor-world-v1",
+      "resourceFile": "monster-world/blindspot-auditor-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/blindspot-auditor-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "以空白账本覆面的盲区审计官的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "1479a32fa5353fbd7a01bd8aef7a82463ba6d98681bd30189bcb68c4adfc178a",
+      "targetSha256": "1479a32fa5353fbd7a01bd8aef7a82463ba6d98681bd30189bcb68c4adfc178a",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:exposure_double_world",
+      "kind": "monster",
+      "entityId": "exposure_double_world",
+      "resourcePath": "monster-world/exposure-double-world-v1",
+      "resourceFile": "monster-world/exposure-double-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/exposure-double-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "正反重影同时过曝的曝光替身的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "373cc2210bfb3644476f0576b726928d815eee07493e8522f45d80e0b1a8a805",
+      "targetSha256": "373cc2210bfb3644476f0576b726928d815eee07493e8522f45d80e0b1a8a805",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "monster:all_sight_warden_world",
+      "kind": "monster",
+      "entityId": "all_sight_warden_world",
+      "resourcePath": "monster-world/all-sight-warden-world-v1",
+      "resourceFile": "monster-world/all-sight-warden-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/monster-world/all-sight-warden-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "观测透镜环绕核心的万目监察者的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "1ac87a6766b1e343adf3082de3954c052e86ba0652cb465c4ba990ca31152274",
+      "targetSha256": "1ac87a6766b1e343adf3082de3954c052e86ba0652cb465c4ba990ca31152274",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "scene:hub_courtyard_walk",
+      "kind": "scene",
+      "entityId": "hub_courtyard_walk",
+      "resourcePath": "hub-courtyard/walk-sanctuary-v1",
+      "resourceFile": "hub-courtyard/walk-sanctuary-v1.png",
+      "sourceFile": "infinite-flow-wechat/prototype/hub-draw/assets/walk-sanctuary-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "轮回庭院正立横向背景：旧金石墙、柱廊与连续浅纵深石板地面",
+      "role": "scene",
+      "width": 2172,
+      "height": 724,
+      "fit": "cover",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "22cf1dfe40d3fb5452e4863d251324bf2bc4361a338a7c7f83aeece655bcbb08",
+      "targetSha256": "22cf1dfe40d3fb5452e4863d251324bf2bc4361a338a7c7f83aeece655bcbb08",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 2172,
+          "height": 724
+        }
+      }
+    },
+    {
+      "key": "scene:courtyard_pillar",
+      "kind": "scene",
+      "entityId": "courtyard_pillar",
+      "resourcePath": "hub-courtyard/pillar-v1",
+      "resourceFile": "hub-courtyard/pillar-v1.png",
+      "sourceFile": "infinite-flow-wechat/prototype/hub-draw/assets/courtyard-props/pillar-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "带旧金莲云纹的透明石柱",
+      "role": "scene",
+      "width": 870,
+      "height": 1808,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "9c0509f4d3157d178605940cd96ff4c39088e03222cf76a472dfde53dc430875",
+      "targetSha256": "9c0509f4d3157d178605940cd96ff4c39088e03222cf76a472dfde53dc430875",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 870,
+          "height": 1808
+        }
+      }
+    },
+    {
+      "key": "scene:courtyard_crate",
+      "kind": "scene",
+      "entityId": "courtyard_crate",
+      "resourcePath": "hub-courtyard/crate-v1",
+      "resourceFile": "hub-courtyard/crate-v1.png",
+      "sourceFile": "infinite-flow-wechat/prototype/hub-draw/assets/courtyard-props/crate-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "带旧铜金包角的透明木箱",
+      "role": "scene",
+      "width": 1457,
+      "height": 1080,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "b22bf93d22614788408ce9c829a395fa21daf7cda01056db98de2f9a51891223",
+      "targetSha256": "b22bf93d22614788408ce9c829a395fa21daf7cda01056db98de2f9a51891223",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1457,
+          "height": 1080
+        }
+      }
+    },
+    {
+      "key": "scene:courtyard_altar",
+      "kind": "scene",
+      "entityId": "courtyard_altar",
+      "resourcePath": "hub-courtyard/altar-v1",
+      "resourceFile": "hub-courtyard/altar-v1.png",
+      "sourceFile": "infinite-flow-wechat/prototype/hub-draw/assets/courtyard-props/altar-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "有青铜香炉与莲云纹的透明石祭坛",
+      "role": "scene",
+      "width": 1500,
+      "height": 1049,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "9531faf0c42c8bfad183e382f3b30e57e4a8f8b049cf044fd71e5bddc14ad258",
+      "targetSha256": "9531faf0c42c8bfad183e382f3b30e57e4a8f8b049cf044fd71e5bddc14ad258",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1500,
+          "height": 1049
+        }
+      }
+    },
+    {
+      "key": "scene:courtyard_lamp",
+      "kind": "scene",
+      "entityId": "courtyard_lamp",
+      "resourcePath": "hub-courtyard/lamp-v1",
+      "resourceFile": "hub-courtyard/lamp-v1.png",
+      "sourceFile": "infinite-flow-wechat/prototype/hub-draw/assets/courtyard-props/lamp-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "带微弱暖光的透明石灯",
+      "role": "scene",
+      "width": 930,
+      "height": 1691,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "1a4a2543634ce44bdd344802fd803751b29c68c57f5ffbf17963df334f4307d3",
+      "targetSha256": "1a4a2543634ce44bdd344802fd803751b29c68c57f5ffbf17963df334f4307d3",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 930,
+          "height": 1691
+        }
+      }
+    },
+    {
+      "key": "scene:dungeon_transition_gate",
+      "kind": "scene",
+      "entityId": "dungeon_transition_gate",
+      "resourcePath": "dungeon-world/ruined-stone-gate-v1",
+      "resourceFile": "dungeon-world/ruined-stone-gate-v1.png",
+      "sourceFile": "infinite-flow-wechat/prototype/dungeon-transition/assets/ruined-stone-gate-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "带旧金镶线与微弱暖光的风化石门，独立透明区域通道",
+      "role": "scene",
+      "width": 1073,
+      "height": 1465,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "48aa094175451317d0a44d18dc6dabafd245f646dff1c578ec76bcab10dd6e69",
+      "targetSha256": "48aa094175451317d0a44d18dc6dabafd245f646dff1c578ec76bcab10dd6e69",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1073,
+          "height": 1465
+        }
+      }
+    },
+    {
+      "key": "scene:hub_dungeon_portal",
+      "kind": "scene",
+      "entityId": "hub_dungeon_portal",
+      "resourcePath": "hub-courtyard/wanxiang-scroll-portal-v1",
+      "resourceFile": "hub-courtyard/wanxiang-scroll-portal-v1.png",
+      "sourceFile": "infinite-flow-wechat/prototype/hub-portals-ten/assets/hub-portal-07.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "主神空间万象画门：旧金画轴展开山水异境，透明独立副本入口",
+      "role": "scene",
+      "width": 1018,
+      "height": 1545,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "e77658a165eab7c3fe527b309909bca1d0be7c4fddd4ab5d4c75905a33927d4e",
+      "targetSha256": "e77658a165eab7c3fe527b309909bca1d0be7c4fddd4ab5d4c75905a33927d4e",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "node:fs.copyFileSync",
+        "version": "v26.7.0",
+        "targetDimensions": {
+          "width": 1018,
+          "height": 1545
+        }
+      }
+    },
+    {
+      "key": "scene:dungeon_prop_chest",
+      "kind": "scene",
+      "entityId": "dungeon_prop_chest",
+      "role": "scene",
+      "fit": "contain",
+      "alt": "磨损木材与旧铜包角组成的副本宝箱",
+      "resourcePath": "dungeon-world/chest-v1",
+      "resourceFile": "dungeon-world/chest-v1.png",
+      "sourceFile": "infinite-flow-wechat/prototype/style-refresh/assets/chest-proposed.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "width": 1254,
+      "height": 1254,
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "d5abfec22278040a8a276832d7a2009d5e2044536ba9f31346317f6dc47695a5",
+      "targetSha256": "d5abfec22278040a8a276832d7a2009d5e2044536ba9f31346317f6dc47695a5",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "targetDimensions": {
           "width": 1254,
           "height": 1254
-        },
+        }
+      }
+    },
+    {
+      "key": "scene:dungeon_prop_exit",
+      "kind": "scene",
+      "entityId": "dungeon_prop_exit",
+      "role": "scene",
+      "fit": "contain",
+      "alt": "灰青雾气与风化石拱组成的副本出口",
+      "resourcePath": "dungeon-world/exit-v1",
+      "resourceFile": "dungeon-world/exit-v1.png",
+      "sourceFile": "infinite-flow-wechat/prototype/style-refresh/assets/exit-proposed.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "width": 1145,
+      "height": 1374,
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "81b674164ee006184f36559629092dee769dc78e8a30c1ed154e423cd0c645f9",
+      "targetSha256": "81b674164ee006184f36559629092dee769dc78e8a30c1ed154e423cd0c645f9",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "cp",
         "targetDimensions": {
-          "width": 256,
-          "height": 256
+          "width": 1145,
+          "height": 1374
+        }
+      }
+    },
+    {
+      "key": "scene:dungeon_prop_event",
+      "kind": "scene",
+      "entityId": "dungeon_prop_event",
+      "role": "scene",
+      "fit": "contain",
+      "alt": "木框、旧纸与封缄组成的事件告示牌",
+      "resourcePath": "dungeon-world/event-v1",
+      "resourceFile": "dungeon-world/event-v1.png",
+      "sourceFile": "infinite-flow-wechat/prototype/style-refresh/assets/event-proposed.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "width": 1254,
+      "height": 1254,
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "351c5b7cbe3752612e078154c1ddc479f34d8714a6b0727134964f980c0cc9ed",
+      "targetSha256": "351c5b7cbe3752612e078154c1ddc479f34d8714a6b0727134964f980c0cc9ed",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "targetDimensions": {
+          "width": 1254,
+          "height": 1254
+        }
+      }
+    },
+    {
+      "key": "scene:dungeon_prop_trap",
+      "kind": "scene",
+      "entityId": "dungeon_prop_trap",
+      "role": "scene",
+      "fit": "contain",
+      "alt": "带触发机构的低矮锈铁尖刺陷阱",
+      "resourcePath": "dungeon-world/trap-v1",
+      "resourceFile": "dungeon-world/trap-v1.png",
+      "sourceFile": "infinite-flow-wechat/prototype/style-refresh/assets/trap-proposed.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "width": 1254,
+      "height": 1254,
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "e48901773ef4f794848b43adc7d19042617167157bdb620db9932e871def1931",
+      "targetSha256": "e48901773ef4f794848b43adc7d19042617167157bdb620db9932e871def1931",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "targetDimensions": {
+          "width": 1254,
+          "height": 1254
+        }
+      }
+    },
+    {
+      "key": "scene:dungeon_prop_survey",
+      "kind": "scene",
+      "entityId": "dungeon_prop_survey",
+      "role": "scene",
+      "fit": "contain",
+      "alt": "旧铜勘探仪器、零散矿石与石材底座",
+      "resourcePath": "dungeon-world/survey-v1",
+      "resourceFile": "dungeon-world/survey-v1.png",
+      "sourceFile": "infinite-flow-wechat/prototype/style-refresh/assets/survey-proposed.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "width": 1254,
+      "height": 1254,
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "7a41a55d8c139bf035cf6a7623e9314acf8d882ff4887cd6e78c31fbc35b2f90",
+      "targetSha256": "7a41a55d8c139bf035cf6a7623e9314acf8d882ff4887cd6e78c31fbc35b2f90",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "targetDimensions": {
+          "width": 1254,
+          "height": 1254
+        }
+      }
+    },
+    {
+      "key": "scene:dungeon_prop_relic",
+      "kind": "scene",
+      "entityId": "dungeon_prop_relic",
+      "role": "scene",
+      "fit": "contain",
+      "alt": "石台上承托的古旧遗物容器",
+      "resourcePath": "dungeon-world/relic-v1",
+      "resourceFile": "dungeon-world/relic-v1.png",
+      "sourceFile": "infinite-flow-wechat/prototype/style-refresh/assets/relic-proposed.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "width": 1254,
+      "height": 1254,
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "5533b22ce3a44154262b3fe81e0fa81f17f0ec3f4c3385bc6df9c247b67e9359",
+      "targetSha256": "5533b22ce3a44154262b3fe81e0fa81f17f0ec3f4c3385bc6df9c247b67e9359",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "targetDimensions": {
+          "width": 1254,
+          "height": 1254
+        }
+      }
+    },
+    {
+      "key": "scene:dungeon_prop_shrine",
+      "kind": "scene",
+      "entityId": "dungeon_prop_shrine",
+      "role": "scene",
+      "fit": "contain",
+      "alt": "带圆形核心与微光的风化石刻共鸣祭坛",
+      "resourcePath": "dungeon-world/shrine-v1",
+      "resourceFile": "dungeon-world/shrine-v1.png",
+      "sourceFile": "infinite-flow-wechat/prototype/style-refresh/assets/shrine-proposed.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "width": 1254,
+      "height": 1254,
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "6552dc80311d080afa82871c116c90939d84af9cf676a85ea1c325c708ab30a1",
+      "targetSha256": "6552dc80311d080afa82871c116c90939d84af9cf676a85ea1c325c708ab30a1",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "targetDimensions": {
+          "width": 1254,
+          "height": 1254
+        }
+      }
+    },
+    {
+      "key": "scene:dungeon_prop_law",
+      "kind": "scene",
+      "entityId": "dungeon_prop_law",
+      "role": "scene",
+      "fit": "contain",
+      "alt": "打开的实体书页、旧铜支架与石台组成的法则书台",
+      "resourcePath": "dungeon-world/law-v1",
+      "resourceFile": "dungeon-world/law-v1.png",
+      "sourceFile": "infinite-flow-wechat/prototype/style-refresh/assets/law-proposed.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "width": 1254,
+      "height": 1254,
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "16ec2a64c56a4a53879bcef9e43d260469a4dc369d7508744973e1a76918cd23",
+      "targetSha256": "16ec2a64c56a4a53879bcef9e43d260469a4dc369d7508744973e1a76918cd23",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "targetDimensions": {
+          "width": 1254,
+          "height": 1254
+        }
+      }
+    },
+    {
+      "key": "scene:dungeon_prop_debris",
+      "kind": "scene",
+      "entityId": "dungeon_prop_debris",
+      "role": "scene",
+      "fit": "contain",
+      "alt": "带自然接地阴影的灰青风化碎石堆",
+      "resourcePath": "dungeon-world/debris-v1",
+      "resourceFile": "dungeon-world/debris-v1.png",
+      "sourceFile": "infinite-flow-wechat/prototype/style-refresh/assets/debris-proposed.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "width": 1536,
+      "height": 1024,
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "d0dea6331d34acd63b0c7da6f74ae8fc5dd1223a02fec0cd947bb4de7fce8371",
+      "targetSha256": "d0dea6331d34acd63b0c7da6f74ae8fc5dd1223a02fec0cd947bb4de7fce8371",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "targetDimensions": {
+          "width": 1536,
+          "height": 1024
+        }
+      }
+    },
+    {
+      "key": "item:run_relic_mist_edge",
+      "kind": "item",
+      "entityId": "run_relic_mist_edge",
+      "resourcePath": "run-relic/mist_edge-v1",
+      "resourceFile": "run-relic/mist_edge-v1.png",
+      "sourceFile": "infinite-flow-wechat/prototype/hud-buff-icons-v1/assets/mist_edge.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "雾锋回响图标",
+      "role": "icon",
+      "width": 1254,
+      "height": 1254,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "0aa124c76590ac6270582bda32f15e3c86d3252f0115a7f87c873d5d8a751041",
+      "targetSha256": "0aa124c76590ac6270582bda32f15e3c86d3252f0115a7f87c873d5d8a751041",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "targetDimensions": {
+          "width": 1254,
+          "height": 1254
+        }
+      }
+    },
+    {
+      "key": "item:run_relic_focus_prism",
+      "kind": "item",
+      "entityId": "run_relic_focus_prism",
+      "resourcePath": "run-relic/focus_prism-v1",
+      "resourceFile": "run-relic/focus_prism-v1.png",
+      "sourceFile": "infinite-flow-wechat/prototype/hud-buff-icons-v1/assets/focus_prism.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "聚念棱镜回响图标",
+      "role": "icon",
+      "width": 1254,
+      "height": 1254,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "09e69b57bfa267ccb6209b2bdd262c3dc7a4d7fd74f24eac3a6a102647fbfc2b",
+      "targetSha256": "09e69b57bfa267ccb6209b2bdd262c3dc7a4d7fd74f24eac3a6a102647fbfc2b",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "targetDimensions": {
+          "width": 1254,
+          "height": 1254
+        }
+      }
+    },
+    {
+      "key": "item:run_relic_hunter_clock",
+      "kind": "item",
+      "entityId": "run_relic_hunter_clock",
+      "resourcePath": "run-relic/hunter_clock-v1",
+      "resourceFile": "run-relic/hunter_clock-v1.png",
+      "sourceFile": "infinite-flow-wechat/prototype/hud-buff-icons-v1/assets/hunter_clock.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "猎时钟回响图标",
+      "role": "icon",
+      "width": 1254,
+      "height": 1254,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "2bfe18c3da4f8627de4613b38b8c482e99c96184ffd9dbb18cedb77128c5b0b9",
+      "targetSha256": "2bfe18c3da4f8627de4613b38b8c482e99c96184ffd9dbb18cedb77128c5b0b9",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "targetDimensions": {
+          "width": 1254,
+          "height": 1254
+        }
+      }
+    },
+    {
+      "key": "item:run_relic_bone_shell",
+      "kind": "item",
+      "entityId": "run_relic_bone_shell",
+      "resourcePath": "run-relic/bone_shell-v1",
+      "resourceFile": "run-relic/bone_shell-v1.png",
+      "sourceFile": "infinite-flow-wechat/prototype/hud-buff-icons-v1/assets/bone_shell.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "骨壳回响图标",
+      "role": "icon",
+      "width": 1254,
+      "height": 1254,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "cd364a363de8ee47e22d5920d6c479e6a955b302950049ee7285d69196f7935b",
+      "targetSha256": "cd364a363de8ee47e22d5920d6c479e6a955b302950049ee7285d69196f7935b",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "targetDimensions": {
+          "width": 1254,
+          "height": 1254
+        }
+      }
+    },
+    {
+      "key": "item:run_relic_mending_thread",
+      "kind": "item",
+      "entityId": "run_relic_mending_thread",
+      "resourcePath": "run-relic/mending_thread-v1",
+      "resourceFile": "run-relic/mending_thread-v1.png",
+      "sourceFile": "infinite-flow-wechat/prototype/hud-buff-icons-v1/assets/mending_thread.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "缝生线回响图标",
+      "role": "icon",
+      "width": 1254,
+      "height": 1254,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "469f833c44b4f4914a3c75e08293361a7b86d1f1365e898103600fa7d7ec214c",
+      "targetSha256": "469f833c44b4f4914a3c75e08293361a7b86d1f1365e898103600fa7d7ec214c",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "targetDimensions": {
+          "width": 1254,
+          "height": 1254
+        }
+      }
+    },
+    {
+      "key": "item:run_relic_iron_echo",
+      "kind": "item",
+      "entityId": "run_relic_iron_echo",
+      "resourcePath": "run-relic/iron_echo-v1",
+      "resourceFile": "run-relic/iron_echo-v1.png",
+      "sourceFile": "infinite-flow-wechat/prototype/hud-buff-icons-v1/assets/iron_echo.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "铁回响回响图标",
+      "role": "icon",
+      "width": 1254,
+      "height": 1254,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "84ce2a7a4a4da7e4bdbdacee82b9f5b43554559795b48522f107e6296127ed8b",
+      "targetSha256": "84ce2a7a4a4da7e4bdbdacee82b9f5b43554559795b48522f107e6296127ed8b",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "targetDimensions": {
+          "width": 1254,
+          "height": 1254
+        }
+      }
+    },
+    {
+      "key": "item:run_relic_rift_step",
+      "kind": "item",
+      "entityId": "run_relic_rift_step",
+      "resourcePath": "run-relic/rift_step-v1",
+      "resourceFile": "run-relic/rift_step-v1.png",
+      "sourceFile": "infinite-flow-wechat/prototype/hud-buff-icons-v1/assets/rift_step.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "裂隙步回响图标",
+      "role": "icon",
+      "width": 1254,
+      "height": 1254,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "0f144fbced4e372900822f58aff2da20e84ea06cf552c4b23c8ba6c5db919e51",
+      "targetSha256": "0f144fbced4e372900822f58aff2da20e84ea06cf552c4b23c8ba6c5db919e51",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "targetDimensions": {
+          "width": 1254,
+          "height": 1254
+        }
+      }
+    },
+    {
+      "key": "item:run_relic_gate_anchor",
+      "kind": "item",
+      "entityId": "run_relic_gate_anchor",
+      "resourcePath": "run-relic/gate_anchor-v1",
+      "resourceFile": "run-relic/gate_anchor-v1.png",
+      "sourceFile": "infinite-flow-wechat/prototype/hud-buff-icons-v1/assets/gate_anchor.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "门锚回响图标",
+      "role": "icon",
+      "width": 1254,
+      "height": 1254,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "87d73c4fe847116a7a36e9b4a3d8bf3ab41fcabf0588314bf223d92cfdfd88bb",
+      "targetSha256": "87d73c4fe847116a7a36e9b4a3d8bf3ab41fcabf0588314bf223d92cfdfd88bb",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "targetDimensions": {
+          "width": 1254,
+          "height": 1254
+        }
+      }
+    },
+    {
+      "key": "item:run_relic_lucky_map",
+      "kind": "item",
+      "entityId": "run_relic_lucky_map",
+      "resourcePath": "run-relic/lucky_map-v1",
+      "resourceFile": "run-relic/lucky_map-v1.png",
+      "sourceFile": "infinite-flow-wechat/prototype/hud-buff-icons-v1/assets/lucky_map.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "幸运地图回响图标",
+      "role": "icon",
+      "width": 1254,
+      "height": 1254,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "b69e988ef0913323aec11c70862904b0647585cdeb8ea77b5ef0dd05d2574e55",
+      "targetSha256": "b69e988ef0913323aec11c70862904b0647585cdeb8ea77b5ef0dd05d2574e55",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "targetDimensions": {
+          "width": 1254,
+          "height": 1254
         }
       }
     }

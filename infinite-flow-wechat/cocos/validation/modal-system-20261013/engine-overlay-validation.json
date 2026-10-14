@@ -1,0 +1,68 @@
+[
+  {
+    "viewport": 320,
+    "height": 105,
+    "rawDiagnosticPreserved": true,
+    "revision": 9,
+    "scroll": [],
+    "type": "loading",
+    "width": 279.34032983508246
+  },
+  {
+    "viewport": 320,
+    "height": 176,
+    "rawDiagnosticPreserved": true,
+    "revision": 9,
+    "scroll": [],
+    "type": "error",
+    "width": 279.34032983508246
+  },
+  {
+    "viewport": 320,
+    "height": 380.99999999999994,
+    "rawDiagnosticPreserved": true,
+    "revision": 9,
+    "scroll": [
+      {
+        "content": 1234,
+        "height": 300,
+        "name": "DiagnosticScroll"
+      }
+    ],
+    "type": "blocked",
+    "width": 279.34032983508246
+  },
+  {
+    "viewport": 390,
+    "height": 105,
+    "rawDiagnosticPreserved": true,
+    "revision": 9,
+    "scroll": [],
+    "type": "loading",
+    "width": 304
+  },
+  {
+    "viewport": 390,
+    "height": 176,
+    "rawDiagnosticPreserved": true,
+    "revision": 9,
+    "scroll": [],
+    "type": "error",
+    "width": 304
+  },
+  {
+    "viewport": 390,
+    "height": 380.99999999999994,
+    "rawDiagnosticPreserved": true,
+    "revision": 9,
+    "scroll": [
+      {
+        "content": 1234,
+        "height": 300,
+        "name": "DiagnosticScroll"
+      }
+    ],
+    "type": "blocked",
+    "width": 304
+  }
+]

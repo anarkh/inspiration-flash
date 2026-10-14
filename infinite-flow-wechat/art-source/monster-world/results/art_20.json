@@ -1,0 +1,27 @@
+{
+  "entityId": "broadcast_warden",
+  "key": "monster:broadcast_warden_world",
+  "tool": "built-in imagegen",
+  "path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/art-source/monster-world/broadcast-warden-world-v1.png",
+  "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a0ecb6-3588-73f3-9751-61811c47523e/exec-8130a69b-ac79-45ec-9876-9ad04cee6405.png",
+  "referencePath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/monster/broadcast-warden-v1.png",
+  "width": 1024,
+  "height": 1536,
+  "mode": "RGBA",
+  "alpha": {
+    "min": 0,
+    "max": 254,
+    "fullyTransparentPixels": 713654,
+    "cornerValues": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "visualCheck": "Full body visible including helmet, lantern pauldrons, frequency-lock shield, lantern mace and both feet; identity and weathered dark bronze style preserved.",
+  "prompt": "prompts.json sharedPrompt + Subject: 以锁频盾护身的广播守卫",
+  "sha256": "c314843a99318ef6fc3b3e5f145f038b10374aaa92461eaf4b27ac80aafec32b",
+  "rawCopyVerified": true,
+  "status": "complete"
+}

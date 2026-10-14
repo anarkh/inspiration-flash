@@ -1,0 +1,16 @@
+{
+  "method": "built-in image_gen.imagegen",
+  "sourcePath": "/Users/bytedance/.codex/generated_images/01a0ecb0-503e-7a81-95d1-22b8b154881e/exec-9557cc91-948c-44c9-9003-d78e393e5934.png",
+  "savedFile": "reincarnator-fullbody-v1.png",
+  "sha256": "234b89507d84f0b5e4f3ca39954ac856243b2bddb50381cc5b8ec7f1b67f893b",
+  "width": 1024,
+  "height": 1536,
+  "alpha128Bounds": [
+    226,
+    12,
+    804,
+    1515
+  ],
+  "unchangedByteCopy": true,
+  "prompt": "prompts/fullbody-v1.txt"
+}

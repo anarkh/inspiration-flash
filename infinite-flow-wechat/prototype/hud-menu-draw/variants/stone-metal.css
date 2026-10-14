@@ -1,0 +1,470 @@
+/* Round two: the hit areas remain large; all visible content stays light. */
+.hud-layer[data-design="01"],
+.hud-layer[data-design="02"],
+.hud-layer[data-design="03"] {
+  --ink: #eee9d7;
+  --muted: #d1d1c2;
+  --accent: #d4d6bc;
+  --panel: transparent;
+  --edge: transparent;
+  --health-fill: #bcc6a5;
+  color: var(--ink);
+  font-family: "Songti SC", "STSong", "SimSun", serif;
+}
+
+.hud-layer[data-design="01"] .hud-top,
+.hud-layer[data-design="02"] .hud-top,
+.hud-layer[data-design="03"] .hud-top,
+.hud-layer[data-design="01"] .hud-vitals,
+.hud-layer[data-design="02"] .hud-vitals,
+.hud-layer[data-design="03"] .hud-vitals {
+  background: none;
+  border: 0;
+  box-shadow: none;
+}
+
+.hud-layer[data-design="01"] .hud-eyebrow,
+.hud-layer[data-design="02"] .hud-eyebrow,
+.hud-layer[data-design="03"] .hud-eyebrow {
+  display: none;
+}
+
+.hud-layer[data-design="01"] .hud-btn,
+.hud-layer[data-design="02"] .hud-btn,
+.hud-layer[data-design="03"] .hud-btn {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 110px;
+  height: 110px;
+  min-width: 110px;
+  min-height: 110px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--ink);
+  font-family: inherit;
+  text-shadow: 0 1px 2px #050b08, 1px 0 1px #050b08;
+  pointer-events: auto;
+}
+
+.hud-layer[data-design="01"] .hud-glyph,
+.hud-layer[data-design="02"] .hud-glyph,
+.hud-layer[data-design="03"] .hud-glyph {
+  display: block;
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  color: var(--accent);
+  filter: drop-shadow(0 1px 1px #050b08);
+}
+
+.hud-layer[data-design="01"] .hud-btn-label,
+.hud-layer[data-design="02"] .hud-btn-label,
+.hud-layer[data-design="03"] .hud-btn-label {
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+.hud-layer[data-design="01"] .hud-zone,
+.hud-layer[data-design="02"] .hud-zone,
+.hud-layer[data-design="03"] .hud-zone {
+  margin: 0;
+  color: var(--ink);
+  font-size: 34px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 2px;
+  white-space: nowrap;
+  text-shadow: 0 2px 2px #030a06, 1px 0 1px #030a06;
+}
+
+.hud-layer[data-design="01"] .hud-hp-line,
+.hud-layer[data-design="02"] .hud-hp-line,
+.hud-layer[data-design="03"] .hud-hp-line {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 25px;
+  font-weight: 400;
+  line-height: 1.1;
+  white-space: nowrap;
+  text-shadow: 0 1px 2px #040b06, 1px 0 1px #040b06;
+}
+
+.hud-layer[data-design="01"] .hud-hp-text,
+.hud-layer[data-design="02"] .hud-hp-text,
+.hud-layer[data-design="03"] .hud-hp-text {
+  color: var(--ink);
+  font-size: 25px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.hud-layer[data-design="01"] .hud-hp-text small,
+.hud-layer[data-design="02"] .hud-hp-text small,
+.hud-layer[data-design="03"] .hud-hp-text small {
+  color: var(--muted);
+  font-size: 24px;
+  font-weight: 400;
+}
+
+.hud-layer[data-design="01"] .hud-hp-track,
+.hud-layer[data-design="02"] .hud-hp-track,
+.hud-layer[data-design="03"] .hud-hp-track {
+  height: 3px;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: #091810b3;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.hud-layer[data-design="01"] .hud-hp-track i,
+.hud-layer[data-design="02"] .hud-hp-track i,
+.hud-layer[data-design="03"] .hud-hp-track i {
+  display: block;
+  height: 100%;
+  width: var(--health);
+  background: var(--health-fill);
+  box-shadow: none;
+}
+
+.hud-layer[data-design="01"] .hud-preview,
+.hud-layer[data-design="02"] .hud-preview,
+.hud-layer[data-design="03"] .hud-preview {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #ddd7bc;
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 22px;
+  line-height: 1.2;
+  white-space: nowrap;
+  text-shadow: 0 1px 2px #020806, 1px 0 1px #020806;
+}
+
+.hud-layer[data-design="01"] .hud-preview small,
+.hud-layer[data-design="02"] .hud-preview small,
+.hud-layer[data-design="03"] .hud-preview small {
+  color: var(--muted);
+  font-size: 22px;
+}
+
+.hud-layer[data-design="01"] .hud-btn:hover,
+.hud-layer[data-design="02"] .hud-btn:hover,
+.hud-layer[data-design="03"] .hud-btn:hover,
+.hud-layer[data-design="01"] .hud-btn[aria-pressed="true"],
+.hud-layer[data-design="02"] .hud-btn[aria-pressed="true"],
+.hud-layer[data-design="03"] .hud-btn[aria-pressed="true"] {
+  color: #fff3cb;
+  background: none;
+  border: 0;
+  box-shadow: none;
+  filter: none;
+}
+
+.hud-layer[data-design="01"] .hud-btn:hover .hud-glyph,
+.hud-layer[data-design="02"] .hud-btn:hover .hud-glyph,
+.hud-layer[data-design="03"] .hud-btn:hover .hud-glyph {
+  color: #eee6c1;
+}
+
+.hud-layer[data-design="01"] .hud-btn:active .hud-glyph,
+.hud-layer[data-design="02"] .hud-btn:active .hud-glyph,
+.hud-layer[data-design="03"] .hud-btn:active .hud-glyph {
+  transform: translateY(1px);
+}
+
+.hud-layer[data-design="01"] .hud-btn:focus-visible,
+.hud-layer[data-design="02"] .hud-btn:focus-visible,
+.hud-layer[data-design="03"] .hud-btn:focus-visible {
+  outline: 0;
+}
+
+.hud-layer[data-design="01"] .hud-btn:focus-visible .hud-glyph,
+.hud-layer[data-design="02"] .hud-btn:focus-visible .hud-glyph,
+.hud-layer[data-design="03"] .hud-btn:focus-visible .hud-glyph {
+  outline: 1px solid #f2e5b4;
+  outline-offset: 4px;
+}
+
+.hud-layer[data-design="01"] .hud-btn:focus-visible .hud-btn-label,
+.hud-layer[data-design="02"] .hud-btn:focus-visible .hud-btn-label,
+.hud-layer[data-design="03"] .hud-btn:focus-visible .hud-btn-label {
+  text-decoration: underline;
+  text-underline-offset: 5px;
+}
+
+/* 01 · 游丝: left aligned vitals and tiny horizontal rail entries. */
+.hud-layer[data-design="01"] .hud-top {
+  top: 16px;
+  left: 22px;
+  right: 20px;
+  height: 172px;
+}
+
+.hud-layer[data-design="01"] .hud-character {
+  position: absolute;
+  left: -5px;
+  top: -2px;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hud-layer[data-design="01"] .hud-menu {
+  position: absolute;
+  right: -4px;
+  top: -2px;
+  flex-direction: row;
+  gap: 8px;
+}
+
+.hud-layer[data-design="01"] .hud-vitals {
+  left: 128px;
+  top: 14px;
+  width: 405px;
+  height: 101px;
+}
+
+.hud-layer[data-design="01"] .hud-hp-line {
+  margin-top: 11px;
+}
+
+.hud-layer[data-design="01"] .hud-hp-track {
+  width: 255px;
+  margin-top: 10px;
+}
+
+.hud-layer[data-design="01"] .hud-preview {
+  left: 128px;
+  right: 117px;
+  top: 125px;
+}
+
+.hud-layer[data-design="01"] .hud-rail {
+  top: 208px;
+  right: 11px;
+  width: 110px;
+  display: grid;
+  gap: 2px;
+}
+
+.hud-layer[data-design="01"] .hud-rail .hud-btn {
+  flex-direction: row;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-right: 5px;
+}
+
+.hud-layer[data-design="01"] .hud-rail .hud-glyph {
+  width: 30px;
+  height: 30px;
+}
+
+/* 02 · 悬针: the zone floats at the center; health is anchored left. */
+.hud-layer[data-design="02"] {
+  --accent: #d8d0b0;
+  --health-fill: #c3caaa;
+}
+
+.hud-layer[data-design="02"] .hud-top {
+  top: 14px;
+  left: 22px;
+  right: 22px;
+  height: 178px;
+}
+
+.hud-layer[data-design="02"] .hud-character {
+  position: absolute;
+  left: -6px;
+  top: 5px;
+  flex-direction: row;
+  gap: 7px;
+}
+
+.hud-layer[data-design="02"] .hud-menu {
+  position: absolute;
+  right: -4px;
+  top: 12px;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.hud-layer[data-design="02"] .hud-vitals {
+  left: 120px;
+  top: 14px;
+  width: 468px;
+  height: 116px;
+}
+
+.hud-layer[data-design="02"] .hud-zone {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  text-align: center;
+}
+
+.hud-layer[data-design="02"] .hud-hp-line {
+  position: absolute;
+  left: 0;
+  top: 64px;
+}
+
+.hud-layer[data-design="02"] .hud-hp-track {
+  position: absolute;
+  left: 0;
+  top: 101px;
+  width: 244px;
+}
+
+.hud-layer[data-design="02"] .hud-preview {
+  left: 120px;
+  right: 118px;
+  top: 139px;
+  justify-content: center;
+}
+
+.hud-layer[data-design="02"] .hud-rail {
+  top: 218px;
+  right: 18px;
+  width: 110px;
+  display: grid;
+  gap: 16px;
+}
+
+.hud-layer[data-design="02"] .hud-rail .hud-btn {
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hud-layer[data-design="02"] .hud-rail .hud-btn::before {
+  content: "";
+  position: absolute;
+  left: 54px;
+  top: 17px;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #d4ceb18a;
+  pointer-events: none;
+}
+
+.hud-layer[data-design="02"] .hud-rail .hud-btn::after {
+  content: "";
+  position: absolute;
+  left: 45px;
+  bottom: 17px;
+  width: 20px;
+  height: 1px;
+  background: #cac6a780;
+  pointer-events: none;
+}
+
+/* 03 · 疏影: numeric health and its fine line share a compact row. */
+.hud-layer[data-design="03"] {
+  --ink: #e9e6d8;
+  --accent: #cdd6c2;
+  --health-fill: #b3c2a4;
+}
+
+.hud-layer[data-design="03"] .hud-top {
+  top: 20px;
+  left: 22px;
+  right: 22px;
+  height: 157px;
+}
+
+.hud-layer[data-design="03"] .hud-character {
+  position: absolute;
+  left: -6px;
+  top: 7px;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.hud-layer[data-design="03"] .hud-menu {
+  position: absolute;
+  right: -3px;
+  top: 12px;
+  flex-direction: row;
+  gap: 9px;
+}
+
+.hud-layer[data-design="03"] .hud-vitals {
+  left: 124px;
+  top: 20px;
+  width: 438px;
+  height: 91px;
+}
+
+.hud-layer[data-design="03"] .hud-zone {
+  font-size: 32px;
+  line-height: 1.2;
+}
+
+.hud-layer[data-design="03"] .hud-hp-line {
+  position: absolute;
+  left: 0;
+  top: 51px;
+  font-size: 24px;
+}
+
+.hud-layer[data-design="03"] .hud-hp-text {
+  font-size: 24px;
+}
+
+.hud-layer[data-design="03"] .hud-hp-track {
+  position: absolute;
+  left: 186px;
+  top: 63px;
+  width: 190px;
+}
+
+.hud-layer[data-design="03"] .hud-preview {
+  left: 124px;
+  right: 113px;
+  top: 118px;
+}
+
+.hud-layer[data-design="03"] .hud-rail {
+  top: 211px;
+  right: 15px;
+  width: 110px;
+  display: grid;
+  gap: 0;
+}
+
+.hud-layer[data-design="03"] .hud-rail .hud-btn {
+  flex-direction: row;
+  gap: 9px;
+}
+
+.hud-layer[data-design="03"] .hud-menu .hud-btn-label,
+.hud-layer[data-design="03"] .hud-rail .hud-btn-label {
+  display: block;
+  flex: 0 0 40px;
+  width: 40px;
+  min-width: 40px;
+  height: 60px;
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  text-align: center;
+  letter-spacing: 3px;
+  line-height: 30px;
+  white-space: nowrap;
+}

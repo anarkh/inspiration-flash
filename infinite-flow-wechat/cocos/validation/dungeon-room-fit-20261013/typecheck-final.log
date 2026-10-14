@@ -1,0 +1,7 @@
+
+> infinite-flow-wechat-cocos@3.8.8 typecheck
+> tsc -p tsconfig.headless.json --noEmit
+
+
+> infinite-flow-wechat-cocos@3.8.8 typecheck:creator
+> tsc -p tsconfig.json --noEmit

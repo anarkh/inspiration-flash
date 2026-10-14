@@ -1,0 +1,34 @@
+{
+  "asset_id": "hub-portal-04",
+  "tool": "image_gen.imagegen",
+  "transparent_background": true,
+  "source_path": "/Users/bytedance/.codex/generated_images/01a11977-eba6-7053-8b04-432632e1d812/exec-e92eacde-2e49-4dbf-82b4-90674226cacf.png",
+  "output_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-portals-ten/assets/hub-portal-04.png",
+  "sha256": "0d9a7292eff3fb500f4ebda44c1630c37a2f268ef5ac16f4b986dd18c6463cda",
+  "source_sha256": "0d9a7292eff3fb500f4ebda44c1630c37a2f268ef5ac16f4b986dd18c6463cda",
+  "width": 1024,
+  "height": 1536,
+  "mode": "RGBA",
+  "alpha_extrema": [
+    0,
+    254
+  ],
+  "alpha_zero_pixels": 618213,
+  "alpha_opaque_pixels": 0,
+  "alpha_partial_pixels": 954651,
+  "alpha_near_opaque_pixels": 712834,
+  "alpha_corners": [
+    0,
+    0,
+    1,
+    0
+  ],
+  "bbox_alpha8": [
+    37,
+    5,
+    988,
+    1506
+  ],
+  "copied_without_postprocessing": true,
+  "prompt_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-portals-ten/assets/hub-portal-04.prompt.txt"
+}

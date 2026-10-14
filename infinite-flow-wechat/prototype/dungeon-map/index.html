@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#121f1d"><title>区域地图 · 附近路线原型</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="workbench">
+    <aside class="studio" aria-label="HTML 原型工作台">
+      <span class="studio-eyebrow">INFINITE FLOW / MAP STUDY</span>
+      <h1>先看脚下，<br>再看远方。</h1>
+      <p class="studio-lead">打开地图，先回答两件事：<br>我在哪里，下一步能往哪走。</p>
+      <div class="studio-controls">
+        <p class="demo-label">HTML 原型 · 演示状态</p>
+        <label for="chapter">副本</label><select id="chapter"></select>
+        <label for="scenario">探索进度</label><select id="scenario"></select>
+        <p class="studio-note">使用真实区域连接与状态投影。切换只改变此原型，不写入游戏存档。</p>
+      </div>
+      <ol class="studio-points"><li><strong>附近路线</strong><span>当前位置与四邻出口直接读。</span></li><li><strong>已知全图</strong><span>保留真实方位，点选看名称。</span></li><li><strong>出口标记</strong><span>只作方向备忘，仍在场景中行走。</span></li></ol>
+      <a class="source-link" href="README.md">查看原型说明 ↗</a>
+    </aside>
+    <section class="phone" aria-label="地图设计预览">
+      <div class="scene" id="scene">
+        <div class="scene-vignette"></div>
+        <div class="scene-location"><small id="sceneChapter"></small><h2 id="sceneLocation"></h2></div>
+        <div class="scene-mark" id="sceneMark" hidden></div>
+        <button type="button" id="openMap" class="open-map"><span aria-hidden="true">⌘</span> 区域地图</button>
+      </div>
+      <section class="map-panel" id="mapPanel" aria-label="区域地图">
+        <header class="map-header"><div><p id="chapterName" class="eyebrow"></p><h2>区域地图</h2></div><button class="icon-button close-map" id="closeMap" type="button" aria-label="关闭地图">×</button></header>
+        <div class="map-body" id="mapBody">
+          <section class="location-card" aria-label="当前位置"><div class="location-symbol" aria-hidden="true"><i></i></div><div class="location-copy"><span class="mini-label">你在这里</span><h3 id="currentName"></h3><p id="currentStatus"></p></div><button class="locate" id="locate" type="button" aria-label="定位自己">定位</button></section>
+          <div class="tabs" role="tablist" aria-label="地图视图"><button type="button" role="tab" id="nearTab" aria-controls="nearView" aria-selected="true" class="active">附近路线</button><button type="button" role="tab" id="allTab" aria-controls="allView" aria-selected="false">已知全图</button></div>
+          <section id="nearView" role="tabpanel" aria-labelledby="nearTab"><div class="section-heading"><h3>相邻出口</h3><span id="reachableCount"></span></div><div class="route-list" id="routeList"></div><p class="fog-note"><span aria-hidden="true">···</span> 更远的未知区域，探索后显现</p></section>
+          <section id="allView" role="tabpanel" aria-labelledby="allTab" hidden><div class="graph-toolbar"><span id="explorationCount"></span><button id="zoom" type="button">放大名称 <span aria-hidden="true">＋</span></button></div><div id="graphViewport" class="graph-viewport" tabindex="0" aria-label="已知区域连接图"><div class="graph" id="graph"></div></div><div class="graph-legend"><span><i class="legend-current"></i>当前</span><span><i class="legend-open"></i>可达</span><span>✓ 已清理</span><span>◇ 已知</span><span>··· 未知</span></div><p class="graph-hint">连线表示区域相邻 · 点选区域查看详情</p></section>
+          <section id="detail" class="detail-card" aria-live="polite" hidden></section>
+        </div>
+        <footer class="map-footer"><div id="markedSummary" class="marked-summary"><span class="footer-symbol" aria-hidden="true">⌖</span><p>选择一个出口，<br><strong>记住下一步的方向</strong></p></div><button type="button" id="returnExplore" class="return-explore">返回探索 <span aria-hidden="true">↗</span></button></footer>
+      </section>
+      <div id="toast" class="toast" role="status" hidden></div>
+    </section>
+  </main>
+  <script defer src="fixtures.js"></script>
+  <script defer src="app.js"></script>
+</body></html>

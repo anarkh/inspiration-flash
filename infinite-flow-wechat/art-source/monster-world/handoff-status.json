@@ -1,0 +1,312 @@
+{
+  "createdAt": "2026-09-29T10:21:41.205Z",
+  "workspace": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash",
+  "total": 59,
+  "completed": [
+    {
+      "entityId": "fog_lesser_demon",
+      "sourceFile": "fog-lesser-demon-world-v1.png",
+      "sha256": "367aa3b9c405e650082109596b74e83a710c1555e87814018d6f1b6a75d1fce2"
+    },
+    {
+      "entityId": "tower_butcher",
+      "sourceFile": "tower-butcher-world-v1.png",
+      "sha256": "b3fe1465174f62417f04cc7d8f664a927e257639f70fa2d96159bd731f0819da"
+    },
+    {
+      "entityId": "tide_boatman",
+      "sourceFile": "tide-boatman-world-v1.png",
+      "sha256": "7bc59ac3685183d88408593c7b6556045923fe1f9ff250c007388b50b9dd3821"
+    },
+    {
+      "entityId": "mirror_thread_spider",
+      "sourceFile": "mirror-thread-spider-world-v1.png",
+      "sha256": "6105abb9cab2f0550f46e3e1c1279fce92b3f0c44c4089bce25687bf21635b73"
+    },
+    {
+      "entityId": "rail_wraith",
+      "sourceFile": "rail-wraith-world-v1.png",
+      "sha256": "21c5331d529e97b5b80e9d9d2ddd766e5eb309a7fbab979a4a6cad9b782df346"
+    },
+    {
+      "entityId": "mine_shell_guard",
+      "sourceFile": "mine-shell-guard-world-v1.png",
+      "sha256": "05af5c5e9d5e5ad077bf6c0e388d10557815b91552c3882126161808eaf859d1"
+    },
+    {
+      "entityId": "spark_imp",
+      "sourceFile": "spark-imp-world-v1.png",
+      "sha256": "b4c0e13944f1b97163bbdd6a7cf6845a74b479cfa777b0c1e868bf1fac1c364d"
+    },
+    {
+      "entityId": "portal_molt_beast",
+      "sourceFile": "portal-molt-beast-world-v1.png",
+      "sha256": "3d621e28829bb99a1deff29d66b6ace27b68b14ff27c3162a683949038c81907"
+    },
+    {
+      "entityId": "plague_orderly",
+      "sourceFile": "plague-orderly-world-v1.png",
+      "sha256": "3be4cec5bb12f4a3f1e1f247206a81e88e65553b2d84ca212f771552a258f8c0"
+    },
+    {
+      "entityId": "paradox_bailiff",
+      "sourceFile": "paradox-bailiff-world-v1.png",
+      "sha256": "df87b90ff7e132da62a5ac4f53b498083d448745909d979923e3ebaf74bbb540"
+    },
+    {
+      "entityId": "zero_sum_auditor",
+      "sourceFile": "zero-sum-auditor-world-v1.png",
+      "sha256": "707775f549bb04889cf9c29a9afe1e363507c95268fea52816d9f8c8f6369dbe"
+    },
+    {
+      "entityId": "entropy_deckhand",
+      "sourceFile": "entropy-deckhand-world-v1.png",
+      "sha256": "6059c5fa0d85800dd3ded7a981bc98b20b71df1f0250140e874e2c3277f5908a"
+    },
+    {
+      "entityId": "dissipation_navigator",
+      "sourceFile": "dissipation-navigator-world-v1.png",
+      "sha256": "a7043e7acdda0dd766fdeb912d59925c2bbc09ffdec2388dc549f3fb2ecc8408"
+    },
+    {
+      "entityId": "last_helmsman",
+      "sourceFile": "last-helmsman-world-v1.png",
+      "sha256": "b7a8780302bf9e69f33e98a345aba57ba5b74b0ef2c36f6be2d4463510400273"
+    },
+    {
+      "entityId": "parallax_hunter",
+      "sourceFile": "parallax-hunter-world-v1.png",
+      "sha256": "75d6f5a993be6e30a2245d284643a187c38b8f8b0b231248fa9e727bab97d114"
+    },
+    {
+      "entityId": "mirror_chorus",
+      "sourceFile": "mirror-chorus-world-v1.png",
+      "sha256": "a3b9922ffe18effcdd382c3ea06d36a2d774de2dba8e49c759b27e0a97fc6222"
+    },
+    {
+      "entityId": "nameless_reflection",
+      "sourceFile": "nameless-reflection-world-v1.png",
+      "sha256": "b535a15bbd74b97c1afb82ab610695dc55943dd8f3cf85241c48689446c8538c"
+    },
+    {
+      "entityId": "erasure_copyist",
+      "sourceFile": "erasure-copyist-world-v1.png",
+      "sha256": "931bc0af0062f16c07289c13b3c9b8957671165a7e096efd0674bf20be2a7102"
+    },
+    {
+      "entityId": "last_broadcaster",
+      "sourceFile": "last-broadcaster-world-v1.png",
+      "sha256": "160ec6d9b9c26b5456a64494b20dfce481d88aaa708116f3eade247e3e5b526c"
+    },
+    {
+      "entityId": "mimic_survivor",
+      "sourceFile": "mimic-survivor-world-v1.png",
+      "sha256": "8e6ad4ab9fc8fe3af8c6432754f03948ef3081bf5dfd8bbbaab38e2779d17782"
+    },
+    {
+      "entityId": "rogue_sentry",
+      "sourceFile": "rogue-sentry-world-v1.png",
+      "sha256": "a72552210bf4296278840181b814f2a5d076b9fa4ec005e0051b5416ed0a81f2"
+    },
+    {
+      "entityId": "shelter_enforcer",
+      "sourceFile": "shelter-enforcer-world-v1.png",
+      "sha256": "1046bffa3e90682aed702858996c4927d58533b22386e673f290235bf7f6b90f"
+    },
+    {
+      "entityId": "evacuation_horror",
+      "sourceFile": "evacuation-horror-world-v1.png",
+      "sha256": "a85738b093153d1f3487732d116df2f0d9d552120eac6ff707c80a7c53bc7e27"
+    },
+    {
+      "entityId": "shelter_overseer",
+      "sourceFile": "shelter-overseer-world-v1.png",
+      "sha256": "ce0f34eeaae109f745a45e48d82521cd0ba1abd9af7311a5608352bd1c2776a5"
+    },
+    {
+      "entityId": "hostile_witness",
+      "sourceFile": "hostile-witness-world-v1.png",
+      "sha256": "ffee3a3fd8f8d7d88b566569584b4ace34d017185ffc98f55cdce0b55b484711"
+    },
+    {
+      "entityId": "archive_censor",
+      "sourceFile": "archive-censor-world-v1.png",
+      "sha256": "bdc16b6c31691fee293c9050e370a024712847ab580d89f81b7c50cedc846438"
+    },
+    {
+      "entityId": "perjury_hound",
+      "sourceFile": "perjury-hound-world-v1.png",
+      "sha256": "7dcc8259e7f8bb669f4857dbec5281334c0e67147ef45c9ee9cf18a82d3c8763"
+    }
+  ],
+  "remaining": [
+    {
+      "entityId": "pulse_doctor",
+      "sourceFile": "pulse-doctor-world-v1.png",
+      "batch": 1
+    },
+    {
+      "entityId": "ash_duelist",
+      "sourceFile": "ash-duelist-world-v1.png",
+      "batch": 1
+    },
+    {
+      "entityId": "furnace_judge",
+      "sourceFile": "furnace-judge-world-v1.png",
+      "batch": 1
+    },
+    {
+      "entityId": "paper_librarian",
+      "sourceFile": "paper-librarian-world-v1.png",
+      "batch": 1
+    },
+    {
+      "entityId": "dream_jailer",
+      "sourceFile": "dream-jailer-world-v1.png",
+      "batch": 1
+    },
+    {
+      "entityId": "void_knight",
+      "sourceFile": "void-knight-world-v1.png",
+      "batch": 1
+    },
+    {
+      "entityId": "main_god_echo",
+      "sourceFile": "main-god-echo-world-v1.png",
+      "batch": 1
+    },
+    {
+      "entityId": "clockwork_scout",
+      "sourceFile": "clockwork-scout-world-v1.png",
+      "batch": 1
+    },
+    {
+      "entityId": "epoch_sentinel",
+      "sourceFile": "epoch-sentinel-world-v1.png",
+      "batch": 1
+    },
+    {
+      "entityId": "zero_hour_regent",
+      "sourceFile": "zero-hour-regent-world-v1.png",
+      "batch": 1
+    },
+    {
+      "entityId": "verdict_usher",
+      "sourceFile": "verdict-usher-world-v1.png",
+      "batch": 1
+    },
+    {
+      "entityId": "palimpsest_censor",
+      "sourceFile": "palimpsest-censor-world-v1.png",
+      "batch": 2
+    },
+    {
+      "entityId": "last_redactor",
+      "sourceFile": "last-redactor-world-v1.png",
+      "batch": 2
+    },
+    {
+      "entityId": "reserve_bailiff",
+      "sourceFile": "reserve-bailiff-world-v1.png",
+      "batch": 2
+    },
+    {
+      "entityId": "inheritance_mimic",
+      "sourceFile": "inheritance-mimic-world-v1.png",
+      "batch": 2
+    },
+    {
+      "entityId": "estate_auctioneer",
+      "sourceFile": "estate-auctioneer-world-v1.png",
+      "batch": 2
+    },
+    {
+      "entityId": "gene_stalker",
+      "sourceFile": "gene-stalker-world-v1.png",
+      "batch": 2
+    },
+    {
+      "entityId": "mutation_guardian",
+      "sourceFile": "mutation-guardian-world-v1.png",
+      "batch": 2
+    },
+    {
+      "entityId": "primal_curator",
+      "sourceFile": "primal-curator-world-v1.png",
+      "batch": 2
+    },
+    {
+      "entityId": "frequency_leech",
+      "sourceFile": "frequency-leech-world-v1.png",
+      "batch": 2
+    },
+    {
+      "entityId": "dead_air_mimic",
+      "sourceFile": "dead-air-mimic-world-v1.png",
+      "batch": 2
+    },
+    {
+      "entityId": "broadcast_warden",
+      "sourceFile": "broadcast-warden-world-v1.png",
+      "batch": 2
+    },
+    {
+      "entityId": "false_testimony_judge",
+      "sourceFile": "false-testimony-judge-world-v1.png",
+      "batch": 3
+    },
+    {
+      "entityId": "cue_stalker",
+      "sourceFile": "cue-stalker-world-v1.png",
+      "batch": 3
+    },
+    {
+      "entityId": "continuity_editor",
+      "sourceFile": "continuity-editor-world-v1.png",
+      "batch": 3
+    },
+    {
+      "entityId": "retake_double",
+      "sourceFile": "retake-double-world-v1.png",
+      "batch": 3
+    },
+    {
+      "entityId": "final_cut_director",
+      "sourceFile": "final-cut-director-world-v1.png",
+      "batch": 3
+    },
+    {
+      "entityId": "sweep_sentinel",
+      "sourceFile": "sweep-sentinel-world-v1.png",
+      "batch": 3
+    },
+    {
+      "entityId": "phase_hunter_drone",
+      "sourceFile": "phase-hunter-drone-world-v1.png",
+      "batch": 3
+    },
+    {
+      "entityId": "blindspot_auditor",
+      "sourceFile": "blindspot-auditor-world-v1.png",
+      "batch": 3
+    },
+    {
+      "entityId": "exposure_double",
+      "sourceFile": "exposure-double-world-v1.png",
+      "batch": 3
+    },
+    {
+      "entityId": "all_sight_warden",
+      "sourceFile": "all-sight-warden-world-v1.png",
+      "batch": 3
+    }
+  ],
+  "oldWorkersStopped": true,
+  "config": {
+    "path": "/Users/bytedance/.codex/config.toml",
+    "key": "agents.max_concurrent_threads_per_session",
+    "value": 30,
+    "strictConfigReadVerified": true,
+    "newConversationConcurrencyVerified": false
+  }
+}

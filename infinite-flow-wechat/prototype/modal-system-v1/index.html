@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>无限流 · 全弹框紧凑原型</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="board-header"><span>无限流 / 界面提案</span><span>全弹框 · 紧凑版</span></header>
+  <main class="board">
+    <section class="preview-column" aria-label="游戏弹框预览">
+      <div class="toolbar"><span>游戏内效果</span><div class="size-switch" aria-label="预览尺寸"><button data-size="390" aria-pressed="true">390</button><button data-size="320" aria-pressed="false">320</button></div></div>
+      <div class="game-stage" id="stage">
+        <div class="world" id="world">
+          <div class="world-scene" aria-hidden="true"></div>
+          <div class="hud"><div class="portrait"><img src="../../cocos/assets/resources/character/reincarnator-v2.png" alt=""></div><div class="hero-info"><strong>轮回者</strong><span>妖塔一层 · 探索中</span><i></i></div><div class="wallet"><span aria-hidden="true">◇</span><strong>1,085</strong></div></div>
+          <div class="location">妖塔一层 <span>北侧岔路</span></div>
+          <div class="world-bottom"><div class="joystick" aria-hidden="true"><i></i></div><button id="reopen">打开弹框</button></div>
+        </div>
+        <div class="scrim" id="scrim"></div>
+        <section id="modal" class="modal" role="dialog" aria-modal="false" aria-labelledby="modal-title"></section>
+        <div class="game-toast" id="game-toast" role="status" hidden></div>
+      </div>
+      <p class="preview-caption" id="preview-caption" role="status"></p>
+      <div class="walkthrough"><button id="previous">← 上一个</button><span id="screen-position"></span><button id="next">下一个 →</button></div>
+    </section>
+    <aside class="design-notes">
+      <p class="eyebrow">小图 · 窄窗 · 小按钮</p>
+      <h1>一套样式<br>覆盖全部弹框</h1>
+      <p class="intro">沿用宝箱原型的暗金细框与横向小图。信息多时在窗内滚动，操作留在底部。</p>
+      <div class="design-spec"><span>窗宽 <strong>≤304</strong></span><span>小图 <strong>40–48</strong></span><span>按钮 <strong>148×32</strong></span></div>
+      <label class="select-label" for="screen-select">全部弹框 <span id="screen-count"></span></label>
+      <select id="screen-select"></select>
+      <div class="group-switch" id="groups" role="group" aria-label="弹框分类"></div>
+      <div class="screen-list" id="screen-list" aria-label="分类弹框目录"></div>
+      <div class="current-notes"><span id="current-group"></span><h2 id="current-label"></h2><p id="current-note"></p><div id="related"></div></div>
+      <p class="proposal-boundary">可点击原型 · 固定内容样例<br>仅演示本页交互，尚未接入游戏。</p>
+      <a class="original-link" href="../chest-claim-v2/index.html">单独查看宝箱领取 ↗</a>
+    </aside>
+  </main>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

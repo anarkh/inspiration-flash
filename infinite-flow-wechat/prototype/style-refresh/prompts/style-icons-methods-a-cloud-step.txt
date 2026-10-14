@@ -1,0 +1,11 @@
+Use case: stylized-concept
+Asset type: one square transparent inventory icon for a dark, restrained ancient Chinese fantasy exploration game.
+Primary request: a single weathered charcoal-gray cloth travel boot, representing the cloud-step cultivation method. The boot has a soft wrinkled fabric shaft, faded ash-brown binding cords, a worn dark sole and just two small tarnished brass fittings. A very small thin translucent wisp of natural pale-gray ground mist touches its lower heel; the boot is the unmistakable main subject.
+Style/medium: realistic hand-painted game inventory illustration with sober material texture and painterly edge control, NOT a photograph or glossy 3D render. Quiet aged materials consistent with an old bronze incense holder, weathered stone courtyards and desaturated dark-fantasy relics.
+Composition/framing: centered single isolated object, clear three-quarter view, broad readable silhouette, full object entirely visible, occupies 70-80 percent of a square canvas, generous clean transparent margin, balanced icon with no base tile or frame, legible when displayed at 48 pixels.
+Lighting/mood: soft natural top-left light, muted and grounded, subtle short contact shading on the object only.
+Color palette: low-saturation charcoal cloth, ash gray, dull umber and tiny old-brass accents; no saturated hue.
+Scene/backdrop: genuine transparent alpha background, fully transparent corners; no floor, no environment, no background shadow disc.
+Text: none.
+Constraints: exactly one boot only; no leg or character; no scroll or book; no surrounding particles. Keep the fabric construction obvious and avoid ornate armored shin guards.
+Avoid: cartoon curled clouds, cloud platform, magical swirl ring, bright glow, colored rimlight, neon cyan/green/purple, bright gold outline, saturated highlights, floating debris, neighboring icon remnants, checkerboard baked into pixels, words, letters, watermark, border.

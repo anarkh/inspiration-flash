@@ -1,0 +1,47 @@
+{
+  "before": {
+    "id": "04",
+    "right": "18px",
+    "width": 930
+  },
+  "after": {
+    "buttons": [
+      {
+        "action": "menu",
+        "glyphHeight": 40,
+        "glyphWidth": 40,
+        "height": 44.49067687988281,
+        "inside": true,
+        "width": 68.28799438476562
+      },
+      {
+        "action": "bag",
+        "glyphHeight": 40,
+        "glyphWidth": 40,
+        "height": 44.49066162109375,
+        "inside": true,
+        "width": 68.28799438476562
+      },
+      {
+        "action": "map",
+        "glyphHeight": 40,
+        "glyphWidth": 40,
+        "height": 44.49066162109375,
+        "inside": true,
+        "width": 68.28799438476562
+      },
+      {
+        "action": "quests",
+        "glyphHeight": 40,
+        "glyphWidth": 40,
+        "height": 44.49066162109375,
+        "inside": true,
+        "width": 68.28799438476562
+      }
+    ],
+    "id": "04",
+    "right": "6px"
+  },
+  "narrowInside": true,
+  "pass": true
+}

@@ -1,0 +1,223 @@
+{
+  "threadId": "01a0ecb0-503e-7a81-95d1-22b8b154881e",
+  "runtimeTotalConcurrencySlots": 31,
+  "configuredSubagentLimit": 30,
+  "actualSpawnSuccessCount": 30,
+  "limitRejectionOccurred": false,
+  "verifiedAt": "2026-09-29T10:32:36.318Z",
+  "assignments": [
+    {
+      "agent": "/root/art_01",
+      "entityIds": [
+        "pulse_doctor",
+        "ash_duelist"
+      ],
+      "spawnSucceeded": true
+    },
+    {
+      "agent": "/root/art_02",
+      "entityIds": [
+        "furnace_judge",
+        "paper_librarian"
+      ],
+      "spawnSucceeded": true
+    },
+    {
+      "agent": "/root/art_03",
+      "entityIds": [
+        "dream_jailer"
+      ],
+      "spawnSucceeded": true
+    },
+    {
+      "agent": "/root/art_04",
+      "entityIds": [
+        "void_knight"
+      ],
+      "spawnSucceeded": true
+    },
+    {
+      "agent": "/root/art_05",
+      "entityIds": [
+        "main_god_echo"
+      ],
+      "spawnSucceeded": true
+    },
+    {
+      "agent": "/root/art_06",
+      "entityIds": [
+        "clockwork_scout"
+      ],
+      "spawnSucceeded": true
+    },
+    {
+      "agent": "/root/art_07",
+      "entityIds": [
+        "epoch_sentinel"
+      ],
+      "spawnSucceeded": true
+    },
+    {
+      "agent": "/root/art_08",
+      "entityIds": [
+        "zero_hour_regent"
+      ],
+      "spawnSucceeded": true
+    },
+    {
+      "agent": "/root/art_09",
+      "entityIds": [
+        "verdict_usher"
+      ],
+      "spawnSucceeded": true
+    },
+    {
+      "agent": "/root/art_10",
+      "entityIds": [
+        "palimpsest_censor"
+      ],
+      "spawnSucceeded": true
+    },
+    {
+      "agent": "/root/art_11",
+      "entityIds": [
+        "last_redactor"
+      ],
+      "spawnSucceeded": true
+    },
+    {
+      "agent": "/root/art_12",
+      "entityIds": [
+        "reserve_bailiff"
+      ],
+      "spawnSucceeded": true
+    },
+    {
+      "agent": "/root/art_13",
+      "entityIds": [
+        "inheritance_mimic"
+      ],
+      "spawnSucceeded": true
+    },
+    {
+      "agent": "/root/art_14",
+      "entityIds": [
+        "estate_auctioneer"
+      ],
+      "spawnSucceeded": true
+    },
+    {
+      "agent": "/root/art_15",
+      "entityIds": [
+        "gene_stalker"
+      ],
+      "spawnSucceeded": true
+    },
+    {
+      "agent": "/root/art_16",
+      "entityIds": [
+        "mutation_guardian"
+      ],
+      "spawnSucceeded": true
+    },
+    {
+      "agent": "/root/art_17",
+      "entityIds": [
+        "primal_curator"
+      ],
+      "spawnSucceeded": true
+    },
+    {
+      "agent": "/root/art_18",
+      "entityIds": [
+        "frequency_leech"
+      ],
+      "spawnSucceeded": true
+    },
+    {
+      "agent": "/root/art_19",
+      "entityIds": [
+        "dead_air_mimic"
+      ],
+      "spawnSucceeded": true
+    },
+    {
+      "agent": "/root/art_20",
+      "entityIds": [
+        "broadcast_warden"
+      ],
+      "spawnSucceeded": true
+    },
+    {
+      "agent": "/root/art_21",
+      "entityIds": [
+        "false_testimony_judge"
+      ],
+      "spawnSucceeded": true
+    },
+    {
+      "agent": "/root/art_22",
+      "entityIds": [
+        "cue_stalker"
+      ],
+      "spawnSucceeded": true
+    },
+    {
+      "agent": "/root/art_23",
+      "entityIds": [
+        "continuity_editor"
+      ],
+      "spawnSucceeded": true
+    },
+    {
+      "agent": "/root/art_24",
+      "entityIds": [
+        "retake_double"
+      ],
+      "spawnSucceeded": true
+    },
+    {
+      "agent": "/root/art_25",
+      "entityIds": [
+        "final_cut_director"
+      ],
+      "spawnSucceeded": true
+    },
+    {
+      "agent": "/root/art_26",
+      "entityIds": [
+        "sweep_sentinel"
+      ],
+      "spawnSucceeded": true
+    },
+    {
+      "agent": "/root/art_27",
+      "entityIds": [
+        "phase_hunter_drone"
+      ],
+      "spawnSucceeded": true
+    },
+    {
+      "agent": "/root/art_28",
+      "entityIds": [
+        "blindspot_auditor"
+      ],
+      "spawnSucceeded": true
+    },
+    {
+      "agent": "/root/art_29",
+      "entityIds": [
+        "exposure_double"
+      ],
+      "spawnSucceeded": true
+    },
+    {
+      "agent": "/root/art_30",
+      "entityIds": [
+        "all_sight_warden"
+      ],
+      "spawnSucceeded": true
+    }
+  ],
+  "note": "All 30 independent production agents were successfully spawned. Some completed while later agents were starting; this is not a claim of a measured 30-way simultaneous peak."
+}

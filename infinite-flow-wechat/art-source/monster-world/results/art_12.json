@@ -1,0 +1,26 @@
+{
+  "entityId": "reserve_bailiff",
+  "path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/art-source/monster-world/reserve-bailiff-world-v1.png",
+  "sourcePath": "/Users/bytedance/.codex/generated_images/01a0ecb4-ed78-7150-b6ed-85c3fa1d307d/exec-2afc12e8-245b-46cd-9fa5-a81b1188b118.png",
+  "width": 1024,
+  "height": 1536,
+  "mode": "RGBA",
+  "alpha": {
+    "min": 0,
+    "max": 254,
+    "transparentPixels": 737190,
+    "nonzeroPixels": 835674,
+    "fullyOpaquePixels": 0,
+    "backgroundSampleAlpha": 0
+  },
+  "reference": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/monster/reserve-bailiff-v1.png",
+  "tool": "built-in imagegen",
+  "prompt": "prompts.json sharedPrompt + Subject: 账本锁链缠腕的底价执役",
+  "visualInspection": {
+    "fullBody": true,
+    "allPropsInsideFrame": true,
+    "identityPreserved": true,
+    "style": "weathered charcoal and old bronze dark RPG armor"
+  },
+  "status": "completed"
+}

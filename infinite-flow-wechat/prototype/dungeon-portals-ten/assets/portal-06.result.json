@@ -1,0 +1,20 @@
+{
+  "generator": "built-in image_gen",
+  "transparent_background_requested": true,
+  "source_path": "/Users/bytedance/.codex/generated_images/01a11978-2e9f-7933-8b90-d6fa83835259/exec-0b1d20c6-a1db-476e-9fe5-4a6521228b3b.png",
+  "output_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/dungeon-portals-ten/assets/portal-06.png",
+  "sha256": "0cf554f3aa61b7831771d6a13b7ad038a0abb3e0270f14be2d26db80572afc01",
+  "byte_exact_copy": true,
+  "width": 1536,
+  "height": 1024,
+  "mode": "RGBA",
+  "alpha_extrema": [
+    0,
+    254
+  ],
+  "transparent_pixels": 684012,
+  "partial_alpha_pixels": 888852,
+  "opaque_pixels": 0,
+  "prompt_file": "portal-06.prompt.txt",
+  "postprocessing": "none"
+}

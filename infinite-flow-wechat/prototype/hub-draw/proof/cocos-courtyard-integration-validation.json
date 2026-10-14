@@ -1,0 +1,121 @@
+{
+  "schemaVersion": 1,
+  "verifiedAt": "2026-09-30T09:10:35.112595+00:00",
+  "status": "PASS",
+  "evidenceBoundary": "Actual Cocos Web Mobile preview; not WeChat physical-device or release acceptance",
+  "previewUrl": "http://127.0.0.1:8125/cocos/build/web-mobile/",
+  "resourceManifest": {
+    "revision": "sha256:a1855551160218c1f3b5d55b27abab4cf01caf1fe983e61fd2c0566f34940f3a",
+    "assetCount": 294,
+    "courtyardAssets": [
+      {
+        "key": "scene:hub_courtyard_walk",
+        "resourceFile": "hub-courtyard/walk-sanctuary-v1.png",
+        "sha256": "22cf1dfe40d3fb5452e4863d251324bf2bc4361a338a7c7f83aeece655bcbb08",
+        "originalBytesPreserved": true
+      },
+      {
+        "key": "scene:courtyard_pillar",
+        "resourceFile": "hub-courtyard/pillar-v1.png",
+        "sha256": "9c0509f4d3157d178605940cd96ff4c39088e03222cf76a472dfde53dc430875",
+        "originalBytesPreserved": true
+      },
+      {
+        "key": "scene:courtyard_crate",
+        "resourceFile": "hub-courtyard/crate-v1.png",
+        "sha256": "b22bf93d22614788408ce9c829a395fa21daf7cda01056db98de2f9a51891223",
+        "originalBytesPreserved": true
+      },
+      {
+        "key": "scene:courtyard_altar",
+        "resourceFile": "hub-courtyard/altar-v1.png",
+        "sha256": "9531faf0c42c8bfad183e382f3b30e57e4a8f8b049cf044fd71e5bddc14ad258",
+        "originalBytesPreserved": true
+      },
+      {
+        "key": "scene:courtyard_lamp",
+        "resourceFile": "hub-courtyard/lamp-v1.png",
+        "sha256": "1a4a2543634ce44bdd344802fd803751b29c68c57f5ffbf17963df334f4307d3",
+        "originalBytesPreserved": true
+      }
+    ]
+  },
+  "creatorBuild": {
+    "version": "3.8.8",
+    "platform": "web-mobile",
+    "exitCode": 36,
+    "mainScriptBytes": 1057468,
+    "mainScriptSha256": "d308da0bb26e8700bb9f96491c69672ad4c88668412bc11ee1428a779bf71b2a"
+  },
+  "headless": {
+    "bootstrapRaceScenarios": 96,
+    "walkWorldChecks": 44,
+    "status": "PASS"
+  },
+  "typechecks": {
+    "sharedPackages": "PASS",
+    "cocosHeadless": "PASS",
+    "cocosCreatorGeneratedConfig": "PASS"
+  },
+  "physicalBrowserRuns": [
+    {
+      "viewport": {
+        "width": 320,
+        "height": 568,
+        "deviceScaleFactor": 1
+      },
+      "exitCode": 0,
+      "manifest": "cocos/build/web-mobile-canvas-smoke/2026-09-30T09-03-15-025Z-320x568-44890/manifest.json",
+      "flowScreenshotCount": 40,
+      "selectedChapterCount": 19,
+      "dungeonRendererFixtureCount": 19,
+      "sheetLayoutScreenshotCount": 30,
+      "sheetStyleScreenshotCount": 0,
+      "sheetStyleEvidenceBoundary": "skipped at narrow viewport",
+      "browserFailureCount": 0,
+      "combatOutcome": "victory-returned-to-explore",
+      "physicalAttackCount": 3,
+      "flowAndDungeonScreenshotBytesAndSha256Verified": true,
+      "sheetGalleryPngFilesVerified": true,
+      "build": {
+        "root": "cocos/build/web-mobile",
+        "entry": "cocos/build/web-mobile/index.html",
+        "entryModifiedAt": "2026-09-30T08:14:31.981Z",
+        "newestInput": "cocos/assets/scripts/ui/InfiniteFlowWalkScene.ts",
+        "newestInputModifiedAt": "2026-09-30T08:13:12.930Z"
+      }
+    },
+    {
+      "viewport": {
+        "width": 750,
+        "height": 1334,
+        "deviceScaleFactor": 1
+      },
+      "exitCode": 0,
+      "manifest": "cocos/build/web-mobile-canvas-smoke/2026-09-30T09-03-15-157Z-750x1334-44908/manifest.json",
+      "flowScreenshotCount": 40,
+      "selectedChapterCount": 19,
+      "dungeonRendererFixtureCount": 19,
+      "sheetLayoutScreenshotCount": 30,
+      "sheetStyleScreenshotCount": 30,
+      "sheetStyleEvidenceBoundary": "Local debug web-mobile gallery (?gallery=1) in headless Chrome; not a WeChat build or release artifact.",
+      "browserFailureCount": 0,
+      "combatOutcome": "victory-returned-to-explore",
+      "physicalAttackCount": 3,
+      "flowAndDungeonScreenshotBytesAndSha256Verified": true,
+      "sheetGalleryPngFilesVerified": true,
+      "build": {
+        "root": "cocos/build/web-mobile",
+        "entry": "cocos/build/web-mobile/index.html",
+        "entryModifiedAt": "2026-09-30T08:14:31.981Z",
+        "newestInput": "cocos/assets/scripts/ui/InfiniteFlowWalkScene.ts",
+        "newestInputModifiedAt": "2026-09-30T08:13:12.930Z"
+      }
+    }
+  ],
+  "nativeBrowserValidation": "cocos-courtyard-browser-validation.json",
+  "phoneScreenshots": [
+    "cocos-courtyard-mobile-320.jpg",
+    "cocos-courtyard-mobile-390.jpg"
+  ]
+}

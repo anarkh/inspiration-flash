@@ -1,0 +1,9 @@
+Use case: precise-object-edit
+Asset type: individual equipment inventory icon for a realistic, low-saturation dark-fantasy game.
+Input image: the attached rebirth-amulet-v1.png is the sole EDIT TARGET, not a style reference.
+Primary request: clean this exact existing amulet into one complete isolated item. Remove the unrelated neighboring sprite fragment along the bottom edge. Restore only the small missing or damaged subject edges caused by that neighboring fragment.
+Subject and invariants: preserve the same dark, worn iron egg-shaped amulet, cracked shell, restrained red ember core, existing brass cap and loop, narrow brass seams, silhouette, orientation and relative proportions. Preserve the recognizable identity and textured painterly realism of the original. Retain only any subtle energy detail already integral to this amulet, with no added luminous effects.
+Composition: one centered intact independent object, fully visible with a modest clear margin. Match the original three-quarter front presentation.
+Color/materials: subdued charcoal iron, weathered brass, dim warm-red embers. Old scratched metal, low saturation, soft realistic lighting.
+Background: genuinely transparent alpha, including all former dark backdrop pixels and every neighboring fragment. No baked checkerboard, no solid backdrop, no floor or cast shadow.
+Constraints: make only the requested cleanup; no new parts, no redesigned amulet, no enlarged fire, no neon, no added aura, no text, no border, no other objects, no watermark.

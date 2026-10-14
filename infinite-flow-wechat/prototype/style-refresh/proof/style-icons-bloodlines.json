@@ -1,0 +1,178 @@
+{
+  "mode": "built-in imagegen",
+  "scope": "HTML prototype only",
+  "assets": [
+    {
+      "id": "titan-marrow",
+      "source": "/Users/bytedance/.codex/generated_images/01a11a7c-3597-7643-8845-5edf557722e9/exec-60fcac32-9bfe-489d-ab13-591b15c85844.png",
+      "destination": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/assets/titan-marrow-proposed.png",
+      "prompt": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/prompts/style-icons-bloodlines-titan-marrow.txt",
+      "sha256": "8858a2b1df6c9b2248acc7a18ea58f1e3031c53cf96bb9b3fd0746834d88e2c1",
+      "source_sha256": "8858a2b1df6c9b2248acc7a18ea58f1e3031c53cf96bb9b3fd0746834d88e2c1",
+      "byte_identical": true,
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "alpha": {
+        "extrema": [
+          0,
+          255
+        ],
+        "transparent_pixels": 1049362,
+        "opaque_pixels": 206,
+        "partial_pixels": 522948,
+        "bounding_box": [
+          0,
+          19,
+          1232,
+          1254
+        ],
+        "main_bbox_alpha_gt32": [
+          68,
+          88,
+          1215,
+          1198
+        ],
+        "main_bbox_fraction": [
+          0.9146730462519936,
+          0.8851674641148325
+        ]
+      },
+      "visual_check": "single isolated relic; muted aged materials; no frame/text; manually inspected; native bytes preserved with no pixel transformations",
+      "generation_mode": "built-in image_gen",
+      "tool_calls": 1
+    },
+    {
+      "id": "void-symbiote",
+      "source": "/Users/bytedance/.codex/generated_images/01a11a7c-3597-7643-8845-5edf557722e9/exec-2dbe08e5-aec2-4685-919c-ba079bb9877f.png",
+      "destination": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/assets/void-symbiote-proposed.png",
+      "prompt": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/prompts/style-icons-bloodlines-void-symbiote.txt",
+      "sha256": "72888c3a04bfaad75230b216e0b067bdc67f7b944b963e64e1622239bb5958ef",
+      "source_sha256": "72888c3a04bfaad75230b216e0b067bdc67f7b944b963e64e1622239bb5958ef",
+      "byte_identical": true,
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "alpha": {
+        "extrema": [
+          0,
+          255
+        ],
+        "transparent_pixels": 756174,
+        "opaque_pixels": 327,
+        "partial_pixels": 816015,
+        "bounding_box": [
+          0,
+          4,
+          1200,
+          1254
+        ],
+        "main_bbox_alpha_gt32": [
+          122,
+          90,
+          1147,
+          1184
+        ],
+        "main_bbox_fraction": [
+          0.817384370015949,
+          0.8724082934609251
+        ]
+      },
+      "visual_check": "single isolated relic; muted aged materials; no frame/text; manually inspected; native bytes preserved with no pixel transformations",
+      "generation_mode": "built-in image_gen",
+      "tool_calls": 1
+    },
+    {
+      "id": "bastion-chitin",
+      "source": "/Users/bytedance/.codex/generated_images/01a11a7c-803f-7e42-ae58-600fd952bc99/exec-1a65ba2a-4c70-4667-bbaa-3d81f1add456.png",
+      "destination": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/assets/bastion-chitin-proposed.png",
+      "prompt": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/prompts/style-icons-bloodlines-bastion-chitin.txt",
+      "generation_mode": "built-in image_gen",
+      "tool_calls": 1,
+      "sha256": "9a571e47a73e3dee8a1724860cf36e0c42b0483035c82b54298c69bee6e1917b",
+      "source_sha256": "9a571e47a73e3dee8a1724860cf36e0c42b0483035c82b54298c69bee6e1917b",
+      "byte_identical": true,
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "alpha": {
+        "extrema": [
+          0,
+          255
+        ],
+        "transparent_pixels": 814695,
+        "opaque_pixels": 230,
+        "partial_pixels": 757591,
+        "bounding_box": [
+          0,
+          23,
+          1253,
+          1254
+        ],
+        "main_bbox_alpha_gt32": [
+          166,
+          49,
+          1169,
+          1213
+        ],
+        "main_bbox_fraction": [
+          0.7998405103668261,
+          0.9282296650717703
+        ]
+      },
+      "visual_check": "single isolated relic; muted aged materials; no frame/text; manually inspected; native bytes preserved with no pixel transformations"
+    },
+    {
+      "id": "phoenix-ember",
+      "source": "/Users/bytedance/.codex/generated_images/01a11a7c-803f-7e42-ae58-600fd952bc99/exec-5d32459d-bd13-42fb-80b9-67433630f787.png",
+      "destination": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/assets/phoenix-ember-proposed.png",
+      "prompt": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/prompts/style-icons-bloodlines-phoenix-ember.txt",
+      "generation_mode": "built-in image_gen",
+      "tool_calls": 1,
+      "sha256": "e176580c531b22261c6af7137253b4806e77bee2a9eb3dfe636c2599cdebb599",
+      "source_sha256": "e176580c531b22261c6af7137253b4806e77bee2a9eb3dfe636c2599cdebb599",
+      "byte_identical": true,
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "alpha": {
+        "extrema": [
+          0,
+          255
+        ],
+        "transparent_pixels": 1100401,
+        "opaque_pixels": 261,
+        "partial_pixels": 471854,
+        "bounding_box": [
+          0,
+          2,
+          1230,
+          1254
+        ],
+        "main_bbox_alpha_gt32": [
+          290,
+          86,
+          980,
+          1199
+        ],
+        "main_bbox_fraction": [
+          0.5502392344497608,
+          0.8875598086124402
+        ]
+      },
+      "visual_check": "single isolated relic; muted aged materials; no frame/text; manually inspected; native bytes preserved with no pixel transformations"
+    }
+  ],
+  "limitations": [
+    "Main silhouettes occupy about 82-92% of image height; larger than 70-80% requested. Keep image bytes unchanged and use HTML contain/padding for consistent visual scale.",
+    "Native generation includes extremely low-alpha edge noise; the alpha >32 bounding box represents the main visible silhouette."
+  ]
+}

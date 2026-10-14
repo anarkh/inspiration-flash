@@ -1,0 +1,30 @@
+{
+  "entityId": "last_redactor",
+  "key": "monster:last_redactor_world",
+  "status": "generated",
+  "tool": "built-in imagegen",
+  "path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/art-source/monster-world/last-redactor-world-v1.png",
+  "sourcePath": "/Users/bytedance/.codex/generated_images/01a0ecb4-c422-7ba0-bb71-9cfd5050a07b/exec-24862268-a90e-4fca-b87b-c1d7bf01148f.png",
+  "referencePath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/monster/last-redactor-v1.png",
+  "width": 1024,
+  "height": 1536,
+  "mode": "RGBA",
+  "alpha": {
+    "min": 0,
+    "max": 254,
+    "transparentPixels": 606606,
+    "nearlyTransparentPixelsAlphaBelow10": 665584,
+    "nonzeroPixels": 966258,
+    "hasTrueTransparency": true
+  },
+  "sha256": "d6262237f24862d61728cc0edc5fc4155039871a8fcdae0045881381655f33f5",
+  "unchangedOriginal": true,
+  "prompt": "art-source/monster-world/prompts.json sharedPrompt + Subject: 手持巨型删界笔的终稿删界官",
+  "visualInspection": {
+    "fullBody": true,
+    "signaturePenAndFloatingPages": true,
+    "darkCharcoalOldGoldMaterials": true,
+    "allPropsInsideFrame": true,
+    "notes": "Complete head, boots, robe and pen tip visible. Side padding narrower than requested 10 percent near outer paper and robe edges."
+  }
+}

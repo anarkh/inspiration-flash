@@ -1,0 +1,16 @@
+{
+  "tool": "image_gen.imagegen",
+  "mode": "built-in",
+  "prompt": "Use case: stylized-concept\nAsset type: environment background plate for an original Chinese infinite-flow survival RPG safe-hub HTML UI prototype.\nPrimary request: Original Chinese infinite-flow survival RPG safe hub, ash-survivor encampment inside a ruined old bronze-and-black stone cloister, hand-painted grounded dark fantasy with restrained retro-scifi.\nComposition/framing: Portrait 1024x1536. Elevated near-orthographic 30-degree camera. Spacious empty stone courtyard in center and foreground. Weathered canvas shelters, workbenches, and practical survivor stalls only along the extreme left and right edges. The middle 60% must be readable clear floor for later UI and NPC overlays. An unobtrusive distant mysterious warm dim doorway on the upper axis. No large objects at foreground.\nLighting/mood: Warm small amber lamps and a distant brazier; quiet refuge among ruins.\nColor palette: old gold and bronze fittings, desaturated charcoal and beige ash textures; preserve a black-and-gold game-family appearance.\nStyle/medium: hand-painted environment illustration, grounded dark fantasy with restrained retro-scifi. Not photographic, not a fantasy village, not cartoon.\nConstraints: Environment plate only. No characters, no NPCs or monsters, no interface cards or buttons, no letters, text, glyphs, numbers or watermark. No clutter obscuring center. Opaque background.",
+  "transparentBackground": false,
+  "originalPath": "/Users/bytedance/.codex/generated_images/01a0f036-82f5-74d1-a184-75d957fc1dfd/exec-9f226192-2f0d-4a26-bb70-e34eb34fa77d.png",
+  "copiedPath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-draw/assets/camp-v1.png",
+  "dimensions": {
+    "width": 1024,
+    "height": 1536
+  },
+  "hash": {
+    "algorithm": "sha256",
+    "value": "a6db875a66b915f1357931f77b476fcab12fc5bdfde3c65c6b38fe6e2faf94f4"
+  }
+}

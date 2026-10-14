@@ -1,0 +1,793 @@
+{
+  "cases": [
+    {
+      "art": [
+        {
+          "box": {
+            "h": 54,
+            "w": 39.550853242320834,
+            "x": 140.22457337883958,
+            "y": 190.9840532959056
+          },
+          "inside": true,
+          "name": "WalkTransitionGateSprite",
+          "parent": "WalkTarget:door:map.cell:0:1",
+          "spriteValid": true
+        },
+        {
+          "box": {
+            "h": 68,
+            "w": 45.333333333333336,
+            "x": 137.33333333333334,
+            "y": 231.16719640179903
+          },
+          "inside": true,
+          "name": "WalkMonsterSprite:monster:fog_lesser_demon_world",
+          "parent": "WalkTarget:node:fog_lesser_demon",
+          "spriteValid": true
+        },
+        {
+          "box": {
+            "h": 54,
+            "w": 39.55085324232081,
+            "x": 69.29278927089356,
+            "y": 261.91583740385164
+          },
+          "inside": true,
+          "name": "WalkTransitionGateSprite",
+          "parent": "WalkTarget:closed-door:west",
+          "spriteValid": true
+        },
+        {
+          "box": {
+            "h": 54,
+            "w": 39.55085324232081,
+            "x": 211.15635748678565,
+            "y": 261.91583740385164
+          },
+          "inside": true,
+          "name": "WalkTransitionGateSprite",
+          "parent": "WalkTarget:door:map.cell:1:2",
+          "spriteValid": true
+        },
+        {
+          "box": {
+            "h": 54.00000000000003,
+            "w": 39.550853242320834,
+            "x": 140.22457337883958,
+            "y": 332.8476215117977
+          },
+          "inside": true,
+          "name": "WalkTransitionGateSprite",
+          "parent": "WalkTarget:door:map.cell:0:3",
+          "spriteValid": true
+        }
+      ],
+      "assets": "ready",
+      "camera": {
+        "position": {
+          "x": -222.1197183098592,
+          "y": 184.5422535211268
+        },
+        "scale": {
+          "x": 0.4442394366197184,
+          "y": 0.4442394366197184
+        }
+      },
+      "controls": [
+        {
+          "box": {
+            "h": 104,
+            "w": 104,
+            "x": 8.329835082458764,
+            "y": 425.8980509745127
+          },
+          "name": "WalkJoystick"
+        },
+        {
+          "box": {
+            "h": 44,
+            "w": 64,
+            "x": 245.67016491754129,
+            "y": 485.8980509745127
+          },
+          "name": "WalkInteract"
+        }
+      ],
+      "phase": "explore",
+      "position": {
+        "x": 500,
+        "y": 700
+      },
+      "revision": {
+        "acceptingInput": true,
+        "durableRevision": 1,
+        "ledgerRevision": 1
+      },
+      "room": {
+        "h": 245.15142428785612,
+        "w": 303.3403298350825,
+        "x": 8.329835082458764,
+        "y": 174.74662668665667
+      },
+      "url": "http://127.0.0.1:8125/cocos/build/web-mobile-room-fit-20261013/index.html",
+      "viewport": {
+        "h": 568,
+        "w": 320
+      }
+    },
+    {
+      "art": [
+        {
+          "box": {
+            "h": 54,
+            "w": 39.550853242320834,
+            "x": 140.22457337883958,
+            "y": 190.9840532959056
+          },
+          "inside": true,
+          "name": "WalkTransitionGateSprite",
+          "parent": "WalkTarget:closed-door:north",
+          "spriteValid": true
+        },
+        {
+          "box": {
+            "h": 68,
+            "w": 45.333333333333336,
+            "x": 171.38058970514743,
+            "y": 219.8181109445277
+          },
+          "inside": true,
+          "name": "WalkMonsterSprite:monster:fog_lesser_demon_world",
+          "parent": "WalkTarget:monster:fog_lesser_demon",
+          "spriteValid": true
+        },
+        {
+          "box": {
+            "h": 54,
+            "w": 39.55085324232082,
+            "x": 42.81158987059369,
+            "y": 261.91583740385164
+          },
+          "inside": true,
+          "name": "WalkTransitionGateSprite",
+          "parent": "WalkTarget:closed-door:west",
+          "spriteValid": true
+        },
+        {
+          "box": {
+            "h": 54,
+            "w": 39.550853242320784,
+            "x": 237.63755688708548,
+            "y": 261.91583740385164
+          },
+          "inside": true,
+          "name": "WalkTransitionGateSprite",
+          "parent": "WalkTarget:closed-door:east",
+          "spriteValid": true
+        },
+        {
+          "box": {
+            "h": 54.00000000000003,
+            "w": 39.550853242320834,
+            "x": 140.22457337883958,
+            "y": 332.8476215117977
+          },
+          "inside": true,
+          "name": "WalkTransitionGateSprite",
+          "parent": "WalkTarget:closed-door:south",
+          "spriteValid": true
+        }
+      ],
+      "assets": "ready",
+      "camera": {
+        "position": {
+          "x": -284.31323943661977,
+          "y": 184.5422535211268
+        },
+        "scale": {
+          "x": 0.4442394366197184,
+          "y": 0.4442394366197184
+        }
+      },
+      "controls": [
+        {
+          "box": {
+            "h": 92,
+            "w": 92,
+            "x": 8.329835082458777,
+            "y": 431.8980509745127
+          },
+          "name": "WalkJoystick"
+        },
+        {
+          "box": {
+            "h": 44,
+            "w": 60.00000000000001,
+            "x": 104.32983508245876,
+            "y": 493.8980509745127
+          },
+          "name": "WalkInteract"
+        },
+        {
+          "box": {
+            "h": 44,
+            "w": 44,
+            "x": 167.67016491754126,
+            "y": 425.8980509745127
+          },
+          "name": "WalkCombatChoice:spells"
+        },
+        {
+          "box": {
+            "h": 14.000000000000002,
+            "w": 42,
+            "x": 168.67016491754126,
+            "y": 450.8980509745127
+          },
+          "name": "WalkCombatChoice:spellsLabel"
+        },
+        {
+          "box": {
+            "h": 16,
+            "w": 19.130434782608695,
+            "x": 180.1049475262369,
+            "y": 431.8980509745127
+          },
+          "name": "WalkCombatChoice:spellsIcon"
+        },
+        {
+          "box": {
+            "h": 44,
+            "w": 44,
+            "x": 167.67016491754126,
+            "y": 477.8980509745127
+          },
+          "name": "WalkCombatChoice:medicines"
+        },
+        {
+          "box": {
+            "h": 14.000000000000002,
+            "w": 42,
+            "x": 168.67016491754126,
+            "y": 502.8980509745127
+          },
+          "name": "WalkCombatChoice:medicinesLabel"
+        },
+        {
+          "box": {
+            "h": 16,
+            "w": 19.130434782608695,
+            "x": 180.1049475262369,
+            "y": 483.8980509745127
+          },
+          "name": "WalkCombatChoice:medicinesIcon"
+        },
+        {
+          "box": {
+            "h": 44,
+            "w": 44,
+            "x": 217.67016491754129,
+            "y": 425.8980509745127
+          },
+          "name": "WalkCombatAction:combat.action:attack"
+        },
+        {
+          "box": {
+            "h": 14.000000000000002,
+            "w": 42,
+            "x": 218.67016491754129,
+            "y": 445.8980509745127
+          },
+          "name": "WalkCombatAction:combat.action:attackLabel"
+        },
+        {
+          "box": {
+            "h": 16,
+            "w": 19.13043478260865,
+            "x": 230.10494752623697,
+            "y": 431.8980509745127
+          },
+          "name": "WalkCombatAction:combat.action:attackIcon"
+        },
+        {
+          "box": {
+            "h": 44,
+            "w": 44,
+            "x": 267.6701649175413,
+            "y": 425.8980509745127
+          },
+          "name": "WalkCombatAction:combat.action:guard"
+        },
+        {
+          "box": {
+            "h": 14.000000000000002,
+            "w": 42,
+            "x": 268.6701649175413,
+            "y": 450.8980509745127
+          },
+          "name": "WalkCombatAction:combat.action:guardLabel"
+        },
+        {
+          "box": {
+            "h": 16,
+            "w": 19.13043478260865,
+            "x": 280.10494752623697,
+            "y": 431.8980509745127
+          },
+          "name": "WalkCombatAction:combat.action:guardIcon"
+        },
+        {
+          "box": {
+            "h": 44,
+            "w": 44,
+            "x": 217.67016491754129,
+            "y": 477.8980509745127
+          },
+          "name": "WalkCombatAction:combat.action:use_thunder_talisman"
+        },
+        {
+          "box": {
+            "h": 14.000000000000002,
+            "w": 42,
+            "x": 218.67016491754129,
+            "y": 502.8980509745127
+          },
+          "name": "WalkCombatAction:combat.action:use_thunder_talismanLabel"
+        },
+        {
+          "box": {
+            "h": 16,
+            "w": 19.13043478260865,
+            "x": 230.10494752623697,
+            "y": 483.8980509745127
+          },
+          "name": "WalkCombatAction:combat.action:use_thunder_talismanIcon"
+        },
+        {
+          "box": {
+            "h": 44,
+            "w": 44,
+            "x": 267.6701649175413,
+            "y": 477.8980509745127
+          },
+          "name": "WalkCombatAction:combat.action:escape"
+        },
+        {
+          "box": {
+            "h": 14.000000000000002,
+            "w": 42,
+            "x": 268.6701649175413,
+            "y": 502.8980509745127
+          },
+          "name": "WalkCombatAction:combat.action:escapeLabel"
+        },
+        {
+          "box": {
+            "h": 16,
+            "w": 19.13043478260865,
+            "x": 280.10494752623697,
+            "y": 483.8980509745127
+          },
+          "name": "WalkCombatAction:combat.action:escapeIcon"
+        }
+      ],
+      "phase": "combat",
+      "position": {
+        "x": 440,
+        "y": 700
+      },
+      "revision": {
+        "acceptingInput": true,
+        "durableRevision": 2,
+        "ledgerRevision": 2
+      },
+      "room": {
+        "h": 245.15142428785612,
+        "w": 303.3403298350825,
+        "x": 8.329835082458764,
+        "y": 174.74662668665667
+      },
+      "url": "http://127.0.0.1:8125/cocos/build/web-mobile-room-fit-20261013/index.html",
+      "viewport": {
+        "h": 568,
+        "w": 320
+      }
+    },
+    {
+      "art": [
+        {
+          "box": {
+            "h": 63.99999999999995,
+            "w": 46.8750853242321,
+            "x": 171.56245733788396,
+            "y": 291.37846358683487
+          },
+          "inside": true,
+          "name": "WalkTransitionGateSprite",
+          "parent": "WalkTarget:closed-door:north",
+          "spriteValid": true
+        },
+        {
+          "box": {
+            "h": 67.99999999999997,
+            "w": 45.333333333333336,
+            "x": 220.42708333333337,
+            "y": 346.51
+          },
+          "inside": true,
+          "name": "WalkMonsterSprite:monster:fog_lesser_demon_world",
+          "parent": "WalkTarget:monster:fog_lesser_demon",
+          "spriteValid": true
+        },
+        {
+          "box": {
+            "h": 64.00000000000001,
+            "w": 46.87508532423208,
+            "x": 33.960894837883956,
+            "y": 391.57377608683487
+          },
+          "inside": true,
+          "name": "WalkTransitionGateSprite",
+          "parent": "WalkTarget:closed-door:west",
+          "spriteValid": true
+        },
+        {
+          "box": {
+            "h": 64.00000000000001,
+            "w": 46.875085324232046,
+            "x": 309.164019837884,
+            "y": 391.57377608683487
+          },
+          "inside": true,
+          "name": "WalkTransitionGateSprite",
+          "parent": "WalkTarget:closed-door:east",
+          "spriteValid": true
+        },
+        {
+          "box": {
+            "h": 64.00000000000001,
+            "w": 46.8750853242321,
+            "x": 171.56245733788396,
+            "y": 491.7690885868349
+          },
+          "inside": true,
+          "name": "WalkTransitionGateSprite",
+          "parent": "WalkTarget:closed-door:south",
+          "spriteValid": true
+        }
+      ],
+      "assets": "ready",
+      "camera": {
+        "position": {
+          "x": -328.84615384615387,
+          "y": 226.14182692307696
+        },
+        "scale": {
+          "x": 0.5138221153846154,
+          "y": 0.5138221153846154
+        }
+      },
+      "controls": [
+        {
+          "box": {
+            "h": 92,
+            "w": 92,
+            "x": 8.000000000000009,
+            "y": 701.68
+          },
+          "name": "WalkJoystick"
+        },
+        {
+          "box": {
+            "h": 44.00000000000001,
+            "w": 59.999999999999986,
+            "x": 104,
+            "y": 763.68
+          },
+          "name": "WalkInteract"
+        },
+        {
+          "box": {
+            "h": 44.000000000000014,
+            "w": 43.999999999999986,
+            "x": 238,
+            "y": 695.6800000000001
+          },
+          "name": "WalkCombatChoice:spells"
+        },
+        {
+          "box": {
+            "h": 13.999999999999991,
+            "w": 41.99999999999997,
+            "x": 239.00000000000003,
+            "y": 720.6800000000001
+          },
+          "name": "WalkCombatChoice:spellsLabel"
+        },
+        {
+          "box": {
+            "h": 15.999999999999988,
+            "w": 19.13043478260867,
+            "x": 250.43478260869568,
+            "y": 701.6800000000001
+          },
+          "name": "WalkCombatChoice:spellsIcon"
+        },
+        {
+          "box": {
+            "h": 44.00000000000001,
+            "w": 43.999999999999986,
+            "x": 238,
+            "y": 747.68
+          },
+          "name": "WalkCombatChoice:medicines"
+        },
+        {
+          "box": {
+            "h": 13.999999999999998,
+            "w": 41.99999999999997,
+            "x": 239.00000000000003,
+            "y": 772.6800000000001
+          },
+          "name": "WalkCombatChoice:medicinesLabel"
+        },
+        {
+          "box": {
+            "h": 16.000000000000004,
+            "w": 19.13043478260867,
+            "x": 250.43478260869568,
+            "y": 753.6800000000001
+          },
+          "name": "WalkCombatChoice:medicinesIcon"
+        },
+        {
+          "box": {
+            "h": 44.000000000000014,
+            "w": 43.99999999999996,
+            "x": 288.00000000000006,
+            "y": 695.6800000000001
+          },
+          "name": "WalkCombatAction:combat.action:attack"
+        },
+        {
+          "box": {
+            "h": 13.999999999999991,
+            "w": 41.99999999999997,
+            "x": 289.00000000000006,
+            "y": 715.6800000000001
+          },
+          "name": "WalkCombatAction:combat.action:attackLabel"
+        },
+        {
+          "box": {
+            "h": 15.999999999999988,
+            "w": 19.13043478260865,
+            "x": 300.4347826086957,
+            "y": 701.6800000000001
+          },
+          "name": "WalkCombatAction:combat.action:attackIcon"
+        },
+        {
+          "box": {
+            "h": 44.000000000000014,
+            "w": 43.99999999999996,
+            "x": 338.00000000000006,
+            "y": 695.6800000000001
+          },
+          "name": "WalkCombatAction:combat.action:guard"
+        },
+        {
+          "box": {
+            "h": 13.999999999999991,
+            "w": 41.99999999999997,
+            "x": 339.00000000000006,
+            "y": 720.6800000000001
+          },
+          "name": "WalkCombatAction:combat.action:guardLabel"
+        },
+        {
+          "box": {
+            "h": 15.999999999999988,
+            "w": 19.13043478260865,
+            "x": 350.43478260869574,
+            "y": 701.6800000000001
+          },
+          "name": "WalkCombatAction:combat.action:guardIcon"
+        },
+        {
+          "box": {
+            "h": 44.00000000000001,
+            "w": 43.99999999999996,
+            "x": 288.00000000000006,
+            "y": 747.68
+          },
+          "name": "WalkCombatAction:combat.action:use_thunder_talisman"
+        },
+        {
+          "box": {
+            "h": 13.999999999999998,
+            "w": 41.99999999999997,
+            "x": 289.00000000000006,
+            "y": 772.6800000000001
+          },
+          "name": "WalkCombatAction:combat.action:use_thunder_talismanLabel"
+        },
+        {
+          "box": {
+            "h": 16.000000000000004,
+            "w": 19.13043478260865,
+            "x": 300.4347826086957,
+            "y": 753.6800000000001
+          },
+          "name": "WalkCombatAction:combat.action:use_thunder_talismanIcon"
+        },
+        {
+          "box": {
+            "h": 44.00000000000001,
+            "w": 43.99999999999996,
+            "x": 338.00000000000006,
+            "y": 747.68
+          },
+          "name": "WalkCombatAction:combat.action:escape"
+        },
+        {
+          "box": {
+            "h": 13.999999999999998,
+            "w": 41.99999999999997,
+            "x": 339.00000000000006,
+            "y": 772.6800000000001
+          },
+          "name": "WalkCombatAction:combat.action:escapeLabel"
+        },
+        {
+          "box": {
+            "h": 16.000000000000004,
+            "w": 19.13043478260865,
+            "x": 350.43478260869574,
+            "y": 753.6800000000001
+          },
+          "name": "WalkCombatAction:combat.action:escapeIcon"
+        }
+      ],
+      "phase": "combat",
+      "position": {
+        "x": 440,
+        "y": 700
+      },
+      "revision": {
+        "acceptingInput": true,
+        "durableRevision": 2,
+        "ledgerRevision": 2
+      },
+      "room": {
+        "h": 506.36,
+        "w": 374.00000000000006,
+        "x": 7.999999999999987,
+        "y": 183.32000000000005
+      },
+      "url": "http://127.0.0.1:8125/cocos/build/web-mobile-room-fit-20261013/index.html",
+      "viewport": {
+        "h": 844,
+        "w": 390
+      }
+    },
+    {
+      "art": [
+        {
+          "box": {
+            "h": 63.99999999999995,
+            "w": 46.8750853242321,
+            "x": 171.56245733788396,
+            "y": 263.32377608683487
+          },
+          "inside": true,
+          "name": "WalkTransitionGateSprite",
+          "parent": "WalkTarget:door:map.cell:0:1",
+          "spriteValid": true
+        },
+        {
+          "box": {
+            "h": 67.99999999999997,
+            "w": 45.333333333333336,
+            "x": 172.33333333333334,
+            "y": 355.06
+          },
+          "inside": true,
+          "name": "WalkMonsterSprite:monster:fog_lesser_demon_world",
+          "parent": "WalkTarget:node:fog_lesser_demon",
+          "spriteValid": true
+        },
+        {
+          "box": {
+            "h": 64.00000000000001,
+            "w": 46.875085324232096,
+            "x": 43.31245733788394,
+            "y": 391.5737760868348
+          },
+          "inside": true,
+          "name": "WalkTransitionGateSprite",
+          "parent": "WalkTarget:closed-door:west",
+          "spriteValid": true
+        },
+        {
+          "box": {
+            "h": 64.00000000000001,
+            "w": 46.875085324232046,
+            "x": 299.8124573378839,
+            "y": 391.5737760868348
+          },
+          "inside": true,
+          "name": "WalkTransitionGateSprite",
+          "parent": "WalkTarget:door:map.cell:1:2",
+          "spriteValid": true
+        },
+        {
+          "box": {
+            "h": 64.00000000000001,
+            "w": 46.8750853242321,
+            "x": 171.56245733788396,
+            "y": 519.8237760868349
+          },
+          "inside": true,
+          "name": "WalkTransitionGateSprite",
+          "parent": "WalkTarget:door:map.cell:0:3",
+          "spriteValid": true
+        }
+      ],
+      "assets": "ready",
+      "camera": {
+        "position": {
+          "x": -328.84615384615387,
+          "y": 298.0769230769231
+        },
+        "scale": {
+          "x": 0.6576923076923077,
+          "y": 0.6576923076923077
+        }
+      },
+      "controls": [
+        {
+          "box": {
+            "h": 104,
+            "w": 104,
+            "x": 7.999999999999987,
+            "y": 695.68
+          },
+          "name": "WalkJoystick"
+        },
+        {
+          "box": {
+            "h": 44.00000000000001,
+            "w": 64.00000000000001,
+            "x": 316.00000000000006,
+            "y": 755.68
+          },
+          "name": "WalkInteract"
+        }
+      ],
+      "phase": "explore",
+      "position": {
+        "x": 500,
+        "y": 700
+      },
+      "revision": {
+        "acceptingInput": true,
+        "durableRevision": 1,
+        "ledgerRevision": 1
+      },
+      "room": {
+        "h": 506.36,
+        "w": 374.00000000000006,
+        "x": 7.999999999999987,
+        "y": 183.32000000000005
+      },
+      "url": "http://127.0.0.1:8125/cocos/build/web-mobile-room-fit-20261013/index.html",
+      "viewport": {
+        "h": 844,
+        "w": 390
+      }
+    }
+  ],
+  "errors": []
+}

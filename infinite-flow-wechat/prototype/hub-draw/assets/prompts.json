@@ -1,0 +1,566 @@
+{
+  "schemaVersion": 2,
+  "scope": "既定独立 HTML 主神空间原型；正式 Cocos 游戏尚未迁移，现有域规则不变。",
+  "reusedNpcAssets": [
+    {
+      "serviceId": "equipment",
+      "name": "军需官",
+      "source": "复用仓库内已有正式游戏 NPC 素材；本次仅引用，未生成、复制或修改源文件。",
+      "portrait": {
+        "repositoryPath": "infinite-flow-wechat/cocos/assets/resources/npc/equipment-quartermaster-v1.png",
+        "sourcePath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/npc/equipment-quartermaster-v1.png",
+        "url": "../../cocos/assets/resources/npc/equipment-quartermaster-v1.png"
+      },
+      "world": {
+        "repositoryPath": "infinite-flow-wechat/cocos/assets/resources/npc/equipment-quartermaster-world-v1.png",
+        "sourcePath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/npc/equipment-quartermaster-world-v1.png",
+        "url": "../../cocos/assets/resources/npc/equipment-quartermaster-world-v1.png"
+      },
+      "prompt": null,
+      "promptNote": "本次未重新生成 NPC；不推断存量素材的历史提示词。"
+    },
+    {
+      "serviceId": "supplies",
+      "name": "补给商",
+      "source": "复用仓库内已有正式游戏 NPC 素材；本次仅引用，未生成、复制或修改源文件。",
+      "portrait": {
+        "repositoryPath": "infinite-flow-wechat/cocos/assets/resources/npc/supply-trader-v1.png",
+        "sourcePath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/npc/supply-trader-v1.png",
+        "url": "../../cocos/assets/resources/npc/supply-trader-v1.png"
+      },
+      "world": {
+        "repositoryPath": "infinite-flow-wechat/cocos/assets/resources/npc/supply-trader-world-v1.png",
+        "sourcePath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/npc/supply-trader-world-v1.png",
+        "url": "../../cocos/assets/resources/npc/supply-trader-world-v1.png"
+      },
+      "prompt": null,
+      "promptNote": "本次未重新生成 NPC；不推断存量素材的历史提示词。"
+    },
+    {
+      "serviceId": "pets",
+      "name": "灵宠师",
+      "source": "复用仓库内已有正式游戏 NPC 素材；本次仅引用，未生成、复制或修改源文件。",
+      "portrait": {
+        "repositoryPath": "infinite-flow-wechat/cocos/assets/resources/npc/pet-keeper-v1.png",
+        "sourcePath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/npc/pet-keeper-v1.png",
+        "url": "../../cocos/assets/resources/npc/pet-keeper-v1.png"
+      },
+      "world": {
+        "repositoryPath": "infinite-flow-wechat/cocos/assets/resources/npc/pet-keeper-world-v1.png",
+        "sourcePath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/npc/pet-keeper-world-v1.png",
+        "url": "../../cocos/assets/resources/npc/pet-keeper-world-v1.png"
+      },
+      "prompt": null,
+      "promptNote": "本次未重新生成 NPC；不推断存量素材的历史提示词。"
+    },
+    {
+      "serviceId": "methods",
+      "name": "修行导师",
+      "source": "复用仓库内已有正式游戏 NPC 素材；本次仅引用，未生成、复制或修改源文件。",
+      "portrait": {
+        "repositoryPath": "infinite-flow-wechat/cocos/assets/resources/npc/method-master-v1.png",
+        "sourcePath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/npc/method-master-v1.png",
+        "url": "../../cocos/assets/resources/npc/method-master-v1.png"
+      },
+      "world": {
+        "repositoryPath": "infinite-flow-wechat/cocos/assets/resources/npc/method-master-world-v1.png",
+        "sourcePath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/npc/method-master-world-v1.png",
+        "url": "../../cocos/assets/resources/npc/method-master-world-v1.png"
+      },
+      "prompt": null,
+      "promptNote": "本次未重新生成 NPC；不推断存量素材的历史提示词。"
+    },
+    {
+      "serviceId": "bloodlines",
+      "name": "血脉祭司",
+      "source": "复用仓库内已有正式游戏 NPC 素材；本次仅引用，未生成、复制或修改源文件。",
+      "portrait": {
+        "repositoryPath": "infinite-flow-wechat/cocos/assets/resources/npc/bloodline-priest-v1.png",
+        "sourcePath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/npc/bloodline-priest-v1.png",
+        "url": "../../cocos/assets/resources/npc/bloodline-priest-v1.png"
+      },
+      "world": {
+        "repositoryPath": "infinite-flow-wechat/cocos/assets/resources/npc/bloodline-priest-world-v1.png",
+        "sourcePath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/npc/bloodline-priest-world-v1.png",
+        "url": "../../cocos/assets/resources/npc/bloodline-priest-world-v1.png"
+      },
+      "prompt": null,
+      "promptNote": "本次未重新生成 NPC；不推断存量素材的历史提示词。"
+    },
+    {
+      "serviceId": "companions",
+      "name": "同行引路人",
+      "source": "复用仓库内已有正式游戏 NPC 素材；本次仅引用，未生成、复制或修改源文件。",
+      "portrait": {
+        "repositoryPath": "infinite-flow-wechat/cocos/assets/resources/npc/companion-guide-v1.png",
+        "sourcePath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/npc/companion-guide-v1.png",
+        "url": "../../cocos/assets/resources/npc/companion-guide-v1.png"
+      },
+      "world": {
+        "repositoryPath": "infinite-flow-wechat/cocos/assets/resources/npc/companion-guide-world-v1.png",
+        "sourcePath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/npc/companion-guide-world-v1.png",
+        "url": "../../cocos/assets/resources/npc/companion-guide-world-v1.png"
+      },
+      "prompt": null,
+      "promptNote": "本次未重新生成 NPC；不推断存量素材的历史提示词。"
+    },
+    {
+      "serviceId": "tasks",
+      "name": "任务使者",
+      "source": "复用仓库内已有正式游戏 NPC 素材；本次仅引用，未生成、复制或修改源文件。",
+      "portrait": {
+        "repositoryPath": "infinite-flow-wechat/cocos/assets/resources/npc/main-god-projection-v1.png",
+        "sourcePath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/npc/main-god-projection-v1.png",
+        "url": "../../cocos/assets/resources/npc/main-god-projection-v1.png"
+      },
+      "world": {
+        "repositoryPath": "infinite-flow-wechat/cocos/assets/resources/npc/main-god-projection-world-v1.png",
+        "sourcePath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/npc/main-god-projection-world-v1.png",
+        "url": "../../cocos/assets/resources/npc/main-god-projection-world-v1.png"
+      },
+      "prompt": null,
+      "promptNote": "本次未重新生成 NPC；不推断存量素材的历史提示词。"
+    }
+  ],
+  "activeBackgroundVersion": "walk2_5dV1",
+  "backgroundVersions": {
+    "portraitUiV1": {
+      "active": false,
+      "description": "原竖屏 HTML 场景比较版本，1024×1536；保留原素材和提示词来源，当前可玩舞台不引用这些底图。",
+      "assets": [
+        {
+          "id": "sanctuary",
+          "source": "本次使用内置 imagegen 新生成的空场景底图；原样复制，没有后处理。",
+          "tool": "image_gen.imagegen",
+          "recordedTool": "image_gen.imagegen",
+          "mode": "built-in",
+          "prompt": "Use case: stylized-concept\nAsset type: empty environment background for an original Chinese infinite-flow survival RPG main-god sanctuary, used behind NPC sprites and controls on a 390x740 mobile screen.\nPrimary request: Generate one original portrait 1024x1536 hand-painted 2D game environment.\nScene/backdrop: a broad, quiet obsidian and charcoal stone courtyard within an ancient sanctuary of bronze columns. A symmetric architectural axis leads to a restrained altar near the upper center, with a small distant warm-gold floating main-god light above it.\nStyle/medium: grounded painted dark fantasy, with restrained retro-science-fiction influence; clearly illustrated game environment, not a photograph.\nComposition/framing: elevated 30-degree near-orthographic camera. Spacious, plain stone floor across the middle and foreground; the middle 60 percent intentionally remains open for overlaid NPC sprites and controls. All major architecture stays within a mobile portrait crop. No dramatic stairs covering the center; no tall foreground obstruction.\nLighting/mood: muted oxidized-cyan side lighting, subtle old-gold edges, soft dusty haze, quiet and solemn.\nMaterials/textures: worn stone and aged bronze, bronze inlay rings in the floor, subtle detail without clutter.\nConstraints: empty environment only; no people, NPCs, monsters, or any additional objects. No interface, buttons, cards, text, glyph letters, numbers, logo, or watermark. No neon, no cyberpunk. Opaque background.",
+          "transparentBackground": false,
+          "generatedPath": "/Users/bytedance/.codex/generated_images/01a0f036-1b26-7610-918c-a77f1c16e005/exec-b4b584e8-03f0-422b-83bc-a4b976a60323.png",
+          "finalSavedPath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-draw/assets/sanctuary-v1.png",
+          "path": "assets/sanctuary-v1.png",
+          "sourceRecord": "assets/sanctuary-result.json",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "hash": {
+            "algorithm": "sha256",
+            "value": "fcde845ca7a2df71bfd8e44b2c9eb4f21de11c3d5daf9c2d0c8a1db138265c02"
+          },
+          "variants": [
+            "01",
+            "05",
+            "08",
+            "10"
+          ],
+          "postprocessing": "none; byte-for-byte copy"
+        },
+        {
+          "id": "camp",
+          "source": "本次使用内置 imagegen 新生成的空场景底图；原样复制，没有后处理。",
+          "tool": "image_gen.imagegen",
+          "recordedTool": "image_gen.imagegen",
+          "mode": "built-in",
+          "prompt": "Use case: stylized-concept\nAsset type: environment background plate for an original Chinese infinite-flow survival RPG safe-hub HTML UI prototype.\nPrimary request: Original Chinese infinite-flow survival RPG safe hub, ash-survivor encampment inside a ruined old bronze-and-black stone cloister, hand-painted grounded dark fantasy with restrained retro-scifi.\nComposition/framing: Portrait 1024x1536. Elevated near-orthographic 30-degree camera. Spacious empty stone courtyard in center and foreground. Weathered canvas shelters, workbenches, and practical survivor stalls only along the extreme left and right edges. The middle 60% must be readable clear floor for later UI and NPC overlays. An unobtrusive distant mysterious warm dim doorway on the upper axis. No large objects at foreground.\nLighting/mood: Warm small amber lamps and a distant brazier; quiet refuge among ruins.\nColor palette: old gold and bronze fittings, desaturated charcoal and beige ash textures; preserve a black-and-gold game-family appearance.\nStyle/medium: hand-painted environment illustration, grounded dark fantasy with restrained retro-scifi. Not photographic, not a fantasy village, not cartoon.\nConstraints: Environment plate only. No characters, no NPCs or monsters, no interface cards or buttons, no letters, text, glyphs, numbers or watermark. No clutter obscuring center. Opaque background.",
+          "transparentBackground": false,
+          "generatedPath": "/Users/bytedance/.codex/generated_images/01a0f036-82f5-74d1-a184-75d957fc1dfd/exec-9f226192-2f0d-4a26-bb70-e34eb34fa77d.png",
+          "finalSavedPath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-draw/assets/camp-v1.png",
+          "path": "assets/camp-v1.png",
+          "sourceRecord": "assets/camp-result.json",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "hash": {
+            "algorithm": "sha256",
+            "value": "a6db875a66b915f1357931f77b476fcab12fc5bdfde3c65c6b38fe6e2faf94f4"
+          },
+          "variants": [
+            "03"
+          ],
+          "postprocessing": "none; byte-for-byte copy"
+        },
+        {
+          "id": "void",
+          "source": "本次使用内置 imagegen 新生成的空场景底图；原样复制，没有后处理。",
+          "tool": "image_gen.imagegen",
+          "recordedTool": "image_gen.imagegen (built-in)",
+          "mode": "built-in",
+          "prompt": "Use case: stylized-concept. Asset type: main-god-space backdrop for a Chinese infinite-flow survival RPG mobile game prototype. Original Chinese infinite-flow survival RPG main-god space, a silent hovering void platform made of black obsidian and worn brass surrounded by mysterious ink-black mist. Hand-painted grounded dark fantasy plus restrained retro-science-fiction, portrait 1024x1536, elevated near-orthographic 30-degree mobile RPG camera. Broad open platform floor at center and foreground with thin antique brass orbital inlay and muted cyan edge light, two far peripheral architectural ribs, a small distant cyan-gold circular portal/rift suspended on the upper-center axis, restrained dim star glimmers only in the far background, no busy space galaxy. Framing like a mystical station / abstract courtyard; not a sci-fi city, not neon. Middle 60% must be open usable painted floor for overlaid NPC sprites and UI. No characters, no people, no NPCs/monsters, no cards/buttons/HUD, no text/letters/numbers/watermark. Palette charcoal / aged bronze / desaturated teal, soft readable paint detail, grounded materials, not photographic.",
+          "transparentBackground": false,
+          "generatedPath": "/Users/bytedance/.codex/generated_images/01a0f036-e69a-79e2-8ade-a385e831d542/exec-c38e26de-b94a-4e6b-a5c5-7b6b4b1457ba.png",
+          "finalSavedPath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-draw/assets/void-v1.png",
+          "path": "assets/void-v1.png",
+          "sourceRecord": "assets/void-result.json",
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "hash": {
+            "algorithm": "sha256",
+            "value": "2a012b29a542936df6ceaa22e1efb094144a94845740f12d341ef680491d6fb6"
+          },
+          "variants": [
+            "02",
+            "04",
+            "06",
+            "07",
+            "09"
+          ],
+          "postprocessing": "none; byte-for-byte copy"
+        }
+      ]
+    },
+    "walk2_5dV1": {
+      "active": true,
+      "description": "Current horizontal 2.5D walking backdrop: 2172 x 724 (3:1), compact world 1200 x 720, portrait viewport 390:740.",
+      "assets": [
+        {
+          "id": "sanctuary",
+          "source": "内置 imagegen 生成的原创平视横版 2.5D 场景；最终 PNG 原样复制，没有像素后处理。",
+          "tool": "image_gen.imagegen",
+          "recordedTool": "image_gen.imagegen",
+          "mode": "built-in",
+          "prompt": "Use case: stylized-concept\nAsset type: panoramic horizontal scrolling stage backdrop for an original Chinese dark-fantasy infinite-flow survival RPG HTML walking prototype.\n\nPrimary request: Generate one extremely wide landscape panorama, 3072x1024 pixels, width-to-height ratio exactly 3:1 if possible. A horizontal action RPG game-stage set for an Eastern reincarnation sanctuary. Original artwork; do not copy existing Dungeon Fighter Online art or any other game's assets.\n\nCamera/composition: Standing eye-level, frontal three-quarter stage presentation, NOT a top-down map and NOT an elevated courtyard view. The stage expands strongly from left to right across the full panorama. Its depth is shallow and natural: a broad walkable strip facing the viewer, never a long hallway receding toward a distant vanishing point. Upper 55 percent shows the black-and-old-gold Eastern sanctuary back wall and colonnade, with distant architectural housing for a mysterious main-god projection. Lower 45 percent is broad, shallow, continuous stone-slab floor. The complete composition must read as a side-scrolling 2.5D action RPG theatrical environment.\n\nScene/style: Hand-painted 2D game scenery, original Chinese Eastern dark reincarnation fantasy. Weathered charcoal stone walls, aged bronze and muted old-gold details, orderly broad rear columns integrated into the back wall. Restrained architecture and painterly surfaces. The back wall and repeated architectural bays span the full horizontal width.\n\nWalkable floor: empty, broad, open, uninterrupted, gently illuminated gray stone paving extending across the entire width from left to right. Natural shallow floor perspective; sufficient readable floor space to separately place seven NPC sprites and a playable character later. No large columns, obstacles, props, or obstructions on the foreground floor; columns belong principally to the rear wall.\n\nLighting/palette: low-saturation gold and gray light, muted charcoal and aged bronze, solemn quiet atmosphere. Floor is readable and lighter than the wall, never pure black. Grounded painted illustration, not photographic and not neon/cyberpunk.\n\nConstraints: environment only. No people, characters, creatures, monsters, NPCs, text, letters, numbers, signs, door labels, interaction circles, glowing interaction markers, interface, HUD, buttons, cards, logos or watermark. No camera looking down from above. No corridor leading into deep distance. Opaque background.",
+          "sourcePromptField": "prompt",
+          "promptOperation": "generate",
+          "transparentBackground": false,
+          "generatedPath": "/Users/bytedance/.codex/generated_images/01a0f036-1b26-7610-918c-a77f1c16e005/exec-8d1c5a29-8e47-42a7-910c-399483f6aef0.png",
+          "finalSavedPath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-draw/assets/walk-sanctuary-v1.png",
+          "source_path": "/Users/bytedance/.codex/generated_images/01a0f036-1b26-7610-918c-a77f1c16e005/exec-8d1c5a29-8e47-42a7-910c-399483f6aef0.png",
+          "final_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-draw/assets/walk-sanctuary-v1.png",
+          "path": "assets/walk-sanctuary-v1.png",
+          "sourceRecord": "assets/walk-sanctuary-result.json",
+          "dimensions": {
+            "width": 2172,
+            "height": 724
+          },
+          "aspectRatio": "3:1",
+          "hash": {
+            "algorithm": "sha256",
+            "value": "22cf1dfe40d3fb5452e4863d251324bf2bc4361a338a7c7f83aeece655bcbb08"
+          },
+          "variants": [
+            "01",
+            "05",
+            "08",
+            "10"
+          ],
+          "postprocessing": "none; byte-for-byte copy"
+        },
+        {
+          "id": "camp",
+          "source": "首次内置 imagegen 生成后，经过第二次内置 imagegen composition edit；最终 PNG 原样复制，没有像素后处理。",
+          "tool": "image_gen.imagegen",
+          "recordedTool": "image_gen.imagegen",
+          "mode": "built-in",
+          "prompt": "Use case: precise-object-edit\nAsset type: original wide 3:1 walkable 2.5D side-scrolling RPG camp background.\nEdit target: the attached generated ash-survivor camp environment plate.\nChange only the vertical scene composition to increase the walkable road. Keep the same full horizontal panorama, camera, original painterly style, colors, dark Eastern reincarnation camp, bronze wall decorations, canvas shelters, forge, warm candles, back wall, and empty street.\n\nRequired correction: The rear camp fixtures currently meet the street too low in the canvas. Move the base line of all rear camp architecture, stalls, shelters and forge UP to exactly 55% of the canvas height measured from the top. The ENTIRE BOTTOM 45% must be continuous empty brighter warm-gray stone-and-dirt walkable street from left to right. Rear architecture must fit inside the top 55%, with shallow perspective and vertical compression as necessary. Do not create a deep central perspective or upward sloping street. Keep a flat left-to-right lane. The canvas remains genuinely panoramic at 3:1 aspect ratio, target 2172x724 or another exactly 3:1 large canvas. Do not crop the horizontal panorama.\nConstraints: No people, characters, NPCs, creatures, words, letters, numbers, UI, interaction rings or watermark. No campfires, forge, crates, furniture, fixed objects or obstructions within the bottom 45% road. All camp facilities remain behind the street along the rear wall. Opaque background.",
+          "sourcePromptField": "prompt",
+          "promptOperation": "edit",
+          "transparentBackground": false,
+          "generatedPath": "/Users/bytedance/.codex/generated_images/01a0f036-82f5-74d1-a184-75d957fc1dfd/exec-9e399a22-3be3-417b-b4e1-b8493ed4e95c.png",
+          "finalSavedPath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-draw/assets/walk-camp-v1.png",
+          "source_path": "/Users/bytedance/.codex/generated_images/01a0f036-82f5-74d1-a184-75d957fc1dfd/exec-9e399a22-3be3-417b-b4e1-b8493ed4e95c.png",
+          "final_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-draw/assets/walk-camp-v1.png",
+          "path": "assets/walk-camp-v1.png",
+          "sourceRecord": "assets/walk-camp-result.json",
+          "dimensions": {
+            "width": 2172,
+            "height": 724
+          },
+          "aspectRatio": "3:1",
+          "hash": {
+            "algorithm": "sha256",
+            "value": "b43115960a68b5f61e6c39dcf7a1ca70a2ae7b41d8f993d0d37765280d1ddccf"
+          },
+          "variants": [
+            "03"
+          ],
+          "postprocessing": "none; byte-for-byte copy",
+          "generation_prompt": "Use case: stylized-concept\nAsset type: original environment background plate for a walkable 2.5D side-scrolling Chinese infinite-flow reincarnation action RPG hub.\nOutput format and aspect: A genuinely very wide horizontal panoramic image, approximately 3:1 width-to-height; target canvas 3072x1024. Compose this as a side-scrolling game-stage panorama across the full width, never a portrait or square illustration.\n\nScene/backdrop: An original ash-survivor encampment for dark Eastern cultivators, inside old weathered charcoal-stone walls. Eastern reincarnation world setting with restrained retro-scifi bronze fittings. The upper 55% of the canvas contains a continuous back-row layer of improvised canvas shelters, practical stalls and workbenches, a dark high ruined wall, a few warm candles and cooking stoves, and a modest forge. The rear architecture is arranged across the width in a left-to-right row.\nComposition/framing: Front-facing, eye-level, slight three-quarter 2.5D stage view like a painterly side-scrolling action RPG. NO aerial or bird's-eye camera. NO vanishing-point corridor running away into the center. The broad walkable lane stretches horizontally from the far left to far right edge. The bottom 45% is a continuous empty shallow-depth stone-and-dirt street with visible near edge and readable surface; its depth is small and parallel across the scene. Keep the entire walkable lane free of fixed painted obstacles. Seven NPCs and a player character will be added by the application later; leave ample open lane space for them.\nStyle/medium: Dark painterly action-RPG stage scenery, hand-painted grounded textures, original Eastern dark-fantasy survival setting, coherent black-and-old-gold bronze game family. Original art; do not reproduce existing DNF artwork or identifiable game assets.\nLighting and palette: Warm earth-yellow and ash-gray ambient light, desaturated charcoal, dusty warm beige, weathered bronze. Not pure black. The street is distinctly brighter and more readable than the back wall. Small amber candles, forge glow and a campfire only at the rear wall region.\nConstraints: Environment only. No people, characters, creatures, NPCs or monsters. No text, letters, numbers, signage, watermarks, interface panels, buttons, interaction circles or gameplay overlays. No large fixed obstacles, crates, furnaces, braziers, campfires or fire pits in the foreground road. All camp fixtures and fires stay up against the rear architecture. No foreground elements covering the street. Opaque background.",
+          "editPromptNote": "prompt 为最终采用的二次编辑提示词；generation_prompt 为首次生成提示词，二者均完整保留。"
+        },
+        {
+          "id": "void",
+          "source": "内置 imagegen 生成的原创平视横版 2.5D 场景；最终 PNG 原样复制，没有像素后处理。",
+          "tool": "image_gen.imagegen",
+          "recordedTool": "image_gen.imagegen (built-in)",
+          "mode": "built-in",
+          "prompt": "Use case: stylized-concept. Asset type: seamless readable wide side-scrolling 2.5D mobile RPG hub stage background, original dark Eastern reincarnation fantasy setting. Create a truly very wide horizontal panorama, 3072x1024 pixels, aspect ratio 3:1. NOT a top-down view. Camera is upright eye-level slight three-quarter side view, like a walkable beat-em-up RPG stage; horizontal movement dominates, with a shallow depth band for walking forward and backward. The upper 55 percent depicts an ancient Eastern bronze station rear wall and restrained arcades floating in the void, muted sparse stars and distant architectural silhouettes. No modern brightly lit neon cyberpunk city. The lower 45 percent is a broad continuous uninterrupted gray-teal stone and bronze floor with shallow depth, spanning from left to right. The main path must not be a central corridor receding toward the horizon. Floor is moderately lighter than the background so characters will be clearly visible. Original hand-painted grounded dark fantasy, aged bronze, silver-gray, subdued teal lamps, low saturation, softly readable materials. Seven NPCs and a player character will be added later by code, so keep the walkable road open and uncluttered. No people, characters, creatures, NPCs, text, letters, numbers, UI, HUD, buttons, glowing interaction circles, watermark, large obstacles on the road, broken walkways or deep chasms. No copied assets from existing games. Balanced dim mystical atmosphere but not completely black. All artwork should fit a single continuous very wide horizontal stage.",
+          "sourcePromptField": "fullprompt",
+          "promptOperation": "generate",
+          "transparentBackground": false,
+          "generatedPath": "/Users/bytedance/.codex/generated_images/01a0f036-e69a-79e2-8ade-a385e831d542/exec-63903054-d4bb-4692-b518-7b9b6ef64bbd.png",
+          "finalSavedPath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-draw/assets/walk-void-v1.png",
+          "source_path": "/Users/bytedance/.codex/generated_images/01a0f036-e69a-79e2-8ade-a385e831d542/exec-63903054-d4bb-4692-b518-7b9b6ef64bbd.png",
+          "final_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-draw/assets/walk-void-v1.png",
+          "path": "assets/walk-void-v1.png",
+          "sourceRecord": "assets/walk-void-result.json",
+          "dimensions": {
+            "width": 2172,
+            "height": 724,
+            "aspect_ratio": "3:1"
+          },
+          "aspectRatio": "3:1",
+          "hash": {
+            "algorithm": "sha256",
+            "value": "b86a965ab0b1dec3f08c54cc5b49455d5fe627d08057fd4f005a5ac38e5f0d6b"
+          },
+          "variants": [
+            "02",
+            "04",
+            "06",
+            "07",
+            "09"
+          ],
+          "postprocessing": "none; byte-for-byte copy"
+        }
+      ]
+    }
+  },
+  "activePropVersion": "courtyardPropsV1",
+  "propVersions": {
+    "courtyardPropsV1": {
+      "active": true,
+      "description": "Four original transparent props for courtyard style 10, matching its weathered stone, antique gold and bronze cloud/lotus reliefs. Visual replacement only; world positions, collision footprints and depth anchors unchanged.",
+      "assets": [
+        {
+          "tool": "image_gen.imagegen",
+          "mode": "built-in",
+          "assetId": "courtyard-pillar-v1",
+          "prompt": "Use case: precise-object-edit\nAsset type: transparent ceremonial stone pillar game sprite.\nEdit target: the referenced isolated column PNG. Keep its original ancient Chinese Eastern fantasy design, charcoal weathered stone, subdued old gold/bronze cloud and lotus relief, matte painterly texture, front slight three-quarter view, soft upper front-left lighting, and genuine transparent background.\nSingle correction: make the whole standing pillar proportionally lower and broader, with the actual visible silhouette width-to-height ratio near 72:150 (about 0.48). Shorten the long middle shaft by about one third while preserving its artistic carved stone identity, and subtly broaden its shoulder cap and own stone foot. The complete visible stone object should occupy about 90 percent of both canvas width and canvas height, centered with about 5 percent clean fully transparent margins on all four sides. The base remains flat, grounded and bottom centered.\nThis is one low ceremonial courtyard column/stela, readable at 72 by 150 game pixels. Preserve the existing subdued matte stone lighting and small desaturated moss at the foot. Do not add new objects, scenery, a floor, a platform, cast shadow, people, UI, text, writing, logos or watermark. No neon, no floating crystal, no magical glow. Preserve real alpha transparency everywhere outside the single stone item.",
+          "initial_prompt": "Use case: stylized-concept\nAsset type: one transparent game sprite for the original Chinese Eastern reincarnation courtyard in a 2.5D HTML RPG prototype.\nPrimary request: create one original upright single low ceremonial stone column or stela, a ground-standing courtyard prop. The previously viewed walk-sanctuary-v1.png panorama is a STYLE reference only: match its matte hand-painted soft texture, dark charcoal weathered stone, aged bronze and muted old-gold ornament, solemn low-saturation lighting. Generate only the new isolated stone sprite, never the backdrop.\nSubject: one tall narrow carved stone courtyard column, silhouette width-to-height about 72:150. Ancient Chinese Eastern reincarnation sanctuary character, subtly tapering stone shaft, shallow ceremonial cap, own modest stone foot. Thin aged gold/bronze relief trims, restrained cloud and lotus motifs. Slight desaturated moss or verdigris just at the foot. Painterly organic weathered contours rather than a plain modern rectangular block.\nComposition/framing: 2.5D standing frontal view with a slight three-quarter angle so a shallow top and side are visible. Whole complete item centered, tightly framed with about 5 percent transparent margins. Flat grounded base centered near the bottom. Readable at a final in-game size of 72 by 150 pixels; polished painterly details with a clear stable silhouette.\nLighting/mood: softly lit from upper front-left, muted warm-gray highlights and restrained old-gold accents, gentle painted shade matching the provided courtyard; no harsh photographic rendering.\nConstraints: genuinely transparent RGBA background, only one column and its own stone foot, no surrounding floor, no platform or floor slab, no scenery, no humans, no UI, no text, letters or writing, no logos or watermark. No neon, no floating crystals, no luminous magical effects. No ground shadow extending beyond the stone foot.",
+          "style_reference": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-draw/assets/walk-sanctuary-v1.png",
+          "edit_reference": "/Users/bytedance/.codex/generated_images/01a0f0f4-7faf-7a83-bccf-71f8e2909dc9/exec-06b21ecb-6499-4b6d-8e85-5ff504179e76.png",
+          "source_path": "/Users/bytedance/.codex/generated_images/01a0f0f4-7faf-7a83-bccf-71f8e2909dc9/exec-e4f65634-03da-44be-9e3e-a011310938fd.png",
+          "generatedPath": "/Users/bytedance/.codex/generated_images/01a0f0f4-7faf-7a83-bccf-71f8e2909dc9/exec-e4f65634-03da-44be-9e3e-a011310938fd.png",
+          "final_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-draw/assets/courtyard-props/pillar-v1.png",
+          "finalSavedPath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-draw/assets/courtyard-props/pillar-v1.png",
+          "path": "assets/courtyard-props/pillar-v1.png",
+          "dimensions": {
+            "width": 870,
+            "height": 1808
+          },
+          "color_mode": "RGBA",
+          "sha256": "9c0509f4d3157d178605940cd96ff4c39088e03222cf76a472dfde53dc430875",
+          "hash": {
+            "algorithm": "sha256",
+            "value": "9c0509f4d3157d178605940cd96ff4c39088e03222cf76a472dfde53dc430875"
+          },
+          "alpha_bbox": [
+            0,
+            90,
+            870,
+            1797
+          ],
+          "alpha_bbox_32": [
+            22,
+            93,
+            866,
+            1795
+          ],
+          "alpha_bbox_coordinate_format": "[left, top, right, bottom], right and bottom exclusive",
+          "alpha_bbox_32_threshold": "alpha >= 32",
+          "transparent_percent": 43.020928694944566,
+          "transparent_percent_definition": "Percentage of pixels with alpha exactly 0",
+          "visible_silhouette_aspect_ratio": 0.49588719153936545,
+          "transparent_background": true,
+          "postprocessing": "none; byte-for-byte copy",
+          "validation": {
+            "visual_inspection": "view_image; single upright stone column with own stone foot, charcoal weathered stone, aged gold relief, moss, no backdrop/text/UI",
+            "alpha_channel": "RGBA with true transparent pixels",
+            "copied_bytes_equal": true
+          },
+          "id": "pillar",
+          "imageMode": "RGBA",
+          "sourceRecord": "assets/courtyard-props/pillar-result.json",
+          "variants": [
+            "10"
+          ],
+          "referenceRole": "style-only; existing courtyard backdrop unchanged"
+        },
+        {
+          "asset": "closed_reliquary_storage_chest",
+          "tool": "image_gen.imagegen",
+          "mode": "built-in",
+          "prompt": "Use case: stylized-concept\nAsset type: original transparent PNG game prop sprite for a Chinese dark fantasy reincarnation courtyard, displayed around 92 x 68 pixels.\n\nPrimary request: ONE isolated squat CLOSED reliquary storage chest used by reincarnators. Produce only the chest cutout, not a scene. Match a grounded painterly Chinese temple courtyard visual language: charcoal black-brown surfaces, restrained antique old-gold details, dusty weathering, soft warm upper-left lighting, and deep brown-black shadows. The courtyard has monumental dark stone pillars and subtle lotus and cloud carvings; echo that visual language only in the chest's sparse carving.\n\nSubject and materials: broad low chest of very dark weathered carved wood, aged bronze corner fittings and an antique old-gold central latch. Small restrained Chinese cloud and lotus motifs, low-relief and organic, with slight dusty verdigris in seams. Natural uneven wear and painted material texture. A shut shallow lid, legible dark front panel, a modest central metal latch; no lock inscription.\n\nComposition: entire object centered on a genuinely transparent background. Full object with approximately 5 percent transparent margin on every side. Chest width to height about 92:68. 2.5D FRONT view with only a slight three-quarter turn showing a narrow right side and shallow lid top. Camera close to eye level, not high isometric or top-down. Broad flat low base, center-bottom anchor. Readable bold silhouette at 92 x 68 pixels; keep carved detail sparse. No large extra footprint.\n\nStyle: polished hand-painted game sprite with organic contour, grounded material, depth and soft painterly shading consistent with an elaborate black stone and old-gold Chinese sanctuary. Avoid flat geometric CSS blocks, cartoon outlines, overly smooth plastic and shiny product photography.\n\nConstraints: ONE closed chest only. Preserve real alpha transparency all around. No environment, background, floor, platform, floor plane, pedestal, stage, cast shadow outside the object, people, text, writing, UI, label, frame, watermark, orange wooden crate, treasure spill, open lid, neon, floating crystals or magical glow. No other objects.",
+          "reference_style_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-draw/assets/walk-sanctuary-v1.png",
+          "reference_role": "style_only",
+          "transparent_background": true,
+          "source_path": "/Users/bytedance/.codex/generated_images/01a0f0f4-e7cb-7ed1-a023-2008dbbfda5a/exec-79579c4f-85d0-4e7e-a818-e7bd20758331.png",
+          "generatedPath": "/Users/bytedance/.codex/generated_images/01a0f0f4-e7cb-7ed1-a023-2008dbbfda5a/exec-79579c4f-85d0-4e7e-a818-e7bd20758331.png",
+          "final_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-draw/assets/courtyard-props/crate-v1.png",
+          "finalSavedPath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-draw/assets/courtyard-props/crate-v1.png",
+          "path": "assets/courtyard-props/crate-v1.png",
+          "sha256": "b22bf93d22614788408ce9c829a395fa21daf7cda01056db98de2f9a51891223",
+          "dimensions": {
+            "width": 1457,
+            "height": 1080
+          },
+          "alpha_bbox": [
+            41,
+            21,
+            1411,
+            1080
+          ],
+          "alpha_bbox_32": [
+            143,
+            272,
+            1352,
+            931
+          ],
+          "transparent_percent": 56.01368870586441,
+          "alpha_below_32_percent": 56.870662701136276,
+          "byte_count": 1570944,
+          "byte_for_byte_copy_verified": true,
+          "alpha_bbox_coordinate_convention": "[left,top,right,bottom], right and bottom exclusive",
+          "alpha_bbox_32_threshold": "alpha >= 32",
+          "visual_inspection": {
+            "complete": true,
+            "subject": "One closed dark wood chest, aged bronze fittings, central old-gold latch, restrained lotus and cloud motifs",
+            "framing_note": "Primary visible chest fills alpha>=32 bbox; tiny alpha values outside it are excluded from display fitting. Preserve raw PNG and fit alpha_bbox_32 with bottom foot anchor.",
+            "accepted": true
+          },
+          "output_hint": "Generated images are saved to /Users/bytedance/.codex/generated_images/01a0f0f4-e7cb-7ed1-a023-2008dbbfda5a as /Users/bytedance/.codex/generated_images/01a0f0f4-e7cb-7ed1-a023-2008dbbfda5a/exec-79579c4f-85d0-4e7e-a818-e7bd20758331.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+          "id": "crate",
+          "imageMode": "RGBA",
+          "sourceRecord": "assets/courtyard-props/crate-result.json",
+          "variants": [
+            "10"
+          ],
+          "postprocessing": "none; byte-for-byte copy",
+          "referenceRole": "style-only; existing courtyard backdrop unchanged"
+        },
+        {
+          "asset": "altar-v1",
+          "method": "built-in image_gen.imagegen; initial generate then one composition edit",
+          "tool": "image_gen.imagegen",
+          "transparentBackground": true,
+          "referenceRole": "style-only; existing courtyard backdrop unchanged",
+          "referencePath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-draw/assets/walk-sanctuary-v1.png",
+          "prompt": "Use case: precise-object-edit.\nAsset type: transparent Chinese ritual courtyard game prop sprite.\nEdit target: the attached isolated stone incense altar PNG.\nChange ONLY its composition/framing and broad proportions: preserve this same altar design, centered single small bronze incense burner, weathered matte charcoal stone, old bronze lotus/cloud reliefs, moss/verdigris traces, subdued overhead lighting, front slight three-quarter camera and genuine transparent alpha. Make the complete visible altar silhouette narrower and taller so its TOTAL visible width:height including the incense burner and stone feet is approximately 120:84 (1.43:1), instead of the current visible silhouette roughly 2.1:1. It should still read as a broad ceremonial altar, with a slightly taller stone front body. Tighten the framing so the main opaque object occupies approximately 90% of both canvas width AND canvas height, with about 5% transparent margin on all sides. The highest burner/incense tip must be near 5% from canvas top and the stone feet near 95% of canvas height; leftmost/rightmost altar edges near 5%/95% canvas width. Keep complete feet visible, bottom center foot anchor.\nDo not add objects, architecture, background, floor, ground slab, shadow plane, text, characters, glow, neon, floating crystals or decorative clutter. No topdown/isometric view. Do not draw a checkerboard. Keep outside fully transparent, with clean alpha edges and no faint stray pixels at the canvas boundaries.",
+          "initialPrompt": "Use case: stylized-concept.\nAsset type: one original transparent game prop sprite for a 2.5D Chinese fantasy ritual courtyard HTML prototype, final displayed size about 120 x 84 pixels.\nPrimary request: create ONE low broad ancient Chinese ceremonial incense altar/table.\nReference role: the already-viewed courtyard image is STYLE ONLY. Match its matte painterly weathered charcoal stone, softly worn antique gold and bronze reliefs, restrained gray-brown palette and diffuse overhead light. Do not recreate, edit, include or place any part of its backdrop.\nSubject: a solid weathered charcoal-gray carved stone altar with thin old bronze lotus/cloud relief edging. A single small bronze incense burner is centered on the altar top with just tiny dim amber embers. Subdued moss and verdigris patina in a few crevices. The stone foot base rests low at the center groundline.\nComposition/framing: entire single altar isolated, centered and tightly framed with approximately 5% genuine transparent margins. A broad total silhouette with width-to-height about 120:84. 2.5D FRONT view at a slight three-quarter angle, showing only a shallow top plane and a little side depth; camera mostly faces the broad altar front. Make the carved front, broad slab-like tabletop, compact incense burner, and low solid foot base readable at thumbnail size.\nStyle/medium: painterly game art with convincing aged stone and antique metal, matte grounded materials, crisp readable silhouette with natural textured edges, subdued and solemn.\nLighting: diffuse overhead light with soft muted warm highlights and gentle visible volume, no dramatic glow.\nScene/backdrop: genuine transparent alpha everywhere outside the altar, without an environmental background or ground plane.\nConstraints: no floor, no background slab, no surrounding architecture, no characters, no humans, no UI, no text, no letters, no watermark. No bright hologram, no floating crystals, no neon, no colorful decorative clutter. No overhead/topdown/isometric view. Do not draw a checkerboard or colored background. Preserve original transparent alpha.",
+          "prompts": [
+            "Use case: stylized-concept.\nAsset type: one original transparent game prop sprite for a 2.5D Chinese fantasy ritual courtyard HTML prototype, final displayed size about 120 x 84 pixels.\nPrimary request: create ONE low broad ancient Chinese ceremonial incense altar/table.\nReference role: the already-viewed courtyard image is STYLE ONLY. Match its matte painterly weathered charcoal stone, softly worn antique gold and bronze reliefs, restrained gray-brown palette and diffuse overhead light. Do not recreate, edit, include or place any part of its backdrop.\nSubject: a solid weathered charcoal-gray carved stone altar with thin old bronze lotus/cloud relief edging. A single small bronze incense burner is centered on the altar top with just tiny dim amber embers. Subdued moss and verdigris patina in a few crevices. The stone foot base rests low at the center groundline.\nComposition/framing: entire single altar isolated, centered and tightly framed with approximately 5% genuine transparent margins. A broad total silhouette with width-to-height about 120:84. 2.5D FRONT view at a slight three-quarter angle, showing only a shallow top plane and a little side depth; camera mostly faces the broad altar front. Make the carved front, broad slab-like tabletop, compact incense burner, and low solid foot base readable at thumbnail size.\nStyle/medium: painterly game art with convincing aged stone and antique metal, matte grounded materials, crisp readable silhouette with natural textured edges, subdued and solemn.\nLighting: diffuse overhead light with soft muted warm highlights and gentle visible volume, no dramatic glow.\nScene/backdrop: genuine transparent alpha everywhere outside the altar, without an environmental background or ground plane.\nConstraints: no floor, no background slab, no surrounding architecture, no characters, no humans, no UI, no text, no letters, no watermark. No bright hologram, no floating crystals, no neon, no colorful decorative clutter. No overhead/topdown/isometric view. Do not draw a checkerboard or colored background. Preserve original transparent alpha.",
+            "Use case: precise-object-edit.\nAsset type: transparent Chinese ritual courtyard game prop sprite.\nEdit target: the attached isolated stone incense altar PNG.\nChange ONLY its composition/framing and broad proportions: preserve this same altar design, centered single small bronze incense burner, weathered matte charcoal stone, old bronze lotus/cloud reliefs, moss/verdigris traces, subdued overhead lighting, front slight three-quarter camera and genuine transparent alpha. Make the complete visible altar silhouette narrower and taller so its TOTAL visible width:height including the incense burner and stone feet is approximately 120:84 (1.43:1), instead of the current visible silhouette roughly 2.1:1. It should still read as a broad ceremonial altar, with a slightly taller stone front body. Tighten the framing so the main opaque object occupies approximately 90% of both canvas width AND canvas height, with about 5% transparent margin on all sides. The highest burner/incense tip must be near 5% from canvas top and the stone feet near 95% of canvas height; leftmost/rightmost altar edges near 5%/95% canvas width. Keep complete feet visible, bottom center foot anchor.\nDo not add objects, architecture, background, floor, ground slab, shadow plane, text, characters, glow, neon, floating crystals or decorative clutter. No topdown/isometric view. Do not draw a checkerboard. Keep outside fully transparent, with clean alpha edges and no faint stray pixels at the canvas boundaries."
+          ],
+          "source_path": "/Users/bytedance/.codex/generated_images/01a0f0f5-478d-7721-a587-0572b7ff4616/exec-212655d8-c650-44ef-ba40-9b6bd1fc0d4a.png",
+          "final_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-draw/assets/courtyard-props/altar-v1.png",
+          "generatedPath": "/Users/bytedance/.codex/generated_images/01a0f0f5-478d-7721-a587-0572b7ff4616/exec-212655d8-c650-44ef-ba40-9b6bd1fc0d4a.png",
+          "finalSavedPath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-draw/assets/courtyard-props/altar-v1.png",
+          "path": "assets/courtyard-props/altar-v1.png",
+          "initialGeneratedPath": "/Users/bytedance/.codex/generated_images/01a0f0f5-478d-7721-a587-0572b7ff4616/exec-420c3d40-5c1b-4d1a-a679-b97f3b8aad0d.png",
+          "sha256": "9531faf0c42c8bfad183e382f3b30e57e4a8f8b049cf044fd71e5bddc14ad258",
+          "width": 1500,
+          "height": 1049,
+          "dimensions": {
+            "width": 1500,
+            "height": 1049
+          },
+          "mode": "built-in",
+          "alphaBBox": [
+            0,
+            13,
+            1478,
+            1049
+          ],
+          "alpha_bbox": [
+            0,
+            13,
+            1478,
+            1049
+          ],
+          "alphaBBox32": [
+            42,
+            61,
+            1459,
+            980
+          ],
+          "alpha_bbox_32": [
+            42,
+            61,
+            1459,
+            980
+          ],
+          "alphaBBoxThreshold": ">0",
+          "alphaBBox32Threshold": ">=32",
+          "bboxCoordinateConvention": "[left, top, right, bottom], right and bottom exclusive",
+          "transparentPercent": 44.30702256116937,
+          "transparent_percent": 44.30702256116937,
+          "transparencyMetric": "percent of pixels with alpha exactly 0",
+          "visibleWidthHeightRatio32": 1.5418933623503808,
+          "finalFilePreservedByteForByte": true,
+          "visualInspection": "Viewed original generated PNG after composition edit. Readable broad altar, low stone feet, single centered bronze burner, muted charcoal stone/old bronze, no floor/background/UI/text. Main opaque silhouette has approx 3% side and 6% top/bottom margins; alpha>=32 bbox recommended for fitting due to faint tool edge pixels.",
+          "id": "altar",
+          "imageMode": "RGBA",
+          "sourceRecord": "assets/courtyard-props/altar-result.json",
+          "variants": [
+            "10"
+          ],
+          "postprocessing": "none; byte-for-byte copy"
+        },
+        {
+          "asset": "courtyard-lantern",
+          "generator": "built-in image_gen.imagegen",
+          "use_case": "stylized-concept",
+          "prompt": "Use case: stylized-concept\nAsset type: original transparent 2.5D game prop sprite for the HTML game prototype 轮回庭院.\nInput image: the provided sanctuary image is a STYLE REFERENCE ONLY. Create a NEW isolated lantern; do not recreate, crop, or include the sanctuary scene.\nScene/backdrop: genuinely transparent alpha background, no floor or backdrop.\nSubject: exactly one slender ancient Chinese stone courtyard lantern. A tall narrow weathered charcoal-stone shaft on a short, stepped stone pedestal, supporting a compact antique bronze octagonal lantern housing and a small pagoda-shaped roof. Old-gold edges, restrained carved cloud motif, tiny warm amber inner light, subtle moss and verdigris only near the bottom. Matte old stone and bronze.\nStyle/medium: mature hand-painted Chinese fantasy game art with the same dark charcoal stone, soft worn old-gold trim, restrained warm lighting, believable textured brushwork and architectural material treatment as the style reference. Detailed but with clear large forms that remain legible when displayed at 46 by 118 pixels.\nComposition/framing: one complete object centered, front view with a slight three-quarter perspective, showing a shallow top and one shallow side. Tall narrow silhouette with object width to height approximately 46:118 (0.39). Use a tall narrow portrait canvas fit around the object, roughly 5% transparent margin on every side. Do not cut off the roof or base. The flat stone foot meets a low centered ground line at the bottom of the sprite. Minimize empty canvas around this object.\nLighting/mood: soft top-left ambient illumination matching the reference. Only a small controlled warm amber glow inside the lantern; no external flare.\nConstraints: retain genuinely transparent alpha, including around the foot. No additional objects, no backdrop, no floor tile, no broad cast shadow, no humans, no UI, no text, no letters, no watermark.\nAvoid: neon cyan light, bright blue effects, flares, floating crystals, modern industrial torch, glossy plastic, cartoon styling, oversized roof, ornate dangling extensions. Antique stone courtyard lantern.",
+          "reference_style_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-draw/assets/walk-sanctuary-v1.png",
+          "transparent_background": true,
+          "source_path": "/Users/bytedance/.codex/generated_images/01a0f0f5-a599-7cc2-ac1f-57b98c7d608c/exec-3b1d67e2-38d4-4acf-a25a-6adc9dac72a2.png",
+          "final_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-draw/assets/courtyard-props/lamp-v1.png",
+          "generatedPath": "/Users/bytedance/.codex/generated_images/01a0f0f5-a599-7cc2-ac1f-57b98c7d608c/exec-3b1d67e2-38d4-4acf-a25a-6adc9dac72a2.png",
+          "finalSavedPath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-draw/assets/courtyard-props/lamp-v1.png",
+          "path": "assets/courtyard-props/lamp-v1.png",
+          "dimensions": {
+            "width": 930,
+            "height": 1691
+          },
+          "mode": "built-in",
+          "alpha_bbox": [
+            0,
+            49,
+            898,
+            1667
+          ],
+          "alpha_bbox_gt0": [
+            0,
+            49,
+            898,
+            1667
+          ],
+          "alpha_bbox_ge32": [
+            163,
+            69,
+            770,
+            1633
+          ],
+          "transparent_percent": 73.13570261282057,
+          "nonopaque_percent": 99.96865124027903,
+          "alpha_extrema": [
+            0,
+            255
+          ],
+          "sha256": "1a4a2543634ce44bdd344802fd803751b29c68c57f5ffbf17963df334f4307d3",
+          "source_sha256": "1a4a2543634ce44bdd344802fd803751b29c68c57f5ffbf17963df334f4307d3",
+          "byte_for_byte_copy": true,
+          "bbox_convention": "[left, top, right, bottom], right and bottom exclusive",
+          "alpha_bbox_ge32_dimensions": {
+            "width": 607,
+            "height": 1564
+          },
+          "visual_inspection": "One complete stone courtyard lantern; restrained warm amber inner light; matte charcoal stone, bronze and old-gold trim; isolated transparent sprite. No backdrop, floor, text or UI. Original tool PNG retained without raster edits.",
+          "id": "lamp",
+          "tool": "image_gen.imagegen",
+          "imageMode": "RGBA",
+          "sourceRecord": "assets/courtyard-props/lamp-result.json",
+          "variants": [
+            "10"
+          ],
+          "postprocessing": "none; byte-for-byte copy",
+          "referenceRole": "style-only; existing courtyard backdrop unchanged"
+        }
+      ]
+    }
+  }
+}

@@ -10,7 +10,7 @@ export class InfiniteFlowWalkInput {
   constructor(
     private readonly joystick: Node,
     private readonly thumb: Node,
-    private readonly interact: () => void,
+    private readonly onReset: () => void,
   ) {
     joystick.on(Node.EventType.TOUCH_START, this.touchStart, this);
     joystick.on(Node.EventType.TOUCH_MOVE, this.touchMove, this);
@@ -34,9 +34,7 @@ export class InfiniteFlowWalkInput {
 
   private readonly keyDown = (event: EventKeyboard): void => {
     if (this.disposed) return;
-    const repeated = this.keys.has(event.keyCode);
     this.keys.add(event.keyCode);
-    if (!repeated && (event.keyCode === KeyCode.KEY_E || event.keyCode === KeyCode.SPACE)) this.interact();
   };
 
   private readonly keyUp = (event: EventKeyboard): void => { this.keys.delete(event.keyCode); };
@@ -71,6 +69,7 @@ export class InfiniteFlowWalkInput {
   };
 
   readonly reset = (): void => {
+    this.onReset();
     this.keys.clear();
     this.touchId = undefined;
     this.touchAxis = { x: 0, y: 0 };

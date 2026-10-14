@@ -1,0 +1,32 @@
+/* Effects belong to the battlefield; HUD and controls stay clear and clickable. */
+.fx-layer{position:absolute;inset:0;z-index:2;pointer-events:none;overflow:hidden;clip-path:inset(78px 0 165px);contain:layout paint}
+.fx-layer *{pointer-events:none}
+.fx-node{position:absolute;left:0;top:0;display:block;transform:translate(-50%,-50%);color:var(--fx-color,#e7bd72);will-change:transform,opacity}
+.fx-node svg{width:100%;height:100%;overflow:visible;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+.fx-ring{width:76px;height:76px;border:1px solid currentColor;border-radius:50%;box-shadow:0 0 12px color-mix(in srgb,currentColor 35%,transparent),inset 0 0 12px color-mix(in srgb,currentColor 15%,transparent)}
+.fx-ring:after{content:"";position:absolute;inset:6px;border:1px solid currentColor;border-radius:50%;opacity:.35}
+.fx-ground{height:32px;width:88px;border-width:1px;box-shadow:0 0 14px color-mix(in srgb,currentColor 28%,transparent)}
+.fx-rune{width:83px;height:83px;filter:drop-shadow(0 0 5px #69cec77a)}
+.fx-rune svg{stroke-width:1}
+.fx-projectile{width:18px;height:18px;border-radius:50%;background:radial-gradient(circle,#ecfff8 0 16%,#91e1d4 20% 38%,#51a89c88 45%,#408f7e00 72%);box-shadow:0 0 17px #64d8c68c}
+.fx-projectile:after{content:"";position:absolute;right:6px;top:6px;width:36px;height:5px;background:linear-gradient(90deg,transparent,#a5f3e3b3);border-radius:100%;transform-origin:right center}
+.fx-slash{width:102px;height:96px;filter:drop-shadow(0 0 3px #eab87499)}
+.fx-slash svg{stroke-width:2.3}
+.fx-slash.fx-strong{width:126px;height:115px;filter:drop-shadow(0 0 5px #efb55c99)}
+.fx-slash.fx-strong svg{stroke-width:3.1}
+.fx-spark{width:3px;height:10px;border-radius:2px;background:currentColor;box-shadow:0 0 5px currentColor}
+.fx-mote{width:4px;height:4px;border-radius:50%;background:currentColor;box-shadow:0 0 6px currentColor}
+.fx-heal{width:9px;height:9px;color:#b2df9e}
+.fx-heal:before,.fx-heal:after{content:"";position:absolute;background:currentColor;box-shadow:0 0 5px #9bcc6d55;border-radius:1px}
+.fx-heal:before{width:9px;height:2px;top:3px;left:0}.fx-heal:after{width:2px;height:9px;left:3px;top:0}
+.fx-pill{width:30px;height:37px;object-fit:cover;border:1px solid #b9c58e99;border-radius:4px;box-shadow:0 0 14px #9bb87055;background:#20291c}
+.fx-shield{width:75px;height:85px;color:#dfbf7e;filter:drop-shadow(0 0 5px #b28a455c)}
+.fx-shield svg{stroke-width:1.8;fill:#b4934114}
+.fx-swirl{width:100px;height:87px;color:#8bcbb1;filter:drop-shadow(0 0 5px #89c9ad55)}
+.fx-swirl svg{stroke-width:1.3}
+.fx-claw{width:80px;height:70px;color:#e5a095;filter:drop-shadow(0 0 4px #b85d4680)}
+.fx-claw svg{stroke-width:2}
+.fx-lightning{width:66px;height:133px;color:#f4d6a1;filter:drop-shadow(0 0 5px #e1b86099)}
+.fx-lightning svg{stroke-width:2.4}
+@media(max-width:370px){.fx-layer{clip-path:inset(68px 0 160px)}}
+@media(prefers-reduced-motion:reduce){.fx-node{will-change:opacity}.fx-projectile:after{display:none}}

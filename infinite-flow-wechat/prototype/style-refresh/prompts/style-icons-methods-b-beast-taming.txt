@@ -1,0 +1,13 @@
+Use case: style-transfer
+Asset type: transparent inventory icon proposal for a Chinese dark fantasy mobile game, readable at 48 px
+Primary request: Redesign the beast-taming seal from reference image 1 as a small timeworn jade beast-head contract seal with one old cord knot, with the grounded, restrained hand-painted material treatment of reference image 2.
+Input images: Image 1 is the subject reference, a beast-head seal icon; preserve the idea of a carved beast head and cord binding but simplify its shape. Image 2 is the style reference, an aged bronze incense burner with subdued painterly textures; follow its material realism, quiet lighting and low saturation, do not depict the incense burner.
+Scene/backdrop: Genuinely transparent background, clean isolated object, no ground, no scenery, no frame, no background shadow.
+Subject: A single coherent aged jade beast-head contract seal in a three-quarter view, compact dark gray-green weathered jade, softly worn carving of a dignified small guardian beast face, attached old dark brown cord knot and a discreet dull bronze fastening. The carving and cord must read as one collectible object.
+Style/medium: Realistic hand-painted game inventory illustration with natural worn materials and restrained edges. No photographic look, no cartoon outline.
+Composition/framing: Square canvas, one centered object occupies approximately 70 to 80 percent of width and height with transparent breathing room on all sides. Full silhouette visible, designed to remain understandable at 48 px.
+Lighting/mood: Quiet soft warm side light, limited highlights, ambient shaded crevices, no magical glow.
+Color palette: Low saturation stone gray-green jade, dark brown cord, very restrained aged brass detail, warm charcoal shadows.
+Materials/textures: Patinated jade with fine chips and rubbed high points, frayed old cord, tarnished bronze. Simplify tiny ornament to preserve small-size readability.
+Constraints: Exactly one icon and one subject, no other props, preserve actual alpha transparency. No text, no numbers, no symbols floating around it, no borders, no watermark.
+Avoid: Bright cyan or turquoise cord, cyan emissions, bright glowing eyes, neon, saturated gold, oversharp glossy 3D, anime, comic contours, sticker border, checkerboard drawn into the image, scenery, crop, detached fragments.

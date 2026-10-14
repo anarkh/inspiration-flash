@@ -1,0 +1,5 @@
+
+> infinite-flow-wechat@0.1.1 cocos:walk:test
+> node cocos/headless/walk-world.self-check.mjs
+
+Walk world self-check passed (45 checks; 19 chapters, 570 real-node projections, 1862 original neighbor bindings, 59 catalog identities, 59 visible exploration identities, 59 combat identities, 19 boss arenas, 6 pending kinds).

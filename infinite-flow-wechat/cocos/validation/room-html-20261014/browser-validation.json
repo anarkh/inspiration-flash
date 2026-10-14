@@ -1,0 +1,1593 @@
+{
+  "buildUrl": "http://127.0.0.1:8125/cocos/build/web-mobile-room-html-20261014/index.html",
+  "engineVersion": "3.8.8",
+  "runtimeScene": "InfiniteFlow.scene",
+  "phase": "explore",
+  "viewports": [
+    {
+      "assets": "ready",
+      "geometry": [
+        {
+          "bounds": {
+            "bottom": 844,
+            "left": 0,
+            "right": 390,
+            "top": 0
+          },
+          "name": "WalkScene",
+          "parent": "InfiniteFlowRuntimeView",
+          "point": {
+            "x": 195,
+            "y": 422
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 844,
+            "left": 0,
+            "right": 390,
+            "top": 0
+          },
+          "name": "WalkDungeonBackdropWindow:scene:dungeon_world_demon_tower_1",
+          "parent": "WalkScene",
+          "point": {
+            "x": 195,
+            "y": 422
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 844,
+            "left": -227,
+            "right": 617,
+            "top": 0
+          },
+          "name": "WalkDungeonBackdrop:scene:dungeon_world_demon_tower_1",
+          "parent": "WalkDungeonBackdropWindow:scene:dungeon_world_demon_tower_1",
+          "point": {
+            "x": 195,
+            "y": 422
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 689.68,
+            "left": 0,
+            "right": 390,
+            "top": 183.32000000000005
+          },
+          "name": "WalkViewport",
+          "parent": "WalkScene",
+          "point": {
+            "x": 195,
+            "y": 436.49999999999994
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 453.5,
+            "left": -147.00000000000003,
+            "right": 195,
+            "top": 55.139999999999986
+          },
+          "name": "WalkCamera",
+          "parent": "WalkViewport",
+          "point": {
+            "x": 23.99999999999999,
+            "y": 254.3199999999999
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 328.72,
+            "left": 156,
+            "right": 234,
+            "top": 229.91999999999996
+          },
+          "name": "WalkTarget:door:map.cell:0:1",
+          "parent": "WalkDepthObjects",
+          "point": {
+            "x": 195,
+            "y": 279.31999999999994
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 301.31999999999994,
+            "left": 153,
+            "right": 237,
+            "top": 276.32000000000005
+          },
+          "label": "断符石盘",
+          "name": "WalkTargetName",
+          "parent": "WalkTarget:door:map.cell:0:1",
+          "point": {
+            "x": 195,
+            "y": 288.81999999999994
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 317.31999999999994,
+            "left": 153,
+            "right": 237,
+            "top": 301.31999999999994
+          },
+          "label": "封闭",
+          "name": "WalkTransitionState",
+          "parent": "WalkTarget:door:map.cell:0:1",
+          "point": {
+            "x": 195,
+            "y": 309.31999999999994
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 473.9544,
+            "left": 156,
+            "right": 234,
+            "top": 375.1544
+          },
+          "name": "WalkTarget:node:fog_lesser_demon",
+          "parent": "WalkDepthObjects",
+          "point": {
+            "x": 195,
+            "y": 424.5544
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 424.5544,
+            "left": 142.33333333333334,
+            "right": 247.66666666666663,
+            "top": 266.5544
+          },
+          "name": "WalkMonsterSprite:monster:fog_lesser_demon_world",
+          "parent": "WorldObjectBody",
+          "point": {
+            "x": 195,
+            "y": 345.55440000000004
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 446.5544,
+            "left": 140,
+            "right": 250,
+            "top": 421.5544
+          },
+          "label": "雾中妖鬼",
+          "name": "WalkTargetName",
+          "parent": "WalkTarget:node:fog_lesser_demon",
+          "point": {
+            "x": 195,
+            "y": 434.0544
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 502.9,
+            "left": 3.000000000000002,
+            "right": 80.99999999999999,
+            "top": 404.1
+          },
+          "name": "WalkTarget:closed-door:west",
+          "parent": "WalkDepthObjects",
+          "point": {
+            "x": 41.99999999999999,
+            "y": 453.5
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 475.49999999999994,
+            "left": 0,
+            "right": 83.99999999999999,
+            "top": 450.49999999999994
+          },
+          "label": "西侧封闭门",
+          "name": "WalkTargetName",
+          "parent": "WalkTarget:closed-door:west",
+          "point": {
+            "x": 41.99999999999999,
+            "y": 462.99999999999994
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 491.5,
+            "left": 0,
+            "right": 83.99999999999999,
+            "top": 475.5
+          },
+          "label": "封闭",
+          "name": "WalkTransitionState",
+          "parent": "WalkTarget:closed-door:west",
+          "point": {
+            "x": 41.99999999999999,
+            "y": 483.5
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 510.9,
+            "left": 309.00000000000006,
+            "right": 387.00000000000006,
+            "top": 412.1
+          },
+          "name": "WalkTarget:door:map.cell:1:2",
+          "parent": "WalkDepthObjects",
+          "point": {
+            "x": 348.00000000000006,
+            "y": 461.5
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 483.49999999999994,
+            "left": 306.00000000000006,
+            "right": 390,
+            "top": 458.49999999999994
+          },
+          "label": "血字阶梯",
+          "name": "WalkTargetName",
+          "parent": "WalkTarget:door:map.cell:1:2",
+          "point": {
+            "x": 348.00000000000006,
+            "y": 470.99999999999994
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 499.5,
+            "left": 306.00000000000006,
+            "right": 390,
+            "top": 483.5
+          },
+          "label": "封闭",
+          "name": "WalkTransitionState",
+          "parent": "WalkTarget:door:map.cell:1:2",
+          "point": {
+            "x": 348.00000000000006,
+            "y": 491.5
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 561.252,
+            "left": 167.96,
+            "right": 222.04,
+            "top": 505.092
+          },
+          "name": "WalkPlayer",
+          "parent": "WalkDepthObjects",
+          "point": {
+            "x": 195,
+            "y": 533.172
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 536.5148571428572,
+            "left": 159.54545454545456,
+            "right": 230.45454545454547,
+            "top": 465.6057662337662
+          },
+          "name": "WalkPlayerBody",
+          "parent": "WalkPlayer",
+          "point": {
+            "x": 195,
+            "y": 501.0603116883117
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 693.08,
+            "left": 156,
+            "right": 234,
+            "top": 594.28
+          },
+          "name": "WalkTarget:door:map.cell:0:3",
+          "parent": "WalkDepthObjects",
+          "point": {
+            "x": 195,
+            "y": 643.6800000000001
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 665.6800000000001,
+            "left": 153,
+            "right": 237,
+            "top": 640.6800000000001
+          },
+          "label": "灰坑回声",
+          "name": "WalkTargetName",
+          "parent": "WalkTarget:door:map.cell:0:3",
+          "point": {
+            "x": 195,
+            "y": 653.1800000000001
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 681.6800000000001,
+            "left": 153,
+            "right": 237,
+            "top": 665.6800000000001
+          },
+          "label": "封闭",
+          "name": "WalkTransitionState",
+          "parent": "WalkTarget:door:map.cell:0:3",
+          "point": {
+            "x": 195,
+            "y": 673.6800000000001
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 795.6800000000001,
+            "left": 18.000000000000007,
+            "right": 110,
+            "top": 703.6800000000001
+          },
+          "name": "WalkJoystick",
+          "parent": "WalkScene",
+          "point": {
+            "x": 64.00000000000001,
+            "y": 749.6800000000001
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 784.1800000000001,
+            "left": 305,
+            "right": 373,
+            "top": 715.1800000000001
+          },
+          "name": "WalkInteract",
+          "parent": "WalkScene",
+          "point": {
+            "x": 339,
+            "y": 749.6800000000001
+          }
+        }
+      ],
+      "phase": "explore",
+      "scale": [
+        0.52,
+        0.52
+      ],
+      "viewport": [
+        390,
+        844,
+        1
+      ],
+      "walkPosition": {
+        "x": 500,
+        "y": 700
+      }
+    },
+    {
+      "assets": "ready",
+      "geometry": [
+        {
+          "bounds": {
+            "bottom": 568,
+            "left": 0.3298350824587639,
+            "right": 319.6701649175413,
+            "top": 0
+          },
+          "name": "WalkScene",
+          "parent": "InfiniteFlowRuntimeView",
+          "point": {
+            "x": 160,
+            "y": 284
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 568,
+            "left": 0.3298350824587639,
+            "right": 319.6701649175413,
+            "top": 0
+          },
+          "name": "WalkDungeonBackdropWindow:scene:dungeon_world_demon_tower_1",
+          "parent": "WalkScene",
+          "point": {
+            "x": 160,
+            "y": 284
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 568,
+            "left": -124,
+            "right": 444.00000000000006,
+            "top": 0
+          },
+          "name": "WalkDungeonBackdrop:scene:dungeon_world_demon_tower_1",
+          "parent": "WalkDungeonBackdropWindow:scene:dungeon_world_demon_tower_1",
+          "point": {
+            "x": 160,
+            "y": 284
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 419.8980509745128,
+            "left": 0.3298350824587639,
+            "right": 319.6701649175413,
+            "top": 174.74662668665667
+          },
+          "name": "WalkViewport",
+          "parent": "WalkScene",
+          "point": {
+            "x": 160,
+            "y": 297.3223388305847
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 315.82233883058467,
+            "left": -111.34032983508244,
+            "right": 160,
+            "top": 145.67091454272867
+          },
+          "name": "WalkCamera",
+          "parent": "WalkViewport",
+          "point": {
+            "x": 24.32983508245879,
+            "y": 230.74662668665667
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 281.19640179910044,
+            "left": 128.06596701649175,
+            "right": 191.93403298350825,
+            "top": 200.29685157421284
+          },
+          "name": "WalkTarget:door:map.cell:0:1",
+          "parent": "WalkDepthObjects",
+          "point": {
+            "x": 160,
+            "y": 240.74662668665667
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 260.74662668665667,
+            "left": 121,
+            "right": 199,
+            "top": 237.74662668665667
+          },
+          "label": "断符石盘",
+          "name": "WalkTargetName",
+          "parent": "WalkTarget:door:map.cell:0:1",
+          "point": {
+            "x": 160,
+            "y": 249.24662668665667
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 274.74662668665667,
+            "left": 121,
+            "right": 199,
+            "top": 260.74662668665667
+          },
+          "label": "封闭",
+          "name": "WalkTransitionState",
+          "parent": "WalkTarget:door:map.cell:0:1",
+          "point": {
+            "x": 160,
+            "y": 267.74662668665667
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 350.77211394302844,
+            "left": 8.395802098950542,
+            "right": 72.26386806596703,
+            "top": 269.87256371814084
+          },
+          "name": "WalkTarget:closed-door:west",
+          "parent": "WalkDepthObjects",
+          "point": {
+            "x": 40.329835082458786,
+            "y": 310.32233883058467
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 330.32233883058467,
+            "left": 1.329835082458788,
+            "right": 79.32983508245879,
+            "top": 307.32233883058467
+          },
+          "label": "西侧封闭门",
+          "name": "WalkTargetName",
+          "parent": "WalkTarget:closed-door:west",
+          "point": {
+            "x": 40.329835082458786,
+            "y": 318.82233883058467
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 344.32233883058467,
+            "left": 1.329835082458788,
+            "right": 79.32983508245879,
+            "top": 330.32233883058467
+          },
+          "label": "封闭",
+          "name": "WalkTransitionState",
+          "parent": "WalkTarget:closed-door:west",
+          "point": {
+            "x": 40.329835082458786,
+            "y": 337.32233883058467
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 357.77211394302844,
+            "left": 247.736131934033,
+            "right": 311.6041979010495,
+            "top": 276.87256371814084
+          },
+          "name": "WalkTarget:door:map.cell:1:2",
+          "parent": "WalkDepthObjects",
+          "point": {
+            "x": 279.67016491754123,
+            "y": 317.32233883058467
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 337.32233883058467,
+            "left": 240.67016491754123,
+            "right": 318.67016491754123,
+            "top": 314.32233883058467
+          },
+          "label": "血字阶梯",
+          "name": "WalkTargetName",
+          "parent": "WalkTarget:door:map.cell:1:2",
+          "point": {
+            "x": 279.67016491754123,
+            "y": 325.82233883058467
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 351.32233883058467,
+            "left": 240.67016491754123,
+            "right": 318.67016491754123,
+            "top": 337.32233883058467
+          },
+          "label": "封闭",
+          "name": "WalkTransitionState",
+          "parent": "WalkTarget:door:map.cell:1:2",
+          "point": {
+            "x": 279.67016491754123,
+            "y": 344.32233883058467
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 366.73391304347825,
+            "left": 128.06596701649175,
+            "right": 191.93403298350825,
+            "top": 285.8343628185907
+          },
+          "name": "WalkTarget:node:fog_lesser_demon",
+          "parent": "WalkDepthObjects",
+          "point": {
+            "x": 160,
+            "y": 326.2841379310345
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 326.2841379310345,
+            "left": 124,
+            "right": 196,
+            "top": 218.28413793103448
+          },
+          "name": "WalkMonsterSprite:monster:fog_lesser_demon_world",
+          "parent": "WorldObjectBody",
+          "point": {
+            "x": 160,
+            "y": 272.2841379310345
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 346.2841379310345,
+            "left": 110,
+            "right": 210,
+            "top": 323.2841379310345
+          },
+          "label": "雾中妖鬼",
+          "name": "WalkTargetName",
+          "parent": "WalkTarget:node:fog_lesser_demon",
+          "point": {
+            "x": 160,
+            "y": 334.7841379310345
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 372.8451274362818,
+            "left": 137.85907046476763,
+            "right": 182.1409295352324,
+            "top": 326.86011994002996
+          },
+          "name": "WalkPlayer",
+          "parent": "WalkDepthObjects",
+          "point": {
+            "x": 160,
+            "y": 349.8526236881559
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 352.42405225958447,
+            "left": 132.72727272727275,
+            "right": 187.27272727272728,
+            "top": 297.87859771412997
+          },
+          "name": "WalkPlayerBody",
+          "parent": "WalkPlayer",
+          "point": {
+            "x": 160,
+            "y": 325.15132498685716
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 434.3478260869565,
+            "left": 128.06596701649175,
+            "right": 191.93403298350825,
+            "top": 353.44827586206895
+          },
+          "name": "WalkTarget:door:map.cell:0:3",
+          "parent": "WalkDepthObjects",
+          "point": {
+            "x": 160,
+            "y": 393.8980509745127
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 413.8980509745127,
+            "left": 121,
+            "right": 199,
+            "top": 390.8980509745127
+          },
+          "label": "灰坑回声",
+          "name": "WalkTargetName",
+          "parent": "WalkTarget:door:map.cell:0:3",
+          "point": {
+            "x": 160,
+            "y": 402.3980509745127
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 388.8980509745127,
+            "left": 121,
+            "right": 199,
+            "top": 374.8980509745127
+          },
+          "label": "封闭",
+          "name": "WalkTransitionState",
+          "parent": "WalkTarget:door:map.cell:0:3",
+          "point": {
+            "x": 160,
+            "y": 381.8980509745127
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 522.3980509745128,
+            "left": 17.329835082458782,
+            "right": 102.32983508245876,
+            "top": 437.3980509745128
+          },
+          "name": "WalkJoystick",
+          "parent": "WalkScene",
+          "point": {
+            "x": 59.82983508245878,
+            "y": 479.8980509745128
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 512.3980509745128,
+            "left": 238.67016491754129,
+            "right": 302.6701649175413,
+            "top": 447.3980509745128
+          },
+          "name": "WalkInteract",
+          "parent": "WalkScene",
+          "point": {
+            "x": 270.6701649175413,
+            "y": 479.8980509745128
+          }
+        }
+      ],
+      "phase": "explore",
+      "scale": [
+        0.4266666666666667,
+        0.4266666666666667
+      ],
+      "viewport": [
+        320,
+        568,
+        1
+      ],
+      "walkPosition": {
+        "x": 500,
+        "y": 700
+      }
+    }
+  ],
+  "combatViewports": [
+    {
+      "assets": "ready",
+      "geometry": [
+        {
+          "bounds": {
+            "bottom": 844,
+            "left": 0,
+            "right": 390,
+            "top": 0
+          },
+          "name": "WalkScene",
+          "parent": "InfiniteFlowRuntimeView",
+          "point": {
+            "x": 195,
+            "y": 422
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 844,
+            "left": 0,
+            "right": 390,
+            "top": 0
+          },
+          "name": "WalkDungeonBackdropWindow:scene:dungeon_world_demon_tower_1",
+          "parent": "WalkScene",
+          "point": {
+            "x": 195,
+            "y": 422
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 844,
+            "left": -227,
+            "right": 617,
+            "top": 0
+          },
+          "name": "WalkDungeonBackdrop:scene:dungeon_world_demon_tower_1",
+          "parent": "WalkDungeonBackdropWindow:scene:dungeon_world_demon_tower_1",
+          "point": {
+            "x": 195,
+            "y": 422
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 689.68,
+            "left": 0,
+            "right": 390,
+            "top": 183.32000000000005
+          },
+          "name": "WalkViewport",
+          "parent": "WalkScene",
+          "point": {
+            "x": 195,
+            "y": 436.49999999999994
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 453.5,
+            "left": -147.00000000000003,
+            "right": 195,
+            "top": 55.139999999999986
+          },
+          "name": "WalkCamera",
+          "parent": "WalkViewport",
+          "point": {
+            "x": 23.99999999999999,
+            "y": 254.3199999999999
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 328.72,
+            "left": 156,
+            "right": 234,
+            "top": 229.91999999999996
+          },
+          "name": "WalkTarget:closed-door:north",
+          "parent": "WalkDepthObjects",
+          "point": {
+            "x": 195,
+            "y": 279.31999999999994
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 301.31999999999994,
+            "left": 153,
+            "right": 237,
+            "top": 276.32000000000005
+          },
+          "label": "北侧封闭门",
+          "name": "WalkTargetName",
+          "parent": "WalkTarget:closed-door:north",
+          "point": {
+            "x": 195,
+            "y": 288.81999999999994
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 317.31999999999994,
+            "left": 153,
+            "right": 237,
+            "top": 301.31999999999994
+          },
+          "label": "封闭",
+          "name": "WalkTransitionState",
+          "parent": "WalkTarget:closed-door:north",
+          "point": {
+            "x": 195,
+            "y": 309.31999999999994
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 473.9544,
+            "left": 156,
+            "right": 234,
+            "top": 375.1544
+          },
+          "name": "WalkTarget:monster:fog_lesser_demon",
+          "parent": "WalkDepthObjects",
+          "point": {
+            "x": 195,
+            "y": 424.5544
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 424.5544,
+            "left": 142.33333333333334,
+            "right": 247.66666666666663,
+            "top": 266.5544
+          },
+          "name": "WalkMonsterSprite:monster:fog_lesser_demon_world",
+          "parent": "WorldObjectBody",
+          "point": {
+            "x": 195,
+            "y": 345.55440000000004
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 339.32000000000005,
+            "left": 163,
+            "right": 227,
+            "top": 335.32000000000005
+          },
+          "name": "WalkEnemyHealth",
+          "parent": "WalkTarget:monster:fog_lesser_demon",
+          "point": {
+            "x": 195,
+            "y": 337.32000000000005
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 335.32,
+            "left": 150,
+            "right": 240,
+            "top": 321.32000000000005
+          },
+          "label": "42 / 42",
+          "name": "WalkEnemyHealthLabel",
+          "parent": "WalkTarget:monster:fog_lesser_demon",
+          "point": {
+            "x": 195,
+            "y": 328.32000000000005
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 446.5544,
+            "left": 140,
+            "right": 250,
+            "top": 421.5544
+          },
+          "label": "雾中妖鬼",
+          "name": "WalkTargetName",
+          "parent": "WalkTarget:monster:fog_lesser_demon",
+          "point": {
+            "x": 195,
+            "y": 434.0544
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 502.9,
+            "left": 3.0000000000000173,
+            "right": 81.00000000000001,
+            "top": 404.1
+          },
+          "name": "WalkTarget:closed-door:west",
+          "parent": "WalkDepthObjects",
+          "point": {
+            "x": 42.00000000000002,
+            "y": 453.5
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 475.49999999999994,
+            "left": 1.4779288903810084e-14,
+            "right": 84.00000000000003,
+            "top": 450.49999999999994
+          },
+          "label": "西侧封闭门",
+          "name": "WalkTargetName",
+          "parent": "WalkTarget:closed-door:west",
+          "point": {
+            "x": 42.00000000000002,
+            "y": 462.99999999999994
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 491.5,
+            "left": 1.4779288903810084e-14,
+            "right": 84.00000000000003,
+            "top": 475.5
+          },
+          "label": "封闭",
+          "name": "WalkTransitionState",
+          "parent": "WalkTarget:closed-door:west",
+          "point": {
+            "x": 42.00000000000002,
+            "y": 483.5
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 510.9,
+            "left": 309.00000000000006,
+            "right": 387.00000000000006,
+            "top": 412.1
+          },
+          "name": "WalkTarget:closed-door:east",
+          "parent": "WalkDepthObjects",
+          "point": {
+            "x": 348.00000000000006,
+            "y": 461.5
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 483.49999999999994,
+            "left": 306.00000000000006,
+            "right": 390,
+            "top": 458.49999999999994
+          },
+          "label": "东侧封闭门",
+          "name": "WalkTargetName",
+          "parent": "WalkTarget:closed-door:east",
+          "point": {
+            "x": 348.00000000000006,
+            "y": 470.99999999999994
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 499.5,
+            "left": 306.00000000000006,
+            "right": 390,
+            "top": 483.5
+          },
+          "label": "封闭",
+          "name": "WalkTransitionState",
+          "parent": "WalkTarget:closed-door:east",
+          "point": {
+            "x": 348.00000000000006,
+            "y": 491.5
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 561.252,
+            "left": 114.5225,
+            "right": 168.6025,
+            "top": 505.092
+          },
+          "name": "WalkPlayer",
+          "parent": "WalkDepthObjects",
+          "point": {
+            "x": 141.5625,
+            "y": 533.172
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 536.5148571428572,
+            "left": 106.10795454545452,
+            "right": 177.01704545454547,
+            "top": 465.6057662337662
+          },
+          "name": "WalkPlayerBody",
+          "parent": "WalkPlayer",
+          "point": {
+            "x": 141.5625,
+            "y": 501.0603116883117
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 693.08,
+            "left": 156,
+            "right": 234,
+            "top": 594.28
+          },
+          "name": "WalkTarget:closed-door:south",
+          "parent": "WalkDepthObjects",
+          "point": {
+            "x": 195,
+            "y": 643.6800000000001
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 665.6800000000001,
+            "left": 153,
+            "right": 237,
+            "top": 640.6800000000001
+          },
+          "label": "南侧封闭门",
+          "name": "WalkTargetName",
+          "parent": "WalkTarget:closed-door:south",
+          "point": {
+            "x": 195,
+            "y": 653.1800000000001
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 681.6800000000001,
+            "left": 153,
+            "right": 237,
+            "top": 665.6800000000001
+          },
+          "label": "封闭",
+          "name": "WalkTransitionState",
+          "parent": "WalkTarget:closed-door:south",
+          "point": {
+            "x": 195,
+            "y": 673.6800000000001
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 795.6800000000001,
+            "left": 8.000000000000009,
+            "right": 100,
+            "top": 703.6800000000001
+          },
+          "name": "WalkJoystick",
+          "parent": "WalkScene",
+          "point": {
+            "x": 54.000000000000014,
+            "y": 749.6800000000001
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 807.68,
+            "left": 104,
+            "right": 164,
+            "top": 763.68
+          },
+          "name": "WalkInteract",
+          "parent": "WalkScene",
+          "point": {
+            "x": 134,
+            "y": 785.68
+          }
+        }
+      ],
+      "phase": "combat",
+      "scale": [
+        0.52,
+        0.52
+      ],
+      "viewport": [
+        390,
+        844,
+        1
+      ],
+      "walkPosition": {
+        "x": 440,
+        "y": 700
+      }
+    },
+    {
+      "assets": "ready",
+      "geometry": [
+        {
+          "bounds": {
+            "bottom": 568,
+            "left": 0.3298350824587639,
+            "right": 319.6701649175413,
+            "top": 0
+          },
+          "name": "WalkScene",
+          "parent": "InfiniteFlowRuntimeView",
+          "point": {
+            "x": 160,
+            "y": 284
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 568,
+            "left": 0.3298350824587639,
+            "right": 319.6701649175413,
+            "top": 0
+          },
+          "name": "WalkDungeonBackdropWindow:scene:dungeon_world_demon_tower_1",
+          "parent": "WalkScene",
+          "point": {
+            "x": 160,
+            "y": 284
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 568,
+            "left": -124,
+            "right": 444.00000000000006,
+            "top": 0
+          },
+          "name": "WalkDungeonBackdrop:scene:dungeon_world_demon_tower_1",
+          "parent": "WalkDungeonBackdropWindow:scene:dungeon_world_demon_tower_1",
+          "point": {
+            "x": 160,
+            "y": 284
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 419.8980509745128,
+            "left": 0.3298350824587639,
+            "right": 319.6701649175413,
+            "top": 174.74662668665667
+          },
+          "name": "WalkViewport",
+          "parent": "WalkScene",
+          "point": {
+            "x": 160,
+            "y": 297.3223388305847
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 315.82233883058467,
+            "left": -111.34032983508244,
+            "right": 160,
+            "top": 145.67091454272867
+          },
+          "name": "WalkCamera",
+          "parent": "WalkViewport",
+          "point": {
+            "x": 24.32983508245879,
+            "y": 230.74662668665667
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 281.19640179910044,
+            "left": 128.06596701649175,
+            "right": 191.93403298350825,
+            "top": 200.29685157421284
+          },
+          "name": "WalkTarget:closed-door:north",
+          "parent": "WalkDepthObjects",
+          "point": {
+            "x": 160,
+            "y": 240.74662668665667
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 260.74662668665667,
+            "left": 121,
+            "right": 199,
+            "top": 237.74662668665667
+          },
+          "label": "北侧封闭门",
+          "name": "WalkTargetName",
+          "parent": "WalkTarget:closed-door:north",
+          "point": {
+            "x": 160,
+            "y": 249.24662668665667
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 274.74662668665667,
+            "left": 121,
+            "right": 199,
+            "top": 260.74662668665667
+          },
+          "label": "封闭",
+          "name": "WalkTransitionState",
+          "parent": "WalkTarget:closed-door:north",
+          "point": {
+            "x": 160,
+            "y": 267.74662668665667
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 350.77211394302844,
+            "left": 8.395802098950524,
+            "right": 72.26386806596702,
+            "top": 269.87256371814084
+          },
+          "name": "WalkTarget:closed-door:west",
+          "parent": "WalkDepthObjects",
+          "point": {
+            "x": 40.32983508245877,
+            "y": 310.32233883058467
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 330.32233883058467,
+            "left": 1.32983508245877,
+            "right": 79.32983508245877,
+            "top": 307.32233883058467
+          },
+          "label": "西侧封闭门",
+          "name": "WalkTargetName",
+          "parent": "WalkTarget:closed-door:west",
+          "point": {
+            "x": 40.32983508245877,
+            "y": 318.82233883058467
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 344.32233883058467,
+            "left": 1.32983508245877,
+            "right": 79.32983508245877,
+            "top": 330.32233883058467
+          },
+          "label": "封闭",
+          "name": "WalkTransitionState",
+          "parent": "WalkTarget:closed-door:west",
+          "point": {
+            "x": 40.32983508245877,
+            "y": 337.32233883058467
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 357.77211394302844,
+            "left": 247.736131934033,
+            "right": 311.6041979010495,
+            "top": 276.87256371814084
+          },
+          "name": "WalkTarget:closed-door:east",
+          "parent": "WalkDepthObjects",
+          "point": {
+            "x": 279.67016491754123,
+            "y": 317.32233883058467
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 337.32233883058467,
+            "left": 240.67016491754123,
+            "right": 318.67016491754123,
+            "top": 314.32233883058467
+          },
+          "label": "东侧封闭门",
+          "name": "WalkTargetName",
+          "parent": "WalkTarget:closed-door:east",
+          "point": {
+            "x": 279.67016491754123,
+            "y": 325.82233883058467
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 351.32233883058467,
+            "left": 240.67016491754123,
+            "right": 318.67016491754123,
+            "top": 337.32233883058467
+          },
+          "label": "封闭",
+          "name": "WalkTransitionState",
+          "parent": "WalkTarget:closed-door:east",
+          "point": {
+            "x": 279.67016491754123,
+            "y": 344.32233883058467
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 366.73391304347825,
+            "left": 128.06596701649175,
+            "right": 191.93403298350825,
+            "top": 285.8343628185907
+          },
+          "name": "WalkTarget:monster:fog_lesser_demon",
+          "parent": "WalkDepthObjects",
+          "point": {
+            "x": 160,
+            "y": 326.2841379310345
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 326.2841379310345,
+            "left": 124,
+            "right": 196,
+            "top": 218.28413793103448
+          },
+          "name": "WalkMonsterSprite:monster:fog_lesser_demon_world",
+          "parent": "WorldObjectBody",
+          "point": {
+            "x": 160,
+            "y": 272.2841379310345
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 296.74662668665667,
+            "left": 128,
+            "right": 192,
+            "top": 292.74662668665667
+          },
+          "name": "WalkEnemyHealth",
+          "parent": "WalkTarget:monster:fog_lesser_demon",
+          "point": {
+            "x": 160,
+            "y": 294.74662668665667
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 292.74662668665667,
+            "left": 115,
+            "right": 205,
+            "top": 278.74662668665667
+          },
+          "label": "42 / 42",
+          "name": "WalkEnemyHealthLabel",
+          "parent": "WalkTarget:monster:fog_lesser_demon",
+          "point": {
+            "x": 160,
+            "y": 285.74662668665667
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 346.2841379310345,
+            "left": 110,
+            "right": 210,
+            "top": 323.2841379310345
+          },
+          "label": "雾中妖鬼",
+          "name": "WalkTargetName",
+          "parent": "WalkTarget:monster:fog_lesser_demon",
+          "point": {
+            "x": 160,
+            "y": 334.7841379310345
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 372.8451274362818,
+            "left": 95.462143928036,
+            "right": 139.74400299850075,
+            "top": 326.86011994002996
+          },
+          "name": "WalkPlayer",
+          "parent": "WalkDepthObjects",
+          "point": {
+            "x": 117.6030734632684,
+            "y": 349.8526236881559
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 352.42405225958447,
+            "left": 90.3303461905411,
+            "right": 144.87580073599565,
+            "top": 297.87859771412997
+          },
+          "name": "WalkPlayerBody",
+          "parent": "WalkPlayer",
+          "point": {
+            "x": 117.6030734632684,
+            "y": 325.15132498685716
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 434.3478260869565,
+            "left": 128.06596701649175,
+            "right": 191.93403298350825,
+            "top": 353.44827586206895
+          },
+          "name": "WalkTarget:closed-door:south",
+          "parent": "WalkDepthObjects",
+          "point": {
+            "x": 160,
+            "y": 393.8980509745127
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 413.8980509745127,
+            "left": 121,
+            "right": 199,
+            "top": 390.8980509745127
+          },
+          "label": "南侧封闭门",
+          "name": "WalkTargetName",
+          "parent": "WalkTarget:closed-door:south",
+          "point": {
+            "x": 160,
+            "y": 402.3980509745127
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 388.8980509745127,
+            "left": 121,
+            "right": 199,
+            "top": 374.8980509745127
+          },
+          "label": "封闭",
+          "name": "WalkTransitionState",
+          "parent": "WalkTarget:closed-door:south",
+          "point": {
+            "x": 160,
+            "y": 381.8980509745127
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 522.3980509745128,
+            "left": 11.829835082458782,
+            "right": 96.82983508245876,
+            "top": 437.3980509745128
+          },
+          "name": "WalkJoystick",
+          "parent": "WalkScene",
+          "point": {
+            "x": 54.32983508245878,
+            "y": 479.8980509745128
+          }
+        },
+        {
+          "bounds": {
+            "bottom": 537.8980509745128,
+            "left": 104.32983508245876,
+            "right": 164.32983508245877,
+            "top": 493.8980509745127
+          },
+          "name": "WalkInteract",
+          "parent": "WalkScene",
+          "point": {
+            "x": 134.32983508245877,
+            "y": 515.8980509745127
+          }
+        }
+      ],
+      "phase": "combat",
+      "scale": [
+        0.4266666666666667,
+        0.4266666666666667
+      ],
+      "viewport": [
+        320,
+        568,
+        1
+      ],
+      "walkPosition": {
+        "x": 440,
+        "y": 700
+      }
+    }
+  ],
+  "realJoystick": {
+    "before": {
+      "x": 500,
+      "y": 700
+    },
+    "afterHorizontal": {
+      "x": 353.78885393406983,
+      "y": 700.499703864121
+    },
+    "afterVertical": {
+      "x": 354.60272601947753,
+      "y": 557.5020199240355
+    },
+    "stateUnchanged": true,
+    "revisionUnchanged": true
+  },
+  "realCombat": {
+    "before": {
+      "monsterHp": 42,
+      "playerHp": 102,
+      "turn": 1,
+      "revision": 2
+    },
+    "after": {
+      "assets": "ready",
+      "monsterHp": 24,
+      "phase": "combat",
+      "playback": false,
+      "playerHp": 92,
+      "revision": {
+        "acceptingInput": true,
+        "durableRevision": 3,
+        "ledgerRevision": 3
+      },
+      "turn": 2
+    }
+  },
+  "livePreservation": {
+    "checks": {
+      "durability": true,
+      "durableStorage": true,
+      "localUiState": true,
+      "mobileSheet": true,
+      "remainingSeeds": true,
+      "revision": true,
+      "state": true,
+      "storage": true,
+      "ui": true,
+      "walk": true
+    },
+    "phase": "explore",
+    "playerHp": 102,
+    "rewardPoints": 1155,
+    "revision": 9,
+    "selectedRelic": "pending.relic:demon_tower_1:echo:1:mist_edge",
+    "confirmed": false,
+    "sheet": null
+  },
+  "desktopViewport": [
+    1280,
+    720,
+    2
+  ],
+  "desktopSurface": {
+    "bottom": 720,
+    "left": 437.60119940029983,
+    "right": 842.3988005997003,
+    "top": 0
+  }
+}

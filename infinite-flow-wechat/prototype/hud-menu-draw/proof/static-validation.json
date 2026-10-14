@@ -1,0 +1,49 @@
+{
+  "variants": [
+    {
+      "id": "01",
+      "name": "断碑铭文"
+    },
+    {
+      "id": "02",
+      "name": "旧铜机括"
+    },
+    {
+      "id": "03",
+      "name": "乌木签牌"
+    },
+    {
+      "id": "04",
+      "name": "残卷朱批"
+    },
+    {
+      "id": "05",
+      "name": "青灰玉璧"
+    },
+    {
+      "id": "06",
+      "name": "玄铁军令"
+    },
+    {
+      "id": "07",
+      "name": "灰烬骨契"
+    },
+    {
+      "id": "08",
+      "name": "行旅皮册"
+    },
+    {
+      "id": "09",
+      "name": "司命简牍"
+    },
+    {
+      "id": "10",
+      "name": "山门留白"
+    }
+  ],
+  "existingAssetCount": 7,
+  "newDependencies": 0,
+  "scope": "prototype/hud-menu-draw",
+  "productionEdited": false,
+  "browserProofPassed": true
+}

@@ -1,0 +1,10 @@
+Use case: stylized-concept
+Asset type: a SINGLE transparent inventory icon for a dark Chinese fantasy survival game, readable at 48 px.
+Primary request: redesign the Mist Breathing cultivation skill as one ancient seated meditation stone statuette. A compact weathered grey-green stone monk with eyes shut, hands resting together over its lap, on one simple worn stone plinth. Distinct quiet cross-legged silhouette. One faint thin mist wisp near the base, unobtrusive and realistic, not clouds. There is no glowing ball, rune or emblem.
+Style/medium: realistically hand-painted game prop, earthy old physical object, tangible carved stone, restrained texture and soft brushwork; believable volume like a small archaeological relic. Keep the visual simplicity of an inventory object.
+Composition/framing: square image, whole isolated object, centered, slight three-quarter frontal view, the main statue occupies 75% of the canvas height and about 65% width, clear margins. The single object must read clearly at small size.
+Lighting/mood: soft warm grey overhead light, quiet and grounded, rich but readable midtones, restrained highlights, no bloom and no illuminated contour.
+Color palette: desaturated grey stone, aged muted jade-grey patina, small warm dust undertones; no saturated cyan, gold or blue.
+Scene/backdrop: actually transparent background with alpha, no scene, no floor plane, no dark square backdrop, no decorative frame.
+Text: none.
+Constraints: one statue only; physically compact single prop; hand-painted realism, no graphic outlines, no magical ring, no halo, no smoke wreath, no curly cartoon clouds, no excessive filigree, no photoreal human, no pedestal wider than the statue's knees, no text, no watermark.

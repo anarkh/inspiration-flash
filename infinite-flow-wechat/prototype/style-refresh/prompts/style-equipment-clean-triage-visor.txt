@@ -1,0 +1,10 @@
+Use case: background-extraction
+Asset type: proposed single equipment sprite for an HTML visual prototype of a dark, low-saturation Chinese fantasy survival RPG.
+Edit target: the referenced triage-visor-v1.png image. Edit this exact asset, preserving its identity.
+Primary request: cleanly isolate ONLY the main triage visor in the upper part of the source. Remove the black rectangle/background, the dark bottom strip, and every small fragment from neighbouring equipment at the bottom edge. Recover a clean complete silhouette of the visor and its head strap.
+Subject invariants: preserve the existing broad angular blue-cyan glass visor, cracked/polygonal faint lens structure, worn charcoal iron frame, black head strap, brass side hinge, and tiny red side indicators. Keep the same viewing angle, overall shape, proportions, material wear, subdued colors, and lighting. The visor must remain recognizably the exact same item, without redesign.
+Composition: a single centered complete visor with breathing room on every side. Preserve the object's natural width-to-height proportions; do not stretch it. Use a square asset canvas. No cropped object edges.
+Style: grounded softly painterly realistic game equipment, dark worn materials, restrained detail. Maintain existing faint glass glow only.
+Background: genuinely transparent RGBA alpha. No black backdrop, checkerboard pattern, floor plane, enclosing panel, border, cast-shadow rectangle, or matte halo.
+Avoid: all extra or detached items, bottom-edge fragments, added pieces, extra lenses, enlarged neon effects, electric beams, saturation boosts, text, labels, watermark.
+Change only the cleanup and isolation necessary to make this existing item a clean transparent sprite.

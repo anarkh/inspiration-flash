@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>主神空间 · 竖屏 2.5D 漫游抽卡</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="walk.css">
+  <link rel="stylesheet" href="walk-workbench.css">
+  <script type="module" src="app.mjs"></script>
+</head>
+<body class="walk-mode">
+  <header class="workbench-header">
+    <div class="workbench-brand"><span class="brand-seal" aria-hidden="true">轮</span><div><span class="overline">无限流 · 竖屏 2.5D 可玩原型</span><h1>走进主神空间。</h1></div></div>
+    <div class="draw-controls">
+      <button type="button" id="draw" class="primary-button" disabled>抽一张</button>
+      <button type="button" id="show-all" class="quiet-button" aria-expanded="false" aria-controls="overview">看全部 10 款</button>
+    </div>
+  </header>
+  <main class="workbench">
+    <section class="preview-column" aria-label="当前方案预览">
+      <div class="preview-caption"><span id="preview-label">正在展开卡组…</span><div><button type="button" id="size-toggle" class="caption-button" aria-pressed="false">放大舞台</button><span class="preview-size">竖屏 · 2.5D</span></div></div>
+      <div class="preview-stage" id="preview-stage">
+        <div class="device-wrapper" id="device-wrapper">
+          <section class="device-frame walking-frame" id="device-frame" aria-label="可走动的2.5D主神空间">
+            <div class="variant-scene" id="scene"><p class="load-message">正在加载 10 种主神空间…</p></div>
+            <dialog class="scene-sheet" id="scene-sheet" aria-labelledby="sheet-title">
+              <div class="sheet-grip" aria-hidden="true"></div>
+              <div id="sheet-content"></div>
+            </dialog>
+            <div class="scene-toast" id="scene-toast" role="status" aria-live="polite" hidden></div>
+          </section>
+        </div>
+      </div>
+      <p class="preview-tip">竖屏走动，镜头随角色左右展开。使用左下摇杆移动，也可点击地面或人物前往，靠近后点击交谈。</p>
+    </section>
+    <aside class="card-notes" aria-label="方案选择">
+      <div class="card-heading"><span class="card-number" id="card-number">01</span><span class="card-total">/ 10</span><span class="card-mood" id="card-mood"></span></div>
+      <h2 id="style-name">十种样式</h2>
+      <p class="style-description" id="style-description">正在加载方案。</p>
+      <div class="card-actions"><button type="button" id="keep" class="quiet-button" aria-pressed="false" disabled>留这张</button><span id="draw-progress" class="draw-progress">还可抽 9 张</span></div>
+      <div class="deck-heading"><h3>卡组</h3><button class="caption-button" id="favorites-only" type="button" aria-pressed="false">只看留牌</button></div>
+      <nav id="style-list" class="style-list" aria-label="10 种主神空间样式"></nav>
+      <p class="selection-note">选中后直接告诉我编号；也可以说「01 的场景 + 06 的布局」。</p>
+      <div class="saved-note" id="saved-note" role="status" aria-live="polite"></div>
+    </aside>
+  </main>
+  <section id="overview" class="overview" aria-labelledby="overview-title" hidden>
+    <div class="overview-heading"><div><span class="overline">全部卡面</span><h2 id="overview-title">把十张摊开看看。</h2></div><button class="quiet-button" id="close-overview" type="button">收起卡面</button></div>
+    <div id="overview-grid" class="overview-grid"></div>
+  </section>
+  <noscript><p class="load-message">请启用 JavaScript，才能抽取样式和体验场景交互。</p></noscript>
+</body>
+</html>

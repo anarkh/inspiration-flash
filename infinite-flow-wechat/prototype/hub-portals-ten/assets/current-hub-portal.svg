@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 126 167" preserveAspectRatio="none">
+  <title>主神空间现用副本门：根据 InfiniteFlowWalkScene.drawDoor 的几何图形还原</title>
+  <g transform="translate(63 157) scale(1 -1)" stroke-width="1">
+    <rect x="-61" y="-8" width="122" height="10" fill="#5b6965" stroke="#60523e"/>
+    <rect x="-54" y="2" width="108" height="12" fill="#757e6f" stroke="#60523e"/>
+    <rect x="-46" y="14" width="92" height="8" fill="#94977f"/>
+    <rect x="-39" y="21" width="78" height="100" rx="35" fill="#0d2329"/>
+    <ellipse cx="0" cy="65" rx="29" ry="46" fill="#3a8b91" fill-opacity=".549" stroke="#c5a86a"/>
+    <ellipse cx="0" cy="65" rx="22" ry="36" fill="#53b7b0" fill-opacity=".314" stroke="#a4f3d3" stroke-opacity=".725" stroke-width="2"/>
+    <rect x="-3" y="28" width="6" height="73" fill="#b5f8dd" fill-opacity=".439"/>
+    <rect x="-54" y="17" width="18" height="101" fill="#677069" stroke="#2a3a3d"/>
+    <rect x="36" y="17" width="18" height="101" fill="#52615e" stroke="#2a3a3d"/>
+    <rect x="-57" y="107" width="114" height="23" fill="#788274" stroke="#334646"/>
+    <path d="M-61 130 L0 155 L61 130 Z" fill="#898c7a" stroke="#344749"/>
+    <path d="M0 120 L7 131 L0 142 L-7 131 Z" fill="#c5a86a"/>
+  </g>
+</svg>

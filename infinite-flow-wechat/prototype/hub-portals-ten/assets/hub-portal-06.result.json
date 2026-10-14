@@ -1,0 +1,27 @@
+{
+  "generator": "built-in image_gen",
+  "transparent_background_requested": true,
+  "source_path": "/Users/bytedance/.codex/generated_images/01a11978-2e9f-7933-8b90-d6fa83835259/exec-b7066a15-b905-41e5-927f-630504157048.png",
+  "output_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-portals-ten/assets/hub-portal-06.png",
+  "sha256": "c6928cd9b1f7487903cf170cff3873ce804d1e995183b867d88d9a4c77338bf9",
+  "byte_exact_copy": true,
+  "dimensions": {
+    "width": 1018,
+    "height": 1544
+  },
+  "width": 1018,
+  "height": 1544,
+  "mode": "RGBA",
+  "alpha": {
+    "extrema": [
+      0,
+      255
+    ],
+    "transparent_pixels": 477490,
+    "partial_alpha_pixels": 1093649,
+    "opaque_pixels": 653
+  },
+  "prompt_file": "hub-portal-06.prompt.txt",
+  "postprocessing": "none",
+  "visual_observation": "Intact elongated octagonal black-gold mirror with lotus cloud frame, dim distant mountain mist image and subtle warm rim, low plinth. Near-frontal silhouette and sanctuary material match references; upper finial has very little top padding."
+}

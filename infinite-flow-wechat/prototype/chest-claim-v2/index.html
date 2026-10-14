@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>宝箱领取 · 紧凑原型</title>
+  <link rel="stylesheet" href="style.css?v=2">
+</head>
+<body>
+  <header class="board-header"><span>无限流 / 界面提案</span><span>宝箱领取 · 02</span></header>
+  <main class="board">
+    <section class="preview-column" aria-label="宝箱交互预览">
+      <div class="toolbar"><span>游戏内效果</span><div class="size-switch" aria-label="预览尺寸"><button data-size="390" aria-pressed="true">390</button><button data-size="320" aria-pressed="false">320</button></div></div>
+      <div class="game-stage" id="stage">
+        <div class="world" id="world">
+          <div class="world-scene" aria-hidden="true"></div>
+          <div class="hud"><div class="portrait"><img src="../../cocos/assets/resources/character/reincarnator-v2.png" alt=""></div><div class="hero-info"><strong>轮回者</strong><span>生命 109 / 109</span><i></i></div><div class="wallet"><span class="coin-small" aria-hidden="true">◇</span><strong id="balance">1085</strong></div></div>
+          <div class="location">妖塔一层 <span>北侧岔路</span></div>
+          <div class="world-cache" aria-hidden="true"><img src="../../cocos/assets/resources/dungeon-world/chest-v1.png" alt=""><span id="world-cache-name">巡哨布袋</span></div>
+          <div class="world-bottom"><div class="joystick" aria-hidden="true"><i></i></div><button id="interact">选择回响</button></div>
+          <div class="world-receipt" id="world-receipt" hidden role="status"></div>
+        </div>
+        <div class="scrim" id="scrim"></div>
+        <section id="reward-dialog" class="reward-dialog" role="dialog" aria-modal="false" aria-labelledby="dialog-title"></section>
+      </div>
+      <p class="preview-caption" id="preview-caption" role="status">物资已领取 · 选择一份回响后继续探索</p>
+      <div class="sample-switch" role="group" aria-label="节点样例"><button data-sample="echo" aria-pressed="true">巡哨布袋 · 含回响</button><button data-sample="ordinary" aria-pressed="false">普通物资</button></div>
+    </section>
+    <aside class="design-notes">
+      <div class="eyebrow">宝箱领取 / 紧凑提案</div>
+      <h1>小图 · 窄窗<br>横向选项</h1>
+      <p class="intro">缩小弹窗和图片，让名称、效果与选择状态更容易扫读。</p>
+      <div class="sample-switch preview-switch" role="group" aria-label="预览阶段"><button data-preview="choosing" aria-pressed="true">回响选择</button><button data-preview="unclaimed" aria-pressed="false">宝箱领取</button></div>
+      <ol class="design-flow">
+        <li><span>01</span><div><h2>弹窗最多 304 px 宽</h2><p>320 px 屏幕下约 280 px 宽，保留场景空间。</p></div></li>
+        <li><span>02</span><div><h2>回响图缩至 48 px</h2><p>每个选项一行，名称与效果放在图片右侧。</p></div></li>
+      </ol>
+      <div class="proposal-boundary"><span>原型 · 尚未接入游戏</span><p>采用现有物品与奖励规则。仅演示本页状态，不读取或修改游戏存档。</p></div>
+      <button id="reset" class="reset-button">从头体验 ↺</button>
+    </aside>
+  </main>
+  <script type="module" src="app.js?v=3"></script>
+</body>
+</html>

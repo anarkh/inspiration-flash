@@ -1,0 +1,34 @@
+{
+  "tool": "image_gen.imagegen",
+  "mode": "built-in",
+  "concept": "轮回月门",
+  "source_path": "/Users/bytedance/.codex/generated_images/01a11977-9e29-7bb0-9458-dd2d77437457/exec-ae784c10-6216-4fed-b64e-0079845d0088.png",
+  "destination_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-portals-ten/assets/hub-portal-02.png",
+  "sha256": "7cb20855d7c12134e32aae73220152e4b15205b0350a9db9ab8bf1ad19029fe0",
+  "source_sha256": "7cb20855d7c12134e32aae73220152e4b15205b0350a9db9ab8bf1ad19029fe0",
+  "width": 1254,
+  "height": 1254,
+  "post_processing": "none; byte-for-byte copy",
+  "style_references": [
+    "cocos/assets/resources/hub-courtyard/walk-sanctuary-v1.png",
+    "cocos/assets/resources/hub-courtyard/pillar-v1.png"
+  ],
+  "alpha_validation": {
+    "mode": "RGBA",
+    "extrema": [
+      0,
+      255
+    ],
+    "transparent_pixels": 638157,
+    "opaque_pixels": 534,
+    "partial_alpha_pixels": 933825,
+    "total_pixels": 1572516,
+    "content_bbox": [
+      0,
+      21,
+      1206,
+      1254
+    ]
+  },
+  "visual_inspection": "Intact frontal circular Chinese moon gate on a low stone pedestal; dark worn stone and old-gold lotus/cloud carvings match the hub pillars. Interior contains dim champagne-gray cloud peaks without vortex. True transparent exterior. Decorative cloud relief is somewhat more prominent than the requested sparse detail, recorded as a concept variation."
+}

@@ -1,0 +1,99 @@
+{
+  "verifiedAt": "2026-10-10T10:22:11.685Z",
+  "scope": "local Cocos Creator 3.8.8 Web Mobile",
+  "url": "http://127.0.0.1:8125/cocos/build/web-mobile-hud-buffs/index.html",
+  "canonicalPreview": "http://127.0.0.1:8125/cocos/build/web-mobile/index.html",
+  "viewports": [
+    {
+      "width": 390,
+      "height": 844
+    },
+    {
+      "width": 320,
+      "height": 568
+    }
+  ],
+  "setup": {
+    "source": "Fresh independent preview; 69 normal client commands plus 3 movement/combat-entry commands, then one physical attack.",
+    "directGameStateMutation": false,
+    "originalGamePageReloaded": false
+  },
+  "observed": {
+    "pendingDraftNotShown": true,
+    "hubAfterSettlementHasNoRelicStrip": true,
+    "ownedIds": [
+      "mist_edge",
+      "focus_prism",
+      "hunter_clock"
+    ],
+    "strip": {
+      "iconsPx": 18,
+      "gapPx": 6,
+      "touchHeightPx": 44,
+      "threeIconTouchWidthPx": 72
+    },
+    "popover": {
+      "widthPx": 264,
+      "threeAssaultRowsHeightPx": 194,
+      "fullDescriptions": true,
+      "heading": false,
+      "footer": false
+    },
+    "exploreUiDomainUnchanged": true,
+    "combatUiDomainUnchanged": true,
+    "movementPausedWhileOpen": true,
+    "closeButton": true,
+    "outsideClose": true,
+    "escapeClose": true,
+    "physicalAttack": {
+      "playerHpBefore": 62,
+      "playerHpAfter": 46,
+      "visibleHp": "46/102",
+      "enemyHpBefore": 60,
+      "enemyHpAfter": 37,
+      "turnAfter": 2
+    },
+    "runtimeErrors": []
+  },
+  "checks": {
+    "typecheckPackages": "passed",
+    "typecheckCreator": "passed",
+    "cocosRace": {
+      "status": "passed",
+      "scenarios": 108
+    },
+    "cocosWalk": "passed",
+    "cocosSheet": {
+      "status": "passed",
+      "viewModels": 1991,
+      "combatVariants": 47
+    },
+    "sourceBoundaries": "passed",
+    "scene": "passed",
+    "assets": {
+      "status": "passed",
+      "assets": 314,
+      "runRelicIcons": 9
+    },
+    "bundleContract": "passed",
+    "gitDiffCheck": "passed",
+    "canonicalHttpReadback": {
+      "status": "passed",
+      "files": 23
+    }
+  },
+  "boundary": {
+    "wechatDeviceVerified": false,
+    "pushed": false,
+    "committed": false
+  },
+  "screenshots": [
+    "game-hub-390.png",
+    "game-relic-popover-390.png",
+    "game-relic-popover-320.png",
+    "game-combat-popover-320.png",
+    "game-combat-hud-320.png",
+    "game-combat-hud-390.png",
+    "game-combat-popover-390.png"
+  ]
+}

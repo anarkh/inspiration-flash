@@ -71,8 +71,8 @@ const CONFIG_BUNDLE_NAME = 'config';
 const RESOURCES_BUNDLE_NAME = 'resources';
 const ASSET_MANIFEST_PATH = 'asset-manifest';
 const ASSET_MANIFEST_UUID = '3d0842ec-43f7-4b5f-961f-39edb535ccd7';
-const EXPECTED_MANIFEST_REVISION = 'sha256:18dd6c94a24afa4ec7c0a44b9f6facf4af6ea6f0ef04e60c47ea56aeee468125';
-const EXPECTED_MANIFEST_ASSET_COUNT = 223;
+const EXPECTED_MANIFEST_REVISION = 'sha256:3d2a276a8cf63784d4d67f490a5e33f66304af2267cd13eae938abe026f370df';
+const EXPECTED_MANIFEST_ASSET_COUNT = 314;
 const GAME_ASSET_KINDS = new Set([
   'character',
   'npc',
@@ -579,7 +579,7 @@ function parseAssetManifest(value: unknown): CocosAssetManifest {
     throw new VisualAssetBootstrapError(
       'manifest-validate',
       'integrity',
-      'Asset manifest must contain exactly 223 assets',
+      `Asset manifest must contain exactly ${EXPECTED_MANIFEST_ASSET_COUNT} assets`,
     );
   }
   const keys = new Set<string>();
@@ -862,6 +862,7 @@ export class InfiniteFlowApp extends Component {
   private readonly visualKeyTerminalFailures = new Map<string, VisualKeyTerminalFailure>();
   private readonly visualIntentGenerations = new Map<string, number>();
   private desiredSceneVisualKeys = new Set<string>();
+  private readonly sceneAssetFailures = new Set<string>();
   private visualDrainPromise: Promise<void> = Promise.resolve();
   private restartAssetsOnNextRefresh = false;
   private readonly visualRecords = new Map<string, VisualAssetRecord>();
@@ -912,6 +913,7 @@ export class InfiniteFlowApp extends Component {
       activate: (physicalId, actionId, event) => {
         this.activate(physicalId, actionId, event);
       },
+      retrySceneAssets: () => this.retrySceneAssets(),
     });
     this.render();
     const generation = this.beginBootstrap();
@@ -1436,6 +1438,7 @@ export class InfiniteFlowApp extends Component {
       this.visualIntentGenerations.delete(current);
       this.cancelVisualKeyRetry(true, undefined, current);
       this.visualKeyTerminalFailures.delete(current);
+      this.sceneAssetFailures.delete(current);
       try {
         this.view?.clearSceneVisualAsset(current);
       } catch (error) {
@@ -1450,7 +1453,10 @@ export class InfiniteFlowApp extends Component {
       const record = this.visualRecords.get(current);
       if (record !== undefined && record.port === port) {
         record.requestedGeneration = this.visualIntentGenerations.get(current)!;
-        if (current === key && previousPrimary !== key && record.acquired) {
+        if (record.acquired && (
+          (current === key && previousPrimary !== key)
+          || (this.desiredSceneVisualKeys.has(current) && !record.sceneDisplayed)
+        )) {
           this.displayVisualRecord(record);
         }
         continue;
@@ -1654,6 +1660,7 @@ export class InfiniteFlowApp extends Component {
       if (this.desiredSceneVisualKeys.has(record.key) && !record.sceneDisplayed) {
         view.setSceneVisualAsset(image, status);
         record.sceneDisplayed = true;
+        this.sceneAssetFailures.delete(record.key);
       }
       if (record.key === this.desiredVisualKey) view.setVisualAsset(image, status);
       if (!this.isVisualRecordDesired(record) || this.view !== view) {
@@ -1765,6 +1772,7 @@ export class InfiniteFlowApp extends Component {
     this.cancelVisualKeyRetry(true, failures);
     this.visualKeyTerminalFailures.clear();
     this.visualIntentGenerations.clear();
+    this.sceneAssetFailures.clear();
     this.assetGeneration += 1;
     this.visualGeneration += 1;
     const pending: Promise<unknown>[] = [];
@@ -1816,6 +1824,9 @@ export class InfiniteFlowApp extends Component {
     updateActivity = true,
   ): void {
     if (this.destroyed || this.view === undefined) return;
+    if (updateActivity && this.desiredSceneVisualKeys.has(input.key)) {
+      this.sceneAssetFailures.add(input.key);
+    }
     const diagnostic = [
       `expectedRevision=${EXPECTED_MANIFEST_REVISION}`,
       `loadedRevision=${input.loadedRevision}`,
@@ -2429,6 +2440,9 @@ export class InfiniteFlowApp extends Component {
     actionId: string,
     result: InfiniteFlowDispatchResult,
   ): void {
+    const frames = result.status === 'committed'
+      ? result.events.find(event => event.type === 'combat.presentation-resolved') : undefined;
+    this.view?.resolveCombatPresentation(actionId, frames?.type === 'combat.presentation-resolved' ? frames.frames : undefined);
     this.busyActionId = undefined;
     this.view?.focusPrimaryActions();
     if (result.status === 'persistence-blocked') {
@@ -2452,6 +2466,7 @@ export class InfiniteFlowApp extends Component {
   }
 
   private failAction(actionId: string, error: unknown): void {
+    this.view?.resolveCombatPresentation(actionId, undefined);
     this.busyActionId = undefined;
     this.activityMessage = `${actionId} 失败：${errorMessage(error)}`;
     this.refreshViewModel();
@@ -2503,6 +2518,7 @@ export class InfiniteFlowApp extends Component {
       modeLabel: this.runtimeMode.label,
       modeDetail: this.runtimeMode.detail,
       activityMessage: this.activityMessage,
+      sceneAssets: this.sceneAssetsStatus(),
       supplyActions: (itemId) => this.projectSupplyActions(itemId),
       ownedLoadout: () => this.projectOwnedLoadout(),
       ...(this.blockingMessage === undefined
@@ -2512,6 +2528,25 @@ export class InfiniteFlowApp extends Component {
         ? {}
         : { busyActionId: this.busyActionId }),
     }, this.safeInsets);
+  }
+
+  private sceneAssetsStatus(): 'loading' | 'ready' | 'error' {
+    if (this.restartAssetsOnNextRefresh || this.lastVisualBootstrapFailure !== undefined) return 'error';
+    let pending = false;
+    for (const key of this.desiredSceneVisualKeys) {
+      if (this.sceneAssetFailures.has(key)) return 'error';
+      const record = this.visualRecords.get(key);
+      if (record?.sceneDisplayed !== true || !this.isVisualRecordDesired(record)) pending = true;
+    }
+    return pending ? 'loading' : 'ready';
+  }
+
+  private retrySceneAssets(): void {
+    if (this.destroyed || this.runtimeMode.kind === 'blocked') return;
+    // The same generation/lease boundary as memory recovery also rejects late
+    // responses from the failed attempt without changing the player's run.
+    this.invalidateVisualAssets(true);
+    this.refreshViewModel();
   }
 
   // Carry-toggle actions are projected into the actions section only while the
@@ -2542,7 +2577,8 @@ export class InfiniteFlowApp extends Component {
 
   /**
    * Generation-guarded preload of character/bag figures and the active NPC or
-   * owned-loadout catalog. Acquires leases through the scene manifest port;
+   * owned-loadout catalog, plus covers for the active entry services. Acquires
+   * leases through the scene manifest port;
    * failures stay on the glyph fallback and are retried on the next asset
    * generation. Re-renders once when frames settle.
    */
@@ -2552,12 +2588,22 @@ export class InfiniteFlowApp extends Component {
     if (loadout === undefined || port === undefined) return;
     const detail = this.viewModel?.sections[1].detail;
     const shop = detail?.kind === 'hub' ? detail.shop : undefined;
+    const entryServices = detail?.kind === 'hub' ? detail.entryServices : undefined;
     const keys = Array.from(new Set([
       SHEET_PORTRAIT_KEY,
       ...loadout.equipment.map((entry) => sheetEquipmentKey(entry.equipmentId)),
+      ...loadout.ownedEquipment.map((entry) => sheetEquipmentKey(entry.equipmentId)),
+      ...(detail?.kind === 'explore'
+        ? detail.pending?.equipmentOptions?.map(entry => sheetEquipmentKey(entry.equipmentId)) ?? [] : []),
+      ...(detail?.kind === 'explore' && detail.rewardPreview ? [
+        'scene:dungeon_prop_chest',
+        ...detail.rewardPreview.items.flatMap(entry => entry.visualAssetKey ? [entry.visualAssetKey] : []),
+      ] : []),
+      ...(detail?.kind === 'explore' ? detail.pending?.relicOptions?.map(entry => entry.visualAssetKey) ?? [] : []),
       ...loadout.items.map((entry) => sheetItemKey(entry.itemId)),
       ...(shop?.portraitAssetKey ? [shop.portraitAssetKey] : []),
       ...(shop?.rows.flatMap((row) => row.visualAssetKey ? [row.visualAssetKey] : []) ?? []),
+      ...(entryServices?.flatMap((service) => service.options.flatMap((option) => option.dungeon ? [option.dungeon.visualAssetKey] : [])) ?? []),
       ...extraKeys,
     ]));
     const generation = this.assetGeneration;

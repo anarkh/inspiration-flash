@@ -2,8 +2,9 @@
 //
 // Scope here is the engine-agnostic contract every one of the ten styles must
 // keep: it renders in both image tiers (empty library / fully stubbed library)
-// with identical node structure, keeps the production semantic node counts,
-// every press target stays >= 104x104 design px, frames remain cut-corner
+// with identical node structure (compact sprites contain-fit loaded art),
+// keeps the production semantic node counts, every press target stays at the
+// compact 44 CSS-px / custom-layout 104 design-px floor, frames remain cut-corner
 // polygons, every label resolves to a painted surface at >= 4.5 contrast and
 // the painter op budgets hold (sheet<=220, card<=120). Style 01 additionally
 // proves byte-identical geometry and tokens versus the unguarded production
@@ -109,11 +110,10 @@ const bundle = await build({
       export { renderInfiniteFlowInfoSheet, PRODUCTION_SHEET_LAYOUT } from './cocos/assets/scripts/ui/InfiniteFlowInfoSheet.ts';
       export { SHEET_STYLE_01 } from './cocos/assets/scripts/ui/layouts/sheet-style-01.ts';
       export { SHEET_LAYOUT_STYLES } from './cocos/assets/scripts/ui/sheet-layout-styles.ts';
-      export { DEFAULT_SHEET_THEME, sheetContrastRatio } from './cocos/assets/scripts/ui/sheet-theme.ts';
-      export { DARK_UI } from './cocos/assets/scripts/ui/dark-ui.ts';
+      export { COMPACT_SHEET_THEME, sheetContrastRatio } from './cocos/assets/scripts/ui/sheet-theme.ts';
       export { EMPTY_SHEET_IMAGE_LIBRARY, SHEET_PORTRAIT_KEY, SHEET_SCENE_BANNER_KEY, SHEET_DUNGEON_BANNER_KEY, sheetEquipmentKey, sheetItemKey } from './cocos/assets/scripts/ui/sheet-kit.ts';
       export { BASELINE_LAYOUT_ID } from './cocos/assets/scripts/ui/sheet-layout.ts';
-      export { Node, UITransform, Label, Graphics } from 'cc';
+      export { Node, UITransform, Label, Graphics, Sprite } from 'cc';
       ${styleImports}
       export const EXTRA_STYLE_MODULES = ${styleArray};
     `,
@@ -192,6 +192,7 @@ const KINDS = [
   ['inventory', hubModel, { kind: 'inventory', page: 0 }],
 ];
 const safeInsets = { top: 323, right: 0, bottom: 66, left: 0 };
+const compactUnit = 750 / 390;
 
 const allKeys = (() => {
   const keys = [api.SHEET_PORTRAIT_KEY, api.SHEET_SCENE_BANNER_KEY, api.SHEET_DUNGEON_BANNER_KEY];
@@ -242,6 +243,7 @@ function geometryMap(rootNode) {
       y: node.position?.y ?? 0,
       width: size?.width ?? 0,
       height: size?.height ?? 0,
+      active: node.active !== false,
     });
     node.children.forEach((child, index) => walk(child, `${path}/${index}:${child.name}`));
   };
@@ -277,17 +279,48 @@ for (const [kind, model, sheetState] of KINDS) {
     const emptyGeometry = geometryMap(empty.rootNode);
     const fakeGeometry = geometryMap(fake.rootNode);
 
-    // (1) both image tiers render the identical node tree and geometry.
+    // (1) tiers keep the same structure. Only compact loaded sprite sizes and
+    // their glyph fallback visibility change; custom layouts keep exact geometry.
+    const fakeNodes = new Map();
+    const walkFake = (node, path) => {
+      fakeNodes.set(path, node);
+      node.children.forEach((child, index) => walkFake(child, `${path}/${index}:${child.name}`));
+    };
+    walkFake(fake.rootNode, '0');
     assert.equal(fakeGeometry.size, emptyGeometry.size, `${label}: node count identical across image tiers`);
     for (const [path, expected] of emptyGeometry) {
       const actual = fakeGeometry.get(path);
+      const fakeNode = fakeNodes.get(path);
       assert.ok(actual, `${label}: tier path ${path} exists`);
       assert.equal(actual.name, expected.name, `${label}: tier node name at ${path}`);
-      assert.deepEqual(
-        { x: actual.x, y: actual.y, width: actual.width, height: actual.height },
-        { x: expected.x, y: expected.y, width: expected.width, height: expected.height },
-        `${label}: tier geometry at ${path}`,
-      );
+      const fittedSprite = style.id === '01' && actual.name.endsWith(':Sprite')
+        && fakeNode.getComponent(api.Sprite)?.spriteFrame === fakeImage.frame;
+      if (fittedSprite) {
+        assert.deepEqual({ x: actual.x, y: actual.y }, { x: expected.x, y: expected.y },
+          `${label}: fitted art stays centered at ${path}`);
+        assert.ok(actual.width > 0 && actual.height > 0, `${label}: fitted art has positive dimensions at ${path}`);
+        assert.ok(Math.abs(actual.width / actual.height - fakeImage.width / fakeImage.height) < 1e-9,
+          `${label}: fitted art preserves image aspect ratio at ${path}`);
+        assert.ok(actual.width <= expected.width + 1e-9 && actual.height <= expected.height + 1e-9,
+          `${label}: fitted art stays inside its slot at ${path}`);
+        assert.ok(Math.abs(actual.width - expected.width) < 1e-9 || Math.abs(actual.height - expected.height) < 1e-9,
+          `${label}: fitted art fills one slot axis at ${path}`);
+        assert.equal(fakeNode.getComponent(api.Sprite).trim, false, `${label}: fitted art keeps the whole frame at ${path}`);
+      } else {
+        assert.deepEqual(
+          { x: actual.x, y: actual.y, width: actual.width, height: actual.height },
+          { x: expected.x, y: expected.y, width: expected.width, height: expected.height },
+          `${label}: tier geometry at ${path}`,
+        );
+      }
+      const loadedGlyph = style.id === '01' && actual.name.endsWith(':Glyph')
+        && fakeNode.parent.getChildByName(actual.name.replace(/:Glyph$/, ':Sprite'))?.getComponent(api.Sprite)?.spriteFrame === fakeImage.frame;
+      if (loadedGlyph) {
+        assert.equal(expected.active, true, `${label}: empty art slot shows fallback at ${path}`);
+        assert.equal(actual.active, false, `${label}: loaded art hides fallback at ${path}`);
+      } else {
+        assert.equal(actual.active, expected.active, `${label}: tier visibility at ${path}`);
+      }
     }
 
     const nodes = allNodes(empty.rootNode);
@@ -320,12 +353,13 @@ for (const [kind, model, sheetState] of KINDS) {
         `${label}: three prepared seals`);
     }
 
-    // (3) every press target keeps the 104 design-px minimum in both axes.
+    // (3) every press target keeps its style's minimum in both axes.
+    const targetFloor = style.id === '01' ? 44 * compactUnit : 104;
     for (const { node } of empty.local) {
       const size = sizeOf(node);
       assert.ok(size, `${label}/${node.name}: bound node has geometry`);
-      assert.ok(size.width >= 104 && size.height >= 104,
-        `${label}/${node.name}: bound target ${size.width}x${size.height} >= 104x104`);
+      assert.ok(size.width >= targetFloor && size.height >= targetFloor,
+        `${label}/${node.name}: bound target ${size.width}x${size.height} >= ${targetFloor}x${targetFloor}`);
     }
 
     // (4) cut-corner discipline (scroll thumb is the sole roundRect user).
@@ -384,7 +418,27 @@ for (const [kind, model, sheetState] of KINDS) {
         );
       }
       assert.equal(style.layout, api.PRODUCTION_SHEET_LAYOUT, 'S01 mounts the shared PRODUCTION_SHEET_LAYOUT');
-      assert.equal(style.theme, api.DEFAULT_SHEET_THEME, 'S01 mounts the production DEFAULT theme');
+      assert.equal(style.theme, api.COMPACT_SHEET_THEME, 'S01 mounts the production COMPACT theme');
+      const frame = nodes.find(node => node.name === `MobileInfoSheet:${kind}`);
+      const titleBand = nodes.find(node => node.name === 'MobileSheetTitleBand');
+      assert.equal(sizeOf(frame).width, 304 * compactUnit, `${label}: production width is 304 CSS px`);
+      assert.ok(sizeOf(frame).height <= Math.min(464 * compactUnit, 1334 - safeInsets.top - safeInsets.bottom - 88 * compactUnit),
+        `${label}: production height respects 464 CSS-px cap and safe area`);
+      assert.equal(sizeOf(titleBand).height, 48 * compactUnit, `${label}: production header is 48 CSS px`);
+      if (kind === 'menu' || kind === 'character') {
+        const scroll = nodes.find(node => node.name === 'MobileSheetScroll');
+        assert.ok(scroll, `${label}: ordinary body has a scroll viewport`);
+        assert.ok(sizeOf(scroll).height <= 300 * compactUnit, `${label}: ordinary scroll viewport is capped at 300 CSS px`);
+        const scrollBottom = (scroll.position?.y ?? 0) - sizeOf(scroll).height / 2;
+        assert.ok(Math.abs(scrollBottom + sizeOf(scroll.parent).height / 2) < 1e-9,
+          `${label}: ordinary body leaves no empty gap below its scroll viewport`);
+      }
+      for (const visual of nodes.filter(node => node.name === 'ButtonVisual')) {
+        const target = sizeOf(visual.parent);
+        assert.equal(target.height, 44 * compactUnit, `${label}/${visual.parent.name}: shared button has 44 CSS-px target height`);
+        assert.ok(target.width <= 148 * compactUnit, `${label}/${visual.parent.name}: shared button width is capped at 148 CSS px`);
+        assert.equal(sizeOf(visual).height, 32 * compactUnit, `${label}/${visual.parent.name}: shared button visual is 32 CSS px`);
+      }
       assert.deepEqual(
         Object.values(style.imagePolicy),
         [false, false, false, false],
@@ -394,15 +448,15 @@ for (const [kind, model, sheetState] of KINDS) {
   }
 }
 
-// The 携行 tab is a second, independently full 5×100 grid: six carried-item
-// cells + 94 blanks + the three prepared seals.
+// Legacy inventory carry state opens the compact character carry surface.
 {
   const [, inventoryModel] = KINDS.find(([kind]) => kind === 'inventory');
   const carry = renderProduction(inventoryModel, { kind: 'inventory', page: 0, tab: 'carry' });
   const carryNodes = allNodes(carry.rootNode);
-  assert.equal(carryNodes.filter((node) => node.name.startsWith('MobileSheetItem:')).length, 6, 'carry tab: six carried item cells');
-  assert.equal(carryNodes.filter((node) => node.name.startsWith('MobileSheetBlank:')).length, 94, 'carry tab: ninety-four blanks');
-  assert.equal(carryNodes.filter((node) => node.name === 'ItemCarriedSeal').length, 3, 'carry tab: three prepared seals');
+  assert.ok(carryNodes.some(node => node.name === 'MobileInfoSheet:character'), 'legacy carry route mounts character information');
+  assert.equal(carryNodes.filter((node) => node.name.startsWith('MobileSheetCarryItem:')).length, 6, 'carry panel: six tactical item cards');
+  assert.equal(carryNodes.filter((node) => node.name.startsWith('MobileSheetBlank:')).length, 0, 'carry panel has no decorative bag padding');
+  assert.equal(carryNodes.filter((node) => node.name.startsWith('MobileSheetCarrySlot:')).length, 3, 'carry panel: three general slots');
 }
 
 // Local contrast fallback removed: the canonical sheetContrastRatio comes
@@ -410,5 +464,5 @@ for (const [kind, model, sheetState] of KINDS) {
 
 const ranIds = STYLES.map((style) => style.id).join(',');
 console.log(`Sheet layout gate: ${STYLES.length} style(s) [${ranIds}] x ${KINDS.length} sheets x 2 image tiers; `
-  + `semantic counts, 104px touch floor, cut-corner discipline, label contrast minimum ${globalMinimumContrast.toFixed(3)} (>=4.5), `
+  + `semantic counts, compact 44 CSS-px / custom 104 design-px touch floors, cut-corner discipline, label contrast minimum ${globalMinimumContrast.toFixed(3)} (>=4.5), `
   + 'op budgets (sheet<=220, card<=120) green; S01 production geometry/token identity asserted.');

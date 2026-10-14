@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Prototype only: nine run-relic HUD icons. No production integration.",
+  "tool": "image_gen.imagegen",
+  "transparent_background": false,
+  "icons": [
+    {
+      "id": "mist_edge",
+      "prompt": "Use case: stylized-concept. Asset type: one polished square RPG buff ability icon for a Chinese dark-fantasy mobile game. Generate a single 1024x1024 square icon, NOT a contact sheet. Hand-painted realistic game inventory illustration, aged bronze, carved jade and worn metal material language, restrained old gold highlights and deep almost-black charcoal background. ONE bold readable object silhouette occupies 78-86 percent of the tile, high local contrast, readable at 32px. Tight crop with slight breathing room, dramatic directional light, refined tactile material, simple uncluttered composition. No words, numbers, letters, logos, watermark, border, frame, UI, or other icons. Background opaque near black. Mist Edge: a single short broad silver sword blade slants from lower left to upper right, its hilt old dark bronze, two thick wisps of blue-grey magical fog curl around its sharp edge. A thin cold pale-cyan highlight makes the blade unmistakeable. Read as a mist sword, not a cloud or a spear.",
+      "sourcePath": "/Users/bytedance/.codex/generated_images/01a0ecb0-503e-7a81-95d1-22b8b154881e/exec-f94b9227-f61d-4f77-84a6-df3f3c961dbd.png",
+      "outputPath": "assets/mist_edge.png"
+    },
+    {
+      "id": "focus_prism",
+      "prompt": "Use case: stylized-concept. Asset type: one polished square RPG buff ability icon for a Chinese dark-fantasy mobile game. Generate a single 1024x1024 square icon, NOT a contact sheet. Hand-painted realistic game inventory illustration, aged bronze, carved jade and worn metal material language, restrained old gold highlights and deep almost-black charcoal background. ONE bold readable object silhouette occupies 78-86 percent of the tile, high local contrast, readable at 32px. Tight crop with slight breathing room, dramatic directional light, refined tactile material, simple uncluttered composition. No words, numbers, letters, logos, watermark, border, frame, UI, or other icons. Background opaque near black. Focus Prism: a large cut triangular crystal prism standing point-up in a small worn bronze cradle; pale violet and silver light converges into the prism center as three bold beams, brightest core contained. Broad glass facets, crisp triangular silhouette. Read as concentration in a crystal, not a potion.",
+      "sourcePath": "/Users/bytedance/.codex/generated_images/01a0ecb0-503e-7a81-95d1-22b8b154881e/exec-df664caa-4d41-4b6b-b419-133ef2c2b459.png",
+      "outputPath": "assets/focus_prism.png"
+    },
+    {
+      "id": "hunter_clock",
+      "prompt": "Use case: stylized-concept. Asset type: one polished square RPG buff ability icon for a Chinese dark-fantasy mobile game. Generate a single 1024x1024 square icon, NOT a contact sheet. Hand-painted realistic game inventory illustration, aged bronze, carved jade and worn metal material language, restrained old gold highlights and deep almost-black charcoal background. ONE bold readable object silhouette occupies 78-86 percent of the tile, high local contrast, readable at 32px. Tight crop with slight breathing room, dramatic directional light, refined tactile material, simple uncluttered composition. No words, numbers, letters, logos, watermark, border, frame, UI, or other icons. Background opaque near black. Hunter Clock: an ancient round bronze hunting timepiece, bold circular clock face with a single spear-shaped hand and a few clean notch marks, no digits; warm amber-lit center, patina and small scratches, a short sharp pointer at top. Read clearly as a round timepiece, not a compass or shield.",
+      "sourcePath": "/Users/bytedance/.codex/generated_images/01a0ecb0-503e-7a81-95d1-22b8b154881e/exec-5b77cb35-ab50-49e2-bf02-bd39d1fd27a3.png",
+      "outputPath": "assets/hunter_clock.png"
+    },
+    {
+      "id": "bone_shell",
+      "prompt": "Use case: stylized-concept. Asset type: one polished square RPG buff ability icon for a Chinese dark-fantasy mobile game. Generate a single 1024x1024 square icon, NOT a contact sheet. Hand-painted realistic game inventory illustration, aged bronze, carved jade and worn metal material language, restrained old gold highlights and deep almost-black charcoal background. ONE bold readable object silhouette occupies 78-86 percent of the tile, high local contrast, readable at 32px. Tight crop with slight breathing room, dramatic directional light, refined tactile material, simple uncluttered composition. No words, numbers, letters, logos, watermark, border, frame, UI, or other icons. Background opaque near black. Bone Shell: three thick ivory-white curved bone plates overlap to form a compact protective carapace shield, angular overall silhouette, subtle aged bronze binding, dark crack joints. Bone is pale and textured, with quiet teal reflected light. No skull face or body. Read as protective bone armor.",
+      "sourcePath": "/Users/bytedance/.codex/generated_images/01a0ecb0-503e-7a81-95d1-22b8b154881e/exec-8980080e-6f9d-4270-b20e-1dd58375b58a.png",
+      "outputPath": "assets/bone_shell.png"
+    },
+    {
+      "id": "mending_thread",
+      "prompt": "Use case: stylized-concept. Asset type: one polished square RPG buff ability icon for a Chinese dark-fantasy mobile game. Generate a single 1024x1024 square icon, NOT a contact sheet. Hand-painted realistic game inventory illustration, aged bronze, carved jade and worn metal material language, restrained old gold highlights and deep almost-black charcoal background. ONE bold readable object silhouette occupies 78-86 percent of the tile, high local contrast, readable at 32px. Tight crop with slight breathing room, dramatic directional light, refined tactile material, simple uncluttered composition. No words, numbers, letters, logos, watermark, border, frame, UI, or other icons. Background opaque near black. Mending Thread: one bold curved golden sewing needle drawing a luminous jade-green thread through a deep crack in a small dark stone or armor fragment. The green thread forms a clear loose loop and visibly stitches two edges back together. Strong gold needle and green loop silhouette, healing/restoration symbolism, no gore.",
+      "sourcePath": "/Users/bytedance/.codex/generated_images/01a0ecb0-503e-7a81-95d1-22b8b154881e/exec-dbae6173-b7a1-481d-9f66-cb2a2e88ea10.png",
+      "outputPath": "assets/mending_thread.png"
+    },
+    {
+      "id": "iron_echo",
+      "prompt": "Use case: stylized-concept. Asset type: one polished square RPG buff ability icon for a Chinese dark-fantasy mobile game. Generate a single 1024x1024 square icon, NOT a contact sheet. Hand-painted realistic game inventory illustration, aged bronze, carved jade and worn metal material language, restrained old gold highlights and deep almost-black charcoal background. ONE bold readable object silhouette occupies 78-86 percent of the tile, high local contrast, readable at 32px. Tight crop with slight breathing room, dramatic directional light, refined tactile material, simple uncluttered composition. No words, numbers, letters, logos, watermark, border, frame, UI, or other icons. Background opaque near black. Iron Echo: one broad heavy dark iron shield seen nearly front-on, aged bronze rim, three sharply readable broken iron trap spikes strike its lower-right side and a pair of pale teal concentric impact arcs echoes outward. Shield dominates, few chunky shapes, robust metal texture. Read as blocking trap spikes, distinct from bone armor.",
+      "sourcePath": "/Users/bytedance/.codex/generated_images/01a0ecb0-503e-7a81-95d1-22b8b154881e/exec-012f1cd8-a1f6-47ee-9e38-a981453ecb60.png",
+      "outputPath": "assets/iron_echo.png"
+    },
+    {
+      "id": "rift_step",
+      "prompt": "Use case: stylized-concept. Asset type: one polished square RPG buff ability icon for a Chinese dark-fantasy mobile game. Generate a single 1024x1024 square icon, NOT a contact sheet. Hand-painted realistic game inventory illustration, aged bronze, carved jade and worn metal material language, restrained old gold highlights and deep almost-black charcoal background. ONE bold readable object silhouette occupies 78-86 percent of the tile, high local contrast, readable at 32px. Tight crop with slight breathing room, dramatic directional light, refined tactile material, simple uncluttered composition. No words, numbers, letters, logos, watermark, border, frame, UI, or other icons. Background opaque near black. Rift Step: one luminous teal boot-sole footprint stepping diagonally across a narrow violet-black spatial tear, two short motion streaks behind the heel. Footprint has an unmistakable heel and toe silhouette, light old bronze particles sparingly. Read as a magical quick step, not a flame or crystal.",
+      "sourcePath": "/Users/bytedance/.codex/generated_images/01a0ecb0-503e-7a81-95d1-22b8b154881e/exec-e497da38-9448-48ad-bd40-747ec729e9bd.png",
+      "outputPath": "assets/rift_step.png"
+    },
+    {
+      "id": "gate_anchor",
+      "prompt": "Use case: stylized-concept. Asset type: one polished square RPG buff ability icon for a Chinese dark-fantasy mobile game. Generate a single 1024x1024 square icon, NOT a contact sheet. Hand-painted realistic game inventory illustration, aged bronze, carved jade and worn metal material language, restrained old gold highlights and deep almost-black charcoal background. ONE bold readable object silhouette occupies 78-86 percent of the tile, high local contrast, readable at 32px. Tight crop with slight breathing room, dramatic directional light, refined tactile material, simple uncluttered composition. No words, numbers, letters, logos, watermark, border, frame, UI, or other icons. Background opaque near black. Gate Anchor: a large weathered bronze anchor centered in front of a compact oval portal ring of dim blue-green energy. Anchor has a clear shaft, crossbar and two curved flukes; its weight steadies the fractured portal. Anchor is the dominant silhouette, portal secondary. No chain clutter, not nautical scenery.",
+      "sourcePath": "/Users/bytedance/.codex/generated_images/01a0ecb0-503e-7a81-95d1-22b8b154881e/exec-e0bf2e4b-b69e-40a9-9355-e4789915bf88.png",
+      "outputPath": "assets/gate_anchor.png"
+    },
+    {
+      "id": "lucky_map",
+      "prompt": "Use case: stylized-concept. Asset type: one polished square RPG buff ability icon for a Chinese dark-fantasy mobile game. Generate a single 1024x1024 square icon, NOT a contact sheet. Hand-painted realistic game inventory illustration, aged bronze, carved jade and worn metal material language, restrained old gold highlights and deep almost-black charcoal background. ONE bold readable object silhouette occupies 78-86 percent of the tile, high local contrast, readable at 32px. Tight crop with slight breathing room, dramatic directional light, refined tactile material, simple uncluttered composition. No words, numbers, letters, logos, watermark, border, frame, UI, or other icons. Background opaque near black. Lucky Map: a partly unfurled aged parchment treasure map seen from above at a slight angle, bold irregular rectangular silhouette and two rolled edges, a large bright golden four-point treasure star at its center with a simple dotted winding path. Dark burnt-umber parchment edges, warm old gold light. No letters, numerals or written labels.",
+      "sourcePath": "/Users/bytedance/.codex/generated_images/01a0ecb0-503e-7a81-95d1-22b8b154881e/exec-cb3f8730-5866-48cf-8ff1-1e1e213bf0e8.png",
+      "outputPath": "assets/lucky_map.png"
+    }
+  ]
+}

@@ -1,0 +1,149 @@
+:root {
+  color-scheme: dark;
+  --ink: #eee4c6;
+  --muted: #b5b1a0;
+  --gold: #d5bc7e;
+  --game-width: 390px;
+  --game-height: 844px;
+  --preview-scale: 1;
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  color: var(--ink);
+  background: #101413;
+}
+* { box-sizing: border-box; }
+body { margin: 0; }
+button, a { -webkit-tap-highlight-color: transparent; }
+button { color: inherit; font: inherit; cursor: pointer; border: 0; background: none; }
+button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px solid #f6da99; outline-offset: 3px; }
+button:hover { color: #ffe6aa; }
+button:active { filter: brightness(1.2); }
+[hidden] { display: none !important; }
+p, h1, dl, dd { margin: 0; }
+svg { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; }
+.workspace { display: grid; grid-template-columns: calc(var(--game-width) * var(--preview-scale)) 310px; justify-content: center; align-items: start; gap: 52px; padding: 32px; min-height: 100vh; }
+.preview { width: calc(var(--game-width) * var(--preview-scale)); height: calc(var(--game-height) * var(--preview-scale)); box-shadow: 0 18px 60px #0006; }
+.game-stage {
+  --room-top: 142px;
+  --room-bottom: 144px;
+  --door-height: 90px;
+  --monster-height: 158px;
+  position: relative; isolation: isolate; width: var(--game-width); height: var(--game-height); overflow: hidden;
+  color: #f0e7ca; touch-action: none; text-shadow: 0 1px 3px #000, 0 0 8px #000;
+  container-type: inline-size;
+  transform: scale(var(--preview-scale)); transform-origin: top left;
+}
+/* This is the unchanged floor image, independent of the room's coordinate area. */
+.scene-background { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; pointer-events: none; user-select: none; }
+.hud-header { position: absolute; z-index: 4; inset: 0 0 auto; height: 108px; pointer-events: none; }
+.hud-header button { pointer-events: auto; }
+.portrait-button { position: absolute; top: 14px; left: 10px; width: 44px; height: 61px; padding: 0; overflow: hidden; border: 1px solid #b49e6575; }
+.portrait-button img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; }
+.portrait-button span { position: absolute; bottom: 0; left: 0; width: 100%; font: 11px/19px "Songti SC", STSong, serif; background: linear-gradient(transparent, #090d0cd9); color: #f0d49a; }
+.vitals { position: absolute; top: 13px; left: 65px; right: 97px; }
+.name-line { display: flex; align-items: center; gap: 4px; height: 24px; white-space: nowrap; }
+.character-name { flex: 1 0 auto; font-size: 14px; letter-spacing: .03em; }
+.resource { display: flex; align-items: center; justify-content: center; gap: 3px; min-width: 44px; min-height: 44px; padding: 0; font-size: 12px; font-variant-numeric: tabular-nums; }
+.resource-reward { min-width: 58px; color: #e6cb8b; }
+.resource-jade { color: #d8c991; }
+.resource svg { width: 14px; height: 14px; stroke-width: 1.4; }
+.health-number { margin-top: 5px; font-size: 12px; line-height: 18px; color: #ecebd9; }
+.health-number strong { font-size: 13px; font-weight: 500; margin-left: 4px; font-variant-numeric: tabular-nums; }
+.health-number strong span { font-size: 11px; color: #d5d9c2; }
+.health-track { width: 116px; height: 3px; margin-top: 5px; background: #101811; box-shadow: 0 1px 4px #000c; }
+.health-track span { display: block; height: 100%; width: 100%; background: #b6c997; }
+.hud-navigation { position: absolute; top: 5px; right: 3px; display: grid; grid-template-columns: 44px 44px; grid-auto-rows: 44px; gap: 4px 2px; }
+.hud-entry { padding: 2px 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: #ead9a4; }
+.hud-entry svg { width: 21px; height: 21px; stroke-width: 1.6; filter: drop-shadow(0 1px 2px #000); }
+.hud-entry span { font-size: 10px; line-height: 12px; letter-spacing: .04em; }
+.scene-law { position: absolute; z-index: 4; top: 108px; left: 12px; font-size: 11px; color: #e6e4d5; line-height: 23px; padding: 0 7px; background: #060c0a87; border-left: 1px solid #bca5774d; }
+.scene-law span { padding: 0 3px; color: #adad98; }
+.room-area { position: absolute; z-index: 1; top: var(--room-top); bottom: var(--room-bottom); left: 12px; right: 12px; pointer-events: none; }
+.door { position: absolute; width: 78px; padding: 0; display: flex; flex-direction: column; align-items: center; pointer-events: auto; min-height: 44px; filter: drop-shadow(0 5px 4px #0008); }
+.door > img, .door-art { width: calc(var(--door-height) * 1073 / 1465); height: var(--door-height); flex-shrink: 0; object-fit: contain; }
+.door-art { position: relative; display: block; }
+.door-art img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.door-north { top: 0; left: 50%; transform: translateX(-50%); }
+.door-south { bottom: 0; left: 50%; transform: translateX(-50%); }
+.door-west { top: 50%; left: -9px; transform: translateY(-50%); }
+.door-east { top: 50%; right: -9px; transform: translateY(-50%); }
+.node-name { display: block; min-width: 56px; padding: 1px 7px 2px; margin-top: -3px; background: #080c09c7; border-radius: 3px; color: #f0dfb4; font: 13px/22px "Songti SC", STSong, serif; letter-spacing: .06em; text-align: center; white-space: nowrap; }
+.door-state { font-size: 10px; line-height: 16px; padding: 0 6px; color: #d5d3c3; background: #0a0d0bd1; border-radius: 0 0 3px 3px; }
+.gate-bars { position: absolute; left: 27%; top: 32%; width: 45%; height: 53%; background: repeating-linear-gradient(90deg, transparent 0 6px, #777163 6px 8px, #121817 8px 10px); border-top: 2px solid #777163; border-bottom: 2px solid #777163; box-shadow: 0 2px 5px #0009; opacity: .94; }
+.gate-lock { position: absolute; width: 14px; height: 17px; left: calc(50% - 7px); top: 56%; fill: #a28d5d; stroke: #292c21; stroke-width: 1.5; filter: drop-shadow(0 2px 2px #000); }
+.monster-node { position: absolute; left: 50%; top: 54%; transform: translate(-50%, -100%); padding: 0; display: flex; flex-direction: column; align-items: center; min-width: 110px; min-height: 44px; pointer-events: auto; }
+.monster-node img { width: calc(var(--monster-height) * 2 / 3); height: var(--monster-height); object-fit: contain; filter: drop-shadow(0 8px 5px #0009); }
+.monster-node .node-name { min-width: 100px; }
+.hero { position: absolute; z-index: 2; left: 50%; top: 65.3%; width: 0; height: 0; pointer-events: none; }
+.hero::after { content: ""; position: absolute; width: 27px; height: 7px; left: -13px; top: -2px; border-radius: 50%; background: #07100c70; filter: blur(2px); z-index: -1; }
+.hero-sprite { position: absolute; background-image: url('../../cocos/assets/resources/character/reincarnator-walk-v2.png'); background-repeat: no-repeat; filter: drop-shadow(0 4px 3px #000b); }
+.world-controls { position: absolute; z-index: 3; left: 0; right: 0; bottom: 0; height: 120px; display: flex; align-items: center; justify-content: space-between; padding: 0 17px 0 18px; pointer-events: none; background: transparent; }
+.world-controls button { pointer-events: auto; touch-action: none; }
+.joystick { position: relative; width: 92px; height: 92px; border: 1px solid #c1b26c7d; border-radius: 50%; background: #25312540; padding: 0; box-shadow: inset 0 0 14px #11150e44; }
+.joystick::before, .joystick::after { content: ""; position: absolute; background: #b8a65b35; pointer-events: none; }
+.joystick::before { width: 1px; height: 74%; left: 50%; top: 13%; }
+.joystick::after { height: 1px; width: 74%; top: 50%; left: 13%; }
+.joystick-knob { position: absolute; left: calc(50% - 19px); top: calc(50% - 19px); width: 38px; height: 38px; border: 1px solid #dcc98c9a; border-radius: 50%; background: #b5a25d87; box-shadow: 0 1px 5px #0006; }
+.interact-button { width: 68px; height: 69px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 2px; color: #e7d8a3; background: #8d7a383d; border: 1px solid #cbb6759c; box-shadow: inset 0 0 0 3px #10170eaa, inset 0 0 0 4px #cbb67562, 0 3px 9px #0004; clip-path: polygon(9px 0, calc(100% - 9px) 0, 100% 9px, 100% calc(100% - 9px), calc(100% - 9px) 100%, 9px 100%, 0 calc(100% - 9px), 0 9px); }
+.interact-button svg { width: 29px; height: 24px; stroke-width: 1.2; }
+.interact-button span { font: 14px/20px "Songti SC", STSong, serif; }
+.interact-button[data-near="true"] { background: #b99c485c; border-color: #eed292; color: #fff0b8; }
+.game-toast { position: absolute; z-index: 7; left: 21px; right: 21px; bottom: 133px; padding: 9px 12px; font-size: 11px; line-height: 1.6; text-align: center; background: #0b1511ec; border: 1px solid #a28f586a; border-radius: 3px; pointer-events: none; }
+.prototype-mark { position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); font-size: 8px; line-height: 12px; color: #d1d0c2; white-space: nowrap; pointer-events: none; }
+.mobile-notes-button { display: none; }
+.design-notes { padding-top: 28px; max-width: 310px; }
+.eyebrow { color: #b5a677; font-size: 10px; letter-spacing: .14em; margin-bottom: 14px; }
+h1 { font: 27px/1.65 "Songti SC", STSong, serif; color: #eee4c5; letter-spacing: .04em; font-weight: 500; }
+.notes-intro { color: #b5b9ac; font-size: 11px; line-height: 1.9; margin-top: 18px; }
+.size-switch { display: flex; margin-top: 24px; gap: 8px; }
+.size-switch button { min-height: 44px; padding: 0 15px; border: 1px solid #555949; color: #b1b8a7; font-size: 11px; }
+.size-switch button[aria-pressed="true"] { color: #f0d7a0; border-color: #b19a65; background: #b19a6517; }
+.design-rules { margin-top: 29px; border-top: 1px solid #363e33; }
+.design-rules div { display: grid; grid-template-columns: 54px 1fr; gap: 14px; padding: 17px 0; border-bottom: 1px solid #363e33; font-size: 11px; line-height: 1.9; }
+.design-rules dt { color: #d8ca9c; }
+.design-rules dd { color: #b3b9a8; }
+.prototype-note { margin-top: 20px; font-size: 10px; line-height: 1.9; color: #98a18f; }
+.reference { margin-top: 20px; font-size: 11px; color: #b5bca9; }
+.reference summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; gap: 10px; }
+.reference summary::before { content: "+"; font-size: 17px; color: #c8b77e; }
+.reference[open] summary::before { content: "−"; }
+.reference img { display: block; width: 140px; height: auto; max-width: 100%; }
+.reference p { font-size: 10px; color: #939e8b; line-height: 1.8; margin-top: 10px; }
+.reset-button { min-height: 44px; padding: 0; margin-top: 13px; font-size: 11px; color: #d1bd87; text-decoration: underline; text-underline-offset: 4px; }
+.desktop-status { color: #98a38d; font-size: 10px; line-height: 1.9; margin-top: 4px; }
+.close-notes { display: none; }
+.game-stage[data-size="320"] { --door-height: 60px; --monster-height: 108px; --room-bottom: 126px; }
+.game-stage[data-size="320"] .monster-node { top: 71%; }
+@container (max-width: 350px) {
+  .vitals { left: 62px; right: 94px; }
+  .name-line { gap: 2px; }
+  .character-name { font-size: 12px; }
+  .resource { font-size: 10px; }
+  .resource-reward { min-width: 54px; }
+  .resource svg { width: 12px; height: 12px; }
+  .health-number { font-size: 11px; }
+  .health-number strong { font-size: 12px; }
+  .health-track { width: 110px; }
+  .door { width: 66px; }
+  .door-west { left: -5px; }
+  .door-east { right: -5px; }
+  .monster-node .node-name { min-width: 91px; }
+  .node-name { font-size: 12px; line-height: 20px; }
+  .door-state { font-size: 9px; line-height: 14px; }
+  .world-controls { padding-left: 17px; padding-right: 17px; }
+  .joystick { width: 85px; height: 85px; }
+  .interact-button { width: 64px; height: 65px; }
+}
+@media (max-width: 740px) {
+  .workspace { display: block; padding: 0; min-height: 100dvh; }
+  .preview { width: 100%; height: 100dvh; box-shadow: none; }
+  .game-stage { width: 100vw; height: 100dvh; --room-bottom: 144px; transform: none; }
+  .game-stage[data-size="320"] { --room-bottom: 126px; }
+  .design-notes { display: none; position: fixed; z-index: 10; inset: 0; max-width: none; padding: 30px 25px; background: #111916f7; overflow-y: auto; }
+  .design-notes.is-open { display: block; }
+  .notes-heading { padding-right: 36px; }
+  .close-notes { display: block; position: absolute; right: 10px; top: 10px; width: 44px; height: 44px; font-size: 26px; color: #e5d4a0; }
+  .mobile-notes-button { display: block; position: absolute; z-index: 5; right: 11px; top: 97px; width: 44px; height: 44px; font-size: 10px; color: #d8d4bf; text-shadow: 0 1px 3px #000, 0 0 8px #000; }
+  .size-switch { display: none; }
+  .reference img { width: 180px; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }

@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>副本体验 · 通道与地图</title>
+  <style>
+    :root { color-scheme: dark; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; color: #eee8d9; background: #101512; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    header, main { max-width: 1500px; margin: auto; padding: 24px; }
+    header { display: flex; gap: 20px; align-items: center; justify-content: space-between; }
+    h1 { margin: 0 0 8px; font: 600 26px/1.3 "Songti SC", "STSong", serif; }
+    p { margin: 0; color: #bbbfae; font-size: 14px; line-height: 1.7; }
+    a { color: #e5cca0; text-underline-offset: 4px; }
+    a:focus-visible { outline: 2px solid #e5cca0; outline-offset: 4px; }
+    .game-link, .open-link { display: inline-flex; min-height: 44px; align-items: center; }
+    .game-link { flex-shrink: 0; padding: 0 16px; border: 1px solid #536150; text-decoration: none; }
+    main { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; padding-top: 0; }
+    section { min-width: 0; border: 1px solid #39463b; background: #171e19; }
+    .heading { padding: 16px 18px; display: flex; justify-content: space-between; align-items: center; gap: 12px; border-bottom: 1px solid #39463b; }
+    h2 { margin: 0 0 4px; font-size: 18px; font-weight: 600; }
+    .open-link { flex-shrink: 0; font-size: 14px; }
+    iframe { display: block; width: 100%; height: clamp(568px, calc(100dvh - 200px), 820px); border: 0; background: #111713; }
+    @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+    @media (max-width: 480px) { header { display: block; padding: 20px 14px; } h1 { font-size: 23px; } .game-link { margin-top: 12px; } main { padding: 0 8px 16px; gap: 16px; } .heading { padding: 12px; } .heading p { font-size: 12px; } .open-link { font-size: 13px; } iframe { height: 568px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>副本体验 · 通道与地图</h1>
+      <p>两项可操作 HTML 原型。副本内的移动提示已从实际游戏删除。</p>
+    </div>
+    <a class="game-link" href="http://127.0.0.1:8125/cocos/build/web-mobile/index.html">打开实际游戏 ↗</a>
+  </header>
+  <main>
+    <section aria-labelledby="transition-title">
+      <div class="heading">
+        <div><h2 id="transition-title">02 · 区域通道</h2><p>石质入口、近身状态与场景适配</p></div>
+        <a class="open-link" href="../dungeon-transition/index.html">单独查看 ↗</a>
+      </div>
+      <iframe src="../dungeon-transition/index.html" title="区域切换入口原型"></iframe>
+    </section>
+    <section aria-labelledby="map-title">
+      <div class="heading">
+        <div><h2 id="map-title">03 · 区域地图</h2><p>先看附近出口，再展开已知全图</p></div>
+        <a class="open-link" href="../dungeon-map/index.html">单独查看 ↗</a>
+      </div>
+      <iframe src="../dungeon-map/index.html" title="副本地图原型"></iframe>
+    </section>
+  </main>
+</body>
+</html>

@@ -5,12 +5,14 @@ import {
 } from '@infinite-flow/core';
 import { MAIN_GOD_TASKS, evaluateTask } from '@infinite-flow/core/task-system';
 import { TACTICAL_ITEM_IDS, TACTICAL_ITEM_CATEGORY_BY_ID, isFieldSupplyItemId } from '@infinite-flow/core/tactical-loadout';
-import { getEquipmentAttunementOptions } from '@infinite-flow/core/equipment-system';
+import { getEquipmentAttunementOptions, getEquipmentSystemBonus } from '@infinite-flow/core/equipment-system';
+import { getEquipmentRolledBaseStats, type EquipmentRoll } from '@infinite-flow/core/equipment-rolls';
 import { reduceGameCommand } from '@infinite-flow/application';
 import type {
   HubCatalogPanel, HubShopCatalogViewModel, HubShopRowViewModel, ViewActionModel,
   PresentationEvent, EquipmentCommissionDetailViewModel, EquipmentMemoryLibraryViewModel,
-  EquipmentMemoryOptionViewModel, HubOwnedLoadoutViewModel
+  EquipmentMemoryOptionViewModel, HubOwnedLoadoutViewModel, EquipmentItemViewModel,
+  OwnedEquipmentEntryViewModel
 } from './types.js';
 
 type PanelProjection = Readonly<{
@@ -54,8 +56,8 @@ const NPCS = {
 
 const SLOT_LABELS = { weapon: '武器', head: '头部', armor: '护甲', hands: '护手', feet: '足部', waist: '腰部', charm: '护符' };
 const STAT_LABELS: Record<string, string> = {
-  body: '体魄', spirit: '灵力', agility: '身法', luck: '气运', maxHp: '生命上限',
-  attack: '攻击', artPower: '术法', defense: '防御', speed: '速度', trapCheck: '陷阱检定'
+  body: '体魄', spirit: '心神', agility: '身法', luck: '气运', maxHp: '生命上限',
+  attack: '攻击', artPower: '术法', defense: '防御', speed: '速度', trapCheck: '陷阱感知'
 };
 const CATEGORY_LABELS = { combat: '战斗道具', ward: '防护道具', portal: '传送道具', capture: '捕获道具' };
 const TASK_LABELS = { locked: '未解锁', active: '进行中', completed: '可领取', claimed: '已领取' };
@@ -68,6 +70,71 @@ const EFFECT_LABELS: Record<string, string> = {
 function statsReadout(stats: Record<string, number | undefined>): string {
   return Object.entries(stats).filter(([, value]) => value !== undefined && value !== 0)
     .map(([key, value]) => `${STAT_LABELS[key] ?? key} ${value! > 0 ? '+' : ''}${value}`).join(' · ') || '无额外属性';
+}
+
+/** Reads fixed affixes through the public core selector; no equipment rules live here. */
+export function buildEquipmentItemViewModel(
+  equipmentId: EquipmentId,
+  level: number,
+  roll?: EquipmentRoll
+): EquipmentItemViewModel {
+  const equipment = EQUIPMENT[equipmentId];
+  const affixes = getEquipmentSystemBonus([equipmentId], { [equipmentId]: level });
+  return {
+    equipmentId,
+    name: equipment.name,
+    description: equipment.description,
+    slot: equipment.slot,
+    slotLabel: SLOT_LABELS[equipment.slot],
+    level,
+    maxLevel: equipment.maxLevel,
+    rarity: catalogRarity('equipment', equipmentId),
+    visualAssetKey: asset('equipment', equipmentId),
+    baseStatsLabel: '基础属性（Lv.1）',
+    baseStatsReadout: statsReadout(getEquipmentRolledBaseStats(equipment.base, roll)),
+    growthStatsReadout: statsReadout(equipment.perLevel),
+    affixReadout: affixes.descriptions.length
+      ? `${affixes.descriptions.join(' ')} ${statsReadout(affixes.bonus)}`
+      : '无固定词缀',
+    ...(roll ? { rollReadout: `炼狱第 ${roll.sourceTier} 层 · 强度 ${roll.itemPower} · ${roll.affixes.map(affix => `${STAT_LABELS[affix.stat] ?? affix.stat} +${affix.value}${affix.greater ? '（强效）' : ''}`).join(' · ')}` } : {})
+  };
+}
+
+function equipmentItemDetails(item: EquipmentItemViewModel): HubShopRowViewModel['details'] {
+  return [
+    { label: '装备部位', value: item.slotLabel },
+    { label: item.baseStatsLabel, value: item.baseStatsReadout },
+    { label: '每级成长', value: item.growthStatsReadout },
+    { label: `固定词缀（Lv.${item.level}）`, value: item.affixReadout },
+    { label: '等级', value: `${item.level} / ${item.maxLevel}` },
+    ...(item.rollReadout ? [{ label: '随机词条', value: item.rollReadout }] : [])
+  ];
+}
+
+/** Inventory rows reuse catalog item details and receive only the wear action from the host. */
+export function buildOwnedEquipmentCatalog(
+  state: GameState,
+  projectEquipAction: (equipmentId: EquipmentId) => ViewActionModel
+): readonly OwnedEquipmentEntryViewModel[] {
+  const owned = new Set(state.ownedEquipment);
+  return Object.values(EQUIPMENT).filter(equipment => owned.has(equipment.id)).map(equipment => {
+    const item = buildEquipmentItemViewModel(equipment.id, state.equipmentLevels[equipment.id] ?? 1, state.equipmentRolls?.[equipment.id]);
+    const equipped = state.equipped[equipment.slot] === equipment.id;
+    const equipAction = projectEquipAction(equipment.id);
+    return {
+      ...item,
+      id: `equipment/${equipment.id}`,
+      category: item.slotLabel,
+      status: `${equipped ? '已装备' : '背包中'} · ${item.level} 级`,
+      equipped,
+      details: [
+        ...equipmentItemDetails(item),
+        { label: '生效方式', value: '永久拥有；主神空间或探索中可手动穿戴，同部位只能穿戴一件。' }
+      ],
+      actions: [equipAction],
+      equipAction
+    };
+  });
 }
 
 function effectReadout(effect: Record<string, number | boolean>): string {
@@ -147,14 +214,14 @@ function buildHubRows(
         const temper = getEquipmentTemperStatus(state, item.id);
         const attunement = getEquipmentAttunementOptions(item.id).find(option => option.id === state.equipmentAttunements?.[item.id]);
         const status = equipped ? `已装备 · ${level} 级` : owned ? `已拥有 · ${level} 级` : '未拥有';
+        const equipmentItem = buildEquipmentItemViewModel(item.id, level, state.equipmentRolls?.[item.id]);
         return rowFromView(panel, item.id, {
           name: item.name, category: SLOT_LABELS[item.slot], visualAssetKey: asset('equipment', item.id),
           description: item.description, status,
           details: [
-            { label: '装备部位', value: SLOT_LABELS[item.slot] },
-            { label: '基础属性', value: statsReadout(item.base) },
-            { label: '每级成长', value: statsReadout(item.perLevel) },
-            { label: '等级', value: `${level} / ${item.maxLevel}${owned ? '' : '（获得后为 1 级）'}` },
+            ...equipmentItemDetails(equipmentItem).map(detail => detail.label === '等级' && !owned
+              ? { ...detail, value: `${detail.value}（获得后为 1 级）` }
+              : detail),
             { label: '铭刻', value: attunement ? `${attunement.name}：${attunement.description}` : '尚未铭刻；支持铭刻的装备满级后可选择分支。' },
             { label: '淬炼', value: temper.eligible ? `${temper.currentRank} / ${temper.maxRank}${temper.materialId ? ` · 材料：${ITEMS[temper.materialId].name}` : ''}` : '此装备不支持淬炼' },
             { label: '生效方式', value: '兑换放入装备架，手动装备后属性生效；同部位只能穿戴一件。' }

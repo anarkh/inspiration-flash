@@ -1,0 +1,29 @@
+{
+  "date": "2026-09-30",
+  "preview": "http://127.0.0.1:8125/prototype/dungeon-ux/index.html",
+  "cause": "Directory iframe and anchor URLs show file listings when opened via file protocol; external module scripts and fetch also prevent local-file bootstrapping.",
+  "changes": [
+    "Explicit index.html targets for prototype links and iframes",
+    "Classic deferred scripts for both prototypes",
+    "Map fixtures.js generated alongside unchanged fixtures.json from the same serialized production projection",
+    "Actual Cocos game link uses the existing HTTP preview server"
+  ],
+  "staticChecks": {
+    "relativeResourcesResolveToFiles": "PASS",
+    "classicScriptParsing": "PASS",
+    "sixSnapshotsUnchanged": "PASS",
+    "generatedJsEqualsJson": "PASS",
+    "threeServedEntryPagesMatchFiles": "PASS"
+  },
+  "httpBrowserChecks": {
+    "bothEmbeddedPagesRender": "PASS",
+    "transitionBackgroundSwitch": "PASS",
+    "transitionStateSwitch": "PASS",
+    "mapFullViewSwitch": "PASS",
+    "mapChapterSwitch": "PASS",
+    "stoneGateAndSceneImagesLoaded": "PASS",
+    "screenshot": "link-fix-overview.jpg"
+  },
+  "localFileBrowserCheck": "UNVERIFIED: browser tool policy only permits HTTP/HTTPS navigation; file-protocol compatibility was checked statically, without bypassing the browser policy.",
+  "consoleObservation": "One unattributed MutationObserver.observe Node-type error appeared in the browser log. The verified prototype interactions completed; no claim of zero console errors is made."
+}

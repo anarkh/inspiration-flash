@@ -1,0 +1,174 @@
+[
+  {
+    "path": "cocos/assets/resources/dungeon-world/chest-v1.png",
+    "status": 200
+  },
+  {
+    "path": "cocos/assets/resources/dungeon-world/exit-v1.png",
+    "status": 200
+  },
+  {
+    "path": "cocos/assets/resources/dungeon-world/event-v1.png",
+    "status": 200
+  },
+  {
+    "path": "cocos/assets/resources/dungeon-world/trap-v1.png",
+    "status": 200
+  },
+  {
+    "path": "cocos/assets/resources/dungeon-world/survey-v1.png",
+    "status": 200
+  },
+  {
+    "path": "cocos/assets/resources/dungeon-world/relic-v1.png",
+    "status": 200
+  },
+  {
+    "path": "cocos/assets/resources/dungeon-world/shrine-v1.png",
+    "status": 200
+  },
+  {
+    "path": "cocos/assets/resources/dungeon-world/law-v1.png",
+    "status": 200
+  },
+  {
+    "path": "cocos/assets/resources/dungeon-world/debris-v1.png",
+    "status": 200
+  },
+  {
+    "path": "cocos/assets/resources/item/mist-breathing-v2.png",
+    "status": 200
+  },
+  {
+    "path": "art-source/style-refresh/before/item/mist-breathing-v1.png",
+    "status": 200
+  },
+  {
+    "path": "cocos/assets/resources/item/iron-body-v2.png",
+    "status": 200
+  },
+  {
+    "path": "art-source/style-refresh/before/item/iron-body-v1.png",
+    "status": 200
+  },
+  {
+    "path": "cocos/assets/resources/item/cloud-step-v2.png",
+    "status": 200
+  },
+  {
+    "path": "art-source/style-refresh/before/item/cloud-step-v1.png",
+    "status": 200
+  },
+  {
+    "path": "cocos/assets/resources/item/gate-sense-v2.png",
+    "status": 200
+  },
+  {
+    "path": "art-source/style-refresh/before/item/gate-sense-v1.png",
+    "status": 200
+  },
+  {
+    "path": "cocos/assets/resources/item/star-core-method-v2.png",
+    "status": 200
+  },
+  {
+    "path": "art-source/style-refresh/before/item/star-core-method-v1.png",
+    "status": 200
+  },
+  {
+    "path": "cocos/assets/resources/item/beast-taming-v2.png",
+    "status": 200
+  },
+  {
+    "path": "art-source/style-refresh/before/item/beast-taming-v1.png",
+    "status": 200
+  },
+  {
+    "path": "cocos/assets/resources/item/void-heart-v2.png",
+    "status": 200
+  },
+  {
+    "path": "art-source/style-refresh/before/item/void-heart-v1.png",
+    "status": 200
+  },
+  {
+    "path": "cocos/assets/resources/item/titan-marrow-v2.png",
+    "status": 200
+  },
+  {
+    "path": "art-source/style-refresh/before/item/titan-marrow-v1.png",
+    "status": 200
+  },
+  {
+    "path": "cocos/assets/resources/item/void-symbiote-v2.png",
+    "status": 200
+  },
+  {
+    "path": "art-source/style-refresh/before/item/void-symbiote-v1.png",
+    "status": 200
+  },
+  {
+    "path": "cocos/assets/resources/item/bastion-chitin-v2.png",
+    "status": 200
+  },
+  {
+    "path": "art-source/style-refresh/before/item/bastion-chitin-v1.png",
+    "status": 200
+  },
+  {
+    "path": "cocos/assets/resources/item/phoenix-ember-v2.png",
+    "status": 200
+  },
+  {
+    "path": "art-source/style-refresh/before/item/phoenix-ember-v1.png",
+    "status": 200
+  },
+  {
+    "path": "cocos/assets/resources/equipment/rebirth-amulet-v2.png",
+    "status": 200
+  },
+  {
+    "path": "art-source/style-refresh/before/equipment/rebirth-amulet-v1.png",
+    "status": 200
+  },
+  {
+    "path": "cocos/assets/resources/equipment/triage-visor-v2.png",
+    "status": 200
+  },
+  {
+    "path": "art-source/style-refresh/before/equipment/triage-visor-v1.png",
+    "status": 200
+  },
+  {
+    "path": "cocos/assets/resources/equipment/forensic-visor-v2.png",
+    "status": 200
+  },
+  {
+    "path": "art-source/style-refresh/before/equipment/forensic-visor-v1.png",
+    "status": 200
+  },
+  {
+    "path": "cocos/assets/resources/character/reincarnator-v2.png",
+    "status": 200
+  },
+  {
+    "path": "art-source/style-refresh/before/character/reincarnator-v1.png",
+    "status": 200
+  },
+  {
+    "path": "cocos/assets/resources/npc/companion-guide-v2.png",
+    "status": 200
+  },
+  {
+    "path": "art-source/style-refresh/before/npc/companion-guide-v1.png",
+    "status": 200
+  },
+  {
+    "path": "cocos/assets/resources/dungeon/mirror-cycle-city-v2.png",
+    "status": 200
+  },
+  {
+    "path": "art-source/style-refresh/before/dungeon/mirror-cycle-city.png",
+    "status": 200
+  }
+]

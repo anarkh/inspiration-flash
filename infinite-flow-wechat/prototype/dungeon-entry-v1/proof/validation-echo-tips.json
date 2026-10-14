@@ -1,0 +1,83 @@
+{
+  "scope": "standalone-prototype",
+  "restored390": {
+    "cardCount": 19,
+    "cardHeight": 84,
+    "dock": {
+      "bottom": 958,
+      "height": 109,
+      "top": 849,
+      "width": 364,
+      "x": 123,
+      "y": 849
+    },
+    "entryEnabled": true,
+    "fullCards": 6,
+    "list": {
+      "bottom": 849,
+      "height": 572.5,
+      "top": 276.5,
+      "width": 364,
+      "x": 123,
+      "y": 276.5
+    },
+    "noHorizontalOverflow": true,
+    "scrollTop": 0,
+    "selected": "妖塔一层",
+    "stage": {
+      "bottom": 983,
+      "height": 844,
+      "top": 139,
+      "width": 390,
+      "x": 110,
+      "y": 139
+    }
+  },
+  "restored320": {
+    "cardCount": 19,
+    "cardHeight": 76,
+    "dock": {
+      "bottom": 690,
+      "height": 107,
+      "top": 583,
+      "width": 302,
+      "x": 154,
+      "y": 583
+    },
+    "entryEnabled": true,
+    "fullCards": 4,
+    "list": {
+      "bottom": 583,
+      "height": 330.5,
+      "top": 252.5,
+      "width": 302,
+      "x": 154,
+      "y": 252.5
+    },
+    "noHorizontalOverflow": true,
+    "scrollTop": 0,
+    "selected": "妖塔一层",
+    "stage": {
+      "bottom": 707,
+      "height": 568,
+      "top": 139,
+      "width": 320,
+      "x": 145,
+      "y": 139
+    }
+  },
+  "bulwarkTip": "守御回响\n×\n\n偏向防御、恢复与陷阱减伤\n\n骨壳\n防御 +4\n缝生线\n获得后，每次领取后续奖励节点时回复 12 生命\n铁回响\n陷阱伤害 −25%\n\n决定本局遗物候选；在奖励节点选中遗物后才生效，入场后方向固定。\n\n通常最多 2 选 1；同向装备导体激活后最多 3 选 1。",
+  "wayfinderTip": "寻路回响\n×\n\n偏向探索、传送与节点收益\n\n裂隙步\n速度 +4，陷阱判定 +4\n门锚\n强闯传送反噬 −35%\n幸运地图\n奖励节点的奖励点 +20%\n\n决定本局遗物候选；在奖励节点选中遗物后才生效，入场后方向固定。\n\n通常最多 2 选 1；同向装备导体激活后最多 3 选 1。",
+  "escapeTip": {
+    "frame": "标准探索 · 寻路回响",
+    "optionsOpen": true,
+    "tipHidden": true
+  },
+  "escapeResult": {
+    "optionsHidden": true,
+    "panelVisible": true,
+    "resultHidden": true,
+    "tipHidden": true
+  },
+  "errors": []
+}

@@ -1,0 +1,179 @@
+{
+  "sourceSize": [
+    1254,
+    1254
+  ],
+  "threshold": 128,
+  "bboxConvention": "[left,top,rightExclusive,bottomExclusive]",
+  "columnCenters": [
+    245,
+    503,
+    761,
+    1024
+  ],
+  "rowBands": [
+    [
+      12,
+      311
+    ],
+    [
+      318,
+      620
+    ],
+    [
+      628,
+      928
+    ],
+    [
+      932,
+      1232
+    ]
+  ],
+  "preview": {
+    "windowSide": 313.5,
+    "columnCenters": [
+      245,
+      503,
+      761,
+      1024
+    ],
+    "rowOffsets": [
+      8,
+      314,
+      624,
+      930
+    ],
+    "rowClipHeights": [
+      305,
+      308,
+      306,
+      304
+    ],
+    "method": "CSS background sampling only; source PNG unchanged; no per-frame scaling or alignment"
+  },
+  "frames": [
+    {
+      "direction": "down",
+      "alpha128BoundingBoxes": [
+        [
+          182,
+          12,
+          306,
+          308
+        ],
+        [
+          442,
+          14,
+          557,
+          310
+        ],
+        [
+          686,
+          13,
+          811,
+          311
+        ],
+        [
+          957,
+          13,
+          1075,
+          310
+        ]
+      ]
+    },
+    {
+      "direction": "left",
+      "alpha128BoundingBoxes": [
+        [
+          193,
+          318,
+          309,
+          620
+        ],
+        [
+          419,
+          318,
+          577,
+          619
+        ],
+        [
+          680,
+          320,
+          835,
+          618
+        ],
+        [
+          944,
+          318,
+          1087,
+          619
+        ]
+      ]
+    },
+    {
+      "direction": "right",
+      "alpha128BoundingBoxes": [
+        [
+          182,
+          628,
+          293,
+          927
+        ],
+        [
+          424,
+          628,
+          588,
+          926
+        ],
+        [
+          684,
+          629,
+          842,
+          926
+        ],
+        [
+          947,
+          628,
+          1105,
+          928
+        ]
+      ]
+    },
+    {
+      "direction": "up",
+      "alpha128BoundingBoxes": [
+        [
+          186,
+          933,
+          305,
+          1231
+        ],
+        [
+          447,
+          932,
+          567,
+          1232
+        ],
+        [
+          697,
+          933,
+          832,
+          1232
+        ],
+        [
+          954,
+          933,
+          1072,
+          1232
+        ]
+      ]
+    }
+  ],
+  "productionReady": false,
+  "issues": [
+    "unequal column and row spacing; cannot use existing equal 4x4 slicer",
+    "left/right passing pose not distinct from wide step",
+    "foot anchor and frame-to-frame body position need calibration",
+    "10-15 degree camera is a design direction, dungeon camera fit unverified"
+  ]
+}

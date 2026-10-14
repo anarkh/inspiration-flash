@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "status": "prototype-only",
+  "icons": [
+    {
+      "id": "mist_edge",
+      "path": "assets/mist_edge.png",
+      "width": 1254,
+      "height": 1254,
+      "sha256": "0aa124c76590ac6270582bda32f15e3c86d3252f0115a7f87c873d5d8a751041",
+      "byteLength": 2031172
+    },
+    {
+      "id": "focus_prism",
+      "path": "assets/focus_prism.png",
+      "width": 1254,
+      "height": 1254,
+      "sha256": "09e69b57bfa267ccb6209b2bdd262c3dc7a4d7fd74f24eac3a6a102647fbfc2b",
+      "byteLength": 2445799
+    },
+    {
+      "id": "hunter_clock",
+      "path": "assets/hunter_clock.png",
+      "width": 1254,
+      "height": 1254,
+      "sha256": "2bfe18c3da4f8627de4613b38b8c482e99c96184ffd9dbb18cedb77128c5b0b9",
+      "byteLength": 2614137
+    },
+    {
+      "id": "bone_shell",
+      "path": "assets/bone_shell.png",
+      "width": 1254,
+      "height": 1254,
+      "sha256": "cd364a363de8ee47e22d5920d6c479e6a955b302950049ee7285d69196f7935b",
+      "byteLength": 2517123
+    },
+    {
+      "id": "mending_thread",
+      "path": "assets/mending_thread.png",
+      "width": 1254,
+      "height": 1254,
+      "sha256": "469f833c44b4f4914a3c75e08293361a7b86d1f1365e898103600fa7d7ec214c",
+      "byteLength": 2515579
+    },
+    {
+      "id": "iron_echo",
+      "path": "assets/iron_echo.png",
+      "width": 1254,
+      "height": 1254,
+      "sha256": "84ce2a7a4a4da7e4bdbdacee82b9f5b43554559795b48522f107e6296127ed8b",
+      "byteLength": 2863122
+    },
+    {
+      "id": "rift_step",
+      "path": "assets/rift_step.png",
+      "width": 1254,
+      "height": 1254,
+      "sha256": "0f144fbced4e372900822f58aff2da20e84ea06cf552c4b23c8ba6c5db919e51",
+      "byteLength": 2647290
+    },
+    {
+      "id": "gate_anchor",
+      "path": "assets/gate_anchor.png",
+      "width": 1254,
+      "height": 1254,
+      "sha256": "87d73c4fe847116a7a36e9b4a3d8bf3ab41fcabf0588314bf223d92cfdfd88bb",
+      "byteLength": 2558319
+    },
+    {
+      "id": "lucky_map",
+      "path": "assets/lucky_map.png",
+      "width": 1254,
+      "height": 1254,
+      "sha256": "b69e988ef0913323aec11c70862904b0647585cdeb8ea77b5ef0dd05d2574e55",
+      "byteLength": 2748211
+    }
+  ]
+}

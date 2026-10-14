@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>副本区域通道 · 无限轮回原型</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="workbench">
+    <section class="preview-column" aria-label="区域通道场景预览">
+      <header class="page-heading"><a href="../dungeon-ux/index.html" aria-label="返回副本体验总览">← 总览</a><span>区域通道 · 外观原型</span></header>
+      <div class="scene" id="scene" data-state="available" data-variant="warm">
+        <div class="world" id="world">
+          <img class="backdrop" id="backdrop" src="../../cocos/assets/resources/dungeon-world/demon_tower_1-v1.png" alt="妖塔一层实际游戏背景" draggable="false">
+          <div class="gate-anchor" id="gate-anchor">
+            <span class="ground-light" aria-hidden="true"></span>
+            <button class="gate" id="gate" aria-label="前往双影巡逻">
+              <img src="assets/ruined-stone-gate-v1.png" alt="旧金镶边的风化石质通道" draggable="false">
+              <span class="gate-label"><span class="gate-eyebrow" id="gate-eyebrow">前往</span><strong id="gate-title">双影巡逻</strong><span class="gate-state" id="gate-state">入口畅通</span></span>
+            </button>
+          </div>
+          <div class="player" id="player" aria-label="轮回者"><span class="player-shadow"></span><span class="player-sprite" id="player-sprite"></span></div>
+        </div>
+        <div class="scene-shade" aria-hidden="true"></div>
+        <div class="scene-top"><div><span class="scene-kicker">副本探索</span><h1 id="dungeon-title">妖塔一层</h1><p id="location">窥视符眼</p></div><span class="demo-badge">原型</span></div>
+        <div class="status-toast" id="toast" role="status" aria-live="polite" hidden></div>
+        <div class="scene-bottom"><div class="interaction-status"><span class="status-mark" aria-hidden="true"></span><div><strong id="action-title">双影巡逻</strong><span id="action-detail">入口畅通</span></div></div><button class="primary-button" id="action">走近入口 <span aria-hidden="true">↗</span></button></div>
+      </div>
+      <p class="preview-note">可点石门体验走近与前往。此页仅演示外观，不连接游戏存档。</p>
+    </section>
+    <aside class="controls" aria-label="原型比较控件">
+      <div class="design-title"><span class="eyebrow">环境里的出口</span><h2>让通道回到场景里</h2><p>石材、纵深与门后的微光，让下一处区域自然可见。</p></div>
+      <fieldset><legend><span>01</span> 外观比较</legend><div class="variant-buttons"><button data-variant="warm" aria-pressed="true"><span class="variant-icon warm-icon" aria-hidden="true">◒</span><span><strong>微光石门</strong><small>门内暖光 · 推荐</small></span><span class="selected-dot" aria-hidden="true"></span></button><button data-variant="quiet" aria-pressed="false"><span class="variant-icon quiet-icon" aria-hidden="true">◒</span><span><strong>静默石门</strong><small>保留门体 · 收起地面引光</small></span><span class="selected-dot" aria-hidden="true"></span></button></div></fieldset>
+      <fieldset><legend><span>02</span> 实际副本背景</legend><div class="segmented backgrounds"><button data-background="demon_tower_1" aria-pressed="true">妖塔</button><button data-background="metro_abyss" aria-pressed="false">地铁</button><button data-background="starfall_mine" aria-pressed="false">矿井</button></div><p class="control-note" id="background-note">青灰石塔 · 原游戏场景素材</p></fieldset>
+      <fieldset><legend><span>03</span> 入口状态</legend><div class="segmented states"><button data-state="locked" aria-pressed="false">未解锁</button><button data-state="available" aria-pressed="true">可前往</button><button data-state="near" aria-pressed="false">已近身</button></div><p class="control-note" id="state-note">点门或「走近入口」，角色会走近后演示前往。</p></fieldset>
+      <button class="reset-button" id="reset">↺ 重置演示</button>
+      <details class="design-notes"><summary>外观与接入说明</summary><p>门体为独立透明 PNG；保留石阶脚底锚点。文字收至门上方，只显示目的地和当前可用状态。小屏下门体仍保留足够点击面积。</p><p>本页复用真实副本背景与玩家四向步行图集。坐标演示采用副本东侧入口 (875, 500)、出生点 (500, 700) 与 110 的交互半径。</p><p>正式接入只替换门体外观，近身继续触发该目标原有的「前往」动作；未开放入口仍由现有地图说明原因。此页不会新增传送规则或改变目标位置。</p></details>
+      <p class="control-footer">局部素材提案 · 尚未替换正式游戏</p>
+    </aside>
+  </main>
+  <dialog id="result-dialog" aria-labelledby="result-title"><form method="dialog"><div class="result-symbol" aria-hidden="true">◇</div><p class="eyebrow" id="result-kicker">交互演示</p><h2 id="result-title">已进入双影巡逻</h2><p id="result-copy"></p><button class="primary-button" value="close">返回场景</button></form></dialog>
+  <script defer src="app.js"></script>
+</body>
+</html>

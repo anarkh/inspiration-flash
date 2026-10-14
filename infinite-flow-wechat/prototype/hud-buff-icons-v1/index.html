@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>回响随身 · 无限流 HUD 原型</title>
+  <link rel="stylesheet" href="style.css?v=6">
+  <script type="module" src="app.js?v=5"></script>
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="#preview"><span class="brand-seal">界</span><span>无限流<span class="brand-small">界面手札 / 003</span></span></a>
+    <p>探索界面 · 回响图标方案<span>交互原型 / 尚未接入游戏</span></p>
+  </header>
+  <main>
+    <section class="page-intro">
+      <div><p class="eyebrow">生命、资源与回响，一眼可见</p><h1>回响随身</h1></div>
+      <p class="intro-copy">名称与资源同排，生命与回响紧随其下。<br>点开回响区域，一次看清本局全部增益。</p>
+    </section>
+    <section class="workspace" aria-label="回响 HUD 设计预览">
+      <div class="preview-column" id="preview">
+        <div class="preview-toolbar"><span>01 <i>/</i> 探索中的常驻状态</span><div class="size-switch" aria-label="预览尺寸"><button type="button" data-size="320" aria-pressed="false">320</button><button type="button" data-size="390" aria-pressed="true">390</button></div></div>
+        <div class="stage-frame">
+          <div class="game-stage" id="game-stage" aria-label="妖塔探索界面交互原型">
+            <div class="scene-art" aria-hidden="true"></div>
+            <div class="scene-vignette" aria-hidden="true"></div>
+            <img class="scene-gate" src="../../cocos/assets/resources/dungeon-world/ruined-stone-gate-v1.png" alt="">
+            <p class="gate-name">断符石盘<span>入口未开放</span></p>
+            <img class="scene-monster" src="../../cocos/assets/resources/monster-world/fog-lesser-demon-world-v1.png" alt="">
+            <p class="monster-name">雾中妖鬼</p>
+            <div class="scene-hero" role="img" aria-label="轮回者站在石殿中央"></div>
+            <div class="hud-header">
+              <button class="portrait-button" type="button" data-interface="角色" aria-label="角色"><img src="../../cocos/assets/resources/character/reincarnator-v2.png" alt=""><span>角色</span></button>
+              <div class="vitals">
+                <div class="name-line">
+                  <span class="character-name">轮回者</span>
+                  <button class="resource resource-reward" type="button" data-resource="reward" aria-label="奖励点 1155，查看说明"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="m12 7 4 5-4 5-4-5Z"/></svg><span>1155</span></button>
+                  <button class="resource resource-jade" type="button" data-resource="jade" aria-label="灵蕴 1，查看说明"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 6 4 1 8-7 6-7-6 1-8Z"/><path d="m12 7 3 5-3 5-3-5Z"/></svg><span>1</span></button>
+                </div>
+                <div class="vitals-line">
+                  <span class="health-number" aria-label="生命 102，共 102"><span class="health-label">生命</span><strong>102<span>/102</span></strong></span>
+                </div>
+                <div class="health-track" role="meter" aria-label="生命" aria-valuemin="0" aria-valuemax="102" aria-valuenow="102"><span></span></div>
+                <button type="button" class="buff-strip" id="buff-strip" aria-label="本局回响，点击查看全部已获得回响" aria-haspopup="dialog" aria-expanded="false" aria-controls="relic-popover"></button>
+              </div>
+              <nav class="hud-navigation" aria-label="游戏入口">
+                <button type="button" class="hud-entry" data-interface="背包" aria-label="背包"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="m17 13-4-6 11 2 11-2-4 6M16 17h16M17 19C9 27 8 32 11 39c5 6 21 6 26 0 3-7 2-12-6-20M18 15l-7 4m19-4 7 5M24 18v10"/></svg><span>背包</span></button>
+                <button type="button" class="hud-entry" data-interface="菜单" aria-label="菜单"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 11C18 8 12 7 6 9v31c6-2 12-1 18 2 6-3 12-4 18-2V9c-6-2-12-1-18 2Zm0 0v31M12 17l6 2m-6 7 6 2m12-9 6-2m-6 11 6-2"/></svg><span>菜单</span></button>
+                <button type="button" class="hud-entry" data-interface="地图" aria-label="地图"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="m7 9 11 4 12-5 11 4v29l-11-4-12 5-11-4Zm11 4v29M30 8v29m-8-17 4-5 8 6"/><circle cx="26" cy="20" r="2"/></svg><span>地图</span></button>
+                <button type="button" class="hud-entry" data-interface="目标" aria-label="目标"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M12 10h23v31H12Zm4 0V6h15v4M17 20h13m-13 7h13m-13 7h8M9 15H6v27h23v-1"/></svg><span>目标</span></button>
+              </nav>
+            </div>
+            <p class="scene-law">侵蚀：稳定 <span>·</span> 出口封印 <span>·</span> 法则：稳定</p>
+            <div class="world-controls" aria-hidden="true"><div class="joystick"><span></span></div><div class="interact-glyph"><svg viewBox="0 0 40 30"><path d="M5 3h29v19H20l-8 5v-5H5Zm7 7h15m-15 5h8"/></svg><span>靠近互动</span></div></div>
+            <div class="popover" id="relic-popover" role="dialog" aria-modal="false" aria-labelledby="popover-title" hidden>
+              <div class="popover-arrow" aria-hidden="true"></div>
+              <button type="button" class="close-popover" id="close-popover" aria-label="关闭详情"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button>
+              <div class="popover-heading"><img id="popover-icon" class="relic-image" src="assets/mist_edge.png" alt=""><div><p id="popover-category" class="popover-category"></p><h2 id="popover-title"></h2></div></div>
+              <div class="popover-effect" id="popover-effect"></div>
+              <p class="popover-lifetime" id="popover-lifetime"></p>
+            </div>
+          </div>
+        </div>
+        <div class="preview-foot"><p id="interaction-status" role="status">点击血条下方回响区域，查看全部已获得回响。</p><button type="button" id="empty-toggle" aria-pressed="false">查看未获得状态</button></div>
+      </div>
+      <aside class="design-notes" aria-label="图标图鉴与设计说明">
+        <div class="notes-heading"><span class="section-number">02</span><div><p class="eyebrow">九枚回响 · 三种流派</p><h2>看见不同的力量</h2></div></div>
+        <p class="notes-intro">每枚回响都有独立轮廓与颜色，缩到血条下仍可辨认。<br>图鉴用于查看全部设计；本局只展示已获得的回响。</p>
+        <div class="icon-atlas" id="icon-atlas"></div>
+        <p class="atlas-caption">点击图鉴也可预览详情，不会加入本局。当前演示：强攻流派。</p>
+        <div class="design-rules">
+          <div class="design-rule"><span>01</span><div><h3>名称与资源排成一行</h3><p>金币与玉符紧随名称；生命下方血条加长 20%，保持左对齐。</p></div></div>
+          <div class="design-rule"><span>02</span><div><h3>整片回响，共用一个入口</h3><p>18 px 图标左对齐、间隔 6 px；整块 72 × 44 px 区域均可点击。</p></div></div>
+          <div class="design-rule"><span>03</span><div><h3>点开一次，看清全部增益</h3><p>浮层只展示回响图标、名称、精确效果与关闭按钮。</p></div></div>
+        </div>
+        <p class="production-note">图标与界面均为本次新原型。数值依据现有规则；<br>场景与角色沿用真实游戏素材，不读写游戏存档。</p>
+      </aside>
+    </section>
+  </main>
+  <footer><span>无限流 · 回响 HUD / V1</span><span>暗色古金 / 320 & 390 / 点击、Esc、点外部关闭</span></footer>
+  <noscript><p>启用 JavaScript 后可查看回响图标并体验详情浮层。</p></noscript>
+</body>
+</html>

@@ -1,0 +1,71 @@
+{
+  "noE": {
+    "badges": 0,
+    "button": {
+      "height": 44,
+      "label": "与修行导师交谈",
+      "text": "交谈",
+      "title": "与修行导师交谈",
+      "width": 64
+    },
+    "nearActors": 1,
+    "player": {
+      "facing": "right",
+      "footX": "600",
+      "footY": "550",
+      "motion": "idle",
+      "player": ""
+    },
+    "sheetClosed": true
+  },
+  "mobile": [
+    {
+      "badges": 0,
+      "button": {
+        "height": 44,
+        "inside": true,
+        "text": "交谈",
+        "width": 64
+      },
+      "overflow": false,
+      "viewport": [
+        320,
+        740
+      ],
+      "talkTitle": "修行导师"
+    },
+    {
+      "badges": 0,
+      "button": {
+        "height": 44,
+        "inside": true,
+        "text": "交谈",
+        "width": 64
+      },
+      "overflow": false,
+      "viewport": [
+        390,
+        844
+      ],
+      "talkTitle": "修行导师"
+    }
+  ],
+  "final": {
+    "badges": 0,
+    "buttonText": "交谈",
+    "hash": "#10",
+    "player": {
+      "facing": "right",
+      "footX": "600",
+      "footY": "550",
+      "motion": "idle",
+      "player": ""
+    },
+    "sheetClosed": true,
+    "viewport": [
+      930,
+      828
+    ]
+  },
+  "console": []
+}

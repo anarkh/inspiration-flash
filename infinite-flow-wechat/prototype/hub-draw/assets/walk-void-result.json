@@ -1,0 +1,18 @@
+{
+  "tool": "image_gen.imagegen (built-in)",
+  "fullprompt": "Use case: stylized-concept. Asset type: seamless readable wide side-scrolling 2.5D mobile RPG hub stage background, original dark Eastern reincarnation fantasy setting. Create a truly very wide horizontal panorama, 3072x1024 pixels, aspect ratio 3:1. NOT a top-down view. Camera is upright eye-level slight three-quarter side view, like a walkable beat-em-up RPG stage; horizontal movement dominates, with a shallow depth band for walking forward and backward. The upper 55 percent depicts an ancient Eastern bronze station rear wall and restrained arcades floating in the void, muted sparse stars and distant architectural silhouettes. No modern brightly lit neon cyberpunk city. The lower 45 percent is a broad continuous uninterrupted gray-teal stone and bronze floor with shallow depth, spanning from left to right. The main path must not be a central corridor receding toward the horizon. Floor is moderately lighter than the background so characters will be clearly visible. Original hand-painted grounded dark fantasy, aged bronze, silver-gray, subdued teal lamps, low saturation, softly readable materials. Seven NPCs and a player character will be added later by code, so keep the walkable road open and uncluttered. No people, characters, creatures, NPCs, text, letters, numbers, UI, HUD, buttons, glowing interaction circles, watermark, large obstacles on the road, broken walkways or deep chasms. No copied assets from existing games. Balanced dim mystical atmosphere but not completely black. All artwork should fit a single continuous very wide horizontal stage.",
+  "source_path": "/Users/bytedance/.codex/generated_images/01a0f036-e69a-79e2-8ade-a385e831d542/exec-63903054-d4bb-4692-b518-7b9b6ef64bbd.png",
+  "final_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-draw/assets/walk-void-v1.png",
+  "dimensions": {
+    "width": 2172,
+    "height": 724,
+    "aspect_ratio": "3:1"
+  },
+  "hash": {
+    "algorithm": "sha256",
+    "value": "b86a965ab0b1dec3f08c54cc5b49455d5fe627d08057fd4f005a5ac38e5f0d6b"
+  },
+  "transparent_background": false,
+  "postprocessing": "none; original copied without modification; source and final SHA256 equal",
+  "inspection": "Upright side-scrolling original Eastern bronze void station stage. Wide continuous shallow gray-teal floor, rear bronze pillars and floating Eastern buildings. No characters, NPCs, creatures, text, UI or glowing interaction circles. Floor is readable and uninterrupted."
+}

@@ -1,0 +1,60 @@
+{
+  "before": {
+    "gap": 67,
+    "mapTop": 252.59375,
+    "toolsBottom": 185.59375
+  },
+  "checks": [
+    {
+      "gap": 6,
+      "joystickHeight": 110,
+      "mapInside": true,
+      "mapRight": 385.84375,
+      "name": "default",
+      "overflow": false,
+      "removed": 0,
+      "toolsRight": 385.84375,
+      "viewport": [
+        930,
+        828
+      ]
+    },
+    {
+      "gap": 6,
+      "joystickHeight": 110,
+      "mapInside": true,
+      "mapRight": 286,
+      "name": "320",
+      "overflow": false,
+      "removed": 0,
+      "toolsRight": 286,
+      "viewport": [
+        320,
+        740
+      ]
+    },
+    {
+      "gap": 6,
+      "joystickHeight": 110,
+      "mapInside": true,
+      "mapRight": 343.5625,
+      "name": "390",
+      "overflow": false,
+      "removed": 0,
+      "toolsRight": 343.5625,
+      "viewport": [
+        390,
+        844
+      ]
+    }
+  ],
+  "movement": {
+    "facing": "right",
+    "footX": "604.342",
+    "footY": "550",
+    "motion": "idle",
+    "player": ""
+  },
+  "talk": "修行导师",
+  "console": []
+}

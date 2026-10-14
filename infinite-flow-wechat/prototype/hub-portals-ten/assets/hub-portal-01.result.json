@@ -1,0 +1,34 @@
+{
+  "tool": "image_gen.imagegen",
+  "mode": "built-in",
+  "concept": "云阙界门",
+  "source_path": "/Users/bytedance/.codex/generated_images/01a11977-9e29-7bb0-9458-dd2d77437457/exec-43b16c70-efac-42f3-8f26-2ad698abfa8e.png",
+  "destination_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-portals-ten/assets/hub-portal-01.png",
+  "sha256": "d83c817d5c80c3165385b20c1015fc07361efe62177127fcee6aa53d679a12c9",
+  "source_sha256": "d83c817d5c80c3165385b20c1015fc07361efe62177127fcee6aa53d679a12c9",
+  "width": 1019,
+  "height": 1544,
+  "post_processing": "none; byte-for-byte copy",
+  "style_references": [
+    "cocos/assets/resources/hub-courtyard/walk-sanctuary-v1.png",
+    "cocos/assets/resources/hub-courtyard/pillar-v1.png"
+  ],
+  "alpha_validation": {
+    "mode": "RGBA",
+    "extrema": [
+      0,
+      255
+    ],
+    "transparent_pixels": 525644,
+    "opaque_pixels": 664,
+    "partial_alpha_pixels": 1047028,
+    "total_pixels": 1573336,
+    "content_bbox": [
+      0,
+      3,
+      1019,
+      1483
+    ]
+  },
+  "visual_inspection": "Complete near-frontal single-eave black-stone Chinese gateway with worn old-gold lotus-cloud pillars and faintly elevated base perspective. Cloud-world interior includes misty peaks and distant buildings. Transparent exterior; no cyan, purple, text or surrounding scene platform. Opening is narrower/taller than requested nearly square aperture, recorded as a concept variation."
+}

@@ -1,0 +1,65 @@
+[
+  {
+    "entityId": "last_broadcaster",
+    "sourceFile": "last-broadcaster-world-v1.png",
+    "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a0ec85-483c-7711-8a42-ba82d0d3bbb3/exec-8d032f30-9e33-454c-ad27-3ab59e0ec160.png",
+    "status": "complete",
+    "validation": "RGBA alpha present; complete body and identity verified"
+  },
+  {
+    "entityId": "mimic_survivor",
+    "sourceFile": "mimic-survivor-world-v1.png",
+    "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a0ec85-483c-7711-8a42-ba82d0d3bbb3/exec-16f5dcc6-1000-497b-b110-6771034e307d.png",
+    "status": "complete",
+    "validation": "RGBA alpha present; complete body and identity verified"
+  },
+  {
+    "entityId": "rogue_sentry",
+    "sourceFile": "rogue-sentry-world-v1.png",
+    "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a0ec85-483c-7711-8a42-ba82d0d3bbb3/exec-58e3c919-9801-4c0c-b290-c3315c1d282c.png",
+    "status": "complete",
+    "validation": "RGBA alpha present; complete body and identity verified"
+  },
+  {
+    "entityId": "shelter_enforcer",
+    "sourceFile": "shelter-enforcer-world-v1.png",
+    "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a0ec85-483c-7711-8a42-ba82d0d3bbb3/exec-103264aa-94e5-4c73-a88c-15755d78ec09.png",
+    "status": "complete",
+    "validation": "RGBA alpha present; complete body and identity verified"
+  },
+  {
+    "entityId": "evacuation_horror",
+    "sourceFile": "evacuation-horror-world-v1.png",
+    "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a0ec85-483c-7711-8a42-ba82d0d3bbb3/exec-affe0eab-132e-4c32-9dcc-82fadd7f65db.png",
+    "status": "complete",
+    "validation": "RGBA alpha present; complete body and identity verified"
+  },
+  {
+    "entityId": "shelter_overseer",
+    "sourceFile": "shelter-overseer-world-v1.png",
+    "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a0ec85-483c-7711-8a42-ba82d0d3bbb3/exec-7caec1ae-f201-4690-90d7-593826e273d5.png",
+    "status": "complete",
+    "validation": "RGBA alpha present; complete body and identity verified"
+  },
+  {
+    "entityId": "hostile_witness",
+    "sourceFile": "hostile-witness-world-v1.png",
+    "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a0ec85-483c-7711-8a42-ba82d0d3bbb3/exec-362472ef-153a-497f-854f-e78622e05847.png",
+    "status": "complete",
+    "validation": "RGBA alpha present; complete body and identity verified"
+  },
+  {
+    "entityId": "archive_censor",
+    "sourceFile": "archive-censor-world-v1.png",
+    "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a0ec85-483c-7711-8a42-ba82d0d3bbb3/exec-65c1deeb-e9b5-4a29-b6ce-8a76cb97083e.png",
+    "status": "complete",
+    "validation": "RGBA alpha present; complete body and identity verified"
+  },
+  {
+    "entityId": "perjury_hound",
+    "sourceFile": "perjury-hound-world-v1.png",
+    "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a0ec85-483c-7711-8a42-ba82d0d3bbb3/exec-baf47583-6ffd-40eb-8038-b867f5378104.png",
+    "status": "complete",
+    "validation": "RGBA alpha present; complete body and identity verified"
+  }
+]

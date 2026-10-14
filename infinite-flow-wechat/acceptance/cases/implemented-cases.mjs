@@ -585,7 +585,9 @@ export async function webV1EquipmentHunt({ fixture, projectRoot, saveCodec, core
     `${scenario.id} warning codes`,
   );
 
-  const settled = core.resolveEquipmentLoot(decoded.state, scenario.expected.selectedEquipmentId);
+  const selectedEquipmentId = scenario.expected.selectedEquipmentId;
+  const equippedBeforeSettlement = structuredClone(decoded.state.equipped);
+  const settled = core.resolveEquipmentLoot(decoded.state, selectedEquipmentId);
   deepEqual(settled.run?.lootBag, scenario.expected.settledLootBag, `${scenario.id} settled loot`);
   equal(settled.run?.pendingEquipmentOffer, undefined, `${scenario.id} clears pending offer`);
   deepEqual(
@@ -598,21 +600,50 @@ export async function webV1EquipmentHunt({ fixture, projectRoot, saveCodec, core
     {
       rewardPoints: settled.rewardPoints,
       lingyun: settled.lingyun,
-      ownsSelectedEquipment: settled.ownedEquipment.includes(scenario.expected.selectedEquipmentId),
+      ownsSelectedEquipment: settled.ownedEquipment.includes(selectedEquipmentId),
     },
-    scenario.expected.permanentStateAfterSettlement,
+    {
+      // Keep the frozen Web oracle intact; current rules grant permanent ownership on pickup.
+      ...scenario.expected.permanentStateAfterSettlement,
+      ownsSelectedEquipment: true,
+    },
     `${scenario.id} permanent state before run exit`,
   );
+  equal(settled.equipmentLevels[selectedEquipmentId], 1, `${scenario.id} initializes permanent equipment level`);
+  deepEqual(settled.equipped, equippedBeforeSettlement, `${scenario.id} pickup does not automatically equip`);
 
-  const repeated = core.resolveEquipmentLoot(settled, scenario.expected.selectedEquipmentId);
+  const repeated = core.resolveEquipmentLoot(settled, selectedEquipmentId);
   deepEqual(repeated.run?.lootBag, scenario.expected.settledLootBag, `${scenario.id} repeated settlement loot`);
   equal(
     repeated.run?.lootBag.equipmentIds.filter(
-      (equipmentId) => equipmentId === scenario.expected.selectedEquipmentId,
+      (equipmentId) => equipmentId === selectedEquipmentId,
     ).length,
     1,
     `${scenario.id} target settles exactly once`,
   );
+  deepEqual(repeated.ownedEquipment, settled.ownedEquipment, `${scenario.id} repeated pickup preserves permanent ownership`);
+  deepEqual(repeated.equipmentLevels, settled.equipmentLevels, `${scenario.id} repeated pickup preserves equipment levels`);
+  equal(repeated.rewardPoints, settled.rewardPoints, `${scenario.id} repeated pickup does not issue reward points`);
+  equal(repeated.lingyun, settled.lingyun, `${scenario.id} repeated pickup does not issue lingyun`);
+  deepEqual(repeated.equipped, equippedBeforeSettlement, `${scenario.id} repeated pickup does not automatically equip`);
+
+  equal(settled.phase, "explore", `${scenario.id} pickup remains in exploration`);
+  const manuallyEquipped = core.equipEquipment(settled, selectedEquipmentId);
+  equal(
+    manuallyEquipped.equipped[core.EQUIPMENT[selectedEquipmentId].slot],
+    selectedEquipmentId,
+    `${scenario.id} permanent equipment can be manually equipped during exploration`,
+  );
+  for (const [exit, exited] of [
+    ["retreat", core.resolveRetreat(manuallyEquipped)],
+    ["failure", core.resolveRunFailure(manuallyEquipped)],
+  ]) {
+    equal(exited.phase, "result", `${scenario.id} ${exit} reaches the run result`);
+    assert(exited.run?.lastLootSettlement, `${scenario.id} ${exit} settles carried loot`);
+    deepEqual(exited.ownedEquipment, settled.ownedEquipment, `${scenario.id} ${exit} preserves permanent equipment`);
+    deepEqual(exited.equipmentLevels, settled.equipmentLevels, `${scenario.id} ${exit} preserves equipment levels`);
+    deepEqual(exited.equipped, manuallyEquipped.equipped, `${scenario.id} ${exit} preserves the manually equipped loadout`);
+  }
 
   return {
     oracleCommit: fixture.provenance.oracle.commit,
@@ -623,6 +654,9 @@ export async function webV1EquipmentHunt({ fixture, projectRoot, saveCodec, core
       targetEquipmentId: scenario.expected.selectedEquipmentId,
       restored: true,
       settledExactlyOnce: true,
+      permanentOnPickup: true,
+      manuallyEquippedDuringExploration: true,
+      retainedAfterRetreatAndFailure: true,
     }],
   };
 }
@@ -13316,17 +13350,56 @@ export async function assetKeyRevisionCache({ fixture, projectRoot, assetManifes
   const calculatedRevision = `sha256:${sha256(JSON.stringify(revisionPayload))}`;
   equal(calculatedRevision, assetManifest.manifestRevision, "calculated manifestRevision");
 
-  // The fixture freezes the migrated Web snapshot. Cocos-only art has no
-  // webSourcePath and extends the current manifest without changing that snapshot.
-  const migratedAssets = assetManifest.assets.filter(
-    (asset) => typeof asset.webSourcePath === "string",
-  );
+  // Restore the original entries for art replaced in Cocos. The frozen Web
+  // snapshot and its source bytes remain independent of those newer mappings.
+  const beforeRefresh = JSON.parse(readFileSync(
+    resolve(projectRoot, "art-source/style-refresh/before/manifest-entries.json"),
+    "utf8",
+  ));
+  const replacedWebAssets = new Map(beforeRefresh.assets
+    .filter((asset) => typeof asset.webSourcePath === "string")
+    .map((asset) => [asset.key, asset]));
+  const migratedAssets = assetManifest.assets.flatMap((asset) => {
+    if (typeof asset.webSourcePath === "string") return [asset];
+    const original = replacedWebAssets.get(asset.key);
+    return original === undefined ? [] : [original];
+  });
   equal(migratedAssets.length, expected.assetCount, "frozen Web asset count");
   const migratedRevision = `sha256:${sha256(JSON.stringify({
     ...revisionPayload,
     assets: migratedAssets,
   }))}`;
   equal(migratedRevision, expected.manifestRevision, "frozen Web manifestRevision");
+
+  const repositoryRoot = resolve(projectRoot, "..");
+  const webSourceRoot = resolve(repositoryRoot, "infinite-flow/public");
+  for (const asset of migratedAssets) {
+    const sourcePath = resolve(repositoryRoot, asset.sourceFile);
+    assert(isPathInside(webSourceRoot, sourcePath), `${asset.key} frozen Web source escapes root`);
+    assert(existsSync(sourcePath), `${asset.key} frozen Web source is missing`);
+    equal(sha256(readFileSync(sourcePath)), asset.sourceSha256, `${asset.key} frozen Web source SHA-256`);
+  }
+
+  const replacementKeys = [];
+  for (const asset of assetManifest.assets) {
+    const original = replacedWebAssets.get(asset.key);
+    if (original === undefined || typeof asset.webSourcePath === "string") continue;
+    for (const field of ["key", "kind", "entityId", "role"]) {
+      equal(asset[field], original[field], `${asset.key} Cocos replacement ${field}`);
+    }
+    assert(asset.sourceRevision > original.sourceRevision, `${asset.key} Cocos replacement revision must advance`);
+    assert(asset.resourcePath !== original.resourcePath, `${asset.key} Cocos replacement must use a new resource path`);
+    equal(asset.sourceFormat, "png", `${asset.key} Cocos replacement source format`);
+    equal(asset.targetFormat, "png", `${asset.key} Cocos replacement target format`);
+    equal(asset.cocosImageImport, "supported", `${asset.key} Cocos replacement import support`);
+    equal(asset.transformation?.operation, "byte-copy", `${asset.key} Cocos replacement transformation`);
+    const sourcePath = resolve(repositoryRoot, asset.sourceFile);
+    assert(isPathInside(projectRoot, sourcePath), `${asset.key} Cocos replacement source escapes project`);
+    assert(existsSync(sourcePath), `${asset.key} Cocos replacement source is missing`);
+    equal(sha256(readFileSync(sourcePath)), asset.sourceSha256, `${asset.key} Cocos replacement source SHA-256`);
+    equal(asset.sourceSha256, asset.targetSha256, `${asset.key} Cocos replacement byte-copy SHA-256`);
+    replacementKeys.push(asset.key);
+  }
 
   const resourcesRoot = resolve(projectRoot, "cocos/assets/resources");
   const keys = new Set();
@@ -13438,6 +13511,10 @@ export async function assetKeyRevisionCache({ fixture, projectRoot, assetManifes
     calculatedRevision,
     assetCount: assetManifest.assets.length,
     physicalAssetsVerified: assetManifest.assets.length,
+    frozenWebAssetCount: migratedAssets.length,
+    frozenWebManifestRevision: migratedRevision,
+    frozenWebSourcesVerified: migratedAssets.length,
+    cocosReplacementKeys: replacementKeys,
     sample: {
       key: sample.key,
       resourcePath: sample.resourcePath,

@@ -1,0 +1,27 @@
+{
+  "entityId": "gene_stalker",
+  "status": "complete",
+  "path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/art-source/monster-world/gene-stalker-world-v1.png",
+  "sourcePath": "/Users/bytedance/.codex/generated_images/01a0ecb5-66bc-7903-b625-4adc4e38a075/exec-500bb461-02d9-4a40-b17c-8eb93ba42b97.png",
+  "referencePath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/monster/gene-stalker-v1.png",
+  "width": 1024,
+  "height": 1536,
+  "mode": "RGBA",
+  "alpha": {
+    "min": 0,
+    "max": 254,
+    "transparentPixels": 977575,
+    "nonTransparentPixels": 595289,
+    "bbox": [
+      30,
+      19,
+      1012,
+      1518
+    ]
+  },
+  "sha256": "061efbb8d6347196f045b7a53e780e7690b973f216ddb68b85a78b653518230c",
+  "byteIdenticalCopy": true,
+  "tool": "built-in imagegen",
+  "promptSet": "art-source/monster-world/prompts.json sharedPrompt + gene_stalker subject",
+  "visualCheck": "Complete quadruped hound with head, all four paws, tail and dorsal spikes visible; embedded cyan serum vials, charcoal flesh and weathered bronze armor retained. No frame or text."
+}

@@ -1,0 +1,10 @@
+Use case: stylized-concept
+Asset type: Single inventory cultivation-method icon for a subdued Chinese dark-fantasy game, HTML proposal only.
+Primary request: Redraw the Void Heart as a tangible fractured obsidian heart-stone with only restrained grey-violet inner light, matching the antique, subdued hand-painted material treatment of the style reference.
+Input images: image 1 void-heart-v1.png is subject/theme reference only; image 2 focus-incense-v1.png is rendering/material reference only.
+Subject: one compact irregular heart-shaped dark obsidian stone, fractured into a few large readable planes while remaining one cohesive object; faint old bronze binding lines hug a few edges, subtle charcoal and weathered mineral surfaces, soft dim grey-purple radiance visible only deep within two or three narrow cracks. No central hole or vortex. Convincingly physical, old, slightly worn.
+Style: realistic hand-painted game item, restrained soft brushwork, low saturation, ancient quiet material presence, matte dark stone with subtle broad worn highlights. Match incense reference's grounded aged-material quality, without copying the incense subject.
+Composition: square canvas; single centered isolated heart stone occupying 75 percent of canvas; compact instantly readable silhouette at 48px; ample transparent margin, no clipping.
+Lighting: soft warm neutral upper-left illumination with very restrained diffuse inner crack light; no bloom.
+Background: genuinely transparent alpha, no floor, no backdrop, no ground shadow outside the object.
+Avoid: strong purple or blue glow, bright void sphere, energy vortex, neon, sparks, smoke, background aura, comic outlines, cel shading, frame, lettering, words, watermark, multiple objects.

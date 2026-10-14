@@ -1,0 +1,43 @@
+{
+  "status": "PASS",
+  "date": "2026-10-08",
+  "url": "http://127.0.0.1:8125/prototype/style-refresh/index.html",
+  "desktop": {
+    "views": 28,
+    "groups": 7,
+    "imageLoadFailures": 0,
+    "visibleErrors": 0,
+    "documentOverflow": false
+  },
+  "mobile": {
+    "viewports": [
+      {
+        "width": 320,
+        "height": 568
+      },
+      {
+        "width": 390,
+        "height": 844
+      }
+    ],
+    "groupChecks": 14,
+    "documentOverflow": false,
+    "buttonsAndSelectsMinimumHeight": 44
+  },
+  "controls": {
+    "backgrounds": [
+      "demon_tower_1",
+      "starfall_mine",
+      "dream_archive"
+    ],
+    "footGuides": 2,
+    "originalImageDialog": true,
+    "escapeClose": true,
+    "focusRestored": true,
+    "mirrorResultAspectRatio": 1.25
+  },
+  "consoleWarnings": 0,
+  "consoleErrors": 0,
+  "viewportRestored": true,
+  "scope": "HTML prototype only; no game integration or device acceptance"
+}

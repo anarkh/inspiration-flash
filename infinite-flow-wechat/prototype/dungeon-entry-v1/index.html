@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>轮回之门 · 单屏入场原型</title>
+  <link rel="stylesheet" href="style.css?v=6">
+</head>
+<body>
+  <header class="board-header"><a href="../">无限流 / 界面提案</a><span>入场交互 · 02</span></header>
+  <main class="board">
+    <section class="preview-column" aria-label="游戏界面预览">
+      <div class="preview-toolbar"><span>轮回之门</span><div class="size-options" aria-label="预览尺寸"><button data-size="390" aria-pressed="true">390</button><button data-size="320" aria-pressed="false">320</button></div></div>
+      <div class="game-stage" id="game-stage">
+        <div class="world-background" aria-hidden="true"></div>
+        <div class="world-shade" aria-hidden="true"></div>
+        <div class="gate-closed" hidden><span>主神空间</span><button id="reopen">打开轮回之门</button></div>
+        <section class="entry-panel" aria-labelledby="entry-title">
+          <header class="panel-header"><div class="gate-seal" aria-hidden="true">门</div><h1 id="entry-title">轮回之门</h1><span class="chapter-count">十九重世界</span><button class="close" id="close-panel" aria-label="关闭轮回之门">×</button></header>
+          <div class="list-heading"><span>选择世界 <b id="world-count">19</b></span><span>当前战力 <strong>167</strong></span></div>
+          <div class="dungeon-list" id="dungeon-list" aria-label="副本列表" tabindex="0"></div>
+          <footer class="entry-dock" aria-label="入场操作">
+          <div class="preparation">
+            <button id="preparation-toggle" class="preparation-toggle" aria-expanded="false" aria-controls="preparation-options"><span><span class="quiet">协议</span><strong id="preparation-summary">标准探索 <i>·</i> 强攻回响</strong></span><span class="edit-label">调整 <b aria-hidden="true">⌃</b></span></button>
+            <div id="preparation-options" class="preparation-options" hidden>
+              <div class="option-line"><span>入场协议</span><span class="current-option">标准探索</span><span class="condition">首通后解锁其他协议</span></div>
+              <div class="frame-label">回响方向</div>
+              <div class="frame-options" role="group" aria-label="回响方向"><button data-frame="assault" aria-pressed="true" aria-label="强攻回响">强攻</button><button data-frame="bulwark" aria-pressed="false" aria-label="守御回响">守御</button><button data-frame="wayfinder" aria-pressed="false" aria-label="寻路回响">寻路</button></div>
+              <p class="frame-description" id="frame-description" role="status">偏向输出与战斗收益</p>
+              <div class="optional-line"><span>路线契约 <b>未接取</b></span><span>归档种子 <b>未携带</b></span></div>
+              <p class="condition">契约需首通；种子需先归档。</p>
+            </div>
+          </div>
+            <div class="entry-action">
+              <div class="selected-copy"><span class="selected-name" id="selected-name">妖塔一层</span><span class="selected-detail" id="selected-detail">已选择 · 可直接进入</span></div>
+              <button class="enter-button" id="enter-dungeon" aria-label="进入妖塔一层"><span id="enter-label">进入副本</span><span aria-hidden="true">→</span></button>
+            </div>
+          </footer>
+        </section>
+        <section class="entry-result" hidden aria-label="入场演示结果"><div class="result-image"></div><div class="result-copy"><span>已踏入</span><h2 id="result-title"></h2><p id="result-preparation"></p><button id="return-list">返回原型</button></div></section>
+      </div>
+      <p class="preview-caption">点选副本，底部统一进入；协议可原地调整。<span id="prototype-status" role="status">独立原型 · 初次入场示例</span></p>
+    </section>
+    <aside class="design-notes">
+      <div class="eyebrow">交互原型 / SINGLE SCREEN</div>
+      <h2>更多世界，<br>一眼可见。</h2>
+      <p class="intro">紧凑图文列表，向下浏览。<br>协议与入场始终留在底部。</p>
+      <div class="flow"><span>同屏选择世界</span><i aria-hidden="true">→</i><strong>点击进入</strong></div>
+      <div class="note"><span>01</span><div><h3>卡片缩小，保留场景</h3><p>横向缩略图搭配名称、战力与状态，一屏容纳更多副本。</p></div></div>
+      <div class="note"><span>02</span><div><h3>底部统一进入</h3><p>选中状态清晰可见。滚动列表时，当前副本与入场按钮保持固定。</p></div></div>
+      <div class="note"><span>03</span><div><h3>协议收到底部</h3><p>一行显示当前整备，点击调整向上展开，不打开第二页。</p></div></div>
+      <div class="prototype-boundary"><span>本轮范围</span><p>复用游戏现有图片与副本数据。示例为初次入场状态；按钮仅演示界面，不影响游戏进度。</p></div>
+      <button class="reset-prototype" id="reset-prototype">重置演示 ↺</button>
+    </aside>
+  </main>
+  <script type="module" src="app.js?v=5"></script>
+</body>
+</html>

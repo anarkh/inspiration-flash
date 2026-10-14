@@ -1,0 +1,639 @@
+/* 04 / 墨点：骨白字直接落在场景上，朱点只作很小的视觉停顿。 */
+.hud-layer[data-design="04"] {
+  --ink: #e8e5d8;
+  --muted: #c1c2b5;
+  --accent: #b18d7e;
+  --panel: transparent;
+  --edge: transparent;
+  --health-fill: #a27e71;
+  color: var(--ink);
+  font-family: "Songti SC", "STSong", "SimSun", serif;
+  text-shadow: 0 1px 2px #0b120d;
+}
+.hud-layer[data-design="04"] .hud-top {
+  top: 20px;
+  left: 20px;
+  right: 20px;
+  height: 155px;
+  background: none;
+  border: 0;
+  box-shadow: none;
+}
+.hud-layer[data-design="04"] .hud-vitals {
+  left: 134px;
+  top: 12px;
+  width: 365px;
+  height: 105px;
+  background: none;
+  border: 0;
+  box-shadow: none;
+}
+.hud-layer[data-design="04"] .hud-top::before,
+.hud-layer[data-design="04"] .hud-top::after,
+.hud-layer[data-design="04"] .hud-vitals::before,
+.hud-layer[data-design="04"] .hud-vitals::after {
+  content: none;
+}
+.hud-layer[data-design="04"] .hud-btn {
+  min-width: 110px;
+  min-height: 110px;
+  width: 110px;
+  height: 110px;
+  display: grid;
+  grid-template-rows: 32px 32px;
+  align-content: center;
+  justify-items: center;
+  gap: 7px;
+  padding: 0;
+  color: var(--ink);
+  background: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  text-shadow: 0 1px 2px #0b120d;
+  pointer-events: auto;
+  transition: color 120ms ease;
+}
+.hud-layer[data-design="04"] .hud-character {
+  left: 0;
+  top: 0;
+}
+.hud-layer[data-design="04"] .hud-menu {
+  right: 0;
+  top: 0;
+}
+.hud-layer[data-design="04"] .hud-glyph {
+  width: 32px;
+  height: 32px;
+  color: #d5d6c9;
+}
+.hud-layer[data-design="04"] .hud-glyph svg {
+  width: 100%;
+  height: 100%;
+  stroke-width: 2;
+}
+.hud-layer[data-design="04"] .hud-btn-label {
+  position: relative;
+  font-size: 25px;
+  line-height: 32px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+.hud-layer[data-design="04"] .hud-eyebrow {
+  display: none;
+}
+.hud-layer[data-design="04"] .hud-zone {
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin: 0;
+  color: var(--ink);
+  font-size: 34px;
+  line-height: 42px;
+  font-weight: 500;
+  letter-spacing: 0.07em;
+  white-space: nowrap;
+}
+.hud-layer[data-design="04"] .hud-zone::before {
+  content: "";
+  position: absolute;
+  left: -14px;
+  top: 18px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #a96a59;
+  pointer-events: none;
+}
+.hud-layer[data-design="04"] .hud-hp-line {
+  position: absolute;
+  top: 52px;
+  left: 0;
+  width: 278px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: 0;
+  color: var(--muted);
+  font-size: 24px;
+  line-height: 30px;
+}
+.hud-layer[data-design="04"] .hud-hp-text {
+  color: var(--ink);
+  font-family: ui-monospace, "SFMono-Regular", "Consolas", monospace;
+  font-size: 26px;
+  line-height: 30px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+.hud-layer[data-design="04"] .hud-hp-text small {
+  color: var(--muted);
+  font-size: 24px;
+  font-weight: 400;
+}
+.hud-layer[data-design="04"] .hud-hp-track {
+  position: absolute;
+  top: 91px;
+  left: 0;
+  width: 278px;
+  height: 4px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: #514741;
+  box-shadow: none;
+  overflow: hidden;
+}
+.hud-layer[data-design="04"] .hud-hp-track i {
+  display: block;
+  height: 100%;
+  width: var(--health);
+  background: var(--health-fill);
+  border-radius: 0;
+  box-shadow: none;
+}
+.hud-layer[data-design="04"] .hud-preview {
+  position: absolute;
+  left: 134px;
+  right: auto;
+  top: 126px;
+  display: flex;
+  align-items: baseline;
+  gap: 13px;
+  color: var(--muted);
+  font-size: 22px;
+  line-height: 28px;
+  white-space: nowrap;
+  text-shadow: 0 1px 2px #0b120d;
+}
+.hud-layer[data-design="04"] .hud-preview > span {
+  color: #d2c5b8;
+}
+.hud-layer[data-design="04"] .hud-preview small {
+  color: var(--muted);
+  font-size: 22px;
+}
+.hud-layer[data-design="04"] .hud-rail {
+  top: 215px;
+  right: 15px;
+  display: grid;
+  gap: 8px;
+}
+.hud-layer[data-design="04"] .hud-rail .hud-btn {
+  width: 110px;
+  height: 110px;
+}
+.hud-layer[data-design="04"] .hud-quests .hud-btn-label::after {
+  content: "";
+  position: absolute;
+  right: -10px;
+  top: 14px;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #a96a59;
+  pointer-events: none;
+}
+.hud-layer[data-design="04"] .hud-btn:hover,
+.hud-layer[data-design="04"] .hud-btn:active {
+  background: none;
+  border: 0;
+  box-shadow: none;
+  color: #fff2dd;
+  filter: none;
+}
+.hud-layer[data-design="04"] .hud-btn:focus-visible {
+  outline: 1px dashed #c6c7b5;
+  outline-offset: -12px;
+}
+
+/* 05 / 月弧：只有小图标外的一段残弧，中央读数保持悬空。 */
+.hud-layer[data-design="05"] {
+  --ink: #e1e8df;
+  --muted: #bdc8bf;
+  --accent: #b5c9bc;
+  --panel: transparent;
+  --edge: transparent;
+  --health-fill: #a5b9a9;
+  color: var(--ink);
+  font-family: "Songti SC", "STSong", "SimSun", serif;
+  text-shadow: 0 1px 2px #0b1410;
+}
+.hud-layer[data-design="05"] .hud-top {
+  top: 20px;
+  left: 20px;
+  right: 20px;
+  height: 158px;
+  background: none;
+  border: 0;
+  box-shadow: none;
+}
+.hud-layer[data-design="05"] .hud-vitals {
+  left: 136px;
+  top: 8px;
+  width: 374px;
+  height: 104px;
+  text-align: center;
+  background: none;
+  border: 0;
+  box-shadow: none;
+}
+.hud-layer[data-design="05"] .hud-top::before,
+.hud-layer[data-design="05"] .hud-top::after,
+.hud-layer[data-design="05"] .hud-vitals::before,
+.hud-layer[data-design="05"] .hud-vitals::after {
+  content: none;
+}
+.hud-layer[data-design="05"] .hud-btn {
+  min-width: 110px;
+  min-height: 110px;
+  width: 110px;
+  height: 110px;
+  display: grid;
+  grid-template-rows: 34px 31px;
+  align-content: center;
+  justify-items: center;
+  gap: 11px;
+  padding: 0;
+  color: var(--ink);
+  background: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  text-shadow: 0 1px 2px #0b1410;
+  pointer-events: auto;
+  transition: color 120ms ease;
+}
+.hud-layer[data-design="05"] .hud-character {
+  left: 0;
+  top: 3px;
+}
+.hud-layer[data-design="05"] .hud-menu {
+  right: 0;
+  top: 3px;
+}
+.hud-layer[data-design="05"] .hud-glyph {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  color: #c1d1c4;
+}
+.hud-layer[data-design="05"] .hud-glyph::before {
+  content: "";
+  position: absolute;
+  top: -5px;
+  left: -5px;
+  width: 44px;
+  height: 44px;
+  border: 1px solid transparent;
+  border-top-color: #a8beb17d;
+  border-left-color: #a8beb17d;
+  border-radius: 50%;
+  background: none;
+  box-shadow: none;
+  transform: rotate(-26deg);
+  pointer-events: none;
+}
+.hud-layer[data-design="05"] .hud-glyph svg {
+  width: 100%;
+  height: 100%;
+  stroke-width: 1.9;
+}
+.hud-layer[data-design="05"] .hud-btn-label {
+  color: var(--ink);
+  font-size: 24px;
+  line-height: 31px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+.hud-layer[data-design="05"] .hud-eyebrow {
+  display: none;
+}
+.hud-layer[data-design="05"] .hud-zone {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  margin: 0;
+  color: var(--ink);
+  font-size: 33px;
+  line-height: 42px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+.hud-layer[data-design="05"] .hud-hp-line {
+  position: absolute;
+  top: 52px;
+  left: 20px;
+  right: 20px;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 15px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 24px;
+  line-height: 30px;
+}
+.hud-layer[data-design="05"] .hud-hp-text {
+  color: var(--ink);
+  font-family: ui-monospace, "SFMono-Regular", "Consolas", monospace;
+  font-size: 26px;
+  line-height: 30px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+.hud-layer[data-design="05"] .hud-hp-text small {
+  color: var(--muted);
+  font-size: 24px;
+  font-weight: 400;
+}
+.hud-layer[data-design="05"] .hud-hp-track {
+  position: absolute;
+  top: 91px;
+  left: 48px;
+  width: 278px;
+  height: 4px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 2px;
+  background: #39493e;
+  box-shadow: none;
+  overflow: hidden;
+}
+.hud-layer[data-design="05"] .hud-hp-track i {
+  display: block;
+  width: var(--health);
+  height: 100%;
+  border-radius: 2px;
+  background: var(--health-fill);
+  box-shadow: none;
+}
+.hud-layer[data-design="05"] .hud-preview {
+  position: absolute;
+  top: 126px;
+  left: 139px;
+  right: auto;
+  width: 372px;
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 11px;
+  color: var(--muted);
+  font-size: 22px;
+  line-height: 29px;
+  white-space: nowrap;
+  text-shadow: 0 1px 2px #0b1410;
+}
+.hud-layer[data-design="05"] .hud-preview > span {
+  color: #d0dbcf;
+}
+.hud-layer[data-design="05"] .hud-preview small {
+  color: var(--muted);
+  font-size: 22px;
+}
+.hud-layer[data-design="05"] .hud-rail {
+  top: 220px;
+  right: 18px;
+  display: grid;
+  gap: 5px;
+}
+.hud-layer[data-design="05"] .hud-rail .hud-btn {
+  width: 110px;
+  height: 110px;
+}
+.hud-layer[data-design="05"] .hud-btn:hover,
+.hud-layer[data-design="05"] .hud-btn:active {
+  background: none;
+  border: 0;
+  box-shadow: none;
+  color: #eff6e8;
+  filter: none;
+}
+.hud-layer[data-design="05"] .hud-btn:hover .hud-glyph::before {
+  border-top-color: #c7d9cdb8;
+  border-left-color: #c7d9cdb8;
+}
+.hud-layer[data-design="05"] .hud-btn:focus-visible {
+  outline: 1px dashed #cad9cc;
+  outline-offset: -12px;
+}
+
+/* 06 / 剑锋：读数错层、细线斜切，入口以短横排降低纵向重量。 */
+.hud-layer[data-design="06"] {
+  --ink: #e4e6dc;
+  --muted: #c1c7bc;
+  --accent: #bac8bd;
+  --panel: transparent;
+  --edge: transparent;
+  --health-fill: #a6b9a4;
+  color: var(--ink);
+  font-family: "Songti SC", "STSong", "SimSun", serif;
+  text-shadow: 0 1px 2px #0b130e;
+}
+.hud-layer[data-design="06"] .hud-top {
+  top: 20px;
+  left: 20px;
+  right: 20px;
+  height: 163px;
+  background: none;
+  border: 0;
+  box-shadow: none;
+}
+.hud-layer[data-design="06"] .hud-vitals {
+  left: 142px;
+  top: 10px;
+  width: 365px;
+  height: 105px;
+  background: none;
+  border: 0;
+  box-shadow: none;
+}
+.hud-layer[data-design="06"] .hud-top::before,
+.hud-layer[data-design="06"] .hud-top::after,
+.hud-layer[data-design="06"] .hud-vitals::before,
+.hud-layer[data-design="06"] .hud-vitals::after {
+  content: none;
+}
+.hud-layer[data-design="06"] .hud-btn {
+  min-width: 110px;
+  min-height: 110px;
+  width: 110px;
+  height: 110px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0;
+  color: var(--ink);
+  background: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  text-shadow: 0 1px 2px #0b130e;
+  pointer-events: auto;
+  transition: color 120ms ease;
+}
+.hud-layer[data-design="06"] .hud-character {
+  left: -1px;
+  top: 6px;
+}
+.hud-layer[data-design="06"] .hud-menu {
+  right: -2px;
+  top: 6px;
+}
+.hud-layer[data-design="06"] .hud-glyph {
+  position: relative;
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  color: #c7d0c3;
+}
+.hud-layer[data-design="06"] .hud-glyph::after {
+  content: "";
+  position: absolute;
+  right: -2px;
+  bottom: -6px;
+  width: 12px;
+  height: 1px;
+  background: #a6b7a78c;
+  transform: rotate(-38deg);
+  transform-origin: right center;
+  pointer-events: none;
+}
+.hud-layer[data-design="06"] .hud-glyph svg {
+  width: 100%;
+  height: 100%;
+  stroke-width: 2;
+}
+.hud-layer[data-design="06"] .hud-btn-label {
+  color: var(--ink);
+  font-size: 25px;
+  line-height: 32px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+.hud-layer[data-design="06"] .hud-eyebrow {
+  display: none;
+}
+.hud-layer[data-design="06"] .hud-zone {
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin: 0;
+  color: var(--ink);
+  font-size: 33px;
+  line-height: 42px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+.hud-layer[data-design="06"] .hud-hp-line {
+  position: absolute;
+  top: 50px;
+  left: 96px;
+  right: 6px;
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 13px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 24px;
+  line-height: 30px;
+}
+.hud-layer[data-design="06"] .hud-hp-text {
+  color: var(--ink);
+  font-family: ui-monospace, "SFMono-Regular", "Consolas", monospace;
+  font-size: 26px;
+  line-height: 30px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+.hud-layer[data-design="06"] .hud-hp-text small {
+  color: var(--muted);
+  font-size: 24px;
+  font-weight: 400;
+}
+.hud-layer[data-design="06"] .hud-hp-track {
+  position: absolute;
+  top: 94px;
+  left: 0;
+  width: 359px;
+  height: 3px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: #3d4d42;
+  box-shadow: none;
+  clip-path: polygon(3px 0, 100% 0, calc(100% - 3px) 100%, 0 100%);
+  overflow: hidden;
+}
+.hud-layer[data-design="06"] .hud-hp-track i {
+  display: block;
+  width: var(--health);
+  height: 100%;
+  border-radius: 0;
+  background: var(--health-fill);
+  box-shadow: none;
+}
+.hud-layer[data-design="06"] .hud-preview {
+  position: absolute;
+  top: 132px;
+  left: 142px;
+  right: auto;
+  display: flex;
+  align-items: baseline;
+  gap: 13px;
+  color: var(--muted);
+  font-size: 22px;
+  line-height: 29px;
+  white-space: nowrap;
+  text-shadow: 0 1px 2px #0b130e;
+}
+.hud-layer[data-design="06"] .hud-preview > span {
+  color: #d9decf;
+}
+.hud-layer[data-design="06"] .hud-preview small {
+  color: var(--muted);
+  font-size: 22px;
+}
+.hud-layer[data-design="06"] .hud-rail {
+  top: 211px;
+  right: 12px;
+  display: grid;
+  gap: 6px;
+}
+.hud-layer[data-design="06"] .hud-rail .hud-btn {
+  width: 132px;
+  height: 110px;
+  justify-content: center;
+}
+.hud-layer[data-design="06"] .hud-btn:hover,
+.hud-layer[data-design="06"] .hud-btn:active {
+  background: none;
+  border: 0;
+  box-shadow: none;
+  color: #f0f3e5;
+  filter: none;
+}
+.hud-layer[data-design="06"] .hud-btn:focus-visible {
+  outline: 1px dashed #d0d8c7;
+  outline-offset: -12px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hud-layer[data-design="04"] .hud-btn,
+  .hud-layer[data-design="05"] .hud-btn,
+  .hud-layer[data-design="06"] .hud-btn {
+    transition: none;
+  }
+}

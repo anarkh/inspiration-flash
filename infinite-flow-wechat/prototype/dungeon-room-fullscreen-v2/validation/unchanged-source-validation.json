@@ -1,0 +1,10 @@
+{
+  "unchanged": {
+    "cocos/assets/scripts/ui/InfiniteFlowWalkScene.ts": true,
+    "cocos/assets/scripts/ui/walk-world.ts": true,
+    "cocos/assets/scripts/ui/scene-visuals.ts": true,
+    "cocos/assets/resources/dungeon-world/demon_tower_1-v1.png": true,
+    "prototype/dungeon-room-fit-v1/single-screen-room-v1.png": true
+  },
+  "scope": "HTML prototype only; production game code and original images preserved"
+}

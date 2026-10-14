@@ -1,0 +1,176 @@
+{
+  "before": [
+    {
+      "avatarHeight": 53,
+      "currencyHeight": 24,
+      "currencyText": "奖励点 1,280灵韵 36",
+      "name": "default",
+      "roleHeight": 75,
+      "stageWidth": 324,
+      "valueTops": [
+        188.09375,
+        200.09375
+      ],
+      "viewport": [
+        930,
+        828
+      ]
+    },
+    {
+      "avatarHeight": 53,
+      "currencyHeight": 24,
+      "currencyText": "奖励点 1,280灵韵 36",
+      "name": "320",
+      "roleHeight": 75,
+      "stageWidth": 287,
+      "valueTops": [
+        218.046875,
+        230.046875
+      ],
+      "viewport": [
+        320,
+        740
+      ]
+    },
+    {
+      "avatarHeight": 53,
+      "currencyHeight": 24,
+      "currencyText": "奖励点 1,280灵韵 36",
+      "name": "390",
+      "roleHeight": 75,
+      "stageWidth": 332,
+      "valueTops": [
+        218.046875,
+        230.046875
+      ],
+      "viewport": [
+        390,
+        844
+      ]
+    }
+  ],
+  "after": [
+    {
+      "avatarHeight": 53,
+      "currencyFits": true,
+      "currencyHeight": 14,
+      "currencyText": "奖励点1,280灵韵36",
+      "name": "default",
+      "overflow": false,
+      "roleHeight": 65,
+      "spanRects": [
+        {
+          "height": 14,
+          "left": 145.1484375,
+          "right": 199.2578125,
+          "top": 187.59375
+        },
+        {
+          "height": 14,
+          "left": 205.2578125,
+          "right": 237.4921875,
+          "top": 187.59375
+        }
+      ],
+      "stageWidth": 324,
+      "valueTops": [
+        189.09375,
+        189.09375
+      ],
+      "viewport": [
+        930,
+        828
+      ]
+    },
+    {
+      "avatarHeight": 53,
+      "currencyFits": true,
+      "currencyHeight": 14,
+      "currencyText": "奖励点1,280灵韵36",
+      "name": "320",
+      "overflow": false,
+      "roleHeight": 65,
+      "spanRects": [
+        {
+          "height": 14,
+          "left": 82,
+          "right": 136.109375,
+          "top": 217.546875
+        },
+        {
+          "height": 14,
+          "left": 142.109375,
+          "right": 174.34375,
+          "top": 217.546875
+        }
+      ],
+      "stageWidth": 287,
+      "valueTops": [
+        219.046875,
+        219.046875
+      ],
+      "viewport": [
+        320,
+        740
+      ]
+    },
+    {
+      "avatarHeight": 53,
+      "currencyFits": true,
+      "currencyHeight": 14,
+      "currencyText": "奖励点1,280灵韵36",
+      "name": "390",
+      "overflow": false,
+      "roleHeight": 65,
+      "spanRects": [
+        {
+          "height": 14,
+          "left": 94.4296875,
+          "right": 148.5390625,
+          "top": 217.546875
+        },
+        {
+          "height": 14,
+          "left": 154.5390625,
+          "right": 186.7734375,
+          "top": 217.546875
+        }
+      ],
+      "stageWidth": 332,
+      "valueTops": [
+        219.046875,
+        219.046875
+      ],
+      "viewport": [
+        390,
+        844
+      ]
+    }
+  ],
+  "final": {
+    "badges": 0,
+    "button": {
+      "height": 44,
+      "width": 64
+    },
+    "hash": "#10",
+    "player": {
+      "facing": "right",
+      "footX": "600",
+      "footY": "550",
+      "motion": "idle",
+      "player": ""
+    },
+    "roleHeight": 65,
+    "sheetClosed": true,
+    "values": [
+      "1,280",
+      "36"
+    ],
+    "viewport": [
+      930,
+      828
+    ]
+  },
+  "console": []
+}

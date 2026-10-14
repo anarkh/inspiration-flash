@@ -14,7 +14,7 @@ import type {
   PetId,
   Phase
 } from '@infinite-flow/core';
-import type { TacticalItemCategory } from '@infinite-flow/core/tactical-loadout';
+import type { TacticalItemCategory, TacticalRigSlotCategory } from '@infinite-flow/core/tactical-loadout';
 import type { RunProtocolId } from '@infinite-flow/core/run-protocols';
 import type {
   EquipmentMemoryId,
@@ -22,7 +22,7 @@ import type {
   EquipmentMemoryHuntStatus
 } from '@infinite-flow/core/equipment-memory-hunts';
 import type { EquipmentAttunementId } from '@infinite-flow/core/equipment-system';
-import type { RunRelicFrame, RunRelicId } from '@infinite-flow/core/run-relics';
+import type { RunRelicEffectContribution, RunRelicFrame, RunRelicId } from '@infinite-flow/core/run-relics';
 
 export type DeepReadonly<T> = T extends (...arguments_: never[]) => unknown
   ? T
@@ -190,6 +190,8 @@ export type MapViewModel = Readonly<{
   seed?: number;
   currentNodeId: string;
   nodes: readonly MapNodeViewModel[];
+  /** Undirected physical connections between known cells; not a promise of legal movement. */
+  knownEdges: readonly (readonly [string, string])[];
 }>;
 
 export type PendingChoiceViewModel = Readonly<{
@@ -203,6 +205,40 @@ export type PendingChoiceViewModel = Readonly<{
   title: string;
   message: string;
   actionIds: readonly string[];
+  /** Equipment selection cards share the inventory metadata; picking a card is host-local. */
+  equipmentOptions?: readonly EquipmentLootOptionViewModel[];
+  /** Actual pending-draft candidates in core order; picking a card is host-local. */
+  relicOptions?: readonly RelicChoiceViewModel[];
+}>;
+
+export type RelicChoiceViewModel = Readonly<{
+  relicId: RunRelicId;
+  name: string;
+  description: string;
+  frame: RunRelicFrame;
+  frameName: string;
+  visualAssetKey: string;
+  effects: RunRelicEffectContribution;
+  actionId: string;
+}>;
+
+export type RewardPreviewViewModel = Readonly<{
+  nodeId: string;
+  actionId: string;
+  /** Actual gains from a pure application transition, including all active bonuses. */
+  rewardPoints: number;
+  lingyun: number;
+  items: readonly Readonly<{
+    itemId: ItemId;
+    name: string;
+    description: string;
+    count: number;
+    visualAssetKey?: string;
+  }>[];
+  /** Actual restored HP after clamping to the current maximum. */
+  healing: number;
+  /** Present only when this claim really creates a nonempty pending relic draft. */
+  relicDraftId?: string;
 }>;
 
 export type EntryRouteContractTargetViewModel = Readonly<{
@@ -351,6 +387,37 @@ export type HubShopRowViewModel = Readonly<{
   actions: readonly ViewActionModel[];
 }>;
 
+/** Shared equipment readouts for loot cards and the owned-equipment inventory. */
+export type EquipmentItemViewModel = Readonly<{
+  equipmentId: EquipmentId;
+  name: string;
+  description: string;
+  slot: EquipmentSlot;
+  slotLabel: string;
+  level: number;
+  maxLevel: number;
+  rarity?: HubShopRowViewModel['rarity'];
+  visualAssetKey?: string;
+  /** Base material at level 1, including rolled base stats when present. */
+  baseStatsLabel: '基础属性（Lv.1）';
+  baseStatsReadout: string;
+  growthStatsReadout: string;
+  /** Fixed affix names and their combined contribution at the displayed level. */
+  affixReadout: string;
+  rollReadout?: string;
+}>;
+
+export type EquipmentLootOptionViewModel = EquipmentItemViewModel & Readonly<{
+  /** Points to the single claim command in the phase action list. */
+  actionId: string;
+}>;
+
+export type OwnedEquipmentEntryViewModel = HubShopRowViewModel & EquipmentItemViewModel & Readonly<{
+  equipped: boolean;
+  /** Inventory entries expose only wearing, without hub upgrade or commerce services. */
+  equipAction: ViewActionModel;
+}>;
+
 export type HubShopCatalogViewModel = Readonly<{
   panel: HubCatalogPanel;
   npcName: string;
@@ -375,6 +442,14 @@ export type HubEntryServiceViewModel = Readonly<{
     id: string;
     name: string;
     description: string;
+    shortDescription?: string;
+    dungeon?: Readonly<{
+      chapter: number;
+      recommendedPower: number;
+      status: 'locked' | 'available' | 'completed';
+      requirement: string;
+      visualAssetKey: string;
+    }>;
     selected: boolean;
     action: ViewActionModel;
   }>[];
@@ -561,10 +636,14 @@ export type ExploreDetailViewModel = Readonly<{
     nodeType: NodeType;
     description: string;
     cleared: boolean;
+    /** Visible encounter identity; node IDs may be aliases of the same monster. */
+    monsterId?: string;
   }>;
   /** Read-only chapter decision projection; present for every healthy run, never gated by pending. */
   chapterDecision?: ChapterDecisionViewModel;
   pending?: PendingChoiceViewModel;
+  /** Only present for an available, uncleared reward-claim command. */
+  rewardPreview?: RewardPreviewViewModel;
   equipmentMemoryHunt?: EquipmentMemoryHuntViewModel;
 }>;
 
@@ -649,6 +728,10 @@ export type CombatDetailViewModel = Readonly<{
     sealName: string;
   }>;
   turn: number;
+  /** Current weapon focus and the core-defined threshold for its combat skill. */
+  focus: Readonly<{ current: number; required: number }>;
+  guarding: boolean;
+  /** Retained for older hosts; combat actions no longer depend on this local toggle. */
   advancedExpanded: boolean;
   /** Read-only chapter law/pursuit context for the active run; absent when no run snapshot exists. */
   chapterContext?: CombatChapterContextViewModel;
@@ -839,6 +922,14 @@ export type CharacterLoadoutViewModel = Readonly<{
   attack: number;
   artPower: number;
   defense: number;
+  speed: number;
+  /** Acquired relics active during this exploration or combat; excludes draft candidates and archive seeds. */
+  runRelics: readonly Readonly<{
+    relicId: RunRelicId;
+    name: string;
+    description: string;
+    frameName: string;
+  }>[];
   equipment: readonly Readonly<{
     slot: EquipmentSlot;
     slotLabel: string;
@@ -847,11 +938,19 @@ export type CharacterLoadoutViewModel = Readonly<{
     level: number;
     maxLevel: number;
   }>[];
+  /** Permanently owned equipment, including worn entries; usable by the inventory in every phase. */
+  ownedEquipment: readonly OwnedEquipmentEntryViewModel[];
+  carrySlots: readonly Readonly<{
+    id: string;
+    label: string;
+    category: TacticalRigSlotCategory;
+    itemId?: ItemId;
+  }>[];
   items: readonly Readonly<{
     itemId: ItemId;
     name: string;
     category: TacticalItemCategory;
-    /** supply = 补给品（不占携行槽）；carry = 携行特殊道具（受 3 槽约束）。 */
+    /** supply = 补给品（不占携行槽）；carry = 携行特殊道具（受通用槽 + 装备附加槽约束）。 */
     itemGroup: 'supply' | 'carry';
     count: number;
     carried: boolean;

@@ -104,13 +104,19 @@ import {
 } from '@infinite-flow/core/task-system';
 import {
   CARRIED_TACTICAL_ITEM_IDS,
+  DEFAULT_GENERAL_TACTICAL_SLOTS,
   FIELD_SUPPLY_ITEM_IDS,
   TACTICAL_ITEM_IDS,
   TACTICAL_ITEM_CATEGORY_BY_ID,
   isFieldSupplyItemId
 } from '@infinite-flow/core/tactical-loadout';
 import { COCOS_DESIGN_TOKENS } from './tokens.js';
-import { buildHubOwnedLoadoutCatalog, buildHubShopCatalog } from './hub-shop.js';
+import {
+  buildEquipmentItemViewModel,
+  buildHubOwnedLoadoutCatalog,
+  buildHubShopCatalog,
+  buildOwnedEquipmentCatalog
+} from './hub-shop.js';
 import {
   HUB_PANELS,
   type ActionsSection,
@@ -160,6 +166,7 @@ import {
   type ResultPressureSettlementViewModel,
   type ResultProtocolSettlementViewModel,
   type ResultRouteContractSettlementViewModel,
+  type RewardPreviewViewModel,
   type ResultSettlementCard,
   type ResultSettlementInvalid,
   type RiskItem,
@@ -893,7 +900,7 @@ function buildEntryServices(
       name: '挑战副本',
       summary: `${dungeon.name}${selectedGate?.status === 'locked' ? ' · 未解锁' : ''}`,
       description: '选择本次挑战的副本。未解锁的副本可查看要求，满足条件后才能入场。',
-      options: gates.map((gate) => {
+      options: gates.map((gate, index) => {
         const selected = gate.dungeonId === draft.dungeonId;
         const status = gate.status === 'locked' ? '未解锁' : gate.status === 'completed' ? '已通关' : '已解锁';
         const description = `${status} · ${gate.requirementText}`;
@@ -901,6 +908,13 @@ function buildEntryServices(
           id: gate.dungeonId,
           name: gate.dungeonName,
           description,
+          dungeon: {
+            chapter: index + 1,
+            recommendedPower: DUNGEONS[gate.dungeonId].recommendedPower,
+            status: gate.status,
+            requirement: gate.requirementText,
+            visualAssetKey: `dungeon:${gate.dungeonId}`
+          },
           selected,
           action: selected
             ? disabledAction(`hub.entry.dungeon:select:${gate.dungeonId}`, gate.dungeonName, 'preparation', '当前已选择该副本。')
@@ -983,6 +997,11 @@ function buildEntryServices(
     bulwark: '偏向防御与恢复的回响。',
     wayfinder: '偏向探索与路线应对的回响。'
   };
+  const frameShortDescriptions: Readonly<Record<RunRelicFrame, string>> = {
+    assault: '偏向输出与战斗收益',
+    bulwark: '偏向防御、恢复与陷阱减伤',
+    wayfinder: '偏向探索、传送与节点收益'
+  };
   services.push({
     id: 'relic-frame',
     name: '遗物回响',
@@ -995,6 +1014,7 @@ function buildEntryServices(
         id: frame,
         name: `${RUN_RELIC_FRAME_DEFINITIONS[frame].name}回响`,
         description: `${frameDescriptions[frame]}每次提供 ${conduit.matched ? '3' : '2'} 个候选。`,
+        shortDescription: frameShortDescriptions[frame],
         selected,
         action: selected
           ? disabledAction(`hub.relic-frame:${frame}`, `${RUN_RELIC_FRAME_DEFINITIONS[frame].name}回响`, 'preparation', '当前已选择该回响方向。')
@@ -1547,6 +1567,33 @@ function buildEquipmentMemoryLibraryProjection(
   };
 }
 
+function buildEquipmentEquipAction(
+  state: GameState,
+  equipmentId: EquipmentId,
+  actionId = `hub.equipment.equip:${equipmentId}`,
+  placement: ViewActionModel['placement'] = 'primary'
+): ViewActionModel {
+  const equipment = EQUIPMENT[equipmentId];
+  const slotLabel = EQUIPMENT_SLOT_LABELS[equipment.slot];
+  const readout = `穿戴到${slotLabel}，装备属性立即生效；同部位只能装备一件，换下的装备保留在背包。`;
+  if (state.phase === 'combat') {
+    return disabledAction(actionId, `装备${equipment.name}`, placement, '战斗中不能更换装备，请在战斗结束后穿戴。', { readout });
+  }
+  if (state.phase !== 'hub' && state.phase !== 'explore') {
+    return disabledAction(actionId, `装备${equipment.name}`, placement, '请返回主神空间或在探索中穿戴装备。', { readout });
+  }
+  return state.equipped[equipment.slot] === equipmentId
+    ? disabledAction(actionId, `装备${equipment.name}`, placement, `${equipment.name}已经装备在${slotLabel}槽位。`, { readout })
+    : previewCommandAction(
+        state,
+        actionId,
+        `装备${equipment.name}`,
+        placement,
+        { type: 'hub/equip-equipment', equipmentId },
+        { recommendation: 'recommended', readout }
+      );
+}
+
 function buildEquipmentPanel(
   state: GameState,
   requestedId: string | undefined,
@@ -1567,16 +1614,7 @@ function buildEquipmentPanel(
     owned
       ? disabledAction(`hub.equipment.buy:${equipmentId}`, `兑换${equipment.name}`, 'primary', `装备架已经拥有${equipment.name}。`, { readout: `兑换后放入装备架，装备到角色身上才生效。${equipment.description}` })
       : buildEquipmentPurchaseAction(state, equipmentId),
-    equipped
-      ? disabledAction(`hub.equipment.equip:${equipmentId}`, `装备${equipment.name}`, 'primary', `${equipment.name}已经装备在${EQUIPMENT_SLOT_LABELS[equipment.slot]}槽位。`, { readout: `穿戴到${EQUIPMENT_SLOT_LABELS[equipment.slot]}，装备属性立即生效；同部位只能装备一件。` })
-      : previewCommandAction(
-          state,
-          `hub.equipment.equip:${equipmentId}`,
-          `装备${equipment.name}`,
-          'primary',
-          { type: 'hub/equip-equipment', equipmentId },
-          { recommendation: 'recommended', readout: `替换当前${EQUIPMENT_SLOT_LABELS[equipment.slot]}装备，属性立即生效；换下的装备保留在装备架。` }
-        ),
+    buildEquipmentEquipAction(state, equipmentId),
     previewCommandAction(
       state,
       `hub.equipment.upgrade:${equipmentId}`,
@@ -2184,16 +2222,16 @@ export function buildHubOwnedLoadoutViewModel(
   ));
 }
 
-function getPhysicalAdjacentIds(state: GameState): Set<string> {
+function getPhysicalAdjacentIds(state: GameState, nodeId = state.run?.currentNodeId): Set<string> {
   const run = state.run;
   const dungeon = getCurrentDungeonDefinition(state);
   if (!run || !dungeon) return new Set();
   if (run.protocol?.id === 'deep' && run.infernoMap) {
     return new Set(
-      run.infernoMap.nodes.find((node) => node.nodeId === run.currentNodeId)?.connectionIds ?? []
+      run.infernoMap.nodes.find((node) => node.nodeId === nodeId)?.connectionIds ?? []
     );
   }
-  const current = dungeon.nodes.find((node) => node.id === run.currentNodeId);
+  const current = dungeon.nodes.find((node) => node.id === nodeId);
   if (!current) return new Set();
   return new Set(dungeon.nodes
     .filter((node) => Math.abs(node.position.x - current.position.x) + Math.abs(node.position.y - current.position.y) === 1)
@@ -2265,6 +2303,15 @@ function buildMap(state: GameState): Readonly<{ map: MapViewModel; movementActio
       ...(disabledReason ? { disabledReason } : {})
     };
   });
+  const knownNodes = nodes.filter((node): node is MapNodeViewModel & { nodeId: string } => node.nodeId !== undefined);
+  const knownEdges: [string, string][] = [];
+  for (let index = 0; index < knownNodes.length; index += 1) {
+    const from = knownNodes[index]!;
+    const neighbors = getPhysicalAdjacentIds(state, from.nodeId);
+    for (const to of knownNodes.slice(index + 1)) {
+      if (neighbors.has(to.nodeId)) knownEdges.push([from.cellId, to.cellId]);
+    }
+  }
   return {
     map: {
       dungeonId: dungeon.id,
@@ -2273,7 +2320,8 @@ function buildMap(state: GameState): Readonly<{ map: MapViewModel; movementActio
       height: dungeon.grid.height,
       ...(run.infernoMap ? { seed: run.infernoMap.seed } : {}),
       currentNodeId: run.currentNodeId,
-      nodes
+      nodes,
+      knownEdges
     },
     movementActions
   };
@@ -2416,16 +2464,22 @@ function buildPendingProjection(state: GameState): PendingProjection {
   if (equipmentOffer) {
     const actions = equipmentOffer.equipmentIds.map((equipmentId) => commandAction(
       `pending.equipment:${equipmentOffer.offerId}:${equipmentId}`,
-      `选择${EQUIPMENT[equipmentId].name}`,
+      `领取${EQUIPMENT[equipmentId].name}`,
       'node',
-      { type: 'node/resolve-equipment-loot', equipmentId }
-    ));
-    actions.push(commandAction(
-      `pending.equipment:${equipmentOffer.offerId}:skip`, '放弃装备', 'node',
-      { type: 'node/resolve-equipment-loot' }, { emphasis: 'quiet' }
+      { type: 'node/resolve-equipment-loot', equipmentId },
+      { readout: '领取后永久拥有，放入背包；探索中可手动穿戴。' }
     ));
     return {
-      pending: { kind: 'equipment-offer', title: '精英装备三选一', message: '选择一件装备，或放弃本次掉落。', actionIds: actions.map((action) => action.actionId) },
+      pending: {
+        kind: 'equipment-offer',
+        title: '精英装备三选一',
+        message: '选择一件装备领取。',
+        actionIds: actions.map((action) => action.actionId),
+        equipmentOptions: equipmentOffer.equipmentIds.map((equipmentId, index) => ({
+          ...buildEquipmentItemViewModel(equipmentId, 1, equipmentOffer.equipmentRolls?.[equipmentId]),
+          actionId: actions[index]!.actionId
+        }))
+      },
       actions
     };
   }
@@ -2440,7 +2494,25 @@ function buildPendingProjection(state: GameState): PendingProjection {
       { readout: RUN_RELIC_DEFINITIONS[relicId].description }
     ));
     return {
-      pending: { kind: 'relic-draft', title: '回响遗物', message: '选择一件本局回响后继续。', actionIds: actions.map((action) => action.actionId) },
+      pending: {
+        kind: 'relic-draft',
+        title: '回响遗物',
+        message: '选择一件本局回响后继续。',
+        actionIds: actions.map((action) => action.actionId),
+        relicOptions: relicDraft.candidateIds.map((relicId, index) => {
+          const relic = RUN_RELIC_DEFINITIONS[relicId];
+          return {
+            relicId,
+            name: relic.name,
+            description: relic.description,
+            frame: relic.frame,
+            frameName: RUN_RELIC_FRAME_DEFINITIONS[relic.frame].name,
+            visualAssetKey: `item:run_relic_${relicId}`,
+            effects: relic.effects,
+            actionId: actions[index]!.actionId
+          };
+        })
+      },
       actions
     };
   }
@@ -2966,11 +3038,54 @@ function buildCombatChapterContext(state: GameState): CombatChapterContextViewMo
   };
 }
 
+function buildRewardNodePreview(
+  state: GameState,
+  actions: readonly ViewActionModel[]
+): RewardPreviewViewModel | undefined {
+  const nodeId = state.run?.currentNodeId;
+  if (!nodeId || state.run?.clearedNodeIds.includes(nodeId)) return undefined;
+  const action = actions.find(candidate => candidate.enabled
+    && candidate.event?.kind === 'command'
+    && candidate.event.command.type === 'node/collect-reward');
+  if (!action || action.event?.kind !== 'command') return undefined;
+
+  // Dry-run the same immutable transition the claim CTA will execute. This also
+  // includes method/relic bonuses, clear milestones, healing and draft creation.
+  const preview = reduceGameCommand(state, action.event.command);
+  if (preview.status === 'rejected') return undefined;
+  const next = preview.state;
+  const pendingDraft = next.run?.relicState?.pendingDraft;
+  return {
+    nodeId,
+    actionId: action.actionId,
+    rewardPoints: next.rewardPoints - state.rewardPoints,
+    lingyun: next.lingyun - state.lingyun,
+    // The run bag is the claim record, including currencies such as legacy scrip
+    // which intentionally do not become a usable inventory stack.
+    items: (Object.keys(next.run!.lootBag.items) as ItemId[]).flatMap(itemId => {
+      const count = (next.run!.lootBag.items[itemId] ?? 0) - (state.run!.lootBag.items[itemId] ?? 0);
+      if (count <= 0) return [];
+      const visualAssetKey = verifiedVisualAssetKey('item', itemId);
+      return [{
+        itemId,
+        name: ITEMS[itemId].name,
+        description: ITEMS[itemId].description,
+        count,
+        ...(visualAssetKey === undefined ? {} : { visualAssetKey })
+      }];
+    }),
+    healing: Math.max(0, next.player.hp - state.player.hp),
+    ...(pendingDraft && pendingDraft.candidateIds.length > 0
+      ? { relicDraftId: pendingDraft.draftId }
+      : {})
+  };
+}
+
 function buildExploreProjection(state: GameState): PhaseProjection {
   if (!state.run) {
     const detail: ExploreDetailViewModel = {
       kind: 'explore',
-      map: { dungeonId: FIRST_DUNGEON_ID, dungeonName: '无进行中副本', width: 0, height: 0, currentNodeId: '', nodes: [] },
+      map: { dungeonId: FIRST_DUNGEON_ID, dungeonName: '无进行中副本', width: 0, height: 0, currentNodeId: '', nodes: [], knownEdges: [] },
       currentNode: { nodeId: '', title: '状态缺失', nodeType: 'exit', description: '副本状态缺失。', cleared: false }
     };
     return {
@@ -3007,6 +3122,9 @@ function buildExploreProjection(state: GameState): PhaseProjection {
   const loot = state.run.lootBag;
   const equipmentMemoryHunt = buildEquipmentMemoryHuntProjection(state);
   const chapterDecision = buildChapterDecision(state, dungeon.id, dungeon.name);
+  const rewardPreview = currentNode.type === 'reward'
+    ? buildRewardNodePreview(state, actions)
+    : undefined;
   const detail: ExploreDetailViewModel = {
     kind: 'explore',
     map,
@@ -3015,10 +3133,12 @@ function buildExploreProjection(state: GameState): PhaseProjection {
       title: currentNode.title,
       nodeType: currentNode.type,
       description: currentNode.description,
-      cleared: state.run.clearedNodeIds.includes(currentNode.id)
+      cleared: state.run.clearedNodeIds.includes(currentNode.id),
+      ...(currentNode.monsterId === undefined ? {} : { monsterId: currentNode.monsterId })
     },
     chapterDecision,
     ...(pendingProjection.pending ? { pending: pendingProjection.pending } : {}),
+    ...(rewardPreview ? { rewardPreview } : {}),
     ...(equipmentMemoryHunt ? { equipmentMemoryHunt } : {})
   };
   const lootPoints = loot.rewardPoints ?? 0;
@@ -3041,7 +3161,9 @@ function buildExploreProjection(state: GameState): PhaseProjection {
               : 'neutral' as const
         }]
       : []),
-    ...(law ? [{ id: 'law', label: law.display.title, value: law.display.status, symbol: '律', severity: law.display.severity === 'danger' ? 'danger' as const : law.display.severity === 'warning' ? 'warning' as const : law.display.severity === 'resolved' ? 'positive' as const : 'neutral' as const }] : [])
+    ...(law ? [{ id: 'law', label: law.display.title, value: law.display.status, symbol: '律', severity: law.display.severity === 'danger' ? 'danger' as const : law.display.severity === 'warning' ? 'warning' as const : law.display.severity === 'resolved' ? 'positive' as const : 'neutral' as const }] : []),
+    { id: 'reward-points', label: '奖励点', value: String(state.rewardPoints), symbol: '点', severity: 'neutral' },
+    { id: 'lingyun', label: '灵蕴', value: String(state.lingyun), symbol: '蕴', severity: 'neutral' }
   ];
   const risks: RiskItem[] = [];
   if (state.player.hp <= state.player.maxHp * 0.3) risks.push({ id: 'low-hp', severity: 'danger', label: '生命危险', reason: '当前生命低于或等于 30%，继续探索可能触发强制回收。' });
@@ -3084,9 +3206,12 @@ function getCombatActionAvailability(state: GameState, action: CombatAction): Re
     const status = getWeaponSkillStatus(state);
     return { available: status.available, ...(status.unavailableReason ? { reason: status.unavailableReason } : {}) };
   }
-  if (action === 'use_healing_pill') return isTacticalItemAvailable(state, 'healing_pill')
-    ? { available: true }
-    : { available: false, reason: '止血丹库存不足或被场域封存。' };
+  if (action === 'use_healing_pill') {
+    if (!isTacticalItemAvailable(state, 'healing_pill')) return { available: false, reason: '止血丹库存不足或被场域封存。' };
+    return state.player.hp < state.player.maxHp
+      ? { available: true }
+      : { available: false, reason: '当前生命已满，无需使用止血丹。' };
+  }
   if (action === 'use_thunder_talisman') return isTacticalItemAvailable(state, 'thunder_talisman')
     ? { available: true }
     : { available: false, reason: '雷火符未携行（或本局未拾取）、库存不足或被场域封存。' };
@@ -3129,6 +3254,8 @@ function buildEquipmentMemoryCombatProjection(
 function buildCombatProjection(state: GameState, localUiState: PresentationLocalUiState): PhaseProjection {
   const profile = getCombatEncounterProfile(state);
   const combat = state.combat;
+  const weaponSkill = getWeaponSkillStatus(state);
+  const focus = { current: weaponSkill.currentFocus, required: weaponSkill.requiredFocus };
   if (!combat || !profile) {
     const detail: CombatDetailViewModel = {
       kind: 'combat',
@@ -3136,6 +3263,8 @@ function buildCombatProjection(state: GameState, localUiState: PresentationLocal
       enemy: { id: 'missing', name: '未知敌人', hp: 0, maxHp: 1, hpPercent: 0, ability: '战斗快照缺失。' },
       intent: { id: 'missing', name: '未知意图', severity: 'danger', consequence: '宿主应恢复最近一次有效快照。', recommendedActions: [], dangerousActions: [] },
       turn: 0,
+      focus,
+      guarding: Boolean(combat?.guarding),
       advancedExpanded: Boolean(localUiState.advancedCombatExpanded)
     };
     return {
@@ -3164,13 +3293,17 @@ function buildCombatProjection(state: GameState, localUiState: PresentationLocal
     const status = availability.get(action)!;
     const preview = action === 'attack' || action === 'art' ? getCombatActionDamagePreview(state, action) : undefined;
     const dangerous = intent.dangerousActions.includes(action) || preview?.playerWillFall === true;
-    const readout = preview
-      ? `预计伤害 ${preview.damage}；敌方余血 ${preview.monsterHpAfter}。${preview.playerWillFall ? ' 行动后将濒死。' : ''}`
-      : action === 'weapon_skill'
-        ? `战意 ${getWeaponSkillStatus(state).currentFocus}/${getWeaponSkillStatus(state).requiredFocus}`
-        : action === 'use_healing_pill' || action === 'use_thunder_talisman'
-          ? `库存 ${state.inventory[action === 'use_healing_pill' ? 'healing_pill' : 'thunder_talisman']}`
-          : undefined;
+    const readout = action === 'art'
+      ? `${preview ? `术法伤害 ${preview.damage}；敌方余血 ${preview.monsterHpAfter}。` : '造成术法伤害。'}推进 1 回合，敌人存活时反击。${preview?.playerWillFall ? ' 行动后将濒死。' : ''}`
+      : preview
+        ? `预计伤害 ${preview.damage}；敌方余血 ${preview.monsterHpAfter}。${preview.playerWillFall ? ' 行动后将濒死。' : ''}`
+        : action === 'weapon_skill'
+          ? `战意 ${focus.current}/${focus.required}`
+          : action === 'use_healing_pill'
+            ? `库存 ${state.inventory.healing_pill}；基础回复 36 点生命（受场域影响）。推进 1 回合，敌人会反击。`
+            : action === 'use_thunder_talisman'
+              ? `库存 ${state.inventory.thunder_talisman}`
+              : undefined;
     if (!status.available) return disabledAction(`combat.action:${action}`, COMBAT_ACTION_LABELS[action], 'combat', status.reason ?? '当前动作不可用。', { combatAction: action, readout });
     return commandAction(
       `combat.action:${action}`,
@@ -3197,35 +3330,36 @@ function buildCombatProjection(state: GameState, localUiState: PresentationLocal
       { emphasis: 'primary', recommendation: 'recommended', readout: '目标已进入捕获线；继续攻击可能关闭窗口。' }
     ));
   }
-  actions.push(localAction(
-    'combat.advanced.toggle',
-    localUiState.advancedCombatExpanded ? '收起进阶战术' : '展开进阶战术',
-    'advanced',
-    { type: 'combat/set-advanced-expanded', expanded: !localUiState.advancedCombatExpanded },
-    { emphasis: 'quiet' }
-  ));
-  if (localUiState.advancedCombatExpanded) {
-    for (const snapshot of getCurrentRunMethodSnapshots(state)) {
-      const status = getCurrentMethodTechniqueStatus(state, snapshot.methodId);
-      actions.push(status.available
-        ? commandAction(`combat.method:${snapshot.methodId}`, status.definition?.name ?? METHODS[snapshot.methodId].name, 'advanced', { type: 'combat/use-method-technique', methodId: snapshot.methodId })
-        : disabledAction(`combat.method:${snapshot.methodId}`, status.definition?.name ?? METHODS[snapshot.methodId].name, 'advanced', status.unavailableReason ?? '功法技当前不可用。'));
-    }
-    const companion = getCurrentCompanionAssistStatus(state);
-    if (companion.snapshot) {
-      actions.push(companion.available
-        ? commandAction('combat.companion-assist', companion.definition?.assistName ?? '同伴援护', 'advanced', { type: 'combat/use-companion-assist' })
-        : disabledAction('combat.companion-assist', companion.definition?.assistName ?? '同伴援护', 'advanced', companion.unavailableReason ?? '同伴援护当前不可用。'));
-    }
-    const bloodline = getCurrentBloodlineSurgeStatus(state);
-    if (bloodline.snapshot) {
-      actions.push(bloodline.available
-        ? commandAction('combat.bloodline-surge', '血统爆发', 'advanced', { type: 'combat/use-bloodline-surge' })
-        : disabledAction('combat.bloodline-surge', '血统爆发', 'advanced', bloodline.unavailableReason ?? '血统爆发当前不可用。'));
-    }
-    actions.push(...buildSoulSkillActions(state, 'advanced'));
-    actions.push(commandAction('combat.retreat-run', '放弃本轮并回收', 'advanced', { type: 'run/retreat' }, { emphasis: 'danger', riskReason: '该动作结束整轮副本，并按撤退规则结算战利品。' }));
+  for (const snapshot of getCurrentRunMethodSnapshots(state)) {
+    const status = getCurrentMethodTechniqueStatus(state, snapshot.methodId);
+    const effect = status.effect;
+    const effectParts = effect ? [
+      ...(effect.guarding ? ['进入守势'] : []),
+      ...(effect.clearsRustPoison ? ['清除锈疫'] : []),
+      ...(effect.clearsMirrorSlow ? ['清除镜缓'] : []),
+      ...(effect.focusGain > 0 ? [`获得至多 ${effect.focusGain} 点战意`] : []),
+      ...(effect.breathGain > 0 ? [`获得至多 ${effect.breathGain} 层蓄息`] : []),
+      ...(effect.healPercent > 0 ? [`回复 ${effect.healPercent}% 最大生命`] : [])
+    ] : [];
+    const readout = `${METHODS[snapshot.methodId].name}${effectParts.length > 0 ? ` · ${effectParts.join('、')}` : ''}。每场一次，不耗回合，不触发反击。`;
+    actions.push(status.available
+      ? commandAction(`combat.method:${snapshot.methodId}`, status.definition?.name ?? METHODS[snapshot.methodId].name, 'advanced', { type: 'combat/use-method-technique', methodId: snapshot.methodId }, { readout })
+      : disabledAction(`combat.method:${snapshot.methodId}`, status.definition?.name ?? METHODS[snapshot.methodId].name, 'advanced', status.unavailableReason ?? '功法技当前不可用。', { readout }));
   }
+  const companion = getCurrentCompanionAssistStatus(state);
+  if (companion.snapshot) {
+    actions.push(companion.available
+      ? commandAction('combat.companion-assist', companion.definition?.assistName ?? '同伴援护', 'advanced', { type: 'combat/use-companion-assist' })
+      : disabledAction('combat.companion-assist', companion.definition?.assistName ?? '同伴援护', 'advanced', companion.unavailableReason ?? '同伴援护当前不可用。'));
+  }
+  const bloodline = getCurrentBloodlineSurgeStatus(state);
+  if (bloodline.snapshot) {
+    actions.push(bloodline.available
+      ? commandAction('combat.bloodline-surge', '血统爆发', 'advanced', { type: 'combat/use-bloodline-surge' })
+      : disabledAction('combat.bloodline-surge', '血统爆发', 'advanced', bloodline.unavailableReason ?? '血统爆发当前不可用。'));
+  }
+  actions.push(...buildSoulSkillActions(state, 'advanced'));
+  actions.push(commandAction('combat.retreat-run', '放弃本轮并回收', 'advanced', { type: 'run/retreat' }, { emphasis: 'danger', riskReason: '该动作结束整轮副本，并按撤退规则结算战利品。' }));
 
   const maxHp = profile.monster.maxHp;
   const equipmentMemory = buildEquipmentMemoryCombatProjection(state);
@@ -3258,6 +3392,8 @@ function buildCombatProjection(state: GameState, localUiState: PresentationLocal
       }
     } : {}),
     turn: combat.turn,
+    focus,
+    guarding: combat.guarding,
     advancedExpanded: Boolean(localUiState.advancedCombatExpanded),
     ...(chapterContext ? { chapterContext } : {}),
     ...(equipmentMemory ? { equipmentMemory } : {})
@@ -3280,7 +3416,9 @@ function buildCombatProjection(state: GameState, localUiState: PresentationLocal
           severity: equipmentMemory.enabled ? 'positive' as const : 'danger' as const
         }]
       : []),
-    ...(profile.boss ? [{ id: 'boss-phase', label: '首领阶段', value: profile.boss.phase === 'sealed' ? '封印阶段' : profile.boss.definition.awakenedPhaseName, symbol: profile.boss.phase === 'sealed' ? '锁' : '醒', severity: profile.boss.phase === 'awakened' ? 'danger' as const : 'warning' as const }] : [])
+    ...(profile.boss ? [{ id: 'boss-phase', label: '首领阶段', value: profile.boss.phase === 'sealed' ? '封印阶段' : profile.boss.definition.awakenedPhaseName, symbol: profile.boss.phase === 'sealed' ? '锁' : '醒', severity: profile.boss.phase === 'awakened' ? 'danger' as const : 'warning' as const }] : []),
+    { id: 'reward-points', label: '奖励点', value: String(state.rewardPoints), symbol: '点', severity: 'neutral' },
+    { id: 'lingyun', label: '灵蕴', value: String(state.lingyun), symbol: '蕴', severity: 'neutral' }
   ];
   const guide = getExplorationGuide(state);
   const risks: RiskItem[] = [
@@ -3961,7 +4099,8 @@ function buildResultProjection(state: GameState): PhaseProjection {
  */
 function buildCharacterLoadout(state: GameState): CharacterLoadoutViewModel {
   const stats = getDerivedStats(state);
-  const prepared = new Set(getTacticalLoadoutStatus(state).preparedItemIds);
+  const loadout = getTacticalLoadoutStatus(state);
+  const prepared = new Set(loadout.preparedItemIds);
   return {
     power: getPlayerPower(state),
     hp: state.player.hp,
@@ -3969,6 +4108,18 @@ function buildCharacterLoadout(state: GameState): CharacterLoadoutViewModel {
     attack: stats.attack,
     artPower: stats.artPower,
     defense: stats.defense,
+    speed: stats.speed,
+    runRelics: state.phase === 'explore' || state.phase === 'combat'
+      ? (state.run?.relicState?.acquiredIds ?? []).map((relicId) => {
+          const relic = RUN_RELIC_DEFINITIONS[relicId];
+          return {
+            relicId,
+            name: relic.name,
+            description: relic.description,
+            frameName: RUN_RELIC_FRAME_DEFINITIONS[relic.frame].name,
+          };
+        })
+      : [],
     equipment: EQUIPMENT_SLOTS.map((slot) => {
       const equipmentId = state.equipped[slot]!;
       const equipment = EQUIPMENT[equipmentId];
@@ -3981,6 +4132,23 @@ function buildCharacterLoadout(state: GameState): CharacterLoadoutViewModel {
         maxLevel: equipment.maxLevel,
       };
     }),
+    ownedEquipment: buildOwnedEquipmentCatalog(state, equipmentId => buildEquipmentEquipAction(
+      state, equipmentId, `inventory.equipment.equip:${equipmentId}`, 'preparation'
+    )),
+    carrySlots: [
+      ...Array.from({ length: DEFAULT_GENERAL_TACTICAL_SLOTS }, (_, index) => ({
+        id: `general-${index}`,
+        label: '通用槽',
+        category: 'any' as const,
+        itemId: loadout.generalSlotItemIds[index],
+      })),
+      ...loadout.activeFieldRigs.map((rig, slotIndex) => ({
+        id: rig.id,
+        label: rig.name,
+        category: rig.category,
+        itemId: loadout.specializedSlotAssignments.find((assignment) => assignment.slotIndex === slotIndex)?.itemId,
+      })),
+    ],
     items: [
       ...FIELD_SUPPLY_ITEM_IDS.map((itemId) => ({
         itemId,

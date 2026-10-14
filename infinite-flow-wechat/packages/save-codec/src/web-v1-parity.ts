@@ -33,6 +33,7 @@ import {
   normalizeMethodRunSnapshots,
   normalizePreparedEquipmentMemoryHunt,
   normalizeRunPursuitState,
+  promoteRunEquipmentOwnership,
   resolveRunFailure,
   sanitizeEquipmentMemoryMap,
   type ActiveEquipmentCommission,
@@ -1774,6 +1775,8 @@ function isSavedDungeonRun(value: unknown): value is SavedDungeonRun {
     isStringArray(value.eventLog) &&
     (value.lootBag === undefined || isSavedRunLootBag(value.lootBag)) &&
     (value.lootOffersMade === undefined || isNonNegativeInteger(value.lootOffersMade)) &&
+    (value.permanentlyOwnedEquipmentIds === undefined ||
+      isKnownStringArray(value.permanentlyOwnedEquipmentIds, EQUIPMENT)) &&
     (value.tacticalLoadout === undefined || isSavedTacticalLoadoutSnapshot(value.tacticalLoadout)) &&
     (value.protocol === undefined || isSavedRunProtocolSnapshot(value.protocol)) &&
     (value.infernoMap === undefined || (
@@ -2098,6 +2101,9 @@ function normalizeSavedState(savedState: SavedGameState): EquipmentMemoryGameSta
         ),
         lootBag: normalizedRunSource.lootBag ?? createEmptyRunLootBag<ItemId, EquipmentId>(),
         lootOffersMade: normalizedRunSource.lootOffersMade ?? 0,
+        ...(normalizedRunSource.permanentlyOwnedEquipmentIds === undefined
+          ? {}
+          : { permanentlyOwnedEquipmentIds: [...normalizedRunSource.permanentlyOwnedEquipmentIds] }),
         tacticalLoadout: normalizedRunSource.tacticalLoadout,
         pressureState: normalizeRunPressureState(normalizedRunSource.pressureState),
         ...(Object.prototype.hasOwnProperty.call(normalizedRunSource, 'combatReplayState')
@@ -2288,8 +2294,7 @@ function normalizeSavedState(savedState: SavedGameState): EquipmentMemoryGameSta
   };
   const maxHp = getDerivedStats(normalized).maxHp;
   const maxHpDelta = maxHp - savedState.player.maxHp;
-
-  return {
+  const restored = {
     ...normalized,
     player: {
       ...normalized.player,
@@ -2297,6 +2302,7 @@ function normalizeSavedState(savedState: SavedGameState): EquipmentMemoryGameSta
       maxHp
     }
   };
+  return promoteRunEquipmentOwnership(restored);
 }
 
 function discardInvalidSavedRun(

@@ -1,0 +1,75 @@
+{
+  "stage": "image prototype; no game integration",
+  "request": "single screen dungeon room with a central monster and four cardinal doors",
+  "viewports": {
+    "390x844": {
+      "hud": [
+        0,
+        0,
+        390,
+        136
+      ],
+      "room": [
+        12,
+        142,
+        366,
+        558
+      ],
+      "controls": [
+        0,
+        724,
+        390,
+        120
+      ],
+      "monsterArtHeight": 82,
+      "doorArtHeight": 64
+    },
+    "320x568": {
+      "hud": [
+        0,
+        0,
+        320,
+        136
+      ],
+      "room": [
+        10,
+        142,
+        300,
+        300
+      ],
+      "controls": [
+        0,
+        448,
+        320,
+        120
+      ],
+      "monsterArtHeight": 68,
+      "doorArtHeight": 54
+    }
+  },
+  "composition": {
+    "monster": "center",
+    "doors": [
+      "north edge midpoint",
+      "east edge midpoint",
+      "south edge midpoint",
+      "west edge midpoint"
+    ],
+    "hero": "below center",
+    "camera": "fixed; whole room visible",
+    "roomScroll": false,
+    "minimumTouchSize": 44
+  },
+  "assets": {
+    "monster": "../../cocos/assets/resources/monster-world/fog-lesser-demon-world-v1.png",
+    "door": "../../cocos/assets/resources/dungeon-world/ruined-stone-gate-v1.png",
+    "floor": "../../cocos/assets/resources/dungeon-world/demon_tower_1-v1.png"
+  },
+  "boundaries": [
+    "prototype composition only",
+    "preserve existing commands and node graph",
+    "closed or unknown routes remain closed or unknown",
+    "single central slot follows actual node type when integrated",
+    "no live game reload, command, choice or save mutation"
+  ]
+}

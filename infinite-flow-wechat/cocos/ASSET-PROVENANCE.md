@@ -48,24 +48,57 @@ transformation audit data.
 ## Cocos walking atlas
 
 `character:reincarnator_walk` resolves to
-`character/reincarnator-walk-v1` through the same `ManifestCocosAssetPort` as the
+`character/reincarnator-walk-v2` through the same `ManifestCocosAssetPort` as the
 other resources. `character:reincarnator` remains the original portrait key.
 
-- Authoritative source: `infinite-flow-wechat/art-source/reincarnator-walk-v1.png`.
-- Exact generation prompt: `infinite-flow-wechat/art-source/reincarnator-walk-v1.prompt.txt`.
-- Cocos target: `assets/resources/character/reincarnator-walk-v1.png`.
-- Generation: built-in `image_gen`, 2026-09-07; original RGBA PNG, with no image post-processing.
-- Verified dimensions: 1254 × 1254, 8-bit RGBA, 1,190,135 bytes. The prompt requested
-  1024 × 1024; runtime cells use the actual dimensions divided into four rows and
-  four columns. Rows face down, left, right, and up, with four walking frames per row.
+- Authoritative source: `infinite-flow-wechat/art-source/hero-redesign/reincarnator-walk-v2.png`.
+- Exact generation prompt: `infinite-flow-wechat/art-source/hero-redesign/prompts/walk-v2-production.txt`.
+- Cocos target: `assets/resources/character/reincarnator-walk-v2.png`.
+- Generation: built-in `image_gen`, 2026-10-08; approved adult character design,
+  with revised side-facing passing poses. Original RGBA PNG, no pixel post-processing.
+- Verified dimensions: 1254 × 1254, 8-bit RGBA, 1,253,030 bytes. Source rows and
+  columns are unevenly spaced. `ui/hero-walk-atlas.ts` uses 16 measured source
+  rectangles and offsets on a shared 336 × 336 logical canvas, with feet at
+  `(168, 320.16)` and `Sprite.trim=false`. Rows face down, left, right, and up;
+  animation remains four frames per direction at 9 fps. Movement and collision
+  retain the existing world anchor.
 - Source and target SHA-256:
-  `60ab8c83067b17079d4eed210a1764bef65af66cca2585afffbe61472f1548a9`.
+  `897deadd34e18c9e3c8e7d52461a8fddac5272503696e263cee2e7baec6bb918`.
 - Transfer: byte-identical `cp`, macOS 26.5.1 (25F80); source alpha remains intact.
-- New image UUID: `3fb66656-ebec-4df1-b04a-1ffd729428ba`, with a texture redirect
+- Preserved image UUID: `3fb66656-ebec-4df1-b04a-1ffd729428ba`, with a texture redirect
   using the existing Creator 3.8.8 metadata format. This is source metadata, not
-  evidence that Creator preview or a device accepted the new candidate.
+  evidence of device acceptance. The old PNG and metadata are archived in
+  `art-source/hero-redesign/before/` outside the runtime resource tree.
 
-The 188-asset snapshot before dungeon world backgrounds was 23,491,414 bytes.
+Source generation and frame measurements are recorded in
+[`art-source/hero-redesign/`](../art-source/hero-redesign/README.md). The current
+manifest contains 314 resources, totaling 325,058,583 bytes; its revision is
+`sha256:3d2a276a8cf63784d4d67f490a5e33f66304af2267cd13eae938abe026f370df`.
+
+## Cocos acquired run relic icons
+
+The approved HUD prototype supplies nine original icons: `mist_edge`,
+`focus_prism`, `hunter_clock`, `bone_shell`, `mending_thread`, `iron_echo`,
+`rift_step`, `gate_anchor`, and `lucky_map`.
+
+- Authoritative source: `infinite-flow-wechat/prototype/hud-buff-icons-v1/assets/<id>.png`;
+  generation records: `prototype/hud-buff-icons-v1/generation-prompts.json`.
+- Stable key: `item:run_relic_<id>`; Cocos target:
+  `assets/resources/run-relic/<id>-v1.png`. These are presentation-only icon assets;
+  the shared item catalog, relic rules, and save schema are unchanged.
+- All nine retain the exact approved 1254 × 1254 RGB PNG bytes and opaque background. The
+  22,940,752 added bytes are byte copies; the manifest pins source and target
+  SHA-256 hashes. No artwork was regenerated or resized for integration.
+- Image metadata uses the existing Creator 3.8.8 texture redirect contract with
+  unique image/texture UUIDs and linear filtering. The directory remains within
+  the existing resources bundle; no new bundle or package placement is introduced.
+- `getInfiniteFlowRunRelicVisualKey()` maps acquired presentation `relicId`s to
+  icon keys. Exploration and combat request only acquired icons through the
+  existing scene loading gate and lease lifecycle; hub and result views release
+  those icons. Manifest validation and bundle checks verify source integrity,
+  counts, and placement, but do not establish device acceptance.
+
+The historical 188-asset snapshot with the v1 atlas, before dungeon world backgrounds, was 23,491,414 bytes.
 Removing this atlas and the 19 added background entries leaves the original
 ordered 187 entries byte-for-byte equivalent under
 compact JSON serialization (SHA-256

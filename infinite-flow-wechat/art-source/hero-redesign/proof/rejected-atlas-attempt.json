@@ -1,0 +1,10 @@
+{
+  "nativeSource": "/Users/bytedance/.codex/generated_images/01a0ecb0-503e-7a81-95d1-22b8b154881e/exec-5c437562-e9c6-4106-b6ea-502267f84793.png",
+  "prompt": "prompts/walk-v2-candidate.txt",
+  "status": "rejected_not_copied",
+  "reasons": [
+    "proportions too close to old chibi reference",
+    "right-facing second frame shoulder armor inconsistent"
+  ],
+  "selectedPrompt": "prompts/walk-v2-candidate-revision.txt"
+}

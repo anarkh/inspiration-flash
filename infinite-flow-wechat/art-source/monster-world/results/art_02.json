@@ -1,0 +1,64 @@
+[
+  {
+    "entityId": "furnace_judge",
+    "savedPath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/art-source/monster-world/furnace-judge-world-v1.png",
+    "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a0ecb3-59f8-7593-86f2-5380d14736a3/exec-de3e0742-72da-44b2-bea9-1007f92ed923.png",
+    "width": 1024,
+    "height": 1536,
+    "mode": "RGBA",
+    "alphaValidation": {
+      "passed": true,
+      "extrema": [
+        0,
+        254
+      ],
+      "fullyTransparentPixelCount": 621220,
+      "fullyTransparentFraction": 0.39496103922526044,
+      "alphaAtLeast250Fraction": 0.5624599456787109,
+      "alpha16BoundingBox": [
+        48,
+        71,
+        982,
+        1435
+      ],
+      "unmodifiedSourceCopy": true
+    },
+    "visualValidation": {
+      "passed": true,
+      "notes": "完整头盔、肩甲、双足、炽热裁决刃与天平均在画内；黑铁旧铜、破损长袍与克制橙色火光保留参考身份。"
+    },
+    "tool": "built-in image_gen",
+    "prompt": "Create a production-ready single full-body idle enemy sprite for an original Chinese infinite-flow survival RPG. Grounded hand-painted dark fantasy with restrained retro science-fiction, matching detailed 2D adult-proportioned RPG characters. Use the reference only to preserve creature identity, signature equipment and materials; recompose as a complete isolated full-body world figure. Slight elevated 25-degree near-orthographic camera, facing viewer/down-screen, entire head through feet or lowest appendage visible, threatening restrained idle pose. Center on a 1024x1536 portrait canvas, top at 7 percent, foot baseline at 93 percent, at least 10 percent side padding; keep all limbs, horns and props inside frame. TRUE transparent alpha background, no floor, no mist backdrop, no vignette, no panel, no frame, no text or watermark. Crisp readable silhouette at small mobile size, weathered charcoal and muted old-bronze materials, bone-white edge highlights and sparse oxidized-cyan or restrained chapter accent glow. Soft top-left illumination and clear outline on dark stone. Each monster retains its own anatomy and distinctive props. No chibi or cartoon, no generic demon substitution, no large bloom, no decorative ground shadow.\n\nSubject: 执掌炽热裁决刃的炉心裁判"
+  },
+  {
+    "entityId": "paper_librarian",
+    "savedPath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/art-source/monster-world/paper-librarian-world-v1.png",
+    "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a0ecb3-59f8-7593-86f2-5380d14736a3/exec-e47b1a64-4a77-4aeb-a087-7009885bf1fd.png",
+    "width": 1024,
+    "height": 1536,
+    "mode": "RGBA",
+    "alphaValidation": {
+      "passed": true,
+      "extrema": [
+        0,
+        254
+      ],
+      "fullyTransparentPixelCount": 680044,
+      "fullyTransparentFraction": 0.43236033121744794,
+      "alphaAtLeast250Fraction": 0.4884815216064453,
+      "alpha16BoundingBox": [
+        66,
+        50,
+        972,
+        1503
+      ],
+      "unmodifiedSourceCopy": true
+    },
+    "visualValidation": {
+      "passed": true,
+      "notes": "无面书页头部、双手、空白飘页、钥匙及层叠纸袍下摆完整；黑灰旧铜骨白风格与参考一致。"
+    },
+    "tool": "built-in image_gen",
+    "prompt": "Create a production-ready single full-body idle enemy sprite for an original Chinese infinite-flow survival RPG. Grounded hand-painted dark fantasy with restrained retro science-fiction, matching detailed 2D adult-proportioned RPG characters. Use the reference only to preserve creature identity, signature equipment and materials; recompose as a complete isolated full-body world figure. Slight elevated 25-degree near-orthographic camera, facing viewer/down-screen, entire head through feet or lowest appendage visible, threatening restrained idle pose. Center on a 1024x1536 portrait canvas, top at 7 percent, foot baseline at 93 percent, at least 10 percent side padding; keep all limbs, horns and props inside frame. TRUE transparent alpha background, no floor, no mist backdrop, no vignette, no panel, no frame, no text or watermark. Crisp readable silhouette at small mobile size, weathered charcoal and muted old-bronze materials, bone-white edge highlights and sparse oxidized-cyan or restrained chapter accent glow. Soft top-left illumination and clear outline on dark stone. Each monster retains its own anatomy and distinctive props. No chibi or cartoon, no generic demon substitution, no large bloom, no decorative ground shadow.\n\nSubject: 空白书页环绕的无面纸面馆主"
+  }
+]

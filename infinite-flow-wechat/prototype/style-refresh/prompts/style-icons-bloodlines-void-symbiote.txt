@@ -1,0 +1,10 @@
+Use case: style-transfer.
+Asset type: single transparent inventory icon for a dark Chinese fantasy game HTML prototype.
+Input image 1 is the original void symbiote icon, for subject identity only. Input image 2 is the demon bone style reference: match its quiet, weathered, tactile hand-painted realism and muted ancient material.
+Primary request: create one newly illustrated void symbiote relic. A single compact asymmetric obsidian-black symbiotic seed, with a few thick curved organic shell folds grown tightly around a small recessed purple inner core. Preserve the recognizable dark symbiotic seed theme; replace luminous purple and glossy effects with a very faint desaturated dusty violet mineral glimpse.
+Style/medium: realistic hand-painted game object, grounded ancient material, fine restrained texture and soft painterly edges; no bold outline, no cel shading.
+Composition/framing: square canvas; one centered isolated object occupying 70–80% of canvas; broad legible silhouette, the entire object visible with generous transparent padding. Simpler overlapping shell forms should remain identifiable at 48px.
+Materials: weathered black obsidian, charcoal organic shell, chipped matte edges, old hairline cracks; tiny grey-violet inner mineral core. Restrained purple occupies less than 5% of object and does not glow.
+Lighting: soft neutral upper-left light; subtle slate-grey highlights which separate shell layers; no bloom, no halo, no glossy plastic.
+Scene/backdrop: genuinely transparent alpha background, nothing behind or beneath the object, no ground plane.
+Constraints: one object only; no labels, numbers, frame, text, watermark or adjacent fragment; no vivid purple lightning, colored rim light, magical rays, floating tendrils or decoration outside silhouette. Produce finished illustration pixels directly.

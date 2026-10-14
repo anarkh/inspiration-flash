@@ -1,4 +1,4 @@
-import { DUNGEON_ORDER, createInitialState, getCampaignGates, listRouteContracts, type GameState } from '@infinite-flow/core';
+import { DUNGEONS, DUNGEON_ORDER, createInitialState, getCampaignGates, getGameAsset, listRouteContracts, type GameState } from '@infinite-flow/core';
 import { buildGameViewModel, type GameViewModel, type HubEntryServiceViewModel } from '../src/index.js';
 
 function assert(value: unknown, message: string): asserts value {
@@ -17,6 +17,25 @@ function service(model: GameViewModel, id: string): HubEntryServiceViewModel {
   return result;
 }
 
+function assertDungeonCards(model: GameViewModel, state: GameState): void {
+  const options = service(model, 'dungeon').options;
+  for (const gate of getCampaignGates(state)) {
+    const option = options.find(({ id }) => id === gate.dungeonId)!;
+    const card = option.dungeon;
+    assert(card, 'every chapter exposes structured card metadata');
+    assert(card.chapter === DUNGEON_ORDER.indexOf(gate.dungeonId) + 1
+      && card.recommendedPower === DUNGEONS[gate.dungeonId].recommendedPower,
+      'chapter number and recommended power come from the real campaign');
+    assert(card.status === gate.status && card.requirement === gate.requirementText,
+      'card status and entry requirement reflect the current player gate');
+    assert(card.visualAssetKey === getGameAsset('dungeon', gate.dungeonId)?.key,
+      'every chapter card resolves its existing dungeon asset key');
+    assert(Object.isFrozen(card), 'nested card metadata remains deeply frozen');
+  }
+  assert(services(model).filter(({ id }) => id !== 'dungeon').every(({ options: choices }) => choices.every(({ dungeon }) => dungeon === undefined)),
+    'other entry services do not carry dungeon card metadata');
+}
+
 const initial = createInitialState();
 const stateBefore = JSON.stringify(initial);
 const initialModel = buildGameViewModel(initial, {});
@@ -24,11 +43,12 @@ assert(services(initialModel).map(({ id }) => id).join(',') === 'dungeon,protoco
   'standard entry groups every service once and excludes inferno tier');
 const dungeonOptions = service(initialModel, 'dungeon').options;
 assert(dungeonOptions.map(({ id }) => id).join(',') === DUNGEON_ORDER.join(','), 'all nineteen chapters retain campaign order');
+assertDungeonCards(initialModel, initial);
 for (const gate of getCampaignGates(initial)) {
   const option = dungeonOptions.find(({ id }) => id === gate.dungeonId)!;
   assert(option.name === gate.dungeonName && option.description.includes(gate.requirementText), 'each chapter retains its real name and gate explanation');
   if (option.selected) assert(!option.action.enabled && !option.action.event, 'selected chapter has no duplicate selection event');
-  else assert(option.action.event?.kind === 'local'
+  else assert(option.action.enabled && option.action.event?.kind === 'local'
     && option.action.event.action.type === 'entry/select-dungeon'
     && option.action.event.action.dungeonId === gate.dungeonId, 'even a locked chapter can be selected for inspection');
 }
@@ -38,6 +58,8 @@ const lockedConfirm = lockedModel.sections[2].actions.find(({ actionId }) => act
 assert(!lockedConfirm.enabled && !lockedConfirm.event && lockedConfirm.disabledReason === lockedGate.requirementText,
   'browsing a locked chapter must still disable entry with its original gate reason');
 assert(service(lockedModel, 'dungeon').summary.includes('未解锁'), 'the selected locked chapter is explicit in the collapsed row');
+assert(service(lockedModel, 'dungeon').options.find(({ selected }) => selected)!.dungeon?.status === 'locked',
+  'selecting a locked chapter keeps its card locked while the gate blocks confirmation');
 
 for (const option of service(initialModel, 'protocol').options) {
   const original = initialModel.sections[2].actions.find(({ actionId }) => actionId === option.action.actionId);
@@ -57,6 +79,9 @@ const prepared: GameState = {
   preparedRelicSeedId: 'focus_prism'
 };
 const preparedModel = buildGameViewModel(prepared, {});
+assertDungeonCards(preparedModel, prepared);
+assert(service(preparedModel, 'dungeon').options.every(({ dungeon }) => dungeon?.status === 'completed'),
+  'completed campaign progress appears on all chapter cards');
 const routeOptions = service(preparedModel, 'route-contract').options;
 for (const contract of listRouteContracts('demon_tower_1')) {
   const option = routeOptions.find(({ id }) => id === contract.id)!;
@@ -80,6 +105,12 @@ assert(clearSeed.event?.kind === 'local' && clearSeed.event.action.type === 'ent
 assert(!seeds[2]!.action.enabled && seeds[2]!.selected, 'selected seed is shown without a duplicate command');
 const frames = service(preparedModel, 'relic-frame').options;
 assert(frames.length === 3 && frames.find(({ id }) => id === 'assault')!.selected, 'all three relic directions include the active direction');
+assert(frames.find(({ id }) => id === 'assault')!.shortDescription === '偏向输出与战斗收益'
+  && frames.find(({ id }) => id === 'bulwark')!.shortDescription === '偏向防御、恢复与陷阱减伤'
+  && frames.find(({ id }) => id === 'wayfinder')!.shortDescription === '偏向探索、传送与节点收益',
+  'the three relic directions expose the approved one-line player explanations');
+assert(frames.every(({ description }) => description.includes('每次提供 2 个候选。')),
+  'compact direction explanations preserve existing detailed candidate information');
 for (const option of frames.filter(({ selected }) => !selected)) {
   assert(option.action.event?.kind === 'command' && option.action.event.command.type === 'hub/configure-relic'
     && option.action.event.command.frame === option.id && !('seedRelicId' in option.action.event.command),

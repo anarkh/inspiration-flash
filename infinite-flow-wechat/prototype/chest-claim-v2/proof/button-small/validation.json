@@ -1,0 +1,82 @@
+{
+  "date": "2026-10-13",
+  "changed": "148×32 visual primary button; 44px hit area",
+  "choosing": [
+    {
+      "button": {
+        "clientW": 148,
+        "font": "13px",
+        "h": 44,
+        "nowrap": "nowrap",
+        "scrollW": 148,
+        "text": "请选择一份回响→",
+        "visualH": 32,
+        "visualW": 148,
+        "w": 148
+      },
+      "modal": {
+        "h": 306.1875,
+        "w": 278
+      },
+      "stageWidth": 320
+    },
+    {
+      "button": {
+        "clientW": 148,
+        "font": "13px",
+        "h": 44,
+        "nowrap": "nowrap",
+        "scrollW": 148,
+        "text": "请选择一份回响→",
+        "visualH": 32,
+        "visualW": 148,
+        "w": 148
+      },
+      "modal": {
+        "h": 310.1875,
+        "w": 304
+      },
+      "stageWidth": 390
+    }
+  ],
+  "claim": [
+    {
+      "button": {
+        "clientW": 148,
+        "font": "13px",
+        "h": 44,
+        "nowrap": "nowrap",
+        "scrollW": 148,
+        "text": "领取奖励→",
+        "visualH": 32,
+        "visualW": 148,
+        "w": 148
+      },
+      "modal": {
+        "h": 261.59375,
+        "w": 278
+      },
+      "stageWidth": 320
+    },
+    {
+      "button": {
+        "clientW": 148,
+        "font": "13px",
+        "h": 44,
+        "nowrap": "nowrap",
+        "scrollW": 148,
+        "text": "领取奖励→",
+        "visualH": 32,
+        "visualW": 148,
+        "w": 148
+      },
+      "modal": {
+        "h": 265.59375,
+        "w": 304
+      },
+      "stageWidth": 390
+    }
+  ],
+  "claimFlowPassed": true,
+  "consoleErrors": []
+}

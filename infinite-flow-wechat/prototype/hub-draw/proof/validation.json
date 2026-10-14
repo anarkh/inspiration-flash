@@ -1,0 +1,682 @@
+{
+  "checkedAt": "2026-09-30T03:14:49.758Z",
+  "desktopScenes": [
+    {
+      "blocked": [],
+      "broken": [],
+      "id": "01",
+      "outside": [],
+      "services": [
+        "equipment",
+        "supplies",
+        "pets",
+        "methods",
+        "bloodlines",
+        "companions",
+        "tasks"
+      ]
+    },
+    {
+      "blocked": [],
+      "broken": [],
+      "id": "02",
+      "outside": [],
+      "services": [
+        "methods",
+        "bloodlines",
+        "companions",
+        "tasks",
+        "pets",
+        "supplies",
+        "equipment"
+      ]
+    },
+    {
+      "blocked": [],
+      "broken": [],
+      "id": "03",
+      "outside": [],
+      "services": [
+        "equipment",
+        "supplies",
+        "tasks",
+        "pets",
+        "methods",
+        "bloodlines",
+        "companions"
+      ]
+    },
+    {
+      "blocked": [],
+      "broken": [],
+      "id": "04",
+      "outside": [],
+      "services": [
+        "equipment",
+        "supplies",
+        "pets",
+        "methods",
+        "bloodlines",
+        "companions",
+        "tasks"
+      ]
+    },
+    {
+      "blocked": [],
+      "broken": [],
+      "id": "05",
+      "outside": [],
+      "services": [
+        "equipment",
+        "supplies",
+        "pets",
+        "methods",
+        "bloodlines",
+        "companions",
+        "tasks"
+      ]
+    },
+    {
+      "blocked": [],
+      "broken": [],
+      "id": "06",
+      "outside": [],
+      "services": [
+        "equipment",
+        "supplies",
+        "pets",
+        "methods",
+        "bloodlines",
+        "companions",
+        "tasks"
+      ]
+    },
+    {
+      "blocked": [],
+      "broken": [],
+      "id": "07",
+      "outside": [],
+      "services": [
+        "tasks",
+        "equipment",
+        "supplies",
+        "pets",
+        "methods",
+        "bloodlines",
+        "companions"
+      ]
+    },
+    {
+      "blocked": [],
+      "broken": [],
+      "id": "08",
+      "outside": [],
+      "services": [
+        "tasks",
+        "pets",
+        "methods",
+        "bloodlines",
+        "equipment",
+        "supplies",
+        "companions"
+      ]
+    },
+    {
+      "blocked": [],
+      "broken": [],
+      "id": "09",
+      "outside": [],
+      "services": [
+        "equipment",
+        "supplies",
+        "pets",
+        "methods",
+        "bloodlines",
+        "companions",
+        "tasks"
+      ]
+    },
+    {
+      "blocked": [],
+      "broken": [],
+      "id": "10",
+      "outside": [],
+      "services": [
+        "equipment",
+        "supplies",
+        "methods",
+        "bloodlines",
+        "pets",
+        "companions",
+        "tasks"
+      ]
+    }
+  ],
+  "npcAndPortalInteractions": [
+    {
+      "id": "01",
+      "service": "equipment",
+      "title": "军需官"
+    },
+    {
+      "id": "01",
+      "service": "supplies",
+      "title": "补给商"
+    },
+    {
+      "id": "01",
+      "service": "pets",
+      "title": "灵宠师"
+    },
+    {
+      "id": "01",
+      "service": "methods",
+      "title": "修行导师"
+    },
+    {
+      "id": "01",
+      "service": "bloodlines",
+      "title": "血脉祭司"
+    },
+    {
+      "id": "01",
+      "service": "companions",
+      "title": "同行引路人"
+    },
+    {
+      "id": "01",
+      "service": "tasks",
+      "title": "任务使者"
+    },
+    {
+      "id": "01",
+      "portal": "副本传送门"
+    },
+    {
+      "id": "02",
+      "service": "methods",
+      "title": "修行导师"
+    },
+    {
+      "id": "02",
+      "service": "bloodlines",
+      "title": "血脉祭司"
+    },
+    {
+      "id": "02",
+      "service": "companions",
+      "title": "同行引路人"
+    },
+    {
+      "id": "02",
+      "service": "tasks",
+      "title": "任务使者"
+    },
+    {
+      "id": "02",
+      "service": "pets",
+      "title": "灵宠师"
+    },
+    {
+      "id": "02",
+      "service": "supplies",
+      "title": "补给商"
+    },
+    {
+      "id": "02",
+      "service": "equipment",
+      "title": "军需官"
+    },
+    {
+      "id": "02",
+      "portal": "副本传送门"
+    },
+    {
+      "id": "03",
+      "service": "equipment",
+      "title": "军需官"
+    },
+    {
+      "id": "03",
+      "service": "supplies",
+      "title": "补给商"
+    },
+    {
+      "id": "03",
+      "service": "tasks",
+      "title": "任务使者"
+    },
+    {
+      "id": "03",
+      "service": "pets",
+      "title": "灵宠师"
+    },
+    {
+      "id": "03",
+      "service": "methods",
+      "title": "修行导师"
+    },
+    {
+      "id": "03",
+      "service": "bloodlines",
+      "title": "血脉祭司"
+    },
+    {
+      "id": "03",
+      "service": "companions",
+      "title": "同行引路人"
+    },
+    {
+      "id": "03",
+      "portal": "副本传送门"
+    },
+    {
+      "id": "04",
+      "service": "equipment",
+      "title": "军需官"
+    },
+    {
+      "id": "04",
+      "service": "supplies",
+      "title": "补给商"
+    },
+    {
+      "id": "04",
+      "service": "pets",
+      "title": "灵宠师"
+    },
+    {
+      "id": "04",
+      "service": "methods",
+      "title": "修行导师"
+    },
+    {
+      "id": "04",
+      "service": "bloodlines",
+      "title": "血脉祭司"
+    },
+    {
+      "id": "04",
+      "service": "companions",
+      "title": "同行引路人"
+    },
+    {
+      "id": "04",
+      "service": "tasks",
+      "title": "任务使者"
+    },
+    {
+      "id": "04",
+      "portal": "副本传送门"
+    },
+    {
+      "id": "05",
+      "service": "equipment",
+      "title": "军需官"
+    },
+    {
+      "id": "05",
+      "service": "supplies",
+      "title": "补给商"
+    },
+    {
+      "id": "05",
+      "service": "pets",
+      "title": "灵宠师"
+    },
+    {
+      "id": "05",
+      "service": "methods",
+      "title": "修行导师"
+    },
+    {
+      "id": "05",
+      "service": "bloodlines",
+      "title": "血脉祭司"
+    },
+    {
+      "id": "05",
+      "service": "companions",
+      "title": "同行引路人"
+    },
+    {
+      "id": "05",
+      "service": "tasks",
+      "title": "任务使者"
+    },
+    {
+      "id": "05",
+      "portal": "副本传送门"
+    },
+    {
+      "id": "06",
+      "service": "equipment",
+      "title": "军需官"
+    },
+    {
+      "id": "06",
+      "service": "supplies",
+      "title": "补给商"
+    },
+    {
+      "id": "06",
+      "service": "pets",
+      "title": "灵宠师"
+    },
+    {
+      "id": "06",
+      "service": "methods",
+      "title": "修行导师"
+    },
+    {
+      "id": "06",
+      "service": "bloodlines",
+      "title": "血脉祭司"
+    },
+    {
+      "id": "06",
+      "service": "companions",
+      "title": "同行引路人"
+    },
+    {
+      "id": "06",
+      "service": "tasks",
+      "title": "任务使者"
+    },
+    {
+      "id": "06",
+      "portal": "副本传送门"
+    },
+    {
+      "id": "07",
+      "service": "tasks",
+      "title": "任务使者"
+    },
+    {
+      "id": "07",
+      "service": "equipment",
+      "title": "军需官"
+    },
+    {
+      "id": "07",
+      "service": "supplies",
+      "title": "补给商"
+    },
+    {
+      "id": "07",
+      "service": "pets",
+      "title": "灵宠师"
+    },
+    {
+      "id": "07",
+      "service": "methods",
+      "title": "修行导师"
+    },
+    {
+      "id": "07",
+      "service": "bloodlines",
+      "title": "血脉祭司"
+    },
+    {
+      "id": "07",
+      "service": "companions",
+      "title": "同行引路人"
+    },
+    {
+      "id": "07",
+      "portal": "副本传送门"
+    },
+    {
+      "id": "08",
+      "service": "tasks",
+      "title": "任务使者"
+    },
+    {
+      "id": "08",
+      "service": "pets",
+      "title": "灵宠师"
+    },
+    {
+      "id": "08",
+      "service": "methods",
+      "title": "修行导师"
+    },
+    {
+      "id": "08",
+      "service": "bloodlines",
+      "title": "血脉祭司"
+    },
+    {
+      "id": "08",
+      "service": "equipment",
+      "title": "军需官"
+    },
+    {
+      "id": "08",
+      "service": "supplies",
+      "title": "补给商"
+    },
+    {
+      "id": "08",
+      "service": "companions",
+      "title": "同行引路人"
+    },
+    {
+      "id": "08",
+      "portal": "副本传送门"
+    },
+    {
+      "id": "09",
+      "service": "equipment",
+      "title": "军需官"
+    },
+    {
+      "id": "09",
+      "service": "supplies",
+      "title": "补给商"
+    },
+    {
+      "id": "09",
+      "service": "pets",
+      "title": "灵宠师"
+    },
+    {
+      "id": "09",
+      "service": "methods",
+      "title": "修行导师"
+    },
+    {
+      "id": "09",
+      "service": "bloodlines",
+      "title": "血脉祭司"
+    },
+    {
+      "id": "09",
+      "service": "companions",
+      "title": "同行引路人"
+    },
+    {
+      "id": "09",
+      "service": "tasks",
+      "title": "任务使者"
+    },
+    {
+      "id": "09",
+      "portal": "副本传送门"
+    },
+    {
+      "id": "10",
+      "service": "equipment",
+      "title": "军需官"
+    },
+    {
+      "id": "10",
+      "service": "supplies",
+      "title": "补给商"
+    },
+    {
+      "id": "10",
+      "service": "methods",
+      "title": "修行导师"
+    },
+    {
+      "id": "10",
+      "service": "bloodlines",
+      "title": "血脉祭司"
+    },
+    {
+      "id": "10",
+      "service": "pets",
+      "title": "灵宠师"
+    },
+    {
+      "id": "10",
+      "service": "companions",
+      "title": "同行引路人"
+    },
+    {
+      "id": "10",
+      "service": "tasks",
+      "title": "任务使者"
+    },
+    {
+      "id": "10",
+      "portal": "副本传送门"
+    }
+  ],
+  "draw": {
+    "ids": [
+      "01",
+      "05",
+      "03",
+      "06",
+      "09",
+      "02",
+      "08",
+      "07",
+      "04",
+      "10"
+    ],
+    "uniqueCount": 10,
+    "newRoundVerified": true
+  },
+  "favorites": {
+    "persistedAfterReload": true,
+    "filterVerified": true,
+    "testFavoriteRestored": true
+  },
+  "commonPanels": [
+    "inventory",
+    "item detail",
+    "character",
+    "menu",
+    "portal chapter"
+  ],
+  "mobile320": [
+    {
+      "broken": 0,
+      "id": "01",
+      "outside": 0,
+      "pageWidth": 305,
+      "sceneWidth": 251,
+      "scrollWidth": 305,
+      "services": 7
+    },
+    {
+      "broken": 0,
+      "id": "02",
+      "outside": 0,
+      "pageWidth": 305,
+      "sceneWidth": 251,
+      "scrollWidth": 305,
+      "services": 7
+    },
+    {
+      "broken": 0,
+      "id": "03",
+      "outside": 0,
+      "pageWidth": 305,
+      "sceneWidth": 251,
+      "scrollWidth": 305,
+      "services": 7
+    },
+    {
+      "broken": 0,
+      "id": "04",
+      "outside": 0,
+      "pageWidth": 305,
+      "sceneWidth": 251,
+      "scrollWidth": 305,
+      "services": 7
+    },
+    {
+      "broken": 0,
+      "id": "05",
+      "outside": 0,
+      "pageWidth": 305,
+      "sceneWidth": 251,
+      "scrollWidth": 305,
+      "services": 7
+    },
+    {
+      "broken": 0,
+      "id": "06",
+      "outside": 0,
+      "pageWidth": 305,
+      "sceneWidth": 251,
+      "scrollWidth": 305,
+      "services": 7
+    },
+    {
+      "broken": 0,
+      "id": "07",
+      "outside": 0,
+      "pageWidth": 305,
+      "sceneWidth": 251,
+      "scrollWidth": 305,
+      "services": 7
+    },
+    {
+      "broken": 0,
+      "id": "08",
+      "outside": 0,
+      "pageWidth": 305,
+      "sceneWidth": 251,
+      "scrollWidth": 305,
+      "services": 7
+    },
+    {
+      "broken": 0,
+      "id": "09",
+      "outside": 0,
+      "pageWidth": 305,
+      "sceneWidth": 251,
+      "scrollWidth": 305,
+      "services": 7
+    },
+    {
+      "broken": 0,
+      "id": "10",
+      "outside": 0,
+      "pageWidth": 305,
+      "sceneWidth": 251,
+      "scrollWidth": 305,
+      "services": 7
+    }
+  ],
+  "overview": {
+    "cards": 10,
+    "selectionVerified": "09",
+    "screenshot": "all-10-styles.png"
+  },
+  "finalBrowserChecks": {
+    "alerts": [],
+    "broken": [],
+    "current": "01",
+    "draw": "抽一张",
+    "overviewCards": 0,
+    "scrollWidth": 915,
+    "width": 915
+  },
+  "logs": []
+}

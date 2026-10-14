@@ -1,0 +1,246 @@
+{
+  "purpose": "HTML style proposal only; no production asset changes",
+  "references_viewed": [
+    "cocos/assets/resources/dungeon-world/demon_tower_1-v1.png",
+    "cocos/assets/resources/hub-courtyard/altar-v1.png"
+  ],
+  "tool": "built-in image_gen",
+  "assets": [
+    {
+      "id": "relic",
+      "file": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/assets/relic-proposed.png",
+      "source": "/Users/bytedance/.codex/generated_images/01a11a79-03d8-7af0-baf3-b546c9d3d6ad/exec-b4bebe5b-61c9-4422-a5d1-3b4f49676eed.png",
+      "prompt_file": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/prompts/style-props-ritual-relic.txt",
+      "prompt": "Use case: stylized-concept\nAsset type: One isolated transparent PNG world prop for a Chinese dark fantasy dungeon HTML art proposal.\nPrimary request: A single ancient relic pedestal, a squat solid worn grey-black stone plinth with a small cluster of weathered smoky pale quartz embedded directly in its cracked top. Crystal fragments feel like excavated mineral relics, not magical neon. Nothing floating.\nStyle/medium: Detailed realistic hand-painted game environment asset, restrained texture and natural material detail, matching a dark ruined Chinese temple dungeon of cold grey flagstones, old stone stairs, aged iron and tarnished gold accents.\nComposition: Lightly elevated three-quarter top-down game camera, see the top and front with one side; entire object including all footings visible. Compact readable single silhouette centered in a square image with 12% transparent padding. No scattered objects separate from pedestal.\nMaterials: rough chipped ash-grey stone, dark iron band around a small recessed mount, tiny oxidized old gold inlays, subtle mineral facets. Low saturation, muted contrast, soft diffuse cold overhead light with gentle warm reflection. No self-illumination.\nBackground: genuinely transparent alpha, no scene, no ground plane, no baked background or checkerboard. Preserve fine edges and opaque stone.\nAvoid: cartoon, vector flat fill, low-poly, bright blue crystals, purple/pink neon, glow aura, energy rings, floating objects, text, letters, symbols resembling readable script, UI, frame, logo, watermark, multiple asset sheet.\n",
+      "method": "built-in image_gen, one independent image per call; byte-for-byte copied; no image postprocessing",
+      "sha256": "5533b22ce3a44154262b3fe81e0fa81f17f0ec3f4c3385bc6df9c247b67e9359",
+      "source_sha256": "5533b22ce3a44154262b3fe81e0fa81f17f0ec3f4c3385bc6df9c247b67e9359",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "alpha_bbox": [
+        0,
+        16,
+        1251,
+        1254
+      ],
+      "transparent_pixels": 911159,
+      "partial_alpha_pixels": 660443,
+      "opaque_pixels": 914,
+      "transparent_fraction": 0.579427,
+      "alpha_histogram_top_values": [
+        {
+          "alpha": 0,
+          "pixels": 911159
+        },
+        {
+          "alpha": 253,
+          "pixels": 460119
+        },
+        {
+          "alpha": 252,
+          "pixels": 168056
+        },
+        {
+          "alpha": 251,
+          "pixels": 7594
+        },
+        {
+          "alpha": 1,
+          "pixels": 5976
+        },
+        {
+          "alpha": 250,
+          "pixels": 2050
+        },
+        {
+          "alpha": 2,
+          "pixels": 1487
+        },
+        {
+          "alpha": 254,
+          "pixels": 1330
+        }
+      ],
+      "alpha_bbox_threshold_128": [
+        143,
+        68,
+        1123,
+        1209
+      ],
+      "alpha_bbox_threshold_16": [
+        142,
+        68,
+        1123,
+        1210
+      ]
+    },
+    {
+      "id": "shrine",
+      "file": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/assets/shrine-proposed.png",
+      "source": "/Users/bytedance/.codex/generated_images/01a11a79-03d8-7af0-baf3-b546c9d3d6ad/exec-e11493d9-99fd-4209-a1c2-e2bfbc41fa30.png",
+      "prompt_file": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/prompts/style-props-ritual-shrine.txt",
+      "prompt": "Use case: stylized-concept\nAsset type: One isolated transparent PNG world prop for a Chinese dark fantasy dungeon HTML art proposal.\nPrimary request: A single small Chinese resonance shrine: a low octagonal black-grey stone altar with restrained old bronze cloud-scroll edging and a shallow ancient bronze fire bowl centered on top. Inside the bowl is one small warm-white spiritual flame with a faint pale grey-celadon wisp, approximately one quarter the height of the stone base. Flame is restrained and believable, no magic aura.\nStyle/medium: Detailed realistic hand-painted environment game asset, matching a dark ruined Chinese temple dungeon of cold grey flagstones, aged iron and tarnished gold details. Elegant but weathered old stone, realistic carved relief and muted texture.\nComposition: Lightly elevated three-quarter top-down game camera, top surface visible along with front and side. Entire shrine and all base feet visible; compact single grounded silhouette, centered in a square image, 12% transparent padding. No independent props or separate stones.\nMaterials: weathered ash-black stone, dull old bronze, subtle worn gold inlay, no bright polished surfaces. Very low saturation, diffuse cold overhead lighting and a tiny warm light localized only within the fire bowl.\nBackground: genuinely transparent alpha, no scene, no ground plane, no baked shadow plate or checkerboard. Fine flame alpha preserved.\nAvoid: cartoon, vector flat fill, low-poly, neon blue/cyan/purple, large glow halo, particle cloud, floating runes, energy rings, floating objects, skulls, text, readable symbols, UI, frame, logo, watermark, asset sheet.\n",
+      "method": "built-in image_gen, one independent image per call; byte-for-byte copied; no image postprocessing",
+      "sha256": "6552dc80311d080afa82871c116c90939d84af9cf676a85ea1c325c708ab30a1",
+      "source_sha256": "6552dc80311d080afa82871c116c90939d84af9cf676a85ea1c325c708ab30a1",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "alpha_bbox": [
+        0,
+        17,
+        1250,
+        1254
+      ],
+      "transparent_pixels": 927540,
+      "partial_alpha_pixels": 644778,
+      "opaque_pixels": 198,
+      "transparent_fraction": 0.589845,
+      "alpha_histogram_top_values": [
+        {
+          "alpha": 0,
+          "pixels": 927540
+        },
+        {
+          "alpha": 253,
+          "pixels": 307372
+        },
+        {
+          "alpha": 252,
+          "pixels": 256773
+        },
+        {
+          "alpha": 1,
+          "pixels": 13834
+        },
+        {
+          "alpha": 251,
+          "pixels": 10867
+        },
+        {
+          "alpha": 250,
+          "pixels": 3891
+        },
+        {
+          "alpha": 2,
+          "pixels": 3787
+        },
+        {
+          "alpha": 3,
+          "pixels": 2141
+        }
+      ],
+      "alpha_bbox_threshold_128": [
+        129,
+        110,
+        1125,
+        1114
+      ],
+      "alpha_bbox_threshold_16": [
+        128,
+        79,
+        1126,
+        1115
+      ]
+    },
+    {
+      "id": "law",
+      "file": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/assets/law-proposed.png",
+      "source": "/Users/bytedance/.codex/generated_images/01a11a79-03d8-7af0-baf3-b546c9d3d6ad/exec-b823e415-0204-4660-9ebf-b648d0037fd5.png",
+      "prompt_file": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/prompts/style-props-ritual-law.txt",
+      "prompt": "Use case: stylized-concept\nAsset type: One isolated transparent PNG world prop for a Chinese dark fantasy dungeon HTML art proposal.\nPrimary request: An ancient law lectern, a short heavy stone bookstand holding one open thick battered tome. Dark weathered stone stand with subtle aged gold carved cloud pattern accents and a slanted top. The open tome has frayed fibrous parchment sheets, broken corners, muted brown worn cover; pages mostly blank with only very faint indistinct weather stains, absolutely no readable writing.\nStyle/medium: Detailed realistic hand-painted environment game asset, suited to an ancient ruined Chinese temple dungeon with cold grey stone floor and aged dark bronze ornaments. Low saturation muted materials, grounded tangible weight.\nComposition: Lightly elevated three-quarter top-down game camera, visible open page spread and front/one side of pedestal. Entire single object including heavy stepped base and all footings visible. Compact readable silhouette centered in square, 12% transparent edge padding. Book sits on stone, not floating. No loose pages or separate props.\nMaterials: ash-grey stone chipped along edges, rough mineral texture, tarnished old gold inlay only on a few recessed border details, dirty cream parchment, dark brown leather binding. Soft diffuse cold overhead light, minimal shadow, no self-emission or glows.\nBackground: genuinely transparent alpha, no scene, no ground plane, no checkerboard or baked background.\nAvoid: cartoon, vector flat fill, low-poly, bright gold, blue/purple neon, magical halo, floating runes, luminous pages, readable text, Latin or Chinese writing, letters, numbers, UI, frame, logo, watermark, asset sheet.\n",
+      "method": "built-in image_gen, one independent image per call; byte-for-byte copied; no image postprocessing",
+      "sha256": "16ec2a64c56a4a53879bcef9e43d260469a4dc369d7508744973e1a76918cd23",
+      "source_sha256": "16ec2a64c56a4a53879bcef9e43d260469a4dc369d7508744973e1a76918cd23",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "alpha_bbox": [
+        0,
+        9,
+        1240,
+        1236
+      ],
+      "transparent_pixels": 770996,
+      "partial_alpha_pixels": 800962,
+      "opaque_pixels": 558,
+      "transparent_fraction": 0.490295,
+      "alpha_histogram_top_values": [
+        {
+          "alpha": 0,
+          "pixels": 770996
+        },
+        {
+          "alpha": 253,
+          "pixels": 456540
+        },
+        {
+          "alpha": 252,
+          "pixels": 302892
+        },
+        {
+          "alpha": 1,
+          "pixels": 9644
+        },
+        {
+          "alpha": 251,
+          "pixels": 8951
+        },
+        {
+          "alpha": 250,
+          "pixels": 2938
+        },
+        {
+          "alpha": 2,
+          "pixels": 2367
+        },
+        {
+          "alpha": 249,
+          "pixels": 1625
+        }
+      ],
+      "alpha_bbox_threshold_128": [
+        127,
+        23,
+        1164,
+        1231
+      ],
+      "alpha_bbox_threshold_16": [
+        126,
+        22,
+        1165,
+        1232
+      ]
+    }
+  ],
+  "visual_inspection": {
+    "relic": "Grounded intact pedestal, weathered neutral quartz, no glow or neighboring-object fragments. Quartz highlights are lighter than dungeon stone but remain natural.",
+    "shrine": "Grounded octagonal shrine, cold black stone and old bronze. Small warm-white flame plus pale gray wisp retained with partial alpha; at thumbnail size flame remains the strongest focal point.",
+    "law": "Whole worn stone lectern and blank ragged tome; no readable script. Parchment gives a broad light area useful for interaction readability."
+  },
+  "known_limitations": [
+    "Not validated in production engine or WeChat device.",
+    "Dense old-gold relief details will simplify at in-game sprite sizes.",
+    "Objects generated independently; final perceived scale is to be evaluated in HTML scene.",
+    "Raw generated alpha contains many near-opaque values of 252/253 and faint edge pixels; source bytes were preserved without thresholding or cleanup. Threshold-128 alpha bounds are recorded to distinguish visible silhouette from faint edge pixels."
+  ]
+}

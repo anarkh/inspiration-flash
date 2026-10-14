@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { build } from 'esbuild';
 
 // Style-gate for the ten gallery themes: palette WCAG contract, geometry/node
-// invariance versus the production DEFAULT theme, cut-corner frame discipline,
+// invariance versus the production COMPACT theme, cut-corner frame discipline,
 // per-label contrast >= 4.5, structural counts and painter op budgets.
 const root = fileURLToPath(new URL('../../', import.meta.url));
 
@@ -76,8 +76,7 @@ const bundle = await build({
       export { renderInfiniteFlowInfoSheet } from './cocos/assets/scripts/ui/InfiniteFlowInfoSheet.ts';
       export { GALLERY_SHEET_THEMES } from './cocos/assets/scripts/ui/sheet-styles.ts';
       export { startInfiniteFlowSheetGallery, sheetGalleryRequested } from './cocos/assets/scripts/ui/InfiniteFlowSheetGallery.ts';
-      export { assertSheetThemeContract, sheetContrastRatio, DEFAULT_SHEET_THEME } from './cocos/assets/scripts/ui/sheet-theme.ts';
-      export { DARK_UI } from './cocos/assets/scripts/ui/dark-ui.ts';
+      export { assertSheetThemeContract, sheetContrastRatio, DEFAULT_SHEET_THEME, COMPACT_SHEET_THEME } from './cocos/assets/scripts/ui/sheet-theme.ts';
       export { Node, UITransform, Label, Graphics } from 'cc';
     `,
     resolveDir: root,
@@ -116,7 +115,9 @@ function assertSheetContract(theme) {
     api.sheetContrastRatio(pair.foreground, pair.background) / pair.minimum);
   assert.ok(Math.min(...margins) >= 1, `${theme.id}: every palette pair meets its WCAG minimum`);
 }
-assert.equal(themes[0], api.DEFAULT_SHEET_THEME, 'gallery index 0 is the production default');
+assert.equal(themes[0], api.DEFAULT_SHEET_THEME, 'gallery index 0 keeps the explicit legacy DEFAULT theme');
+assertSheetContract(api.COMPACT_SHEET_THEME);
+const renderThemes = [api.COMPACT_SHEET_THEME, ...themes];
 
 // --- authentic hub fixtures (real client command path, enrichments best-effort) ---
 function commitOrCurrent(current, command) {
@@ -202,7 +203,7 @@ for (const [kind, model, sheetState] of KINDS) {
   const baselineGeometry = geometryMap(baseline.rootNode);
   const baselineNodes = allNodes(baseline.rootNode);
 
-  for (const theme of themes) {
+  for (const theme of renderThemes) {
     const view = render(model, sheetState, theme);
     const nodes = allNodes(view.rootNode);
     const label = `${theme.id}/${kind}`;
@@ -272,7 +273,7 @@ for (const [kind, model, sheetState] of KINDS) {
     }
   }
 
-  // (e) structural counts on the DEFAULT render are the invariant every style shares.
+  // (e) structural counts on the production render are the invariant every style shares.
   const names = new Set(baselineNodes.map((node) => node.name));
   if (kind === 'character') {
     assert.ok(names.has('MobileSheetDollStage'), 'character: doll stage');
@@ -289,14 +290,14 @@ for (const [kind, model, sheetState] of KINDS) {
     // Default 道具 tab: 3 supply cells.
     assert.ok(names.has('MobileSheetInventoryRack'), 'inventory: loadout rack');
     assert.equal(baselineNodes.filter((node) => node.name.startsWith('MobileSheetItem:')).length, 3, 'inventory 道具 tab: three supply cells');
-    assert.ok(names.has('MobileSheetTab:items'), 'inventory: 道具 tab mounted');
-    assert.ok(names.has('MobileSheetTab:carry'), 'inventory: 携行 tab mounted');
-    // The 携行 tab carries the six special items with three prepared seals.
+    assert.ok(!names.has('MobileSheetTab:carry'), 'inventory no longer exposes the migrated carry tab');
+    // Legacy carry state resolves to the character carry panel.
     const carryView = render(model, { ...sheetState, tab: 'carry' }, undefined);
     const carryNodes = allNodes(carryView.rootNode);
-    assert.equal(carryNodes.filter((node) => node.name.startsWith('MobileSheetItem:')).length, 6, 'inventory 携行 tab: six carried item cells');
-    const carriedSeals = carryNodes.filter((node) => node.name === 'ItemCarriedSeal');
-    assert.equal(carriedSeals.length, 3, 'inventory 携行 tab: three default carried seals');
+    assert.ok(carryNodes.some(node => node.name === 'MobileInfoSheet:character'), 'legacy carry state opens character information');
+    assert.equal(carryNodes.filter((node) => node.name.startsWith('MobileSheetCarryItem:')).length, 6, 'carry panel has six tactical item cards');
+    assert.equal(carryNodes.filter((node) => node.name.startsWith('MobileSheetCarrySlot:')).length, 3, 'carry panel has three general slots');
+    assert.ok(carryNodes.some(node => node.name === 'MobileSheetCarryList'), 'carry panel scrolls its item list separately');
     // The legacy actions state view still renders the real inventory action
     // list for state-level fixtures/engines.
     const actionsView = render(model, { ...sheetState, tab: 'actions' }, undefined);
@@ -305,23 +306,24 @@ for (const [kind, model, sheetState] of KINDS) {
   }
 }
 
-// (g) DEFAULT with no theme option keeps the exact production palette tokens.
+// (g) No theme option uses the exact compact production palette tokens.
 const defaultView = render(hubModel, { kind: 'character', page: 0 }, undefined);
 const defaultNodes = allNodes(defaultView.rootNode);
 const sheetFrame = defaultNodes.find((node) => node.name === 'MobileInfoSheet:character');
-assert.deepEqual(rgba(firstSurfaceFill(sheetFrame).color), rgba(api.DARK_UI.panel), 'DEFAULT sheet surface is DARK_UI.panel');
+const productionPalette = api.COMPACT_SHEET_THEME.palette;
+assert.deepEqual(rgba(firstSurfaceFill(sheetFrame).color), rgba(productionPalette.surface), 'production sheet surface is COMPACT_SHEET_THEME.palette.surface');
 const equip = defaultNodes.find((node) => node.name.startsWith('MobileSheetEquip:'));
-assert.deepEqual(rgba(firstSurfaceFill(equip).color), rgba(api.DARK_UI.raised), 'DEFAULT cell surface is DARK_UI.raised');
+assert.deepEqual(rgba(firstSurfaceFill(equip).color), rgba(productionPalette.raised), 'production cell surface is COMPACT_SHEET_THEME.palette.raised');
 const rackModel = render(hubModel, { kind: 'inventory', page: 0 }, undefined);
 const rack = allNodes(rackModel.rootNode).find((node) => node.name === 'MobileSheetInventoryRack');
-assert.deepEqual(rgba(firstSurfaceFill(rack).color), rgba(api.DARK_UI.quiet), 'DEFAULT card surface is DARK_UI.quiet');
-const labelTokens = [api.DARK_UI.bone, api.DARK_UI.muted, api.DARK_UI.gold, api.DARK_UI.red, api.DARK_UI.green]
+assert.deepEqual(rgba(firstSurfaceFill(rack).color), rgba(productionPalette.quiet), 'production card surface is COMPACT_SHEET_THEME.palette.quiet');
+const labelTokens = [productionPalette.text, productionPalette.textMuted, productionPalette.accent, productionPalette.danger, productionPalette.positive]
   .map((color) => JSON.stringify([color.r, color.g, color.b]));
 for (const node of defaultNodes) {
   const component = node.getComponent(api.Label);
   if (!component?.string) continue;
   assert.ok(labelTokens.includes(JSON.stringify([component.color.r, component.color.g, component.color.b])),
-    `DEFAULT label ${node.name} uses a production palette token`);
+    `production label ${node.name} uses a compact palette token`);
 }
 
 const themeMins = themes.map((theme) => {
@@ -334,11 +336,11 @@ const boundaryMins = themes.map((theme) => {
   const boundaryPairs = pairs.filter((pair) => pair.minimum === 3);
   return Math.min(...boundaryPairs.map((pair) => api.sheetContrastRatio(pair.foreground, pair.background)));
 });
-console.log(`Sheet style gate: ${themes.length} themes x ${KINDS.length} sheets = ${themes.length * KINDS.length} combos; `
+console.log(`Sheet style gate: compact production + ${themes.length} gallery themes x ${KINDS.length} sheets = ${renderThemes.length * KINDS.length} combos; `
   + `text-pair minimums ${themeMins.map((value) => value.toFixed(2)).join('/')} (>=4.5); `
   + `boundary minimums ${boundaryMins.map((value) => value.toFixed(2)).join('/')} (>=3); `
   + `rendered label contrast minimum ${globalMinimumContrast.toFixed(3)}; `
-  + `geometry, cut-corner discipline, structure and op budgets (sheet<=140, card<=80) green; DEFAULT tokens identical.`);
+  + `geometry, cut-corner discipline, structure and op budgets (sheet<=140, card<=80) green; compact production tokens identical.`);
 
 // --- gallery controller: guard, switcher bar, remounts, touch binding, exit ---
 function setLocationSearch(search) {
@@ -414,10 +416,9 @@ const shortcutCount = allNodes(handle.root).filter((node) => node.name.startsWit
 assert.equal(shortcutCount, 9, 'menu: nine shortcut tiles');
 firePress(handle.root, 'SheetGalleryKind:inventory');
 assert.ok(findNode(handle.root, 'MobileInfoSheet:inventory'), 'inventory sheet mounted');
-// The bag opens on the 道具 tab: the bought healing pill shows there; the
-// prepared seals live on the 携行 tab.
-assert.equal(findNodes(handle.root, 'MobileSheetItem:healing_pill').length, 1, 'enriched fixture shows the bought item on 道具 tab');
-assert.equal(findNodes(handle.root, 'ItemCarriedSeal').length, 0, '道具 tab carries no prepared seals');
+// The bag keeps unrestricted supplies; carry moved to character information.
+assert.equal(findNodes(handle.root, 'MobileSheetItem:healing_pill').length, 1, 'enriched fixture shows the bought supply');
+assert.equal(findNodes(handle.root, 'ItemCarriedSeal').length, 0, 'supply bag carries no prepared seals');
 
 // In-sheet navigation rebuilds only the sheet subtree: from the menu the
 // 进阶行动 destination tile opens the real action list (the bag has no tabs).
@@ -433,4 +434,4 @@ firePress(handle.root, 'SheetGalleryExit');
 assert.equal(canvas.children.length, 0, 'exit removes the gallery host');
 
 console.log('Gallery controller: guard (gallery=1 / wx / bare URL), six 104px bar controls with dual touch listeners, '
-  + '10-style walkthrough captions, first/last disabled ends, kind switching, in-sheet tab remount, tabbed bag fixture (道具 pill / 携行 seals), exit teardown green.');
+  + '10-style walkthrough captions, first/last disabled ends, kind switching, in-sheet tab remount, supply-only bag and legacy carry route, exit teardown green.');

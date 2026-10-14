@@ -1,0 +1,33 @@
+{
+  "entityId": "continuity_editor",
+  "status": "completed",
+  "path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/art-source/monster-world/continuity-editor-world-v1.png",
+  "sourcePath": "/Users/bytedance/.codex/generated_images/01a0ecb6-c3fd-7922-b14d-b1fad7d413dc/exec-67c53688-6002-4f91-819c-fed536b6b83d.png",
+  "referencePath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/monster/continuity-editor-v1.png",
+  "tool": "built-in imagegen",
+  "prompt": "Create a production-ready single full-body idle enemy sprite for an original Chinese infinite-flow survival RPG. Grounded hand-painted dark fantasy with restrained retro science-fiction, matching detailed 2D adult-proportioned RPG characters. Use the reference only to preserve creature identity, signature equipment and materials; recompose as a complete isolated full-body world figure. Slight elevated 25-degree near-orthographic camera, facing viewer/down-screen, entire head through feet or lowest appendage visible, threatening restrained idle pose. Center on a 1024x1536 portrait canvas, top at 7 percent, foot baseline at 93 percent, at least 10 percent side padding; keep all limbs, horns and props inside frame. TRUE transparent alpha background, no floor, no mist backdrop, no vignette, no panel, no frame, no text or watermark. Crisp readable silhouette at small mobile size, weathered charcoal and muted old-bronze materials, bone-white edge highlights and sparse oxidized-cyan or restrained chapter accent glow. Soft top-left illumination and clear outline on dark stone. Each monster retains its own anatomy and distinctive props. No chibi or cartoon, no generic demon substitution, no large bloom, no decorative ground shadow.\nSubject: 双手形似剪刀的连续性剪辑师",
+  "width": 1024,
+  "height": 1536,
+  "mode": "RGBA",
+  "alpha": {
+    "min": 0,
+    "max": 254,
+    "zeroRatio": 0.4590568542480469,
+    "nearOpaqueRatio": 0.4948660532633464,
+    "bbox": [
+      10,
+      57,
+      1012,
+      1476
+    ],
+    "corners": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "transparent": true
+  },
+  "sha256": "35b0e7338e475334196602e280655781f12bb38f832bb05f02c36eac646e6f4b",
+  "visualCheck": "Full body and lowest robe appendages visible; scissors, film reel halo and film strips retained; grounded charcoal and old bronze style; no frame, text or floor. Wide lower robe/scissors extend close to side margins, uncropped."
+}

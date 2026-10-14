@@ -1,0 +1,273 @@
+{
+  "schemaVersion": 1,
+  "verifiedAt": "2026-10-09T07:04:48.500Z",
+  "approvedVariant": {
+    "id": "04",
+    "name": "墨点",
+    "source": "prototype/hud-menu-draw/"
+  },
+  "scope": "Cocos exploration and combat HUD",
+  "build": {
+    "engine": "Cocos Creator 3.8.8",
+    "target": "Web Mobile",
+    "completed": true,
+    "completedLocal": "2026-10-09 15:01:53 +08:00",
+    "exitCode": 36,
+    "sceneSourceSha256": "314c11af7bdd405da0ec08b1b02efa139d2832fc6b6d3b8c9aa2dfbf341bf270"
+  },
+  "checks": {
+    "packagesBuild": true,
+    "cocosHeadlessTypecheck": true,
+    "cocosCreatorTypecheck": true,
+    "bootstrapScenarios": 103,
+    "walkChecks": 44,
+    "sourceBoundary": true,
+    "diffWhitespace": true
+  },
+  "actualEngine": {
+    "input": "Chrome physical touch via CUA CDP",
+    "panelChecks": [
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "entry": "SceneCharacter",
+        "panel": "character",
+        "touch": {
+          "width": 57.20000000000003,
+          "height": 57.20000000000004
+        },
+        "positionStable": true,
+        "domainStable": true
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "entry": "SceneHelp",
+        "panel": "menu",
+        "touch": {
+          "width": 68.6400000000001,
+          "height": 44.72000000000003
+        },
+        "positionStable": true,
+        "domainStable": true
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "entry": "SceneDetails",
+        "panel": "inventory",
+        "touch": {
+          "width": 68.6400000000001,
+          "height": 44.72000000000003
+        },
+        "positionStable": true,
+        "domainStable": true
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "entry": "SceneMap",
+        "panel": "map",
+        "touch": {
+          "width": 68.6400000000001,
+          "height": 44.72000000000003
+        },
+        "positionStable": true,
+        "domainStable": true
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "entry": "SceneCodex",
+        "panel": "objectives",
+        "touch": {
+          "width": 68.6400000000001,
+          "height": 44.72000000000048
+        },
+        "positionStable": true,
+        "domainStable": true
+      },
+      {
+        "viewport": {
+          "width": 320,
+          "height": 568
+        },
+        "entry": "SceneCharacter",
+        "panel": "character",
+        "touch": {
+          "width": 46.83658170914548,
+          "height": 46.83658170914566
+        },
+        "positionStable": true,
+        "domainStable": true
+      },
+      {
+        "viewport": {
+          "width": 320,
+          "height": 568
+        },
+        "entry": "SceneHelp",
+        "panel": "menu",
+        "touch": {
+          "width": 56.203898050974544,
+          "height": 44.00000000000023
+        },
+        "positionStable": true,
+        "domainStable": true
+      },
+      {
+        "viewport": {
+          "width": 320,
+          "height": 568
+        },
+        "entry": "SceneDetails",
+        "panel": "inventory",
+        "touch": {
+          "width": 56.203898050974544,
+          "height": 44
+        },
+        "positionStable": true,
+        "domainStable": true
+      },
+      {
+        "viewport": {
+          "width": 320,
+          "height": 568
+        },
+        "entry": "SceneMap",
+        "panel": "map",
+        "touch": {
+          "width": 56.203898050974544,
+          "height": 44
+        },
+        "positionStable": true,
+        "domainStable": true
+      },
+      {
+        "viewport": {
+          "width": 320,
+          "height": 568
+        },
+        "entry": "SceneCodex",
+        "panel": "objectives",
+        "touch": {
+          "width": 56.203898050974544,
+          "height": 44
+        },
+        "positionStable": true,
+        "domainStable": true
+      }
+    ],
+    "movement": {
+      "before": {
+        "x": 500,
+        "y": 700
+      },
+      "after": {
+        "x": 500.00000658555706,
+        "y": 505.7840000104904
+      },
+      "action": "迎战"
+    },
+    "combat": [
+      {
+        "stage": "start",
+        "phase": "combat",
+        "status": "生命 102/102"
+      },
+      {
+        "stage": "after-attack-1",
+        "phase": "combat",
+        "status": "生命 92/102",
+        "animating": false
+      },
+      {
+        "stage": "after-attack-2",
+        "phase": "combat",
+        "status": "生命 87/102",
+        "animating": false
+      },
+      {
+        "stage": "victory-return",
+        "phase": "explore",
+        "status": "生命 102/102",
+        "animating": false,
+        "cleared": true
+      }
+    ],
+    "hudReadback": {
+      "healthSize": {
+        "height": 4,
+        "width": 278
+      },
+      "hudHasBackground": false,
+      "icons": [
+        {
+          "labelPresent": false,
+          "lineWidth": 2.8846153846153846,
+          "name": "SceneCharacter",
+          "shadowPresent": false,
+          "size": {
+            "height": 40,
+            "width": 40
+          }
+        },
+        {
+          "labelPresent": false,
+          "lineWidth": 2.8846153846153846,
+          "name": "SceneHelp",
+          "shadowPresent": false,
+          "size": {
+            "height": 40,
+            "width": 40
+          }
+        },
+        {
+          "labelPresent": false,
+          "lineWidth": 2.8846153846153846,
+          "name": "SceneDetails",
+          "shadowPresent": false,
+          "size": {
+            "height": 40,
+            "width": 40
+          }
+        },
+        {
+          "labelPresent": false,
+          "lineWidth": 2.8846153846153846,
+          "name": "SceneCodex",
+          "shadowPresent": false,
+          "size": {
+            "height": 40,
+            "width": 40
+          }
+        }
+      ],
+      "locationPresent": false,
+      "previewNoticePresent": false
+    },
+    "browserErrorCount": 0
+  },
+  "renderAdjustment": "Keep 40x40 paths; minimum 1.5 CSS-pixel stroke prevents Cocos graphics antialiasing from fading subpixel strokes.",
+  "screenshots": [
+    "explore-390.png",
+    "explore-320.png",
+    "combat-390.png",
+    "victory-390.png"
+  ],
+  "boundaries": {
+    "localOnly": true,
+    "wechatDeviceVerified": false,
+    "published": false
+  }
+}

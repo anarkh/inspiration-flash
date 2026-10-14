@@ -1,0 +1,65 @@
+{
+  "modelsPassed": 12,
+  "scenes": [
+    {
+      "id": "01",
+      "interactionButtons": 1,
+      "worldTargets": 8,
+      "removedControlsAbsent": true
+    },
+    {
+      "id": "02",
+      "interactionButtons": 1,
+      "worldTargets": 8,
+      "removedControlsAbsent": true
+    },
+    {
+      "id": "03",
+      "interactionButtons": 1,
+      "worldTargets": 8,
+      "removedControlsAbsent": true
+    },
+    {
+      "id": "04",
+      "interactionButtons": 1,
+      "worldTargets": 8,
+      "removedControlsAbsent": true
+    },
+    {
+      "id": "05",
+      "interactionButtons": 1,
+      "worldTargets": 8,
+      "removedControlsAbsent": true
+    },
+    {
+      "id": "06",
+      "interactionButtons": 1,
+      "worldTargets": 8,
+      "removedControlsAbsent": true
+    },
+    {
+      "id": "07",
+      "interactionButtons": 1,
+      "worldTargets": 8,
+      "removedControlsAbsent": true
+    },
+    {
+      "id": "08",
+      "interactionButtons": 1,
+      "worldTargets": 8,
+      "removedControlsAbsent": true
+    },
+    {
+      "id": "09",
+      "interactionButtons": 1,
+      "worldTargets": 8,
+      "removedControlsAbsent": true
+    },
+    {
+      "id": "10",
+      "interactionButtons": 1,
+      "worldTargets": 8,
+      "removedControlsAbsent": true
+    }
+  ]
+}

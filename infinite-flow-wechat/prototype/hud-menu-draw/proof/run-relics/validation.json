@@ -1,0 +1,47 @@
+{
+  "viewportChecks": [
+    {
+      "width": 390,
+      "height": 844,
+      "hubEmpty": true,
+      "mistEdgeShown": true
+    },
+    {
+      "width": 320,
+      "height": 568,
+      "mistEdgeShown": true,
+      "combatListAvailable": true,
+      "tabTouchHeight": 44.28185907046472
+    }
+  ],
+  "actualAcquisition": "normal client command sequence: enter, fight, collect two reward nodes, select mist_edge",
+  "expectedBonus": {
+    "attack": 6,
+    "artPower": 4
+  },
+  "observedBonus": {
+    "attack": 6,
+    "artPower": 4
+  },
+  "tabSwitchPreservesExactDomainState": true,
+  "screenshots": [
+    "hub-empty-390.png",
+    "mist-edge-390.png",
+    "mist-edge-320.png",
+    "combat-relic-320.png"
+  ],
+  "runtimeErrors": [],
+  "userOriginalTabReloaded": false,
+  "userOriginalTabMutated": false,
+  "independentTestPreview": "http://127.0.0.1:8125/cocos/build/web-mobile-run-relics/index.html",
+  "wechatDeviceVerified": false,
+  "canonicalPreviewBuild": {
+    "updatedScripts": [
+      "assets/main/index.js",
+      "src/chunks/bundle.js"
+    ],
+    "allFilesMatchVerifiedBuild": true,
+    "resourcesUnchanged": true,
+    "originalPageReloaded": false
+  }
+}

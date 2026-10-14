@@ -1,0 +1,30 @@
+{
+  "id": "hub-portal-08",
+  "title": "鎏金重扉",
+  "tool": "image_gen.imagegen",
+  "transparent_background": true,
+  "source_path": "/Users/bytedance/.codex/generated_images/01a11978-834a-79a3-85fb-08271558cdce/exec-cf80743a-4b1f-4e35-8f87-c6eb8a7483ee.png",
+  "saved_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-portals-ten/assets/hub-portal-08.png",
+  "prompt_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-portals-ten/assets/hub-portal-08.prompt.txt",
+  "source_sha256": "fa074dbbcb56f8caa41c2b7c4bd86356e201d3d14a8638fb5025f001ef983daa",
+  "saved_sha256": "fa074dbbcb56f8caa41c2b7c4bd86356e201d3d14a8638fb5025f001ef983daa",
+  "width": 1019,
+  "height": 1544,
+  "mode": "RGBA",
+  "alpha_extrema": [
+    0,
+    255
+  ],
+  "alpha_bbox": [
+    0,
+    25,
+    1005,
+    1544
+  ],
+  "fully_transparent_pixels": 381098,
+  "partially_transparent_pixels": 1191688,
+  "opaque_pixels": 550,
+  "byte_for_byte_copy": true,
+  "post_processing": "none",
+  "visual_review": "Heavy Chinese black-gold double door with broad lotus relief and cloud-path opening, restrained old metal. Opening is visibly traversable. The door-leaf perspective reads more outward-opening than the requested inward-opening direction; otherwise fits sanctuary palette and low-tilt front camera."
+}

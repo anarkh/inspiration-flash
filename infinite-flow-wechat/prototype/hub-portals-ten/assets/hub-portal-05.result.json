@@ -1,0 +1,27 @@
+{
+  "generator": "built-in image_gen",
+  "transparent_background_requested": true,
+  "source_path": "/Users/bytedance/.codex/generated_images/01a11978-2e9f-7933-8b90-d6fa83835259/exec-6f9a7605-fa7c-40e2-ae4b-eff7f2697feb.png",
+  "output_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-portals-ten/assets/hub-portal-05.png",
+  "sha256": "5890979a915339a0a54caac983a1d3a4c8dd6a72be1dba05c3a16a0d981e09a0",
+  "byte_exact_copy": true,
+  "dimensions": {
+    "width": 1018,
+    "height": 1544
+  },
+  "width": 1018,
+  "height": 1544,
+  "mode": "RGBA",
+  "alpha": {
+    "extrema": [
+      0,
+      255
+    ],
+    "transparent_pixels": 552782,
+    "partial_alpha_pixels": 1018270,
+    "opaque_pixels": 740
+  },
+  "prompt_file": "hub-portal-05.prompt.txt",
+  "postprocessing": "none",
+  "visual_observation": "Intact equal-height symmetrical lotus-cloud black-gold stone steles without overhead beam; open-top mist doorway, stable bases. Mist center is brighter than requested very subdued level; preserved as generated."
+}

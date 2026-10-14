@@ -1,0 +1,3365 @@
+{
+  "generatedAt": "2026-09-30T05:08:43.380Z",
+  "scope": "Independent HTML prototype; Cocos unchanged",
+  "world": {
+    "previousWidth": 2400,
+    "width": 1200,
+    "height": 720,
+    "spawn": {
+      "x": 600,
+      "y": 550
+    },
+    "walkSpeedX": 260,
+    "walkSpeedY": 145
+  },
+  "modelTests": {
+    "passed": 12,
+    "slowestApproachSeconds": 1.5,
+    "longestFullFootPathSeconds": 1.939
+  },
+  "sceneChecks": [
+    {
+      "id": "01",
+      "broken": [],
+      "overflow": false,
+      "stage": {
+        "bottom": 746.578125,
+        "height": 617.984375,
+        "left": 71.1484375,
+        "right": 396.84375,
+        "top": 128.59375,
+        "width": 325.6953125,
+        "x": 71.1484375,
+        "y": 128.59375
+      },
+      "targets": 8,
+      "width": "1200px"
+    },
+    {
+      "id": "02",
+      "broken": [],
+      "overflow": false,
+      "stage": {
+        "bottom": 746.578125,
+        "height": 617.984375,
+        "left": 71.1484375,
+        "right": 396.84375,
+        "top": 128.59375,
+        "width": 325.6953125,
+        "x": 71.1484375,
+        "y": 128.59375
+      },
+      "targets": 8,
+      "width": "1200px"
+    },
+    {
+      "id": "03",
+      "broken": [],
+      "overflow": false,
+      "stage": {
+        "bottom": 746.578125,
+        "height": 617.984375,
+        "left": 71.1484375,
+        "right": 396.84375,
+        "top": 128.59375,
+        "width": 325.6953125,
+        "x": 71.1484375,
+        "y": 128.59375
+      },
+      "targets": 8,
+      "width": "1200px"
+    },
+    {
+      "id": "04",
+      "broken": [],
+      "overflow": false,
+      "stage": {
+        "bottom": 746.578125,
+        "height": 617.984375,
+        "left": 71.1484375,
+        "right": 396.84375,
+        "top": 128.59375,
+        "width": 325.6953125,
+        "x": 71.1484375,
+        "y": 128.59375
+      },
+      "targets": 8,
+      "width": "1200px"
+    },
+    {
+      "id": "05",
+      "broken": [],
+      "overflow": false,
+      "stage": {
+        "bottom": 746.578125,
+        "height": 617.984375,
+        "left": 71.1484375,
+        "right": 396.84375,
+        "top": 128.59375,
+        "width": 325.6953125,
+        "x": 71.1484375,
+        "y": 128.59375
+      },
+      "targets": 8,
+      "width": "1200px"
+    },
+    {
+      "id": "06",
+      "broken": [],
+      "overflow": false,
+      "stage": {
+        "bottom": 746.578125,
+        "height": 617.984375,
+        "left": 71.1484375,
+        "right": 396.84375,
+        "top": 128.59375,
+        "width": 325.6953125,
+        "x": 71.1484375,
+        "y": 128.59375
+      },
+      "targets": 8,
+      "width": "1200px"
+    },
+    {
+      "id": "07",
+      "broken": [],
+      "overflow": false,
+      "stage": {
+        "bottom": 746.578125,
+        "height": 617.984375,
+        "left": 71.1484375,
+        "right": 396.84375,
+        "top": 128.59375,
+        "width": 325.6953125,
+        "x": 71.1484375,
+        "y": 128.59375
+      },
+      "targets": 8,
+      "width": "1200px"
+    },
+    {
+      "id": "08",
+      "broken": [],
+      "overflow": false,
+      "stage": {
+        "bottom": 746.578125,
+        "height": 617.984375,
+        "left": 71.1484375,
+        "right": 396.84375,
+        "top": 128.59375,
+        "width": 325.6953125,
+        "x": 71.1484375,
+        "y": 128.59375
+      },
+      "targets": 8,
+      "width": "1200px"
+    },
+    {
+      "id": "09",
+      "broken": [],
+      "overflow": false,
+      "stage": {
+        "bottom": 746.578125,
+        "height": 617.984375,
+        "left": 71.1484375,
+        "right": 396.84375,
+        "top": 128.59375,
+        "width": 325.6953125,
+        "x": 71.1484375,
+        "y": 128.59375
+      },
+      "targets": 8,
+      "width": "1200px"
+    },
+    {
+      "id": "10",
+      "broken": [],
+      "overflow": false,
+      "stage": {
+        "bottom": 746.578125,
+        "height": 617.984375,
+        "left": 71.1484375,
+        "right": 396.84375,
+        "top": 128.59375,
+        "width": 325.6953125,
+        "x": 71.1484375,
+        "y": 128.59375
+      },
+      "targets": 8,
+      "width": "1200px"
+    }
+  ],
+  "routes": [
+    {
+      "id": "01",
+      "targetId": "npc:equipment",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:equipment",
+          "footX": "170",
+          "footY": "466",
+          "service": "equipment",
+          "worldTarget": "npc:equipment"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "left",
+          "footX": "260.22015331424785",
+          "footY": "501.19184522746104",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "军需官",
+        "worldTransform": "translate(-79.6234px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 1430,
+      "distance": 96.8408076926249
+    },
+    {
+      "id": "01",
+      "targetId": "npc:supplies",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:supplies",
+          "footX": "290",
+          "footY": "636",
+          "service": "supplies",
+          "worldTarget": "npc:supplies"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "left",
+          "footX": "382.71492645671367",
+          "footY": "610.2790849184603",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "补给商",
+        "worldTransform": "translate(-183.078px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 1026,
+      "distance": 96.21654255119336
+    },
+    {
+      "id": "01",
+      "targetId": "npc:pets",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:pets",
+          "footX": "440",
+          "footY": "466",
+          "service": "pets",
+          "worldTarget": "npc:pets"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "left",
+          "footX": "527.398528870382",
+          "footY": "511.8842276569506",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "灵宠师",
+        "worldTransform": "translate(-299.516px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 505,
+      "distance": 98.71101861687922
+    },
+    {
+      "id": "01",
+      "targetId": "npc:methods",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:methods",
+          "footX": "560",
+          "footY": "636",
+          "service": "methods",
+          "worldTarget": "npc:methods"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "修行导师",
+        "worldTransform": "translate(-351.333px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 299,
+      "distance": 94.847245611035
+    },
+    {
+      "id": "01",
+      "targetId": "npc:bloodlines",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:bloodlines",
+          "footX": "710",
+          "footY": "466",
+          "service": "bloodlines",
+          "worldTarget": "npc:bloodlines"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "630.6683270577954",
+          "footY": "526.5805502467742",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "血脉祭司",
+        "worldTransform": "translate(-369.217px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 301,
+      "distance": 99.81742032336267
+    },
+    {
+      "id": "01",
+      "targetId": "npc:companions",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:companions",
+          "footX": "830",
+          "footY": "636",
+          "service": "companions",
+          "worldTarget": "npc:companions"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "738.909891865651",
+          "footY": "599.3324849616333",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "同行引路人",
+        "worldTransform": "translate(-450.923px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 712,
+      "distance": 98.19325057770637
+    },
+    {
+      "id": "01",
+      "targetId": "npc:tasks",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:tasks",
+          "footX": "980",
+          "footY": "466",
+          "service": "tasks",
+          "worldTarget": "npc:tasks"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "886.0098619865018",
+          "footY": "486.7767673503523",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "任务使者",
+        "worldTransform": "translate(-585.943px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 1332,
+      "distance": 96.25912998426227
+    },
+    {
+      "id": "01",
+      "targetId": "portal:entry",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "portal:entry",
+          "footX": "1080",
+          "footY": "636",
+          "worldTarget": "portal:entry"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "962.8678082934592",
+          "footY": "615.0138156525782",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "副本传送门",
+        "worldTransform": "translate(-639.968px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 1545,
+      "distance": 118.99735403546498
+    },
+    {
+      "id": "02",
+      "targetId": "npc:equipment",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:equipment",
+          "footX": "170",
+          "footY": "596",
+          "service": "equipment",
+          "worldTarget": "npc:equipment"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "left",
+          "footX": "266.34006523061487",
+          "footY": "583.5166647043328",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "军需官",
+        "worldTransform": "translate(-80.1053px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 1431,
+      "distance": 97.14546736077386
+    },
+    {
+      "id": "02",
+      "targetId": "npc:supplies",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:supplies",
+          "footX": "300",
+          "footY": "466",
+          "service": "supplies",
+          "worldTarget": "npc:supplies"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "left",
+          "footX": "391.4333456657083",
+          "footY": "495.56650299119576",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "补给商",
+        "worldTransform": "translate(-185.021px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 1025,
+      "distance": 96.09492597818726
+    },
+    {
+      "id": "02",
+      "targetId": "npc:pets",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:pets",
+          "footX": "440",
+          "footY": "596",
+          "service": "pets",
+          "worldTarget": "npc:pets"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "left",
+          "footX": "528.0112074179982",
+          "footY": "550.4890914883347",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "灵宠师",
+        "worldTransform": "translate(-300.039px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 503,
+      "distance": 99.0818622389137
+    },
+    {
+      "id": "02",
+      "targetId": "npc:methods",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:methods",
+          "footX": "580",
+          "footY": "466",
+          "service": "methods",
+          "worldTarget": "npc:methods"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "修行导师",
+        "worldTransform": "translate(-351.333px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 303,
+      "distance": 86.34813257969161
+    },
+    {
+      "id": "02",
+      "targetId": "npc:bloodlines",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:bloodlines",
+          "footX": "720",
+          "footY": "596",
+          "service": "bloodlines",
+          "worldTarget": "npc:bloodlines"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "629.4346747219009",
+          "footY": "554.1071639146838",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "血脉祭司",
+        "worldTransform": "translate(-370.637px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 295,
+      "distance": 99.78520861329628
+    },
+    {
+      "id": "02",
+      "targetId": "npc:companions",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:companions",
+          "footX": "860",
+          "footY": "466",
+          "service": "companions",
+          "worldTarget": "npc:companions"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "764.9744732791552",
+          "footY": "496.70055478673476",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "同行引路人",
+        "worldTransform": "translate(-475.445px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 820,
+      "distance": 99.86177843793538
+    },
+    {
+      "id": "02",
+      "targetId": "npc:tasks",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:tasks",
+          "footX": "1000",
+          "footY": "596",
+          "service": "tasks",
+          "worldTarget": "npc:tasks"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "901.3184656772733",
+          "footY": "584.6516235528868",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "任务使者",
+        "worldTransform": "translate(-598.537px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 1340,
+      "distance": 99.3319226848695
+    },
+    {
+      "id": "02",
+      "targetId": "portal:entry",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "portal:entry",
+          "footX": "1080",
+          "footY": "466",
+          "worldTarget": "portal:entry"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "963.7994881182836",
+          "footY": "486.33508957930036",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "副本传送门",
+        "worldTransform": "translate(-653.72px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 1646,
+      "distance": 117.9664139904705
+    },
+    {
+      "id": "03",
+      "targetId": "npc:equipment",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:equipment",
+          "footX": "170",
+          "footY": "466",
+          "service": "equipment",
+          "worldTarget": "npc:equipment"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "left",
+          "footX": "260.06908409749093",
+          "footY": "501.17014467698766",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "军需官",
+        "worldTransform": "translate(-79.6081px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 1440,
+      "distance": 96.6921867927349
+    },
+    {
+      "id": "03",
+      "targetId": "npc:supplies",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:supplies",
+          "footX": "430",
+          "footY": "466",
+          "service": "supplies",
+          "worldTarget": "npc:supplies"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "left",
+          "footX": "518.9081234981983",
+          "footY": "509.93107278734533",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "补给商",
+        "worldTransform": "translate(-296.489px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 511,
+      "distance": 99.16951941104641
+    },
+    {
+      "id": "03",
+      "targetId": "npc:pets",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:pets",
+          "footX": "290",
+          "footY": "636",
+          "service": "pets",
+          "worldTarget": "npc:pets"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "left",
+          "footX": "382.7149264567104",
+          "footY": "610.279084918461",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "灵宠师",
+        "worldTransform": "translate(-183.077px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 1031,
+      "distance": 96.21654255119
+    },
+    {
+      "id": "03",
+      "targetId": "npc:methods",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:methods",
+          "footX": "710",
+          "footY": "466",
+          "service": "methods",
+          "worldTarget": "npc:methods"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "630.6836612213232",
+          "footY": "526.5688405218987",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "修行导师",
+        "worldTransform": "translate(-367.864px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 298,
+      "distance": 99.7981264324187
+    },
+    {
+      "id": "03",
+      "targetId": "npc:bloodlines",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:bloodlines",
+          "footX": "560",
+          "footY": "636",
+          "service": "bloodlines",
+          "worldTarget": "npc:bloodlines"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "血脉祭司",
+        "worldTransform": "translate(-351.333px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 301,
+      "distance": 94.847245611035
+    },
+    {
+      "id": "03",
+      "targetId": "npc:companions",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:companions",
+          "footX": "980",
+          "footY": "466",
+          "service": "companions",
+          "worldTarget": "npc:companions"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "886.0823735715578",
+          "footY": "486.7607384736557",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "同行引路人",
+        "worldTransform": "translate(-584.398px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 1329,
+      "distance": 96.1848679155092
+    },
+    {
+      "id": "03",
+      "targetId": "npc:tasks",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:tasks",
+          "footX": "830",
+          "footY": "636",
+          "service": "tasks",
+          "worldTarget": "npc:tasks"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "738.8879610333403",
+          "footY": "599.3246964417473",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "任务使者",
+        "worldTransform": "translate(-450.901px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 715,
+      "distance": 98.2165033777527
+    },
+    {
+      "id": "03",
+      "targetId": "portal:entry",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "portal:entry",
+          "footX": "1080",
+          "footY": "636",
+          "worldTarget": "portal:entry"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "963.0658397053077",
+          "footY": "615.0492962805342",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "副本传送门",
+        "worldTransform": "translate(-643.139px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 1550,
+      "distance": 118.7961692571172
+    },
+    {
+      "id": "04",
+      "targetId": "npc:equipment",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:equipment",
+          "footX": "180",
+          "footY": "596",
+          "service": "equipment",
+          "worldTarget": "npc:equipment"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "left",
+          "footX": "276.83104211977053",
+          "footY": "585.394695386882",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "军需官",
+        "worldTransform": "translate(-83.9992px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 1433,
+      "distance": 97.4100775276244
+    },
+    {
+      "id": "04",
+      "targetId": "npc:supplies",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:supplies",
+          "footX": "310",
+          "footY": "466",
+          "service": "supplies",
+          "worldTarget": "npc:supplies"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "left",
+          "footX": "398.70775529044585",
+          "footY": "505.26839006454355",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "补给商",
+        "worldTransform": "translate(-197.434px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 924,
+      "distance": 97.01068140638311
+    },
+    {
+      "id": "04",
+      "targetId": "npc:pets",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:pets",
+          "footX": "450",
+          "footY": "596",
+          "service": "pets",
+          "worldTarget": "npc:pets"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "left",
+          "footX": "541.7293904535425",
+          "footY": "559.4492880345608",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "灵宠师",
+        "worldTransform": "translate(-309.328px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 401,
+      "distance": 98.7432813823753
+    },
+    {
+      "id": "04",
+      "targetId": "npc:methods",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:methods",
+          "footX": "590",
+          "footY": "466",
+          "service": "methods",
+          "worldTarget": "npc:methods"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "修行导师",
+        "worldTransform": "translate(-351.333px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 294,
+      "distance": 84.59314393022642
+    },
+    {
+      "id": "04",
+      "targetId": "npc:bloodlines",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:bloodlines",
+          "footX": "730",
+          "footY": "596",
+          "service": "bloodlines",
+          "worldTarget": "npc:bloodlines"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "636.5751675710628",
+          "footY": "562.9419823712994",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "血脉祭司",
+        "worldTransform": "translate(-374.382px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 300,
+      "distance": 99.10111928689034
+    },
+    {
+      "id": "04",
+      "targetId": "npc:companions",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:companions",
+          "footX": "870",
+          "footY": "466",
+          "service": "companions",
+          "worldTarget": "npc:companions"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "777.4839299338331",
+          "footY": "499.29030573319056",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "同行引路人",
+        "worldTransform": "translate(-493.418px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 919,
+      "distance": 98.32328145610886
+    },
+    {
+      "id": "04",
+      "targetId": "npc:tasks",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:tasks",
+          "footX": "1000",
+          "footY": "596",
+          "service": "tasks",
+          "worldTarget": "npc:tasks"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "901.0892874307485",
+          "footY": "584.6252680545365",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "任务使者",
+        "worldTransform": "translate(-598.412px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 1337,
+      "distance": 99.56261139498216
+    },
+    {
+      "id": "04",
+      "targetId": "portal:entry",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "portal:entry",
+          "footX": "1080",
+          "footY": "466",
+          "worldTarget": "portal:entry"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "963.8491027774171",
+          "footY": "486.3264070139521",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "副本传送门",
+        "worldTransform": "translate(-653.741px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 1640,
+      "distance": 117.91604533611132
+    },
+    {
+      "id": "05",
+      "targetId": "npc:equipment",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:equipment",
+          "footX": "180",
+          "footY": "466",
+          "service": "equipment",
+          "worldTarget": "npc:equipment"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "left",
+          "footX": "271.69397927827254",
+          "footY": "503.2952180210998",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "军需官",
+        "worldTransform": "translate(-86.4077px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 1429,
+      "distance": 98.98847974954279
+    },
+    {
+      "id": "05",
+      "targetId": "npc:supplies",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:supplies",
+          "footX": "300",
+          "footY": "636",
+          "service": "supplies",
+          "worldTarget": "npc:supplies"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "left",
+          "footX": "395.74612090830584",
+          "footY": "608.5527786729533",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "补给商",
+        "worldTransform": "translate(-187.757px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 1028,
+      "distance": 99.60255833844735
+    },
+    {
+      "id": "05",
+      "targetId": "npc:pets",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:pets",
+          "footX": "450",
+          "footY": "466",
+          "service": "pets",
+          "worldTarget": "npc:pets"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "left",
+          "footX": "535.7862760459277",
+          "footY": "514.0403145857198",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "灵宠师",
+        "worldTransform": "translate(-303.706px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 510,
+      "distance": 98.32170148712353
+    },
+    {
+      "id": "05",
+      "targetId": "npc:methods",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:methods",
+          "footX": "570",
+          "footY": "636",
+          "service": "methods",
+          "worldTarget": "npc:methods"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "修行导师",
+        "worldTransform": "translate(-351.333px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 298,
+      "distance": 91.08238029388559
+    },
+    {
+      "id": "05",
+      "targetId": "npc:bloodlines",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:bloodlines",
+          "footX": "720",
+          "footY": "466",
+          "service": "bloodlines",
+          "worldTarget": "npc:bloodlines"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "640.5029017541801",
+          "footY": "521.6479687720737",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "血脉祭司",
+        "worldTransform": "translate(-379.941px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 409,
+      "distance": 97.03857510270453
+    },
+    {
+      "id": "05",
+      "targetId": "npc:companions",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:companions",
+          "footX": "840",
+          "footY": "636",
+          "service": "companions",
+          "worldTarget": "npc:companions"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "749.486283010007",
+          "footY": "603.5659180785856",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "同行引路人",
+        "worldTransform": "translate(-468.581px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 818,
+      "distance": 96.14937666687999
+    },
+    {
+      "id": "05",
+      "targetId": "npc:tasks",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:tasks",
+          "footX": "990",
+          "footY": "466",
+          "service": "tasks",
+          "worldTarget": "npc:tasks"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "894.9289960519677",
+          "footY": "486.47683161957616",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "任务使者",
+        "worldTransform": "translate(-587.795px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 1329,
+      "distance": 97.25120269108882
+    },
+    {
+      "id": "05",
+      "targetId": "portal:entry",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "portal:entry",
+          "footX": "1080",
+          "footY": "636",
+          "worldTarget": "portal:entry"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "963.0905936317909",
+          "footY": "615.053731359029",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "副本传送门",
+        "worldTransform": "translate(-640.176px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 1547,
+      "distance": 118.77102115982159
+    },
+    {
+      "id": "06",
+      "targetId": "npc:equipment",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:equipment",
+          "footX": "160",
+          "footY": "596",
+          "service": "equipment",
+          "worldTarget": "npc:equipment"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "left",
+          "footX": "257.5466166228313",
+          "footY": "583.8188282950883",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "军需官",
+        "worldTransform": "translate(-77.577px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 1436,
+      "distance": 98.3042387624571
+    },
+    {
+      "id": "06",
+      "targetId": "npc:supplies",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:supplies",
+          "footX": "290",
+          "footY": "466",
+          "service": "supplies",
+          "worldTarget": "npc:supplies"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "left",
+          "footX": "382.3495978413008",
+          "footY": "494.87973482176653",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "补给商",
+        "worldTransform": "translate(-182.32px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 1028,
+      "distance": 96.75994680044809
+    },
+    {
+      "id": "06",
+      "targetId": "npc:pets",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:pets",
+          "footX": "430",
+          "footY": "596",
+          "service": "pets",
+          "worldTarget": "npc:pets"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "left",
+          "footX": "516.8256334540796",
+          "footY": "554.5253061810135",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "灵宠师",
+        "worldTransform": "translate(-287.017px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 611,
+      "distance": 96.22287073290246
+    },
+    {
+      "id": "06",
+      "targetId": "npc:methods",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:methods",
+          "footX": "570",
+          "footY": "466",
+          "service": "methods",
+          "worldTarget": "npc:methods"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "修行导师",
+        "worldTransform": "translate(-351.333px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 300,
+      "distance": 89.19641248391103
+    },
+    {
+      "id": "06",
+      "targetId": "npc:bloodlines",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:bloodlines",
+          "footX": "710",
+          "footY": "596",
+          "service": "bloodlines",
+          "worldTarget": "npc:bloodlines"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "620.119563216107",
+          "footY": "554.4710140480238",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "血脉祭司",
+        "worldTransform": "translate(-365.141px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 296,
+      "distance": 99.01085592329163
+    },
+    {
+      "id": "06",
+      "targetId": "npc:companions",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:companions",
+          "footX": "850",
+          "footY": "466",
+          "service": "companions",
+          "worldTarget": "npc:companions"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "755.9149687011172",
+          "footY": "497.61257051642434",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "同行引路人",
+        "worldTransform": "translate(-472.131px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 820,
+      "distance": 99.25395573561616
+    },
+    {
+      "id": "06",
+      "targetId": "npc:tasks",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:tasks",
+          "footX": "990",
+          "footY": "596",
+          "service": "tasks",
+          "worldTarget": "npc:tasks"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "892.5800541201686",
+          "footY": "584.5094422808404",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "任务使者",
+        "worldTransform": "translate(-582.362px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 1233,
+      "distance": 98.09525356471951
+    },
+    {
+      "id": "06",
+      "targetId": "portal:entry",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "portal:entry",
+          "footX": "1080",
+          "footY": "466",
+          "worldTarget": "portal:entry"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "963.8491027774242",
+          "footY": "486.3264070139509",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "副本传送门",
+        "worldTransform": "translate(-653.749px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 1642,
+      "distance": 117.91604533610416
+    },
+    {
+      "id": "07",
+      "targetId": "npc:equipment",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:equipment",
+          "footX": "170",
+          "footY": "466",
+          "service": "equipment",
+          "worldTarget": "npc:equipment"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "left",
+          "footX": "260.06908409749036",
+          "footY": "501.1701446769876",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "军需官",
+        "worldTransform": "translate(-82.6824px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 1422,
+      "distance": 96.69218679273435
+    },
+    {
+      "id": "07",
+      "targetId": "npc:supplies",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:supplies",
+          "footX": "290",
+          "footY": "596",
+          "service": "supplies",
+          "worldTarget": "npc:supplies"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "left",
+          "footX": "386.48081906370345",
+          "footY": "581.6834913647406",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "补给商",
+        "worldTransform": "translate(-177.626px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 1022,
+      "distance": 97.53722810653655
+    },
+    {
+      "id": "07",
+      "targetId": "npc:pets",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:pets",
+          "footX": "440",
+          "footY": "466",
+          "service": "pets",
+          "worldTarget": "npc:pets"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "left",
+          "footX": "527.6067729857539",
+          "footY": "511.9935558175212",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "灵宠师",
+        "worldTransform": "translate(-299.604px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 509,
+      "distance": 98.9462169550552
+    },
+    {
+      "id": "07",
+      "targetId": "npc:methods",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:methods",
+          "footX": "560",
+          "footY": "596",
+          "service": "methods",
+          "worldTarget": "npc:methods"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "修行导师",
+        "worldTransform": "translate(-351.333px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 303,
+      "distance": 60.959002616512684
+    },
+    {
+      "id": "07",
+      "targetId": "npc:bloodlines",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:bloodlines",
+          "footX": "710",
+          "footY": "466",
+          "service": "bloodlines",
+          "worldTarget": "npc:bloodlines"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "633.2291323671233",
+          "footY": "524.6250261923788",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "血脉祭司",
+        "worldTransform": "translate(-369.787px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 306,
+      "distance": 96.59534053546152
+    },
+    {
+      "id": "07",
+      "targetId": "npc:companions",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:companions",
+          "footX": "830",
+          "footY": "596",
+          "service": "companions",
+          "worldTarget": "npc:companions"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "739.1395638539033",
+          "footY": "556.4373693835429",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "同行引路人",
+        "worldTransform": "translate(-452.32px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 714,
+      "distance": 99.10005347099037
+    },
+    {
+      "id": "07",
+      "targetId": "npc:tasks",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:tasks",
+          "footX": "980",
+          "footY": "466",
+          "service": "tasks",
+          "worldTarget": "npc:tasks"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "886.0098619864981",
+          "footY": "486.77676735035317",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "任务使者",
+        "worldTransform": "translate(-584.359px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 1332,
+      "distance": 96.25912998426611
+    },
+    {
+      "id": "07",
+      "targetId": "portal:entry",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "portal:entry",
+          "footX": "1080",
+          "footY": "596",
+          "worldTarget": "portal:entry"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "964.583065082918",
+          "footY": "576.9102753075853",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "副本传送门",
+        "worldTransform": "translate(-647.022px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 1540,
+      "distance": 116.98498388462569
+    },
+    {
+      "id": "08",
+      "targetId": "npc:equipment",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:equipment",
+          "footX": "170",
+          "footY": "636",
+          "service": "equipment",
+          "worldTarget": "npc:equipment"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "left",
+          "footX": "265.51640181855606",
+          "footY": "616.8967196362886",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "军需官",
+        "worldTransform": "translate(-83.7849px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 1448,
+      "distance": 97.4079993481974
+    },
+    {
+      "id": "08",
+      "targetId": "npc:supplies",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:supplies",
+          "footX": "300",
+          "footY": "466",
+          "service": "supplies",
+          "worldTarget": "npc:supplies"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "left",
+          "footX": "394.9283095904243",
+          "footY": "497.24632066622337",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "补给商",
+        "worldTransform": "translate(-186.727px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 1025,
+      "distance": 99.93856371227226
+    },
+    {
+      "id": "08",
+      "targetId": "npc:pets",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:pets",
+          "footX": "440",
+          "footY": "636",
+          "service": "pets",
+          "worldTarget": "npc:pets"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "left",
+          "footX": "525.1177640061999",
+          "footY": "590.2492018466672",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "灵宠师",
+        "worldTransform": "translate(-299.144px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 507,
+      "distance": 96.6342034741433
+    },
+    {
+      "id": "08",
+      "targetId": "npc:methods",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:methods",
+          "footX": "580",
+          "footY": "466",
+          "service": "methods",
+          "worldTarget": "npc:methods"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "修行导师",
+        "worldTransform": "translate(-351.333px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 300,
+      "distance": 86.34813257969161
+    },
+    {
+      "id": "08",
+      "targetId": "npc:bloodlines",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:bloodlines",
+          "footX": "720",
+          "footY": "636",
+          "service": "bloodlines",
+          "worldTarget": "npc:bloodlines"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "639.9188449183983",
+          "footY": "578.6085055248524",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "血脉祭司",
+        "worldTransform": "translate(-379.497px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 402,
+      "distance": 98.52296705486714
+    },
+    {
+      "id": "08",
+      "targetId": "npc:companions",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:companions",
+          "footX": "860",
+          "footY": "466",
+          "service": "companions",
+          "worldTarget": "npc:companions"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "764.9969708208598",
+          "footY": "496.69328635018394",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "同行引路人",
+        "worldTransform": "translate(-475.466px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 825,
+      "distance": 99.83813590100203
+    },
+    {
+      "id": "08",
+      "targetId": "npc:tasks",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:tasks",
+          "footX": "1000",
+          "footY": "636",
+          "service": "tasks",
+          "worldTarget": "npc:tasks"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "903.2698568380819",
+          "footY": "615.2030192201879",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "任务使者",
+        "worldTransform": "translate(-592.408px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 1341,
+      "distance": 98.9405629945628
+    },
+    {
+      "id": "08",
+      "targetId": "portal:entry",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "portal:entry",
+          "footX": "1080",
+          "footY": "466",
+          "worldTarget": "portal:entry"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "963.8739101069847",
+          "footY": "486.32206573127763",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "副本传送门",
+        "worldTransform": "translate(-640.793px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 1544,
+      "distance": 117.89086100893083
+    },
+    {
+      "id": "09",
+      "targetId": "npc:equipment",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:equipment",
+          "footX": "180",
+          "footY": "466",
+          "service": "equipment",
+          "worldTarget": "npc:equipment"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "left",
+          "footX": "272.884789318908",
+          "footY": "503.0110747087935",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "军需官",
+        "worldTransform": "translate(-83.5656px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 1434,
+      "distance": 99.98701784690762
+    },
+    {
+      "id": "09",
+      "targetId": "npc:supplies",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:supplies",
+          "footX": "300",
+          "footY": "596",
+          "service": "supplies",
+          "worldTarget": "npc:supplies"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "left",
+          "footX": "395.40610863292807",
+          "footY": "581.3710633429511",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "补给商",
+        "worldTransform": "translate(-195.222px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 914,
+      "distance": 96.52114458601297
+    },
+    {
+      "id": "09",
+      "targetId": "npc:pets",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:pets",
+          "footX": "450",
+          "footY": "466",
+          "service": "pets",
+          "worldTarget": "npc:pets"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "left",
+          "footX": "535.7862760459275",
+          "footY": "514.0403145857194",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "灵宠师",
+        "worldTransform": "translate(-303.738px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 504,
+      "distance": 98.32170148712316
+    },
+    {
+      "id": "09",
+      "targetId": "npc:methods",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:methods",
+          "footX": "570",
+          "footY": "596",
+          "service": "methods",
+          "worldTarget": "npc:methods"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "修行导师",
+        "worldTransform": "translate(-351.333px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 301,
+      "distance": 54.91812087098393
+    },
+    {
+      "id": "09",
+      "targetId": "npc:bloodlines",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:bloodlines",
+          "footX": "720",
+          "footY": "466",
+          "service": "bloodlines",
+          "worldTarget": "npc:bloodlines"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "640.5029017541806",
+          "footY": "521.6479687720732",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "血脉祭司",
+        "worldTransform": "translate(-379.952px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 402,
+      "distance": 97.03857510270387
+    },
+    {
+      "id": "09",
+      "targetId": "npc:companions",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:companions",
+          "footX": "840",
+          "footY": "596",
+          "service": "companions",
+          "worldTarget": "npc:companions"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "751.2690812561975",
+          "footY": "550.4808643498421",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "同行引路人",
+        "worldTransform": "translate(-472.592px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 819,
+      "distance": 99.7254614000695
+    },
+    {
+      "id": "09",
+      "targetId": "npc:tasks",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:tasks",
+          "footX": "990",
+          "footY": "466",
+          "service": "tasks",
+          "worldTarget": "npc:tasks"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "895.1230282862239",
+          "footY": "486.4350400614289",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "任务使者",
+        "worldTransform": "translate(-590.202px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 1334,
+      "distance": 97.05272084742847
+    },
+    {
+      "id": "09",
+      "targetId": "portal:entry",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "portal:entry",
+          "footX": "1080",
+          "footY": "596",
+          "worldTarget": "portal:entry"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "965.8585237456418",
+          "footY": "573.7667205322832",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "副本传送门",
+        "worldTransform": "translate(-648.359px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 1533,
+      "distance": 116.28669449861323
+    },
+    {
+      "id": "10",
+      "targetId": "npc:equipment",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:equipment",
+          "footX": "160",
+          "footY": "636",
+          "service": "equipment",
+          "worldTarget": "npc:equipment"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "left",
+          "footX": "256.46141646099585",
+          "footY": "617.1461776917147",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "军需官",
+        "worldTransform": "translate(-67.6228px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 1544,
+      "distance": 98.28668008074175
+    },
+    {
+      "id": "10",
+      "targetId": "npc:supplies",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:supplies",
+          "footX": "290",
+          "footY": "466",
+          "service": "supplies",
+          "worldTarget": "npc:supplies"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "left",
+          "footX": "379.1737656107007",
+          "footY": "506.83096169833243",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "补给商",
+        "worldTransform": "translate(-176.308px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 1020,
+      "distance": 98.07715282573652
+    },
+    {
+      "id": "10",
+      "targetId": "npc:pets",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:pets",
+          "footX": "430",
+          "footY": "636",
+          "service": "pets",
+          "worldTarget": "npc:pets"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "left",
+          "footX": "516.5571678974364",
+          "footY": "592.2122562401199",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "灵宠师",
+        "worldTransform": "translate(-296.567px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 511,
+      "distance": 97.00262789226855
+    },
+    {
+      "id": "10",
+      "targetId": "npc:methods",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:methods",
+          "footX": "570",
+          "footY": "466",
+          "service": "methods",
+          "worldTarget": "npc:methods"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "修行导师",
+        "worldTransform": "translate(-351.333px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 300,
+      "distance": 89.19641248391103
+    },
+    {
+      "id": "10",
+      "targetId": "npc:bloodlines",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:bloodlines",
+          "footX": "710",
+          "footY": "636",
+          "service": "bloodlines",
+          "worldTarget": "npc:bloodlines"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "632.7039099806813",
+          "footY": "575.5685114394417",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "血脉祭司",
+        "worldTransform": "translate(-369.451px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 300,
+      "distance": 98.11549491247295
+    },
+    {
+      "id": "10",
+      "targetId": "npc:companions",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:companions",
+          "footX": "850",
+          "footY": "466",
+          "service": "companions",
+          "worldTarget": "npc:companions"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "759.4148132252514",
+          "footY": "500.9288303970922",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "同行引路人",
+        "worldTransform": "translate(-471.399px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 809,
+      "distance": 97.08604047917976
+    },
+    {
+      "id": "10",
+      "targetId": "npc:tasks",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "npc:tasks",
+          "footX": "990",
+          "footY": "636",
+          "service": "tasks",
+          "worldTarget": "npc:tasks"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "894.2044350484749",
+          "footY": "614.8758497799205",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "任务使者",
+        "worldTransform": "translate(-589.363px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 1333,
+      "distance": 98.09699275157391
+    },
+    {
+      "id": "10",
+      "targetId": "portal:entry",
+      "start": {
+        "player": {
+          "facing": "right",
+          "footX": "600",
+          "footY": "550",
+          "motion": "idle",
+          "player": ""
+        },
+        "run": "false",
+        "target": {
+          "entity": "portal:entry",
+          "footX": "1080",
+          "footY": "466",
+          "worldTarget": "portal:entry"
+        }
+      },
+      "arrived": {
+        "player": {
+          "facing": "right",
+          "footX": "963.8242954478453",
+          "footY": "486.33074829662684",
+          "motion": "paused",
+          "player": ""
+        },
+        "title": "副本传送门",
+        "worldTransform": "translate(-640.746px, 0px) scale(0.855556)"
+      },
+      "observedMilliseconds": 1545,
+      "distance": 117.94122966329599
+    }
+  ],
+  "invalidRoutes": [],
+  "slowestObservedMilliseconds": 1646,
+  "mobile": {
+    "width320": {
+      "controls": [
+        {
+          "name": "角色信息",
+          "rect": {
+            "bottom": 235.546875,
+            "height": 53,
+            "left": 26,
+            "right": 75,
+            "top": 182.546875,
+            "width": 49,
+            "x": 26,
+            "y": 182.546875
+          }
+        },
+        {
+          "name": "寻找 NPC",
+          "rect": {
+            "bottom": 215.546875,
+            "height": 44,
+            "left": 192,
+            "right": 286,
+            "top": 171.546875,
+            "width": 94,
+            "x": 192,
+            "y": 171.546875
+          }
+        },
+        {
+          "name": "打开背包",
+          "rect": {
+            "bottom": 265.546875,
+            "height": 44,
+            "left": 192,
+            "right": 236,
+            "top": 221.546875,
+            "width": 44,
+            "x": 192,
+            "y": 221.546875
+          }
+        },
+        {
+          "name": "打开菜单",
+          "rect": {
+            "bottom": 265.546875,
+            "height": 44,
+            "left": 242,
+            "right": 286,
+            "top": 221.546875,
+            "width": 44,
+            "x": 242,
+            "y": 221.546875
+          }
+        },
+        {
+          "name": "移动摇杆",
+          "rect": {
+            "bottom": 689.8984375,
+            "height": 110,
+            "left": 21,
+            "right": 131,
+            "top": 579.8984375,
+            "width": 110,
+            "x": 21,
+            "y": 579.8984375
+          }
+        },
+        {
+          "name": "E · 与修行导师交谈",
+          "rect": {
+            "bottom": 633.8984375,
+            "height": 60,
+            "left": 180,
+            "right": 284,
+            "top": 573.8984375,
+            "width": 104,
+            "x": 180,
+            "y": 573.8984375
+          }
+        },
+        {
+          "name": "跳跃",
+          "rect": {
+            "bottom": 689.8984375,
+            "height": 48,
+            "left": 180,
+            "right": 228,
+            "top": 641.8984375,
+            "width": 48,
+            "x": 180,
+            "y": 641.8984375
+          }
+        },
+        {
+          "name": "奔跑Shift",
+          "rect": {
+            "bottom": 689.8984375,
+            "height": 48,
+            "left": 236,
+            "right": 284,
+            "top": 641.8984375,
+            "width": 48,
+            "x": 236,
+            "y": 641.8984375
+          }
+        }
+      ],
+      "minimap": "50%",
+      "overflow": false,
+      "player": {
+        "facing": "right",
+        "footX": "600",
+        "footY": "550",
+        "motion": "idle",
+        "player": ""
+      },
+      "stage": {
+        "bottom": 706.8984375,
+        "height": 548.3515625,
+        "left": 8,
+        "right": 297,
+        "top": 158.546875,
+        "width": 289,
+        "x": 8,
+        "y": 158.546875
+      },
+      "viewport": {
+        "height": 740,
+        "width": 320
+      },
+      "worldWidth": "1200px"
+    },
+    "width390": {
+      "controls": [
+        {
+          "name": "角色信息",
+          "rect": {
+            "bottom": 235.546875,
+            "height": 53,
+            "left": 38.4296875,
+            "right": 87.4296875,
+            "top": 182.546875,
+            "width": 49,
+            "x": 38.4296875,
+            "y": 182.546875
+          }
+        },
+        {
+          "name": "寻找 NPC",
+          "rect": {
+            "bottom": 215.546875,
+            "height": 44,
+            "left": 249.5625,
+            "right": 343.5625,
+            "top": 171.546875,
+            "width": 94,
+            "x": 249.5625,
+            "y": 171.546875
+          }
+        },
+        {
+          "name": "打开背包",
+          "rect": {
+            "bottom": 265.546875,
+            "height": 44,
+            "left": 249.5625,
+            "right": 293.5625,
+            "top": 221.546875,
+            "width": 44,
+            "x": 249.5625,
+            "y": 221.546875
+          }
+        },
+        {
+          "name": "打开菜单",
+          "rect": {
+            "bottom": 265.546875,
+            "height": 44,
+            "left": 299.5625,
+            "right": 343.5625,
+            "top": 221.546875,
+            "width": 44,
+            "x": 299.5625,
+            "y": 221.546875
+          }
+        },
+        {
+          "name": "移动摇杆",
+          "rect": {
+            "bottom": 775.5390625,
+            "height": 110,
+            "left": 33.4296875,
+            "right": 143.4296875,
+            "top": 665.5390625,
+            "width": 110,
+            "x": 33.4296875,
+            "y": 665.5390625
+          }
+        },
+        {
+          "name": "E · 与修行导师交谈",
+          "rect": {
+            "bottom": 719.5390625,
+            "height": 60,
+            "left": 237.5625,
+            "right": 341.5625,
+            "top": 659.5390625,
+            "width": 104,
+            "x": 237.5625,
+            "y": 659.5390625
+          }
+        },
+        {
+          "name": "跳跃",
+          "rect": {
+            "bottom": 775.5390625,
+            "height": 48,
+            "left": 237.5625,
+            "right": 285.5625,
+            "top": 727.5390625,
+            "width": 48,
+            "x": 237.5625,
+            "y": 727.5390625
+          }
+        },
+        {
+          "name": "奔跑Shift",
+          "rect": {
+            "bottom": 775.5390625,
+            "height": 48,
+            "left": 293.5625,
+            "right": 341.5625,
+            "top": 727.5390625,
+            "width": 48,
+            "x": 293.5625,
+            "y": 727.5390625
+          }
+        }
+      ],
+      "minimap": "50%",
+      "overflow": false,
+      "player": {
+        "facing": "right",
+        "footX": "600",
+        "footY": "550",
+        "motion": "idle",
+        "player": ""
+      },
+      "stage": {
+        "bottom": 792.5390625,
+        "height": 633.9921875,
+        "left": 20.4296875,
+        "right": 354.5625,
+        "top": 158.546875,
+        "width": 334.1328125,
+        "x": 20.4296875,
+        "y": 158.546875
+      },
+      "viewport": {
+        "height": 844,
+        "width": 390
+      },
+      "worldWidth": "1200px"
+    }
+  },
+  "overview": {
+    "cards": [
+      {
+        "broken": [],
+        "id": "01",
+        "rect": {
+          "bottom": 806.4765625,
+          "height": 304.7109375,
+          "left": 24,
+          "right": 184.59375,
+          "top": 501.765625,
+          "width": 160.59375,
+          "x": 24,
+          "y": 501.765625
+        },
+        "width": "1200px"
+      },
+      {
+        "broken": [],
+        "id": "02",
+        "rect": {
+          "bottom": 806.4921875,
+          "height": 304.7265625,
+          "left": 200.59375,
+          "right": 361.1953125,
+          "top": 501.765625,
+          "width": 160.6015625,
+          "x": 200.59375,
+          "y": 501.765625
+        },
+        "width": "1200px"
+      },
+      {
+        "broken": [],
+        "id": "03",
+        "rect": {
+          "bottom": 806.4921875,
+          "height": 304.7265625,
+          "left": 377.1953125,
+          "right": 537.796875,
+          "top": 501.765625,
+          "width": 160.6015625,
+          "x": 377.1953125,
+          "y": 501.765625
+        },
+        "width": "1200px"
+      },
+      {
+        "broken": [],
+        "id": "04",
+        "rect": {
+          "bottom": 806.4921875,
+          "height": 304.7265625,
+          "left": 553.796875,
+          "right": 714.3984375,
+          "top": 501.765625,
+          "width": 160.6015625,
+          "x": 553.796875,
+          "y": 501.765625
+        },
+        "width": "1200px"
+      },
+      {
+        "broken": [],
+        "id": "05",
+        "rect": {
+          "bottom": 806.4921875,
+          "height": 304.7265625,
+          "left": 730.3984375,
+          "right": 891,
+          "top": 501.765625,
+          "width": 160.6015625,
+          "x": 730.3984375,
+          "y": 501.765625
+        },
+        "width": "1200px"
+      },
+      {
+        "broken": [],
+        "id": "06",
+        "rect": {
+          "bottom": 1205.703125,
+          "height": 304.7109375,
+          "left": 24,
+          "right": 184.59375,
+          "top": 900.9921875,
+          "width": 160.59375,
+          "x": 24,
+          "y": 900.9921875
+        },
+        "width": "1200px"
+      },
+      {
+        "broken": [],
+        "id": "07",
+        "rect": {
+          "bottom": 1205.71875,
+          "height": 304.7265625,
+          "left": 200.59375,
+          "right": 361.1953125,
+          "top": 900.9921875,
+          "width": 160.6015625,
+          "x": 200.59375,
+          "y": 900.9921875
+        },
+        "width": "1200px"
+      },
+      {
+        "broken": [],
+        "id": "08",
+        "rect": {
+          "bottom": 1205.71875,
+          "height": 304.7265625,
+          "left": 377.1953125,
+          "right": 537.796875,
+          "top": 900.9921875,
+          "width": 160.6015625,
+          "x": 377.1953125,
+          "y": 900.9921875
+        },
+        "width": "1200px"
+      },
+      {
+        "broken": [],
+        "id": "09",
+        "rect": {
+          "bottom": 1205.71875,
+          "height": 304.7265625,
+          "left": 553.796875,
+          "right": 714.3984375,
+          "top": 900.9921875,
+          "width": 160.6015625,
+          "x": 553.796875,
+          "y": 900.9921875
+        },
+        "width": "1200px"
+      },
+      {
+        "broken": [],
+        "id": "10",
+        "rect": {
+          "bottom": 1205.71875,
+          "height": 304.7265625,
+          "left": 730.3984375,
+          "right": 891,
+          "top": 900.9921875,
+          "width": 160.6015625,
+          "x": 730.3984375,
+          "y": 900.9921875
+        },
+        "width": "1200px"
+      }
+    ],
+    "hidden": false
+  },
+  "finalState": {
+    "dialogOpen": false,
+    "frame": {
+      "bottom": 745.578125,
+      "height": 615.984375,
+      "left": 72.1484375,
+      "right": 395.84375,
+      "top": 129.59375,
+      "width": 323.6953125,
+      "x": 72.1484375,
+      "y": 129.59375
+    },
+    "label": "10 / 10 · 轮回庭院",
+    "minimap": "50%",
+    "overflow": false,
+    "overviewHidden": true,
+    "player": {
+      "facing": "right",
+      "footX": "600",
+      "footY": "550",
+      "motion": "idle",
+      "player": ""
+    },
+    "run": "false",
+    "stage": {
+      "bottom": 746.578125,
+      "height": 617.984375,
+      "left": 71.1484375,
+      "right": 396.84375,
+      "top": 128.59375,
+      "width": 325.6953125,
+      "x": 71.1484375,
+      "y": 128.59375
+    },
+    "worldHeight": "720px",
+    "worldWidth": "1200px"
+  },
+  "consoleWarningsAndErrors": []
+}

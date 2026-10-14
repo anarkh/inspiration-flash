@@ -1,0 +1,27 @@
+{
+  "concept_id": "09",
+  "title": "玄镜通路",
+  "generator": "built-in image_gen",
+  "source_file": "/Users/bytedance/.codex/generated_images/01a11978-ca69-7a43-9d84-74a21482996f/exec-c034a707-9ad9-4316-be57-f008f2950b58.png",
+  "output_file": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/dungeon-portals-ten/assets/portal-09.png",
+  "prompt_file": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/dungeon-portals-ten/assets/portal-09.prompt.txt",
+  "transparent_background_requested": true,
+  "copy_method": "byte-for-byte copy; no post-processing",
+  "sha256": "a8be6ffd45a3350ddae9ac9e03d8ac2d2972125590923e9eebbbc54d8520b228",
+  "source_sha256": "a8be6ffd45a3350ddae9ac9e03d8ac2d2972125590923e9eebbbc54d8520b228",
+  "width": 1072,
+  "height": 1467,
+  "png_color_type": 6,
+  "image_mode": "RGBA",
+  "alpha_extrema": [
+    0,
+    255
+  ],
+  "visible_bbox": [
+    0,
+    0,
+    1050,
+    1467
+  ],
+  "fully_transparent_pixel_count": 740686
+}

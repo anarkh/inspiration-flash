@@ -1,0 +1,27 @@
+{
+  "checks": {
+    "storage": true,
+    "durableStorage": true,
+    "durability": true,
+    "state": true,
+    "revision": true,
+    "remainingSeeds": true,
+    "localUiState": true,
+    "ui": true,
+    "mobileSheet": true,
+    "walk": true
+  },
+  "hp": 102,
+  "balance": 1155,
+  "phase": "explore",
+  "node": "watch_post_cache",
+  "revision": {
+    "acceptingInput": true,
+    "durableRevision": 9,
+    "ledgerRevision": 9
+  },
+  "closed": true,
+  "selection": "pending.relic:demon_tower_1:echo:1:mist_edge",
+  "remainingSeeds": 1021,
+  "method": "formal createInfiniteFlowClient recovery; no gameplay dispatch"
+}

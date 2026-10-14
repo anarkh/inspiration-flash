@@ -312,6 +312,42 @@ export const DEFAULT_SHEET_THEME: SheetTheme = {
   },
 };
 
+/** Warm, compact parchment surfaces shared by production sheets and overlays. */
+export const COMPACT_SHEET_THEME: SheetTheme = {
+  ...DEFAULT_SHEET_THEME,
+  id: 'compact-gold-parchment',
+  name: '暖金小窗',
+  reference: '统一紧凑弹框',
+  palette: {
+    text: new Color(240, 232, 214), textMuted: new Color(200, 195, 175),
+    surface: new Color(29, 29, 21), raised: new Color(36, 35, 26),
+    quiet: new Color(33, 31, 23), ink: new Color(9, 12, 10),
+    edge: new Color(108, 98, 70), edgeStrong: new Color(163, 142, 91),
+    accent: new Color(235, 208, 146), accentDark: new Color(76, 60, 34),
+    danger: new Color(238, 155, 127), dangerDark: new Color(65, 33, 26),
+    positive: new Color(189, 216, 160), backdrop: new Color(6, 9, 7, 144),
+    severity: {
+      danger: new Color(238, 155, 127), warning: new Color(235, 208, 146),
+      positive: new Color(189, 216, 160), neutral: new Color(240, 232, 214),
+    },
+  },
+  framePolicy: { cut: { sheet: 3, card: 2, control: 2, tile: 2, cell: 2 } },
+  thumb: { color: new Color(174, 146, 89), alpha: 172, width: 4, radius: 1 },
+  paintFrame(g, width, height, input) {
+    fillChamfer(g, width, height, input.cut, input.fill);
+    strokeChamfer(g, width, height, input.cut, input.edge, 2);
+    if (input.role === 'sheet') {
+      for (const side of [-1, 1]) {
+        for (const vertical of [-1, 1]) {
+          const x = side * (width / 2 - 7), y = vertical * (height / 2 - 7);
+          rule(g, x, y, x - side * 17, y, input.accent, 2);
+          rule(g, x, y, x, y - vertical * 17, input.accent, 2);
+        }
+      }
+    }
+  },
+};
+
 // --- WCAG palette contract (same math as the InfiniteFlowView module audit) ---
 
 function linearChannel(value: number): number {

@@ -1,0 +1,140 @@
+{
+  "verifiedAt": "2026-10-09T07:49:00.502Z",
+  "target": "Cocos Creator 3.8.8 Web Mobile",
+  "preview": "http://127.0.0.1:8125/cocos/build/web-mobile/index.html",
+  "portraitEvidence": [
+    {
+      "phase": "hub",
+      "width": 390,
+      "crop": {
+        "height": 98.07692307692308,
+        "width": 90.3846153846154
+      },
+      "frames": [],
+      "imageUuid": "2a0017c1-1814-4582-8bf6-b333c60640c7",
+      "placeholder": false,
+      "portraitPresent": true
+    },
+    {
+      "phase": "explore",
+      "width": 390,
+      "crop": {
+        "height": 108,
+        "width": 100
+      },
+      "frames": [],
+      "imageUuid": "2a0017c1-1814-4582-8bf6-b333c60640c7",
+      "placeholder": false,
+      "portraitPresent": true
+    },
+    {
+      "phase": "explore",
+      "width": 320,
+      "crop": {
+        "height": 108,
+        "width": 100
+      },
+      "frames": [],
+      "imageUuid": "2a0017c1-1814-4582-8bf6-b333c60640c7",
+      "placeholder": false,
+      "portraitPresent": true
+    },
+    {
+      "phase": "combat",
+      "width": 390,
+      "crop": {
+        "height": 108,
+        "width": 100
+      },
+      "frames": [],
+      "imageUuid": "2a0017c1-1814-4582-8bf6-b333c60640c7",
+      "placeholder": false,
+      "portraitPresent": true
+    }
+  ],
+  "avatarClicks": [
+    {
+      "phase": "explore",
+      "width": 390,
+      "touch": [
+        57.20000000000003,
+        57.20000000000004
+      ],
+      "panel": "character",
+      "positionStable": true
+    },
+    {
+      "phase": "explore",
+      "width": 320,
+      "touch": [
+        46.83658170914548,
+        46.83658170914566
+      ],
+      "panel": "character",
+      "positionStable": true
+    },
+    {
+      "phase": "combat",
+      "width": 390,
+      "panel": "character",
+      "verified": true
+    }
+  ],
+  "combatAfterAttack": {
+    "phase": "combat",
+    "playerHp": 92,
+    "status": "生命 92/102",
+    "portrait": {
+      "crop": {
+        "height": 108,
+        "width": 100
+      },
+      "frames": [],
+      "imageUuid": "2a0017c1-1814-4582-8bf6-b333c60640c7",
+      "placeholder": false,
+      "portraitPresent": true
+    }
+  },
+  "consoleErrors": [],
+  "wechatDeviceVerified": false,
+  "sourceSha256": {
+    "cocos/assets/scripts/ui/InfiniteFlowWalkScene.ts": "7a9de6dbeb05a2f1d185dd4cf0d65ec6a2fce5aaea4a20285cb54fc026b2bcdf",
+    "cocos/assets/scripts/ui/scene-visuals.ts": "8401b3e3d1e4ec5022dc641a9eeff1cd4ae8fc9dcd55e813e7d136ffabd29e66",
+    "cocos/headless/bootstrap-race.self-check.mjs": "05a2c01691a238dbbf5bdc531bf18891f4db90aa5de4db99b4a74f457f8ee9f8",
+    "cocos/README.md": "9315f30c691e7b595e4bb8c71eaa92edee12f756c9c9b6282c905aff3c5d29d7"
+  },
+  "checks": {
+    "cocosRaceScenarios": 103,
+    "cocosRacePassed": true,
+    "typecheckPassed": true,
+    "creatorTypecheckPassed": true,
+    "creatorWebMobileBuildPassed": true,
+    "scopedDiffCheckPassed": true
+  },
+  "screenshots": {
+    "combat-390.png": {
+      "sha256": "8374b49d61cf8cc387365477b2d97188693cc207c229dd916b8875676d3af5ac",
+      "bytes": 434346
+    },
+    "explore-320.png": {
+      "sha256": "fc32f712f1803b7d633d70e0d37510003467b94c8eef93101230e8378b6333fb",
+      "bytes": 297314
+    },
+    "explore-390.png": {
+      "sha256": "64d83624d621a270f99f55c609441b4d53ba79ffbf982d48b55e4fae64f9deab",
+      "bytes": 449745
+    },
+    "explore-top.png": {
+      "sha256": "b8b09b534261fa016929d912777b2077534328c58977a9edb59782f8ef33ecbc",
+      "bytes": 102251
+    },
+    "hub-390.png": {
+      "sha256": "808180df5d93669098ef6145c1095a4c3c6adfd3a1f24be6655442370dde04cc",
+      "bytes": 477266
+    },
+    "hub-top.png": {
+      "sha256": "d4133d4c2f2484d171fbe7fc93f436ed19fbde04ec804a9326193248d9c2f7b4",
+      "bytes": 121002
+    }
+  }
+}

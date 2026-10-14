@@ -1,0 +1,145 @@
+{
+  "observedAt": "2026-09-30T08:47:09.832Z",
+  "evidenceBoundary": "Actual Cocos Web Mobile preview; not WeChat device or release acceptance",
+  "finalRuntime": {
+    "url": "http://127.0.0.1:8125/cocos/build/web-mobile/",
+    "phase": "hub",
+    "position": {
+      "x": 600,
+      "y": 550
+    },
+    "facing": "right",
+    "newRenderer": true,
+    "surfaceHeight": 1334,
+    "canvas": {
+      "x": 0,
+      "y": 0,
+      "width": 930,
+      "height": 828,
+      "top": 0,
+      "right": 930,
+      "bottom": 828,
+      "left": 0
+    },
+    "mainScript": [
+      {
+        "name": "http://127.0.0.1:8125/cocos/build/web-mobile/assets/main/index.js",
+        "decodedBodySize": 1057468
+      }
+    ],
+    "sceneVisuals": [
+      {
+        "key": "npc:supply_trader_world",
+        "width": 1024,
+        "height": 1536,
+        "valid": true
+      },
+      {
+        "key": "character:reincarnator_walk",
+        "width": 1254,
+        "height": 1254,
+        "valid": true
+      },
+      {
+        "key": "npc:equipment_quartermaster_world",
+        "width": 1024,
+        "height": 1536,
+        "valid": true
+      },
+      {
+        "key": "npc:pet_keeper_world",
+        "width": 1024,
+        "height": 1536,
+        "valid": true
+      },
+      {
+        "key": "scene:hub_courtyard_walk",
+        "width": 2172,
+        "height": 724,
+        "valid": true
+      },
+      {
+        "key": "npc:method_master_world",
+        "width": 1024,
+        "height": 1536,
+        "valid": true
+      },
+      {
+        "key": "npc:bloodline_priest_world",
+        "width": 1024,
+        "height": 1536,
+        "valid": true
+      },
+      {
+        "key": "npc:main_god_projection_world",
+        "width": 1024,
+        "height": 1536,
+        "valid": true
+      },
+      {
+        "key": "npc:companion_guide_world",
+        "width": 1024,
+        "height": 1536,
+        "valid": true
+      },
+      {
+        "key": "scene:courtyard_lamp",
+        "width": 930,
+        "height": 1691,
+        "valid": true
+      },
+      {
+        "key": "scene:courtyard_crate",
+        "width": 1457,
+        "height": 1080,
+        "valid": true
+      },
+      {
+        "key": "scene:courtyard_altar",
+        "width": 1500,
+        "height": 1049,
+        "valid": true
+      },
+      {
+        "key": "character:reincarnator",
+        "width": 768,
+        "height": 768,
+        "valid": true
+      },
+      {
+        "key": "scene:courtyard_pillar",
+        "width": 870,
+        "height": 1808,
+        "valid": true
+      }
+    ]
+  },
+  "phoneScreenshots": [
+    {
+      "width": 320,
+      "height": 568,
+      "file": "cocos-courtyard-mobile-320.jpg"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "file": "cocos-courtyard-mobile-390.jpg"
+    }
+  ],
+  "uiObservations": {
+    "groundTapPosition": {
+      "x": 546.4873202034319,
+      "y": 434
+    },
+    "npcTapArrival": {
+      "target": "bloodlines",
+      "position": {
+        "x": 632.6888112226142,
+        "y": 575.5567069558621
+      },
+      "sheet": "npc"
+    },
+    "mentorSheet": "methods",
+    "bagSheet": "inventory"
+  }
+}

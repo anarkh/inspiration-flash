@@ -1,0 +1,379 @@
+{
+  "verifiedAt": "2026-09-30T09:42:56.463Z",
+  "status": "PASS",
+  "scope": "Interactive HTML proposals only; production change is limited to dungeon movement hint removal",
+  "transition": {
+    "url": "http://127.0.0.1:8125/prototype/dungeon-transition/",
+    "viewports": [
+      {
+        "requested": {
+          "width": 320,
+          "height": 568
+        },
+        "images": [
+          {
+            "alt": "妖塔一层实际游戏背景",
+            "loaded": true
+          },
+          {
+            "alt": "旧金镶边的风化石质通道",
+            "loaded": true
+          }
+        ],
+        "scrollWidth": 305,
+        "smallTargets": [],
+        "width": 305
+      },
+      {
+        "requested": {
+          "width": 390,
+          "height": 844
+        },
+        "images": [
+          {
+            "alt": "妖塔一层实际游戏背景",
+            "loaded": true
+          },
+          {
+            "alt": "旧金镶边的风化石质通道",
+            "loaded": true
+          }
+        ],
+        "scrollWidth": 375,
+        "smallTargets": [],
+        "width": 375
+      }
+    ],
+    "verifiedInteractions": [
+      "available gate: walk toward doorway then open result",
+      "locked gate: show unavailable reason",
+      "near gate: open result immediately",
+      "switch all three real dungeon backgrounds",
+      "switch glowing and quiet gate variants",
+      "reset demonstration",
+      "expand and collapse implementation notes"
+    ],
+    "screenshots": [
+      "transition-mobile-320.png",
+      "transition-mobile-390.png"
+    ]
+  },
+  "map": {
+    "url": "http://127.0.0.1:8125/prototype/dungeon-map/",
+    "viewports": [
+      {
+        "requested": {
+          "width": 320,
+          "height": 568
+        },
+        "body": {
+          "bottom": 505,
+          "height": 439.6015625,
+          "left": 0,
+          "right": 305,
+          "top": 65.3984375,
+          "width": 305,
+          "x": 0,
+          "y": 65.3984375
+        },
+        "routes": [
+          {
+            "label": "上方，双影巡逻，可前往",
+            "rect": {
+              "bottom": 283.0390625,
+              "height": 56,
+              "left": 12,
+              "right": 293,
+              "top": 227.0390625,
+              "width": 281,
+              "x": 12,
+              "y": 227.0390625
+            }
+          },
+          {
+            "label": "右侧，雾后暗格，可前往",
+            "rect": {
+              "bottom": 345.0390625,
+              "height": 56,
+              "left": 12,
+              "right": 293,
+              "top": 289.0390625,
+              "width": 281,
+              "x": 12,
+              "y": 289.0390625
+            }
+          },
+          {
+            "label": "下方，伏雾妖鬼，可前往",
+            "rect": {
+              "bottom": 407.0390625,
+              "height": 56,
+              "left": 12,
+              "right": 293,
+              "top": 351.0390625,
+              "width": 281,
+              "x": 12,
+              "y": 351.0390625
+            }
+          },
+          {
+            "label": "左侧，血字阶梯，已清理",
+            "rect": {
+              "bottom": 469.0390625,
+              "height": 56,
+              "left": 12,
+              "right": 293,
+              "top": 413.0390625,
+              "width": 281,
+              "x": 12,
+              "y": 413.0390625
+            }
+          }
+        ],
+        "scrollWidth": 305,
+        "smallTargets": [],
+        "width": 305
+      },
+      {
+        "requested": {
+          "width": 390,
+          "height": 844
+        },
+        "routeCards": [
+          {
+            "label": "上方，双影巡逻，可前往",
+            "rect": {
+              "bottom": 399.3828125,
+              "height": 72,
+              "left": 16,
+              "right": 359,
+              "top": 327.3828125,
+              "width": 343,
+              "x": 16,
+              "y": 327.3828125
+            }
+          },
+          {
+            "label": "右侧，雾后暗格，可前往",
+            "rect": {
+              "bottom": 480.3828125,
+              "height": 72,
+              "left": 16,
+              "right": 359,
+              "top": 408.3828125,
+              "width": 343,
+              "x": 16,
+              "y": 408.3828125
+            }
+          },
+          {
+            "label": "下方，伏雾妖鬼，可前往",
+            "rect": {
+              "bottom": 561.3828125,
+              "height": 72,
+              "left": 16,
+              "right": 359,
+              "top": 489.3828125,
+              "width": 343,
+              "x": 16,
+              "y": 489.3828125
+            }
+          },
+          {
+            "label": "左侧，血字阶梯，已清理",
+            "rect": {
+              "bottom": 642.3828125,
+              "height": 72,
+              "left": 16,
+              "right": 359,
+              "top": 570.3828125,
+              "width": 343,
+              "x": 16,
+              "y": 570.3828125
+            }
+          }
+        ],
+        "scrollWidth": 375,
+        "width": 375
+      }
+    ],
+    "fixtureChecks": [
+      {
+        "chapterLabel": "第一章 · 妖塔一层",
+        "scenarioLabel": "途中探索",
+        "location": "裂缝石门",
+        "overflow": false,
+        "routes": [
+          {
+            "height": 56,
+            "label": "上方，双影巡逻，可前往",
+            "width": 281
+          },
+          {
+            "height": 56,
+            "label": "右侧，雾后暗格，可前往",
+            "width": 281
+          },
+          {
+            "height": 56,
+            "label": "下方，伏雾妖鬼，可前往",
+            "width": 281
+          },
+          {
+            "height": 56,
+            "label": "左侧，血字阶梯，已清理",
+            "width": 281
+          }
+        ]
+      },
+      {
+        "chapterLabel": "第一章 · 妖塔一层",
+        "scenarioLabel": "初入副本",
+        "location": "雾中妖鬼",
+        "overflow": false,
+        "routes": [
+          {
+            "height": 56,
+            "label": "上方，断符石盘，暂不可达",
+            "width": 281
+          },
+          {
+            "height": 56,
+            "label": "右侧，血字阶梯，暂不可达",
+            "width": 281
+          },
+          {
+            "height": 56,
+            "label": "下方，灰坑回声，暂不可达",
+            "width": 281
+          }
+        ]
+      },
+      {
+        "chapterLabel": "第八章 · 时序观测庭",
+        "scenarioLabel": "途中探索",
+        "location": "双时校准桥",
+        "overflow": false,
+        "routes": [
+          {
+            "height": 56,
+            "label": "上方，现场观测台，可前往",
+            "width": 281
+          },
+          {
+            "height": 56,
+            "label": "右侧，零时摄政，暂不可达",
+            "width": 281
+          },
+          {
+            "height": 56,
+            "label": "下方，器魂回刻室，可前往",
+            "width": 281
+          },
+          {
+            "height": 56,
+            "label": "左侧，零点子午线，已清理",
+            "width": 281
+          }
+        ]
+      },
+      {
+        "chapterLabel": "第八章 · 时序观测庭",
+        "scenarioLabel": "初入副本",
+        "location": "时序庭门",
+        "overflow": false,
+        "routes": [
+          {
+            "height": 56,
+            "label": "上方，入庭计时仪，可前往",
+            "width": 281
+          },
+          {
+            "height": 56,
+            "label": "右侧，发条侦察兵，可前往",
+            "width": 281
+          },
+          {
+            "height": 56,
+            "label": "下方，未来补给箱，可前往",
+            "width": 281
+          }
+        ]
+      },
+      {
+        "chapterLabel": "第十九章 · 天幕监察城",
+        "scenarioLabel": "途中探索",
+        "location": "南部盲区中继",
+        "overflow": false,
+        "routes": [
+          {
+            "height": 56,
+            "label": "上方，中央盲区中继，可前往",
+            "width": 281
+          },
+          {
+            "height": 56,
+            "label": "右侧，万目监察者，暂不可达",
+            "width": 281
+          },
+          {
+            "height": 56,
+            "label": "下方，折光实验室，可前往",
+            "width": 281
+          },
+          {
+            "height": 56,
+            "label": "左侧，曝光替身巡逻队，已清理",
+            "width": 281
+          }
+        ]
+      },
+      {
+        "chapterLabel": "第十九章 · 天幕监察城",
+        "scenarioLabel": "初入副本",
+        "location": "监察城正门",
+        "overflow": false,
+        "routes": [
+          {
+            "height": 56,
+            "label": "上方，万目总锁，可前往",
+            "width": 281
+          },
+          {
+            "height": 56,
+            "label": "右侧，监镜秘藏，可前往",
+            "width": 281
+          },
+          {
+            "height": 56,
+            "label": "下方，下层入场口，可前往",
+            "width": 281
+          }
+        ]
+      }
+    ],
+    "verifiedInteractions": [
+      "nearby/full map tabs",
+      "known node selection and visible details",
+      "mark adjacent right exit and return to exploration without changing location",
+      "locked era court exit displays production requirement and has no mark button",
+      "enlarge names and locate current room",
+      "unknown map cells stay anonymous and non-interactive"
+    ],
+    "screenshots": [
+      "map-mobile-320.png",
+      "map-mobile-390.png"
+    ]
+  },
+  "screenshotCapture": {
+    "method": "Page.captureScreenshot with exact CSS viewport clip",
+    "format": "png",
+    "note": "Requested widths include a 15px browser scrollbar; captured content widths are 305px and 375px."
+  },
+  "overview": {
+    "url": "http://127.0.0.1:8125/prototype/dungeon-ux/",
+    "embeddedMapTabSwitch": "PASS",
+    "desktopHorizontalOverflow": false,
+    "screenshot": "overview.jpg"
+  }
+}

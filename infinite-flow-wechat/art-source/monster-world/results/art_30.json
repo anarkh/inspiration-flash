@@ -1,0 +1,24 @@
+{
+  "entityId": "all_sight_warden",
+  "path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/art-source/monster-world/all-sight-warden-world-v1.png",
+  "sourcePath": "/Users/bytedance/.codex/generated_images/01a0ecb7-e4b6-7f21-9b6d-17dbaf338c1b/exec-fff861dc-05cd-4863-92eb-8235d5a205c4.png",
+  "width": 1024,
+  "height": 1536,
+  "mode": "RGBA",
+  "alpha": {
+    "min": 0,
+    "max": 254,
+    "transparentPixels": 563745,
+    "nonOpaquePixels": 1572864,
+    "totalPixels": 1572864,
+    "corners": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "tool": "built-in imagegen",
+  "promptSource": "art-source/monster-world/prompts.json sharedPrompt + asset.subject",
+  "visualCheck": "Full silhouette and feet visible; multiple observation lenses and cyan central core preserve reference identity; weathered black bronze robe/armor."
+}

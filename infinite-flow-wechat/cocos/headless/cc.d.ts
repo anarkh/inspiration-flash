@@ -35,6 +35,7 @@ declare module 'cc' {
   }
 
   export class ScrollView extends Component {
+    bounceDuration: number;
     static readonly EventType: Readonly<{ SCROLLING: string }>;
     content: Node;
     horizontal: boolean;
@@ -59,6 +60,7 @@ declare module 'cc' {
   }
 
   export class Node {
+    active: boolean;
     static readonly EventType: Readonly<{
       TOUCH_START: string;
       TOUCH_END: string;
@@ -99,7 +101,9 @@ declare module 'cc' {
     static readonly SizeMode: Readonly<{ CUSTOM: number }>;
     spriteFrame: SpriteFrame | null;
     sizeMode: number;
+    trim: boolean;
     color: Readonly<Color>;
+    grayscale: boolean;
   }
 
   export class Size {
@@ -127,7 +131,7 @@ declare module 'cc' {
     constructor(x?: number, y?: number, width?: number, height?: number);
   }
   export class EventKeyboard { keyCode: number; }
-  export const KeyCode: Readonly<{ KEY_W: number; KEY_A: number; KEY_S: number; KEY_D: number; KEY_E: number; SPACE: number; ARROW_UP: number; ARROW_DOWN: number; ARROW_LEFT: number; ARROW_RIGHT: number }>;
+  export const KeyCode: Readonly<{ ESCAPE: number; KEY_W: number; KEY_A: number; KEY_S: number; KEY_D: number; KEY_E: number; SPACE: number; ARROW_UP: number; ARROW_DOWN: number; ARROW_LEFT: number; ARROW_RIGHT: number }>;
   export const Input: { EventType: { KEY_DOWN: string; KEY_UP: string } };
   export const input: { on(event: string, handler: (event: EventKeyboard) => void, target?: unknown): void; off(event: string, handler: (event: EventKeyboard) => void, target?: unknown): void };
   export const Game: { EVENT_HIDE: string };
@@ -148,9 +152,13 @@ declare module 'cc' {
   }
 
   export class Graphics extends Component {
+    static readonly LineCap: Readonly<{ ROUND: number }>;
+    static readonly LineJoin: Readonly<{ ROUND: number }>;
     fillColor: Color;
     strokeColor: Color;
     lineWidth: number;
+    lineCap: number;
+    lineJoin: number;
     rect(x: number, y: number, width: number, height: number): void;
     roundRect(
       x: number,
@@ -162,6 +170,7 @@ declare module 'cc' {
     circle(cx: number, cy: number, radius: number): void;
     moveTo(x: number, y: number): void;
     lineTo(x: number, y: number): void;
+    bezierCurveTo(c1x: number, c1y: number, c2x: number, c2y: number, x: number, y: number): void;
     close(): void;
     fill(): void;
     stroke(): void;
@@ -187,6 +196,11 @@ declare module 'cc' {
     }>;
 
     string: string;
+    fontFamily: string;
+    enableShadow: boolean;
+    shadowColor: Color;
+    shadowOffset: Vec2;
+    shadowBlur: number;
     fontSize: number;
     isBold: boolean;
     lineHeight: number;

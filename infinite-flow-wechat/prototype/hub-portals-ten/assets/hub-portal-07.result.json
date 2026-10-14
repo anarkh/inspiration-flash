@@ -1,0 +1,30 @@
+{
+  "id": "hub-portal-07",
+  "title": "万象画门",
+  "tool": "image_gen.imagegen",
+  "transparent_background": true,
+  "source_path": "/Users/bytedance/.codex/generated_images/01a11978-834a-79a3-85fb-08271558cdce/exec-471a4820-1607-42b3-9afd-24434b88967e.png",
+  "saved_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-portals-ten/assets/hub-portal-07.png",
+  "prompt_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/hub-portals-ten/assets/hub-portal-07.prompt.txt",
+  "source_sha256": "e77658a165eab7c3fe527b309909bca1d0be7c4fddd4ab5d4c75905a33927d4e",
+  "saved_sha256": "e77658a165eab7c3fe527b309909bca1d0be7c4fddd4ab5d4c75905a33927d4e",
+  "width": 1018,
+  "height": 1545,
+  "mode": "RGBA",
+  "alpha_extrema": [
+    0,
+    255
+  ],
+  "alpha_bbox": [
+    0,
+    0,
+    998,
+    1545
+  ],
+  "fully_transparent_pixels": 624741,
+  "partially_transparent_pixels": 945719,
+  "opaque_pixels": 2350,
+  "byte_for_byte_copy": true,
+  "post_processing": "none",
+  "visual_review": "A vertical silk landscape scroll with antique gold and black rollers, thin bronze supports, lotus stone feet, and mountain cloud-path depth. Front view and muted black-gold palette fit the sanctuary references. Taller, more slender silhouette than the double door."
+}

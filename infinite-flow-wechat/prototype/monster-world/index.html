@@ -1,0 +1,681 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>怪物素材对照 · Infinite Flow</title>
+  <style>
+    :root {
+      --page: #0d0f10;
+      --panel: #16191a;
+      --line: #3a3931;
+      --gold: #d0b77d;
+      --text: #ece7dc;
+      --muted: #b1b0a9;
+      --focus: #efe0af;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--page); color: var(--text); font: 14px/1.5 system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; }
+    a { color: inherit; }
+    button, input, select { font: inherit; }
+    button, select { cursor: pointer; }
+    :focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+    [hidden] { display: none !important; }
+    .shell { max-width: 1560px; margin: 0 auto; padding: 0 20px; }
+    .page-header { padding: 22px 0 14px; border-bottom: 1px solid var(--line); }
+    .title-row { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+    h1 { margin: 0; font-size: 23px; font-weight: 650; letter-spacing: .03em; }
+    .total { color: var(--gold); font-variant-numeric: tabular-nums; }
+    .intro { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
+    .toolbar { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: end; padding: 16px 0 12px; }
+    .control { display: grid; gap: 5px; min-width: 0; }
+    .control-label { color: var(--muted); font-size: 12px; }
+    .search-row { display: flex; gap: 8px; }
+    input, select, button { min-height: 44px; border: 1px solid #66604c; border-radius: 4px; background: #1e2223; color: var(--text); }
+    input { width: 100%; min-width: 0; padding: 9px 12px; }
+    input::placeholder { color: #a9aaa4; }
+    select { padding: 9px 32px 9px 12px; }
+    button { flex: 0 0 auto; padding: 8px 14px; }
+    button:hover { border-color: var(--gold); background: #292a25; }
+    .status-row { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; padding-bottom: 12px; color: var(--muted); font-size: 12px; }
+    #result-count { color: var(--gold); font-variant-numeric: tabular-nums; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 12px; align-items: start; padding-bottom: 24px; }
+    .monster { min-width: 0; padding: 12px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel); }
+    .monster-heading { display: flex; align-items: baseline; gap: 9px; min-width: 0; }
+    .number { color: var(--gold); font: 11px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
+    h2 { margin: 0; min-width: 0; font-size: 16px; line-height: 1.5; font-weight: 620; overflow-wrap: anywhere; }
+    .entity-id { margin: 4px 0 0; color: var(--muted); font: 11px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; }
+    .identity { margin: 5px 0 10px; min-height: 36px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .comparison { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+    figure { margin: 0; min-width: 0; }
+    .image-frame { position: relative; display: block; height: 260px; overflow: hidden; border: 1px solid #3d4140; border-radius: 2px; }
+    .portrait { background: #090b0c; }
+    .world { background-color: #242927; background-image: url("../../cocos/assets/resources/dungeon-world/demon_tower_1-v1.png"); background-size: auto 300%; background-position: center; }
+    body[data-background="checker"] .world {
+      background-color: #c3c3bc;
+      background-image: linear-gradient(45deg, #777d79 25%, transparent 25%), linear-gradient(-45deg, #777d79 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #777d79 75%), linear-gradient(-45deg, transparent 75%, #777d79 75%);
+      background-size: 20px 20px;
+      background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+    }
+    .image-frame img { display: block; width: 100%; height: 100%; object-fit: contain; }
+    figcaption { padding-top: 6px; text-align: center; color: var(--muted); font-size: 11px; }
+    .load-error { position: absolute; inset: auto 6px 6px; padding: 4px; background: #421d18; color: #ffcab7; text-align: center; font-size: 11px; }
+    .message { padding: 28px 14px; border: 1px solid var(--line); color: var(--muted); text-align: center; }
+    .error-summary { margin: 0 0 12px; padding: 10px 12px; border: 1px solid #895143; color: #ffcab7; }
+    footer { padding: 0 0 24px; color: var(--muted); font-size: 12px; }
+    footer a { text-underline-offset: 3px; }
+    @media (max-width: 600px) {
+      .shell { padding: 0 12px; }
+      .page-header { padding-top: 16px; }
+      h1 { font-size: 21px; }
+      .toolbar { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+      .background-control { grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 12px; }
+      select { width: 100%; min-width: 0; }
+      .monster { padding: 10px; }
+      .image-frame { height: 230px; }
+      .identity { min-height: 0; }
+    }
+  </style>
+</head>
+<body data-background="dungeon">
+  <main class="shell">
+    <header class="page-header">
+      <div class="title-row"><h1>怪物素材对照</h1><span class="total">59 种身份</span></div>
+      <p class="intro">旧肖像与新全身图并列。切换背景检查透明边缘，点击图片查看原图。</p>
+    </header>
+    <div class="toolbar" role="search" aria-label="搜索怪物素材">
+      <div class="control">
+        <label class="control-label" for="search">名称 / 身份描述 / ID</label>
+        <div class="search-row"><input id="search" type="search" placeholder="如：发条、clockwork、医师" autocomplete="off" spellcheck="false"><button id="clear-search" type="button">清空</button></div>
+      </div>
+      <div class="control background-control">
+        <label class="control-label" for="background">新图背景</label>
+        <select id="background"><option value="dungeon">地牢地面</option><option value="checker">透明棋盘</option></select>
+      </div>
+    </div>
+    <div class="status-row"><output id="result-count" aria-live="polite">显示 59 / 59</output><span>左：旧肖像　右：新全身图</span></div>
+    <p id="error-summary" class="error-summary" role="status" hidden></p>
+    <noscript><p class="message">图片对照可直接浏览；启用 JavaScript 后可搜索及切换背景。</p></noscript>
+    <p id="empty" class="message" hidden>没有匹配的怪物，请调整名称或 ID。</p>
+    <section class="grid" id="gallery" aria-label="59 种怪物的图片对照">
+      <article class="monster" data-entity-id="fog_lesser_demon" data-search="雾中妖鬼 从灰雾中显形的雾中妖鬼 fog_lesser_demon fog-lesser-demon">
+        <header class="monster-heading"><span class="number">01</span><h2>雾中妖鬼</h2></header>
+        <p class="entity-id">fog_lesser_demon</p>
+        <p class="identity">从灰雾中显形的雾中妖鬼</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/fog-lesser-demon-v1.png" target="_blank" rel="noopener" aria-label="打开雾中妖鬼旧肖像原图"><img src="../../cocos/assets/resources/monster/fog-lesser-demon-v1.png" alt="雾中妖鬼的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/fog-lesser-demon-world-v1.png" target="_blank" rel="noopener" aria-label="打开雾中妖鬼新全身原图"><img src="../../art-source/monster-world/fog-lesser-demon-world-v1.png" alt="雾中妖鬼的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="tower_butcher" data-search="剔骨塔卒 披挂骨甲与重刃的剔骨塔卒 tower_butcher tower-butcher">
+        <header class="monster-heading"><span class="number">02</span><h2>剔骨塔卒</h2></header>
+        <p class="entity-id">tower_butcher</p>
+        <p class="identity">披挂骨甲与重刃的剔骨塔卒</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/tower-butcher-v1.png" target="_blank" rel="noopener" aria-label="打开剔骨塔卒旧肖像原图"><img src="../../cocos/assets/resources/monster/tower-butcher-v1.png" alt="剔骨塔卒的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/tower-butcher-world-v1.png" target="_blank" rel="noopener" aria-label="打开剔骨塔卒新全身原图"><img src="../../art-source/monster-world/tower-butcher-world-v1.png" alt="剔骨塔卒的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="tide_boatman" data-search="潮影船夫 提灯涉水而来的潮影船夫 tide_boatman tide-boatman">
+        <header class="monster-heading"><span class="number">03</span><h2>潮影船夫</h2></header>
+        <p class="entity-id">tide_boatman</p>
+        <p class="identity">提灯涉水而来的潮影船夫</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/tide-boatman-v1.png" target="_blank" rel="noopener" aria-label="打开潮影船夫旧肖像原图"><img src="../../cocos/assets/resources/monster/tide-boatman-v1.png" alt="潮影船夫的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/tide-boatman-world-v1.png" target="_blank" rel="noopener" aria-label="打开潮影船夫新全身原图"><img src="../../art-source/monster-world/tide-boatman-world-v1.png" alt="潮影船夫的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="mirror_thread_spider" data-search="镜丝织蛛 以镜面长足织出银丝的镜丝织蛛 mirror_thread_spider mirror-thread-spider">
+        <header class="monster-heading"><span class="number">04</span><h2>镜丝织蛛</h2></header>
+        <p class="entity-id">mirror_thread_spider</p>
+        <p class="identity">以镜面长足织出银丝的镜丝织蛛</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/mirror-thread-spider-v1.png" target="_blank" rel="noopener" aria-label="打开镜丝织蛛旧肖像原图"><img src="../../cocos/assets/resources/monster/mirror-thread-spider-v1.png" alt="镜丝织蛛的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/mirror-thread-spider-world-v1.png" target="_blank" rel="noopener" aria-label="打开镜丝织蛛新全身原图"><img src="../../art-source/monster-world/mirror-thread-spider-world-v1.png" alt="镜丝织蛛的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="rail_wraith" data-search="断轨怨影 断轨与电弧环绕的断轨怨影 rail_wraith rail-wraith">
+        <header class="monster-heading"><span class="number">05</span><h2>断轨怨影</h2></header>
+        <p class="entity-id">rail_wraith</p>
+        <p class="identity">断轨与电弧环绕的断轨怨影</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/rail-wraith-v1.png" target="_blank" rel="noopener" aria-label="打开断轨怨影旧肖像原图"><img src="../../cocos/assets/resources/monster/rail-wraith-v1.png" alt="断轨怨影的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/rail-wraith-world-v1.png" target="_blank" rel="noopener" aria-label="打开断轨怨影新全身原图"><img src="../../art-source/monster-world/rail-wraith-world-v1.png" alt="断轨怨影的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="mine_shell_guard" data-search="矿壳守卫 披覆星矿晶壳的矿壳守卫 mine_shell_guard mine-shell-guard">
+        <header class="monster-heading"><span class="number">06</span><h2>矿壳守卫</h2></header>
+        <p class="entity-id">mine_shell_guard</p>
+        <p class="identity">披覆星矿晶壳的矿壳守卫</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/mine-shell-guard-v1.png" target="_blank" rel="noopener" aria-label="打开矿壳守卫旧肖像原图"><img src="../../cocos/assets/resources/monster/mine-shell-guard-v1.png" alt="矿壳守卫的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/mine-shell-guard-world-v1.png" target="_blank" rel="noopener" aria-label="打开矿壳守卫新全身原图"><img src="../../art-source/monster-world/mine-shell-guard-world-v1.png" alt="矿壳守卫的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="spark_imp" data-search="跳火小鬼 由炭火与恶意凝成的跳火小鬼 spark_imp spark-imp">
+        <header class="monster-heading"><span class="number">07</span><h2>跳火小鬼</h2></header>
+        <p class="entity-id">spark_imp</p>
+        <p class="identity">由炭火与恶意凝成的跳火小鬼</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/spark-imp-v1.png" target="_blank" rel="noopener" aria-label="打开跳火小鬼旧肖像原图"><img src="../../cocos/assets/resources/monster/spark-imp-v1.png" alt="跳火小鬼的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/spark-imp-world-v1.png" target="_blank" rel="noopener" aria-label="打开跳火小鬼新全身原图"><img src="../../art-source/monster-world/spark-imp-world-v1.png" alt="跳火小鬼的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="portal_molt_beast" data-search="裂门蜕兽 甲壳沿界隙裂开的裂门蜕兽 portal_molt_beast portal-molt-beast">
+        <header class="monster-heading"><span class="number">08</span><h2>裂门蜕兽</h2></header>
+        <p class="entity-id">portal_molt_beast</p>
+        <p class="identity">甲壳沿界隙裂开的裂门蜕兽</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/portal-molt-beast-v1.png" target="_blank" rel="noopener" aria-label="打开裂门蜕兽旧肖像原图"><img src="../../cocos/assets/resources/monster/portal-molt-beast-v1.png" alt="裂门蜕兽的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/portal-molt-beast-world-v1.png" target="_blank" rel="noopener" aria-label="打开裂门蜕兽新全身原图"><img src="../../art-source/monster-world/portal-molt-beast-world-v1.png" alt="裂门蜕兽的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="plague_orderly" data-search="锈疫护工 携带锈蚀医疗工具的锈疫护工 plague_orderly plague-orderly">
+        <header class="monster-heading"><span class="number">09</span><h2>锈疫护工</h2></header>
+        <p class="entity-id">plague_orderly</p>
+        <p class="identity">携带锈蚀医疗工具的锈疫护工</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/plague-orderly-v1.png" target="_blank" rel="noopener" aria-label="打开锈疫护工旧肖像原图"><img src="../../cocos/assets/resources/monster/plague-orderly-v1.png" alt="锈疫护工的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/plague-orderly-world-v1.png" target="_blank" rel="noopener" aria-label="打开锈疫护工新全身原图"><img src="../../art-source/monster-world/plague-orderly-world-v1.png" alt="锈疫护工的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="pulse_doctor" data-search="脉冲医师 操纵脉冲器械的脉冲医师 pulse_doctor pulse-doctor">
+        <header class="monster-heading"><span class="number">10</span><h2>脉冲医师</h2></header>
+        <p class="entity-id">pulse_doctor</p>
+        <p class="identity">操纵脉冲器械的脉冲医师</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/pulse-doctor-v1.png" target="_blank" rel="noopener" aria-label="打开脉冲医师旧肖像原图"><img src="../../cocos/assets/resources/monster/pulse-doctor-v1.png" alt="脉冲医师的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/pulse-doctor-world-v1.png" target="_blank" rel="noopener" aria-label="打开脉冲医师新全身原图"><img src="../../art-source/monster-world/pulse-doctor-world-v1.png" alt="脉冲医师的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="ash_duelist" data-search="灰烬斗士 甲片间燃着余烬的灰烬斗士 ash_duelist ash-duelist">
+        <header class="monster-heading"><span class="number">11</span><h2>灰烬斗士</h2></header>
+        <p class="entity-id">ash_duelist</p>
+        <p class="identity">甲片间燃着余烬的灰烬斗士</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/ash-duelist-v1.png" target="_blank" rel="noopener" aria-label="打开灰烬斗士旧肖像原图"><img src="../../cocos/assets/resources/monster/ash-duelist-v1.png" alt="灰烬斗士的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/ash-duelist-world-v1.png" target="_blank" rel="noopener" aria-label="打开灰烬斗士新全身原图"><img src="../../art-source/monster-world/ash-duelist-world-v1.png" alt="灰烬斗士的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="furnace_judge" data-search="炉心裁判 执掌炽热裁决刃的炉心裁判 furnace_judge furnace-judge">
+        <header class="monster-heading"><span class="number">12</span><h2>炉心裁判</h2></header>
+        <p class="entity-id">furnace_judge</p>
+        <p class="identity">执掌炽热裁决刃的炉心裁判</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/furnace-judge-v1.png" target="_blank" rel="noopener" aria-label="打开炉心裁判旧肖像原图"><img src="../../cocos/assets/resources/monster/furnace-judge-v1.png" alt="炉心裁判的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/furnace-judge-world-v1.png" target="_blank" rel="noopener" aria-label="打开炉心裁判新全身原图"><img src="../../art-source/monster-world/furnace-judge-world-v1.png" alt="炉心裁判的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="paper_librarian" data-search="无面纸面馆主 空白书页环绕的无面纸面馆主 paper_librarian paper-librarian">
+        <header class="monster-heading"><span class="number">13</span><h2>无面纸面馆主</h2></header>
+        <p class="entity-id">paper_librarian</p>
+        <p class="identity">空白书页环绕的无面纸面馆主</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/paper-librarian-v1.png" target="_blank" rel="noopener" aria-label="打开无面纸面馆主旧肖像原图"><img src="../../cocos/assets/resources/monster/paper-librarian-v1.png" alt="无面纸面馆主的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/paper-librarian-world-v1.png" target="_blank" rel="noopener" aria-label="打开无面纸面馆主新全身原图"><img src="../../art-source/monster-world/paper-librarian-world-v1.png" alt="无面纸面馆主的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="dream_jailer" data-search="梦牢看守 拖曳梦锁与封存笼的梦牢看守 dream_jailer dream-jailer">
+        <header class="monster-heading"><span class="number">14</span><h2>梦牢看守</h2></header>
+        <p class="entity-id">dream_jailer</p>
+        <p class="identity">拖曳梦锁与封存笼的梦牢看守</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/dream-jailer-v1.png" target="_blank" rel="noopener" aria-label="打开梦牢看守旧肖像原图"><img src="../../cocos/assets/resources/monster/dream-jailer-v1.png" alt="梦牢看守的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/dream-jailer-world-v1.png" target="_blank" rel="noopener" aria-label="打开梦牢看守新全身原图"><img src="../../art-source/monster-world/dream-jailer-world-v1.png" alt="梦牢看守的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="void_knight" data-search="虚界骑士 甲片悬浮于界隙之间的虚界骑士 void_knight void-knight">
+        <header class="monster-heading"><span class="number">15</span><h2>虚界骑士</h2></header>
+        <p class="entity-id">void_knight</p>
+        <p class="identity">甲片悬浮于界隙之间的虚界骑士</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/void-knight-v1.png" target="_blank" rel="noopener" aria-label="打开虚界骑士旧肖像原图"><img src="../../cocos/assets/resources/monster/void-knight-v1.png" alt="虚界骑士的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/void-knight-world-v1.png" target="_blank" rel="noopener" aria-label="打开虚界骑士新全身原图"><img src="../../art-source/monster-world/void-knight-world-v1.png" alt="虚界骑士的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="main_god_echo" data-search="主神残响 由黑曜碎面与扫描环构成的主神残响 main_god_echo main-god-echo">
+        <header class="monster-heading"><span class="number">16</span><h2>主神残响</h2></header>
+        <p class="entity-id">main_god_echo</p>
+        <p class="identity">由黑曜碎面与扫描环构成的主神残响</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/main-god-echo-v1.png" target="_blank" rel="noopener" aria-label="打开主神残响旧肖像原图"><img src="../../cocos/assets/resources/monster/main-god-echo-v1.png" alt="主神残响的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/main-god-echo-world-v1.png" target="_blank" rel="noopener" aria-label="打开主神残响新全身原图"><img src="../../art-source/monster-world/main-god-echo-world-v1.png" alt="主神残响的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="clockwork_scout" data-search="发条侦察兵 拖曳时序残影的发条侦察兵 clockwork_scout clockwork-scout">
+        <header class="monster-heading"><span class="number">17</span><h2>发条侦察兵</h2></header>
+        <p class="entity-id">clockwork_scout</p>
+        <p class="identity">拖曳时序残影的发条侦察兵</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/clockwork-scout-v1.png" target="_blank" rel="noopener" aria-label="打开发条侦察兵旧肖像原图"><img src="../../cocos/assets/resources/monster/clockwork-scout-v1.png" alt="发条侦察兵的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/clockwork-scout-world-v1.png" target="_blank" rel="noopener" aria-label="打开发条侦察兵新全身原图"><img src="../../art-source/monster-world/clockwork-scout-world-v1.png" alt="发条侦察兵的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="epoch_sentinel" data-search="纪元哨卫 背负纪元环与冲击残响的纪元哨卫 epoch_sentinel epoch-sentinel">
+        <header class="monster-heading"><span class="number">18</span><h2>纪元哨卫</h2></header>
+        <p class="entity-id">epoch_sentinel</p>
+        <p class="identity">背负纪元环与冲击残响的纪元哨卫</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/epoch-sentinel-v1.png" target="_blank" rel="noopener" aria-label="打开纪元哨卫旧肖像原图"><img src="../../cocos/assets/resources/monster/epoch-sentinel-v1.png" alt="纪元哨卫的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/epoch-sentinel-world-v1.png" target="_blank" rel="noopener" aria-label="打开纪元哨卫新全身原图"><img src="../../art-source/monster-world/epoch-sentinel-world-v1.png" alt="纪元哨卫的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="zero_hour_regent" data-search="零时摄政 过去与未来重影交叠的零时摄政 zero_hour_regent zero-hour-regent">
+        <header class="monster-heading"><span class="number">19</span><h2>零时摄政</h2></header>
+        <p class="entity-id">zero_hour_regent</p>
+        <p class="identity">过去与未来重影交叠的零时摄政</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/zero-hour-regent-v1.png" target="_blank" rel="noopener" aria-label="打开零时摄政旧肖像原图"><img src="../../cocos/assets/resources/monster/zero-hour-regent-v1.png" alt="零时摄政的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/zero-hour-regent-world-v1.png" target="_blank" rel="noopener" aria-label="打开零时摄政新全身原图"><img src="../../art-source/monster-world/zero-hour-regent-world-v1.png" alt="零时摄政的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="verdict_usher" data-search="裁决执事 手持悬浮裁决武器的裁决执事 verdict_usher verdict-usher">
+        <header class="monster-heading"><span class="number">20</span><h2>裁决执事</h2></header>
+        <p class="entity-id">verdict_usher</p>
+        <p class="identity">手持悬浮裁决武器的裁决执事</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/verdict-usher-v1.png" target="_blank" rel="noopener" aria-label="打开裁决执事旧肖像原图"><img src="../../cocos/assets/resources/monster/verdict-usher-v1.png" alt="裁决执事的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/verdict-usher-world-v1.png" target="_blank" rel="noopener" aria-label="打开裁决执事新全身原图"><img src="../../art-source/monster-world/verdict-usher-world-v1.png" alt="裁决执事的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="paradox_bailiff" data-search="悖论法警 因果位置彼此倒置的悖论法警 paradox_bailiff paradox-bailiff">
+        <header class="monster-heading"><span class="number">21</span><h2>悖论法警</h2></header>
+        <p class="entity-id">paradox_bailiff</p>
+        <p class="identity">因果位置彼此倒置的悖论法警</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/paradox-bailiff-v1.png" target="_blank" rel="noopener" aria-label="打开悖论法警旧肖像原图"><img src="../../cocos/assets/resources/monster/paradox-bailiff-v1.png" alt="悖论法警的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/paradox-bailiff-world-v1.png" target="_blank" rel="noopener" aria-label="打开悖论法警新全身原图"><img src="../../art-source/monster-world/paradox-bailiff-world-v1.png" alt="悖论法警的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="zero_sum_auditor" data-search="零和审计官 双侧衡臂汇入黑曜核心的零和审计官 zero_sum_auditor zero-sum-auditor">
+        <header class="monster-heading"><span class="number">22</span><h2>零和审计官</h2></header>
+        <p class="entity-id">zero_sum_auditor</p>
+        <p class="identity">双侧衡臂汇入黑曜核心的零和审计官</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/zero-sum-auditor-v1.png" target="_blank" rel="noopener" aria-label="打开零和审计官旧肖像原图"><img src="../../cocos/assets/resources/monster/zero-sum-auditor-v1.png" alt="零和审计官的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/zero-sum-auditor-world-v1.png" target="_blank" rel="noopener" aria-label="打开零和审计官新全身原图"><img src="../../art-source/monster-world/zero-sum-auditor-world-v1.png" alt="零和审计官的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="entropy_deckhand" data-search="熵舱水手 失序结晶缠身的熵舱水手 entropy_deckhand entropy-deckhand">
+        <header class="monster-heading"><span class="number">23</span><h2>熵舱水手</h2></header>
+        <p class="entity-id">entropy_deckhand</p>
+        <p class="identity">失序结晶缠身的熵舱水手</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/entropy-deckhand-v1.png" target="_blank" rel="noopener" aria-label="打开熵舱水手旧肖像原图"><img src="../../cocos/assets/resources/monster/entropy-deckhand-v1.png" alt="熵舱水手的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/entropy-deckhand-world-v1.png" target="_blank" rel="noopener" aria-label="打开熵舱水手新全身原图"><img src="../../art-source/monster-world/entropy-deckhand-world-v1.png" alt="熵舱水手的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="dissipation_navigator" data-search="耗散领航员 与破损星盘融合的耗散领航员 dissipation_navigator dissipation-navigator">
+        <header class="monster-heading"><span class="number">24</span><h2>耗散领航员</h2></header>
+        <p class="entity-id">dissipation_navigator</p>
+        <p class="identity">与破损星盘融合的耗散领航员</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/dissipation-navigator-v1.png" target="_blank" rel="noopener" aria-label="打开耗散领航员旧肖像原图"><img src="../../cocos/assets/resources/monster/dissipation-navigator-v1.png" alt="耗散领航员的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/dissipation-navigator-world-v1.png" target="_blank" rel="noopener" aria-label="打开耗散领航员新全身原图"><img src="../../art-source/monster-world/dissipation-navigator-world-v1.png" alt="耗散领航员的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="last_helmsman" data-search="终末舵手 与崩解舵轮融为一体的终末舵手 last_helmsman last-helmsman">
+        <header class="monster-heading"><span class="number">25</span><h2>终末舵手</h2></header>
+        <p class="entity-id">last_helmsman</p>
+        <p class="identity">与崩解舵轮融为一体的终末舵手</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/last-helmsman-v1.png" target="_blank" rel="noopener" aria-label="打开终末舵手旧肖像原图"><img src="../../cocos/assets/resources/monster/last-helmsman-v1.png" alt="终末舵手的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/last-helmsman-world-v1.png" target="_blank" rel="noopener" aria-label="打开终末舵手新全身原图"><img src="../../art-source/monster-world/last-helmsman-world-v1.png" alt="终末舵手的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="parallax_hunter" data-search="视差猎手 本体与镜像彼此错位的视差猎手 parallax_hunter parallax-hunter">
+        <header class="monster-heading"><span class="number">26</span><h2>视差猎手</h2></header>
+        <p class="entity-id">parallax_hunter</p>
+        <p class="identity">本体与镜像彼此错位的视差猎手</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/parallax-hunter-v1.png" target="_blank" rel="noopener" aria-label="打开视差猎手旧肖像原图"><img src="../../cocos/assets/resources/monster/parallax-hunter-v1.png" alt="视差猎手的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/parallax-hunter-world-v1.png" target="_blank" rel="noopener" aria-label="打开视差猎手新全身原图"><img src="../../art-source/monster-world/parallax-hunter-world-v1.png" alt="视差猎手的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="mirror_chorus" data-search="镜群合唱者 多重镜像躯干交叠的镜群合唱者 mirror_chorus mirror-chorus">
+        <header class="monster-heading"><span class="number">27</span><h2>镜群合唱者</h2></header>
+        <p class="entity-id">mirror_chorus</p>
+        <p class="identity">多重镜像躯干交叠的镜群合唱者</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/mirror-chorus-v1.png" target="_blank" rel="noopener" aria-label="打开镜群合唱者旧肖像原图"><img src="../../cocos/assets/resources/monster/mirror-chorus-v1.png" alt="镜群合唱者的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/mirror-chorus-world-v1.png" target="_blank" rel="noopener" aria-label="打开镜群合唱者新全身原图"><img src="../../art-source/monster-world/mirror-chorus-world-v1.png" alt="镜群合唱者的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="nameless_reflection" data-search="无名镜王 身披黑曜镜甲的无名镜王 nameless_reflection nameless-reflection">
+        <header class="monster-heading"><span class="number">28</span><h2>无名镜王</h2></header>
+        <p class="entity-id">nameless_reflection</p>
+        <p class="identity">身披黑曜镜甲的无名镜王</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/nameless-reflection-v1.png" target="_blank" rel="noopener" aria-label="打开无名镜王旧肖像原图"><img src="../../cocos/assets/resources/monster/nameless-reflection-v1.png" alt="无名镜王的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/nameless-reflection-world-v1.png" target="_blank" rel="noopener" aria-label="打开无名镜王新全身原图"><img src="../../art-source/monster-world/nameless-reflection-world-v1.png" alt="无名镜王的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="erasure_copyist" data-search="删界抄写员 空白书页环绕的删界抄写员 erasure_copyist erasure-copyist">
+        <header class="monster-heading"><span class="number">29</span><h2>删界抄写员</h2></header>
+        <p class="entity-id">erasure_copyist</p>
+        <p class="identity">空白书页环绕的删界抄写员</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/erasure-copyist-v1.png" target="_blank" rel="noopener" aria-label="打开删界抄写员旧肖像原图"><img src="../../cocos/assets/resources/monster/erasure-copyist-v1.png" alt="删界抄写员的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/erasure-copyist-world-v1.png" target="_blank" rel="noopener" aria-label="打开删界抄写员新全身原图"><img src="../../art-source/monster-world/erasure-copyist-world-v1.png" alt="删界抄写员的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="palimpsest_censor" data-search="覆页裁定者 以覆写书页作盾的覆页裁定者 palimpsest_censor palimpsest-censor">
+        <header class="monster-heading"><span class="number">30</span><h2>覆页裁定者</h2></header>
+        <p class="entity-id">palimpsest_censor</p>
+        <p class="identity">以覆写书页作盾的覆页裁定者</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/palimpsest-censor-v1.png" target="_blank" rel="noopener" aria-label="打开覆页裁定者旧肖像原图"><img src="../../cocos/assets/resources/monster/palimpsest-censor-v1.png" alt="覆页裁定者的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/palimpsest-censor-world-v1.png" target="_blank" rel="noopener" aria-label="打开覆页裁定者新全身原图"><img src="../../art-source/monster-world/palimpsest-censor-world-v1.png" alt="覆页裁定者的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="last_redactor" data-search="终稿删界官 手持巨型删界笔的终稿删界官 last_redactor last-redactor">
+        <header class="monster-heading"><span class="number">31</span><h2>终稿删界官</h2></header>
+        <p class="entity-id">last_redactor</p>
+        <p class="identity">手持巨型删界笔的终稿删界官</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/last-redactor-v1.png" target="_blank" rel="noopener" aria-label="打开终稿删界官旧肖像原图"><img src="../../cocos/assets/resources/monster/last-redactor-v1.png" alt="终稿删界官的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/last-redactor-world-v1.png" target="_blank" rel="noopener" aria-label="打开终稿删界官新全身原图"><img src="../../art-source/monster-world/last-redactor-world-v1.png" alt="终稿删界官的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="reserve_bailiff" data-search="底价执役 账本锁链缠腕的底价执役 reserve_bailiff reserve-bailiff">
+        <header class="monster-heading"><span class="number">32</span><h2>底价执役</h2></header>
+        <p class="entity-id">reserve_bailiff</p>
+        <p class="identity">账本锁链缠腕的底价执役</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/reserve-bailiff-v1.png" target="_blank" rel="noopener" aria-label="打开底价执役旧肖像原图"><img src="../../cocos/assets/resources/monster/reserve-bailiff-v1.png" alt="底价执役的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/reserve-bailiff-world-v1.png" target="_blank" rel="noopener" aria-label="打开底价执役新全身原图"><img src="../../art-source/monster-world/reserve-bailiff-world-v1.png" alt="底价执役的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="inheritance_mimic" data-search="遗产拟形体 遗物与面孔不断变形的遗产拟形体 inheritance_mimic inheritance-mimic">
+        <header class="monster-heading"><span class="number">33</span><h2>遗产拟形体</h2></header>
+        <p class="entity-id">inheritance_mimic</p>
+        <p class="identity">遗物与面孔不断变形的遗产拟形体</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/inheritance-mimic-v1.png" target="_blank" rel="noopener" aria-label="打开遗产拟形体旧肖像原图"><img src="../../cocos/assets/resources/monster/inheritance-mimic-v1.png" alt="遗产拟形体的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/inheritance-mimic-world-v1.png" target="_blank" rel="noopener" aria-label="打开遗产拟形体新全身原图"><img src="../../art-source/monster-world/inheritance-mimic-world-v1.png" alt="遗产拟形体的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="estate_auctioneer" data-search="遗产执槌人 巨槌与手臂融合的遗产执槌人 estate_auctioneer estate-auctioneer">
+        <header class="monster-heading"><span class="number">34</span><h2>遗产执槌人</h2></header>
+        <p class="entity-id">estate_auctioneer</p>
+        <p class="identity">巨槌与手臂融合的遗产执槌人</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/estate-auctioneer-v1.png" target="_blank" rel="noopener" aria-label="打开遗产执槌人旧肖像原图"><img src="../../cocos/assets/resources/monster/estate-auctioneer-v1.png" alt="遗产执槌人的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/estate-auctioneer-world-v1.png" target="_blank" rel="noopener" aria-label="打开遗产执槌人新全身原图"><img src="../../art-source/monster-world/estate-auctioneer-world-v1.png" alt="遗产执槌人的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="gene_stalker" data-search="基因猎犬 血清瓶嵌入肋骨的基因猎犬 gene_stalker gene-stalker">
+        <header class="monster-heading"><span class="number">35</span><h2>基因猎犬</h2></header>
+        <p class="entity-id">gene_stalker</p>
+        <p class="identity">血清瓶嵌入肋骨的基因猎犬</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/gene-stalker-v1.png" target="_blank" rel="noopener" aria-label="打开基因猎犬旧肖像原图"><img src="../../cocos/assets/resources/monster/gene-stalker-v1.png" alt="基因猎犬的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/gene-stalker-world-v1.png" target="_blank" rel="noopener" aria-label="打开基因猎犬新全身原图"><img src="../../art-source/monster-world/gene-stalker-world-v1.png" alt="基因猎犬的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="mutation_guardian" data-search="变异守库体 活性甲壳与血清罐共生的变异守库体 mutation_guardian mutation-guardian">
+        <header class="monster-heading"><span class="number">36</span><h2>变异守库体</h2></header>
+        <p class="entity-id">mutation_guardian</p>
+        <p class="identity">活性甲壳与血清罐共生的变异守库体</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/mutation-guardian-v1.png" target="_blank" rel="noopener" aria-label="打开变异守库体旧肖像原图"><img src="../../cocos/assets/resources/monster/mutation-guardian-v1.png" alt="变异守库体的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/mutation-guardian-world-v1.png" target="_blank" rel="noopener" aria-label="打开变异守库体新全身原图"><img src="../../art-source/monster-world/mutation-guardian-world-v1.png" alt="变异守库体的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="primal_curator" data-search="原型典藏官 托起螺旋样本架的原型典藏官 primal_curator primal-curator">
+        <header class="monster-heading"><span class="number">37</span><h2>原型典藏官</h2></header>
+        <p class="entity-id">primal_curator</p>
+        <p class="identity">托起螺旋样本架的原型典藏官</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/primal-curator-v1.png" target="_blank" rel="noopener" aria-label="打开原型典藏官旧肖像原图"><img src="../../cocos/assets/resources/monster/primal-curator-v1.png" alt="原型典藏官的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/primal-curator-world-v1.png" target="_blank" rel="noopener" aria-label="打开原型典藏官新全身原图"><img src="../../art-source/monster-world/primal-curator-world-v1.png" alt="原型典藏官的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="frequency_leech" data-search="频段寄生体 波形触须贯穿胸口的频段寄生体 frequency_leech frequency-leech">
+        <header class="monster-heading"><span class="number">38</span><h2>频段寄生体</h2></header>
+        <p class="entity-id">frequency_leech</p>
+        <p class="identity">波形触须贯穿胸口的频段寄生体</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/frequency-leech-v1.png" target="_blank" rel="noopener" aria-label="打开频段寄生体旧肖像原图"><img src="../../cocos/assets/resources/monster/frequency-leech-v1.png" alt="频段寄生体的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/frequency-leech-world-v1.png" target="_blank" rel="noopener" aria-label="打开频段寄生体新全身原图"><img src="../../art-source/monster-world/frequency-leech-world-v1.png" alt="频段寄生体的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="dead_air_mimic" data-search="死频拟声体 磁带环缠绕玻璃耳面的死频拟声体 dead_air_mimic dead-air-mimic">
+        <header class="monster-heading"><span class="number">39</span><h2>死频拟声体</h2></header>
+        <p class="entity-id">dead_air_mimic</p>
+        <p class="identity">磁带环缠绕玻璃耳面的死频拟声体</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/dead-air-mimic-v1.png" target="_blank" rel="noopener" aria-label="打开死频拟声体旧肖像原图"><img src="../../cocos/assets/resources/monster/dead-air-mimic-v1.png" alt="死频拟声体的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/dead-air-mimic-world-v1.png" target="_blank" rel="noopener" aria-label="打开死频拟声体新全身原图"><img src="../../art-source/monster-world/dead-air-mimic-world-v1.png" alt="死频拟声体的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="broadcast_warden" data-search="广播守卫 以锁频盾护身的广播守卫 broadcast_warden broadcast-warden">
+        <header class="monster-heading"><span class="number">40</span><h2>广播守卫</h2></header>
+        <p class="entity-id">broadcast_warden</p>
+        <p class="identity">以锁频盾护身的广播守卫</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/broadcast-warden-v1.png" target="_blank" rel="noopener" aria-label="打开广播守卫旧肖像原图"><img src="../../cocos/assets/resources/monster/broadcast-warden-v1.png" alt="广播守卫的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/broadcast-warden-world-v1.png" target="_blank" rel="noopener" aria-label="打开广播守卫新全身原图"><img src="../../art-source/monster-world/broadcast-warden-world-v1.png" alt="广播守卫的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="last_broadcaster" data-search="末频道播音主 与三座中继桅杆融合的末频道播音主 last_broadcaster last-broadcaster">
+        <header class="monster-heading"><span class="number">41</span><h2>末频道播音主</h2></header>
+        <p class="entity-id">last_broadcaster</p>
+        <p class="identity">与三座中继桅杆融合的末频道播音主</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/last-broadcaster-v1.png" target="_blank" rel="noopener" aria-label="打开末频道播音主旧肖像原图"><img src="../../cocos/assets/resources/monster/last-broadcaster-v1.png" alt="末频道播音主的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/last-broadcaster-world-v1.png" target="_blank" rel="noopener" aria-label="打开末频道播音主新全身原图"><img src="../../art-source/monster-world/last-broadcaster-world-v1.png" alt="末频道播音主的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="mimic_survivor" data-search="拟声幸存者 皮下浮现第二张脸的拟声幸存者 mimic_survivor mimic-survivor">
+        <header class="monster-heading"><span class="number">42</span><h2>拟声幸存者</h2></header>
+        <p class="entity-id">mimic_survivor</p>
+        <p class="identity">皮下浮现第二张脸的拟声幸存者</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/mimic-survivor-v1.png" target="_blank" rel="noopener" aria-label="打开拟声幸存者旧肖像原图"><img src="../../cocos/assets/resources/monster/mimic-survivor-v1.png" alt="拟声幸存者的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/mimic-survivor-world-v1.png" target="_blank" rel="noopener" aria-label="打开拟声幸存者新全身原图"><img src="../../art-source/monster-world/mimic-survivor-world-v1.png" alt="拟声幸存者的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="rogue_sentry" data-search="失控哨戒炮 三段充能灯亮起的失控哨戒炮 rogue_sentry rogue-sentry">
+        <header class="monster-heading"><span class="number">43</span><h2>失控哨戒炮</h2></header>
+        <p class="entity-id">rogue_sentry</p>
+        <p class="identity">三段充能灯亮起的失控哨戒炮</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/rogue-sentry-v1.png" target="_blank" rel="noopener" aria-label="打开失控哨戒炮旧肖像原图"><img src="../../cocos/assets/resources/monster/rogue-sentry-v1.png" alt="失控哨戒炮的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/rogue-sentry-world-v1.png" target="_blank" rel="noopener" aria-label="打开失控哨戒炮新全身原图"><img src="../../art-source/monster-world/rogue-sentry-world-v1.png" alt="失控哨戒炮的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="shelter_enforcer" data-search="避难所执行体 路障与注射器构成双臂的避难所执行体 shelter_enforcer shelter-enforcer">
+        <header class="monster-heading"><span class="number">44</span><h2>避难所执行体</h2></header>
+        <p class="entity-id">shelter_enforcer</p>
+        <p class="identity">路障与注射器构成双臂的避难所执行体</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/shelter-enforcer-v1.png" target="_blank" rel="noopener" aria-label="打开避难所执行体旧肖像原图"><img src="../../cocos/assets/resources/monster/shelter-enforcer-v1.png" alt="避难所执行体的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/shelter-enforcer-world-v1.png" target="_blank" rel="noopener" aria-label="打开避难所执行体新全身原图"><img src="../../art-source/monster-world/shelter-enforcer-world-v1.png" alt="避难所执行体的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="evacuation_horror" data-search="撤离畸变体 担架与撤离束带扭结成的撤离畸变体 evacuation_horror evacuation-horror">
+        <header class="monster-heading"><span class="number">45</span><h2>撤离畸变体</h2></header>
+        <p class="entity-id">evacuation_horror</p>
+        <p class="identity">担架与撤离束带扭结成的撤离畸变体</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/evacuation-horror-v1.png" target="_blank" rel="noopener" aria-label="打开撤离畸变体旧肖像原图"><img src="../../cocos/assets/resources/monster/evacuation-horror-v1.png" alt="撤离畸变体的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/evacuation-horror-world-v1.png" target="_blank" rel="noopener" aria-label="打开撤离畸变体新全身原图"><img src="../../art-source/monster-world/evacuation-horror-world-v1.png" alt="撤离畸变体的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="shelter_overseer" data-search="失联总控 监控屏与警报号角组成的失联总控 shelter_overseer shelter-overseer">
+        <header class="monster-heading"><span class="number">46</span><h2>失联总控</h2></header>
+        <p class="entity-id">shelter_overseer</p>
+        <p class="identity">监控屏与警报号角组成的失联总控</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/shelter-overseer-v1.png" target="_blank" rel="noopener" aria-label="打开失联总控旧肖像原图"><img src="../../cocos/assets/resources/monster/shelter-overseer-v1.png" alt="失联总控的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/shelter-overseer-world-v1.png" target="_blank" rel="noopener" aria-label="打开失联总控新全身原图"><img src="../../art-source/monster-world/shelter-overseer-world-v1.png" alt="失联总控的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="hostile_witness" data-search="敌意证人 被锁在证词架上的敌意证人 hostile_witness hostile-witness">
+        <header class="monster-heading"><span class="number">47</span><h2>敌意证人</h2></header>
+        <p class="entity-id">hostile_witness</p>
+        <p class="identity">被锁在证词架上的敌意证人</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/hostile-witness-v1.png" target="_blank" rel="noopener" aria-label="打开敌意证人旧肖像原图"><img src="../../cocos/assets/resources/monster/hostile-witness-v1.png" alt="敌意证人的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/hostile-witness-world-v1.png" target="_blank" rel="noopener" aria-label="打开敌意证人新全身原图"><img src="../../art-source/monster-world/hostile-witness-world-v1.png" alt="敌意证人的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="archive_censor" data-search="档案删录官 档案盒吞没空白证页的档案删录官 archive_censor archive-censor">
+        <header class="monster-heading"><span class="number">48</span><h2>档案删录官</h2></header>
+        <p class="entity-id">archive_censor</p>
+        <p class="identity">档案盒吞没空白证页的档案删录官</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/archive-censor-v1.png" target="_blank" rel="noopener" aria-label="打开档案删录官旧肖像原图"><img src="../../cocos/assets/resources/monster/archive-censor-v1.png" alt="档案删录官的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/archive-censor-world-v1.png" target="_blank" rel="noopener" aria-label="打开档案删录官新全身原图"><img src="../../art-source/monster-world/archive-censor-world-v1.png" alt="档案删录官的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="perjury_hound" data-search="伪证猎犬 由案卷与铁骨缝合的伪证猎犬 perjury_hound perjury-hound">
+        <header class="monster-heading"><span class="number">49</span><h2>伪证猎犬</h2></header>
+        <p class="entity-id">perjury_hound</p>
+        <p class="identity">由案卷与铁骨缝合的伪证猎犬</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/perjury-hound-v1.png" target="_blank" rel="noopener" aria-label="打开伪证猎犬旧肖像原图"><img src="../../cocos/assets/resources/monster/perjury-hound-v1.png" alt="伪证猎犬的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/perjury-hound-world-v1.png" target="_blank" rel="noopener" aria-label="打开伪证猎犬新全身原图"><img src="../../art-source/monster-world/perjury-hound-world-v1.png" alt="伪证猎犬的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="false_testimony_judge" data-search="伪证主审 胸嵌三盏裁定灯的伪证主审 false_testimony_judge false-testimony-judge">
+        <header class="monster-heading"><span class="number">50</span><h2>伪证主审</h2></header>
+        <p class="entity-id">false_testimony_judge</p>
+        <p class="identity">胸嵌三盏裁定灯的伪证主审</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/false-testimony-judge-v1.png" target="_blank" rel="noopener" aria-label="打开伪证主审旧肖像原图"><img src="../../cocos/assets/resources/monster/false-testimony-judge-v1.png" alt="伪证主审的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/false-testimony-judge-world-v1.png" target="_blank" rel="noopener" aria-label="打开伪证主审新全身原图"><img src="../../art-source/monster-world/false-testimony-judge-world-v1.png" alt="伪证主审的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="cue_stalker" data-search="场记潜猎者 沿起拍光束扑出的场记潜猎者 cue_stalker cue-stalker">
+        <header class="monster-heading"><span class="number">51</span><h2>场记潜猎者</h2></header>
+        <p class="entity-id">cue_stalker</p>
+        <p class="identity">沿起拍光束扑出的场记潜猎者</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/cue-stalker-v1.png" target="_blank" rel="noopener" aria-label="打开场记潜猎者旧肖像原图"><img src="../../cocos/assets/resources/monster/cue-stalker-v1.png" alt="场记潜猎者的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/cue-stalker-world-v1.png" target="_blank" rel="noopener" aria-label="打开场记潜猎者新全身原图"><img src="../../art-source/monster-world/cue-stalker-world-v1.png" alt="场记潜猎者的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="continuity_editor" data-search="连续性剪辑师 双手形似剪刀的连续性剪辑师 continuity_editor continuity-editor">
+        <header class="monster-heading"><span class="number">52</span><h2>连续性剪辑师</h2></header>
+        <p class="entity-id">continuity_editor</p>
+        <p class="identity">双手形似剪刀的连续性剪辑师</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/continuity-editor-v1.png" target="_blank" rel="noopener" aria-label="打开连续性剪辑师旧肖像原图"><img src="../../cocos/assets/resources/monster/continuity-editor-v1.png" alt="连续性剪辑师的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/continuity-editor-world-v1.png" target="_blank" rel="noopener" aria-label="打开连续性剪辑师新全身原图"><img src="../../art-source/monster-world/continuity-editor-world-v1.png" alt="连续性剪辑师的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="retake_double" data-search="重拍替身 双躯共用一条脊柱的重拍替身 retake_double retake-double">
+        <header class="monster-heading"><span class="number">53</span><h2>重拍替身</h2></header>
+        <p class="entity-id">retake_double</p>
+        <p class="identity">双躯共用一条脊柱的重拍替身</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/retake-double-v1.png" target="_blank" rel="noopener" aria-label="打开重拍替身旧肖像原图"><img src="../../cocos/assets/resources/monster/retake-double-v1.png" alt="重拍替身的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/retake-double-world-v1.png" target="_blank" rel="noopener" aria-label="打开重拍替身新全身原图"><img src="../../art-source/monster-world/retake-double-world-v1.png" alt="重拍替身的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="final_cut_director" data-search="终剪导演 冻结画框环绕头部的终剪导演 final_cut_director final-cut-director">
+        <header class="monster-heading"><span class="number">54</span><h2>终剪导演</h2></header>
+        <p class="entity-id">final_cut_director</p>
+        <p class="identity">冻结画框环绕头部的终剪导演</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/final-cut-director-v1.png" target="_blank" rel="noopener" aria-label="打开终剪导演旧肖像原图"><img src="../../cocos/assets/resources/monster/final-cut-director-v1.png" alt="终剪导演的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/final-cut-director-world-v1.png" target="_blank" rel="noopener" aria-label="打开终剪导演新全身原图"><img src="../../art-source/monster-world/final-cut-director-world-v1.png" alt="终剪导演的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="sweep_sentinel" data-search="扫视哨兵 扇形视锥扫过黑甲的扫视哨兵 sweep_sentinel sweep-sentinel">
+        <header class="monster-heading"><span class="number">55</span><h2>扫视哨兵</h2></header>
+        <p class="entity-id">sweep_sentinel</p>
+        <p class="identity">扇形视锥扫过黑甲的扫视哨兵</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/sweep-sentinel-v1.png" target="_blank" rel="noopener" aria-label="打开扫视哨兵旧肖像原图"><img src="../../cocos/assets/resources/monster/sweep-sentinel-v1.png" alt="扫视哨兵的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/sweep-sentinel-world-v1.png" target="_blank" rel="noopener" aria-label="打开扫视哨兵新全身原图"><img src="../../art-source/monster-world/sweep-sentinel-world-v1.png" alt="扫视哨兵的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="phase_hunter_drone" data-search="相位猎杀无人机 双相护盾包围核心的相位猎杀无人机 phase_hunter_drone phase-hunter-drone">
+        <header class="monster-heading"><span class="number">56</span><h2>相位猎杀无人机</h2></header>
+        <p class="entity-id">phase_hunter_drone</p>
+        <p class="identity">双相护盾包围核心的相位猎杀无人机</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/phase-hunter-drone-v1.png" target="_blank" rel="noopener" aria-label="打开相位猎杀无人机旧肖像原图"><img src="../../cocos/assets/resources/monster/phase-hunter-drone-v1.png" alt="相位猎杀无人机的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/phase-hunter-drone-world-v1.png" target="_blank" rel="noopener" aria-label="打开相位猎杀无人机新全身原图"><img src="../../art-source/monster-world/phase-hunter-drone-world-v1.png" alt="相位猎杀无人机的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="blindspot_auditor" data-search="盲区审计官 以空白账本覆面的盲区审计官 blindspot_auditor blindspot-auditor">
+        <header class="monster-heading"><span class="number">57</span><h2>盲区审计官</h2></header>
+        <p class="entity-id">blindspot_auditor</p>
+        <p class="identity">以空白账本覆面的盲区审计官</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/blindspot-auditor-v1.png" target="_blank" rel="noopener" aria-label="打开盲区审计官旧肖像原图"><img src="../../cocos/assets/resources/monster/blindspot-auditor-v1.png" alt="盲区审计官的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/blindspot-auditor-world-v1.png" target="_blank" rel="noopener" aria-label="打开盲区审计官新全身原图"><img src="../../art-source/monster-world/blindspot-auditor-world-v1.png" alt="盲区审计官的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="exposure_double" data-search="曝光替身 正反重影同时过曝的曝光替身 exposure_double exposure-double">
+        <header class="monster-heading"><span class="number">58</span><h2>曝光替身</h2></header>
+        <p class="entity-id">exposure_double</p>
+        <p class="identity">正反重影同时过曝的曝光替身</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/exposure-double-v1.png" target="_blank" rel="noopener" aria-label="打开曝光替身旧肖像原图"><img src="../../cocos/assets/resources/monster/exposure-double-v1.png" alt="曝光替身的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/exposure-double-world-v1.png" target="_blank" rel="noopener" aria-label="打开曝光替身新全身原图"><img src="../../art-source/monster-world/exposure-double-world-v1.png" alt="曝光替身的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+      <article class="monster" data-entity-id="all_sight_warden" data-search="万目监察者 观测透镜环绕核心的万目监察者 all_sight_warden all-sight-warden">
+        <header class="monster-heading"><span class="number">59</span><h2>万目监察者</h2></header>
+        <p class="entity-id">all_sight_warden</p>
+        <p class="identity">观测透镜环绕核心的万目监察者</p>
+        <div class="comparison">
+          <figure><a class="image-frame portrait" href="../../cocos/assets/resources/monster/all-sight-warden-v1.png" target="_blank" rel="noopener" aria-label="打开万目监察者旧肖像原图"><img src="../../cocos/assets/resources/monster/all-sight-warden-v1.png" alt="万目监察者的旧肖像" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>旧肖像</figcaption></figure>
+          <figure><a class="image-frame world" href="../../art-source/monster-world/all-sight-warden-world-v1.png" target="_blank" rel="noopener" aria-label="打开万目监察者新全身原图"><img src="../../art-source/monster-world/all-sight-warden-world-v1.png" alt="万目监察者的透明全身图" width="1024" height="1536" loading="lazy" decoding="async"></a><figcaption>新全身图</figcaption></figure>
+        </div>
+      </article>
+    </section>
+    <footer>列表来源：<a href="../../art-source/monster-world/prompts.json">怪物素材清单</a>。场景背景：<a href="../../cocos/assets/resources/dungeon-world/demon_tower_1-v1.png" target="_blank" rel="noopener">妖塔地面原图</a>。</footer>
+  </main>
+  <script>
+    const cards = Array.from(document.querySelectorAll('.monster'));
+    const search = document.querySelector('#search');
+    const count = document.querySelector('#result-count');
+    const empty = document.querySelector('#empty');
+    const normalize = value => value.toLocaleLowerCase().replace(/[_-]+/g, ' ').trim();
+    function filterCards() {
+      const terms = normalize(search.value).split(/\s+/).filter(Boolean);
+      let visible = 0;
+      for (const card of cards) {
+        const identity = normalize(card.dataset.search);
+        card.hidden = !terms.every(term => identity.includes(term));
+        if (!card.hidden) visible += 1;
+      }
+      count.textContent = `显示 ${visible} / ${cards.length}`;
+      empty.hidden = visible > 0;
+    }
+    search.addEventListener('input', filterCards);
+    document.querySelector('#clear-search').addEventListener('click', () => {
+      search.value = '';
+      filterCards();
+      search.focus();
+    });
+    document.querySelector('#background').addEventListener('change', event => {
+      document.body.dataset.background = event.target.value;
+    });
+    const failedImages = new Set();
+    function reportImageFailure(img) {
+      if (!failedImages.has(img)) {
+        failedImages.add(img);
+        const label = document.createElement('span');
+        label.className = 'load-error';
+        label.textContent = '图片加载失败';
+        img.parentElement.append(label);
+      }
+      const summary = document.querySelector('#error-summary');
+      summary.hidden = false;
+      summary.textContent = `${failedImages.size} 张图片加载失败；可点击对应图片框检查原图地址。`;
+    }
+    for (const img of document.querySelectorAll('.image-frame img')) {
+      img.addEventListener('error', () => reportImageFailure(img));
+      if (img.complete && img.naturalWidth === 0) reportImageFailure(img);
+    }
+  </script>
+</body>
+</html>

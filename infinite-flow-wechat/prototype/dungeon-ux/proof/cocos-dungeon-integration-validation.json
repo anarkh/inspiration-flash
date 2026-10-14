@@ -1,0 +1,82 @@
+{
+  "date": "2026-09-30",
+  "status": "PASS",
+  "scope": "Production Cocos presentation and local Web Mobile build; no WeChat device or release acceptance.",
+  "preview": "http://127.0.0.1:8125/cocos/build/web-mobile/index.html",
+  "approvedChanges": [
+    "Recommended warm stone gate applied to dungeon transition targets with original coordinates, radius and movement action.",
+    "Compact icon graph with actual known connections, legend and selected region details below the map.",
+    "No nearby route tabs, name zoom or map-to-detail page replacement; selection never moves the player."
+  ],
+  "assets": {
+    "count": 295,
+    "revision": "sha256:1e637bf01eea35e870e8e9e188ef54d8d3128ba055928acf578cd88c7146f231",
+    "key": "scene:dungeon_transition_gate",
+    "source": "prototype/dungeon-transition/assets/ruined-stone-gate-v1.png",
+    "originalBytesPreserved": true
+  },
+  "checks": {
+    "presentationBuildAndTests": "PASS, including 12 standard/deep topology and visibility cases",
+    "presentationTypecheck": "PASS",
+    "cocosHeadlessAndCreatorTypecheck": "PASS",
+    "walkWorld": "PASS: 44 checks",
+    "bootstrapRace": "PASS: 96 scenarios",
+    "mobileSheets": "PASS: 1979 ViewModels, 76 maps, 2280 map cells, 12 stone-gate scenes, 2748 original door actions",
+    "assetManifestAndWechatBundle": "PASS",
+    "wechatEditorConfigCompose": "PASS: 57 assertions, 10 suites",
+    "sourceBoundaries": "PASS: 7 source roots, no generated artifacts",
+    "creatorWebMobileBuild": "PASS: natural Creator exit 36; built script contains new manifest revision and UI",
+    "diffWhitespace": "PASS"
+  },
+  "browserRuns": {
+    "320": {
+      "scope": "full",
+      "viewport": {
+        "width": 320,
+        "height": 568,
+        "deviceScaleFactor": 1
+      },
+      "flowCount": 43,
+      "browserFailureCount": 0,
+      "combatOutcome": "victory-returned-to-explore",
+      "physicalAttackCount": 3,
+      "manifest": "cocos/build/web-mobile-canvas-smoke/2026-09-30T10-16-01-027Z-320x568-19589/manifest.json",
+      "sceneEvidenceCount": 6,
+      "chapterSelectionCount": 19,
+      "dungeonRendererScreenshots": 19,
+      "sheetLayoutScreenshots": 30
+    },
+    "390": {
+      "scope": "dungeon-only",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "deviceScaleFactor": 1
+      },
+      "flowCount": 21,
+      "browserFailureCount": 0,
+      "combatOutcome": "victory-returned-to-explore",
+      "physicalAttackCount": 3,
+      "manifest": "cocos/build/web-mobile-canvas-smoke/2026-09-30T10-16-01-187Z-390x844-19617/manifest.json",
+      "sceneEvidenceCount": 5,
+      "chapterSelectionCount": 1,
+      "dungeonRendererScreenshots": 0,
+      "sheetLayoutScreenshots": 0
+    }
+  },
+  "screenshots": {
+    "320": {
+      "map": "cocos-dungeon-map-320.png",
+      "stoneGate": "cocos-dungeon-transition-320.png"
+    },
+    "390": {
+      "map": "cocos-dungeon-map-390.png",
+      "stoneGate": "cocos-dungeon-transition-390.png"
+    }
+  },
+  "verificationNotes": [
+    "An initial build exposed stale runtime manifest revision/count. Both constants were synchronized, rebuilt, and final browser runs loaded all assets successfully.",
+    "The 390 test approach was adapted to the taller camera viewport without changing gameplay or relaxing viewport assertions.",
+    "Final smoke runs completed all assertions and persisted success manifests with zero browser failures. Their remaining Node processes stayed idle after browser cleanup and were terminated after the manifests were verified; process exit zero is not claimed."
+  ]
+}

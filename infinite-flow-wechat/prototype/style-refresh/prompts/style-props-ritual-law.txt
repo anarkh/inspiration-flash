@@ -1,0 +1,8 @@
+Use case: stylized-concept
+Asset type: One isolated transparent PNG world prop for a Chinese dark fantasy dungeon HTML art proposal.
+Primary request: An ancient law lectern, a short heavy stone bookstand holding one open thick battered tome. Dark weathered stone stand with subtle aged gold carved cloud pattern accents and a slanted top. The open tome has frayed fibrous parchment sheets, broken corners, muted brown worn cover; pages mostly blank with only very faint indistinct weather stains, absolutely no readable writing.
+Style/medium: Detailed realistic hand-painted environment game asset, suited to an ancient ruined Chinese temple dungeon with cold grey stone floor and aged dark bronze ornaments. Low saturation muted materials, grounded tangible weight.
+Composition: Lightly elevated three-quarter top-down game camera, visible open page spread and front/one side of pedestal. Entire single object including heavy stepped base and all footings visible. Compact readable silhouette centered in square, 12% transparent edge padding. Book sits on stone, not floating. No loose pages or separate props.
+Materials: ash-grey stone chipped along edges, rough mineral texture, tarnished old gold inlay only on a few recessed border details, dirty cream parchment, dark brown leather binding. Soft diffuse cold overhead light, minimal shadow, no self-emission or glows.
+Background: genuinely transparent alpha, no scene, no ground plane, no checkerboard or baked background.
+Avoid: cartoon, vector flat fill, low-poly, bright gold, blue/purple neon, magical halo, floating runes, luminous pages, readable text, Latin or Chinese writing, letters, numbers, UI, frame, logo, watermark, asset sheet.

@@ -1,0 +1,37 @@
+{
+  "verifiedAt": "2026-09-30T09:29:08.992002+00:00",
+  "scope": "Removal of persistent movement/interaction hint in dungeon scenes",
+  "status": "PASS",
+  "creatorVersion": "3.8.8",
+  "creatorBuildExitCode": 36,
+  "typecheck": "PASS",
+  "bootstrapRaceScenarios": 96,
+  "webMobile": {
+    "viewport": {
+      "width": 320,
+      "height": 568,
+      "deviceScaleFactor": 1
+    },
+    "exitCode": 0,
+    "browserFailureCount": 0,
+    "combatOutcome": "victory-returned-to-explore",
+    "flowScreenshotCount": 40,
+    "manifest": "cocos/build/web-mobile-canvas-smoke/2026-09-30T09-25-23-300Z-320x568-98052/manifest.json",
+    "build": {
+      "root": "cocos/build/web-mobile",
+      "entry": "cocos/build/web-mobile/index.html",
+      "entryModifiedAt": "2026-09-30T09:24:57.570Z",
+      "newestInput": "cocos/assets/scripts/ui/InfiniteFlowWalkScene.ts",
+      "newestInputModifiedAt": "2026-09-30T09:23:17.770Z"
+    },
+    "mainScriptSha256": "ac1ac283d1850baeb5c34cbef2e95bb0aab1019520cf02857ba3abec5daa6fa3"
+  },
+  "removedNodeNames": [
+    "WalkInteractionHint",
+    "WalkInteractionHintBacking"
+  ],
+  "removedFromSourceAndBuild": true,
+  "joystickAndProximityInteractionRetained": true,
+  "screenshot": "dungeon-without-movement-hint.png",
+  "evidenceBoundary": "Actual Web Mobile build; no WeChat physical-device or release acceptance"
+}

@@ -45,7 +45,7 @@ try {
   ];
 
   if (
-    report.assertions !== 90
+    report.assertions !== 128
     || JSON.stringify(report.suites) !== JSON.stringify(expectedSuites)
   ) {
     throw new Error(`Unexpected platform self-check report: ${JSON.stringify(report)}`);

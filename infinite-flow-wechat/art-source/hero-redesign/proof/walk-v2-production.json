@@ -1,0 +1,12 @@
+{
+  "method": "built-in image_gen.imagegen",
+  "nativeSource": "/Users/bytedance/.codex/generated_images/01a0ecb0-503e-7a81-95d1-22b8b154881e/exec-2044fa4d-6ced-444e-bf96-1204c2b09019.png",
+  "output": "reincarnator-walk-v2.png",
+  "width": 1254,
+  "height": 1254,
+  "bytes": 1253030,
+  "mode": "RGBA",
+  "sha256": "897deadd34e18c9e3c8e7d52461a8fddac5272503696e263cee2e7baec6bb918",
+  "unchangedByteCopy": true,
+  "prompt": "prompts/walk-v2-production.txt"
+}

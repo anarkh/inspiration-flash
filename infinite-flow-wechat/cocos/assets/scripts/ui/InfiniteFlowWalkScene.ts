@@ -1,14 +1,20 @@
-import { Color, Graphics, Label, Mask, Node, Size, Sprite, UITransform, Vec3 } from 'cc';
+import { Color, Graphics, Label, Mask, Node, Size, Sprite, UITransform, Vec2, Vec3 } from 'cc';
 import type { SpriteFrame } from 'cc';
 import type { GameViewModel, ViewActionModel } from '@infinite-flow/presentation';
 import { formatInfiniteFlowPlayerChrome } from './InfiniteFlowView';
 import type { InfiniteFlowRuntimeChrome } from './InfiniteFlowView';
-import { nearestWalkTarget, stepWalkPosition } from './walk-world';
-import type { WalkWorldSpec, WorldPoint, WorldRect, WorldTarget } from './walk-world';
+import { findWalkPath, nearestWalkTarget, stepWalkPosition } from './walk-world';
+import type { WalkWorldSpec, WorldPoint, WorldProp, WorldRect, WorldTarget } from './walk-world';
 import { HUB_WORLD_THEME } from './dungeon-world-theme';
-import type { DungeonWorldTheme, WorldTint } from './dungeon-world-theme';
-import { getInfiniteFlowSceneVisualKeys } from './scene-visuals';
+import type { WorldTint } from './dungeon-world-theme';
+import { getInfiniteFlowNpcWorldVisualKey, getInfiniteFlowRunRelicVisualKey, getInfiniteFlowSceneVisualKeys, INFINITE_FLOW_DUNGEON_PROP_VISUAL_KEYS, INFINITE_FLOW_DUNGEON_TRANSITION_GATE_VISUAL_KEY, INFINITE_FLOW_HUB_DUNGEON_PORTAL_VISUAL_KEY } from './scene-visuals';
 import { DARK_UI, paintDarkFrame, paintDarkIcon } from './dark-ui';
+import { getWalkHudLayout } from './hud-layout';
+import type { HudPopoverKind } from './hud-layout';
+import { createInfiniteFlowCombatEffects } from './InfiniteFlowCombatEffects';
+import type { CombatEffectKind, CombatEffectResult } from './InfiniteFlowCombatEffects';
+
+export type { CombatEffectKind, CombatEffectResult } from './InfiniteFlowCombatEffects';
 
 export type WalkSceneOptions = Readonly<{
   spec: WalkWorldSpec;
@@ -16,6 +22,8 @@ export type WalkSceneOptions = Readonly<{
   safeInsets: Readonly<{ top: number; right: number; bottom: number; left: number }>;
   /** Real visible fixed-width design surface height (>= 1334 on tall phones). */
   surfaceHeight: number;
+  /** Visible game width in screen pixels; keeps the approved HUD touch dimensions. */
+  viewportWidth?: number;
   visual: (key: string) => Readonly<{ frame: SpriteFrame; width: number; height: number }> | undefined;
   walkerFrames?: readonly SpriteFrame[];
   trackSprite: (sprite: Sprite) => void;
@@ -23,9 +31,14 @@ export type WalkSceneOptions = Readonly<{
   bindLocal: (node: Node, callback: () => void) => void;
   bindHelp: (node: Node) => void;
   bindInteract: (node: Node, getTarget: () => WorldTarget | undefined) => void;
+  bindWorldTap?: (node: Node, callback: (point: WorldPoint) => void) => void;
+  interactTarget?: (target: WorldTarget) => void;
   openDetails: () => void;
   openCodex: () => void;
   openPanel?: (panel: 'character' | 'inventory' | 'map' | 'objectives' | 'log' | 'menu') => void;
+  openHudPopover?: (kind: HudPopoverKind) => void;
+  activeHudPopover?: HudPopoverKind;
+  openCombatChoices: (group: 'spells' | 'medicines') => void;
   page: number;
   setPage: (page: number) => void;
   chrome: InfiniteFlowRuntimeChrome;
@@ -38,23 +51,171 @@ export type WalkSceneHandle = Readonly<{
   getFacing: () => 'down' | 'left' | 'right' | 'up';
   joystick: Node;
   joystickThumb: Node;
+  startCombatAction: (kind: CombatEffectKind, onImpact: () => void) => boolean;
+  resolveCombatAction: (result: CombatEffectResult, onComplete: () => void) => boolean;
+  cancelCombatAction: () => void;
+  isCombatAnimating: () => boolean;
+  updateCombatReadout: (values: Readonly<{ playerHp?: number; enemyHp?: number }>) => void;
+  cancelApproach: () => void;
   dispose: () => void;
 }>;
 
 type Facing = ReturnType<WalkSceneHandle['getFacing']>;
 type DepthItem = { node: Node; y: number };
-type Flame = Readonly<{ graphics: Graphics; offset: number }>;
+type SceneVisual = NonNullable<ReturnType<WalkSceneOptions['visual']>>;
+type ReadyWalkSceneOptions = Omit<WalkSceneOptions, 'visual' | 'walkerFrames'> & Readonly<{
+  visual: (key: string) => SceneVisual;
+  walkerFrames: readonly SpriteFrame[];
+  dungeonView?: Readonly<{ worldPixel: number; gateHeight: number; monsterHeight: number; monsterHudTop: number; compactLabels: boolean }>;
+}>;
+
+type DungeonHtmlRoomInput = Readonly<{
+  worldWidth: number;
+  worldHeight: number;
+  surfaceHeight: number;
+  viewportWidth: number;
+  safeInsets: Readonly<{ top: number; right: number; bottom: number; left: number }>;
+}>;
+type DungeonHtmlRoomLayout = Readonly<{
+  roomRect: WorldRect;
+  cameraPoint: WorldPoint;
+  scale: WorldPoint;
+  offset: WorldPoint;
+  hudPixel: number;
+  controlsHeight: number;
+  artwork: Readonly<{ gateHeight: number; monsterHeight: number; heroVisibleHeight: number; compact: boolean }>;
+  targetFeet: Readonly<Record<'north' | 'south' | 'west' | 'east' | 'main', WorldPoint>>;
+  project: (point: WorldPoint) => WorldPoint;
+  unproject: (point: WorldPoint) => WorldPoint;
+}>;
+
+/** The HTML room uses screen positions; movement still follows the original world axes. */
+export function getDungeonHtmlRoomLayout(input: DungeonHtmlRoomInput): DungeonHtmlRoomLayout {
+  const hudPixel = 750 / input.viewportWidth;
+  const controlsHeight = 120 * hudPixel;
+  const safeWidth = 750 - input.safeInsets.left - input.safeInsets.right;
+  const compact = input.viewportWidth <= 350;
+  const artwork = { gateHeight: compact ? 60 : 90, monsterHeight: compact ? 108 : 158, heroVisibleHeight: compact ? 50 : 65, compact };
+  const safeTop = input.surfaceHeight / 2 - input.safeInsets.top;
+  const safeBottom = -input.surfaceHeight / 2 + input.safeInsets.bottom;
+  const roomRect = {
+    x: -safeWidth / 2,
+    y: safeBottom + controlsHeight,
+    width: safeWidth,
+    height: input.surfaceHeight - input.safeInsets.top - input.safeInsets.bottom - (136 + 120) * hudPixel,
+  };
+  const contentTop = safeTop - 142 * hudPixel;
+  const contentBottom = safeBottom + (compact ? 126 : 144) * hudPixel;
+  const contentHeight = contentTop - contentBottom;
+  const footTop = contentTop - artwork.heroVisibleHeight * hudPixel;
+  const footBottom = contentBottom + 13 * hudPixel;
+  const scale = { x: (safeWidth - 48 * hudPixel) / input.worldWidth, y: (footTop - footBottom) / input.worldHeight };
+  if (scale.x <= 0 || scale.y <= 0 || roomRect.height <= 0) throw new Error('Dungeon room requires space below the HUD and above the controls.');
+  const cameraPoint = { x: input.worldWidth / 2, y: input.worldHeight / 2 };
+  const offset = { x: 0, y: (footTop + footBottom) / 2 };
+  const project = (point: WorldPoint): WorldPoint => ({ x: offset.x + (point.x - cameraPoint.x) * scale.x, y: offset.y + (cameraPoint.y - point.y) * scale.y });
+  const unproject = (point: WorldPoint): WorldPoint => ({ x: cameraPoint.x + (point.x - offset.x) / scale.x, y: cameraPoint.y - (point.y - offset.y) / scale.y });
+  // Bottom edges, including the HTML's caption height and -3px image overlap.
+  const nameHeight = compact ? 23 : 25;
+  const westStateHeight = compact ? 14 : 16;
+  const sideCenter = (contentTop + contentBottom) / 2;
+  return {
+    roomRect,
+    cameraPoint,
+    scale,
+    offset,
+    hudPixel,
+    controlsHeight,
+    artwork,
+    targetFeet: {
+      north: { x: 0, y: contentTop - artwork.gateHeight * hudPixel },
+      south: { x: 0, y: contentBottom + (nameHeight - 3) * hudPixel },
+      west: { x: -safeWidth / 2 + (compact ? 40 : 42) * hudPixel, y: sideCenter - (artwork.gateHeight - nameHeight + 3 - westStateHeight) / 2 * hudPixel },
+      east: { x: safeWidth / 2 - (compact ? 40 : 42) * hudPixel, y: sideCenter - (artwork.gateHeight - nameHeight + 3) / 2 * hudPixel },
+      main: { x: 0, y: contentTop - contentHeight * (compact ? 0.71 : 0.54) + (nameHeight - 3) * hudPixel },
+    },
+    project,
+    unproject,
+  };
+}
+
+/** Only view-local feet change. Every target retains its action, radius and destination. */
+export function fitDungeonHtmlTargets(spec: WalkWorldSpec, layout: DungeonHtmlRoomLayout): WalkWorldSpec {
+  const sides = ['north', 'south', 'west', 'east'] as const;
+  const groups = new Map(sides.map(side => [side, spec.targets.filter(target => target.doorSide === side)]));
+  const central = spec.targets.filter(target => target.doorSide === undefined);
+  const targets = spec.targets.map(target => {
+    const side = target.doorSide;
+    const group = side === undefined ? central : groups.get(side)!;
+    const index = group.indexOf(target);
+    const slot = side === undefined ? layout.targetFeet.main : layout.targetFeet[side];
+    const maxHorizontal = Math.max(0, layout.roomRect.width / 2 - 44 * layout.hudPixel);
+    const minVertical = layout.roomRect.y + 38 * layout.hudPixel;
+    const maxVertical = layout.roomRect.y + layout.roomRect.height - layout.artwork.gateHeight * layout.hudPixel;
+    const spacing = Math.min((side === 'west' || side === 'east' ? 96 : 92) * layout.hudPixel,
+      group.length <= 1 ? Infinity : (side === 'west' || side === 'east' ? maxVertical - minVertical : maxHorizontal * 2) / (group.length - 1));
+    const shift = (index - (group.length - 1) / 2) * spacing;
+    const verticalHalfSpan = (group.length - 1) * spacing / 2;
+    const verticalCenter = Math.max(minVertical + verticalHalfSpan, Math.min(maxVertical - verticalHalfSpan, slot.y));
+    const foot = side === 'west' || side === 'east'
+      ? { x: slot.x, y: verticalCenter - shift }
+      : { x: Math.max(-maxHorizontal, Math.min(maxHorizontal, slot.x + shift)), y: slot.y };
+    return { ...target, ...layout.unproject(foot) };
+  });
+  return { ...spec, targets };
+}
+
+/** App owns loading; no scene nodes are created until all declared art is available. */
+function readyWalkSceneOptions(options: WalkSceneOptions, model: GameViewModel): ReadyWalkSceneOptions {
+  const frames = options.walkerFrames;
+  if (frames === undefined || frames.length < 16 || Array.from({ length: 16 }, (_, index) => frames[index]).some(frame => frame == null)) {
+    throw new Error('Walk scene requires the complete 16-frame player atlas.');
+  }
+  const visuals = new Map<string, SceneVisual>();
+  for (const key of Object.values(getInfiniteFlowSceneVisualKeys(model))) {
+    if (key === undefined) continue;
+    const visual = options.visual(key);
+    if (visual === undefined || visual.width <= 0 || visual.height <= 0) {
+      throw new Error(`Walk scene required art is not ready: ${key}`);
+    }
+    visuals.set(key, visual);
+  }
+  return { ...options, walkerFrames: frames, visual: (key) => {
+    const visual = visuals.get(key);
+    if (visual === undefined) throw new Error(`Walk scene art was not declared: ${key}`);
+    return visual;
+  } };
+}
 
 const WORLD_ZOOM = 1.1;
+const HUB_PORTAL_BODY_SCALE = { x: 1.25, y: 1.42 } as const;
 const WHITE = new Color(244, 235, 211, 255);
-const MUTED = new Color(184, 172, 150, 255);
 const GOLD = new Color(236, 195, 117, 255);
 // 玄黑金箓: actors and interaction magic read as red-gold bronze rather than teal.
 const TEAL = new Color(197, 168, 106, 255);
 const RED = new Color(214, 100, 82, 255);
 const INK = new Color(18, 15, 12, 255);
 const EDGE = new Color(96, 82, 62, 255);
-const SKIN = new Color(217, 174, 131, 255);
+// Approved style-refresh HUD materials. Geometry and input regions remain unchanged.
+const WALK_HUD = Object.freeze({
+  panel: new Color(26, 28, 19, 232),
+  raised: new Color(37, 43, 27, 221),
+  quiet: new Color(27, 32, 20, 217),
+  active: new Color(57, 59, 36, 230),
+  edge: new Color(178, 155, 98, 110),
+  edgeLight: new Color(187, 162, 105, 176),
+  gold: new Color(218, 202, 154, 255),
+  text: new Color(226, 213, 174, 255),
+  muted: new Color(193, 196, 173, 255),
+  healthTrack: new Color(60, 65, 48, 255),
+  health: new Color(157, 170, 132, 255),
+});
+// Every scene shares the courtyard's compact, borderless header.
+const INK_DOT_HUD = Object.freeze({
+  icon: WALK_HUD.gold,
+  shadow: new Color(11, 18, 13, 255),
+});
+const HUD_WASH = new Color(25, 31, 25, 152);
 
 function tint(rgb: WorldTint, brightness = 0, alpha = 255): Color {
   return new Color(Math.max(0, Math.min(255, rgb[0] + brightness)), Math.max(0, Math.min(255, rgb[1] + brightness)), Math.max(0, Math.min(255, rgb[2] + brightness)), alpha);
@@ -92,12 +253,6 @@ function rect(g: Graphics, x: number, y: number, width: number, height: number, 
   }
 }
 
-function rounded(g: Graphics, x: number, y: number, width: number, height: number, radius: number, color: Color): void {
-  g.fillColor = color;
-  g.roundRect(x, y, width, height, radius);
-  g.fill();
-}
-
 function ellipse(g: Graphics, x: number, y: number, width: number, height: number, fill?: Color, stroke?: Color): void {
   g.moveTo(x + width, y);
   for (let i = 1; i <= 32; i += 1) {
@@ -126,539 +281,317 @@ function shadow(parent: Node, width: number, height: number): void {
   ellipse(g, 0, 0, width * 0.63, height * 0.65, new Color(5, 5, 4, 70));
 }
 
-/** Every limb shares the feet anchor; the fallback remains a walking full-body actor. */
-function drawHuman(g: Graphics, facing: Facing, stride: number, npc = false, palette = TEAL): void {
-  g.clear();
-  const side = facing === 'left' ? -1 : facing === 'right' ? 1 : 0;
-  const up = facing === 'up';
-  const step = Math.sin(stride * Math.PI / 2) * 4;
-  const coat = npc ? new Color(palette.r * 0.53, palette.g * 0.53, palette.b * 0.53, 255) : new Color(58, 46, 32, 255);
-  const dark = new Color(30, 26, 21, 255);
-  const hair = new Color(48, 43, 43, 255);
-  const shoulder = side === 0 ? 16 : 12;
-  rounded(g, -11, 2 + step, 9, 20, 3, dark);
-  rounded(g, 3, 2 - step, 9, 20, 3, dark);
-  rounded(g, -13 + side * 2, 0 + step, 12, 8, 3, new Color(61, 47, 38, 255));
-  rounded(g, 2 + side * 2, 0 - step, 13, 8, 3, new Color(61, 47, 38, 255));
-  polygon(g, [[-13, 45], [-18, 18], [0, 12], [18, 18], [13, 45]], coat, dark);
-  rounded(g, -shoulder - 7, 23 - step, 10, 21, 4, coat);
-  rounded(g, shoulder - 3, 23 + step, 10, 21, 4, coat);
-  rounded(g, -shoulder - 6, 19 - step, 8, 9, 3, SKIN);
-  rounded(g, shoulder - 2, 19 + step, 8, 9, 3, SKIN);
-  rect(g, -14, 24, 28, 4, new Color(103, 75, 48, 255));
-  rect(g, -3, 23, 6, 6, GOLD);
-  if (up) {
-    polygon(g, [[-10, 44], [-12, 26], [11, 26], [10, 44]], new Color(77, 61, 47, 255), dark);
-    rect(g, -10, 40, 20, 3, new Color(173, 148, 106, 255));
-  } else {
-    polygon(g, [[-11, 43], [-1, 35], [11, 43], [5, 48], [-6, 48]], palette);
-    rect(g, -4, 30, 5, 8, palette);
-  }
-  ellipse(g, side * 3, 55, side === 0 ? 12 : 10, 14, SKIN, dark);
-  polygon(g, [[-12 + side * 3, 54], [-12 + side * 3, 65], [-5 + side * 3, 71], [10 + side * 3, 67], [13 + side * 3, 54], [7 + side * 3, 61], [-6 + side * 3, 61]], hair);
-  if (up) ellipse(g, 0, 58, 12, 12, hair);
-  else if (side === 0) {
-    rect(g, -6, 54, 3, 3, dark);
-    rect(g, 4, 54, 3, 3, dark);
-    rect(g, -2, 48, 5, 2, new Color(138, 99, 76, 255));
-  } else {
-    rect(g, side < 0 ? -6 : 7, 55, 3, 3, dark);
-    rounded(g, side < 0 ? -13 : 11, 49, 5, 5, 2, SKIN);
-  }
-  if (!npc) {
-    polygon(g, [[16, 14], [21, 15], [24, 39], [19, 37]], new Color(188, 196, 183, 255), dark);
-    rect(g, 15, 34, 12, 4, GOLD);
-  }
-}
-
-function floor(parent: Node, spec: WalkWorldSpec, phase: GameViewModel['phase']): void {
-  const theme = spec.theme ?? HUB_WORLD_THEME;
-  const surface = makeNode(parent, 'WalkStoneFloor', 0, 0, spec.width, spec.height);
-  const g = surface.addComponent(Graphics);
-  g.lineWidth = 1;
-  rect(g, 0, -spec.height, spec.width, spec.height, tint(theme.ground, theme.floor === 'sand' ? 0 : -14));
-  const tileWidth = theme.floor === 'wood' ? 150 : theme.floor === 'metal' ? 112 : theme.floor === 'tile' ? 64 : 86;
-  const tileHeight = theme.floor === 'wood' ? 34 : theme.floor === 'metal' ? 96 : theme.floor === 'tile' ? 64 : 52;
-  for (let row = 0; row * tileHeight < spec.height; row += 1) {
-    for (let column = -1; column * tileWidth < spec.width; column += 1) {
-      const x = column * tileWidth + (theme.floor === 'tile' || theme.floor === 'metal' ? 0 : (row % 2) * tileWidth / 2);
-      const y = row * tileHeight;
-      const variation = (row * 13 + column * 7 + 41) % 6;
-      if (theme.floor === 'sand' || theme.floor === 'void') {
-        if (x > 10 && y > 10 && x + 60 < spec.width && y + 40 < spec.height) {
-          const grainX = x + 13 + variation * 7;
-          const grainY = -y - 12 - variation * 4;
-          ellipse(g, grainX, grainY, theme.floor === 'sand' ? 9 + variation : 1 + variation % 2, theme.floor === 'sand' ? 2 : 1 + variation % 2,
-            theme.floor === 'sand' ? tint(theme.ground, variation - 12, 160) : tint(theme.accent, 10, 100 + variation * 20));
-          if (theme.floor === 'sand') rect(g, grainX + 18, grainY + 11, 3, 2, tint(theme.accent, -75, 150));
-        }
-        continue;
-      }
-      const offset = theme.floor === 'tile' ? (row + column) % 2 * 9 : variation * 2;
-      rect(g, Math.max(0, x + 1), -Math.min(spec.height, y + tileHeight - 1), Math.min(tileWidth - 2, spec.width - Math.max(0, x + 1)), Math.min(tileHeight - 3, spec.height - y), tint(theme.ground, offset));
-      if (theme.floor === 'metal' && x > 0 && x + tileWidth < spec.width && y + tileHeight < spec.height) {
-        rect(g, x + 8, -y - 11, 4, 4, tint(theme.wall, 12));
-        rect(g, x + tileWidth - 12, -y - tileHeight + 12, 4, 4, tint(theme.wall, 12));
-      } else if (theme.floor === 'wood') {
-        rect(g, x + 13, -y - 18, tileWidth - 28, 1, tint(theme.ground, -8));
-      } else if (variation === 2 && x > 0 && x + 68 < spec.width && y + 50 < spec.height) {
-        g.strokeColor = tint(theme.ground, -14, 200);
-        g.moveTo(x + 19, -y - 2); g.lineTo(x + 24, -y - 14); g.lineTo(x + 18, -y - 22); g.stroke();
-      }
-    }
-  }
-  const cx = spec.width / 2;
-  const cy = spec.height * (phase === 'hub' ? 0.54 : 0.50);
-  g.lineWidth = 4;
-  ellipse(g, cx, -cy, phase === 'hub' ? 176 : 218, phase === 'hub' ? 176 : 218, tint(theme.wall, -10, 85), tint(theme.accent, -25, 115));
-  g.lineWidth = 2;
-  ellipse(g, cx, -cy, phase === 'hub' ? 161 : 202, phase === 'hub' ? 161 : 202, undefined, tint(theme.accent, 0, 70));
-  for (let i = 0; i < 12; i += 1) {
-    const a = i * Math.PI / 6;
-    const r = phase === 'hub' ? 168 : 210;
-    g.strokeColor = tint(theme.accent, 0, 120);
-    g.moveTo(cx + Math.cos(a) * (r - 5), -cy + Math.sin(a) * (r - 5));
-    g.lineTo(cx + Math.cos(a) * (r + 5), -cy + Math.sin(a) * (r + 5));
-    g.stroke();
-  }
-  const emblem = makeNode(parent, `WalkFloorMotif:${theme.id}`, cx, -cy, 420, 420).addComponent(Graphics);
-  drawFloorMotif(emblem, theme);
-  rect(g, 24, -spec.height + 24, spec.width - 48, 9, tint(theme.wall, 10));
-  if (theme.motif === 'rails' || theme.motif === 'keel') {
-    for (const x of [110, spec.width - 146]) {
-      rect(g, x, -spec.height + 45, 8, spec.height - 90, tint(theme.accent, -40, 180));
-      rect(g, x + 28, -spec.height + 45, 8, spec.height - 90, tint(theme.accent, -40, 180));
-      for (let y = 70; y < spec.height - 40; y += 38) rect(g, x - 8, -y, 52, 8, tint(theme.wall, -10));
-    }
-  }
-  if (theme.motif === 'ward' || theme.motif === 'shelter' || theme.motif === 'replay') {
-    for (let y = 80; y < spec.height - 70; y += 76) {
-      rect(g, 174, -y, 10, 45, tint(theme.accent, -15, 155));
-      rect(g, spec.width - 184, -y, 10, 45, tint(theme.accent, -15, 155));
-    }
-  }
-}
-
-/** One real environment fills the complete world; cover clips excess art without stretching it. */
-function dungeonFloor(parent: Node, model: GameViewModel, options: WalkSceneOptions): boolean {
+/** Cover the visible world with one environment image, independently of gameplay bounds. */
+function dungeonFloor(parent: Node, model: GameViewModel, options: ReadyWalkSceneOptions, viewportWidth: number, viewportHeight: number): void {
   const { spec } = options;
   const theme = spec.theme ?? HUB_WORLD_THEME;
-  const backing = makeNode(parent, 'WalkDungeonFloor', 0, 0, spec.width, spec.height).addComponent(Graphics);
-  rect(backing, 0, -spec.height, spec.width, spec.height, tint(theme.ground, -10));
+  const width = Math.max(spec.width, viewportWidth);
+  const height = Math.max(spec.height, viewportHeight);
+  const backing = makeNode(parent, 'WalkDungeonFloor', spec.width / 2, -spec.height / 2, width, height).addComponent(Graphics);
+  rect(backing, -width / 2, -height / 2, width, height, model.phase === 'hub' ? new Color(21, 23, 26, 255) : tint(theme.ground, -10));
   const key = getInfiniteFlowSceneVisualKeys(model).background;
-  const visual = key === undefined ? undefined : options.visual(key);
-  if (key === undefined || visual === undefined || visual.width <= 0 || visual.height <= 0) {
-    makeNode(parent, 'WalkDungeonBackdropPending', spec.width / 2, -spec.height / 2, spec.width, spec.height);
-    return false;
-  }
-  const window = makeNode(parent, `WalkDungeonBackdropWindow:${key}`, spec.width / 2, -spec.height / 2, spec.width, spec.height);
+  // Legacy combat without chapter context intentionally has only the plain backing.
+  if (key === undefined) return;
+  const visual = options.visual(key);
+  const window = makeNode(parent, `WalkDungeonBackdropWindow:${key}`, spec.width / 2, -spec.height / 2, width, height);
   window.addComponent(Mask).type = Mask.Type.GRAPHICS_RECT;
-  const coverScale = Math.max(spec.width / visual.width, spec.height / visual.height);
+  const coverScale = Math.max(width / visual.width, height / visual.height);
   const artwork = makeNode(window, `WalkDungeonBackdrop:${key}`, 0, 0, visual.width * coverScale, visual.height * coverScale);
   const sprite = artwork.addComponent(Sprite);
   sprite.sizeMode = Sprite.SizeMode.CUSTOM;
   sprite.spriteFrame = visual.frame;
   sprite.color = new Color(255, 255, 255, 255);
   options.trackSprite(sprite);
-  return true;
+  if (model.phase === 'hub') {
+    courtyardFilter(artwork, sprite, visual.frame, visual.width * coverScale, visual.height * coverScale, options);
+    const atmosphere = makeNode(parent, 'WalkCourtyardAtmosphere', 0, 0, spec.width, spec.height).addComponent(Graphics);
+    // Distant dark green haze and the shallow lane settle the art into the approved palette.
+    for (let row = 0; row < 24; row += 1) {
+      const y = row * 30;
+      const opacity = y < 240 ? Math.round(25 * (1 - y / 240)) : y > 420 ? Math.round(18 + 52 * (y - 420) / 300) : 9;
+      rect(atmosphere, 0, -y - 30, spec.width, 30, new Color(11, 21, 25, opacity));
+    }
+    rect(atmosphere, 0, -421, spec.width, 1, new Color(195, 184, 152, 9));
+    for (let edge = 0; edge < 8; edge += 1) {
+      const opacity = Math.round(100 * (1 - edge / 8));
+      rect(atmosphere, edge * 8, -720, 8, 340, new Color(9, 14, 21, opacity));
+      rect(atmosphere, spec.width - (edge + 1) * 8, -720, 8, 340, new Color(9, 14, 21, opacity));
+    }
+  }
 }
 
-/** Low debris identifies the exact solid footprints without obscuring the chapter environment. */
-function dungeonObstacle(parent: Node, obstacle: WorldRect, index: number, theme: DungeonWorldTheme): DepthItem {
+/** The approved floor covers the entire surface, independently of room and camera. */
+function fullscreenDungeonFloor(scene: Node, model: GameViewModel, options: ReadyWalkSceneOptions): void {
+  const x = (options.safeInsets.right - options.safeInsets.left) / 2;
+  const width = 750;
+  const height = options.surfaceHeight;
+  const theme = options.spec.theme ?? HUB_WORLD_THEME;
+  const backing = makeNode(scene, 'WalkDungeonFloor', x, 0, width, height).addComponent(Graphics);
+  rect(backing, -width / 2, -height / 2, width, height, tint(theme.ground, -10));
+  const key = getInfiniteFlowSceneVisualKeys(model).background;
+  if (key === undefined) return;
+  const visual = options.visual(key);
+  const window = makeNode(scene, `WalkDungeonBackdropWindow:${key}`, x, 0, width, height);
+  window.addComponent(Mask).type = Mask.Type.GRAPHICS_RECT;
+  const scale = Math.max(width / visual.width, height / visual.height);
+  const art = makeNode(window, `WalkDungeonBackdrop:${key}`, 0, 0, visual.width * scale, visual.height * scale);
+  const sprite = art.addComponent(Sprite);
+  sprite.sizeMode = Sprite.SizeMode.CUSTOM;
+  sprite.spriteFrame = visual.frame;
+  options.trackSprite(sprite);
+}
+
+/** Built-in grayscale blending reproduces the courtyard's muted .54 saturation. */
+function courtyardFilter(parent: Node, sprite: Sprite, frame: SpriteFrame, width: number, height: number, options: WalkSceneOptions): void {
+  sprite.color = new Color(239, 240, 238, 255);
+  const muted = makeNode(parent, 'WalkCourtyardDesaturation', 0, 0, width, height).addComponent(Sprite);
+  muted.sizeMode = Sprite.SizeMode.CUSTOM;
+  muted.spriteFrame = frame;
+  muted.grayscale = true;
+  muted.color = new Color(239, 240, 238, 117);
+  options.trackSprite(muted);
+}
+
+const COURTYARD_PROP_ART: Readonly<Record<WorldProp['kind'], Readonly<{ width: number; height: number; bounds: readonly [number, number, number, number] }>>> = {
+  pillar: { width: 870, height: 1808, bounds: [22, 93, 866, 1795] },
+  crate: { width: 1457, height: 1080, bounds: [143, 272, 1352, 931] },
+  lamp: { width: 930, height: 1691, bounds: [163, 69, 770, 1633] },
+  altar: { width: 1500, height: 1049, bounds: [42, 61, 1459, 980] },
+};
+
+/** The visible alpha bounds, depth anchor, and solid foot box share one prop foot. */
+function courtyardProp(parent: Node, prop: WorldProp, options: ReadyWalkSceneOptions): DepthItem {
+  const base = makeNode(parent, `WalkCourtyardProp:${prop.kind}`, prop.x, -prop.y, prop.width, prop.height);
+  shadow(base, prop.kind === 'altar' ? 70 : prop.kind === 'crate' ? 50 : 42.5, prop.kind === 'altar' ? 13 : 10);
+  const visual = options.visual(prop.visualAssetKey);
+  const source = COURTYARD_PROP_ART[prop.kind];
+  const [left, top, right, bottom] = source.bounds;
+  const scale = Math.min(prop.width / (right - left), prop.height / (bottom - top));
+  const width = source.width * scale;
+  const height = source.height * scale;
+  const x = -(left + right - source.width) * scale / 2;
+  const y = height / 2 - (source.height - bottom) * scale;
+  const artwork = makeNode(base, `WalkCourtyardPropSprite:${prop.kind}`, x, y, width, height);
+  const sprite = artwork.addComponent(Sprite);
+  sprite.sizeMode = Sprite.SizeMode.CUSTOM;
+  sprite.spriteFrame = visual.frame;
+  options.trackSprite(sprite);
+  courtyardFilter(artwork, sprite, visual.frame, width, height, options);
+  return { node: base, y: prop.y };
+}
+
+type DungeonPropKind = 'chest' | 'exit' | 'event' | 'trap' | 'survey' | 'relic' | 'shrine' | 'law' | 'debris';
+type DungeonPropArt = Readonly<{
+  key: string;
+  width: number;
+  height: number;
+  bounds: readonly [number, number, number, number];
+  display: readonly [number, number];
+}>;
+
+// Source alpha bounds and display boxes from the approved style-refresh prototype.
+// Keeping full PNG dimensions avoids stretching or cropping the hand-painted art.
+const DUNGEON_PROP_ART: Readonly<Record<DungeonPropKind, DungeonPropArt>> = {
+  chest: { key: INFINITE_FLOW_DUNGEON_PROP_VISUAL_KEYS.propChest, width: 1254, height: 1254, bounds: [27, 222, 1230, 1146], display: [82, 72] },
+  exit: { key: INFINITE_FLOW_DUNGEON_PROP_VISUAL_KEYS.propExit, width: 1145, height: 1374, bounds: [58, 48, 1085, 1321], display: [126, 171] },
+  event: { key: INFINITE_FLOW_DUNGEON_PROP_VISUAL_KEYS.propEvent, width: 1254, height: 1254, bounds: [94, 8, 1144, 1245], display: [104, 127] },
+  trap: { key: INFINITE_FLOW_DUNGEON_PROP_VISUAL_KEYS.propTrap, width: 1254, height: 1254, bounds: [22, 76, 1233, 1196], display: [108, 90] },
+  survey: { key: INFINITE_FLOW_DUNGEON_PROP_VISUAL_KEYS.propSurvey, width: 1254, height: 1254, bounds: [68, 164, 1219, 1176], display: [111, 107] },
+  relic: { key: INFINITE_FLOW_DUNGEON_PROP_VISUAL_KEYS.propRelic, width: 1254, height: 1254, bounds: [143, 68, 1123, 1209], display: [106, 122] },
+  shrine: { key: INFINITE_FLOW_DUNGEON_PROP_VISUAL_KEYS.propShrine, width: 1254, height: 1254, bounds: [129, 110, 1125, 1114], display: [110, 132] },
+  law: { key: INFINITE_FLOW_DUNGEON_PROP_VISUAL_KEYS.propLaw, width: 1254, height: 1254, bounds: [127, 23, 1164, 1231], display: [108, 128] },
+  debris: { key: INFINITE_FLOW_DUNGEON_PROP_VISUAL_KEYS.propDebris, width: 1536, height: 1024, bounds: [34, 49, 1510, 955], display: [90, 93] },
+};
+
+/** Anchor visible alpha feet to the existing target/obstacle depth position. */
+function drawDungeonProp(body: Node, kind: DungeonPropKind, options: ReadyWalkSceneOptions, display = DUNGEON_PROP_ART[kind].display): void {
+  const source = DUNGEON_PROP_ART[kind];
+  const visual = options.visual(source.key);
+  const [left, top, right, bottom] = source.bounds;
+  const scale = Math.min(display[0] / (right - left), display[1] / (bottom - top));
+  const width = source.width * scale;
+  const height = source.height * scale;
+  const x = -(left + right - source.width) * scale / 2;
+  const y = height / 2 - (source.height - bottom) * scale;
+  const artwork = makeNode(body, `WalkDungeonPropSprite:${kind}`, x, y, width, height);
+  const sprite = artwork.addComponent(Sprite);
+  sprite.sizeMode = Sprite.SizeMode.CUSTOM;
+  sprite.spriteFrame = visual.frame;
+  options.trackSprite(sprite);
+}
+
+/** Low debris stays within the existing solid footprints and shares their depth feet. */
+function dungeonObstacle(parent: Node, obstacle: WorldRect, index: number, options: ReadyWalkSceneOptions): DepthItem {
   const foot = obstacle.y + obstacle.height;
   const item = makeNode(parent, `WalkObstacleFootprint:${index}`, obstacle.x + obstacle.width / 2, -foot, obstacle.width, obstacle.height + 8);
-  const g = item.addComponent(Graphics);
   const w = obstacle.width;
   const h = obstacle.height;
   if (w > 140 || h > 140) {
-    // A subdued edge on the world boundary, not an opaque wall laid over the illustration.
-    rect(g, -w / 2, 0, w, h, new Color(7, 12, 17, 115));
+    // World bounds still block movement; their geometry must not stripe the full-screen art.
     return { node: item, y: foot };
   }
-  g.lineWidth = 1;
-  polygon(g, [[-w / 2, 0], [w / 2, 0], [w / 2, h], [-w / 2, h]], new Color(8, 7, 6, 72), tint(theme.wall, 20, 180));
-  const metal = theme.floor === 'metal';
-  const paper = theme.motif === 'archive' || theme.motif === 'redaction' || theme.motif === 'evidence';
-  for (let row = 0; row < 3; row += 1) {
-    const x = row % 2 === 0 ? -w * 0.22 : w * 0.15;
-    const y = 12 + row * (h - 25) / 3;
-    const rw = w * (row === 1 ? 0.43 : 0.56);
-    if (metal || paper) {
-      polygon(g, [[x - rw / 2, y], [x + rw / 2, y + 2], [x + rw / 2 - 3, y + 20], [x - rw / 2 + 3, y + 24]], tint(theme.wall, paper ? 18 : -4, 235), tint(theme.wall, 40));
-      rect(g, x - rw / 3, y + 11, rw * 0.6, 2, tint(theme.wall, metal ? 25 : -18));
-    } else {
-      polygon(g, [[x - rw / 2, y + 5], [x - rw * 0.25, y + 24], [x + rw * 0.35, y + 26], [x + rw / 2, y + 8], [x + rw * 0.15, y]], tint(theme.wall, row * 7 - 10, 235), tint(theme.wall, 22));
-      polygon(g, [[x - rw * 0.25, y + 24], [x + rw * 0.35, y + 26], [x + rw * 0.2, y + 17], [x - rw * 0.4, y + 15]], tint(theme.wall, 22, 220));
-    }
-  }
+  drawDungeonProp(item, 'debris', options, [w, h]);
   return { node: item, y: foot };
 }
 
-/** Chapter-specific inlaid diagrams are painted beneath actors, never used as domain state. */
-function drawFloorMotif(g: Graphics, theme: DungeonWorldTheme): void {
-  const ink = tint(theme.accent, -10, 145);
-  const dim = tint(theme.accent, -25, 55);
-  g.lineWidth = 4;
-  g.strokeColor = ink;
-  const line = (points: readonly (readonly [number, number])[]): void => {
-    const first = points[0];
-    if (first === undefined) return;
-    g.moveTo(first[0], first[1]);
-    for (const [x, y] of points.slice(1)) g.lineTo(x, y);
-    g.stroke();
+/** Fit the selected artwork into the existing courtyard portal's world footprint. */
+function drawHubDungeonPortal(body: Node, options: ReadyWalkSceneOptions): void {
+  const visual = options.visual(INFINITE_FLOW_HUB_DUNGEON_PORTAL_VISUAL_KEY);
+  const { x: scaleX, y: scaleY } = HUB_PORTAL_BODY_SCALE;
+  const scale = Math.min(122 * scaleX / visual.width, 163 * scaleY / visual.height);
+  // Compensate for the original body's uneven scale so the PNG stays proportional.
+  const width = visual.width * scale / scaleX;
+  const height = visual.height * scale / scaleY;
+  const artwork = makeNode(body, 'WalkHubDungeonPortalSprite', 0, height / 2 - 8, width, height);
+  const sprite = artwork.addComponent(Sprite);
+  sprite.sizeMode = Sprite.SizeMode.CUSTOM;
+  sprite.spriteFrame = visual.frame;
+  sprite.color = new Color(255, 255, 255, 255);
+  options.trackSprite(sprite);
+}
+
+/** The recommended stone gate keeps the original transition's feet and footprint. */
+function drawTransitionGate(body: Node, target: WorldTarget, options: ReadyWalkSceneOptions): void {
+  const unavailable = target.disabledReason !== undefined;
+  if (!unavailable) {
+    const light = makeNode(body, 'WalkTransitionGroundLight', 0, -16, 116, 66).addComponent(Graphics);
+    // Concentric translucent ellipses keep the warm guidance low on the floor.
+    for (let ring = 5; ring > 0; ring -= 1) {
+      const scale = ring / 5;
+      ellipse(light, 0, 0, 58 * scale, 33 * scale, new Color(185, 155, 90, 10));
+    }
+  }
+  const visual = options.visual(INFINITE_FLOW_DUNGEON_TRANSITION_GATE_VISUAL_KEY);
+  const scale = options.dungeonView === undefined ? Math.min(122 / visual.width, 167 / visual.height)
+    : options.dungeonView.gateHeight * options.dungeonView.worldPixel / visual.height;
+  const width = visual.width * scale;
+  const height = visual.height * scale;
+  const artwork = makeNode(body, 'WalkTransitionGateSprite', 0, height / 2 - (options.dungeonView === undefined ? 8 : 0), width, height);
+  const sprite = artwork.addComponent(Sprite);
+  sprite.sizeMode = Sprite.SizeMode.CUSTOM;
+  sprite.spriteFrame = visual.frame;
+  sprite.color = unavailable ? new Color(128, 128, 128, 255) : new Color(255, 255, 255, 255);
+  sprite.grayscale = unavailable;
+  options.trackSprite(sprite);
+}
+
+/** Keep the artwork's bottom on the same world feet used for depth and interaction. */
+function drawNpcBody(body: Node, target: WorldTarget, options: ReadyWalkSceneOptions): void {
+  const key = getInfiniteFlowNpcWorldVisualKey(target.id);
+  if (key === undefined) throw new Error(`Walk scene NPC art is not declared: ${target.id}`);
+  const visual = options.visual(key);
+  const sizes: Readonly<Record<string, readonly [number, number]>> = {
+    'npc:equipment': [190, 7], 'npc:supplies': [180, 5], 'npc:pets': [184, 5],
+    'npc:methods': [190, 3], 'npc:bloodlines': [187, 6], 'npc:companions': [188, 7], 'npc:tasks': [194, 6],
   };
-  switch (theme.motif) {
-    case 'sigil':
-      polygon(g, [[0, 145], [106, -90], [-106, -90]], dim, ink);
-      polygon(g, [[0, -145], [106, 90], [-106, 90]], dim, ink);
-      ellipse(g, 0, 0, 61, 61, undefined, ink); break;
-    case 'rails':
-      for (const x of [-65, 65]) rect(g, x - 4, -150, 8, 300, ink);
-      for (let y = -140; y < 150; y += 42) rect(g, -95, y, 190, 12, dim);
-      for (const y of [-77, 39, 103]) ellipse(g, 0, y, 127, 14, undefined, dim); break;
-    case 'crystal':
-      for (const [x, y, s] of [[0, 0, 1], [-102, 57, 0.6], [99, -60, 0.7]] as const) {
-        polygon(g, [[x, y + 116 * s], [x + 47 * s, y + 36 * s], [x + 27 * s, y - 93 * s], [x - 33 * s, y - 67 * s], [x - 46 * s, y + 30 * s]], dim, ink);
-        line([[x, y + 116 * s], [x + 6 * s, y + 11 * s], [x + 27 * s, y - 93 * s]]);
-      } break;
-    case 'ward':
-      rect(g, -28, -128, 56, 256, dim, ink); rect(g, -128, -28, 256, 56, dim, ink);
-      line([[-168, -146], [-113, -146], [-97, -108], [-76, -175], [-45, -146], [170, -146]]); break;
-    case 'arena':
-      ellipse(g, 0, 0, 149, 149, undefined, ink);
-      for (const direction of [-1, 1]) { polygon(g, [[-85 * direction, -119], [-111 * direction, -91], [91 * direction, 122], [123 * direction, 142], [104 * direction, 106]], dim, ink); line([[-121 * direction, -72], [-69 * direction, -123]]); }
-      break;
-    case 'archive':
-      polygon(g, [[-143, -103], [0, -124], [143, -103], [143, 122], [0, 103], [-143, 122]], dim, ink);
-      line([[0, -124], [0, 103]]);
-      for (const y of [-57, -18, 21, 60]) { line([[-114, y + 10], [-27, y]]); line([[27, y], [114, y + 10]]); } break;
-    case 'rift':
-      for (let i = 0; i < 5; i += 1) polygon(g, [[-165 + i * 18, 140 - i * 17], [18 - i * 4, 59], [-32 + i * 8, -22], [156 - i * 21, -143]], i % 2 === 0 ? dim : new Color(10, 15, 31, 110), ink);
-      break;
-    case 'clock':
-      ellipse(g, 0, 0, 150, 150, undefined, ink); ellipse(g, 0, 0, 125, 125, undefined, dim);
-      for (let i = 0; i < 12; i += 1) { const a = i * Math.PI / 6; line([[Math.cos(a) * 110, Math.sin(a) * 110], [Math.cos(a) * 139, Math.sin(a) * 139]]); }
-      line([[0, 108], [0, 0], [84, -53]]); ellipse(g, 0, 0, 12, 12, ink); break;
-    case 'balance':
-      line([[0, -136], [0, 141]]); line([[-129, 79], [129, 79]]); line([[-65, -139], [65, -139]]);
-      for (const x of [-98, 98]) { line([[x, 79], [x - 43, -25], [x + 43, -25], [x, 79]]); ellipse(g, x, -29, 46, 23, dim, ink); } break;
-    case 'keel':
-      polygon(g, [[0, 163], [101, 56], [76, -126], [-76, -126], [-101, 56]], dim, ink);
-      line([[0, 158], [0, -138]]); for (const y of [-86, -39, 8, 55]) line([[-71, y], [71, y]]);
-      ellipse(g, 0, 26, 130, 37, undefined, dim); break;
-    case 'mirror':
-      for (const x of [-78, 78]) { polygon(g, [[x, 136], [x + 63, 59], [x + 47, -122], [x - 47, -122], [x - 63, 59]], dim, ink); line([[x + 21, 82], [x - 25, -58]]); }
-      line([[0, -160], [0, 160]]); break;
-    case 'redaction':
-      rect(g, -112, -142, 224, 284, dim, ink);
-      for (const y of [-93, -42, 9, 60, 111]) rect(g, -86, y, y === 9 ? 172 : 119, 9, ink);
-      polygon(g, [[-145, -91], [-127, -110], [156, 112], [139, 132]], tint(theme.accent, -15, 190)); break;
-    case 'auction':
-      ellipse(g, 0, -106, 120, 30, dim, ink);
-      polygon(g, [[-82, -45], [-69, -58], [72, 74], [59, 87]], ink);
-      polygon(g, [[18, 72], [48, 112], [130, 44], [99, 6]], dim, ink);
-      for (const x of [-133, 0, 133]) ellipse(g, x, 137, 21, 21, dim, ink); break;
-    case 'helix':
-      for (let y = -140; y <= 140; y += 28) { const x = Math.sin(y / 55) * 79; line([[-x, y], [x, y]]); ellipse(g, x, y, 11, 11, ink); ellipse(g, -x, y, 11, 11, dim, ink); } break;
-    case 'antenna':
-      polygon(g, [[-62, -137], [0, 102], [62, -137]], dim, ink); line([[-45, -89], [43, -36], [-25, 20], [18, 64]]);
-      for (const r of [48, 92, 136]) ellipse(g, 0, 87, r, r * 0.64, undefined, dim);
-      ellipse(g, 0, 87, 14, 14, ink); break;
-    case 'shelter':
-      polygon(g, [[-134, 45], [0, 149], [134, 45], [105, 45], [105, -137], [-105, -137], [-105, 45]], dim, ink);
-      rect(g, -26, -61, 52, 132, ink); rect(g, -66, -21, 132, 52, ink); break;
-    case 'evidence':
-      for (const [x, y] of [[-90, 68], [86, 68], [0, -92]] as const) { rect(g, x - 42, y - 47, 84, 94, dim, ink); for (let l = -20; l <= 20; l += 20) rect(g, x - 25, y + l, 50, 4, ink); }
-      line([[-90, 13], [0, -39], [86, 13]]); line([[-45, 72], [41, 72]]); break;
-    case 'replay':
-      rect(g, -165, -111, 330, 222, dim, ink);
-      for (let x = -143; x < 150; x += 44) { rect(g, x, 84, 23, 13, ink); rect(g, x, -97, 23, 13, ink); }
-      polygon(g, [[-44, 59], [63, 0], [-44, -59]], dim, ink); break;
-    case 'surveillance':
-      polygon(g, [[-171, 0], [-103, 69], [0, 96], [103, 69], [171, 0], [103, -69], [0, -96], [-103, -69]], dim, ink);
-      ellipse(g, 0, 0, 65, 65, undefined, ink); ellipse(g, 0, 0, 27, 27, ink);
-      for (const y of [-150, 150]) line([[-86, y], [86, y]]); break;
+  const hubSize = options.spec.key === 'hub' ? sizes[target.id] : undefined;
+  const scale = hubSize === undefined ? Math.min(104 / visual.width, 124 / visual.height) : hubSize[0] / visual.height;
+  const width = visual.width * scale;
+  const height = visual.height * scale;
+  body.setPosition(new Vec3(0, height / 2 - (hubSize?.[1] ?? 0), 0));
+  body.getComponent(UITransform)!.setContentSize(new Size(width, height));
+  const sprite = body.addComponent(Sprite);
+  sprite.sizeMode = Sprite.SizeMode.CUSTOM;
+  sprite.spriteFrame = visual.frame;
+  sprite.color = new Color(255, 255, 255, 255);
+  options.trackSprite(sprite);
+}
+
+function targetActor(parent: Node, target: WorldTarget, model: GameViewModel, options: ReadyWalkSceneOptions): DepthItem {
+  const courtyard = model.phase === 'hub';
+  const pixel = options.dungeonView?.worldPixel;
+  const base = makeNode(parent, `WalkTarget:${target.id}`, target.x, -target.y, courtyard && target.kind === 'portal' ? 160 : 150, courtyard && target.kind === 'portal' ? 220 : 190);
+  shadow(base, pixel === undefined ? target.kind === 'monster' ? 56 : target.kind === 'npc' ? courtyard ? 41 : 26 : courtyard ? 81 : 61
+    : (target.kind === 'monster' ? 27 : 21) * pixel, pixel === undefined ? target.kind === 'npc' ? 10 : 16 : 3.5 * pixel);
+  const body = makeNode(base, 'WorldObjectBody', 0, 0, 150, 175);
+  if (target.kind === 'npc') drawNpcBody(body, target, options);
+  else drawTargetObject(body, base, target, model, options);
+  if (courtyard) {
+    if (target.kind === 'portal') body.setScale(new Vec3(HUB_PORTAL_BODY_SCALE.x, HUB_PORTAL_BODY_SCALE.y, 1));
+    text(base, 'WalkTargetName', target.label, 0, target.kind === 'portal' ? 255 : 222, 192, 26, target.kind === 'portal' ? 17 : 14, new Color(239, 222, 176, 255));
+    if (target.purpose !== undefined) text(base, 'WalkTargetPurpose', target.purpose, 0, 204, 192, 22, 11, new Color(206, 200, 183, 255));
+    if (target.kind === 'portal') text(base, 'WalkTargetPurpose', '进入副本', 0, 232, 192, 22, 11, new Color(180, 216, 210, 255));
+    return { node: base, y: target.y };
   }
-}
-
-function wall(parent: Node, obstacle: WorldRect, index: number, theme: DungeonWorldTheme): DepthItem {
-  const foot = obstacle.y + obstacle.height;
-  const item = makeNode(parent, `WalkWall:${index}`, obstacle.x + obstacle.width / 2, -foot, obstacle.width, obstacle.height + 34);
-  const g = item.addComponent(Graphics);
-  const w = obstacle.width;
-  const h = obstacle.height;
-  g.lineWidth = 2;
-  rect(g, -w / 2 + 7, -8, w + 3, h + 26, new Color(16, 13, 10, 80));
-  rect(g, -w / 2, 0, w, h + 27, tint(theme.wall, -20), tint(theme.wall, -45));
-  rect(g, -w / 2, h + 15, w, 21, tint(theme.wall, 22), tint(theme.wall, -25));
-  rect(g, -w / 2 + 4, h + 26, w - 8, 5, tint(theme.wall, 48));
-  g.lineWidth = 1;
-  for (let y = 0; y < h + 16; y += 29) {
-    g.strokeColor = tint(theme.wall, -38);
-    g.moveTo(-w / 2, y); g.lineTo(w / 2, y); g.stroke();
-    for (let x = -w / 2 + ((Math.floor(y / 29) % 2) * 34); x < w / 2; x += 68) {
-      g.moveTo(x, y); g.lineTo(x, Math.min(y + 29, h + 16)); g.stroke();
-    }
+  const compact = options.dungeonView?.compactLabels ?? false;
+  const nameWidth = pixel === undefined ? target.kind === 'monster' ? 260 : 192 : (target.kind === 'monster' ? compact ? 100 : 110 : compact ? 78 : 84) * pixel;
+  const nameHeight = pixel === undefined ? 35 : (compact ? 23 : 25) * pixel;
+  const nameY = pixel === undefined ? -26 : -(compact ? 8.5 : 9.5) * pixel;
+  const nameX = 0;
+  if (target.kind === 'npc' || model.phase === 'explore' || model.phase === 'combat') {
+    const nameBacking = makeNode(base, 'WalkTargetNameBacking', nameX, nameY, nameWidth, nameHeight).addComponent(Graphics);
+    nameBacking.lineWidth = 1;
+    const cut = pixel === undefined ? 5 : 2 * pixel;
+    polygon(nameBacking, [[-nameWidth / 2 + cut, -nameHeight / 2], [nameWidth / 2 - cut, -nameHeight / 2], [nameWidth / 2, -nameHeight / 2 + cut], [nameWidth / 2, nameHeight / 2 - cut], [nameWidth / 2 - cut, nameHeight / 2], [-nameWidth / 2 + cut, nameHeight / 2], [-nameWidth / 2, nameHeight / 2 - cut], [-nameWidth / 2, -nameHeight / 2 + cut]], new Color(16, 13, 10, 200), DARK_UI.edge);
   }
-  if (w <= 130 && h <= 140) {
-    rect(g, -w / 2 - 5, 1, w + 10, 10, tint(theme.wall, 10), tint(theme.wall, -30));
-    rect(g, -w / 2 - 5, h + 29, w + 10, 11, tint(theme.wall, 40), tint(theme.wall, -20));
-    const prop = makeNode(item, `WalkChapterProp:${theme.motif}`, 0, 0, w + 25, h + 90).addComponent(Graphics);
-    drawChapterProp(prop, w, h, theme);
+  text(base, 'WalkTargetName', `${target.rank === 'boss' ? '首领 · ' : target.rank === 'elite' ? '精英 · ' : ''}${target.label}`, nameX, nameY, nameWidth, nameHeight, pixel === undefined ? 21 : (compact ? 12 : 13) * pixel, target.disabledReason === undefined ? DARK_UI.bone : DARK_UI.muted);
+  if (target.kind === 'transition') {
+    const stateY = pixel === undefined ? -54 : compact && target.doorSide === 'south' ? 12 * pixel : -(compact ? 27 : 30) * pixel;
+    text(base, 'WalkTransitionState', target.action === undefined ? '封闭' : target.disabledReason === undefined ? '入口畅通' : '入口未开放', nameX, stateY, pixel === undefined ? 192 : (compact ? 78 : 84) * pixel, pixel === undefined ? 24 : (compact ? 14 : 16) * pixel, pixel === undefined ? 16 : (compact ? 9 : 10) * pixel, target.disabledReason === undefined ? new Color(209, 225, 207, 255) : DARK_UI.muted);
   }
-  return { node: item, y: foot };
+  return { node: base, y: target.y };
 }
 
-/** Furnish the existing solid column footprints: no decorative obstacle changes the walk rules. */
-function drawChapterProp(g: Graphics, w: number, h: number, theme: DungeonWorldTheme): void {
-  const a = tint(theme.accent);
-  const dark = tint(theme.wall, -35);
-  const face = tint(theme.wall, 20);
-  g.lineWidth = 2;
-  if (theme.motif === 'crystal' || theme.motif === 'rift' || theme.motif === 'mirror') {
-    const shift = theme.motif === 'rift' ? 12 : 0;
-    polygon(g, [[-w / 2, 18], [-w / 2 + 8, h + 40], [shift, h + 82], [w / 2 - 5, h + 37], [w / 2, 18]], tint(theme.accent, -90), a);
-    polygon(g, [[shift, h + 82], [7, 35], [w / 2, 18], [w / 2 - 5, h + 37]], tint(theme.accent, -35, 190));
-    g.strokeColor = tint(theme.accent, 50);
-    g.moveTo(-17, h + 28); g.lineTo(10, 56); g.stroke();
-  } else if (theme.motif === 'archive' || theme.motif === 'redaction' || theme.motif === 'evidence') {
-    rect(g, -w / 2 + 4, 13, w - 8, h + 26, dark, a);
-    for (let y = 24; y < h + 17; y += 34) {
-      rect(g, -w / 2 + 6, y - 4, w - 12, 5, face);
-      for (let x = -w / 2 + 9; x < w / 2 - 8; x += 12) {
-        rect(g, x, y, 8, 23, theme.motif === 'redaction' ? tint(theme.accent, -50) : tint(theme.accent, Math.floor(x / 12) % 2 * -35));
-        rect(g, x + 1, y + 16, 6, 2, dark);
-      }
-    }
-    if (theme.motif === 'evidence') { rect(g, -12, h + 12, 24, 32, WHITE, EDGE); rect(g, -8, h + 26, 16, 3, a); }
-  } else if (theme.motif === 'ward' || theme.motif === 'shelter') {
-    rect(g, -w / 2 + 3, 10, w - 6, h + 27, tint(theme.wall, 18), dark);
-    rect(g, -w / 2 + 10, h - 5, w - 20, 31, tint(theme.accent, -20), dark);
-    rect(g, -8, 28, 16, 47, a); rect(g, -23, 43, 46, 16, a);
-    if (theme.motif === 'shelter') { rect(g, -w / 2 + 8, 14, w - 16, 7, GOLD); rect(g, w / 2 - 15, 79, 5, 13, GOLD); }
-  } else if (theme.motif === 'helix') {
-    rounded(g, -w / 2 + 1, 12, w - 2, h + 40, 23, new Color(46, 62, 50, 230));
-    ellipse(g, 0, h + 42, w / 2 - 1, 13, face, a);
-    ellipse(g, 0, 18, w / 2 - 1, 12, face, a);
-    for (let y = 34; y < h + 31; y += 13) { const x = Math.sin(y / 17) * 17; ellipse(g, x, y, 5, 5, a); ellipse(g, -x, y, 5, 5, tint(theme.accent, -55)); g.strokeColor = tint(theme.accent, -30); g.moveTo(-x, y); g.lineTo(x, y); g.stroke(); }
-  } else if (theme.motif === 'antenna' || theme.motif === 'surveillance') {
-    rect(g, -w / 2 + 8, 10, w - 16, h + 14, dark, a);
-    for (let y = 21; y < h; y += 17) rect(g, -w / 2 + 15, y, w - 30, 4, face);
-    rect(g, -4, h + 18, 8, 43, face);
-    if (theme.motif === 'antenna') {
-      for (let y = h + 36; y < h + 78; y += 14) rect(g, -25 + (y - h - 36) / 2, y, 50 - (y - h - 36), 4, a);
-      ellipse(g, 0, h + 80, 5, 5, RED);
-    } else {
-      rounded(g, -28, h + 40, 56, 34, 9, face); ellipse(g, 6, h + 57, 11, 11, dark, a); ellipse(g, 6, h + 57, 5, 5, a);
-    }
-  } else if (theme.motif === 'clock' || theme.motif === 'balance' || theme.motif === 'auction') {
-    rect(g, -w / 2 + 7, 17, w - 14, h + 10, dark, a);
-    if (theme.motif === 'clock') {
-      ellipse(g, 0, h + 28, 35, 35, face, a); g.strokeColor = a; g.lineWidth = 4; g.moveTo(0, h + 51); g.lineTo(0, h + 28); g.lineTo(18, h + 17); g.stroke();
-    } else if (theme.motif === 'balance') {
-      rect(g, -3, h + 8, 6, 65, a); rect(g, -36, h + 59, 72, 5, a);
-      for (const x of [-28, 28]) { g.strokeColor = a; g.moveTo(x, h + 60); g.lineTo(x, h + 27); g.stroke(); ellipse(g, x, h + 23, 15, 7, face, a); }
-    } else {
-      ellipse(g, 0, h + 24, 32, 13, face, a); rect(g, -4, h + 35, 8, 39, a); rect(g, -26, h + 63, 46, 20, tint(theme.wall, 35), a);
-    }
-  } else if (theme.motif === 'replay' || theme.motif === 'keel' || theme.motif === 'rails') {
-    rect(g, -w / 2 + 4, 15, w - 8, h + 22, dark, face);
-    rect(g, -w / 2 + 10, h - 13, w - 20, 43, tint(theme.accent, -80), a);
-    if (theme.motif === 'replay') polygon(g, [[-12, h - 6], [-12, h + 22], [15, h + 8]], a);
-    else for (let y = h - 4; y < h + 21; y += 9) rect(g, -w / 2 + 17, y, w - 34, 3, a);
-    for (const x of [-18, 0, 18]) ellipse(g, x, 52, 4, 4, a);
-  } else {
-    // Ritual banners in the tower; scorched shield standards in the arena.
-    rect(g, -3, 30, 6, h + 27, face);
-    polygon(g, [[-27, h + 46], [27, h + 46], [23, 58], [0, 41], [-23, 58]], tint(theme.accent, -100), a);
-    if (theme.motif === 'arena') polygon(g, [[0, h + 33], [15, h + 8], [0, 66], [-15, h + 8]], a);
-    else { rect(g, -2, 65, 4, h - 27, a); rect(g, -15, h + 7, 30, 4, a); }
-  }
-}
-
-function drawFlame(g: Graphics, time: number): void {
-  g.clear();
-  const flicker = Math.sin(time * 11) * 3;
-  ellipse(g, 0, 10, 25 + flicker, 31, new Color(246, 152, 58, 18));
-  polygon(g, [[-12, 0], [-15, 13], [-6, 30 + flicker], [-2, 20], [5, 41 - flicker], [13, 21], [14, 8], [7, 0]], new Color(227, 114, 47, 235));
-  polygon(g, [[-7, 1], [-8, 12], [-2, 24 + flicker], [2, 16], [6, 28], [8, 8], [3, 0]], new Color(255, 204, 93, 255));
-  polygon(g, [[-4, 1], [0, 14], [5, 1]], new Color(255, 241, 183, 255));
-}
-
-function brazier(parent: Node, x: number, y: number, index: number, flames: Flame[]): DepthItem {
-  const base = makeNode(parent, `WalkBrazier:${index}`, x, -y, 62, 97);
-  shadow(base, 31, 11);
-  const g = base.addComponent(Graphics);
-  rect(g, -21, 0, 42, 9, new Color(100, 98, 84, 255), new Color(34, 43, 46, 255));
-  rect(g, -10, 9, 20, 27, new Color(60, 69, 69, 255), EDGE);
-  polygon(g, [[-24, 42], [-15, 29], [15, 29], [24, 42]], new Color(45, 49, 46, 255), new Color(153, 123, 77, 255));
-  const flame = makeNode(base, 'BrazierFire', 0, 40, 64, 80).addComponent(Graphics);
-  drawFlame(flame, index);
-  flames.push({ graphics: flame, offset: index });
-  return { node: base, y };
-}
-
-function drawDoor(g: Graphics, target: WorldTarget): void {
-  const magic = target.kind === 'portal' || target.kind === 'exit';
-  const glow = magic ? TEAL : GOLD;
-  rect(g, -61, -8, 122, 10, new Color(91, 105, 101, 255), EDGE);
-  rect(g, -54, 2, 108, 12, new Color(117, 126, 111, 255), EDGE);
-  rect(g, -46, 14, 92, 8, new Color(148, 151, 127, 255));
-  rounded(g, -39, 21, 78, 100, 35, new Color(13, 35, 41, 255));
-  if (magic) {
-    ellipse(g, 0, 65, 29, 46, new Color(58, 139, 145, 140), glow);
-    g.lineWidth = 2;
-    ellipse(g, 0, 65, 22, 36, new Color(83, 183, 176, 80), new Color(164, 243, 211, 185));
-    rect(g, -3, 28, 6, 73, new Color(181, 248, 221, 112));
-  } else {
-    for (let x = -31; x < 32; x += 16) rect(g, x, 20, 13, 80, new Color(53, 65, 66, 255));
-    rect(g, -29, 47, 57, 8, new Color(41, 50, 54, 255));
-    rect(g, 18, 59, 5, 7, GOLD);
-  }
-  rect(g, -54, 17, 18, 101, new Color(103, 112, 105, 255), new Color(42, 58, 61, 255));
-  rect(g, 36, 17, 18, 101, new Color(82, 97, 94, 255), new Color(42, 58, 61, 255));
-  rect(g, -57, 107, 114, 23, new Color(120, 130, 116, 255), new Color(51, 70, 70, 255));
-  polygon(g, [[-61, 130], [0, 155], [61, 130]], new Color(137, 140, 122, 255), new Color(52, 71, 73, 255));
-  polygon(g, [[0, 120], [7, 131], [0, 142], [-7, 131]], glow);
-}
-
-function drawMonster(g: Graphics, theme: DungeonWorldTheme): void {
-  const fur = tint(theme.wall, -5);
-  const rim = new Color(41, 35, 44, 255);
-  if (theme.enemy === 'human') {
-    drawHuman(g, 'down', 0, true, tint(theme.accent));
-    rect(g, -17, 51, 34, 9, rim);
-    rect(g, -11, 53, 9, 4, RED); rect(g, 4, 53, 9, 4, RED);
-    polygon(g, [[26, 23], [33, 19], [45, 72], [38, 80]], tint(theme.wall, 80), rim);
-    rect(g, 20, 26, 26, 5, GOLD);
+function drawTargetObject(body: Node, base: Node, target: WorldTarget, model: GameViewModel, options: ReadyWalkSceneOptions): void {
+  if (model.phase === 'hub' && target.kind === 'portal') {
+    drawHubDungeonPortal(body, options);
     return;
   }
-  if (theme.enemy === 'machine') {
-    for (const x of [-29, 15]) { rect(g, x, 2, 17, 41, fur, rim); rect(g, x - 4, 0, 25, 10, tint(theme.wall, 30), rim); }
-    polygon(g, [[-35, 73], [35, 73], [28, 27], [-28, 27]], tint(theme.wall, 10), rim);
-    for (const x of [-54, 36]) { rect(g, x, 26, 18, 43, fur, rim); ellipse(g, x + 9, 69, 12, 12, tint(theme.wall, 30), rim); }
-    rounded(g, -29, 75, 58, 38, 12, tint(theme.wall, 35));
-    rect(g, -23, 85, 46, 12, rim); rect(g, -17, 89, 34, 5, RED);
-    ellipse(g, 0, 51, 15, 15, rim, tint(theme.accent)); ellipse(g, 0, 51, 8, 8, tint(theme.accent));
+  if (target.kind === 'transition') {
+    drawTransitionGate(body, target, options);
     return;
   }
-  if (theme.enemy === 'specter') {
-    polygon(g, [[0, 117], [-30, 92], [-36, 57], [-64, 8], [-22, 22], [0, 2], [21, 22], [66, 8], [35, 57], [30, 92]], tint(theme.accent, -105, 225), tint(theme.accent, -25));
-    ellipse(g, 0, 84, 22, 25, rim, tint(theme.accent));
-    rect(g, -13, 83, 9, 4, RED); rect(g, 5, 83, 9, 4, RED);
-    polygon(g, [[-13, 69], [0, 47], [13, 69]], tint(theme.accent, -45));
-    return;
-  }
-  polygon(g, [[-27, 36], [-35, 18], [-41, 3], [-19, 1], [-12, 30]], fur, rim);
-  polygon(g, [[27, 36], [35, 18], [41, 3], [19, 1], [12, 30]], fur, rim);
-  polygon(g, [[-29, 69], [-49, 55], [-55, 24], [-44, 13], [-32, 26], [-28, 42]], fur, rim);
-  polygon(g, [[29, 69], [49, 55], [55, 24], [44, 13], [32, 26], [28, 42]], fur, rim);
-  ellipse(g, 0, 49, 33, 39, fur, rim);
-  polygon(g, [[-19, 69], [-13, 30], [0, 23], [13, 30], [19, 69]], new Color(133, 100, 96, 255));
-  polygon(g, [[-26, 77], [-38, 106], [-14, 94], [14, 94], [38, 106], [26, 77]], new Color(145, 129, 115, 255), rim);
-  ellipse(g, 0, 82, 26, 24, new Color(106, 80, 79, 255), rim);
-  polygon(g, [[-18, 86], [-5, 82], [-10, 78], [-20, 80]], RED);
-  polygon(g, [[18, 86], [5, 82], [10, 78], [20, 80]], RED);
-  polygon(g, [[-14, 71], [0, 64], [14, 71], [9, 57], [-9, 57]], rim);
-  polygon(g, [[-11, 70], [-6, 58], [-3, 67]], WHITE);
-  polygon(g, [[11, 70], [6, 58], [3, 67]], WHITE);
-  for (const x of [-46, -39, -32, 32, 39, 46]) polygon(g, [[x - 2, 6], [x, -2], [x + 3, 6]], new Color(196, 184, 157, 255));
-  if (theme.enemy === 'armored') {
-    polygon(g, [[-27, 65], [0, 74], [27, 65], [20, 31], [0, 22], [-20, 31]], tint(theme.wall, 55), rim);
-    polygon(g, [[0, 67], [13, 50], [0, 32], [-13, 50]], tint(theme.accent), rim);
-  }
-}
-
-function drawRoomObject(g: Graphics, kind: WorldTarget['kind'], theme: DungeonWorldTheme): void {
-  const a = tint(theme.accent);
-  if (kind === 'trap') {
-    ellipse(g, 0, 9, 66, 27, new Color(84, 35, 35, 205), RED);
-    for (const [x, y] of [[-38, 5], [-14, 17], [14, 4], [38, 16], [0, -5]] as const) polygon(g, [[x - 9, y], [x, y + 38], [x + 9, y]], new Color(169, 174, 159, 255), INK);
-    polygon(g, [[0, 89], [-21, 51], [21, 51]], new Color(77, 34, 29, 255), RED);
-    rect(g, -2, 61, 4, 12, GOLD); rect(g, -2, 55, 4, 4, GOLD);
-  } else if (kind === 'event') {
-    rect(g, -8, 0, 16, 62, tint(theme.wall), INK);
-    rect(g, -45, 53, 90, 64, new Color(176, 153, 106, 255), INK);
-    rect(g, -48, 49, 96, 8, GOLD); rect(g, -48, 113, 96, 8, GOLD);
-    for (let y = 66; y < 109; y += 13) rect(g, -29, y, 56, 3, tint(theme.wall, -30));
-    ellipse(g, 35, 54, 12, 12, RED, GOLD);
-  } else if (kind === 'survey') {
-    polygon(g, [[-48, 3], [48, 3], [56, 61], [-56, 61]], tint(theme.wall, 15), EDGE);
-    polygon(g, [[-51, 62], [-31, 88], [33, 82], [51, 62]], tint(theme.wall, 45), a);
-    ellipse(g, -3, 80, 19, 17, undefined, a); rect(g, 10, 46, 8, 24, GOLD);
-    rect(g, -31, 28, 39, 3, a); rect(g, -31, 17, 24, 3, a);
-  } else if (kind === 'relic') {
-    ellipse(g, 0, 7, 54, 19, tint(theme.wall), GOLD);
-    rect(g, -28, 10, 56, 23, tint(theme.wall, 20), GOLD);
-    for (const x of [-35, 0, 35]) polygon(g, [[x, 105], [x + 14, 75], [x, 47], [x - 14, 75]], tint(theme.accent, x === 0 ? 10 : -45), GOLD);
-    ellipse(g, 0, 60, 63, 17, undefined, tint(theme.accent, -20, 120));
-  } else if (kind === 'shrine') {
-    ellipse(g, 0, 5, 54, 20, tint(theme.wall, 25), a);
-    polygon(g, [[-29, 10], [-21, 69], [21, 69], [29, 10]], tint(theme.wall), a);
-    ellipse(g, 0, 87, 29, 29, tint(theme.accent, -95, 180), a);
-    polygon(g, [[0, 115], [10, 88], [0, 59], [-10, 88]], tint(theme.accent, 40));
-    ellipse(g, 0, 87, 39, 15, undefined, a);
-  } else if (kind === 'law') {
-    rect(g, -48, 4, 96, 13, tint(theme.wall, 20), a);
-    polygon(g, [[-36, 17], [36, 17], [30, 77], [-30, 77]], tint(theme.wall, -15), EDGE);
-    polygon(g, [[-43, 76], [0, 65], [43, 76], [43, 115], [0, 104], [-43, 115]], new Color(194, 180, 138, 255), GOLD);
-    rect(g, -2, 69, 4, 39, GOLD);
-    for (const y of [81, 94]) { rect(g, -34, y, 24, 3, tint(theme.wall)); rect(g, 10, y, 24, 3, tint(theme.wall)); }
-  }
-}
-
-function targetActor(parent: Node, target: WorldTarget, model: GameViewModel, theme: DungeonWorldTheme): DepthItem {
-  const base = makeNode(parent, `WalkTarget:${target.id}`, target.x, -target.y, 150, 190);
-  shadow(base, target.kind === 'monster' ? 56 : target.kind === 'npc' ? 26 : 61, target.kind === 'npc' ? 10 : 16);
-  const g = makeNode(base, 'WorldObjectBody', 0, 0, 150, 175).addComponent(Graphics);
-  g.lineWidth = 2;
-  if (target.kind === 'npc') {
-    const palette = target.id.includes('supplies') ? GOLD : target.id.includes('bloodlines') ? RED : TEAL;
-    drawHuman(g, 'down', 0, true, palette);
-    if (target.id.includes('equipment')) {
-      polygon(g, [[27, 1], [36, 1], [36, 37], [27, 37]], new Color(116, 92, 59, 255));
-      polygon(g, [[19, 37], [44, 37], [44, 48], [19, 48]], new Color(173, 181, 175, 255), INK);
-    } else if (target.id.includes('methods') || target.id.includes('tasks')) {
-      rect(g, 20, 24, 20, 26, new Color(191, 165, 111, 255), new Color(76, 70, 53, 255));
-      rect(g, 24, 29, 12, 2, new Color(89, 103, 84, 255));
-      rect(g, 24, 35, 12, 2, new Color(89, 103, 84, 255));
-    } else if (target.id.includes('supplies')) {
-      ellipse(g, 31, 21, 10, 14, new Color(124, 84, 65, 255), GOLD);
-      rect(g, 27, 31, 8, 9, new Color(144, 131, 86, 255));
-    }
-  } else if (target.kind === 'monster') {
-    drawMonster(g, theme);
+  if (target.kind === 'monster') {
+    if (target.visualAssetKey === undefined) throw new Error(`Walk scene monster art is not declared: ${target.id}`);
+    const visual = options.visual(target.visualAssetKey);
+    const pixel = options.dungeonView?.worldPixel;
+    const displaySize = pixel === undefined ? 156 : options.dungeonView!.monsterHeight * pixel;
+    const scale = pixel === undefined ? Math.min(displaySize / visual.width, displaySize / visual.height) : displaySize / visual.height;
+    const width = visual.width * scale;
+    const height = visual.height * scale;
+    // The body wrapper stays at the feet: combat recoil moves and resets it.
+    const art = makeNode(body, `WalkMonsterSprite:${target.visualAssetKey}`, 0, height * (pixel === undefined ? 0.43 : 0.5), width, height);
+    const sprite = art.addComponent(Sprite);
+    sprite.sizeMode = Sprite.SizeMode.CUSTOM;
+    sprite.spriteFrame = visual.frame;
+    sprite.color = new Color(255, 255, 255, 255);
+    options.trackSprite(sprite);
     if (target.rank === 'boss' || target.rank === 'elite') {
-      const rank = makeNode(base, 'WalkEnemyRank', 0, target.rank === 'boss' ? 139 : 124, 112, 48).addComponent(Graphics);
+      const rank = makeNode(base, 'WalkEnemyRank', 0, pixel === undefined ? target.rank === 'boss' ? 186 : 161 : height * 0.93 + 5 * pixel, 112, 48).addComponent(Graphics);
       if (target.rank === 'boss') polygon(rank, [[-28, -10], [-36, 20], [-16, 7], [0, 30], [16, 7], [36, 20], [28, -10]], GOLD, RED);
       else polygon(rank, [[0, 19], [15, 0], [0, -19], [-15, 0]], GOLD, INK);
-      bodyRankScale(g.node, target.rank);
+      if (pixel === undefined) bodyRankScale(body, target.rank);
+      else {
+        rank.node.setScale(new Vec3(0.22 * pixel, 0.22 * pixel, 1));
+        rank.node.setPosition(new Vec3(width * 0.46, height * 0.82, 0));
+      }
     }
     const detail = model.sections[1].detail;
     if (detail.kind === 'combat') {
-      const health = makeNode(base, 'WalkEnemyHealth', 0, 183, 142, 12).addComponent(Graphics);
-      rect(health, -71, -6, 142, 12, INK, EDGE);
-      rect(health, -68, -3, 136 * detail.enemy.hpPercent / 100, 6, RED);
-      text(base, 'WalkEnemyHealthLabel', `${detail.enemy.hp} / ${detail.enemy.maxHp}`, 0, 203, 174, 25, 18, WHITE);
+      const healthY = pixel === undefined ? target.rank === 'boss' ? 231 : target.rank === 'elite' ? 205 : 183 : Math.min(height * 0.74, options.dungeonView!.monsterHudTop);
+      const healthWidth = pixel === undefined ? 142 : 64 * pixel;
+      const healthHeight = pixel === undefined ? 12 : 4 * pixel;
+      const healthInset = pixel === undefined ? 3 : pixel;
+      const health = makeNode(base, 'WalkEnemyHealth', 0, healthY, healthWidth, healthHeight).addComponent(Graphics);
+      rect(health, -healthWidth / 2, -healthHeight / 2, healthWidth, healthHeight, INK, EDGE);
+      rect(health, -healthWidth / 2 + healthInset, -healthHeight / 2 + healthInset, (healthWidth - healthInset * 2) * detail.enemy.hpPercent / 100, healthHeight - healthInset * 2, RED);
+      // A tall boss reaches the round banner; keep its readout beside the bar.
+      const bossReadout = pixel === undefined && target.rank === 'boss';
+      text(base, 'WalkEnemyHealthLabel', `${detail.enemy.hp} / ${detail.enemy.maxHp}`,
+        bossReadout ? -145 : 0, pixel === undefined ? bossReadout ? healthY - 15 : healthY + 20 : healthY + 9 * pixel,
+        pixel === undefined ? bossReadout ? 140 : 174 : 90 * pixel, pixel === undefined ? 25 : 14 * pixel, pixel === undefined ? 18 : 10 * pixel, WHITE);
     }
-  } else if (target.kind === 'chest') {
-    rect(g, -38, 0, 76, 32, new Color(92, 65, 45, 255), INK);
-    rounded(g, -38, 23, 76, 24, 9, new Color(132, 91, 53, 255));
-    rect(g, -29, 0, 8, 44, new Color(183, 145, 78, 255));
-    rect(g, 21, 0, 8, 44, new Color(183, 145, 78, 255));
-    rect(g, -38, 26, 76, 5, GOLD);
-    rect(g, -7, 18, 14, 16, GOLD, INK);
-    rect(g, -2, 22, 4, 8, INK);
-  } else if (target.kind === 'portal' || target.kind === 'exit' || target.kind === 'transition') drawDoor(g, target);
-  else drawRoomObject(g, target.kind, theme);
-  if (model.phase === 'explore' || model.phase === 'combat') {
-    const nameWidth = target.kind === 'monster' ? 260 : 192;
-    const nameBacking = makeNode(base, 'WalkTargetNameBacking', 0, -26, nameWidth, 35).addComponent(Graphics);
-    nameBacking.lineWidth = 1;
-    polygon(nameBacking, [[-nameWidth / 2 + 5, -17.5], [nameWidth / 2 - 5, -17.5], [nameWidth / 2, -12.5], [nameWidth / 2, 12.5], [nameWidth / 2 - 5, 17.5], [-nameWidth / 2 + 5, 17.5], [-nameWidth / 2, 12.5], [-nameWidth / 2, -12.5]], new Color(16, 13, 10, 200), DARK_UI.edge);
+    return;
   }
-  text(base, 'WalkTargetName', `${target.rank === 'boss' ? '首领 · ' : target.rank === 'elite' ? '精英 · ' : ''}${target.label}`, 0, -26, target.kind === 'monster' ? 260 : 192, 35, 21, target.disabledReason === undefined ? DARK_UI.bone : DARK_UI.muted);
-  return { node: base, y: target.y };
+  const propKind = target.kind === 'portal' ? 'exit' : target.kind;
+  if (!(propKind in DUNGEON_PROP_ART)) throw new Error(`Walk scene target art is not declared: ${target.kind}`);
+  drawDungeonProp(body, propKind as DungeonPropKind, options);
+  if (options.dungeonView !== undefined) {
+    const prop = DUNGEON_PROP_ART[propKind as DungeonPropKind];
+    const visibleHeight = Math.min(prop.display[0] / (prop.bounds[2] - prop.bounds[0]), prop.display[1] / (prop.bounds[3] - prop.bounds[1])) * (prop.bounds[3] - prop.bounds[1]);
+    const presentationScale = (propKind === 'chest' ? 84 : propKind === 'trap' ? 80 : 108) * options.dungeonView.worldPixel / visibleHeight;
+    body.setScale(new Vec3(presentationScale, presentationScale, 1));
+  }
 }
 
 function bodyRankScale(body: Node, rank: 'boss' | 'elite'): void {
@@ -669,8 +602,8 @@ function bodyRankScale(body: Node, rank: 'boss' | 'elite'): void {
 function button(parent: Node, name: string, label: string, x: number, y: number, diameter: number, enabled = true, accent = DARK_UI.edgeLight, icon?: Parameters<typeof paintDarkIcon>[1]): Node {
   const base = makeNode(parent, name, x, y, diameter, diameter);
   const g = base.addComponent(Graphics);
-  paintDarkFrame(g, diameter, diameter, { fill: enabled ? DARK_UI.raised : DARK_UI.quiet, edge: enabled ? DARK_UI.edgeLight : DARK_UI.edge, accent: enabled ? accent : DARK_UI.edge, cut: 11 });
-  const title = text(base, `${name}Label`, label, 0, icon === undefined ? 0 : -29, diameter - 12, icon === undefined ? diameter - 20 : 30, 22, enabled ? DARK_UI.bone : DARK_UI.muted);
+  paintDarkFrame(g, diameter, diameter, { fill: enabled ? WALK_HUD.raised : WALK_HUD.quiet, edge: enabled ? WALK_HUD.edgeLight : WALK_HUD.edge, accent: enabled ? accent : WALK_HUD.edge, cut: 11 });
+  const title = text(base, `${name}Label`, label, 0, icon === undefined ? 0 : -29, diameter - 12, icon === undefined ? diameter - 20 : 30, 22, enabled ? WALK_HUD.text : WALK_HUD.muted);
   title.enableWrapText = false;
   if (icon !== undefined) {
     const mark = makeNode(base, `${name}Icon`, 0, label.length === 0 ? 0 : 12, 55, 46).addComponent(Graphics);
@@ -679,45 +612,229 @@ function button(parent: Node, name: string, label: string, x: number, y: number,
   return base;
 }
 
-function informationButton(parent: Node, name: string, label: string, icon: 'character' | 'bag' | 'map' | 'target' | 'menu', x: number, y: number): Node {
-  const base = button(parent, name, label, x, y, 104, true, DARK_UI.gold, icon);
-  const labelNode = base.getChildByName(`${name}Label`);
-  if (labelNode !== null) {
-    labelNode.setPosition(new Vec3(0, -29, 0));
-    labelNode.getComponent(UITransform)?.setContentSize(new Size(90, 29));
-    const component = labelNode.getComponent(Label);
-    if (component !== null) component.fontSize = 21;
+/** Direct paths from hud-menu-draw/app.js, with its SVG 48×48 coordinates flipped for Cocos. */
+function paintInkDotIcon(g: Graphics, icon: 'character' | 'bag' | 'map' | 'target' | 'menu', viewportWidth: number): void {
+  const scale = (20 * 750 / viewportWidth) / 48;
+  const x = (value: number): number => (value - 24) * scale;
+  const y = (value: number): number => (24 - value) * scale;
+  const move = (sx: number, sy: number): void => g.moveTo(x(sx), y(sy));
+  const line = (sx: number, sy: number): void => g.lineTo(x(sx), y(sy));
+  const curve = (c1x: number, c1y: number, c2x: number, c2y: number, sx: number, sy: number): void =>
+    g.bezierCurveTo(x(c1x), y(c1y), x(c2x), y(c2y), x(sx), y(sy));
+  g.clear();
+  g.strokeColor = INK_DOT_HUD.icon;
+  // Creator's stroke AA loses subpixel lines; preserve the SVG path at >= 1.5 screen pixels.
+  g.lineWidth = Math.max(2 * scale, 1.5 * 750 / viewportWidth);
+  g.lineCap = Graphics.LineCap.ROUND;
+  g.lineJoin = Graphics.LineJoin.ROUND;
+  if (icon === 'character') {
+    move(21, 9); curve(18, 5, 29, 2, 29, 7);
+    move(17, 17); curve(17, 7, 31, 7, 31, 17); line(31, 22); curve(30, 29, 18, 29, 17, 22); g.close();
+    move(18, 29); line(11, 34); line(8, 42);
+    move(30, 29); line(37, 34); line(40, 42);
+    move(17, 33); line(24, 39); line(31, 33);
+  } else if (icon === 'menu') {
+    move(24, 11); curve(18, 8, 12, 7, 6, 9); line(6, 40);
+    curve(12, 38, 18, 39, 24, 42); curve(30, 39, 36, 38, 42, 40); line(42, 9);
+    curve(36, 7, 30, 8, 24, 11); g.close();
+    move(24, 11); line(24, 42);
+    move(12, 17); line(18, 19); move(12, 26); line(18, 28);
+    move(30, 19); line(36, 17); move(30, 28); line(36, 26);
+  } else if (icon === 'bag') {
+    move(17, 13); line(13, 7); line(24, 9); line(35, 7); line(31, 13);
+    move(16, 17); line(32, 17);
+    move(17, 19); curve(9, 27, 8, 32, 11, 39); curve(16, 45, 32, 45, 37, 39); curve(40, 32, 39, 27, 31, 19);
+    move(18, 15); line(11, 19); move(30, 15); line(37, 20); move(24, 18); line(24, 28);
+  } else if (icon === 'map') {
+    move(7, 9); line(18, 13); line(30, 8); line(41, 12); line(41, 41); line(30, 37); line(18, 42); line(7, 38); g.close();
+    move(18, 13); line(18, 42); move(30, 8); line(30, 37); move(22, 25); line(26, 20); line(34, 26);
+  } else {
+    move(12, 10); line(35, 10); line(35, 41); line(12, 41); g.close();
+    move(16, 10); line(16, 6); line(31, 6); line(31, 10);
+    move(17, 20); line(30, 20); move(17, 27); line(30, 27); move(17, 34); line(25, 34);
+    move(9, 15); line(6, 15); line(6, 42); line(29, 42); line(29, 41);
   }
+  g.stroke();
+  if (icon === 'map') {
+    g.circle(x(26), y(20), 2 * scale);
+    g.stroke();
+  }
+}
+
+/** Main and dungeon-only shortcuts use the same icon, caption and touch geometry. */
+function headerButton(scene: Node, name: string, label: string, icon: 'bag' | 'map' | 'target' | 'menu', column: number, row: number, options: WalkSceneOptions, top: number): Node {
+  const px = 750 / (options.viewportWidth ?? 320);
+  const narrow = (options.viewportWidth ?? 320) <= 350;
+  const base = makeNode(scene, name, 375 - ((narrow ? 67 : 71) - (narrow ? 44 : 46) * column) * px, top - (27 + 44 * row) * px, 44 * px, 44 * px);
+  const mark = makeNode(base, `${name}Icon`, 0, 5 * px, 20 * px, 20 * px).addComponent(Graphics);
+  paintInkDotIcon(mark, icon, options.viewportWidth ?? 320);
+  inkDotTextShadow(text(base, `${name}Label`, label, 0, -12 * px, 42 * px, 13 * px, 10 * px, WALK_HUD.gold));
   return base;
 }
 
-function header(scene: Node, model: GameViewModel, options: WalkSceneOptions, top: number): void {
-  const detail = model.sections[1].detail;
-  const title = detail.kind === 'hub' ? '主神空间' : detail.kind === 'explore' ? detail.map.dungeonName : detail.kind === 'combat' ? detail.chapterContext?.dungeonName ?? '遭遇战' : '本轮结算';
-  const hud = makeNode(scene, 'WalkHud', 0, top - 60, 750, 120);
-  const g = hud.addComponent(Graphics);
-  paintDarkFrame(g, 750, 120, { fill: DARK_UI.panel, edge: DARK_UI.edge, accent: DARK_UI.goldDark, cut: 8, ornate: true });
-  const location = text(hud, 'WalkLocationName', title, -4, 28, 460, 36, 26, DARK_UI.bone, false);
-  location.enableWrapText = false;
+function paintPlayerHealth(g: Graphics, hp: number, maxHp: number, width: number, height: number): void {
+  g.clear();
+  rect(g, -width / 2, -height / 2, width, height, WALK_HUD.healthTrack, WALK_HUD.edge);
+  rect(g, -width / 2, -height / 2, width * Math.max(0, Math.min(1, hp / maxHp)), height, WALK_HUD.health);
+}
+
+function inkDotTextShadow(label: Label): void {
+  label.enableShadow = true;
+  label.shadowColor = INK_DOT_HUD.shadow;
+  label.shadowOffset = new Vec2(0, -1);
+  label.shadowBlur = 2;
+}
+
+/** The same portrait crop is used in the courtyard, exploration, and combat. */
+function hudPortrait(avatar: Node, options: ReadyWalkSceneOptions, width: number, height: number): void {
+  const portrait = options.visual('character:reincarnator');
+  const crop = makeNode(avatar, 'WalkAvatarCrop', 0, 0, width, height);
+  crop.addComponent(Mask).type = Mask.Type.GRAPHICS_RECT;
+  const scale = Math.max(width / portrait.width, height / portrait.height);
+  const artwork = makeNode(crop, 'WalkAvatarArt', 0, -(portrait.height * scale - height) * 0.33, portrait.width * scale, portrait.height * scale).addComponent(Sprite);
+  // Set CUSTOM first: assigning a frame in TRIMMED mode resets the cover size.
+  artwork.sizeMode = Sprite.SizeMode.CUSTOM;
+  artwork.spriteFrame = portrait.frame;
+  options.trackSprite(artwork);
+}
+
+/** Currency glyphs use the same 24×24 paths as the approved prototype. */
+function paintHudCurrency(g: Graphics, kind: 'reward-points' | 'lingyun', pixel: number, color: Color): void {
+  const scale = 13 * pixel / 24;
+  const point = (x: number, y: number): readonly [number, number] => [(x - 12) * scale, (12 - y) * scale];
+  const path = (points: readonly (readonly [number, number])[]): void => {
+    g.moveTo(...point(...points[0]!));
+    for (const value of points.slice(1)) g.lineTo(...point(...value));
+    g.close();
+  };
+  g.strokeColor = color;
+  g.fillColor = new Color(144, 129, 73, 38);
+  g.lineWidth = 1.5 * scale;
+  if (kind === 'reward-points') g.circle(0, 0, 8.5 * scale);
+  else path([[12, 3], [18, 7], [19, 15], [12, 21], [5, 15], [6, 7]]);
+  g.fill(); g.stroke();
+  path(kind === 'reward-points' ? [[12, 7], [16, 12], [12, 17], [8, 12]] : [[12, 7], [15, 12], [12, 17], [9, 12]]);
+  g.stroke();
+}
+
+function sharedHeader(scene: Node, model: GameViewModel, options: ReadyWalkSceneOptions, top: number): void {
+  const layout = getWalkHudLayout(options.viewportWidth ?? 320);
+  const px = layout.pixel;
+  const roleLeft = 9;
+  const roleWidth = (layout.infoLeft + layout.infoWidth - roleLeft) * px;
+  const role = makeNode(scene, 'WalkHud', -375 + roleLeft * px + roleWidth / 2, top - 48 * px, roleWidth, 96 * px);
+  const x = (left: number, width: number): number => (left + width / 2 - roleLeft) * px - roleWidth / 2;
+  const y = (top: number, height: number): number => (48 - top - height / 2) * px;
+  const avatar = makeNode(role, 'SceneCharacter', x(layout.portraitLeft, layout.portraitWidth), y(13, 61), 44 * px, 61 * px);
+  const frame = avatar.addComponent(Graphics);
+  frame.lineWidth = px;
+  rect(frame, -layout.portraitWidth * px / 2, -30.5 * px, layout.portraitWidth * px, 61 * px,
+    new Color(16, 25, 16, 255), new Color(138, 128, 80, 99));
+  hudPortrait(avatar, options, (layout.portraitWidth - 2) * px, 59 * px);
+  inkDotTextShadow(text(avatar, 'SceneCharacterLabel', '角色', 0, -21 * px, (layout.portraitWidth - 2) * px, 18 * px, 10 * px, WALK_HUD.gold));
+  options.bindLocal(avatar, () => options.openPanel === undefined ? options.openDetails() : options.openPanel('character'));
+  inkDotTextShadow(text(role, 'WalkRoleName', '轮回者', x(layout.infoLeft, layout.nameWidth), y(13, 20), layout.nameWidth * px, 20 * px,
+    (layout.narrow ? 12 : 13) * px, new Color(237, 233, 212, 255), false));
   const metrics = model.sections[1].metrics;
+  const detail = model.sections[1].detail;
   const hp = detail.kind === 'combat' ? `${detail.player.hp}/${detail.player.maxHp}` : metrics.find(({ id }) => id === 'hp')?.value;
-  text(hud, 'WalkPlayerStatus', hp === undefined ? '生命 —' : `生命 ${hp}`, -95, -12, 278, 31, 21, DARK_UI.bone, false);
+  const captionWidth = layout.narrow ? 0 : 27;
+  if (!layout.narrow) inkDotTextShadow(text(role, 'WalkHealthCaption', '生命', x(layout.infoLeft, 22), y(35, 16), 22 * px, 16 * px, 10 * px,
+    new Color(216, 222, 198, 255), false));
+  inkDotTextShadow(text(role, 'WalkPlayerStatus', hp ?? '—', x(layout.infoLeft + captionWidth, layout.healthWidth - captionWidth), y(35, 16),
+    (layout.healthWidth - captionWidth) * px, 16 * px, (layout.narrow ? 11 : 12) * px, new Color(238, 229, 201, 255), false));
   const split = hp?.match(/^(\d+)\s*\/\s*(\d+)$/);
   if (split !== undefined && split !== null && Number(split[2]) > 0) {
-    const fillWidth = 262 * Math.min(1, Number(split[1]) / Number(split[2]));
-    rect(g, -235, -44, 266, 10, DARK_UI.ink, DARK_UI.edge);
-    rect(g, -233, -42, fillWidth, 6, DARK_UI.redDark);
-    rect(g, -233, -40, fillWidth, 3, DARK_UI.red);
+    const health = makeNode(role, 'WalkPlayerHealth', x(layout.infoLeft, layout.healthWidth), y(53, 3), layout.healthWidth * px, 3 * px).addComponent(Graphics);
+    paintPlayerHealth(health, Number(split[1]), Number(split[2]), layout.healthWidth * px, 3 * px);
   }
-  const mode = options.chrome.busyActionId !== undefined ? '行动中…' : options.chrome.modeKind === 'preview' || options.chrome.modeKind === 'wx-devtools' ? '临时试玩' : '';
-  text(hud, 'WalkMode', mode, 150, -11, 155, 28, 19, DARK_UI.gold);
-  if (mode === '临时试玩') text(hud, 'WalkStorageNotice', '刷新丢失进度', 150, -40, 163, 25, 17, DARK_UI.muted);
-  const character = informationButton(scene, 'SceneCharacter', '角色', 'character', -309, top - 59);
-  options.bindLocal(character, () => options.openPanel === undefined ? options.openDetails() : options.openPanel('character'));
-  const menu = informationButton(scene, 'SceneHelp', '菜单', 'menu', 309, top - 59);
-  if (options.openPanel === undefined) options.bindHelp(menu);
-  else options.bindLocal(menu, () => options.openPanel?.('menu'));
+  const currency = makeNode(role, 'WalkCurrencyReadout', 0, 0, roleWidth, 96 * px);
+  for (const [kind, name, left, width, color] of [
+    ['reward-points', 'WalkRewardPoints', layout.rewardLeft, layout.rewardWidth, new Color(224, 194, 127, 255)],
+    ['lingyun', 'WalkLingyun', layout.jadeLeft, layout.jadeWidth, new Color(182, 208, 168, 255)],
+  ] as const) {
+    const metric = metrics.find(({ id }) => id === kind);
+    // Invalid/legacy combat projections intentionally omit metrics. Show the
+    // established unavailable marker, and do not expose a fabricated balance.
+    const value = metric?.value ?? '—';
+    const resource = makeNode(currency, name, x(left, width), y(1, 44), width * px, 44 * px);
+    const size = layout.narrow ? 10 : 11;
+    const valueWidth = Math.min(width - 18, value.length * size * 0.65);
+    const contentWidth = 16 + valueWidth;
+    const glyph = makeNode(resource, `${name}Icon`, (-contentWidth / 2 + 6.5) * px, 0, 13 * px, 13 * px).addComponent(Graphics);
+    paintHudCurrency(glyph, kind, px, color);
+    const label = text(resource, `${name}Value`, value, 8 * px, 0, valueWidth * px, 20 * px, size * px, color);
+    label.enableWrapText = false;
+    inkDotTextShadow(label);
+    if (metric !== undefined) options.bindLocal(resource, () => options.openHudPopover?.(kind));
+  }
+  const owned = model.phase === 'explore' || model.phase === 'combat' ? model.sections[1].loadout?.runRelics ?? [] : [];
+  if (owned.length > 0) {
+    const width = Math.max(44, owned.length * 24);
+    const strip = makeNode(role, 'WalkRunRelics', x(layout.infoLeft - 3, width), y(49, 44), width * px, 44 * px);
+    const selected = options.activeHudPopover === 'relics';
+    owned.forEach((relic, index) => {
+      const tile = makeNode(strip, `WalkRunRelicIcon:${relic.relicId}`, (-width / 2 + 12 + index * 24) * px, 0, 18 * px, 18 * px);
+      const edge = tile.addComponent(Graphics);
+      edge.lineWidth = px;
+      rect(edge, -9 * px, -9 * px, 18 * px, 18 * px, new Color(16, 19, 13, 255),
+        selected ? new Color(242, 209, 151, 255) : new Color(188, 161, 107, 153));
+      const sprite = makeNode(tile, `WalkRunRelicSprite:${relic.relicId}`, 0, 0, 16 * px, 16 * px).addComponent(Sprite);
+      sprite.sizeMode = Sprite.SizeMode.CUSTOM;
+      sprite.trim = false;
+      sprite.spriteFrame = options.visual(getInfiniteFlowRunRelicVisualKey(relic.relicId)).frame;
+      options.trackSprite(sprite);
+    });
+    if (selected) {
+      const marker = strip.addComponent(Graphics);
+      polygon(marker, [[0, -17 * px], [1.5 * px, -18.5 * px], [0, -20 * px], [-1.5 * px, -18.5 * px]], new Color(227, 193, 123, 255));
+    }
+    options.bindLocal(strip, () => options.openHudPopover?.('relics'));
+  }
+  for (const [name, label, icon, column] of [
+    ['SceneDetails', '背包', 'bag', 0], ['SceneHelp', '菜单', 'menu', 1],
+  ] as const) {
+    const base = headerButton(scene, name, label, icon, column, 0, options, top);
+    if (name === 'SceneHelp' && options.openPanel === undefined) options.bindHelp(base);
+    else options.bindLocal(base, () => name === 'SceneDetails'
+      ? options.openPanel === undefined ? options.openDetails() : options.openPanel('inventory')
+      : options.openPanel?.('menu'));
+  }
+  const mode = options.chrome.busyActionId !== undefined ? '行动中…' : options.chrome.modeKind === 'preview' || options.chrome.modeKind === 'wx-devtools' ? '临时试玩 · 刷新丢失进度' : '';
+  if (model.phase === 'hub' && mode.length > 0) text(scene, 'WalkMode', mode, -375 + 10 * px + roleWidth / 2, top - 85 * px, roleWidth, 17 * px, 8 * px, DARK_UI.muted, false);
+}
 
+function courtyardMinimap(scene: Node, spec: WalkWorldSpec, options: WalkSceneOptions, top: number): Node {
+  const px = 750 / (options.viewportWidth ?? 320);
+  const width = ((options.viewportWidth ?? 320) <= 380 ? 94 : 108) * px;
+  const height = 44 * px;
+  const map = makeNode(scene, 'WalkMinimap', 375 - 10 * px - width / 2, top - 84 * px, width, height);
+  const g = map.addComponent(Graphics);
+  rect(g, -width / 2, -height / 2, width, height, HUD_WASH);
+  g.lineWidth = px;
+  const bounds = spec.bounds!;
+  rect(g, -width / 2 + bounds.x / spec.width * width, height / 2 - (bounds.y + bounds.height) / spec.height * height,
+    bounds.width / spec.width * width, bounds.height / spec.height * height, new Color(173, 188, 186, 11), new Color(159, 174, 164, 25));
+  for (const target of spec.targets) {
+    const x = -width / 2 + target.x / spec.width * width;
+    const y = height / 2 - target.y / spec.height * height;
+    if (target.kind === 'portal') polygon(g, [[x, y + 3 * px], [x + 3 * px, y], [x, y - 3 * px], [x - 3 * px, y]], new Color(152, 236, 223, 255));
+    else ellipse(g, x, y, 2 * px, 2 * px, new Color(198, 184, 138, 255));
+  }
+  const player = makeNode(map, 'WalkMinimapPlayer', -width / 2 + options.position.x / spec.width * width, height / 2 - options.position.y / spec.height * height, 5 * px, 5 * px);
+  const dot = player.addComponent(Graphics);
+  ellipse(dot, 0, 0, 4.5 * px, 4.5 * px, new Color(220, 187, 86, 102));
+  ellipse(dot, 0, 0, 2.5 * px, 2.5 * px, new Color(255, 245, 190, 255), new Color(255, 249, 223, 255));
+  return player;
+}
+
+function header(scene: Node, model: GameViewModel, options: ReadyWalkSceneOptions, top: number): void {
+  sharedHeader(scene, model, options, top);
+  if (model.phase === 'hub') return;
+  const detail = model.sections[1].detail;
+  const metrics = model.sections[1].metrics;
+  const px = 750 / (options.viewportWidth ?? 320);
+  const roleWidth = Math.min((options.viewportWidth ?? 320) - 124, 244) * px;
   const riskReadouts = detail.kind === 'combat'
     ? [`第 ${detail.turn} 回合`, `意图：${detail.intent.name}`,
       ...(detail.chapterContext?.law.severity === 'danger' || detail.chapterContext?.law.severity === 'warning' ? [`法则${detail.chapterContext.law.severity === 'danger' ? '危险' : '警戒'}`] : []),
@@ -729,90 +846,150 @@ function header(scene: Node, model: GameViewModel, options: WalkSceneOptions, to
   if (riskReadouts.length > 0) {
     const danger = detail.kind === 'combat' ? detail.intent.severity === 'danger' || detail.chapterContext?.law.severity === 'danger'
       : metrics.some(({ id, severity }) => ['hp', 'pressure', 'law'].includes(id) && severity === 'danger');
-    const strip = makeNode(scene, 'WalkRiskSummary', -49, top - 157, 554, 58);
-    paintDarkFrame(strip.addComponent(Graphics), 554, 58, { fill: DARK_UI.panel, edge: DARK_UI.edge, accent: danger ? DARK_UI.red : DARK_UI.goldDark, cut: 6, ornate: false });
-    text(strip, 'WalkRiskReadout', riskReadouts.join(' · '), 0, 0, 526, 48, 20, danger ? DARK_UI.red : DARK_UI.bone, false);
+    const strip = makeNode(scene, 'WalkRiskSummary', -375 + 10 * px + roleWidth / 2, top - 94 * px, roleWidth, 24 * px);
+    rect(strip.addComponent(Graphics), -roleWidth / 2, -12 * px, roleWidth, 24 * px, HUD_WASH);
+    inkDotTextShadow(text(strip, 'WalkRiskReadout', riskReadouts.join(' · '), 0, 0, roleWidth - 12 * px, 24 * px, 9 * px, danger ? DARK_UI.red : DARK_UI.bone, false));
   }
 }
 
 function combatControls(scene: Node, model: GameViewModel, options: WalkSceneOptions, bottom: number): void {
   if (model.phase !== 'combat') return;
+  const pixel = 750 / (options.viewportWidth ?? 320);
+  const right = 375 - (options.safeInsets.left + options.safeInsets.right) / 2;
+  const left = -right;
   const actions = model.sections[2].actions;
-  const pages = Math.max(1, Math.ceil(actions.length / 4));
-  const page = Math.max(0, Math.min(pages - 1, Math.trunc(options.page)));
+  const weapon = actions.find(action => action.combatAction === 'weapon_skill' && action.enabled && action.event !== undefined);
+  const attack = weapon ?? actions.find(action => action.combatAction === 'attack');
   const busy = options.chrome.busyActionId !== undefined || options.chrome.modeKind === 'blocked';
-  actions.slice(page * 4, page * 4 + 4).forEach((action, index) => {
-    const ready = action.enabled && action.event !== undefined && !busy;
-    const accent = action.emphasis === 'danger' ? DARK_UI.red : action.recommendation === 'recommended' ? DARK_UI.gold : DARK_UI.muted;
-    const icon = action.combatAction === 'guard' ? 'guard' : action.combatAction === 'attack' || action.combatAction === 'weapon_skill' ? 'sword'
-      : action.combatAction === 'art' || action.combatAction === 'use_thunder_talisman' ? 'arcane'
-        : action.combatAction === 'use_healing_pill' ? 'bag' : action.combatAction === 'escape' ? 'left' : 'target';
-    const actionNode = button(scene, `WalkCombatAction:${action.actionId}`, action.label, index % 2 === 0 ? 166 : 291, bottom + 331 - Math.floor(index / 2) * 121, 112, ready, accent, icon);
-    options.bindAction(actionNode, action);
-  });
-  if (pages > 1) {
-    const previous = button(scene, 'WalkCombatPagePrevious', '', -285, bottom + 287, 104, page > 0, DARK_UI.gold, 'left');
-    const next = button(scene, 'WalkCombatPageNext', '', -172, bottom + 287, 104, page + 1 < pages, DARK_UI.gold, 'right');
-    if (page > 0) options.bindLocal(previous, () => options.setPage(page - 1));
-    if (page + 1 < pages) options.bindLocal(next, () => options.setPage(page + 1));
-    text(scene, 'WalkCombatPage', `${page + 1} / ${pages}`, -226, bottom + 362, 164, 32, 20, DARK_UI.muted);
+  const x = (column: number): number => right - (130 - 50 * column) * pixel;
+  const y = (row: number): number => bottom + (92 - 52 * row) * pixel;
+  const decorate = (node: Node, name: string): void => {
+    const mark = node.getChildByName(`${name}Icon`);
+    mark?.setScale(new Vec3(16 * pixel / 46, 16 * pixel / 46, 1));
+    mark?.setPosition(new Vec3(0, 8 * pixel, 0));
+    const title = node.getChildByName(`${name}Label`);
+    title?.setPosition(new Vec3(0, -10 * pixel, 0));
+    const label = title?.getComponent(Label);
+    if (label != null) {
+      label.fontSize = 10 * pixel;
+      label.lineHeight = 12 * pixel;
+      title!.getComponent(UITransform)!.setContentSize(new Size(42 * pixel, 14 * pixel));
+    }
+  };
+  // Six 44 CSS-pixel actions fit in two rows above the safe bottom edge.
+  for (const [row, group] of (['spells', 'medicines'] as const).entries()) {
+    const name = `WalkCombatChoice:${group}`;
+    const choice = button(scene, name, group === 'spells' ? '法术' : '药品', x(0), y(row), 44 * pixel,
+      !busy, DARK_UI.gold, group === 'spells' ? 'arcane' : 'bag');
+    decorate(choice, name);
+    if (!busy) options.bindLocal(choice, () => options.openCombatChoices(group));
   }
+  const slots = [
+    { action: attack, label: '攻击', column: 1, row: 0, icon: 'sword' as const },
+    { action: actions.find(action => action.combatAction === 'guard'), label: '防御', column: 2, row: 0, icon: 'guard' as const },
+    { action: actions.find(action => action.combatAction === 'use_thunder_talisman'), label: '雷火符', column: 1, row: 1, icon: 'arcane' as const },
+    { action: actions.find(action => action.combatAction === 'escape'), label: '脱离战斗', column: 2, row: 1, icon: 'left' as const },
+  ];
+  for (const { action, label, column, row, icon } of slots) {
+    if (action === undefined) continue;
+    const ready = action.enabled && action.event !== undefined && !busy;
+    const accent = action === weapon || action.recommendation === 'recommended' ? DARK_UI.gold
+      : action.emphasis === 'danger' ? DARK_UI.red : DARK_UI.muted;
+    const name = `WalkCombatAction:${action.actionId}`;
+    const actionNode = button(scene, name, label, x(column), y(row), 44 * pixel, ready, accent, icon);
+    decorate(actionNode, name);
+    if (action === attack) {
+      actionNode.getChildByName(`${name}Label`)?.setPosition(new Vec3(0, -5 * pixel, 0));
+      text(actionNode, 'WalkCombatAttackMode', weapon === undefined ? '普攻' : '战技', 0, -16 * pixel, 40 * pixel, 12 * pixel, 8 * pixel, ready ? accent : DARK_UI.muted);
+    }
+    options.bindAction(actionNode, action);
+  }
+  const detail = model.sections[1].detail;
+  if (detail.kind === 'combat') text(scene, 'WalkCombatFocus', `战意\n${detail.focus.current} / ${detail.focus.required}`,
+    left + 134 * pixel, bottom + 88 * pixel, 60 * pixel, 38 * pixel, 10 * pixel, weapon === undefined ? DARK_UI.muted : DARK_UI.gold);
 }
 
 /** Creates one persistent world. tick moves actors/camera and never recreates the root. */
-export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, options: WalkSceneOptions): WalkSceneHandle {
+export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, sceneOptions: WalkSceneOptions): WalkSceneHandle {
+  const readyOptions = readyWalkSceneOptions(sceneOptions, model);
+  const roomFit = model.phase === 'explore' || model.phase === 'combat' ? getDungeonHtmlRoomLayout({
+    worldWidth: readyOptions.spec.width, worldHeight: readyOptions.spec.height,
+    surfaceHeight: readyOptions.surfaceHeight, viewportWidth: readyOptions.viewportWidth ?? 320, safeInsets: readyOptions.safeInsets,
+  }) : undefined;
+  const options: ReadyWalkSceneOptions = roomFit === undefined ? readyOptions : { ...readyOptions, spec: fitDungeonHtmlTargets(readyOptions.spec, roomFit), dungeonView: {
+    worldPixel: roomFit.hudPixel, gateHeight: roomFit.artwork.gateHeight, monsterHeight: roomFit.artwork.monsterHeight,
+    monsterHudTop: roomFit.targetFeet.north.y - roomFit.targetFeet.main.y - (roomFit.artwork.compact ? 54 : 58) * roomFit.hudPixel,
+    compactLabels: roomFit.artwork.compact,
+  } };
   const { spec } = options;
+  const courtyard = model.phase === 'hub';
+  const hudPixel = 750 / (options.viewportWidth ?? 320);
   const halfSurface = options.surfaceHeight / 2;
   const scene = makeNode(root, 'WalkScene', (options.safeInsets.left - options.safeInsets.right) / 2, 0, 750, options.surfaceHeight);
   const top = halfSurface - options.safeInsets.top;
   const bottom = -halfSurface + options.safeInsets.bottom;
-  const viewportHeight = options.surfaceHeight - options.safeInsets.top - options.safeInsets.bottom - 122;
-  const viewport = makeNode(scene, 'WalkViewport', 0, top - 122 - viewportHeight / 2, 750, viewportHeight);
+  const safeHeight = options.surfaceHeight - options.safeInsets.top - options.safeInsets.bottom;
+  const viewportHeight = roomFit?.roomRect.height ?? options.surfaceHeight;
+  const viewportWidth = roomFit?.roomRect.width ?? 750;
+  const viewportCenter = roomFit === undefined ? { x: (options.safeInsets.right - options.safeInsets.left) / 2, y: 0 }
+    : { x: roomFit.roomRect.x + viewportWidth / 2, y: roomFit.roomRect.y + viewportHeight / 2 };
+  const cameraOffset = roomFit === undefined ? { x: 0, y: 0 } : { x: roomFit.offset.x - viewportCenter.x, y: roomFit.offset.y - viewportCenter.y };
+  const worldZoom = courtyard ? safeHeight / spec.height : WORLD_ZOOM;
+  const cameraScale = roomFit?.scale ?? { x: worldZoom, y: worldZoom };
+  const actorScale = roomFit === undefined ? undefined : { x: 1 / cameraScale.x, y: 1 / cameraScale.y };
+  if (roomFit !== undefined) fullscreenDungeonFloor(scene, model, options);
+  const viewport = makeNode(scene, 'WalkViewport', viewportCenter.x, viewportCenter.y, viewportWidth, viewportHeight);
   viewport.addComponent(Mask).type = Mask.Type.GRAPHICS_RECT;
   const theme = spec.theme ?? HUB_WORLD_THEME;
-  const backdrop = viewport.addComponent(Graphics);
+  const backdrop = makeNode(viewport, 'WalkViewportBackdrop', 0, 0, viewportWidth, viewportHeight).addComponent(Graphics);
   // Match the floor painter's own backing tint so a tall-screen viewport that
   // extends past a smaller world map reads as shadowed ground, never a black band.
   const viewportGroundTint = model.phase === 'hub'
     ? (theme.floor === 'sand' ? 0 : -14)
     : -10;
-  rect(backdrop, -375, -viewportHeight / 2, 750, viewportHeight, tint(theme.ground, viewportGroundTint));
+  if (roomFit === undefined) rect(backdrop, -viewportWidth / 2, -viewportHeight / 2, viewportWidth, viewportHeight, courtyard ? new Color(21, 23, 26, 255) : tint(theme.ground, viewportGroundTint));
   const camera = makeNode(viewport, 'WalkCamera', 0, 0, spec.width, spec.height);
-  camera.setScale(new Vec3(WORLD_ZOOM, WORLD_ZOOM, 1));
-  let environmentReady = true;
-  if (model.phase === 'hub') floor(camera, spec, model.phase);
-  else environmentReady = dungeonFloor(camera, model, options);
+  camera.setScale(new Vec3(cameraScale.x, cameraScale.y, 1));
+  if (roomFit === undefined) dungeonFloor(camera, model, options, (viewportWidth + 2 * Math.abs(cameraOffset.x)) / worldZoom,
+    (viewportHeight + 2 * Math.abs(cameraOffset.y)) / worldZoom);
   const marker = makeNode(camera, 'WalkTargetMarker', 0, 0, 152, 58);
+  if (actorScale !== undefined) marker.setScale(new Vec3(actorScale.x, actorScale.y, 1));
   const markerGraphics = marker.addComponent(Graphics);
   const actors = makeNode(camera, 'WalkDepthObjects', 0, 0, spec.width, spec.height);
-  const depth = spec.obstacles.map((obstacle, index) => model.phase === 'hub'
-    ? wall(actors, obstacle, index, theme)
-    : dungeonObstacle(actors, obstacle, index, theme));
-  const flames: Flame[] = [];
-  if (model.phase === 'hub') {
-    const torchPoints = [[96, 245], [spec.width - 96, 245], [96, spec.height - 180], [spec.width - 96, spec.height - 180]] as const;
-    torchPoints.forEach(([x, y], index) => depth.push(brazier(actors, x, y, index, flames)));
-  }
-  spec.targets.forEach((target) => depth.push(targetActor(actors, target, model, theme)));
+  const depth: DepthItem[] = courtyard ? (spec.props ?? []).map(prop => courtyardProp(actors, prop, options))
+    : spec.obstacles.map((obstacle, index) => dungeonObstacle(actors, obstacle, index, options));
+  if (actorScale !== undefined) depth.forEach(entry => entry.node.setScale(new Vec3(actorScale.x, actorScale.y, 1)));
+  const transitionStates: { target: WorldTarget; label: Label }[] = [];
+  spec.targets.forEach((target) => {
+    const actor = targetActor(actors, target, model, options);
+    if (actorScale !== undefined) actor.node.setScale(new Vec3(actorScale.x, actorScale.y, 1));
+    depth.push(actor);
+    const transitionState = actor.node.getChildByName('WalkTransitionState')?.getComponent(Label);
+    if (transitionState != null) transitionStates.push({ target, label: transitionState });
+    if (courtyard) {
+      const begin = (): void => approachTarget(target);
+      options.bindLocal(actor.node, begin);
+      const touch = makeNode(actor.node, 'WalkTargetTouch', 0, target.kind === 'portal' ? 110 : 95, target.kind === 'portal' ? 160 : 148, target.kind === 'portal' ? 220 : 190);
+      options.bindLocal(touch, begin);
+    }
+  });
 
   const player = makeNode(actors, 'WalkPlayer', options.position.x, -options.position.y, 104, 108);
-  shadow(player, 24, 9);
-  const body = makeNode(player, 'WalkPlayerBody', 0, 0, 104, 104);
+  if (actorScale !== undefined) player.setScale(new Vec3(actorScale.x, actorScale.y, 1));
+  const playerSize = roomFit === undefined ? courtyard ? 172 : 104 : roomFit.artwork.heroVisibleHeight * 336 / 308 * hudPixel;
+  const playerBodyY = roomFit === undefined ? courtyard ? 78 : 47 : playerSize * (320.16 - 168) / 336;
+  shadow(player, roomFit === undefined ? courtyard ? 31 : 24 : 15 * options.dungeonView!.worldPixel, roomFit === undefined ? courtyard ? 7.5 : 9 : 3 * options.dungeonView!.worldPixel);
+  const body = makeNode(player, 'WalkPlayerBody', 0, 0, playerSize, playerSize);
   const walkerFrames = options.walkerFrames;
-  let playerSprite: Sprite | undefined;
-  let playerGraphics: Graphics | undefined;
-  if (walkerFrames !== undefined && walkerFrames.length >= 16) {
-    body.setPosition(new Vec3(0, 47, 0));
-    playerSprite = body.addComponent(Sprite);
-    playerSprite.sizeMode = Sprite.SizeMode.CUSTOM;
-    playerSprite.spriteFrame = walkerFrames[0] ?? null;
-    playerSprite.color = new Color(255, 255, 255, 255);
-    options.trackSprite(playerSprite);
-  } else {
-    playerGraphics = body.addComponent(Graphics);
-    playerGraphics.lineWidth = 2;
-    drawHuman(playerGraphics, 'down', 0);
-  }
+  body.setPosition(new Vec3(0, playerBodyY, 0));
+  const playerSprite = body.addComponent(Sprite);
+  playerSprite.sizeMode = Sprite.SizeMode.CUSTOM;
+  // Keep the shared logical canvas so trimmed poses retain one ground point.
+  playerSprite.trim = false;
+  playerSprite.spriteFrame = walkerFrames[courtyard ? 8 : 0]!;
+  playerSprite.color = new Color(255, 255, 255, 255);
+  options.trackSprite(playerSprite);
+  if (courtyard) text(player, 'WalkPlayerName', '轮回者', 0, 180, 150, 24, 12, new Color(190, 241, 217, 255));
   const playerDepth: DepthItem = { node: player, y: options.position.y };
   depth.push(playerDepth);
   const sortDepth = (): void => {
@@ -821,113 +998,226 @@ export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, op
   };
   sortDepth();
 
-  const joystick = makeNode(scene, 'WalkJoystick', -230, bottom + 128, 200, 200);
-  const joystickGraphic = joystick.addComponent(Graphics);
-  joystickGraphic.lineWidth = 2;
-  ellipse(joystickGraphic, 0, -3, 96, 96, DARK_UI.ink);
-  ellipse(joystickGraphic, 0, 0, 96, 96, DARK_UI.panel, DARK_UI.edgeLight);
-  ellipse(joystickGraphic, 0, 0, 90, 90, undefined, DARK_UI.goldDark);
-  ellipse(joystickGraphic, 0, 0, 66, 66, DARK_UI.ink, DARK_UI.edge);
-  for (const [x, y, dx, dy] of [[0, 78, 5, 0], [0, -78, 5, 0], [78, 0, 0, 5], [-78, 0, 0, 5]]) {
-    joystickGraphic.strokeColor = DARK_UI.gold;
-    joystickGraphic.moveTo((x ?? 0) - (dx ?? 0), (y ?? 0) - (dy ?? 0));
-    joystickGraphic.lineTo((x ?? 0) + (dx ?? 0), (y ?? 0) + (dy ?? 0));
-    joystickGraphic.stroke();
+  const controlsLeft = -375 + (options.safeInsets.left + options.safeInsets.right) / 2;
+  const controlsRight = -controlsLeft;
+  const joystickSize = roomFit?.artwork.compact ? 85 : 92;
+  const joystick = makeNode(scene, 'WalkJoystick', roomFit !== undefined ? controlsLeft + (model.phase === 'combat' ? 54 : (roomFit.artwork.compact ? 17 : 18) + joystickSize / 2) * hudPixel
+    : courtyard ? -375 + ((options.viewportWidth ?? 320) <= 340 ? 67 : 73) * hudPixel : -230,
+    bottom + (roomFit !== undefined ? 60 * hudPixel : courtyard ? ((options.viewportWidth ?? 320) <= 340 ? 71 : 77) * hudPixel : 128), 200, 200);
+  if (courtyard) joystick.setScale(new Vec3(110 * hudPixel / 200, 110 * hudPixel / 200, 1));
+  else if (roomFit !== undefined) {
+    const scale = joystickSize * hudPixel / 200;
+    joystick.setScale(new Vec3(scale, scale, 1));
   }
-  const joystickThumb = makeNode(joystick, 'WalkJoystickThumb', 0, 0, 84, 84);
+  const joystickGraphic = joystick.addComponent(Graphics);
+  joystickGraphic.lineWidth = 1.8;
+  const joystickRadius = courtyard || roomFit !== undefined ? 100 : 96;
+  ellipse(joystickGraphic, 0, 0, joystickRadius, joystickRadius, new Color(28, 36, 22, 122), new Color(188, 165, 111, 112));
+  ellipse(joystickGraphic, 0, 0, joystickRadius - 7, joystickRadius - 7, undefined, new Color(189, 167, 106, 9));
+  joystickGraphic.strokeColor = new Color(196, 171, 102, 41);
+  joystickGraphic.moveTo(-71, 0); joystickGraphic.lineTo(71, 0); joystickGraphic.stroke();
+  joystickGraphic.moveTo(0, -71); joystickGraphic.lineTo(0, 71); joystickGraphic.stroke();
+  const joystickThumb = makeNode(joystick, 'WalkJoystickThumb', 0, 0, courtyard ? 80 : 84, courtyard ? 80 : 84);
   const thumb = joystickThumb.addComponent(Graphics);
-  thumb.lineWidth = 2;
-  ellipse(thumb, 0, -2, 40, 40, DARK_UI.ink);
-  ellipse(thumb, 0, 0, 40, 40, DARK_UI.raised, DARK_UI.edgeLight);
-  ellipse(thumb, 0, 0, 31, 31, undefined, DARK_UI.goldDark);
-  polygon(thumb, [[0, 8], [6, 0], [0, -8], [-6, 0]], DARK_UI.goldDark, DARK_UI.gold);
-  const interact = button(scene, 'WalkInteract', '靠近互动', 290, bottom + 79, 120, false, DARK_UI.gold, 'interact');
+  thumb.lineWidth = 1.8;
+  ellipse(thumb, 0, -5, 40, 40, new Color(0, 0, 0, 35));
+  ellipse(thumb, 0, 0, 40, 40, new Color(129, 115, 72, 112), new Color(203, 187, 132, 156));
+  ellipse(thumb, 0, 0, 35, 35, undefined, new Color(37, 30, 25, 43));
+  const compactInteract = courtyard || roomFit !== undefined;
+  const htmlInteract = roomFit !== undefined && model.phase === 'explore';
+  const interactWidth = htmlInteract ? (roomFit.artwork.compact ? 64 : 68) * hudPixel : compactInteract ? (model.phase === 'combat' ? 60 : 64) * hudPixel : 120;
+  const interactHeight = htmlInteract ? (roomFit.artwork.compact ? 65 : 69) * hudPixel : compactInteract ? 44 * hudPixel : 120;
+  const interact = roomFit !== undefined
+    ? makeNode(scene, 'WalkInteract', model.phase === 'combat' ? controlsLeft + 134 * hudPixel : controlsRight - 17 * hudPixel - interactWidth / 2,
+      bottom + (model.phase === 'combat' ? 24 : 60) * hudPixel, interactWidth, interactHeight)
+    : courtyard
+    ? makeNode(scene, 'WalkInteract', 375 - ((options.viewportWidth ?? 320) <= 340 ? 44 : 50) * hudPixel,
+      bottom + ((options.viewportWidth ?? 320) <= 340 ? 38 : 46) * hudPixel, interactWidth, interactHeight)
+    : button(scene, 'WalkInteract', '靠近互动', 290, bottom + 79, 120, false, DARK_UI.gold, 'interact');
+  if (compactInteract) {
+    paintDarkFrame(interact.addComponent(Graphics), interactWidth, interactHeight, { fill: WALK_HUD.quiet, edge: WALK_HUD.edge, accent: WALK_HUD.gold, cut: htmlInteract ? 9 * hudPixel : 0 });
+    const icon = makeNode(interact, 'WalkInteractIcon', htmlInteract ? 0 : -17 * hudPixel, htmlInteract ? 10 * hudPixel : 0, 14 * hudPixel, 14 * hudPixel).addComponent(Graphics);
+    paintDarkIcon(icon, 'interact', DARK_UI.gold);
+    const iconSize = htmlInteract ? 24 : 14;
+    icon.node.setScale(new Vec3(iconSize * hudPixel / 46, iconSize * hudPixel / 46, 1));
+    const label = text(interact, 'WalkInteractLabel', htmlInteract ? '互动' : '靠近', htmlInteract ? 0 : 8 * hudPixel, htmlInteract ? -16 * hudPixel : 0, (htmlInteract ? 54 : 34) * hudPixel, 20 * hudPixel, (htmlInteract ? 14 : 11) * hudPixel, DARK_UI.muted);
+    label.enableWrapText = false;
+  }
   const interactLabel = interact.getChildByName('WalkInteractLabel')?.getComponent(Label);
   const interactIcon = interact.getChildByName('WalkInteractIcon')?.getComponent(Graphics);
   const interactGraphics = interact.getComponent(Graphics);
-  if (model.phase === 'explore' || model.phase === 'combat') {
-    const hintBacking = makeNode(scene, 'WalkInteractionHintBacking', 0, bottom + (model.phase === 'combat' ? 416 : 253), 685, 51).addComponent(Graphics);
-    hintBacking.lineWidth = 1;
-    polygon(hintBacking, [[-334.5, -25.5], [334.5, -25.5], [342.5, -17.5], [342.5, 17.5], [334.5, 25.5], [-334.5, 25.5], [-342.5, 17.5], [-342.5, -17.5]], new Color(16, 13, 10, 200), DARK_UI.edge);
-  }
-  const targetHint = text(scene, 'WalkInteractionHint', '拖动摇杆移动 · 靠近人物或门互动', 0, bottom + (model.phase === 'combat' ? 416 : 253), 685, 51, 22, DARK_UI.bone);
-  const details = informationButton(scene, 'SceneDetails', '背包', 'bag', 309, top - 182);
-  options.bindLocal(details, () => options.openPanel === undefined ? options.openDetails() : options.openPanel('inventory'));
+  const minimapPlayer = courtyard ? courtyardMinimap(scene, spec, options, top) : undefined;
   const detail = model.sections[1].detail;
   if (detail.kind === 'explore') {
-    const map = informationButton(scene, 'SceneMap', '地图', 'map', 309, top - 294);
+    const map = headerButton(scene, 'SceneMap', '地图', 'map', 0, 1, options, top);
     options.bindLocal(map, () => options.openPanel === undefined ? options.openDetails() : options.openPanel('map'));
   }
   if (detail.kind !== 'hub') {
-    const codex = informationButton(scene, 'SceneCodex', '目标', 'target', 309, top - (detail.kind === 'explore' ? 406 : 294));
+    const codex = headerButton(scene, 'SceneCodex', '目标', 'target', 1, 1, options, top);
     options.bindLocal(codex, () => options.openPanel === undefined ? options.openCodex() : options.openPanel('objectives'));
   }
   combatControls(scene, model, options, bottom);
   header(scene, model, options, top);
-  if (!environmentReady) {
-    text(scene, 'WalkEnvironmentLoading', '场景加载中…', -49, top - 302, 330, 39, 23, DARK_UI.gold);
-  }
 
   let position: WorldPoint = { x: options.position.x, y: options.position.y };
-  let facing: Facing = 'down';
+  let facing: Facing = courtyard ? 'right' : 'down';
   let previousFacing: Facing = facing;
   let frameIndex = 0;
   let gait = 0;
   let age = 0;
-  let flameFrame = -1;
   let disposed = false;
   let nearby: WorldTarget | undefined;
   let targetId: string | undefined;
   let interactionInitialized = false;
   const busy = options.chrome.busyActionId !== undefined || options.chrome.modeKind === 'blocked';
   options.bindInteract(interact, () => {
+    cancelApproach();
     const target = nearestWalkTarget(spec, position);
     return busy ? undefined : target;
   });
 
-  const halfWidth = 375 / WORLD_ZOOM;
-  const halfHeight = viewportHeight / WORLD_ZOOM / 2;
+  const halfWidth = 375 / worldZoom;
+  const halfHeight = safeHeight / worldZoom / 2;
   const clampCamera = (point: WorldPoint): WorldPoint => ({
-    x: spec.width <= halfWidth * 2 ? spec.width / 2 : Math.max(halfWidth, Math.min(spec.width - halfWidth, point.x + (model.phase === 'combat' ? 120 : 0))),
-    y: spec.height <= halfHeight * 2 ? spec.height / 2 : Math.max(halfHeight, Math.min(spec.height - halfHeight, point.y + 65)),
+    x: roomFit !== undefined ? roomFit.cameraPoint.x : spec.width <= halfWidth * 2 ? spec.width / 2 : Math.max(halfWidth, Math.min(spec.width - halfWidth, point.x + (model.phase === 'combat' ? 220 : 0))),
+    y: roomFit !== undefined ? roomFit.cameraPoint.y : courtyard || spec.height <= halfHeight * 2 ? spec.height / 2 : Math.max(halfHeight, Math.min(spec.height - halfHeight, point.y + 65)),
   });
   let cameraPoint = clampCamera(position);
-  camera.setPosition(new Vec3(-cameraPoint.x * WORLD_ZOOM, cameraPoint.y * WORLD_ZOOM, 0));
+  camera.setPosition(new Vec3(cameraOffset.x - cameraPoint.x * cameraScale.x, cameraOffset.y + cameraPoint.y * cameraScale.y, 0));
+
+  const destinationMarker = courtyard ? makeNode(camera, 'WalkDestinationMarker', 0, 0, 36, 17).addComponent(Graphics) : undefined;
+  let path: WorldPoint[] = [];
+  let pendingTarget: WorldTarget | undefined;
+  let stuckTime = 0;
+  const routeNotice = courtyard ? text(scene, 'WalkRouteNotice', '', 0, top - 155 * hudPixel, 310 * hudPixel, 26 * hudPixel, 11 * hudPixel, DARK_UI.gold) : undefined;
+  let noticeExpires = 0;
+  const cancelApproach = (): void => {
+    path = [];
+    pendingTarget = undefined;
+    stuckTime = 0;
+    destinationMarker?.clear();
+  };
+  const beginRoute = (destination: WorldPoint, target?: WorldTarget): void => {
+    cancelApproach();
+    if (disposed || busy) return;
+    if (target !== undefined && Math.hypot(target.x - position.x, target.y - position.y) <= target.radius) {
+      options.interactTarget?.(target);
+      return;
+    }
+    path = findWalkPath(spec, position, destination);
+    if (path.length === 0) {
+      if (routeNotice !== undefined) {
+        routeNotice.string = '此处无法到达，请从旁边绕行。';
+        noticeExpires = age + 3;
+      }
+      return;
+    }
+    pendingTarget = target;
+    if (destinationMarker !== undefined) {
+      destinationMarker.node.setPosition(new Vec3(destination.x, -destination.y, 0));
+      destinationMarker.lineWidth = 1;
+      ellipse(destinationMarker, 0, 0, 18, 8.5, new Color(223, 201, 138, 25), new Color(224, 210, 164, 173));
+      rect(destinationMarker, -6, -0.5, 12, 1, new Color(224, 210, 164, 171));
+      rect(destinationMarker, -0.5, -3, 1, 6, new Color(224, 210, 164, 171));
+    }
+  };
+  const approachTarget = (target: WorldTarget): void => beginRoute({ x: target.x, y: target.y }, target);
+  if (courtyard) options.bindWorldTap?.(viewport, (point) => {
+    const bounds = spec.bounds!;
+    beginRoute({
+      x: Math.max(bounds.x + 14, Math.min(bounds.x + bounds.width - 14, point.x / worldZoom + cameraPoint.x)),
+      y: Math.max(bounds.y + 14, Math.min(bounds.y + bounds.height - 14, cameraPoint.y - point.y / worldZoom)),
+    });
+  });
 
   const activity = formatInfiniteFlowPlayerChrome(options.chrome, model.phase).activityMessage;
   const failed = activity !== undefined && /不可执行|失败|异常|无效|内存紧张|暂不可用/.test(activity);
   const feedbackText = failed ? activity : options.feedback?.text;
   const toast = feedbackText === undefined ? undefined
-    : text(scene, 'WalkFeedback', feedbackText, -49, top - 234, 554, 61, 23, failed ? DARK_UI.red : DARK_UI.gold);
+    : text(scene, 'WalkFeedback', feedbackText, -49, top - 124 * hudPixel, 554, 24 * hudPixel, 10 * hudPixel, failed ? DARK_UI.red : DARK_UI.gold);
   const monster = spec.targets.find((target) => target.kind === 'monster');
-  const damageTarget = monster ?? { x: position.x, y: position.y };
-  const feedbackNode = makeNode(camera, 'WalkCombatEffects', damageTarget.x, -damageTarget.y, 200, 210);
-  const slash = feedbackNode.addComponent(Graphics);
-  const damageLabel = failed || options.feedback?.damage === undefined ? undefined
-    : text(feedbackNode, 'WalkDamage', `−${options.feedback.damage}`, 0, 136, 200, 73, 48, RED);
+  const enemyNode = monster === undefined ? undefined : actors.getChildByName(`WalkTarget:${monster.id}`);
+  const enemyBody = enemyNode?.getChildByName('WorldObjectBody');
+  const updateCombatReadout = (values: Readonly<{ playerHp?: number; enemyHp?: number }>): void => {
+    if (disposed || detail.kind !== 'combat') return;
+    if (values.playerHp !== undefined) {
+      const hud = scene.getChildByName('WalkHud');
+      const status = hud?.getChildByName('WalkPlayerStatus')?.getComponent(Label);
+      if (status !== undefined && status !== null) status.string = `${values.playerHp}/${detail.player.maxHp}`;
+      const health = hud?.getChildByName('WalkPlayerHealth')?.getComponent(Graphics);
+      if (health !== undefined && health !== null) {
+        const size = health.node.getComponent(UITransform)!.contentSize;
+        paintPlayerHealth(health, values.playerHp, detail.player.maxHp, size.width, size.height);
+      }
+    }
+    if (values.enemyHp !== undefined) {
+      const label = enemyNode?.getChildByName('WalkEnemyHealthLabel')?.getComponent(Label);
+      if (label !== undefined && label !== null) label.string = `${values.enemyHp} / ${detail.enemy.maxHp}`;
+      const health = enemyNode?.getChildByName('WalkEnemyHealth')?.getComponent(Graphics);
+      if (health !== undefined && health !== null) {
+        const size = health.node.getComponent(UITransform)!.contentSize;
+        const inset = roomFit === undefined ? 3 : options.dungeonView!.worldPixel;
+        health.clear();
+        rect(health, -size.width / 2, -size.height / 2, size.width, size.height, INK, EDGE);
+        rect(health, -size.width / 2 + inset, -size.height / 2 + inset, (size.width - inset * 2) * Math.max(0, Math.min(1, values.enemyHp / detail.enemy.maxHp)), size.height - inset * 2, RED);
+      }
+    }
+  };
+  // A separate mask ends above the controls. It shares the world camera's
+  // coordinate conversion while keeping particles and numbers off the HUD.
+  const effectBottom = 394;
+  const effectHeight = roomFit === undefined ? Math.max(1, viewportHeight - effectBottom) : viewportHeight;
+  const effectCenterY = roomFit === undefined ? effectBottom / 2 : 0;
+  const effectsMask = model.phase === 'combat'
+    ? makeNode(viewport, 'WalkCombatEffectsViewport', 0, effectCenterY, viewportWidth, effectHeight) : undefined;
+  if (effectsMask !== undefined) effectsMask.addComponent(Mask).type = Mask.Type.GRAPHICS_RECT;
+  const enemyArt = monster?.visualAssetKey === undefined ? undefined : enemyBody?.getChildByName(`WalkMonsterSprite:${monster.visualAssetKey}`);
+  const enemyAnchorY = roomFit === undefined ? 66 : (enemyArt?.getComponent(UITransform)?.contentSize.height ?? 0) / 2;
+  const effects = effectsMask === undefined ? undefined : createInfiniteFlowCombatEffects(effectsMask, {
+    getAnchors: () => {
+      if (roomFit !== undefined) {
+        const playerFoot = roomFit.project(position);
+        const enemyFoot = roomFit.project(monster ?? position);
+        return {
+          player: { x: playerFoot.x - viewportCenter.x, y: playerFoot.y - viewportCenter.y + playerBodyY - effectCenterY },
+          enemy: { x: enemyFoot.x - viewportCenter.x, y: enemyFoot.y - viewportCenter.y + enemyAnchorY - effectCenterY },
+        };
+      }
+      return {
+        player: { x: cameraOffset.x + (position.x - cameraPoint.x) * worldZoom, y: cameraOffset.y + (cameraPoint.y - position.y + playerBodyY) * worldZoom - effectCenterY },
+        enemy: { x: cameraOffset.x + ((monster?.x ?? position.x) - cameraPoint.x) * worldZoom, y: cameraOffset.y + (cameraPoint.y - (monster?.y ?? position.y) + enemyAnchorY) * worldZoom - effectCenterY },
+      };
+    },
+    // Dungeon actor roots cancel both camera axes, so body positions are already screen units.
+    movePlayer: offset => body.setPosition(new Vec3(offset.x / (roomFit === undefined ? worldZoom : 1), playerBodyY + offset.y / (roomFit === undefined ? worldZoom : 1), 0)),
+    moveEnemy: offset => enemyBody?.setPosition(new Vec3(offset.x / (roomFit === undefined ? worldZoom : 1), offset.y / (roomFit === undefined ? worldZoom : 1), 0)),
+  });
 
   const updateInteraction = (): void => {
     nearby = nearestWalkTarget(spec, position);
     if (interactionInitialized && targetId === nearby?.id) return;
     interactionInitialized = true;
     targetId = nearby?.id;
+    for (const entry of transitionStates) {
+      entry.label.string = entry.target.action === undefined ? '封闭' : entry.target.disabledReason !== undefined ? '入口未开放'
+        : entry.target.id === targetId ? '已到达入口' : '入口畅通';
+    }
     const ready = !busy && nearby !== undefined;
     if (interactLabel !== null && interactLabel !== undefined) {
-      interactLabel.string = nearby === undefined ? '靠近互动' : nearby.disabledReason !== undefined ? '查看' : nearby.interactionLabel ?? '互动';
-      interactLabel.color = ready ? DARK_UI.bone : DARK_UI.muted;
+      interactLabel.string = nearby === undefined ? htmlInteract ? '互动' : compactInteract ? '靠近' : '靠近互动' : nearby.disabledReason !== undefined ? '查看' : nearby.interactionLabel ?? '互动';
+      interactLabel.color = ready ? WALK_HUD.text : WALK_HUD.muted;
     }
     if (interactGraphics !== null) {
-      paintDarkFrame(interactGraphics, 120, 120, { fill: ready ? DARK_UI.raised : DARK_UI.quiet, edge: ready ? DARK_UI.edgeLight : DARK_UI.edge, accent: ready ? DARK_UI.gold : DARK_UI.edge, cut: 11 });
+      paintDarkFrame(interactGraphics, interactWidth, interactHeight, { fill: ready ? WALK_HUD.active : WALK_HUD.quiet, edge: ready ? WALK_HUD.edgeLight : WALK_HUD.edge, accent: ready ? WALK_HUD.gold : WALK_HUD.edge, cut: htmlInteract ? 9 * hudPixel : compactInteract ? 0 : 11 });
     }
-    if (interactIcon !== null && interactIcon !== undefined) paintDarkIcon(interactIcon, 'interact', ready ? DARK_UI.gold : DARK_UI.muted);
-    targetHint.string = nearby === undefined ? '摇杆移动 · 靠近目标互动'
-      : nearby.disabledReason === undefined ? `${nearby.label} · ${nearby.interactionLabel ?? '互动'}` : `${nearby.label} · 查看条件`;
-    targetHint.color = nearby?.disabledReason !== undefined ? DARK_UI.red : DARK_UI.bone;
+    if (interactIcon !== null && interactIcon !== undefined) paintDarkIcon(interactIcon, 'interact', ready ? WALK_HUD.gold : WALK_HUD.muted);
     markerGraphics.clear();
     if (nearby !== undefined) {
       marker.setPosition(new Vec3(nearby.x, -nearby.y, 0));
-      markerGraphics.lineWidth = 3;
-      ellipse(markerGraphics, 0, 0, nearby.kind === 'npc' ? 36 : 69, nearby.kind === 'npc' ? 15 : 24, new Color(197, 168, 106, 25), ready ? TEAL : RED);
+      const pixel = options.dungeonView?.worldPixel;
+      markerGraphics.lineWidth = pixel === undefined ? 3 : 1.5 * pixel;
+      ellipse(markerGraphics, 0, 0, pixel === undefined ? nearby.kind === 'npc' ? 36 : 69 : 27 * pixel,
+        pixel === undefined ? nearby.kind === 'npc' ? 15 : 24 : 9 * pixel, new Color(197, 168, 106, 25), ready ? TEAL : RED);
     }
   };
   updateInteraction();
@@ -937,14 +1227,58 @@ export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, op
     joystickThumb,
     getPosition: () => ({ x: position.x, y: position.y }),
     getFacing: () => facing,
+    cancelApproach,
+    updateCombatReadout,
+    isCombatAnimating: () => effects?.isPlaying() ?? false,
+    startCombatAction: (kind, onImpact) => {
+      if (disposed || effects === undefined) return false;
+      return effects.start(kind, onImpact);
+    },
+    resolveCombatAction: (result, onComplete) => {
+      if (disposed || effects === undefined) return false;
+      const accepted = effects.resolve({ ...result, onCounterImpact: () => {
+        updateCombatReadout({ playerHp: result.playerHpAfterCounter, enemyHp: result.enemyHpAfterCounter });
+        result.onCounterImpact?.();
+      } }, onComplete);
+      if (!accepted) return false;
+      updateCombatReadout({ playerHp: result.playerHpAfterImpact, enemyHp: result.enemyHpAfterImpact });
+      return true;
+    },
+    cancelCombatAction: () => { if (!disposed) effects?.cancel(); },
     tick: (dt, axis) => {
       if (disposed) return;
-      const elapsed = Math.min(Math.max(dt, 0), 0.1);
+      const elapsed = Math.min(Math.max(dt, 0), courtyard ? 0.05 : 0.1);
       age += elapsed;
-      const next = busy ? position : stepWalkPosition(spec, position, axis, elapsed);
+      const movingBlocked = busy || (effects?.isPlaying() ?? false);
+      let movement = axis;
+      let next = movingBlocked ? position : stepWalkPosition(spec, position, axis, elapsed);
+      if (axis.x !== 0 || axis.y !== 0) cancelApproach();
+      else if (courtyard && path.length > 0 && !movingBlocked) {
+        let remaining = elapsed;
+        // Reach each clear segment's endpoint before turning. Consume only its
+        // actual travel time, so touching a tangent never cuts the foot corner
+        // and crossing a waypoint cannot add movement to the current frame.
+        while (path.length > 0 && remaining > 1e-10) {
+          const waypoint = path[0]!;
+          const dx = (waypoint.x - next.x) / 260;
+          const dy = (waypoint.y - next.y) / 145;
+          const magnitude = Math.hypot(dx, dy);
+          if (magnitude < 1e-10) { path.shift(); continue; }
+          movement = { x: dx / magnitude, y: dy / magnitude };
+          const travelSeconds = Math.min(remaining, magnitude);
+          next = stepWalkPosition(spec, next, movement, travelSeconds);
+          remaining -= travelSeconds;
+          if (Math.hypot(waypoint.x - next.x, waypoint.y - next.y) < 1e-7) path.shift();
+          else break;
+        }
+        if (path.length === 0) destinationMarker?.clear();
+      }
       const moved = Math.abs(next.x - position.x) + Math.abs(next.y - position.y) > 0.01;
-      if (axis.x !== 0 || axis.y !== 0) facing = Math.abs(axis.x) > Math.abs(axis.y)
-        ? axis.x < 0 ? 'left' : 'right' : axis.y < 0 ? 'up' : 'down';
+      if (!movingBlocked && (movement.x !== 0 || movement.y !== 0)) {
+        if (courtyard) { if (Math.abs(movement.x) > 0.04) facing = movement.x < 0 ? 'left' : 'right'; }
+        else facing = Math.abs(movement.x) > Math.abs(movement.y)
+          ? movement.x < 0 ? 'left' : 'right' : movement.y < 0 ? 'up' : 'down';
+      }
       position = next;
       if (moved) {
         player.setPosition(new Vec3(position.x, -position.y, 0));
@@ -952,40 +1286,42 @@ export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, op
         sortDepth();
         gait += elapsed * 9;
       } else gait = 0;
+      if (courtyard && path.length > 0) {
+        stuckTime = moved ? 0 : stuckTime + elapsed;
+        if (stuckTime > 0.4) {
+          cancelApproach();
+          if (routeNotice !== undefined) { routeNotice.string = '前方有障碍，请从旁边绕行。'; noticeExpires = age + 3; }
+        }
+      }
+      if (!movingBlocked && pendingTarget !== undefined && Math.hypot(pendingTarget.x - position.x, pendingTarget.y - position.y) <= pendingTarget.radius) {
+        const arrived = pendingTarget;
+        cancelApproach();
+        options.interactTarget?.(arrived);
+        // Opening the real target panel can synchronously dispose this scene.
+        return;
+      }
+      if (minimapPlayer !== undefined) {
+        const size = minimapPlayer.parent!.getComponent(UITransform)!.contentSize;
+        minimapPlayer.setPosition(new Vec3(-size.width / 2 + position.x / spec.width * size.width, size.height / 2 - position.y / spec.height * size.height, 0));
+      }
+      if (routeNotice !== undefined && age > noticeExpires) routeNotice.string = '';
       const nextFrame = Math.floor(gait) % 4;
       if (frameIndex !== nextFrame || previousFacing !== facing) {
         frameIndex = nextFrame;
         previousFacing = facing;
-        if (playerSprite !== undefined && walkerFrames !== undefined) {
-          const row = facing === 'down' ? 0 : facing === 'left' ? 1 : facing === 'right' ? 2 : 3;
-          playerSprite.spriteFrame = walkerFrames[row * 4 + frameIndex] ?? null;
-        } else if (playerGraphics !== undefined) drawHuman(playerGraphics, facing, frameIndex);
+        const row = facing === 'down' ? 0 : facing === 'left' ? 1 : facing === 'right' ? 2 : 3;
+        playerSprite.spriteFrame = walkerFrames[row * 4 + frameIndex]!;
       }
-      const desired = clampCamera(position);
-      const smoothing = 1 - Math.exp(-elapsed * 9);
-      cameraPoint = { x: cameraPoint.x + (desired.x - cameraPoint.x) * smoothing, y: cameraPoint.y + (desired.y - cameraPoint.y) * smoothing };
-      camera.setPosition(new Vec3(-cameraPoint.x * WORLD_ZOOM, cameraPoint.y * WORLD_ZOOM, 0));
+      if (roomFit === undefined) {
+        const desired = clampCamera(position);
+        const smoothing = 1 - Math.exp(-elapsed * 9);
+        cameraPoint = { x: cameraPoint.x + (desired.x - cameraPoint.x) * smoothing, y: cameraPoint.y + (desired.y - cameraPoint.y) * smoothing };
+        camera.setPosition(new Vec3(-cameraPoint.x * worldZoom, cameraPoint.y * worldZoom, 0));
+      }
       updateInteraction();
-      const nextFlameFrame = Math.floor(age * 10);
-      if (flameFrame !== nextFlameFrame) {
-        flameFrame = nextFlameFrame;
-        flames.forEach((flame) => drawFlame(flame.graphics, age + flame.offset));
-      }
       if (toast !== undefined && !failed) toast.color = new Color(DARK_UI.gold.r, DARK_UI.gold.g, DARK_UI.gold.b, Math.round(255 * Math.max(0, Math.min(1, 4 - age))));
-      if (damageLabel !== undefined) {
-        damageLabel.node.setPosition(new Vec3(0, 136 + Math.min(age, 1) * 35, 0));
-        damageLabel.color = new Color(RED.r, RED.g, RED.b, Math.round(255 * Math.max(0, 1 - age / 1.2)));
-      }
-      slash.clear();
-      if (!failed && options.feedback?.damage !== undefined && options.feedback.damage > 0 && age < 0.34) {
-        slash.lineWidth = 9 * (1 - age / 0.34);
-        slash.strokeColor = new Color(255, 241, 194, Math.round(255 * (1 - age / 0.34)));
-        slash.moveTo(-57, 101); slash.lineTo(-7, 40); slash.lineTo(55, 12); slash.stroke();
-        slash.lineWidth = 3;
-        slash.strokeColor = GOLD;
-        slash.moveTo(-48, 14); slash.lineTo(9, 58); slash.lineTo(34, 96); slash.stroke();
-      }
+      effects?.tick(elapsed);
     },
-    dispose: () => { disposed = true; scene.destroy(); },
+    dispose: () => { disposed = true; cancelApproach(); effects?.dispose(); scene.destroy(); },
   };
 }

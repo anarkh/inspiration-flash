@@ -1,0 +1,405 @@
+{
+  "date": "2026-10-13",
+  "surface": "Isolated HTML/CSS prototype; no game commands or save access",
+  "url": "http://127.0.0.1:8125/prototype/chest-claim-v2/index.html",
+  "dimensions": {
+    "relic390": {
+      "balance": "1155",
+      "caption": "物资已领取 · 选择一份回响后继续探索",
+      "cards": [
+        {
+          "copy": {
+            "h": 42,
+            "w": 172,
+            "x": 292.5,
+            "y": 487.5
+          },
+          "h": 66,
+          "id": "mist_edge",
+          "image": {
+            "h": 48,
+            "w": 48,
+            "x": 234.5,
+            "y": 484.5
+          },
+          "mark": {
+            "h": 16,
+            "w": 16,
+            "x": 474.5,
+            "y": 500.5
+          },
+          "selected": "false",
+          "w": 274,
+          "x": 225.5,
+          "y": 475.5
+        },
+        {
+          "copy": {
+            "h": 42,
+            "w": 172,
+            "x": 292.5,
+            "y": 559.5
+          },
+          "h": 66,
+          "id": "focus_prism",
+          "image": {
+            "h": 48,
+            "w": 48,
+            "x": 234.5,
+            "y": 556.5
+          },
+          "mark": {
+            "h": 16,
+            "w": 16,
+            "x": 474.5,
+            "y": 572.5
+          },
+          "selected": "false",
+          "w": 274,
+          "x": 225.5,
+          "y": 547.5
+        }
+      ],
+      "images": [
+        {
+          "fit": "contain",
+          "h": 48,
+          "loaded": true,
+          "sourceH": 1254,
+          "sourceW": 1254,
+          "src": "../../cocos/assets/resources/run-relic/mist_edge-v1.png",
+          "w": 48,
+          "x": 234.5,
+          "y": 484.5
+        },
+        {
+          "fit": "contain",
+          "h": 48,
+          "loaded": true,
+          "sourceH": 1254,
+          "sourceW": 1254,
+          "src": "../../cocos/assets/resources/run-relic/focus_prism-v1.png",
+          "w": 48,
+          "x": 234.5,
+          "y": 556.5
+        }
+      ],
+      "modal": {
+        "clientH": 308,
+        "clientW": 302,
+        "h": 310.1875,
+        "hidden": false,
+        "scrollH": 308,
+        "scrollW": 302,
+        "w": 304,
+        "x": 210.5,
+        "y": 396.90625
+      },
+      "primary": {
+        "disabled": true,
+        "h": 44,
+        "text": "请选择一份回响→",
+        "w": 274,
+        "x": 225.5,
+        "y": 648.09375
+      },
+      "stage": {
+        "h": 844,
+        "w": 390,
+        "x": 167.5,
+        "y": 130
+      },
+      "viewport": {
+        "h": 720,
+        "w": 1280
+      }
+    },
+    "relic320": {
+      "balance": "1155",
+      "caption": "物资已领取 · 选择一份回响后继续探索",
+      "cards": [
+        {
+          "copy": {
+            "h": 42,
+            "w": 154,
+            "x": 301.5,
+            "y": 349.5
+          },
+          "h": 66,
+          "id": "mist_edge",
+          "image": {
+            "h": 48,
+            "w": 48,
+            "x": 245.5,
+            "y": 346.5
+          },
+          "mark": {
+            "h": 16,
+            "w": 16,
+            "x": 463.5,
+            "y": 362.5
+          },
+          "selected": "false",
+          "w": 252,
+          "x": 236.5,
+          "y": 337.5
+        },
+        {
+          "copy": {
+            "h": 42,
+            "w": 154,
+            "x": 301.5,
+            "y": 421.5
+          },
+          "h": 66,
+          "id": "focus_prism",
+          "image": {
+            "h": 48,
+            "w": 48,
+            "x": 245.5,
+            "y": 418.5
+          },
+          "mark": {
+            "h": 16,
+            "w": 16,
+            "x": 463.5,
+            "y": 434.5
+          },
+          "selected": "false",
+          "w": 252,
+          "x": 236.5,
+          "y": 409.5
+        }
+      ],
+      "images": [
+        {
+          "fit": "contain",
+          "h": 48,
+          "loaded": true,
+          "sourceH": 1254,
+          "sourceW": 1254,
+          "src": "../../cocos/assets/resources/run-relic/mist_edge-v1.png",
+          "w": 48,
+          "x": 245.5,
+          "y": 346.5
+        },
+        {
+          "fit": "contain",
+          "h": 48,
+          "loaded": true,
+          "sourceH": 1254,
+          "sourceW": 1254,
+          "src": "../../cocos/assets/resources/run-relic/focus_prism-v1.png",
+          "w": 48,
+          "x": 245.5,
+          "y": 418.5
+        }
+      ],
+      "modal": {
+        "clientH": 304,
+        "clientW": 276,
+        "h": 306.1875,
+        "hidden": false,
+        "scrollH": 304,
+        "scrollW": 276,
+        "w": 278,
+        "x": 223.5,
+        "y": 260.90625
+      },
+      "primary": {
+        "disabled": true,
+        "h": 44,
+        "text": "请选择一份回响→",
+        "w": 252,
+        "x": 236.5,
+        "y": 510.09375
+      },
+      "stage": {
+        "h": 568,
+        "w": 320,
+        "x": 202.5,
+        "y": 130
+      },
+      "viewport": {
+        "h": 720,
+        "w": 1280
+      }
+    },
+    "claim390": {
+      "balance": "1085",
+      "caption": "待领取 · 点击主按钮体验完整流程",
+      "cards": [],
+      "images": [
+        {
+          "fit": "contain",
+          "h": 48,
+          "loaded": true,
+          "sourceH": 1254,
+          "sourceW": 1254,
+          "src": "../../cocos/assets/resources/dungeon-world/chest-v1.png",
+          "w": 48,
+          "x": 225.5,
+          "y": 434.203125
+        },
+        {
+          "fit": "contain",
+          "h": 32,
+          "loaded": true,
+          "sourceH": 200,
+          "sourceW": 160,
+          "src": "../../cocos/assets/resources/item/medicine-ash-v1.png",
+          "w": 28,
+          "x": 236.5,
+          "y": 550.203125
+        }
+      ],
+      "modal": {
+        "clientH": 264,
+        "clientW": 302,
+        "h": 265.59375,
+        "hidden": false,
+        "scrollH": 264,
+        "scrollW": 302,
+        "w": 304,
+        "x": 210.5,
+        "y": 419.203125
+      },
+      "primary": {
+        "disabled": false,
+        "h": 44,
+        "text": "领取奖励→",
+        "w": 274,
+        "x": 225.5,
+        "y": 625.796875
+      },
+      "stage": {
+        "h": 844,
+        "w": 390,
+        "x": 167.5,
+        "y": 130
+      },
+      "viewport": {
+        "h": 720,
+        "w": 1280
+      }
+    },
+    "claim320": {
+      "balance": "1085",
+      "caption": "待领取 · 点击主按钮体验完整流程",
+      "cards": [],
+      "images": [
+        {
+          "fit": "contain",
+          "h": 48,
+          "loaded": true,
+          "sourceH": 1254,
+          "sourceW": 1254,
+          "src": "../../cocos/assets/resources/dungeon-world/chest-v1.png",
+          "w": 48,
+          "x": 236.5,
+          "y": 188.203125
+        },
+        {
+          "fit": "contain",
+          "h": 32,
+          "loaded": true,
+          "sourceH": 200,
+          "sourceW": 160,
+          "src": "../../cocos/assets/resources/item/medicine-ash-v1.png",
+          "w": 28,
+          "x": 247.5,
+          "y": 304.203125
+        }
+      ],
+      "modal": {
+        "clientH": 260,
+        "clientW": 276,
+        "h": 261.59375,
+        "hidden": false,
+        "scrollH": 260,
+        "scrollW": 276,
+        "w": 278,
+        "x": 223.5,
+        "y": 175.203125
+      },
+      "primary": {
+        "disabled": false,
+        "h": 44,
+        "text": "领取奖励→",
+        "w": 252,
+        "x": 236.5,
+        "y": 379.796875
+      },
+      "stage": {
+        "h": 568,
+        "w": 320,
+        "x": 202.5,
+        "y": 22
+      },
+      "viewport": {
+        "h": 720,
+        "w": 1280
+      }
+    }
+  },
+  "layoutChecks": [
+    {
+      "stage": 320,
+      "phase": "choosing",
+      "noOverflow": true,
+      "loaded": true,
+      "contain": true,
+      "action44": true,
+      "cardContentSeparated": true
+    },
+    {
+      "stage": 390,
+      "phase": "choosing",
+      "noOverflow": true,
+      "loaded": true,
+      "contain": true,
+      "action44": true,
+      "cardContentSeparated": true
+    },
+    {
+      "stage": 320,
+      "phase": "unclaimed",
+      "noOverflow": true,
+      "loaded": true,
+      "contain": true,
+      "action44": true,
+      "cardContentSeparated": true
+    },
+    {
+      "stage": 390,
+      "phase": "unclaimed",
+      "noOverflow": true,
+      "loaded": true,
+      "contain": true,
+      "action44": true,
+      "cardContentSeparated": true
+    }
+  ],
+  "interactionChecks": {
+    "defaultUnselected": true,
+    "selectOnly": true,
+    "closeReopenPreserves": true,
+    "selectBusyDisablesAll": true,
+    "selectedCompletesWithoutSecondModal": true,
+    "completedViewHasNoCollect": true,
+    "collectBusyDisablesAll": true,
+    "collectOnlyOnce": true,
+    "fullFlow": true,
+    "ordinaryDirectCompletion": true
+  },
+  "consoleErrors": [],
+  "screenshots": {
+    "relic320": "relic-320.jpg",
+    "relic390": "relic-390.jpg",
+    "claim320": "claim-320.jpg",
+    "claim390": "claim-390.jpg",
+    "selected320": "selected-320.jpg"
+  },
+  "gameIntegrationTested": false,
+  "wechatDeviceTested": false
+}

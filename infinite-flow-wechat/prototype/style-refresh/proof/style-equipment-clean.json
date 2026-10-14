@@ -1,0 +1,283 @@
+{
+  "scope": "HTML visual prototype only; production assets unchanged",
+  "image_processing": "Native imagegen outputs copied without pixel manipulation",
+  "assets": [
+    {
+      "asset": "triage-visor",
+      "mode": "built-in imagegen edit",
+      "transparent_background": true,
+      "imagegen_calls": 1,
+      "input": {
+        "path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/equipment/triage-visor-v1.png",
+        "sha256": "7030bf9d44b3d447b8fa4057b7295d9764c7c4ef9740345a70932fe17bf086d1",
+        "width": 160,
+        "height": 200,
+        "mode": "RGB"
+      },
+      "native_output": {
+        "path": "/Users/bytedance/.codex/generated_images/01a11a7d-425a-7370-9917-c0504c44d8b6/exec-0ec54b29-a63a-4de3-99af-ddaa08cb86f9.png",
+        "sha256": "5d662827b0cca639cc1e40ed63dc9dc3d1eb1521c8cdbf611fb2511a8e606ea9",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "fully_transparent_fraction": 0.7123081736529231,
+        "fully_opaque_fraction": 0.0003287724894373094,
+        "alpha_ge_240_fraction": 0.2753173894574046,
+        "alpha_bbox": [
+          0,
+          29,
+          1208,
+          1254
+        ]
+      },
+      "proposed_output": {
+        "path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/assets/triage-visor-proposed.png",
+        "sha256": "5d662827b0cca639cc1e40ed63dc9dc3d1eb1521c8cdbf611fb2511a8e606ea9",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "fully_transparent_fraction": 0.7123081736529231,
+        "fully_opaque_fraction": 0.0003287724894373094,
+        "alpha_ge_240_fraction": 0.2753173894574046,
+        "alpha_bbox": [
+          0,
+          29,
+          1208,
+          1254
+        ]
+      },
+      "native_bytes_preserved": true,
+      "prompt_file": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/prompts/style-equipment-clean-triage-visor.txt",
+      "visual_check": {
+        "bottom_fragments_removed": true,
+        "full_main_object_present": true,
+        "transparent_background_requested_and_verified": true,
+        "notes": "Preserves item identity and worn dark materials. Cyan lens markings remain, with crisp rendering from generation. Tiny low-alpha specks extend beyond the visible sprite; no pixel postprocessing was applied."
+      },
+      "alpha_threshold_bboxes": {
+        "16": [
+          74,
+          331,
+          1193,
+          912
+        ],
+        "64": [
+          74,
+          332,
+          1193,
+          911
+        ],
+        "128": [
+          75,
+          332,
+          1192,
+          911
+        ],
+        "240": [
+          76,
+          333,
+          1192,
+          910
+        ]
+      }
+    },
+    {
+      "asset": "forensic-visor",
+      "mode": "built-in imagegen edit",
+      "transparent_background": true,
+      "imagegen_calls": 1,
+      "input": {
+        "path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/equipment/forensic-visor-v1.png",
+        "sha256": "093163d0f926ef04302a291db35542bd31f52adc3f140faf06c09fc788b96e33",
+        "width": 160,
+        "height": 200,
+        "mode": "RGB"
+      },
+      "native_output": {
+        "path": "/Users/bytedance/.codex/generated_images/01a11a7d-425a-7370-9917-c0504c44d8b6/exec-76092223-3fb4-4031-995f-517008e5d06e.png",
+        "sha256": "164d5a3293f2be13845aaed76efd8e51388ebb85a4fe20756d4a28d5e326b8da",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "fully_transparent_fraction": 0.7195532509685116,
+        "fully_opaque_fraction": 0.00014689834634432972,
+        "alpha_ge_240_fraction": 0.2676716802881497,
+        "alpha_bbox": [
+          17,
+          53,
+          1182,
+          1182
+        ]
+      },
+      "proposed_output": {
+        "path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/assets/forensic-visor-proposed.png",
+        "sha256": "164d5a3293f2be13845aaed76efd8e51388ebb85a4fe20756d4a28d5e326b8da",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "fully_transparent_fraction": 0.7195532509685116,
+        "fully_opaque_fraction": 0.00014689834634432972,
+        "alpha_ge_240_fraction": 0.2676716802881497,
+        "alpha_bbox": [
+          17,
+          53,
+          1182,
+          1182
+        ]
+      },
+      "native_bytes_preserved": true,
+      "prompt_file": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/prompts/style-equipment-clean-forensic-visor.txt",
+      "visual_check": {
+        "bottom_fragments_removed": true,
+        "full_main_object_present": true,
+        "transparent_background_requested_and_verified": true,
+        "notes": "Preserves item identity and worn dark materials. Cyan lens markings remain, with crisp rendering from generation. Tiny low-alpha specks extend beyond the visible sprite; no pixel postprocessing was applied."
+      },
+      "alpha_threshold_bboxes": {
+        "16": [
+          103,
+          344,
+          1179,
+          925
+        ],
+        "64": [
+          103,
+          345,
+          1178,
+          925
+        ],
+        "128": [
+          104,
+          345,
+          1178,
+          924
+        ],
+        "240": [
+          105,
+          346,
+          1177,
+          924
+        ]
+      }
+    },
+    {
+      "tool": "built-in image_gen.imagegen",
+      "mode": "edit",
+      "use_case": "precise-object-edit",
+      "transparent_background_requested": true,
+      "number_of_generation_calls": 1,
+      "input": {
+        "path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/equipment/rebirth-amulet-v1.png",
+        "sha256": "e17603d858f086d7c0d16df96dcc754b60af3c75e2edd64345ad24c316202526",
+        "bytes": 29378,
+        "dimensions": [
+          160,
+          200
+        ],
+        "mode": "RGB"
+      },
+      "native_output": {
+        "path": "/Users/bytedance/.codex/generated_images/01a11a7d-9083-7bf2-abd5-da2349928f0d/exec-5a19eae6-ed8e-4302-8e2d-4810271a4cb1.png",
+        "sha256": "f048795bad3b3c6a1fed13ccf1cce52620c71f491c88f49662fabdf918656f01",
+        "bytes": 1149439,
+        "dimensions": [
+          1122,
+          1402
+        ],
+        "mode": "RGBA",
+        "alpha": {
+          "min": 0,
+          "max": 255,
+          "fully_transparent_pixels": 1125614,
+          "fully_opaque_pixels": 328,
+          "partial_pixels": 447102,
+          "transparent_fraction": 0.715564218165544,
+          "nonzero_bbox": [
+            63,
+            22,
+            1102,
+            1378
+          ]
+        }
+      },
+      "output": {
+        "path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/assets/rebirth-amulet-proposed.png",
+        "sha256": "f048795bad3b3c6a1fed13ccf1cce52620c71f491c88f49662fabdf918656f01",
+        "bytes": 1149439,
+        "dimensions": [
+          1122,
+          1402
+        ],
+        "mode": "RGBA",
+        "alpha": {
+          "min": 0,
+          "max": 255,
+          "fully_transparent_pixels": 1125614,
+          "fully_opaque_pixels": 328,
+          "partial_pixels": 447102,
+          "transparent_fraction": 0.715564218165544,
+          "nonzero_bbox": [
+            63,
+            22,
+            1102,
+            1378
+          ]
+        }
+      },
+      "copy_only": true,
+      "byte_identical_to_native": true,
+      "prompt_path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/prototype/style-refresh/prompts/style-equipment-clean-rebirth-amulet.txt",
+      "prompt_sha256": "61797e543b0f25ecbb2ab8b1cc9a4e4952a3dcac341cffd056f9dd592782c1ec",
+      "prompt": "Use case: precise-object-edit\nAsset type: individual equipment inventory icon for a realistic, low-saturation dark-fantasy game.\nInput image: the attached rebirth-amulet-v1.png is the sole EDIT TARGET, not a style reference.\nPrimary request: clean this exact existing amulet into one complete isolated item. Remove the unrelated neighboring sprite fragment along the bottom edge. Restore only the small missing or damaged subject edges caused by that neighboring fragment.\nSubject and invariants: preserve the same dark, worn iron egg-shaped amulet, cracked shell, restrained red ember core, existing brass cap and loop, narrow brass seams, silhouette, orientation and relative proportions. Preserve the recognizable identity and textured painterly realism of the original. Retain only any subtle energy detail already integral to this amulet, with no added luminous effects.\nComposition: one centered intact independent object, fully visible with a modest clear margin. Match the original three-quarter front presentation.\nColor/materials: subdued charcoal iron, weathered brass, dim warm-red embers. Old scratched metal, low saturation, soft realistic lighting.\nBackground: genuinely transparent alpha, including all former dark backdrop pixels and every neighboring fragment. No baked checkerboard, no solid backdrop, no floor or cast shadow.\nConstraints: make only the requested cleanup; no new parts, no redesigned amulet, no enlarged fire, no neon, no added aura, no text, no border, no other objects, no watermark.\n",
+      "quality_observations": [
+        "Bottom neighboring sprite fragment is absent.",
+        "Complete centered egg-shaped amulet, loop and bottom edge remain visible.",
+        "Worn dark shell, brass seams and red core preserve the item identity.",
+        "Original cyan energy rings are absent; the result is more restrained and focused on material.",
+        "Iron and brass highlights are stronger than the low-resolution original; assess at inventory thumbnail size in the HTML prototype.",
+        "No production asset modified."
+      ],
+      "alpha_readonly_analysis": {
+        "alpha_bands": {
+          "1_to_7": 8532,
+          "8_to_31": 878,
+          "32_to_127": 1876,
+          "128_to_239": 2472,
+          "240_to_255": 433672
+        },
+        "alpha_ge_8_bbox": [
+          248,
+          135,
+          878,
+          1197
+        ],
+        "alpha_ge_32_bbox": [
+          248,
+          136,
+          876,
+          1197
+        ],
+        "alpha_ge_128_bbox": [
+          249,
+          137,
+          875,
+          1196
+        ],
+        "alpha_ge_240_bbox": [
+          250,
+          137,
+          874,
+          1195
+        ]
+      }
+    }
+  ]
+}

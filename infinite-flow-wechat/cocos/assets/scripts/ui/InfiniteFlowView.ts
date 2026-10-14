@@ -2,6 +2,10 @@ import {
   BlockInputEvents,
   Color,
   EventTouch,
+  EventKeyboard,
+  Input,
+  KeyCode,
+  input,
   Graphics,
   ImageAsset,
   Label,
@@ -18,17 +22,21 @@ import {
   view,
 } from 'cc';
 import type { Asset } from 'cc';
-import type { ItemId } from '@infinite-flow/core';
+import type { ItemId, CombatPresentationFrame } from '@infinite-flow/core';
+import type { CombatEffectKind } from './InfiniteFlowCombatEffects';
 import { renderInfiniteFlowScene } from './InfiniteFlowScene';
 import type { InfiniteFlowSceneOptions } from './InfiniteFlowScene';
 import { renderInfiniteFlowWalkScene } from './InfiniteFlowWalkScene';
 import type { WalkSceneHandle } from './InfiniteFlowWalkScene';
+import type { HudPopoverKind } from './hud-layout';
 import { InfiniteFlowWalkInput } from './InfiniteFlowWalkInput';
 import { captureInfiniteFlowInfoSheetState, renderInfiniteFlowInfoSheet } from './InfiniteFlowInfoSheet';
 import type { MobilePanelKind, MobileSheetState } from './InfiniteFlowInfoSheet';
-import { buildWalkWorld, nearestWalkTarget } from './walk-world';
+import { buildWalkWorld } from './walk-world';
 import type { WorldPoint, WorldTarget } from './walk-world';
 import { DARK_UI, paintDarkFrame } from './dark-ui';
+import { COMPACT_SHEET_THEME } from './sheet-theme';
+import { HERO_WALK_ATLAS, HERO_WALK_FRAMES, assertHeroWalkAtlasSize } from './hero-walk-atlas';
 import type {
   ChapterDecisionViewModel,
   ChapterDirectiveViewModel,
@@ -56,6 +64,7 @@ import type {
   ResultDirectiveSettlementViewModel,
   ResultEquipmentRollSettlementViewModel,
   ResultLootSettlementViewModel,
+  RewardPreviewViewModel,
   ResultPursuitSettlementViewModel,
   ResultPressureSettlementViewModel,
   ResultProtocolSettlementViewModel,
@@ -263,6 +272,7 @@ export type InfiniteFlowRuntimeChrome = Readonly<{
   activityMessage?: string;
   blockingMessage?: string;
   busyActionId?: string;
+  sceneAssets?: 'loading' | 'ready' | 'error';
   /** Hub-only: supplies-panel actions for item-tip carry toggles (projected on demand). */
   supplyActions?: (itemId: ItemId) => readonly ViewActionModel[];
   ownedLoadout?: () => HubOwnedLoadoutViewModel | undefined;
@@ -290,6 +300,8 @@ function formatInfiniteFlowPlayerActivity(
   const activity = chrome.activityMessage?.trim();
   if (activity === undefined || activity.length === 0) return infiniteFlowPhaseActivity(phase);
 
+  if (chrome.sceneAssets === 'ready' && (phase === 'hub' || phase === 'explore' || phase === 'combat')
+    && /视觉资源恢复|视觉资源回退|内存告警/u.test(activity)) return infiniteFlowPhaseActivity(phase);
   if (/视觉资源恢复/u.test(activity)) return '画面资源已恢复 · 可继续游戏';
   if (/视觉资源回退/u.test(activity)) return '部分画面暂不可用 · 已切换文字模式，可继续游戏';
   if (/内存告警/u.test(activity)) return '设备内存紧张 · 已释放画面资源，请稍后继续';
@@ -800,6 +812,7 @@ export function layoutInfiniteFlowVisualStage(
 }
 
 export interface InfiniteFlowViewDelegate {
+  retrySceneAssets?(): void;
   activate(
     physicalId: string,
     actionId: string,
@@ -2778,6 +2791,35 @@ export function buildInfiniteFlowResultPages(
   return Object.freeze(pages);
 }
 
+type CombatPlayback = {
+  actionId: string;
+  playerHp: number;
+  enemyHp: number;
+  resolved: boolean;
+};
+
+type DeferredCombatRender = {
+  model: GameViewModel | undefined;
+  chrome: InfiniteFlowRuntimeChrome;
+  safeInsets: InfiniteFlowSafeInsets;
+};
+
+function combatEffectKind(event: PresentationEvent): CombatEffectKind | undefined {
+  if (event.kind !== 'command') return undefined;
+  const command = event.command;
+  if (command.type === 'combat/act') {
+    const kinds: Record<typeof command.action, CombatEffectKind> = {
+      attack: 'attack', weapon_skill: 'weapon', art: 'art', guard: 'guard',
+      use_healing_pill: 'pill', use_thunder_talisman: 'talisman', escape: 'escape',
+    };
+    return kinds[command.action];
+  }
+  if (command.type === 'combat/use-method-technique') return command.methodId === 'iron_body' ? 'iron' : 'mist';
+  if (command.type === 'combat/use-companion-assist' || command.type === 'combat/use-bloodline-surge'
+    || command.type === 'node/use-soul-skill') return 'other';
+  return undefined;
+}
+
 /**
  * Purely visual Cocos adapter. It consumes detached presentation view models and
  * never receives the writable domain state.
@@ -2825,10 +2867,36 @@ export class InfiniteFlowView {
   private walkWorldKey = '';
   private walkPosition: WorldPoint | undefined;
   private mobileSheet: MobileSheetState | undefined;
+  private equipmentOfferKey = '';
+  private equipmentOfferSelection: string | undefined;
+  private relicDraftKey = '';
+  private relicDraftSelection: string | undefined;
+  private rewardReceipt: RewardPreviewViewModel | undefined;
+  private readonly closeHudOnEscape = (event: EventKeyboard): void => {
+    if (event.keyCode !== KeyCode.ESCAPE || this.activeHudPopover() === undefined) return;
+    this.mobileSheet = undefined;
+    this.renderAgain();
+  };
+  private activeHudPopover(): HudPopoverKind | undefined {
+    if (this.mobileSheet?.kind !== 'inventory') return undefined;
+    switch (this.mobileSheet.tab) {
+      case 'hud-relics': return 'relics';
+      case 'hud-reward-points': return 'reward-points';
+      case 'hud-lingyun': return 'lingyun';
+      default: return undefined;
+    }
+  }
+  private measureHudViewportWidth(): number {
+    const frame = view.getFrameSize();
+    return frame.width > 0 && frame.height > 0
+      ? Math.min(frame.width, frame.height * DESIGN_WIDTH / this.surfaceHeight) : 320;
+  }
   private mobileRoomKey = '';
   private mobilePendingKey = '';
   private mobileNodeCleared = false;
   private surfaceHeight = DESIGN_HEIGHT;
+  private combatPlayback: CombatPlayback | undefined;
+  private deferredCombatRender: DeferredCombatRender | undefined;
 
   constructor(
     private readonly canvas: Node,
@@ -2857,8 +2925,19 @@ export class InfiniteFlowView {
     safeInsets: InfiniteFlowSafeInsets,
   ): void {
     if (this.destroyed) return;
+    if (this.combatPlayback !== undefined) {
+      if (chrome.modeKind === 'blocked' || model === undefined) this.cancelCombatPlayback();
+      else {
+        // Keep the current actors alive until the committed action finishes its
+        // visual timeline, even if the command already ended the encounter.
+        this.deferredCombatRender = { model, chrome, safeInsets };
+        return;
+      }
+    }
+    input.off(Input.EventType.KEY_DOWN, this.closeHudOnEscape, this);
     if (this.mobileSheet) this.mobileSheet = captureInfiniteFlowInfoSheetState(this.root, this.mobileSheet);
     this.stopWalking();
+    const previousModel = this.lastModel;
     this.lastModel = model;
     this.lastChrome = chrome;
     this.lastSafeInsets = safeInsets;
@@ -2890,14 +2969,55 @@ export class InfiniteFlowView {
     const pendingKey = mobileDetail?.kind === 'explore' && mobileDetail.pending !== undefined
       ? JSON.stringify(mobileDetail.pending) : '';
     const nodeCleared = mobileDetail?.kind === 'explore' && mobileDetail.currentNode.cleared;
+    const previousDetail = previousModel?.sections[1].detail;
+    if (roomKey !== this.mobileRoomKey) this.rewardReceipt = undefined;
+    else if (nodeCleared && previousDetail?.kind === 'explore' && !previousDetail.currentNode.cleared && previousDetail.rewardPreview) {
+      this.rewardReceipt = previousDetail.rewardPreview;
+      this.sceneFeedback = { text: '已领取物资' };
+    }
     if (this.mobileSheet?.kind === 'interaction') {
       if (roomKey !== this.mobileRoomKey || (this.mobilePendingKey !== '' && pendingKey === '')
         || (!this.mobileNodeCleared && nodeCleared && (pendingKey === ''
           || (mobileDetail?.kind === 'explore' && mobileDetail.pending?.kind === 'dungeon-event')))) {
         this.mobileSheet = undefined;
       } else if (pendingKey !== this.mobilePendingKey) {
-        this.mobileSheet = { kind: 'interaction', page: 0 };
+        this.mobileSheet = { kind: 'interaction', page: 0,
+          selectedActionId: mobileDetail?.kind === 'explore' && mobileDetail.pending?.kind === 'relic-draft'
+            ? this.relicDraftSelection : this.equipmentOfferSelection };
       }
+    }
+    const equipmentOffer = mobileDetail?.kind === 'explore' && mobileDetail.pending?.kind === 'equipment-offer'
+      ? mobileDetail.pending : undefined;
+    const equipmentOfferKey = equipmentOffer ? `${roomKey}:${equipmentOffer.actionIds.join('|')}` : '';
+    if (equipmentOfferKey !== this.equipmentOfferKey) {
+      if (equipmentOffer) {
+        // Open once per offer. Closing and re-rendering the same offer must stay closed.
+        this.mobileSheet = { kind: 'interaction', page: 0 };
+        this.sceneFeedback = undefined;
+      } else if (roomKey === this.mobileRoomKey && previousModel) {
+        const previousDetail = previousModel.sections[1].detail;
+        const previousOffer = previousDetail.kind === 'explore' && previousDetail.pending?.kind === 'equipment-offer'
+          ? previousDetail.pending : undefined;
+        const acquired = model?.sections[1].loadout?.ownedEquipment.find(entry =>
+          previousOffer?.equipmentOptions?.some(option => option.equipmentId === entry.equipmentId)
+          && !previousModel.sections[1].loadout?.ownedEquipment.some(previous => previous.equipmentId === entry.equipmentId));
+        if (acquired) this.sceneFeedback = { text: `已收入背包 · ${acquired.name}` };
+      }
+      this.equipmentOfferKey = equipmentOfferKey;
+      this.equipmentOfferSelection = undefined;
+    }
+    const relicDraft = mobileDetail?.kind === 'explore' && mobileDetail.pending?.kind === 'relic-draft'
+      ? mobileDetail.pending : undefined;
+    const relicDraftKey = relicDraft ? `${roomKey}:${relicDraft.actionIds.join('|')}` : '';
+    if (relicDraftKey !== this.relicDraftKey) {
+      if (relicDraft) this.mobileSheet = { kind: 'interaction', page: 0 };
+      else if (roomKey === this.mobileRoomKey && previousModel) {
+        const acquired = model?.sections[1].loadout?.runRelics.find(entry =>
+          !previousModel.sections[1].loadout?.runRelics.some(previous => previous.relicId === entry.relicId));
+        if (acquired) this.sceneFeedback = { text: `${acquired.name} · 本局生效` };
+      }
+      this.relicDraftKey = relicDraftKey;
+      this.relicDraftSelection = undefined;
     }
     this.mobileRoomKey = roomKey;
     this.mobilePendingKey = pendingKey;
@@ -2921,6 +3041,17 @@ export class InfiniteFlowView {
       return;
     }
 
+    if (chrome.sceneAssets !== undefined && chrome.sceneAssets !== 'ready') {
+      if (chrome.modeKind === 'blocked') {
+        const blocker = addNode(root, 'RuntimeBlockedOverlay', 0, 0, DESIGN_WIDTH, this.surfaceHeight);
+        blocker.addComponent(BlockInputEvents);
+        this.renderBootOrBlocked(blocker, chrome);
+      } else {
+        this.renderSceneLoading(root, model, chrome.sceneAssets);
+      }
+      return;
+    }
+
     if (this.detailsOpen) {
       this.renderVisualBackdrop(root, model.sections[1].detail.kind);
       this.renderChrome(root, model, chrome);
@@ -2941,12 +3072,7 @@ export class InfiniteFlowView {
     }
 
     if (chrome.modeKind === 'blocked' && chrome.blockingMessage !== undefined) {
-      const blocker = addPanel(root, 'RuntimeBlockedOverlay', 0, 0, DESIGN_WIDTH, this.surfaceHeight, {
-        fill: PALETTE.backgroundOpaque,
-        stroke: PALETTE.backgroundOpaque,
-        lineWidth: 0,
-        radius: 0,
-      });
+      const blocker = addNode(root, 'RuntimeBlockedOverlay', 0, 0, DESIGN_WIDTH, this.surfaceHeight);
       blocker.addComponent(BlockInputEvents);
       this.renderBootOrBlocked(blocker, chrome);
       return;
@@ -2958,6 +3084,9 @@ export class InfiniteFlowView {
       renderInfiniteFlowInfoSheet(root, model, this.mobileSheet, {
         safeInsets,
         surfaceHeight: this.surfaceHeight,
+        viewportWidth: this.measureHudViewportWidth(),
+        hudVisual: (key) => this.sceneVisuals.get(key),
+        trackHudSprite: (sprite) => this.visualSprites.add(sprite),
         chrome,
         bindLocal: (node, callback) => this.bindPhysical(node, enabled, () => {
           if (isCurrent()) callback();
@@ -2973,23 +3102,29 @@ export class InfiniteFlowView {
             }
             if (node.name.startsWith('MobileSheetEntryDungeon:') && this.mobileSheet) {
               const state = captureInfiniteFlowInfoSheetState(root, this.mobileSheet);
-              this.mobileSheet = { ...state, entryView: 'configuration', entryServiceId: undefined,
-                entryDungeonScrollOffset: state.catalogScrollOffset ?? 0, catalogScrollOffset: 0 };
+              this.mobileSheet = { ...state, entryServiceId: undefined, entrySettingsScrollOffset: 0 };
             }
-            this.delegate.activate(physicalId, action.actionId, event);
+            this.activateSceneAction(physicalId, action, event, node.name.startsWith('MobileSheetExecute:'));
           });
         },
         close: () => { this.mobileSheet = undefined; this.renderAgain(); },
-        setState: (next) => { this.mobileSheet = next; this.renderAgain(); },
+        setState: (next) => {
+          this.mobileSheet = next;
+          if (next.kind === 'interaction' && this.equipmentOfferKey) this.equipmentOfferSelection = next.selectedActionId;
+          if (next.kind === 'interaction' && this.relicDraftKey) this.relicDraftSelection = next.selectedActionId;
+          this.renderAgain();
+        },
         openHelp: (entry) => {
           this.physicalSequence += 1;
           this.delegate.activate(`cocos-help:${this.physicalSequence}`, entry.openAction.actionId, entry.openAction.event);
         },
         ...(chrome.supplyActions === undefined ? {} : { supplyActions: chrome.supplyActions }),
         ...(chrome.ownedLoadout === undefined ? {} : { ownedLoadout: chrome.ownedLoadout }),
+        ...(this.rewardReceipt === undefined ? {} : { rewardReceipt: this.rewardReceipt }),
       });
     }
 
+    if (this.activeHudPopover() !== undefined) input.on(Input.EventType.KEY_DOWN, this.closeHudOnEscape, this);
     const help = model.sections[4];
     const detail = phaseDetail;
     if (
@@ -3007,6 +3142,8 @@ export class InfiniteFlowView {
   destroy(): void {
     const failures: unknown[] = [];
     this.destroyed = true;
+    input.off(Input.EventType.KEY_DOWN, this.closeHudOnEscape, this);
+    this.cancelCombatPlayback();
     this.stopWalking();
     try {
       this.clearVisualAsset();
@@ -3065,6 +3202,8 @@ export class InfiniteFlowView {
 
   /** Scene slots share App-owned image leases, but own their frames and textures. */
   setSceneVisualAsset(image: ImageAsset, status: InfiniteFlowVisualAssetStatus): void {
+    const isWalker = status.key === 'character:reincarnator_walk';
+    if (isWalker) assertHeroWalkAtlasSize(image.width, image.height);
     this.clearSceneVisualAsset(status.key);
     const frame = SpriteFrame.createWithImage(image);
     const texture = frame.texture;
@@ -3072,39 +3211,62 @@ export class InfiniteFlowView {
       frame.destroy();
       throw new Error('Scene SpriteFrame.createWithImage produced no texture');
     }
-    this.sceneVisuals.set(status.key, {
-      frame,
-      texture,
-      width: image.width,
-      height: image.height,
-      ...(status.key === 'character:reincarnator_walk'
-        ? { frames: this.makeWalkerFrames(frame, image.width, image.height) }
-        : {}),
-    });
+    let frames: readonly SpriteFrame[] = [];
+    try {
+      if (isWalker) frames = this.makeWalkerFrames(frame);
+      this.sceneVisuals.set(status.key, {
+        frame,
+        texture,
+        width: image.width,
+        height: image.height,
+        ...(isWalker ? { frames } : {}),
+      });
+    } catch (error) {
+      this.rethrowSceneVisualCreationError(error, [...frames, frame, texture]);
+    }
   }
 
-  private makeWalkerFrames(atlas: SpriteFrame, width: number, height: number): readonly SpriteFrame[] {
+  private makeWalkerFrames(atlas: SpriteFrame): readonly SpriteFrame[] {
     const frames: SpriteFrame[] = [];
-    for (let row = 0; row < 4; row += 1) {
-      for (let column = 0; column < 4; column += 1) {
+    try {
+      for (const { rect, sourceFoot } of HERO_WALK_FRAMES) {
+        const [x, y, width, height] = rect;
         const frame = new SpriteFrame();
-        frame.texture = atlas.texture;
-        frame.rect = new Rect(column * width / 4, row * height / 4, width / 4, height / 4);
-        frame.originalSize = new Size(width / 4, height / 4);
-        frame.offset = new Vec2(0, 0);
-        frame.packable = false;
+        // Own each frame before assigning engine properties, which may throw.
         frames.push(frame);
+        frame.texture = atlas.texture;
+        frame.rect = new Rect(x, y, width, height);
+        frame.originalSize = new Size(HERO_WALK_ATLAS.originalSize, HERO_WALK_ATLAS.originalSize);
+        frame.offset = new Vec2(
+          x + width / 2 - sourceFoot[0],
+          HERO_WALK_ATLAS.originalSize / 2 - HERO_WALK_ATLAS.footY + sourceFoot[1] - (y + height / 2),
+        );
+        frame.packable = false;
       }
+    } catch (error) {
+      this.rethrowSceneVisualCreationError(error, frames);
     }
     return frames;
   }
 
+  private rethrowSceneVisualCreationError(error: unknown, assets: readonly Asset[]): never {
+    const cleanupFailures: unknown[] = [];
+    for (const asset of assets) {
+      try { asset.destroy(); } catch (cleanupError) { cleanupFailures.push(cleanupError); }
+    }
+    if (cleanupFailures.length > 0) {
+      throw new Error(`Scene visual creation failed: ${String(error)}; cleanup failed: ${cleanupFailures.map(String).join('; ')}`);
+    }
+    throw error;
+  }
+
   setSceneVisualAssetFallback(status: InfiniteFlowVisualAssetStatus): void {
-    // Other loaded slots remain visible; the scene draws the missing role itself.
+    // App keeps the scene behind its loading/error screen until this slot is ready.
     this.clearSceneVisualAsset(status.key);
   }
 
   clearSceneVisualAsset(key?: string): void {
+    if (key === undefined) this.cancelCombatPlayback();
     const failures: unknown[] = [];
     const keys = key === undefined ? Array.from(this.sceneVisuals.keys()) : [key];
     for (const target of keys) {
@@ -3134,7 +3296,10 @@ export class InfiniteFlowView {
   }
 
   private openMobilePanel(kind: MobilePanelKind): void {
-    this.mobileSheet = { kind, page: 0 };
+    this.mobileSheet = { kind, page: 0,
+      ...(kind === 'interaction' && this.equipmentOfferKey ? { selectedActionId: this.equipmentOfferSelection } : {}),
+      ...(kind === 'interaction' && this.relicDraftKey ? { selectedActionId: this.relicDraftSelection } : {}),
+    };
     this.renderAgain();
   }
 
@@ -3147,7 +3312,89 @@ export class InfiniteFlowView {
     this.root?.setScale(new Vec3(scale, scale, 1));
   }
 
+  private activateSceneAction(physicalId: string, action: ViewActionModel, event: PresentationEvent, confirmed = false): void {
+    if (this.combatPlayback !== undefined || this.destroyed) return;
+    const detail = this.lastModel?.sections[1].detail;
+    if (detail?.kind === 'combat' && event.kind === 'command' && !confirmed
+      && (event.command.type === 'run/retreat' || event.command.type === 'combat/act' && event.command.action === 'escape')) {
+      this.mobileSheet = { kind: 'menu', tab: 'confirm-combat', page: 0, selectedActionId: action.actionId };
+      this.renderAgain();
+      return;
+    }
+    const kind = detail?.kind === 'combat' ? combatEffectKind(event) : undefined;
+    if (kind === undefined || detail?.kind !== 'combat' || this.lastChrome === undefined || this.walkScene === undefined) {
+      this.delegate.activate(physicalId, action.actionId, event);
+      return;
+    }
+    this.mobileSheet = undefined;
+    // A local busy render closes the picker and removes every action binding
+    // before windup. The real command is still dispatched exactly once at hit.
+    this.render(this.lastModel, { ...this.lastChrome, busyActionId: action.actionId }, this.lastSafeInsets);
+    const playback: CombatPlayback = { actionId: action.actionId, playerHp: detail.player.hp,
+      enemyHp: detail.enemy.hp, resolved: false };
+    this.combatPlayback = playback;
+    const started = this.walkScene?.startCombatAction(kind, () => {
+      if (this.combatPlayback === playback && !this.destroyed) this.delegate.activate(physicalId, action.actionId, event);
+    });
+    if (!started) {
+      this.cancelCombatPlayback(true);
+      throw new Error('战斗动画未能启动，行动尚未提交。');
+    }
+  }
+
+  /** Receives committed presentation frames; never estimates domain damage. */
+  resolveCombatPresentation(actionId: string, frames: readonly CombatPresentationFrame[] | undefined): void {
+    const playback = this.combatPlayback;
+    if (playback === undefined || playback.actionId !== actionId || playback.resolved) return;
+    if (frames === undefined || frames.length === 0) {
+      this.cancelCombatPlayback(true);
+      return;
+    }
+    const impact = frames.find(frame => frame.stage === 'impact');
+    const counter = frames.find(frame => frame.stage === 'counter');
+    if (impact === undefined) {
+      this.cancelCombatPlayback(true);
+      return;
+    }
+    playback.resolved = true;
+    const result = this.walkScene?.resolveCombatAction({
+      enemyDamage: Math.max(0, playback.enemyHp - impact.enemyHp),
+      playerHealing: Math.max(0, impact.playerHp - playback.playerHp),
+      playerDamage: counter === undefined ? Math.max(0, playback.playerHp - impact.playerHp)
+        : Math.max(0, impact.playerHp - counter.playerHp),
+      counter: counter !== undefined,
+      guarded: counter?.guarded === true,
+      playerHpAfterImpact: impact.playerHp,
+      enemyHpAfterImpact: impact.enemyHp,
+      ...(counter === undefined ? {} : { playerHpAfterCounter: counter.playerHp, enemyHpAfterCounter: counter.enemyHp }),
+    }, () => {
+      if (this.combatPlayback !== playback || this.destroyed) return;
+      this.combatPlayback = undefined;
+      this.sceneCombatSnapshot = undefined;
+      this.sceneFeedback = undefined;
+      const next = this.deferredCombatRender;
+      this.deferredCombatRender = undefined;
+      if (next !== undefined) this.render(next.model, next.chrome, next.safeInsets);
+    });
+    if (!result) this.cancelCombatPlayback(true);
+  }
+
+  private cancelCombatPlayback(restore = false): void {
+    const next = this.deferredCombatRender;
+    this.walkScene?.cancelCombatAction();
+    this.combatPlayback = undefined;
+    this.deferredCombatRender = undefined;
+    if (restore && !this.destroyed && this.lastChrome !== undefined) {
+      this.render(next?.model ?? this.lastModel,
+        { ...(next?.chrome ?? this.lastChrome), busyActionId: undefined }, next?.safeInsets ?? this.lastSafeInsets);
+    }
+  }
+
   tick(deltaTime: number): void {
+    if (this.combatPlayback !== undefined && !this.destroyed) {
+      this.walkScene?.tick(deltaTime, { x: 0, y: 0 });
+      return;
+    }
     if (!this.destroyed) {
       const measured = this.measureSurfaceHeight();
       if (Math.abs(measured - this.surfaceHeight) > 0.5) {
@@ -3158,7 +3405,10 @@ export class InfiniteFlowView {
     }
     if (this.destroyed || this.detailsOpen || this.mobileSheet !== undefined || this.lastChrome?.busyActionId !== undefined
       || this.lastChrome?.modeKind === 'blocked' || this.chapterCodexOpen
-      || this.lastModel?.sections[4].active !== undefined) return;
+      || this.lastModel?.sections[4].active !== undefined) {
+      this.walkScene?.cancelApproach();
+      return;
+    }
     this.walkScene?.tick(deltaTime, this.walkInput?.axis() ?? { x: 0, y: 0 });
   }
 
@@ -3168,6 +3418,110 @@ export class InfiniteFlowView {
     this.walkInput = undefined;
     this.walkScene?.dispose();
     this.walkScene = undefined;
+  }
+
+  private compactOverlayUnit(): number {
+    return DESIGN_WIDTH / this.measureHudViewportWidth();
+  }
+
+  private compactOverlayWidth(unit: number): number {
+    return Math.min(304 * unit,
+      DESIGN_WIDTH - this.lastSafeInsets.left - this.lastSafeInsets.right - 40 * unit);
+  }
+
+  private compactOverlayMaxHeight(unit: number): number {
+    return Math.min(464 * unit,
+      this.surfaceHeight - this.lastSafeInsets.top - this.lastSafeInsets.bottom - 88 * unit);
+  }
+
+  private compactOverlayBackdrop(parent: Node, name: string): Node {
+    const node = addNode(parent, name, 0, 0, DESIGN_WIDTH, this.surfaceHeight);
+    const graphics = node.addComponent(Graphics);
+    graphics.fillColor = COMPACT_SHEET_THEME.palette.backdrop;
+    graphics.rect(-DESIGN_WIDTH / 2, -this.surfaceHeight / 2, DESIGN_WIDTH, this.surfaceHeight);
+    graphics.fill();
+    node.addComponent(BlockInputEvents);
+    return node;
+  }
+
+  private compactOverlayPanel(
+    parent: Node, name: string, x: number, y: number, width: number, height: number,
+    role: 'sheet' | 'control' = 'sheet', fill = COMPACT_SHEET_THEME.palette.surface,
+    edge = COMPACT_SHEET_THEME.palette.edgeStrong,
+  ): Node {
+    const node = addNode(parent, name, x, y, width, height);
+    COMPACT_SHEET_THEME.paintFrame(node.addComponent(Graphics), width, height, {
+      role, fill, edge, accent: COMPACT_SHEET_THEME.palette.accent,
+      cut: (role === 'sheet' ? 3 : 2) * this.compactOverlayUnit(), ornate: false,
+    });
+    return node;
+  }
+
+  private compactOverlayScroll(
+    parent: Node, name: string, x: number, y: number, width: number, height: number,
+    naturalContentHeight: number,
+  ): Readonly<{ content: Node; contentHeight: number }> {
+    const unit = this.compactOverlayUnit();
+    const holder = addNode(parent, name, x, y, width, height);
+    holder.addComponent(Mask).type = Mask.Type.GRAPHICS_RECT;
+    const contentHeight = Math.max(height, naturalContentHeight);
+    const content = addNode(holder, `${name}Content`, 0, (height - contentHeight) / 2, width, contentHeight);
+    const scrollView = holder.addComponent(ScrollView);
+    scrollView.content = content;
+    scrollView.horizontal = false;
+    scrollView.vertical = true;
+    scrollView.inertia = true;
+    scrollView.brake = 0.75;
+    scrollView.elastic = true;
+    scrollView.cancelInnerEvents = true;
+    if (contentHeight > height) {
+      const barWidth = 2 * unit;
+      const thumbHeight = Math.max(24 * unit, height * height / contentHeight);
+      const travel = height - thumbHeight - 2 * unit;
+      const thumbX = width / 2 - unit;
+      const thumbY = height / 2 - unit - thumbHeight / 2;
+      const thumb = addNode(holder, `${name}Thumb`, thumbX, thumbY, barWidth, thumbHeight);
+      const graphics = thumb.addComponent(Graphics);
+      const color = COMPACT_SHEET_THEME.thumb.color;
+      graphics.fillColor = new Color(color.r, color.g, color.b, COMPACT_SHEET_THEME.thumb.alpha);
+      graphics.rect(-barWidth / 2, -thumbHeight / 2, barWidth, thumbHeight);
+      graphics.fill();
+      scrollView.node.on(ScrollView.EventType.SCROLLING, () => {
+        const ratio = Math.max(0, Math.min(1, scrollView.getScrollOffset().y / (contentHeight - height)));
+        thumb.setPosition(new Vec3(thumbX, thumbY - ratio * travel, 0));
+      });
+    }
+    return { content, contentHeight };
+  }
+
+  private renderSceneLoading(root: Node, model: GameViewModel, status: 'loading' | 'error'): void {
+    const failed = status === 'error';
+    const unit = this.compactOverlayUnit();
+    const width = this.compactOverlayWidth(unit);
+    const innerWidth = width - 24 * unit;
+    const bodyHeight = (failed ? 42 : 24) * unit;
+    const height = (24 + 48 + 9 + (failed ? 42 + 9 + 44 : 24)) * unit;
+    const overlay = this.compactOverlayBackdrop(root, 'SceneAssetOverlayBlocker');
+    const panel = this.compactOverlayPanel(overlay, failed ? 'SceneAssetError' : 'SceneAssetLoading',
+      this.safeX(), this.safeCenterY(), width, height);
+    panel.addComponent(BlockInputEvents);
+    addText(panel, 'SceneAssetTitle', failed ? '场景加载失败'
+      : model.phase === 'hub' ? '正在进入主神空间…' : '正在进入副本…',
+      0, localY(height, 12 * unit, 48 * unit), innerWidth, 48 * unit, {
+        fontSize: 16 * unit, lineHeight: 22 * unit, color: COMPACT_SHEET_THEME.palette.text,
+        shrink: false,
+      });
+    addText(panel, 'SceneAssetDetail', failed ? '请重新加载场景，当前进度已保留' : '正在准备场景素材',
+      0, localY(height, 69 * unit, bodyHeight), innerWidth, bodyHeight, {
+        fontSize: 12 * unit, lineHeight: 20 * unit, color: COMPACT_SHEET_THEME.palette.textMuted,
+        vertical: Label.VerticalAlign.TOP, shrink: false,
+      });
+    if (!failed) return;
+    const buttonWidth = Math.min(148 * unit, innerWidth);
+    this.renderOverlayButton(panel, 'SceneAssetRetry', '重新加载', (innerWidth - buttonWidth) / 2,
+      localY(height, 120 * unit, 44 * unit), buttonWidth, this.delegate.retrySceneAssets !== undefined, () => {
+        if (this.root === root && !this.destroyed) this.delegate.retrySceneAssets?.();
+      }, true, 'SceneAssetRetryLabel');
   }
 
   private renderScene(root: Node, model: GameViewModel, chrome: InfiniteFlowRuntimeChrome): void {
@@ -3221,7 +3575,7 @@ export class InfiniteFlowView {
         if (event === undefined) return;
         this.bindPhysical(node, enabled && this.mobileSheet === undefined && action.enabled, (physicalId) => {
           if (!isCurrent()) return;
-          this.delegate.activate(physicalId, action.actionId, event);
+          this.activateSceneAction(physicalId, action, event);
         });
       },
       bindLocal: (node, activate) => {
@@ -3280,27 +3634,78 @@ export class InfiniteFlowView {
         this.openMobilePanel('interaction');
         return;
       }
+      // Combat proximity uses the same unified attack and animation path as
+      // the button, including the current weapon's availability.
+      if (detail.kind === 'combat') {
+        const attack = model.sections[2].actions.find(candidate => candidate.combatAction === 'weapon_skill'
+          && candidate.enabled && candidate.event !== undefined) ?? action;
+        if (attack.event !== undefined) this.activateSceneAction(physicalId, attack, attack.event);
+        return;
+      }
       // The spatial hotspot only chooses an existing action. The application
       // still owns entry, inventory, encounter, loot and persistence semantics.
       this.delegate.activate(physicalId, action.actionId, action.event);
     };
     const frames = this.sceneVisuals.get('character:reincarnator_walk')?.frames;
+    const activeHudPopover = this.activeHudPopover();
     this.walkScene = renderInfiniteFlowWalkScene(root, model, {
       ...options,
       openPanel: (panel) => this.openMobilePanel(panel),
+      openHudPopover: (kind) => {
+        this.mobileSheet = { kind: 'inventory', tab: `hud-${kind}`, page: 0 };
+        this.renderAgain();
+      },
+      ...(activeHudPopover === undefined ? {} : { activeHudPopover }),
+      openCombatChoices: (group) => {
+        this.mobileSheet = { kind: 'menu', tab: group, page: 0 };
+        this.renderAgain();
+      },
       spec,
       position: this.walkPosition ?? spec.spawn,
+      viewportWidth: this.measureHudViewportWidth(),
+      interactTarget: (target) => {
+        this.physicalSequence += 1;
+        interact(target, `cocos-arrival:${this.physicalSequence}`);
+      },
       ...(frames === undefined ? {} : { walkerFrames: frames }),
       bindInteract: (node, getTarget) => {
         this.bindPhysical(node, enabled && this.mobileSheet === undefined, (physicalId) => interact(getTarget(), physicalId));
       },
+      bindWorldTap: (node, callback) => {
+        if (!enabled || this.mobileSheet !== undefined) return;
+        const starts = new Map<number, Vec3>();
+        node.on(Node.EventType.TOUCH_START, (event: EventTouch) => {
+          if (!isCurrent()) return;
+          const id = event.getID();
+          if (id === null) return;
+          const point = event.getUILocation();
+          starts.set(id, new Vec3(point.x, point.y, 0));
+          event.propagationStopped = true;
+        });
+        node.on(Node.EventType.TOUCH_CANCEL, (event: EventTouch) => {
+          const id = event.getID();
+          if (id !== null) starts.delete(id);
+          event.propagationStopped = true;
+        });
+        node.on(Node.EventType.TOUCH_END, (event: EventTouch) => {
+          const id = event.getID();
+          event.propagationStopped = true;
+          if (id === null) return;
+          const start = starts.get(id);
+          starts.delete(id);
+          if (!isCurrent() || start === undefined) return;
+          const point = event.getUILocation();
+          if (Math.hypot(point.x - start.x, point.y - start.y) > 12) return;
+          const transform = node.getComponent(UITransform);
+          if (transform === null) throw new Error('Walking viewport has no UITransform');
+          const local = transform.convertToNodeSpaceAR(new Vec3(point.x, point.y, 0));
+          callback({ x: local.x, y: local.y });
+        });
+      },
     });
     if (enabled && this.mobileSheet === undefined && !this.chapterCodexOpen && model.sections[4].active === undefined) {
-      this.walkInput = new InfiniteFlowWalkInput(this.walkScene.joystick, this.walkScene.joystickThumb, () => {
-        if (this.walkScene === undefined) return;
-        this.physicalSequence += 1;
-        interact(nearestWalkTarget(spec, this.walkScene.getPosition()), `cocos-key:${this.physicalSequence}`);
-      });
+      this.walkInput = new InfiniteFlowWalkInput(this.walkScene.joystick, this.walkScene.joystickThumb,
+        () => this.walkScene?.cancelApproach());
     }
   }
 
@@ -3428,77 +3833,51 @@ export class InfiniteFlowView {
     chrome: InfiniteFlowRuntimeChrome,
   ): void {
     const blocked = chrome.modeKind === 'blocked';
-    const diagnosticHeight = Math.min(
-      820,
-      this.surfaceHeight - this.lastSafeInsets.top - this.lastSafeInsets.bottom - 80,
-    );
-    const panel = addPanel(root, 'RuntimeDiagnostic', this.safeX(), this.safeCenterY() - 30, CONTENT_WIDTH, diagnosticHeight, {
-      fill: PALETTE.raised,
-      stroke: blocked ? PALETTE.red : PALETTE.teal,
-      lineWidth: 4,
-      radius: 18,
-    });
-    addText(
-      panel,
-      'DiagnosticSymbol',
-      blocked ? '×' : '…',
-      0,
-      300,
-      160,
-      120,
-      {
-        fontSize: 78,
-        color: blocked ? PALETTE.red : PALETTE.gold,
-        horizontal: Label.HorizontalAlign.CENTER,
-      },
-    );
-    addText(
-      panel,
-      'DiagnosticTitle',
-      blocked ? `运行已阻断 · ${chrome.modeLabel}` : '正在初始化',
-      0,
-      205,
-      620,
-      72,
-      {
-        fontSize: 38,
-        color: blocked ? PALETTE.red : PALETTE.bone,
-        horizontal: Label.HorizontalAlign.CENTER,
-      },
-    );
-    addText(
-      panel,
-      'DiagnosticBody',
-      chrome.blockingMessage ?? chrome.modeDetail,
-      0,
-      5,
-      610,
-      280,
-      {
-        fontSize: 27,
-        color: PALETTE.bone,
-        horizontal: Label.HorizontalAlign.CENTER,
-        vertical: Label.VerticalAlign.TOP,
-        wrap: true,
-      },
-    );
-    addText(
-      panel,
-      'DiagnosticPolicy',
-      blocked
-        ? '不会降级为内存存档，也不会显示“已签核”。\n请按上方诊断补齐明确宿主边界后重新载入。'
-        : '目标 → 状态 → 动作 → 风险 → 帮助 → 日志',
-      0,
-      -212,
-      610,
-      130,
-      {
-        fontSize: 24,
-        color: blocked ? PALETTE.gold : PALETTE.teal,
-        horizontal: Label.HorizontalAlign.CENTER,
-        wrap: true,
-      },
-    );
+    const unit = this.compactOverlayUnit();
+    const width = this.compactOverlayWidth(unit);
+    const innerWidth = width - 24 * unit;
+    const textWidth = innerWidth - 6 * unit;
+    const diagnostic = chrome.blockingMessage ?? chrome.modeDetail;
+    const policy = blocked
+      ? '不会降级为内存存档，也不会显示“已签核”。\n请按上方诊断补齐明确宿主边界后重新载入。'
+      : '目标 → 状态 → 动作 → 风险 → 帮助 → 日志';
+    const measuredLines = (value: string, font: number): number => value.split('\n').reduce(
+      (count, line) => count + wrapInfiniteFlowLine(line, Math.floor(textWidth / (font * unit))).length, 0);
+    const bodyHeight = (measuredLines(diagnostic, 12) * 21 + 4) * unit;
+    const policyHeight = (measuredLines(policy, 11) * 19 + 4) * unit;
+    const naturalContentHeight = bodyHeight + 12 * unit + policyHeight;
+    const scrollHeight = Math.min(300 * unit, naturalContentHeight,
+      this.compactOverlayMaxHeight(unit) - 81 * unit);
+    const height = 81 * unit + scrollHeight;
+    const overlay = this.compactOverlayBackdrop(root, 'RuntimeDiagnosticBlocker');
+    const panel = this.compactOverlayPanel(overlay, 'RuntimeDiagnostic',
+      this.safeX(), this.safeCenterY(), width, height);
+    panel.addComponent(BlockInputEvents);
+    addText(panel, 'DiagnosticSymbol', blocked ? '×' : '…',
+      -innerWidth / 2 + 8 * unit, localY(height, 12 * unit, 48 * unit), 16 * unit, 48 * unit, {
+        fontSize: 16 * unit, lineHeight: 22 * unit,
+        color: blocked ? COMPACT_SHEET_THEME.palette.danger : COMPACT_SHEET_THEME.palette.accent,
+        horizontal: Label.HorizontalAlign.CENTER, shrink: false,
+      });
+    addText(panel, 'DiagnosticTitle', blocked ? `运行已阻断 · ${chrome.modeLabel}` : '正在初始化',
+      12 * unit, localY(height, 12 * unit, 48 * unit), innerWidth - 24 * unit, 48 * unit, {
+        fontSize: 16 * unit, lineHeight: 22 * unit, color: COMPACT_SHEET_THEME.palette.text,
+        shrink: false,
+      });
+    const { content, contentHeight } = this.compactOverlayScroll(panel, 'DiagnosticScroll',
+      0, localY(height, 69 * unit, scrollHeight), innerWidth, scrollHeight, naturalContentHeight);
+    // Keep the raw runtime message on a single label; its measured height lets
+    // long host/storage boundaries scroll without hiding the actual diagnostic.
+    addText(content, 'DiagnosticBody', diagnostic, -3 * unit,
+      localY(contentHeight, 0, bodyHeight), textWidth, bodyHeight, {
+        fontSize: 12 * unit, lineHeight: 21 * unit, color: COMPACT_SHEET_THEME.palette.text,
+        vertical: Label.VerticalAlign.TOP, wrap: true, shrink: false,
+      });
+    addText(content, 'DiagnosticPolicy', policy, -3 * unit,
+      localY(contentHeight, bodyHeight + 12 * unit, policyHeight), textWidth, policyHeight, {
+        fontSize: 11 * unit, lineHeight: 19 * unit, color: COMPACT_SHEET_THEME.palette.accent,
+        vertical: Label.VerticalAlign.TOP, wrap: true, shrink: false,
+      });
   }
 
   private renderInformationRail(root: Node): void {
@@ -6097,38 +6476,40 @@ export class InfiniteFlowView {
   ): void {
     const active = help.active;
     if (active === undefined) return;
-    const overlay = addPanel(root, 'HelpOverlayBlocker', 0, 0, DESIGN_WIDTH, this.surfaceHeight, {
-      fill: PALETTE.backgroundOpaque,
-      stroke: PALETTE.backgroundOpaque,
-      lineWidth: 0,
-      radius: 0,
-    });
-    overlay.addComponent(BlockInputEvents);
-    const helpHeight = Math.min(
-      1140,
-      this.surfaceHeight - this.lastSafeInsets.top - this.lastSafeInsets.bottom,
-    );
-    const panel = addPanel(overlay, 'HelpDialog', this.safeX(), this.safeCenterY(), CONTENT_WIDTH, helpHeight, {
-      fill: PALETTE.raised,
-      stroke: PALETTE.gold,
-      lineWidth: 5,
-      radius: 20,
-    });
+    const unit = this.compactOverlayUnit();
+    const width = this.compactOverlayWidth(unit);
+    const innerWidth = width - 24 * unit;
+    const scrollHeight = Math.min(300 * unit, this.compactOverlayMaxHeight(unit) - 134 * unit);
+    const helpHeight = 134 * unit + scrollHeight;
+    const overlay = this.compactOverlayBackdrop(root, 'HelpOverlayBlocker');
+    const panel = this.compactOverlayPanel(overlay, 'HelpDialog',
+      this.safeX(), this.safeCenterY(), width, helpHeight);
     const activeIndex = Math.max(0, help.entries.findIndex((entry) => entry.id === active.id));
-    addText(panel, 'HelpKicker', `? 帮助 ${activeIndex + 1} / ${Math.max(1, help.entries.length)}`, -185, localY(helpHeight, 18, 42), 280, 40, {
-      fontSize: 25,
-      color: PALETTE.gold,
-    });
     const playerCopy = (value: string, fallback?: string): string => (
       hubPlayerCopy
         ? formatInfiniteFlowHubPlayerCopy(value, fallback)
         : value
     );
-    addText(panel, 'HelpTitle', playerCopy(active.title, '帮助'), 0, localY(helpHeight, 62, 60), 632, 56, {
-      fontSize: 38,
-      color: PALETTE.bone,
-      horizontal: Label.HorizontalAlign.CENTER,
-      shrink: true,
+    addText(panel, 'HelpTitle', playerCopy(active.title, '帮助'), -22 * unit,
+      localY(helpHeight, 12 * unit, 27 * unit), innerWidth - 44 * unit, 27 * unit, {
+        fontSize: 16 * unit, lineHeight: 22 * unit, color: COMPACT_SHEET_THEME.palette.text,
+        shrink: false,
+      });
+    addText(panel, 'HelpKicker', `帮助 ${activeIndex + 1} / ${Math.max(1, help.entries.length)}`, -22 * unit,
+      localY(helpHeight, 41 * unit, 19 * unit), innerWidth - 44 * unit, 19 * unit, {
+        fontSize: 11 * unit, lineHeight: 17 * unit, color: COMPACT_SHEET_THEME.palette.textMuted,
+        shrink: false,
+      });
+    const enabled = chrome.busyActionId === undefined && chrome.modeKind !== 'blocked';
+    const close = addNode(panel, 'CloseHelp', innerWidth / 2 - 22 * unit,
+      localY(helpHeight, 14 * unit, 44 * unit), 44 * unit, 44 * unit);
+    addText(close, 'HelpCloseGlyph', '×', 0, 0, 24 * unit, 24 * unit, {
+      fontSize: 18 * unit, lineHeight: 24 * unit,
+      color: enabled ? COMPACT_SHEET_THEME.palette.accent : COMPACT_SHEET_THEME.palette.textMuted,
+      horizontal: Label.HorizontalAlign.CENTER, shrink: false,
+    });
+    this.bindPhysical(close, enabled, (physicalId) => {
+      this.delegate.activate(physicalId, active.closeAction.actionId, active.closeAction.event);
     });
 
     const sections = [
@@ -6144,107 +6525,66 @@ export class InfiniteFlowView {
       { title: '界面读数', paragraphs: [playerCopy(active.readout)] },
     ];
 
-    // Normal display copy scrolls as one cut-corner document instead of
-    // splitting 概要/机制/行动建议/界面读数 across paged screens.
-    const HELP_VIEW_TOP = 130;
-    const HELP_VIEW_BOTTOM = 688;
-    const HELP_VIEW_HEIGHT = helpHeight - HELP_VIEW_TOP - HELP_VIEW_BOTTOM;
-    const HELP_SCROLL_WIDTH = 638;
-    const holder = addNode(panel, 'HelpScroll', 0, localY(helpHeight, HELP_VIEW_TOP, HELP_VIEW_HEIGHT), HELP_SCROLL_WIDTH, HELP_VIEW_HEIGHT);
-    holder.addComponent(Mask).type = Mask.Type.GRAPHICS_RECT;
-
-    const HELP_CARD_SIDE = 20;
-    const HELP_CARD_WIDTH = HELP_SCROLL_WIDTH - 2 * HELP_CARD_SIDE;
-    const HELP_TITLE_FONT = 29;
-    const HELP_BODY_FONT = 26;
-    const HELP_LINE_HEIGHT = 38;
-    const HELP_CARD_PAD = 24;
-    const HELP_TITLE_GAP = 16;
-    const HELP_CARD_FOOT = 22;
-    const HELP_CARD_GAP = 16;
-    const HELP_CARD_PAD_TOP = 8;
-    const HELP_CARD_PAD_BOTTOM = 8;
-    const HELP_TEXT_WIDTH = HELP_CARD_WIDTH - 48;
-    const HELP_MAX_UNITS = Math.floor((HELP_TEXT_WIDTH - 12) / HELP_BODY_FONT);
+    const textWidth = innerWidth - 6 * unit;
+    const sectionTitleHeight = 23 * unit;
+    const lineHeight = 20.4 * unit;
+    const sectionGap = 9 * unit;
+    const maxUnits = Math.floor((textWidth - 2 * unit) / (12 * unit));
     const laidCards = sections.map((section) => {
       const lines: string[] = [];
       section.paragraphs.forEach((paragraph, paragraphIndex) => {
         if (paragraphIndex > 0) lines.push('');
         for (const logicalLine of String(paragraph).split('\n')) {
-          lines.push(...wrapInfiniteFlowLine(logicalLine, HELP_MAX_UNITS));
+          lines.push(...wrapInfiniteFlowLine(logicalLine, maxUnits));
         }
       });
-      const height = HELP_CARD_PAD + 40 + HELP_TITLE_GAP + lines.length * HELP_LINE_HEIGHT + HELP_CARD_FOOT;
+      const height = sectionTitleHeight + lines.length * lineHeight + 2 * unit;
       return { title: section.title, lines, height };
     });
-    const contentHeight = HELP_CARD_PAD_TOP + laidCards.reduce((sum, card) => sum + card.height, 0)
-      + (laidCards.length - 1) * HELP_CARD_GAP + HELP_CARD_PAD_BOTTOM;
-    const content = addNode(holder, 'HelpScrollContent', 0, (HELP_VIEW_HEIGHT - Math.max(HELP_VIEW_HEIGHT, contentHeight)) / 2, HELP_SCROLL_WIDTH, Math.max(HELP_VIEW_HEIGHT, contentHeight));
-    const scrollView = holder.addComponent(ScrollView);
-    scrollView.content = content;
-    scrollView.horizontal = false;
-    scrollView.vertical = true;
-    scrollView.inertia = true;
-    scrollView.brake = 0.75;
-    scrollView.elastic = true;
-    scrollView.cancelInnerEvents = true;
-
-    let cursor = HELP_CARD_PAD_TOP;
+    const naturalContentHeight = laidCards.reduce((sum, card) => sum + card.height, 0)
+      + (laidCards.length - 1) * sectionGap;
+    const { content, contentHeight } = this.compactOverlayScroll(panel, 'HelpScroll',
+      0, localY(helpHeight, 69 * unit, scrollHeight), innerWidth, scrollHeight, naturalContentHeight);
+    // Keep 概要/机制/行动建议/界面读数 together as a complete scrolling document.
+    let cursor = 0;
     laidCards.forEach((card, index) => {
-      const cardNode = addPanel(content, `HelpScrollSection:${index}`, 0, contentHeight / 2 - cursor - card.height / 2, HELP_CARD_WIDTH, card.height, {
-        fill: PALETTE.raisedQuiet,
-        stroke: PALETTE.teal,
-        lineWidth: 3,
-        radius: 16,
-      });
-      addText(cardNode, 'HelpSectionTitle', card.title, 0, card.height / 2 - HELP_CARD_PAD - 20, HELP_TEXT_WIDTH, 40, {
-        fontSize: HELP_TITLE_FONT,
-        color: PALETTE.teal,
-        horizontal: Label.HorizontalAlign.LEFT,
-      });
-      const bodyHeight = card.lines.length * HELP_LINE_HEIGHT;
-      const bodyTop = card.height / 2 - HELP_CARD_PAD - 40 - HELP_TITLE_GAP;
-      addText(cardNode, 'HelpSectionBody', card.lines.join('\n'), 0, bodyTop - bodyHeight / 2, HELP_TEXT_WIDTH, bodyHeight + 4, {
-        fontSize: HELP_BODY_FONT,
-        lineHeight: HELP_LINE_HEIGHT,
-        color: PALETTE.bone,
-        vertical: Label.VerticalAlign.TOP,
-        horizontal: Label.HorizontalAlign.LEFT,
-        wrap: true,
-      });
-      cursor += card.height + HELP_CARD_GAP;
+      const cardNode = addNode(content, `HelpScrollSection:${index}`, -3 * unit,
+        localY(contentHeight, cursor, card.height), textWidth, card.height);
+      addText(cardNode, 'HelpSectionTitle', card.title, 0,
+        localY(card.height, 0, 18 * unit), textWidth, 18 * unit, {
+          fontSize: 11 * unit, lineHeight: 18 * unit, color: COMPACT_SHEET_THEME.palette.accent,
+          shrink: false,
+        });
+      const rule = cardNode.addComponent(Graphics);
+      rule.strokeColor = COMPACT_SHEET_THEME.palette.edge;
+      rule.lineWidth = unit;
+      rule.moveTo(-textWidth / 2, card.height / 2 - 20 * unit);
+      rule.lineTo(textWidth / 2, card.height / 2 - 20 * unit);
+      rule.stroke();
+      const bodyHeight = card.lines.length * lineHeight;
+      addText(cardNode, 'HelpSectionBody', card.lines.join('\n'), 0,
+        localY(card.height, sectionTitleHeight, bodyHeight), textWidth, bodyHeight + 2 * unit, {
+          fontSize: 12 * unit, lineHeight, color: COMPACT_SHEET_THEME.palette.textMuted,
+          vertical: Label.VerticalAlign.TOP, horizontal: Label.HorizontalAlign.LEFT,
+          wrap: true, shrink: false,
+        });
+      cursor += card.height + sectionGap;
     });
-
-    if (contentHeight > HELP_VIEW_HEIGHT) {
-      const barWidth = 6;
-      const thumbHeight = Math.max(72, Math.round(HELP_VIEW_HEIGHT * HELP_VIEW_HEIGHT / contentHeight));
-      const travel = HELP_VIEW_HEIGHT - thumbHeight - 4;
-      const thumb = addNode(holder, 'HelpScrollThumb', HELP_SCROLL_WIDTH / 2 - 6, HELP_VIEW_HEIGHT / 2 - 2 - thumbHeight / 2, barWidth, thumbHeight);
-      const thumbGraphics = thumb.addComponent(Graphics);
-      thumbGraphics.fillColor = new Color(PALETTE.gold.r, PALETTE.gold.g, PALETTE.gold.b, 140);
-      thumbGraphics.roundRect(-barWidth / 2, -thumbHeight / 2, barWidth, thumbHeight, 3);
-      thumbGraphics.fill();
-      scrollView.node.on(ScrollView.EventType.SCROLLING, () => {
-        const maxOffset = Math.max(1, contentHeight - HELP_VIEW_HEIGHT);
-        const ratio = Math.max(0, Math.min(1, scrollView.getScrollOffset().y / maxOffset));
-        thumb.setPosition(new Vec3(HELP_SCROLL_WIDTH / 2 - 6, HELP_VIEW_HEIGHT / 2 - 2 - thumbHeight / 2 - ratio * travel, 0));
-      });
-    }
-
-    const enabled = chrome.busyActionId === undefined && chrome.modeKind !== 'blocked';
+    const buttonWidth = Math.min(148 * unit, (innerWidth - 7 * unit) / 2);
+    const buttonX = (innerWidth - buttonWidth) / 2;
+    const buttonY = localY(helpHeight, 78 * unit + scrollHeight, 44 * unit);
     const previousTopic = help.entries[activeIndex - 1];
     const nextTopic = help.entries[activeIndex + 1];
-    this.renderOverlayButton(panel, 'PreviousTopic', '‹ 上一主题', -166, localY(helpHeight, 704, MINIMUM_TOUCH_HEIGHT), 310, previousTopic !== undefined && enabled, (physicalId) => {
+    this.renderOverlayButton(panel, 'PreviousTopic', '‹ 上一主题', -buttonX, buttonY,
+      buttonWidth, previousTopic !== undefined && enabled, (physicalId) => {
       if (previousTopic === undefined) return;
       this.delegate.activate(physicalId, previousTopic.openAction.actionId, previousTopic.openAction.event);
     });
-    this.renderOverlayButton(panel, 'NextTopic', '下一主题 ›', 166, localY(helpHeight, 704, MINIMUM_TOUCH_HEIGHT), 310, nextTopic !== undefined && enabled, (physicalId) => {
+    this.renderOverlayButton(panel, 'NextTopic', '下一主题 ›', buttonX, buttonY,
+      buttonWidth, nextTopic !== undefined && enabled, (physicalId) => {
       if (nextTopic === undefined) return;
       this.delegate.activate(physicalId, nextTopic.openAction.actionId, nextTopic.openAction.event);
     });
-    this.renderOverlayButton(panel, 'CloseHelp', '× 关闭帮助', 0, localY(helpHeight, 824, PRIMARY_TOUCH_HEIGHT), 638, enabled, (physicalId) => {
-      this.delegate.activate(physicalId, active.closeAction.actionId, active.closeAction.event);
-    }, true);
   }
 
   private renderOverlayButton(
@@ -6256,19 +6596,19 @@ export class InfiniteFlowView {
     width: number,
     enabled: boolean,
     activate: (physicalId: string) => void,
-    danger = false,
+    primary = false,
+    labelName = 'Label',
   ): void {
-    const button = addPanel(parent, name, x, y, width, name === 'CloseHelp' ? PRIMARY_TOUCH_HEIGHT : MINIMUM_TOUCH_HEIGHT, {
-      fill: enabled ? (danger ? PALETTE.redDark : PALETTE.tealDark) : PALETTE.raisedQuiet,
-      stroke: enabled ? (danger ? PALETTE.red : PALETTE.teal) : PALETTE.disabled,
-      lineWidth: enabled ? 4 : 2,
-      radius: 13,
-    });
-    addText(button, 'Label', enabled ? text : `× ${text}`, 0, 0, width - 20, 78, {
-      fontSize: 26,
-      color: enabled ? (danger ? PALETTE.red : PALETTE.bone) : PALETTE.disabled,
-      horizontal: Label.HorizontalAlign.CENTER,
-      shrink: true,
+    const unit = this.compactOverlayUnit();
+    const palette = COMPACT_SHEET_THEME.palette;
+    const button = addNode(parent, name, x, y, Math.min(148 * unit, width), 44 * unit);
+    this.compactOverlayPanel(button, `${name}Plate`, 0, 0, Math.min(148 * unit, width), 32 * unit,
+      'control', enabled ? (primary ? palette.accentDark : palette.raised) : palette.quiet,
+      enabled && primary ? palette.accent : palette.edge);
+    addText(button, labelName, text, 0, 0, width - 16 * unit, 30 * unit, {
+      fontSize: 13 * unit, lineHeight: 18 * unit,
+      color: enabled ? palette.text : palette.textMuted,
+      horizontal: Label.HorizontalAlign.CENTER, shrink: false,
     });
     this.bindPhysical(button, enabled, activate);
   }

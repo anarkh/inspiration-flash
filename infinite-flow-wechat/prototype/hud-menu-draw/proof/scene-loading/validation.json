@@ -1,0 +1,970 @@
+{
+  "recordedAt": "2026-10-10T07:28:43.600Z",
+  "engine": "Cocos Creator 3.8.8 Web Mobile",
+  "url": "http://127.0.0.1:8125/cocos/build/web-mobile/index.html",
+  "finalRunStart": "2026-10-10T07:24:32.845Z",
+  "viewports": [
+    {
+      "width": 390,
+      "height": 844
+    },
+    {
+      "width": 320,
+      "height": 568
+    }
+  ],
+  "checks": {
+    "bootstrapRaceScenarios": 105,
+    "worldChecks": 44,
+    "chapterCount": 19,
+    "monsterIdentities": 59,
+    "sheetActionCheck": "passed",
+    "cocosHeadlessTypecheck": "passed",
+    "cocosCreatorTypecheck": "passed",
+    "assetVerify": "passed",
+    "webMobileBuild": "passed",
+    "scopedDiffCheck": "passed"
+  },
+  "assetAudit": {
+    "manifestEntries": 305,
+    "physicalPngFiles": 305,
+    "deletedPngFiles": 0,
+    "retained": "Registered chapter banners and portraits still serve distinct result/detail/gallery surfaces."
+  },
+  "obsoleteDrawing": {
+    "netLinesRemoved": 512,
+    "removed": [
+      "vector player and NPC",
+      "vector monster",
+      "vector doors and props",
+      "unused floor/wall/brazier/flame chain"
+    ]
+  },
+  "networkFault": {
+    "heldKeys": [
+      "scene:hub_courtyard_walk",
+      "scene:dungeon_world_demon_tower_1",
+      "scene:dungeon_transition_gate"
+    ],
+    "failedNativeRequests": 4,
+    "expectedConsoleErrors": 2,
+    "unexpectedConsoleErrors": []
+  },
+  "domainStatePreservedOnRetry": true,
+  "retryButton320": {
+    "found": true,
+    "height": 104,
+    "name": "SceneAssetRetry",
+    "screenHeight": 44.28185907046486,
+    "screenWidth": 106.4467766116942,
+    "touch": true,
+    "width": 250,
+    "x": 160,
+    "y": 331.9010494752624
+  },
+  "entryTrace": {
+    "active": false,
+    "changes": [
+      {
+        "at": 12346.799999952316,
+        "input": false,
+        "missing": [],
+        "phase": "hub",
+        "status": "ready",
+        "walk": true
+      },
+      {
+        "at": 12487.199999809263,
+        "input": false,
+        "missing": [
+          "scene:dungeon_world_demon_tower_1",
+          "monster:fog_lesser_demon_world",
+          "scene:dungeon_transition_gate",
+          "scene:dungeon_prop_chest",
+          "scene:dungeon_prop_exit",
+          "scene:dungeon_prop_event",
+          "scene:dungeon_prop_trap",
+          "scene:dungeon_prop_survey",
+          "scene:dungeon_prop_relic",
+          "scene:dungeon_prop_shrine",
+          "scene:dungeon_prop_law",
+          "scene:dungeon_prop_debris"
+        ],
+        "phase": "explore",
+        "status": "loading",
+        "walk": false
+      },
+      {
+        "at": 12580.599999904633,
+        "input": false,
+        "missing": [
+          "scene:dungeon_world_demon_tower_1",
+          "monster:fog_lesser_demon_world",
+          "scene:dungeon_transition_gate",
+          "scene:dungeon_prop_chest",
+          "scene:dungeon_prop_exit",
+          "scene:dungeon_prop_event",
+          "scene:dungeon_prop_trap",
+          "scene:dungeon_prop_survey",
+          "scene:dungeon_prop_relic",
+          "scene:dungeon_prop_law",
+          "scene:dungeon_prop_debris"
+        ],
+        "phase": "explore",
+        "status": "loading",
+        "walk": false
+      },
+      {
+        "at": 12762.399999856949,
+        "input": false,
+        "missing": [
+          "scene:dungeon_world_demon_tower_1",
+          "monster:fog_lesser_demon_world",
+          "scene:dungeon_transition_gate",
+          "scene:dungeon_prop_chest",
+          "scene:dungeon_prop_exit",
+          "scene:dungeon_prop_event"
+        ],
+        "phase": "explore",
+        "status": "loading",
+        "walk": false
+      },
+      {
+        "at": 12880.699999809263,
+        "input": false,
+        "missing": [
+          "scene:dungeon_world_demon_tower_1",
+          "scene:dungeon_transition_gate"
+        ],
+        "phase": "explore",
+        "status": "loading",
+        "walk": false
+      },
+      {
+        "at": 28468.39999985695,
+        "input": false,
+        "missing": [
+          "scene:dungeon_transition_gate"
+        ],
+        "phase": "explore",
+        "status": "loading",
+        "walk": false
+      },
+      {
+        "at": 34593.59999990463,
+        "input": false,
+        "missing": [
+          "scene:dungeon_transition_gate"
+        ],
+        "phase": "explore",
+        "status": "error",
+        "walk": false
+      },
+      {
+        "at": 47144.199999809265,
+        "input": false,
+        "missing": [
+          "scene:dungeon_world_demon_tower_1",
+          "character:reincarnator_walk",
+          "character:reincarnator",
+          "monster:fog_lesser_demon_world",
+          "scene:dungeon_transition_gate",
+          "scene:dungeon_prop_chest",
+          "scene:dungeon_prop_exit",
+          "scene:dungeon_prop_event",
+          "scene:dungeon_prop_trap",
+          "scene:dungeon_prop_survey",
+          "scene:dungeon_prop_relic",
+          "scene:dungeon_prop_shrine",
+          "scene:dungeon_prop_law",
+          "scene:dungeon_prop_debris"
+        ],
+        "phase": "explore",
+        "status": "loading",
+        "walk": false
+      },
+      {
+        "at": 47541.699999809265,
+        "input": false,
+        "missing": [
+          "scene:dungeon_transition_gate",
+          "scene:dungeon_prop_law",
+          "scene:dungeon_prop_debris"
+        ],
+        "phase": "explore",
+        "status": "loading",
+        "walk": false
+      },
+      {
+        "at": 47588.29999995232,
+        "input": false,
+        "missing": [
+          "scene:dungeon_transition_gate"
+        ],
+        "phase": "explore",
+        "status": "loading",
+        "walk": false
+      },
+      {
+        "at": 47711.39999985695,
+        "input": true,
+        "missing": [],
+        "phase": "explore",
+        "status": "ready",
+        "walk": true
+      }
+    ],
+    "counts": {
+      "explore:error": 1494,
+      "explore:loading": 2387,
+      "explore:ready": 2297,
+      "hub:ready": 6
+    },
+    "total": 6184,
+    "violations": []
+  },
+  "combat": {
+    "before": {
+      "animating": false,
+      "enemyHp": 42,
+      "phase": "combat",
+      "playerHp": 102,
+      "status": "ready"
+    },
+    "after": {
+      "animating": false,
+      "enemyHp": 24,
+      "phase": "combat",
+      "playerHp": 92,
+      "status": "ready"
+    }
+  },
+  "samples": [
+    {
+      "name": "hub-cold-loading-390",
+      "desired": [
+        "scene:hub_courtyard_walk",
+        "character:reincarnator_walk",
+        "character:reincarnator",
+        "npc:equipment_quartermaster_world",
+        "npc:supply_trader_world",
+        "npc:pet_keeper_world",
+        "npc:method_master_world",
+        "npc:bloodline_priest_world",
+        "npc:companion_guide_world",
+        "npc:main_god_projection_world",
+        "scene:hub_dungeon_portal",
+        "scene:courtyard_pillar",
+        "scene:courtyard_crate",
+        "scene:courtyard_altar",
+        "scene:courtyard_lamp"
+      ],
+      "error": false,
+      "input": false,
+      "labels": [
+        "正在进入主神空间…",
+        "正在准备场景素材"
+      ],
+      "loading": true,
+      "missing": [
+        "scene:hub_courtyard_walk"
+      ],
+      "phase": "hub",
+      "primary": "scene:main_god_space",
+      "retry": false,
+      "status": "loading",
+      "touchable": [
+        "SceneAssetLoading"
+      ],
+      "viewport": {
+        "height": 844,
+        "width": 390
+      },
+      "walking": false
+    },
+    {
+      "name": "hub-ready-390",
+      "desired": [
+        "scene:hub_courtyard_walk",
+        "character:reincarnator_walk",
+        "character:reincarnator",
+        "npc:equipment_quartermaster_world",
+        "npc:supply_trader_world",
+        "npc:pet_keeper_world",
+        "npc:method_master_world",
+        "npc:bloodline_priest_world",
+        "npc:companion_guide_world",
+        "npc:main_god_projection_world",
+        "scene:hub_dungeon_portal",
+        "scene:courtyard_pillar",
+        "scene:courtyard_crate",
+        "scene:courtyard_altar",
+        "scene:courtyard_lamp"
+      ],
+      "error": false,
+      "input": true,
+      "labels": [
+        "副本传送门",
+        "进入副本",
+        "补给商",
+        "药品与道具",
+        "修行导师",
+        "功法修行",
+        "同行引路人",
+        "同伴招募",
+        "轮回者",
+        "军需官",
+        "装备与强化",
+        "灵宠师",
+        "灵宠培养",
+        "血脉祭司",
+        "血统觉醒",
+        "任务使者",
+        "任务与奖励",
+        "交谈",
+        "角色",
+        "轮回者",
+        "生命 102/102",
+        "奖励点 850   灵韵 1",
+        "背包",
+        "菜单",
+        "临时试玩 · 刷新丢失进度"
+      ],
+      "loading": false,
+      "missing": [],
+      "phase": "hub",
+      "position": {
+        "x": 600,
+        "y": 550
+      },
+      "primary": "scene:main_god_space",
+      "retry": false,
+      "status": "ready",
+      "touchable": [
+        "WalkViewport",
+        "WalkTarget:portal:entry",
+        "WalkTargetTouch",
+        "WalkTarget:npc:supplies",
+        "WalkTargetTouch",
+        "WalkTarget:npc:methods",
+        "WalkTargetTouch",
+        "WalkTarget:npc:companions",
+        "WalkTargetTouch",
+        "WalkTarget:npc:equipment",
+        "WalkTargetTouch",
+        "WalkTarget:npc:pets",
+        "WalkTargetTouch",
+        "WalkTarget:npc:bloodlines",
+        "WalkTargetTouch",
+        "WalkTarget:npc:tasks",
+        "WalkTargetTouch",
+        "WalkJoystick",
+        "WalkInteract",
+        "SceneCharacter",
+        "SceneDetails",
+        "SceneHelp"
+      ],
+      "viewport": {
+        "height": 844,
+        "width": 390
+      },
+      "walking": true
+    },
+    {
+      "name": "dungeon-entry-loading-390",
+      "desired": [
+        "scene:dungeon_world_demon_tower_1",
+        "character:reincarnator_walk",
+        "character:reincarnator",
+        "monster:fog_lesser_demon_world",
+        "scene:dungeon_transition_gate",
+        "scene:dungeon_prop_chest",
+        "scene:dungeon_prop_exit",
+        "scene:dungeon_prop_event",
+        "scene:dungeon_prop_trap",
+        "scene:dungeon_prop_survey",
+        "scene:dungeon_prop_relic",
+        "scene:dungeon_prop_shrine",
+        "scene:dungeon_prop_law",
+        "scene:dungeon_prop_debris"
+      ],
+      "error": false,
+      "input": false,
+      "labels": [
+        "正在进入副本…",
+        "正在准备场景素材"
+      ],
+      "loading": true,
+      "missing": [
+        "scene:dungeon_world_demon_tower_1",
+        "scene:dungeon_transition_gate"
+      ],
+      "phase": "explore",
+      "primary": "dungeon:demon_tower_1",
+      "retry": false,
+      "status": "loading",
+      "touchable": [
+        "SceneAssetLoading"
+      ],
+      "viewport": {
+        "height": 844,
+        "width": 390
+      },
+      "walking": false
+    },
+    {
+      "name": "dungeon-last-image-loading-390",
+      "desired": [
+        "scene:dungeon_world_demon_tower_1",
+        "character:reincarnator_walk",
+        "character:reincarnator",
+        "monster:fog_lesser_demon_world",
+        "scene:dungeon_transition_gate",
+        "scene:dungeon_prop_chest",
+        "scene:dungeon_prop_exit",
+        "scene:dungeon_prop_event",
+        "scene:dungeon_prop_trap",
+        "scene:dungeon_prop_survey",
+        "scene:dungeon_prop_relic",
+        "scene:dungeon_prop_shrine",
+        "scene:dungeon_prop_law",
+        "scene:dungeon_prop_debris"
+      ],
+      "error": false,
+      "input": false,
+      "labels": [
+        "正在进入副本…",
+        "正在准备场景素材"
+      ],
+      "loading": true,
+      "missing": [
+        "scene:dungeon_transition_gate"
+      ],
+      "phase": "explore",
+      "primary": "dungeon:demon_tower_1",
+      "retry": false,
+      "status": "loading",
+      "touchable": [
+        "SceneAssetLoading"
+      ],
+      "viewport": {
+        "height": 844,
+        "width": 390
+      },
+      "walking": false
+    },
+    {
+      "name": "dungeon-error-390",
+      "desired": [
+        "scene:dungeon_world_demon_tower_1",
+        "character:reincarnator_walk",
+        "character:reincarnator",
+        "monster:fog_lesser_demon_world",
+        "scene:dungeon_transition_gate",
+        "scene:dungeon_prop_chest",
+        "scene:dungeon_prop_exit",
+        "scene:dungeon_prop_event",
+        "scene:dungeon_prop_trap",
+        "scene:dungeon_prop_survey",
+        "scene:dungeon_prop_relic",
+        "scene:dungeon_prop_shrine",
+        "scene:dungeon_prop_law",
+        "scene:dungeon_prop_debris"
+      ],
+      "error": true,
+      "input": false,
+      "labels": [
+        "场景加载失败",
+        "请重新加载场景，当前进度已保留",
+        "重新加载"
+      ],
+      "loading": false,
+      "missing": [
+        "scene:dungeon_transition_gate"
+      ],
+      "phase": "explore",
+      "primary": "dungeon:demon_tower_1",
+      "retry": true,
+      "status": "error",
+      "touchable": [
+        "SceneAssetError",
+        "SceneAssetRetry"
+      ],
+      "viewport": {
+        "height": 844,
+        "width": 390
+      },
+      "walking": false
+    },
+    {
+      "name": "dungeon-error-320",
+      "desired": [
+        "scene:dungeon_world_demon_tower_1",
+        "character:reincarnator_walk",
+        "character:reincarnator",
+        "monster:fog_lesser_demon_world",
+        "scene:dungeon_transition_gate",
+        "scene:dungeon_prop_chest",
+        "scene:dungeon_prop_exit",
+        "scene:dungeon_prop_event",
+        "scene:dungeon_prop_trap",
+        "scene:dungeon_prop_survey",
+        "scene:dungeon_prop_relic",
+        "scene:dungeon_prop_shrine",
+        "scene:dungeon_prop_law",
+        "scene:dungeon_prop_debris"
+      ],
+      "error": true,
+      "input": false,
+      "labels": [
+        "场景加载失败",
+        "请重新加载场景，当前进度已保留",
+        "重新加载"
+      ],
+      "loading": false,
+      "missing": [
+        "scene:dungeon_transition_gate"
+      ],
+      "phase": "explore",
+      "primary": "dungeon:demon_tower_1",
+      "retry": true,
+      "status": "error",
+      "touchable": [
+        "SceneAssetError",
+        "SceneAssetRetry"
+      ],
+      "viewport": {
+        "height": 568,
+        "width": 320
+      },
+      "walking": false
+    },
+    {
+      "name": "dungeon-retry-loading-320",
+      "desired": [
+        "scene:dungeon_world_demon_tower_1",
+        "character:reincarnator_walk",
+        "character:reincarnator",
+        "monster:fog_lesser_demon_world",
+        "scene:dungeon_transition_gate",
+        "scene:dungeon_prop_chest",
+        "scene:dungeon_prop_exit",
+        "scene:dungeon_prop_event",
+        "scene:dungeon_prop_trap",
+        "scene:dungeon_prop_survey",
+        "scene:dungeon_prop_relic",
+        "scene:dungeon_prop_shrine",
+        "scene:dungeon_prop_law",
+        "scene:dungeon_prop_debris"
+      ],
+      "error": false,
+      "input": false,
+      "labels": [
+        "正在进入副本…",
+        "正在准备场景素材"
+      ],
+      "loading": true,
+      "missing": [
+        "scene:dungeon_transition_gate"
+      ],
+      "phase": "explore",
+      "primary": "dungeon:demon_tower_1",
+      "retry": false,
+      "status": "loading",
+      "touchable": [
+        "SceneAssetLoading"
+      ],
+      "viewport": {
+        "height": 568,
+        "width": 320
+      },
+      "walking": false
+    },
+    {
+      "name": "dungeon-retry-ready-320",
+      "desired": [
+        "scene:dungeon_world_demon_tower_1",
+        "character:reincarnator_walk",
+        "character:reincarnator",
+        "monster:fog_lesser_demon_world",
+        "scene:dungeon_transition_gate",
+        "scene:dungeon_prop_chest",
+        "scene:dungeon_prop_exit",
+        "scene:dungeon_prop_event",
+        "scene:dungeon_prop_trap",
+        "scene:dungeon_prop_survey",
+        "scene:dungeon_prop_relic",
+        "scene:dungeon_prop_shrine",
+        "scene:dungeon_prop_law",
+        "scene:dungeon_prop_debris"
+      ],
+      "error": false,
+      "input": true,
+      "labels": [
+        "断符石盘",
+        "入口未开放",
+        "雾中妖鬼",
+        "血字阶梯",
+        "入口未开放",
+        "灰坑回声",
+        "入口未开放",
+        "靠近互动",
+        "地图",
+        "目标",
+        "角色",
+        "轮回者",
+        "生命 102/102",
+        "奖励点 850   灵韵 1",
+        "背包",
+        "菜单",
+        "侵蚀：稳定 · 出口封印 · 法则：稳定"
+      ],
+      "loading": false,
+      "missing": [],
+      "phase": "explore",
+      "position": {
+        "x": 500,
+        "y": 700
+      },
+      "primary": "dungeon:demon_tower_1",
+      "retry": false,
+      "status": "ready",
+      "touchable": [
+        "WalkJoystick",
+        "WalkInteract",
+        "SceneMap",
+        "SceneCodex",
+        "SceneCharacter",
+        "SceneDetails",
+        "SceneHelp"
+      ],
+      "viewport": {
+        "height": 568,
+        "width": 320
+      },
+      "walking": true
+    },
+    {
+      "name": "dungeon-retry-ready-390",
+      "desired": [
+        "scene:dungeon_world_demon_tower_1",
+        "character:reincarnator_walk",
+        "character:reincarnator",
+        "monster:fog_lesser_demon_world",
+        "scene:dungeon_transition_gate",
+        "scene:dungeon_prop_chest",
+        "scene:dungeon_prop_exit",
+        "scene:dungeon_prop_event",
+        "scene:dungeon_prop_trap",
+        "scene:dungeon_prop_survey",
+        "scene:dungeon_prop_relic",
+        "scene:dungeon_prop_shrine",
+        "scene:dungeon_prop_law",
+        "scene:dungeon_prop_debris"
+      ],
+      "error": false,
+      "input": true,
+      "labels": [
+        "断符石盘",
+        "入口未开放",
+        "雾中妖鬼",
+        "血字阶梯",
+        "入口未开放",
+        "灰坑回声",
+        "入口未开放",
+        "靠近互动",
+        "地图",
+        "目标",
+        "角色",
+        "轮回者",
+        "生命 102/102",
+        "奖励点 850   灵韵 1",
+        "背包",
+        "菜单",
+        "侵蚀：稳定 · 出口封印 · 法则：稳定"
+      ],
+      "loading": false,
+      "missing": [],
+      "phase": "explore",
+      "position": {
+        "x": 500,
+        "y": 700
+      },
+      "primary": "dungeon:demon_tower_1",
+      "retry": false,
+      "status": "ready",
+      "touchable": [
+        "WalkJoystick",
+        "WalkInteract",
+        "SceneMap",
+        "SceneCodex",
+        "SceneCharacter",
+        "SceneDetails",
+        "SceneHelp"
+      ],
+      "viewport": {
+        "height": 844,
+        "width": 390
+      },
+      "walking": true
+    },
+    {
+      "name": "combat-ready-390",
+      "desired": [
+        "scene:dungeon_world_demon_tower_1",
+        "character:reincarnator_walk",
+        "character:reincarnator",
+        "monster:fog_lesser_demon_world",
+        "scene:dungeon_prop_debris"
+      ],
+      "error": false,
+      "input": true,
+      "labels": [
+        "42 / 42",
+        "雾中妖鬼",
+        "靠近互动",
+        "目标",
+        "法术",
+        "药品",
+        "攻击",
+        "普攻",
+        "防御",
+        "雷火符",
+        "脱离战斗",
+        "战意 0 / 3",
+        "角色",
+        "轮回者",
+        "生命 102/102",
+        "奖励点 850   灵韵 1",
+        "背包",
+        "菜单",
+        "第 1 回合 · 意图：首回合撕甲"
+      ],
+      "loading": false,
+      "missing": [],
+      "phase": "combat",
+      "position": {
+        "x": 440,
+        "y": 700
+      },
+      "primary": "monster:fog_lesser_demon",
+      "retry": false,
+      "status": "ready",
+      "touchable": [
+        "WalkJoystick",
+        "WalkInteract",
+        "SceneCodex",
+        "WalkCombatChoice:spells",
+        "WalkCombatChoice:medicines",
+        "WalkCombatAction:combat.action:attack",
+        "WalkCombatAction:combat.action:guard",
+        "WalkCombatAction:combat.action:use_thunder_talisman",
+        "WalkCombatAction:combat.action:escape",
+        "SceneCharacter",
+        "SceneDetails",
+        "SceneHelp"
+      ],
+      "viewport": {
+        "height": 844,
+        "width": 390
+      },
+      "walking": true
+    },
+    {
+      "name": "combat-ready-320",
+      "desired": [
+        "scene:dungeon_world_demon_tower_1",
+        "character:reincarnator_walk",
+        "character:reincarnator",
+        "monster:fog_lesser_demon_world",
+        "scene:dungeon_prop_debris"
+      ],
+      "error": false,
+      "input": true,
+      "labels": [
+        "42 / 42",
+        "雾中妖鬼",
+        "靠近互动",
+        "目标",
+        "法术",
+        "药品",
+        "攻击",
+        "普攻",
+        "防御",
+        "雷火符",
+        "脱离战斗",
+        "战意 0 / 3",
+        "角色",
+        "轮回者",
+        "生命 102/102",
+        "奖励点 850   灵韵 1",
+        "背包",
+        "菜单",
+        "第 1 回合 · 意图：首回合撕甲"
+      ],
+      "loading": false,
+      "missing": [],
+      "phase": "combat",
+      "position": {
+        "x": 440,
+        "y": 700
+      },
+      "primary": "monster:fog_lesser_demon",
+      "retry": false,
+      "status": "ready",
+      "touchable": [
+        "WalkJoystick",
+        "WalkInteract",
+        "SceneCodex",
+        "WalkCombatChoice:spells",
+        "WalkCombatChoice:medicines",
+        "WalkCombatAction:combat.action:attack",
+        "WalkCombatAction:combat.action:guard",
+        "WalkCombatAction:combat.action:use_thunder_talisman",
+        "WalkCombatAction:combat.action:escape",
+        "SceneCharacter",
+        "SceneDetails",
+        "SceneHelp"
+      ],
+      "viewport": {
+        "height": 568,
+        "width": 320
+      },
+      "walking": true
+    },
+    {
+      "name": "combat-after-hit-320",
+      "desired": [
+        "scene:dungeon_world_demon_tower_1",
+        "character:reincarnator_walk",
+        "character:reincarnator",
+        "monster:fog_lesser_demon_world",
+        "scene:dungeon_prop_debris"
+      ],
+      "error": false,
+      "input": true,
+      "labels": [
+        "24 / 42",
+        "雾中妖鬼",
+        "靠近互动",
+        "目标",
+        "法术",
+        "药品",
+        "攻击",
+        "普攻",
+        "防御",
+        "雷火符",
+        "脱离战斗",
+        "战意 0 / 3",
+        "角色",
+        "轮回者",
+        "生命 92/102",
+        "奖励点 850   灵韵 1",
+        "背包",
+        "菜单",
+        "第 2 回合 · 意图：常规追击"
+      ],
+      "loading": false,
+      "missing": [],
+      "phase": "combat",
+      "position": {
+        "x": 440,
+        "y": 700
+      },
+      "primary": "monster:fog_lesser_demon",
+      "retry": false,
+      "status": "ready",
+      "touchable": [
+        "WalkJoystick",
+        "WalkInteract",
+        "SceneCodex",
+        "WalkCombatChoice:spells",
+        "WalkCombatChoice:medicines",
+        "WalkCombatAction:combat.action:attack",
+        "WalkCombatAction:combat.action:guard",
+        "WalkCombatAction:combat.action:use_thunder_talisman",
+        "WalkCombatAction:combat.action:escape",
+        "SceneCharacter",
+        "SceneDetails",
+        "SceneHelp"
+      ],
+      "viewport": {
+        "height": 568,
+        "width": 320
+      },
+      "walking": true
+    }
+  ],
+  "wechatDeviceVerified": false,
+  "sourceSha256": {
+    "cocos/assets/scripts/InfiniteFlowApp.ts": "5756d0e327b84dc1123903796651239041df236ecbc5172b9a8d1903496d99d2",
+    "cocos/assets/scripts/ui/InfiniteFlowView.ts": "36413b03b0dd6e0b8e31d4b2d300fc5d36a35e565432a97639746dce5fcfcf0d",
+    "cocos/assets/scripts/ui/InfiniteFlowWalkScene.ts": "1255aac126afd7f0da913aa636404e7dd0bc7ec1e7dab017b4b03c9fb1bbcf29",
+    "cocos/headless/bootstrap-race.self-check.mjs": "89eaad010390f87a71a541874723d75d64bc00aabc9379787e5dc3dee6d29dd0",
+    "cocos/headless/mobile-sheet-actions.self-check.mjs": "352fa3c3e637fef1ff73146f127ee571c44296fb1d34b63bacc27a101b3c6fb9",
+    "scripts/web-mobile-canvas.smoke.mjs": "3d32116417f7a089da9ffdf67ea7749702ca6db93ddbfd9063ae7a521da7ab56",
+    "cocos/README.md": "e82e5220ef00d048a3faaa04ea9eadb26be7d245bfde76d5ea5b2abcabc0772b"
+  },
+  "screenshots": [
+    {
+      "file": "hub-cold-loading-390.png",
+      "bytes": 9706,
+      "sha256": "62e6e8d5ffb0890f4ab5d600d679f2e0f2e6c32597fd14b47ad638f21a015638"
+    },
+    {
+      "file": "hub-ready-390.png",
+      "bytes": 507734,
+      "sha256": "c7eba825405e1bec03015dee03c422b7d912af21f77d6c0ca354ddeafc6082b0"
+    },
+    {
+      "file": "dungeon-entry-loading-390.png",
+      "bytes": 8982,
+      "sha256": "96624cde3eeacda2a2171e4fc84e36c73408b87db37ebc15509dc14f23cee8d3"
+    },
+    {
+      "file": "dungeon-last-image-loading-390.png",
+      "bytes": 8982,
+      "sha256": "96624cde3eeacda2a2171e4fc84e36c73408b87db37ebc15509dc14f23cee8d3"
+    },
+    {
+      "file": "dungeon-error-390.png",
+      "bytes": 13982,
+      "sha256": "059a25f038e65e98489ea39613734a1bc2be026757926e5a8c406f160ca1ddcc"
+    },
+    {
+      "file": "dungeon-error-320.png",
+      "bytes": 9773,
+      "sha256": "3ba4c3cac2551d304fc07bf91542c49053f998fc273c826752a8ed55a1c9d58e"
+    },
+    {
+      "file": "dungeon-retry-loading-320.png",
+      "bytes": 6222,
+      "sha256": "3848900c014c8439f5584e2c8c609f1fab59c09a97156029978882e45d3b092f"
+    },
+    {
+      "file": "dungeon-retry-ready-320.png",
+      "bytes": 356037,
+      "sha256": "391816167e3bc18116b54432451d99bdffda476eeae30f2ace64313821fb2f4a"
+    },
+    {
+      "file": "dungeon-retry-ready-390.png",
+      "bytes": 601103,
+      "sha256": "79a2451f71d7534da431030db0b27d1042c53227eee8ad7f09436510fb197a7c"
+    },
+    {
+      "file": "combat-ready-390.png",
+      "bytes": 589259,
+      "sha256": "30e9757eb6c2cb8fe01ad925ba281392ad18e308156f25c55a93a01642850c84"
+    },
+    {
+      "file": "combat-ready-320.png",
+      "bytes": 348756,
+      "sha256": "32c2eb6b59789bf4806332e8b18c93ffdaccbec350c6fe53d15fc2ea0fa9635b"
+    },
+    {
+      "file": "combat-after-hit-320.png",
+      "bytes": 349064,
+      "sha256": "071bbf65bbd7ce0edaf28539508c398b4c33be9a089fefc06fbdf880f54956e3"
+    }
+  ]
+}

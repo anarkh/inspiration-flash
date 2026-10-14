@@ -1,0 +1,40 @@
+{
+  "verifiedAt": "2026-10-10T10:54:04.416Z",
+  "url": "http://127.0.0.1:8125/prototype/dungeon-entry-v1/",
+  "scope": "standalone interface prototype only",
+  "data": "Current core catalog, fresh-game campaign gates, asset manifest paths",
+  "chapters": 19,
+  "availableInExample": [
+    "demon_tower_1"
+  ],
+  "imagesHttpChecked": 19,
+  "initialPower": 167,
+  "checks": {
+    "narrow": {
+      "button": {
+        "height": 44,
+        "width": 82
+      },
+      "cards": 19,
+      "entryVisibleWithoutScroll": true,
+      "listHasNoHorizontalOverflow": true,
+      "stage": {
+        "height": 568,
+        "width": 320
+      }
+    },
+    "singleClickEntry": true,
+    "preparationExpandedOnSameScreen": true,
+    "frameChangeAppliedToEntryDemo": true,
+    "noSecondConfirmation": true,
+    "returnToPrototype": true
+  },
+  "errors": [],
+  "productionModified": false,
+  "gameStateReadOrWritten": false,
+  "screenshots": [
+    "entry-390.png",
+    "entry-320.png",
+    "prototype-board.png"
+  ]
+}

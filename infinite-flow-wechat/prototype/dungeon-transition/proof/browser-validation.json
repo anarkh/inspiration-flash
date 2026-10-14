@@ -1,0 +1,63 @@
+{
+  "status": "PASS",
+  "scope": "Interactive HTML prototype only; not production Cocos integration",
+  "method": "CUA browser interactions and DOM measurements by coordinating root agent",
+  "verifiedAt": "2026-09-30T09:42:56.463Z",
+  "checks": {
+    "url": "http://127.0.0.1:8125/prototype/dungeon-transition/",
+    "viewports": [
+      {
+        "requested": {
+          "width": 320,
+          "height": 568
+        },
+        "images": [
+          {
+            "alt": "妖塔一层实际游戏背景",
+            "loaded": true
+          },
+          {
+            "alt": "旧金镶边的风化石质通道",
+            "loaded": true
+          }
+        ],
+        "scrollWidth": 305,
+        "smallTargets": [],
+        "width": 305
+      },
+      {
+        "requested": {
+          "width": 390,
+          "height": 844
+        },
+        "images": [
+          {
+            "alt": "妖塔一层实际游戏背景",
+            "loaded": true
+          },
+          {
+            "alt": "旧金镶边的风化石质通道",
+            "loaded": true
+          }
+        ],
+        "scrollWidth": 375,
+        "smallTargets": [],
+        "width": 375
+      }
+    ],
+    "verifiedInteractions": [
+      "available gate: walk toward doorway then open result",
+      "locked gate: show unavailable reason",
+      "near gate: open result immediately",
+      "switch all three real dungeon backgrounds",
+      "switch glowing and quiet gate variants",
+      "reset demonstration",
+      "expand and collapse implementation notes"
+    ],
+    "screenshots": [
+      "transition-mobile-320.png",
+      "transition-mobile-390.png"
+    ]
+  },
+  "combinedEvidence": "../../dungeon-ux/proof/prototypes-validation.json"
+}

@@ -1,0 +1,66 @@
+{
+  "styles": [
+    {
+      "id": "01",
+      "unchanged": true,
+      "paintedProps": 0
+    },
+    {
+      "id": "02",
+      "unchanged": true,
+      "paintedProps": 0
+    },
+    {
+      "id": "03",
+      "unchanged": true,
+      "paintedProps": 0
+    },
+    {
+      "id": "04",
+      "unchanged": true,
+      "paintedProps": 0
+    },
+    {
+      "id": "05",
+      "unchanged": true,
+      "paintedProps": 0
+    },
+    {
+      "id": "06",
+      "unchanged": true,
+      "paintedProps": 0
+    },
+    {
+      "id": "07",
+      "unchanged": true,
+      "paintedProps": 0
+    },
+    {
+      "id": "08",
+      "unchanged": true,
+      "paintedProps": 0
+    },
+    {
+      "id": "09",
+      "unchanged": true,
+      "paintedProps": 0
+    },
+    {
+      "id": "10",
+      "unchanged": false,
+      "paintedProps": 4
+    }
+  ],
+  "unchangedFiles": [
+    {
+      "name": "walk-world.mjs",
+      "sha256": "94074044d5a819517a431c8cb5bf3648285deea4725a6036bda32153ac94ef19"
+    },
+    {
+      "name": "walk-controller.mjs",
+      "sha256": "6f80099098c73d87564951ade0c3aeeeb62227c746289baa868af0017138ea62"
+    }
+  ],
+  "syntax": "passed",
+  "sourceCopyHashes": "all four passed"
+}

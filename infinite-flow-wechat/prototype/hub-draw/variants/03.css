@@ -1,0 +1,82 @@
+.v03 {
+  position: relative;
+  width: 390px;
+  height: 740px;
+  overflow: hidden;
+  isolation: isolate;
+  background: #1b1713;
+  color: #f5e8ce;
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+.v03 * { box-sizing: border-box; }
+.v03 button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.v03 button:focus-visible { outline: 2px solid #f7c57d; outline-offset: 3px; }
+.v03 button:active { filter: brightness(1.16); }
+.v03 svg { width: 22px; height: 22px; }
+.v03 .scene-background { position: absolute; inset: 0; z-index: -3; width: 100%; height: 100%; object-fit: cover; object-position: center; }
+.v03 .camp-shade { position: absolute; inset: 0; z-index: -2; background: linear-gradient(180deg, #100e0bea 0, #17130e52 24%, #1b120921 49%, #1b120a5c 74%, #17110ef5 100%); }
+.v03 .camp-rope { position: absolute; top: 138px; left: -20px; width: 430px; height: 28px; z-index: -1; border-top: 1px solid #cd9b5860; border-radius: 50%; transform: rotate(-4deg); box-shadow: 0 -2px 0 #15100975; }
+.v03 .scene-header { position: absolute; top: 13px; left: 15px; right: 15px; height: 73px; display: flex; align-items: center; gap: 12px; padding: 8px 8px 8px 7px; background: linear-gradient(110deg, #26231ff2, #1b1a16da); border: 1px solid #a38a553d; border-radius: 9px; box-shadow: 0 5px 18px #0004; }
+.v03 .avatar-button { flex: 0 0 58px; height: 57px; position: relative; padding: 0; overflow: hidden; background: #28241d; border: 1px solid #a48b60; border-radius: 5px; }
+.v03 .avatar-button img { width: 100%; height: 100%; object-fit: cover; object-position: center 17%; }
+.v03 .avatar-button span { position: absolute; bottom: 0; left: 0; right: 0; padding: 2px; background: #15100bdc; color: #f0dfbf; font-size: 12px; }
+.v03 .scene-identity { flex: 1; align-self: center; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; column-gap: 8px; row-gap: 5px; }
+.v03 .scene-place { flex: 0 0 100%; font-size: 18px; font-weight: 700; letter-spacing: 2px; color: #f9efdc; }
+.v03 .scene-health { font-size: 12px; color: #d7cdb8; }
+.v03 .scene-health b { color: #f5ecda; font-size: 13px; font-weight: 600; margin-left: 5px; }
+.v03 .scene-health > span { margin-left: 3px; color: #b9ae98; }
+.v03 .hp-track { width: 100%; height: 3px; background: #3d3c2d; border-radius: 1px; }
+.v03 .hp-track i { display: block; width: 100%; height: 100%; background: #bac38d; }
+.v03 .scene-menu { flex: 0 0 56px; height: 56px; display: grid; place-items: center; border: 0; border-left: 1px solid #b4a1762b; background: transparent; color: #d4c6a7; }
+.v03 .camp-location { position: absolute; top: 101px; left: 22px; display: flex; align-items: center; gap: 7px; color: #f0ddbc; font-size: 15px; font-weight: 600; text-shadow: 0 2px 4px #000; }
+.v03 .camp-location small { font-size: 12px; color: #c8b799; font-weight: 400; margin-left: 4px; }
+.v03 .camp-dot { width: 5px; height: 5px; background: #ecb468; transform: rotate(45deg); box-shadow: 0 0 9px #efa65c; }
+.v03 .scene-resources { position: absolute; top: 128px; left: 22px; display: flex; align-items: center; gap: 17px; font-size: 12px; color: #d8c9ab; text-shadow: 0 2px 4px #000; }
+.v03 .scene-resources b { color: #f2d097; font-weight: 600; margin-left: 3px; font-size: 13px; }
+.v03 .camp-bag { position: absolute; top: 94px; right: 15px; width: 71px; height: 56px; display: flex; justify-content: center; align-items: center; gap: 7px; padding: 0; border: 1px solid #ae936142; border-radius: 6px; background: #282018d9; font-size: 13px; color: #f2e0bf; }
+.v03 .camp-bag svg { width: 20px; height: 20px; }
+.v03 .camp-path { position: absolute; top: 335px; left: 122px; width: 147px; height: 311px; z-index: -1; border-radius: 40% 40% 0 0; background: radial-gradient(ellipse at 50% 30%, #d5903724, transparent 53%), linear-gradient(90deg, transparent, #b8a78219 40%, #b8a78211 60%, transparent); transform: perspective(200px) rotateX(9deg); }
+.v03 .camp-embers { position: absolute; top: 361px; left: 159px; width: 72px; height: 82px; z-index: -1; border-radius: 50%; background: radial-gradient(ellipse at 50% 78%, #fabc495c, #ea7c2e20 48%, transparent 71%); }
+.v03 .camp-embers i { position: absolute; width: 3px; height: 3px; background: #efa64e; border-radius: 50%; box-shadow: 0 0 7px #fb973c; }
+.v03 .camp-embers i:nth-child(1) { left: 20px; top: 16px; }
+.v03 .camp-embers i:nth-child(2) { left: 45px; top: 35px; width: 2px; height: 2px; }
+.v03 .camp-embers i:nth-child(3) { left: 31px; top: 52px; }
+.v03 .camp-embers i:nth-child(4) { left: 54px; top: 3px; width: 2px; height: 2px; }
+.v03 .camp-stall { position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding: 0 2px 1px; border: 0; background: transparent; min-width: 56px; min-height: 56px; }
+.v03 .camp-stall:hover { background: transparent; }
+.v03 .camp-stall:hover .svc-copy { border-color: #d8b375; background: #3e2d1fed; }
+.v03 .camp-stall::before { content: ""; position: absolute; bottom: 31px; left: 13px; right: 13px; height: 16px; border-radius: 50%; background: #0008; filter: blur(4px); }
+.v03 .camp-stall .svc-art { position: absolute; bottom: 31px; height: calc(100% - 23px); width: 100%; object-fit: contain; object-position: bottom; filter: sepia(.11) drop-shadow(0 3px 3px #0d080ac0); }
+.v03 .camp-stall .svc-copy { position: relative; z-index: 1; display: flex; flex-direction: column; width: 100%; text-align: center; gap: 3px; padding: 6px 2px 5px; border: 1px solid #ad8e554f; border-radius: 3px; background: linear-gradient(105deg, #36291fe8, #211b16f2); box-shadow: 0 3px 7px #0005; }
+.v03 .camp-stall .svc-title { font-size: 14px; font-weight: 600; color: #f4e2bf; white-space: nowrap; line-height: 1.2; }
+.v03 .camp-stall .svc-purpose { font-size: 12px; color: #d0bea0; white-space: nowrap; line-height: 1.2; }
+.v03 .camp-stall .svc-icon { display: none; }
+.v03 .camp-equipment { top: 162px; left: 14px; width: 119px; height: 152px; transform: rotate(-1.5deg); }
+.v03 .camp-supplies { top: 170px; left: 262px; width: 114px; height: 146px; transform: rotate(1.4deg); }
+.v03 .camp-tasks { top: 209px; left: 142px; width: 107px; height: 140px; }
+.v03 .camp-tasks .svc-copy { background: #352c20e8; border-color: #c4a96e7a; }
+.v03 .camp-pets { top: 332px; left: 18px; width: 115px; height: 133px; transform: rotate(1deg); }
+.v03 .camp-methods { top: 343px; left: 263px; width: 113px; height: 133px; transform: rotate(-1.2deg); }
+.v03 .camp-bloodlines { top: 493px; left: 27px; width: 119px; height: 137px; transform: rotate(-1deg); }
+.v03 .camp-companions { top: 489px; left: 244px; width: 132px; height: 141px; transform: rotate(1deg); }
+.v03 .camp-player { position: absolute; top: 449px; left: 151px; width: 90px; height: 166px; display: flex; align-items: center; justify-content: flex-end; flex-direction: column; padding: 0; border: 0; background: transparent; }
+.v03 .camp-player::before { content: ""; position: absolute; left: 10px; right: 10px; bottom: 21px; height: 14px; background: #0007; border-radius: 50%; filter: blur(4px); }
+.v03 .camp-player .walker-art { display: block; width: 104px; height: 104px; background-image: url('../../../art-source/reincarnator-walk-v1.png'); background-repeat: no-repeat; background-size: 416px 416px; background-position: 0 0; filter: drop-shadow(0 4px 5px #0008); }
+.v03 .camp-player .player-name { position: relative; padding: 3px 8px; color: #f0e3c8; background: #181411a8; border-radius: 3px; font-size: 12px; line-height: 1.2; }
+.v03 .camp-trail-mark { position: absolute; top: 618px; left: 189px; height: 27px; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.v03 .camp-trail-mark span { width: 6px; height: 3px; border-right: 1px solid #deb77691; border-bottom: 1px solid #deb77691; transform: rotate(45deg); }
+.v03 .camp-departure { position: absolute; top: 651px; left: 17px; width: 356px; height: 68px; display: flex; align-items: center; gap: 13px; padding: 8px 14px; border: 1px solid #aa8150; border-radius: 5px; background: linear-gradient(110deg, #5d3c24f5, #39281bec); box-shadow: 0 6px 16px #0007, inset 0 0 0 3px #241b113e; text-align: left; transform: rotate(-.5deg); }
+.v03 .camp-departure::before, .v03 .camp-departure::after { content: ""; position: absolute; top: 7px; width: 4px; height: 4px; background: #c7a46c; border-radius: 50%; box-shadow: 0 0 0 1px #151009; }
+.v03 .camp-departure::before { left: 7px; }
+.v03 .camp-departure::after { right: 7px; }
+.v03 .portal-symbol { flex: 0 0 40px; height: 43px; position: relative; display: block; border: 1px solid #e9bc6f91; border-bottom: 0; border-radius: 16px 16px 0 0; background: radial-gradient(ellipse at bottom, #f3b15a50, transparent 80%); }
+.v03 .portal-symbol::before { content: ""; position: absolute; inset: 5px 5px 0; border: 1px solid #e9b3636a; border-bottom: 0; border-radius: 11px 11px 0 0; }
+.v03 .portal-symbol::after { content: ""; position: absolute; left: 18px; top: 16px; width: 4px; height: 17px; background: #f0c678; box-shadow: 0 0 13px #f3c063; }
+.v03 .portal-symbol i, .v03 .portal-symbol b { display: none; }
+.v03 .portal-copy { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+.v03 .portal-eyebrow { font-size: 12px; line-height: 1; color: #dcb57b; letter-spacing: 2px; }
+.v03 .portal-copy strong { font-size: 18px; font-weight: 600; line-height: 1.2; letter-spacing: 1px; color: #fff0cf; }
+.v03 .portal-hint { font-size: 12px; line-height: 1.2; color: #dfc9a5; }
+.v03 .portal-arrow { width: 25px; color: #f6cc83; }
+.v03 .portal-arrow svg { width: 24px; height: 24px; }
+.v03 .camp-footnote { position: absolute; top: 725px; left: 0; width: 100%; text-align: center; font-size: 12px; color: #bdab8e; line-height: 1; }

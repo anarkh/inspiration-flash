@@ -1,0 +1,50 @@
+{
+  "revision": 1,
+  "tool": "built-in imagegen",
+  "direction": "Original Chinese infinite-flow survival RPG: grounded dark fantasy plus restrained retro science fiction.",
+  "sharedPrompt": "Create a production-ready single full-body idle NPC sprite for an original Chinese infinite-flow survival RPG. Use the attached canonical portrait ONLY as identity, clothing and material reference; turn it into a complete full-body game-world figure. Hand-painted grounded dark-fantasy illustration with restrained retro-science-fiction, matching a detailed 2D RPG player. Adult human proportions around 6 heads tall, NOT chibi. Slight elevated 25-degree camera, facing toward viewer/down-screen, near-orthographic, entire head to soles visible, neutral readable pose. Center the character on a 1024x1536 portrait canvas, feet baseline at 93 percent height, top of head at about 7 percent, roughly 12 percent side padding, held props within canvas. Transparent alpha background throughout, no floor, no backdrop, no card, no frame, no caption, no text, no watermark. Crisp readable silhouette, weathered charcoal materials, muted old-gold highlights, sparse oxidized-cyan rim light; soft top-left illumination, enough separation for placement on dark stone. Preserve face, apparent age, hair and signature clothing from the reference. Avoid photographic backgrounds, photoreal cutout lighting, cute cartoon proportions, modern generic fantasy gacha glamor, giant visual effects, cut-off boots.",
+  "assets": [
+    {
+      "key": "npc:equipment_quartermaster_world",
+      "source": "equipment-quartermaster-v1.png",
+      "reference": "../../cocos/assets/resources/npc/equipment-quartermaster-v1.png",
+      "subject": "Equipment quartermaster: mature East Asian man with a scarred stern face, black hair in topknot, worn black field coat and oxidized bronze armored shoulders, utility belt, a long modular mechanical sword carried vertically beside his leg, experienced survivor not ceremonial knight."
+    },
+    {
+      "key": "npc:supply_trader_world",
+      "source": "supply-trader-v1.png",
+      "reference": "../../cocos/assets/resources/npc/supply-trader-v1.png",
+      "subject": "Supply trader: elderly East Asian man with round brass spectacles, salt-and-pepper beard and topknot, layered weathered charcoal traveling robes, holding a compact open wooden medicine case with vials at waist, paper talisman packets on belt and brown satchel. Resourceful merchant."
+    },
+    {
+      "key": "npc:pet_keeper_world",
+      "source": "pet-keeper-v1.png",
+      "reference": "../../cocos/assets/resources/npc/pet-keeper-v1.png",
+      "subject": "Pet keeper: adult East Asian woman with loosely tied dark hair, weathered moss-green and olive long field robes, leather waist belt, brass jade charm, carrying one small translucent pale cyan fox spirit at her right side. Calm compassionate beast keeper, practical clothing."
+    },
+    {
+      "key": "npc:method_master_world",
+      "source": "method-master-v1.png",
+      "reference": "../../cocos/assets/resources/npc/method-master-v1.png",
+      "subject": "Cultivation mentor: tall adult East Asian man with long silver-white hair and a small carved hair crown, layered ivory-gray weathered robes with pale jade details, holding a green jade scroll/tablet diagonally at chest, calm and austere."
+    },
+    {
+      "key": "npc:bloodline_priest_world",
+      "source": "bloodline-priest-v1.png",
+      "reference": "../../cocos/assets/resources/npc/bloodline-priest-v1.png",
+      "subject": "Bloodline priest: androgynous East Asian adult around forty, swept-back black hair, stern calm face, long charcoal ceremonial robe with dark oxblood sash, bronze collar with amber stone, one hand holding a small dark-red glowing ritual vessel. Restrained ritual design, no gore."
+    },
+    {
+      "key": "npc:companion_guide_world",
+      "source": "companion-guide-v1.png",
+      "reference": "../../cocos/assets/resources/npc/companion-guide-v1.png",
+      "subject": "Companion guide: older East Asian woman around fifty-eight, long silver-gray braid over one shoulder, friendly experienced face, weathered brown travel coat and moss-green scarf with brass compass brooch, sturdy boots, a walking staff and rolled map at belt. Experienced expedition guide."
+    },
+    {
+      "key": "npc:main_god_projection_world",
+      "source": "main-god-projection-v1.png",
+      "reference": "../../cocos/assets/resources/npc/main-god-projection-v1.png",
+      "subject": "Task messenger as Main God projection: an adult faceless androgynous humanoid wearing layered dark ceremonial robes edged in warm old gold, hands calmly together, face an entirely smooth luminous golden oval with NO eyes nose or mouth, fragmented golden scanline holographic material, subtle concentric glyph halo and small floating ledger tablet. A mysterious retro-science-fiction projection with visible lower robe and feet, restrained glow not a sun flare."
+    }
+  ]
+}

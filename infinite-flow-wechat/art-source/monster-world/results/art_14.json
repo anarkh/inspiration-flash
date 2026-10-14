@@ -1,0 +1,26 @@
+{
+  "entityId": "estate_auctioneer",
+  "path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/art-source/monster-world/estate-auctioneer-world-v1.png",
+  "sourcePath": "/Users/bytedance/.codex/generated_images/01a0ecb5-3ef1-7880-b106-5a71e95de038/exec-1402c9a4-2197-4c8e-9bb4-64db1863b894.png",
+  "referencePath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/monster/estate-auctioneer-v1.png",
+  "size": {
+    "width": 1024,
+    "height": 1536
+  },
+  "mode": "RGBA",
+  "alpha": {
+    "min": 0,
+    "max": 254,
+    "transparentPixels": 688916,
+    "nonTransparentPixels": 883948,
+    "cornerAlpha": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "tool": "built-in imagegen",
+  "promptSource": "art-source/monster-world/prompts.json sharedPrompt + estate_auctioneer subject",
+  "visualInspection": "Full-body robed humanoid; integrated giant bronze hammer arm, floating plaque halo, hanging chains retained; no visible crop of subject; charcoal and bronze palette retained."
+}

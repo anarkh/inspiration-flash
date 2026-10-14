@@ -1,0 +1,43 @@
+{
+  "scope": "HTML equipment loot prototype backpack parity with production Cocos inventory; no Cocos release validation in this change",
+  "status": "passed",
+  "date": "2026-10-12",
+  "model": "Production core, application reducer and presentation ViewModel bundled from game-model-entry.js",
+  "viewports": [
+    {
+      "stage": "390x844",
+      "equipmentColumns": 4,
+      "equipmentBeforeClaim": 7,
+      "equipmentAfterClaim": 8,
+      "allEquipmentImagesLoaded": true,
+      "horizontalOverflow": false
+    },
+    {
+      "stage": "320x568",
+      "equipmentColumns": 4,
+      "equipmentAfterClaim": 8,
+      "allEquipmentImagesLoaded": true,
+      "horizontalOverflow": false,
+      "equipButtonMinimumHeight": 44
+    }
+  ],
+  "verifiedInteractions": [
+    "Claim closes reward panel directly without a second result popup",
+    "Opening backpack defaults to supplies; three tabs match production",
+    "Supplies use five columns and 100 cells with current exploration quantities; detail offers close only",
+    "Equipment uses four columns with complete owned inventory",
+    "Selecting equipment opens a floating detail panel; equipping keeps panel open and disables the equipped action",
+    "Swapping back and re-equipping preserves all eight owned items",
+    "Clicking another equipment cell directly switches detail",
+    "Switching tabs closes detail; relic tab renders production empty state",
+    "Backdrop click closes detail only; with no detail it leaves backpack open",
+    "Header close dismisses backpack even with detail open; reopening resets to supplies"
+  ],
+  "browserConsoleErrorsAndWarnings": [],
+  "screenshots": [
+    "game-backpack-390.png",
+    "game-backpack-equipped-390.png",
+    "game-backpack-320.png",
+    "game-backpack-equipped-320.png"
+  ]
+}

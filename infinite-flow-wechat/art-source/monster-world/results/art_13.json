@@ -1,0 +1,33 @@
+{
+  "entityId": "inheritance_mimic",
+  "status": "complete",
+  "path": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/art-source/monster-world/inheritance-mimic-world-v1.png",
+  "sourcePath": "/Users/bytedance/.codex/generated_images/01a0ecb5-16c6-7fa2-8abe-162666f8f5b1/exec-149017eb-28d5-4437-825d-f0cbad248cb2.png",
+  "referencePath": "/Users/bytedance/.codex/worktrees/108c/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/monster/inheritance-mimic-v1.png",
+  "width": 1024,
+  "height": 1536,
+  "mode": "RGBA",
+  "alpha": {
+    "min": 0,
+    "max": 254,
+    "transparentPixels": 757521,
+    "nonTransparentPixels": 815343,
+    "bbox": [
+      65,
+      21,
+      1010,
+      1536
+    ],
+    "cornerAlpha": [
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "sha256": "b5ca9bbd6eb12b68583b33060b0bffea0ba858da67caf26cf152737be513a7b6",
+  "byteIdenticalCopy": true,
+  "tool": "built-in imagegen",
+  "promptSet": "art-source/monster-world/prompts.json sharedPrompt + inheritance_mimic subject",
+  "visualCheck": "Complete isolated humanoid silhouette with both claw hands and lowest foot/tendrils visible; aged masks, inherited artifacts, hourglass and chest core preserved; dark charcoal and muted old bronze materials; no panel or text."
+}
