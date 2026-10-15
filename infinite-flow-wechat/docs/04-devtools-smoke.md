@@ -41,7 +41,7 @@
    ├─ project.config.json   appid=游客号, setting.urlCheck=false
    ├─ src/settings.*.json   assets.server=http://127.0.0.1:8947/
    ├─ 主包（不含 remote/）  与已验证构建一致
-   └─ remote/               22MB 远程 bundle，由 loopback server 提供
+   └─ remote/               远程 bundle（当前源资源约 325MB），由 loopback server 提供
                               ▲
                               │ npm run wechat:devtools-smoke:serve
               127.0.0.1:8947 （fail-closed 静态服务，仅 /remote/ 前缀）

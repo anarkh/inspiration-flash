@@ -107,6 +107,16 @@ type PendingPhysicalWrite = Readonly<{
   raw: string;
 }>;
 
+/**
+ * Decoding is a pure function of the exact raw bytes, so a slot whose physical
+ * value is byte-identical to the last decoded value reuses that outcome. Every
+ * load still reads both physical slots; any change re-runs the full checksum.
+ */
+type DecodedSlot = Readonly<
+  | { raw: string; ok: true; record: JournalRecord }
+  | { raw: string; ok: false; error: unknown }
+>;
+
 export type WxJournalStorageOptions = Readonly<{
   namespace?: string;
   hashPort?: HashPort;
@@ -289,6 +299,7 @@ export class WxJournalStoragePort implements StoragePort {
   private readonly namespace: string;
   private readonly onDiagnostic: ((diagnostic: WxJournalDiagnostic) => void) | undefined;
   private pendingPhysicalWrite: PendingPhysicalWrite | undefined;
+  private readonly decodedSlots: Partial<Record<WxJournalSlot, DecodedSlot>> = {};
   private queue: Promise<void> = Promise.resolve();
 
   constructor(
@@ -469,13 +480,16 @@ export class WxJournalStoragePort implements StoragePort {
         }
         throw cause;
       }
-      if (raw === null) continue;
-      try {
-        valid.push({ slot, raw, record: await decodeRecord(this.hashPort, raw) });
-      } catch (cause) {
+      if (raw === null) {
+        delete this.decodedSlots[slot];
+        continue;
+      }
+      const decoded = await this.decodeSlot(slot, raw);
+      if (decoded.ok) valid.push({ slot, raw, record: decoded.record });
+      else {
         corrupt.push({
           slot,
-          reason: cause instanceof Error ? cause.message : String(cause),
+          reason: decoded.error instanceof Error ? decoded.error.message : String(decoded.error),
         });
       }
     }
@@ -575,7 +589,7 @@ export class WxJournalStoragePort implements StoragePort {
       try {
         const observed = this.readPhysical(slot);
         if (observed === encoded.raw) {
-          await decodeRecord(this.hashPort, observed);
+          await this.decodeSlotOrThrow(slot, observed);
           this.pendingPhysicalWrite = { generation, slot, raw: observed };
         } else {
           this.pendingPhysicalWrite = undefined;
@@ -604,8 +618,32 @@ export class WxJournalStoragePort implements StoragePort {
         `Journal readback mismatch for ${physicalKey}`,
       );
     }
-    await decodeRecord(this.hashPort, readback);
+    await this.decodeSlotOrThrow(slot, readback);
     this.pendingPhysicalWrite = { generation, slot, raw: readback };
+  }
+
+  private async decodeSlot(slot: WxJournalSlot, raw: string): Promise<DecodedSlot> {
+    const cached = this.decodedSlots[slot];
+    if (cached !== undefined && cached.raw === raw) return cached;
+    let decoded: DecodedSlot;
+    try {
+      decoded = { raw, ok: true, record: await decodeRecord(this.hashPort, raw) };
+    } catch (error) {
+      decoded = { raw, ok: false, error };
+      // Only deterministic content failures are memoized; a failing HashPort
+      // must be retried on the next load.
+      if (!(error instanceof WxJournalStorageError && error.code === 'corrupt-journal')) {
+        delete this.decodedSlots[slot];
+        return decoded;
+      }
+    }
+    this.decodedSlots[slot] = decoded;
+    return decoded;
+  }
+
+  private async decodeSlotOrThrow(slot: WxJournalSlot, raw: string): Promise<void> {
+    const decoded = await this.decodeSlot(slot, raw);
+    if (!decoded.ok) throw decoded.error;
   }
 
   private emitDiagnostic(diagnostic: WxJournalDiagnostic): void {

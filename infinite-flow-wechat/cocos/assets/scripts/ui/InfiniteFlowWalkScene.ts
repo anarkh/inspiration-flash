@@ -1,7 +1,7 @@
 import { Color, Graphics, Label, Mask, Node, Size, Sprite, UITransform, Vec2, Vec3 } from 'cc';
 import type { SpriteFrame } from 'cc';
 import type { GameViewModel, ViewActionModel } from '@infinite-flow/presentation';
-import { formatInfiniteFlowPlayerChrome } from './InfiniteFlowView';
+import { formatInfiniteFlowPlayerChrome, isInfiniteFlowPlayerActivityFailure } from './InfiniteFlowView';
 import type { InfiniteFlowRuntimeChrome } from './InfiniteFlowView';
 import { findWalkPath, nearestWalkTarget, stepWalkPosition } from './walk-world';
 import type { WalkWorldSpec, WorldPoint, WorldProp, WorldRect, WorldTarget } from './walk-world';
@@ -1131,7 +1131,7 @@ export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, sc
   });
 
   const activity = formatInfiniteFlowPlayerChrome(options.chrome, model.phase).activityMessage;
-  const failed = activity !== undefined && /不可执行|失败|异常|无效|内存紧张|暂不可用/.test(activity);
+  const failed = isInfiniteFlowPlayerActivityFailure(activity);
   const feedbackText = failed ? activity : options.feedback?.text;
   const toast = feedbackText === undefined ? undefined
     : text(scene, 'WalkFeedback', feedbackText, -49, top - 124 * hudPixel, 554, 24 * hudPixel, 10 * hudPixel, failed ? DARK_UI.red : DARK_UI.gold);

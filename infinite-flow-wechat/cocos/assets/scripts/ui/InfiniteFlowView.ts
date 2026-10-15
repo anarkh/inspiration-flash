@@ -271,6 +271,8 @@ export type InfiniteFlowRuntimeChrome = Readonly<{
   modeDetail: string;
   activityMessage?: string;
   blockingMessage?: string;
+  /** The block is a recoverable write failure of an already-reduced command. */
+  persistenceRetry?: true;
   busyActionId?: string;
   sceneAssets?: 'loading' | 'ready' | 'error';
   /** Hub-only: supplies-panel actions for item-tip carry toggles (projected on demand). */
@@ -322,6 +324,7 @@ function formatInfiniteFlowPlayerActivity(
   if (/规则拒绝|本地输入拒绝|写入阻断/u.test(activity)) {
     return '当前行动不可执行 · 进度未改变';
   }
+  if (/已补写\s/u.test(activity)) return '存档已补写 · 可继续游戏';
   if (/输入无效|invalid input/iu.test(activity)) return '当前输入无效 · 请重新选择';
   if (/本地界面/u.test(activity)) return '界面已切换';
 
@@ -330,6 +333,13 @@ function formatInfiniteFlowPlayerActivity(
     return '运行遇到异常 · 请稍后重试';
   }
   return infiniteFlowPhaseActivity(phase);
+}
+
+/** Player activity lines (from the closed set above) that report a failed or unavailable action. */
+const PLAYER_ACTIVITY_FAILURE_PATTERN = /不可执行|失败|异常|无效|内存紧张|暂不可用/u;
+
+export function isInfiniteFlowPlayerActivityFailure(activity: string | undefined): activity is string {
+  return activity !== undefined && PLAYER_ACTIVITY_FAILURE_PATTERN.test(activity);
 }
 
 /** Player-facing chrome projection. The supplied diagnostic chrome stays untouched. */
@@ -813,6 +823,7 @@ export function layoutInfiniteFlowVisualStage(
 
 export interface InfiniteFlowViewDelegate {
   retrySceneAssets?(): void;
+  retryPersistence?(): void;
   activate(
     physicalId: string,
     actionId: string,
@@ -3838,17 +3849,21 @@ export class InfiniteFlowView {
     const innerWidth = width - 24 * unit;
     const textWidth = innerWidth - 6 * unit;
     const diagnostic = chrome.blockingMessage ?? chrome.modeDetail;
-    const policy = blocked
-      ? '不会降级为内存存档，也不会显示“已签核”。\n请按上方诊断补齐明确宿主边界后重新载入。'
-      : '目标 → 状态 → 动作 → 风险 → 帮助 → 日志';
+    const retry = blocked && chrome.persistenceRetry === true;
+    const policy = retry
+      ? '上一步尚未写入存档，画面保持写入前的状态。\n重试只补写这一步，不会重复结算。'
+      : blocked
+        ? '不会降级为内存存档，也不会显示“已签核”。\n请按上方诊断补齐明确宿主边界后重新载入。'
+        : '目标 → 状态 → 动作 → 风险 → 帮助 → 日志';
+    const buttonBlock = retry ? 53 * unit : 0;
     const measuredLines = (value: string, font: number): number => value.split('\n').reduce(
       (count, line) => count + wrapInfiniteFlowLine(line, Math.floor(textWidth / (font * unit))).length, 0);
     const bodyHeight = (measuredLines(diagnostic, 12) * 21 + 4) * unit;
     const policyHeight = (measuredLines(policy, 11) * 19 + 4) * unit;
     const naturalContentHeight = bodyHeight + 12 * unit + policyHeight;
     const scrollHeight = Math.min(300 * unit, naturalContentHeight,
-      this.compactOverlayMaxHeight(unit) - 81 * unit);
-    const height = 81 * unit + scrollHeight;
+      this.compactOverlayMaxHeight(unit) - 81 * unit - buttonBlock);
+    const height = 81 * unit + scrollHeight + buttonBlock;
     const overlay = this.compactOverlayBackdrop(root, 'RuntimeDiagnosticBlocker');
     const panel = this.compactOverlayPanel(overlay, 'RuntimeDiagnostic',
       this.safeX(), this.safeCenterY(), width, height);
@@ -3878,6 +3893,16 @@ export class InfiniteFlowView {
         fontSize: 11 * unit, lineHeight: 19 * unit, color: COMPACT_SHEET_THEME.palette.accent,
         vertical: Label.VerticalAlign.TOP, wrap: true, shrink: false,
       });
+    if (!retry) return;
+    const retrying = chrome.busyActionId !== undefined;
+    // `root` may be a blocker overlay; retire the callback with the whole view root.
+    const viewRoot = this.root;
+    const buttonWidth = Math.min(148 * unit, innerWidth);
+    this.renderOverlayButton(panel, 'PersistenceRetry', retrying ? '正在重试…' : '重试保存',
+      (innerWidth - buttonWidth) / 2, localY(height, 69 * unit + scrollHeight + 9 * unit, 44 * unit), buttonWidth,
+      !retrying && this.delegate.retryPersistence !== undefined, () => {
+        if (this.root === viewRoot && !this.destroyed) this.delegate.retryPersistence?.();
+      }, true, 'PersistenceRetryLabel');
   }
 
   private renderInformationRail(root: Node): void {

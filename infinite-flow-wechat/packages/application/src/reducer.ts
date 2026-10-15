@@ -552,7 +552,8 @@ function deriveEvents(
 
   if (before.combat && !after.combat) {
     const defeated = after.run?.clearedNodeIds.includes(before.combat.nodeId) === true;
-    const escaped = command.type === 'combat/act' && command.action === 'escape';
+    // A lethal escape scrape or counter settles the run as a failure.
+    const escaped = command.type === 'combat/act' && command.action === 'escape' && after.phase !== 'result';
     events.push({
       type: 'combat.finished',
       nodeId: before.combat.nodeId,

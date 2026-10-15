@@ -93,7 +93,7 @@ law/pursuit/fail-closed/JSON/deep-freeze/动作不变，headless 覆盖 320×568
 - `packages/save-codec/`：Web v1 原始存档的只读兼容解码器与 checksum fixture。
 - `packages/client/`：唯一 session 编排、入场 seed、物理输入去重和生命周期绑定。
 - `packages/presentation/`：四阶段只读 ViewModel、帮助语义和移动端设计令牌。
-- `cocos/`：Cocos 3.8.8 场景、行走及详情 UI、305 个资源和微信平台适配。
+- `cocos/`：Cocos 3.8.8 场景、行走及详情 UI、314 个资源（PNG 约 325 MB）和微信平台适配。
 - `acceptance/`：冻结的 103 项迁移验收登记；登记有效不等于 case PASS。
 - `docs/`：迁移阶段、工具链、当前状态和风险。
 
@@ -121,7 +121,7 @@ npm run verify
 污染、305 项资源及 Creator metadata、Cocos 场景、headless
 bootstrap/销毁/视觉资源与装备系统竞态、连续移动及手机详情检查、103 项 registry、验收 runner 合同、远程 bundle
 配置/产物合同、全部
-workspace 类型、90 项微信平台自检和包级测试。
+workspace 类型、137 项微信平台自检和包级测试。
 `npm run typecheck` 与 `npm test` 也会先构建依赖，因此可在 clean clone 独立执行。
 
 本机已用 Creator 3.8.8 完成首次导入，并提交其生成的稳定 `.meta` UUID；编辑器生成
@@ -266,7 +266,7 @@ npm run wechat:devtools-smoke:self-check # 正例 + 负例自检（36 项）
 ```
 
 派生副本使用官方公开小游戏游客 AppID（DevTools 显示为 touristappid），
-`assets.server` 指向 `http://127.0.0.1:8947/`，22MB 远程 bundle 仍由本地
+`assets.server` 指向 `http://127.0.0.1:8947/`，远程 bundle（2026-08-12 构建时约 22MB；当前源资源已约 325MB）仍由本地
 fail-closed 静态服务提供，不进主包。副本根目录带 `NON_RELEASE_SMOKE.md` 与
 `devtools-smoke.derived.json` 标记。导入时目录选 `wechatgame-devtools-smoke`
 （不是 `wechatgame`），详见 [docs/04-devtools-smoke.md](docs/04-devtools-smoke.md)。

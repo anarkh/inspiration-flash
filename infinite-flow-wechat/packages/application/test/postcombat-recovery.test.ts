@@ -44,6 +44,13 @@ function transition(
   return reduced.state;
 }
 
+function finishedResult(state: GameState, command: GameCommand): string | undefined {
+  const reduced = reduceGameCommand(state, command);
+  assert(reduced.status === 'committed', `${command.type}: finishing command must commit`);
+  const finished = reduced.events.find(event => event.type === 'combat.finished');
+  return finished?.type === 'combat.finished' ? finished.result : undefined;
+}
+
 function assertRecovered(state: GameState, phase: 'explore' | 'result', label: string): void {
   assert(state.phase === phase && !state.combat, `${label}: encounter must be finished`);
   assert(state.player.maxHp === getDerivedStats(state).maxHp, `${label}: use settled derived maximum HP`);
@@ -108,6 +115,21 @@ assert(defeated.run.lastLootSettlement && defeated.lastOutcome, 'defeat still pe
 assert(JSON.stringify(defeated.claimedDirectiveIds) === JSON.stringify(doomed.claimedDirectiveIds)
   && JSON.stringify(defeated.completedDungeonIds) === JSON.stringify(doomed.completedDungeonIds),
   'defeat recovery must not grant completion rewards');
+
+const doomedEscape: GameState = { ...trapped, player: { ...trapped.player, hp: 1 } };
+const caughtEscaping = transition(doomedEscape, { type: 'combat/act', action: 'escape' },
+  state => performCombatAction(state, 'escape'));
+assertRecovered(caughtEscaping, 'result', 'escape cut off by a lethal counter');
+assert(finishedResult(winning, { type: 'combat/act', action: 'attack' }) === 'victory',
+  'combat.finished reports a victory');
+assert(finishedResult(speedy, { type: 'combat/act', action: 'escape' }) === 'escaped',
+  'combat.finished reports a successful escape');
+assert(finishedResult(fatalEscape, { type: 'combat/act', action: 'escape' }) === 'failed',
+  'combat.finished reports a fatal escape scrape as a failed run, not an escape');
+assert(finishedResult(doomedEscape, { type: 'combat/act', action: 'escape' }) === 'failed',
+  'combat.finished reports death after a failed escape as a failed run, not an escape');
+assert(finishedResult(doomed, { type: 'combat/act', action: 'attack' }) === 'failed',
+  'combat.finished reports a combat defeat');
 
 const retreated = transition(injured, { type: 'run/retreat' }, resolveRetreat);
 assertRecovered(retreated, 'result', 'retreat during combat');
