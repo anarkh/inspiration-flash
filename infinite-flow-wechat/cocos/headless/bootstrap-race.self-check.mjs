@@ -148,6 +148,14 @@ function fakeClient(label) {
       assert.ok(result, 'unexpected dispatchPhysical call');
       return result;
     },
+    retryPersistenceCalls: 0,
+    retryPersistenceResults: [],
+    retryPendingPersistence() {
+      this.retryPersistenceCalls += 1;
+      const result = this.retryPersistenceResults.shift();
+      assert.ok(result, 'unexpected retryPendingPersistence call');
+      return result;
+    },
   };
 }
 
@@ -882,6 +890,7 @@ const {
   formatInfiniteFlowOutcomeSummary,
   formatInfiniteFlowOutcomeMetric,
   formatInfiniteFlowPlayerChrome,
+  isInfiniteFlowPlayerActivityFailure,
   formatInfiniteFlowVisualFallbackDiagnostic,
   formatInfiniteFlowResultAltar,
   formatInfiniteFlowResultOverview,
@@ -1561,6 +1570,16 @@ function assertSceneAssetGate(view, root, status) {
       '界面已切换',
     ],
     [
+      'persistence-retried',
+      { activityMessage: '已补写 wx-fixture:42 · revision 42' },
+      '存档已补写 · 可继续游戏',
+    ],
+    [
+      'persistence-retried-rejected',
+      { activityMessage: '已补写 wx-fixture:42 · 规则拒绝，状态未改变' },
+      '当前行动不可执行 · 进度未改变',
+    ],
+    [
       'unknown-normal',
       { activityMessage: 'opaque command token revision=42' },
       '战斗进行中',
@@ -1583,6 +1602,15 @@ function assertSceneAssetGate(view, root, status) {
     );
     assert.equal(JSON.stringify(chrome), before, `${label} raw activity stays unchanged`);
   }
+  const failureActivityLabels = new Set([
+    'rule-rejected', 'local-rejected', 'invalid', 'action-failure', 'visual-fallback', 'memory-warning',
+    'lifecycle-failure', 'lifecycle-timeout', 'random-source-failure', 'persistence-retried-rejected',
+  ]);
+  for (const [label, , expected] of activityCases) {
+    assert.equal(isInfiniteFlowPlayerActivityFailure(expected), failureActivityLabels.has(label),
+      `${label} player activity failure tone`);
+  }
+  assert.equal(isInfiniteFlowPlayerActivityFailure(undefined), false);
   for (const [label, overrides, legacyActivity] of activityCases.filter(([label]) =>
     ['visual-recovered', 'visual-fallback', 'memory-warning'].includes(label))) {
     const chrome = Object.freeze({
@@ -8238,6 +8266,81 @@ for (const result of [
   app.onDestroy();
 }
 
+// A recoverable write block offers a retry that only re-persists the pending
+// candidate: no second domain command, no early state change, and the original
+// runtime chrome returns once the write is durable.
+{
+  delete globalThis.wx;
+  const client = fakeClient('preview-persistence-retry');
+  client.dispatchResults.push(Promise.resolve({
+    status: 'persistence-blocked',
+    error: { code: 'storage-write', message: 'synthetic quota' },
+  }));
+  controller.clientFactories.push(() => Promise.resolve(client));
+  const app = new InfiniteFlowApp();
+  app.start();
+  await settleUntil(() => app.client === client, 'persistence retry preview client was not handed off');
+  const view = controller.views.at(-1);
+  const modeBefore = view.lastRender.chrome.modeKind;
+  assert.notEqual(modeBefore, 'blocked');
+  assert.equal(view.lastRender.chrome.persistenceRetry, undefined);
+  view.callbacks.retryPersistence();
+  await drainMicrotasks();
+  assert.equal(client.retryPersistenceCalls, 0, 'retry is inert without a persistence block');
+
+  view.callbacks.activate('touch:persistence:block', 'hub.recover', {
+    kind: 'command',
+    command: { type: 'hub/recover' },
+  });
+  await settleUntil(
+    () => view.lastRender.chrome.modeKind === 'blocked',
+    'persistence-blocked dispatch did not block the runtime',
+  );
+  assert.equal(view.lastRender.chrome.persistenceRetry, true);
+  assert.match(view.lastRender.chrome.blockingMessage, /storage-write/);
+
+  const stillBlocked = deferred();
+  client.retryPersistenceResults.push(stillBlocked.promise);
+  view.callbacks.retryPersistence();
+  view.callbacks.retryPersistence();
+  await drainMicrotasks();
+  assert.equal(client.retryPersistenceCalls, 1, 'a retry in flight ignores repeated taps');
+  assert.equal(view.lastRender.chrome.busyActionId, 'runtime.persistence.retry');
+  stillBlocked.resolve({
+    status: 'persistence-blocked',
+    error: { code: 'storage-flush', message: 'synthetic flush failure' },
+  });
+  await settleUntil(
+    () => view.lastRender.chrome.busyActionId === undefined,
+    'blocked retry did not settle',
+  );
+  assert.equal(view.lastRender.chrome.modeKind, 'blocked');
+  assert.equal(view.lastRender.chrome.persistenceRetry, true);
+  assert.match(view.lastRender.chrome.blockingMessage, /storage-flush/);
+
+  client.retryPersistenceResults.push(Promise.resolve({
+    status: 'committed',
+    commandId: 'preview:1',
+    stateRevision: 1,
+    ledgerRevision: 1,
+    events: [],
+  }));
+  view.callbacks.retryPersistence();
+  await settleUntil(
+    () => view.lastRender.chrome.modeKind === modeBefore,
+    'durable retry did not restore the runtime mode',
+  );
+  assert.equal(view.lastRender.chrome.blockingMessage, undefined);
+  assert.equal(view.lastRender.chrome.persistenceRetry, undefined);
+  assert.match(view.lastRender.chrome.activityMessage, /已补写 preview:1/);
+  assert.equal(client.retryPersistenceCalls, 2);
+  assert.equal(client.dispatchPhysicalCalls.length, 1, 'retry never re-dispatches the domain command');
+  view.callbacks.retryPersistence();
+  await drainMicrotasks();
+  assert.equal(client.retryPersistenceCalls, 2, 'retry is inert after the block clears');
+  app.onDestroy();
+}
+
 // Recall uses the same command path. Both successful result variants clear any
 // transient draft retained by the host and emit exactly one physical command.
 for (const resultStatus of ['committed', 'duplicate']) {
@@ -12451,6 +12554,7 @@ let compactOverlayCases = 0;
       for (const [kind, model, chrome, panelName, blockerName, scrollName] of [
         ['boot', undefined, { modeKind: 'boot', modeLabel: 'bootstrap', modeDetail: diagnostic }, 'RuntimeDiagnostic', 'RuntimeDiagnosticBlocker', 'DiagnosticScroll'],
         ['blocked', hub, { modeKind: 'blocked', modeLabel: 'storage', modeDetail: '', blockingMessage: diagnostic }, 'RuntimeDiagnostic', 'RuntimeDiagnosticBlocker', 'DiagnosticScroll'],
+        ['persistence', hub, { modeKind: 'blocked', modeLabel: 'storage', modeDetail: '', blockingMessage: diagnostic, persistenceRetry: true }, 'RuntimeDiagnostic', 'RuntimeDiagnosticBlocker', 'DiagnosticScroll'],
         ['loading', hub, { modeKind: 'preview', modeLabel: '', modeDetail: '', sceneAssets: 'loading' }, 'SceneAssetLoading', 'SceneAssetOverlayBlocker', undefined],
         ['error', hub, { modeKind: 'preview', modeLabel: '', modeDetail: '', sceneAssets: 'error' }, 'SceneAssetError', 'SceneAssetOverlayBlocker', undefined],
         ['help', help, { modeKind: 'preview', modeLabel: '', modeDetail: '' }, 'HelpDialog', 'HelpOverlayBlocker', 'HelpScroll'],
@@ -12458,11 +12562,14 @@ let compactOverlayCases = 0;
         const canvas = { name: `compact-overlay-${viewportWidth}-${kind}`, children: [],
           getComponent() { return { contentSize: { width: 750, height: surfaceHeight } }; },
           addChild(child) { this.children.push(child); child.parent = this; } };
+        let persistenceRetries = 0;
         const view = new SceneFixtureView(canvas, {
           activate() { assert.fail('rendering compact overlays cannot dispatch actions'); },
           retrySceneAssets() { assert.fail('rendering recovery controls cannot start a retry'); },
+          retryPersistence() { persistenceRetries += 1; },
         });
         view.render(model, chrome, insets);
+        assert.equal(persistenceRetries, 0, `${kind}: rendering cannot start a persistence retry`);
         const root = canvas.children.at(-1);
         const panel = findNode(root, panelName);
         assert.ok(panel, `${viewportWidth}px/${kind}: real host overlay exists`);
@@ -12493,9 +12600,11 @@ let compactOverlayCases = 0;
             assert.ok(thumb.position.y < initialY, `${kind}: overflow scrolling updates its thumb`);
           }
         }
-        if (kind === 'boot' || kind === 'blocked') {
+        if (kind === 'boot' || kind === 'blocked' || kind === 'persistence') {
           assert.equal(labelComponent(findNode(panel, 'DiagnosticBody')).string, diagnostic,
             `${kind}: compact diagnostic preserves every original line`);
+          assert.equal(findNode(panel, 'PersistenceRetry') !== undefined, kind === 'persistence',
+            `${kind}: only a recoverable write block offers a persistence retry`);
         }
         if (kind === 'help') {
           assert.equal(collectNodes(panel, node => node.name.startsWith('HelpScrollSection:')).length, 4,
@@ -12504,7 +12613,8 @@ let compactOverlayCases = 0;
           assert.ok(Math.abs(close.size.width / unit - 44) < 0.6 && Math.abs(close.size.height / unit - 44) < 0.6,
             'help title close retains a 44px physical target');
         }
-        for (const name of kind === 'help' ? ['PreviousTopic', 'NextTopic'] : kind === 'error' ? ['SceneAssetRetry'] : []) {
+        for (const name of kind === 'help' ? ['PreviousTopic', 'NextTopic'] : kind === 'error' ? ['SceneAssetRetry']
+          : kind === 'persistence' ? ['PersistenceRetry'] : []) {
           const target = findNode(panel, name);
           const plate = findNode(target, `${name}Plate`);
           assert.ok(target.size.width / unit >= 44 && Math.abs(target.size.height / unit - 44) < 0.6,
@@ -12513,6 +12623,21 @@ let compactOverlayCases = 0;
             `${name}: button separates compact appearance from its touch region`);
           assert.equal(nodesOverlap(target, findNode(panel, scrollName ?? 'SceneAssetDetail')), false,
             `${name}: button never covers the document clip or loading detail`);
+        }
+        if (kind === 'persistence') {
+          const retryBounds = absoluteNodeBounds(findNode(panel, 'PersistenceRetry'));
+          assert.ok(retryBounds.left >= bounds.left - 0.6 && retryBounds.right <= bounds.right + 0.6
+            && retryBounds.top <= bounds.top + 0.6 && retryBounds.bottom >= bounds.bottom - 0.6,
+            'persistence retry stays inside the compact frame');
+          emitTouch(findNode(panel, 'PersistenceRetry'), 9950 + viewportWidth);
+          assert.equal(persistenceRetries, 1, 'persistence retry forwards exactly one callback');
+          view.render(model, { ...chrome, busyActionId: 'runtime.persistence.retry' }, insets);
+          const busyRetry = findNode(canvas.children.at(-1), 'PersistenceRetry');
+          assert.equal(labelComponent(findNode(busyRetry, 'PersistenceRetryLabel')).string, '正在重试…');
+          emitTouch(busyRetry, 9960 + viewportWidth);
+          assert.equal(persistenceRetries, 1, 'a retry in flight disables the retry control');
+          emitTouch(findNode(panel, 'PersistenceRetry'), 9970 + viewportWidth);
+          assert.equal(persistenceRetries, 1, 'a retired retry control from an older render is inert');
         }
         view.destroy();
         compactOverlayCases += 1;
