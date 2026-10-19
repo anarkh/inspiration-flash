@@ -17,6 +17,8 @@ export const TERMINAL_LOG_DIR = join(STATE_DIR, "terminals");
 export const AGENT_TIMEOUT_MS = 10 * 60 * 1000;
 export const DEFAULT_BRIDGE_GATE_TIMEOUT_MS = 10 * 60 * 1000;
 export const BRIDGE_GATE_TIMEOUT_ENV = "AGENT_BRIDGE_GATE_TIMEOUT_MS";
+export const CLAUDE_MAX_TURNS_ENV = "AGENT_BRIDGE_CLAUDE_MAX_TURNS";
+export const DEFAULT_CLAUDE_MAX_TURNS = 3;
 export const RECENT_TTL_MS = 10 * 60 * 1000;
 export const MAX_DIFF_CHARS = 120_000;
 export const HOOK_STATUS_MESSAGE = "Running Agent Bridge";
@@ -33,4 +35,11 @@ export function bridgeGateTimeoutMs(): number {
   return Number.isFinite(configured) && configured > 0
     ? configured
     : DEFAULT_BRIDGE_GATE_TIMEOUT_MS;
+}
+
+export function claudeMaxTurns(): number {
+  const configured = Number.parseInt(process.env[CLAUDE_MAX_TURNS_ENV] ?? "", 10);
+  return Number.isFinite(configured) && configured > 0
+    ? configured
+    : DEFAULT_CLAUDE_MAX_TURNS;
 }
