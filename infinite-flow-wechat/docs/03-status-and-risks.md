@@ -27,16 +27,19 @@ case-ID 映射、已转存到外部 WORM/签名存储的 candidate 或所需的�
 1. **Creator 生产构建**：3.8.8 导入、metadata、源码解析、无 Missing Script、首章自然
    preview，以及 sentinel 配置的真实 remote 模板构建均已通过；仍须提供真实 AppID/CDN，
    在 clean candidate 上执行 `build:wechat` 并归档 production 产物与日志。
-2. **资源交付策略**：`assets/resources` 当前为 314 项 PNG、约 325 MB（2026-08-12 模板构建时为 187 项、约 22 MB），上 CDN 前需先评估降采样或纹理压缩。remote preset、两个官方 fragment 的
+2. **主包体积**：2026-08-12 模板构建主包为 6,798,993 bytes，超过微信 4 MiB 主包上限；
+   production 产物门禁现会拒绝超限主包。需启用引擎插件（`separateEngine`）或把游戏代码
+   移入分包，并在真实 Creator 构建中复核。
+3. **资源交付策略**：`assets/resources` 当前为 314 项 PNG、约 325 MB（2026-08-12 模板构建时为 187 项、约 22 MB），上 CDN 前需先评估降采样或纹理压缩。remote preset、两个官方 fragment 的
    合成、template/production renderer 和真实模板输出门禁已通过；仍需确定 CDN/HTTPS
    域名与微信白名单，上传并核对远端树 hash，再验证 revision 缓存、弱网、失败 fallback
    和低内存释放。
-3. **持久性签核**：微信同步写入+读回只形成 candidate，不是强杀后 durable 证明。
+4. **持久性签核**：微信同步写入+读回只形成 candidate，不是强杀后 durable 证明。
    必须在真实设备完成强杀/空间不足/延迟矩阵后，才能注入具名
    `WxDurabilityBoundary`；否则运行时保持阻断。
-4. **存档迁移封口**：Web v1 codec 已能保真 decode，但 import/rejected index、raw
+5. **存档迁移封口**：Web v1 codec 已能保真 decode，但 import/rejected index、raw
    payload/reason/index 三件套和完整 schema-v2 invariant gate 尚未实现。
-5. **验收 evidence**：`test:migration -- --ac` 已覆盖全部 ID 的显式注册并实现 9 项
+6. **验收 evidence**：`test:migration -- --ac` 已覆盖全部 ID 的显式注册并实现 9 项
    fixture，但尚无 clean candidate 的正式 leaf evidence、release evidence、双签
    attestation 或最终只读 derived evidence；正式 leaf 仍为 0/94。
 

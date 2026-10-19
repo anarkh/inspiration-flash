@@ -8,6 +8,7 @@ import './entry-services.test.js';
 import './task-list.test.js';
 import './combat-choices.test.js';
 import './map-topology.test.js';
+import './action-legality.test.js';
 import { reduceGameCommand } from '@infinite-flow/application';
 import {
   DUNGEON_FEATURE_HELP_IDS,

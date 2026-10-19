@@ -108,7 +108,8 @@ import {
   FIELD_SUPPLY_ITEM_IDS,
   TACTICAL_ITEM_IDS,
   TACTICAL_ITEM_CATEGORY_BY_ID,
-  isFieldSupplyItemId
+  isFieldSupplyItemId,
+  isTacticalItemId
 } from '@infinite-flow/core/tactical-loadout';
 import { COCOS_DESIGN_TOKENS } from './tokens.js';
 import {
@@ -2574,7 +2575,8 @@ function buildPendingProjection(state: GameState): PendingProjection {
   }
 
   const survey = getCurrentFieldSurveyStatus(state);
-  if (survey.survey && !survey.resolved) {
+  // Ordinary collection clears the reward node without resolving the survey.
+  if (survey.survey && !survey.resolved && !run.clearedNodeIds.includes(survey.survey.nodeId)) {
     const actions = survey.options.map((option) => option.available
       ? commandAction(
           `pending.field-survey:${survey.survey!.id}:${option.definition.id}`,
@@ -2671,6 +2673,22 @@ function buildSoulRechargeActivationActions(state: GameState): ViewActionModel[]
       )];
 }
 
+/** Mirrors core trap/portal tool checks: carried-only tools need the run loadout; consumables respect field seals. */
+function nodeToolUnavailableReason(state: GameState, itemId: ItemId): string | undefined {
+  const name = ITEMS[itemId].name;
+  if (isTacticalItemId(itemId)) {
+    if (isTacticalItemAvailable(state, itemId)) return undefined;
+    if (!isCurrentDungeonFeatureAvailable(state, 'consumable')) return `场域法则已封存${name}。`;
+    if ((state.inventory[itemId] ?? 0) <= 0) return `缺少${name}。`;
+    return `本局未携行${name}，需在入场前装入战术携行。`;
+  }
+  if ((state.inventory[itemId] ?? 0) <= 0) return `缺少${name}。`;
+  if (ITEMS[itemId].kind !== 'material' && !isCurrentDungeonFeatureAvailable(state, 'consumable')) {
+    return `场域法则已封存${name}。`;
+  }
+  return undefined;
+}
+
 function buildCurrentNodeActions(state: GameState): ViewActionModel[] {
   const run = state.run!;
   const dungeon = getCurrentDungeonDefinition(state) ?? DUNGEONS[run.dungeonId];
@@ -2686,18 +2704,25 @@ function buildCurrentNodeActions(state: GameState): ViewActionModel[] {
     actions.push(commandAction(`node.select:${node.id}`, `迎战${node.title}`, 'node', { type: 'run/select-node', nodeId: node.id }, { emphasis: 'primary', recommendation: 'recommended' }));
   } else if (node.type === 'trap') {
     const counterItem = node.trap?.counterItem;
-    const canCounter = counterItem ? (state.inventory[counterItem] ?? 0) > 0 : false;
-    actions.push(canCounter
+    const counterBlock = counterItem ? nodeToolUnavailableReason(state, counterItem) : '该陷阱没有道具破解方式。';
+    actions.push(counterBlock === undefined
       ? commandAction(`node.trap:${node.id}:counter`, `使用${ITEMS[counterItem!].name}破解`, 'node', { type: 'node/handle-trap', choice: 'counter' }, { recommendation: 'recommended' })
-      : disabledAction(`node.trap:${node.id}:counter`, '道具破解', 'node', counterItem ? `缺少${ITEMS[counterItem].name}。` : '该陷阱没有道具破解方式。'));
+      : disabledAction(`node.trap:${node.id}:counter`, '道具破解', 'node', counterBlock));
     actions.push(commandAction(`node.trap:${node.id}:risk`, '强行通过', 'node', { type: 'node/handle-trap', choice: 'risk' }, { emphasis: 'danger', recommendation: 'high-risk', riskReason: `失败可能承受 ${node.trap?.damage ?? 0} 点伤害。` }));
   } else if (node.type === 'portal') {
     const stableItem = node.portal?.stableItem;
-    const canStabilize = stableItem ? (state.inventory[stableItem] ?? 0) > 0 : false;
-    actions.push(canStabilize
+    const targetGate = getCampaignGates(state).find((gate) => gate.dungeonId === node.portal?.targetDungeonId);
+    const mainlineBlock = targetGate?.status === 'locked'
+      ? `主线未解锁：${targetGate.requirementText || '先领取对应章节主线。'}`
+      : undefined;
+    const stableBlock = mainlineBlock
+      ?? (stableItem ? nodeToolUnavailableReason(state, stableItem) : '该传送门没有稳定方式。');
+    actions.push(stableBlock === undefined
       ? commandAction(`node.portal:${node.id}:stabilize`, `使用${ITEMS[stableItem!].name}稳定`, 'node', { type: 'node/use-portal', choice: 'stabilize' }, { recommendation: 'recommended' })
-      : disabledAction(`node.portal:${node.id}:stabilize`, '稳定传送', 'node', stableItem ? `缺少${ITEMS[stableItem].name}。` : '该传送门没有稳定方式。'));
-    actions.push(commandAction(`node.portal:${node.id}:force`, '强闯传送', 'node', { type: 'node/use-portal', choice: 'force' }, { emphasis: 'danger', recommendation: 'high-risk', riskReason: '强闯会承受传送反噬。' }));
+      : disabledAction(`node.portal:${node.id}:stabilize`, '稳定传送', 'node', stableBlock));
+    actions.push(mainlineBlock === undefined
+      ? commandAction(`node.portal:${node.id}:force`, '强闯传送', 'node', { type: 'node/use-portal', choice: 'force' }, { emphasis: 'danger', recommendation: 'high-risk', riskReason: '强闯会承受传送反噬。' })
+      : disabledAction(`node.portal:${node.id}:force`, '强闯传送', 'node', mainlineBlock));
   } else if (node.type === 'reward') {
     actions.push(commandAction(`node.reward:${node.id}`, '领取奖励', 'node', { type: 'node/collect-reward' }, { emphasis: 'primary', recommendation: 'recommended' }));
   } else {
