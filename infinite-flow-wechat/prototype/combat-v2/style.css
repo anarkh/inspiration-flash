@@ -290,7 +290,6 @@ dialog::backdrop { background: #0004; }
 .card strong { color: var(--bright); font-weight: 600; font-size: 13px; }
 .card p { margin: 0; font-size: 12px; color: #ded0b6; }
 .card small { margin-top: auto; font-size: 10px; color: var(--muted); }
-.card .qte-tag { color: #ffd77c; }
 .card:disabled { opacity: .55; }
 .info p { margin: 0 0 8px; font-size: 12px; color: #d2c5ae; line-height: 1.6; }
 .info h2 { margin: 2px 0 8px; font-size: 14px; color: var(--bright); font-weight: 600; }
@@ -332,3 +331,4 @@ dialog::backdrop { background: #0004; }
 .game.qte .controls, .game.qte .topbar { pointer-events: none; }
 .game.qte .world-layer { cursor: pointer; }
 .game.busy .intent-bubble { opacity: 0; transition: opacity .15s; }
+.qte-chip { margin-left: 5px; padding: 0 4px; border-radius: 3px; font: 600 9px/14px inherit; font-style: normal; vertical-align: 2px; color: #2a1505; background: #f2c475; }

@@ -82,12 +82,12 @@ function reset() {
     enemyName: boss ? '雾锋妖将' : '雾中妖鬼', boss,
     turn: scenario === 'heavy' ? 2 : 1, focus: scenario === 'focus' ? 3 : scenario === 'heavy' ? 1 : 0,
     pills: 2, talismans: scenario === 'talisman' ? 2 : 0, used: new Set(), guarded: false, breath: false,
-    busy: false, ended: false, log: [], streak: 0,
+    busy: false, ended: false, log: [],
   };
   enemyEl.querySelector('.enemy-art').style.height = boss ? 'calc(var(--enemy-h) * 1.12)' : '';
   if (sheet.open) sheet.close();
   setHeroFrame(8);
-  ticker(`迎战<em>${state.enemyName}</em> · 出招把握时机可打出会心`);
+  ticker(`迎战<em>${state.enemyName}</em> · 战技与重击回合可把握时机`);
   render();
 }
 
@@ -110,7 +110,7 @@ function render() {
   $('#encounter-kind').textContent = state.boss ? '首领遭遇' : '普通遭遇';
   $('#enemy-rank').textContent = state.boss ? '首领' : '普通';
   $('#enemy-rank').classList.toggle('boss', state.boss);
-  $('#hero-chips').innerHTML = [state.guarded && '守势', state.breath && '蓄息', state.streak > 1 && `会心连击 ×${state.streak}`]
+  $('#hero-chips').innerHTML = [state.guarded && '守势', state.breath && '蓄息']
     .filter(Boolean).map(chip => `<span>${chip}</span>`).join('');
 
   const bubble = $('#intent');
@@ -119,10 +119,10 @@ function render() {
   bubble.hidden = state.ended;
   $('#intent-icon').dataset.icon = intent.heavy ? 'heavy' : 'claw';
   paintIcons(bubble);
-  $('#intent-name').textContent = intent.name;
   $('#intent-detail').textContent = state.guarded
     ? `守势中 · 预计承伤 ${intent.guarded}`
     : `${intent.heavy ? '重击' : '反击'} ${intent.damage} · 防御 ${intent.guarded}`;
+  $('#intent-name').innerHTML = `${intent.name}${intent.heavy && !state.guarded ? '<em class="qte-chip">可格挡</em>' : ''}`;
 
   const ready = state.focus >= 3;
   const attack = $('#attack');
@@ -130,7 +130,7 @@ function render() {
   $('#attack-icon').dataset.icon = ready ? 'weapon' : 'attack';
   paintIcons(attack);
   $('#attack-label').textContent = ready ? '战技' : '攻击';
-  $('#attack-mode').textContent = ready ? '裂空斩 · 战意满' : `普攻 · 战意 ${state.focus}/3`;
+  $('#attack-mode').textContent = ready ? '裂空斩 · 可会心' : `普攻 · 战意 ${state.focus}/3`;
   attack.querySelectorAll('.seg').forEach((seg, index) => seg.classList.toggle('on', index < state.focus));
   attack.setAttribute('aria-label', ready ? '释放武器战技裂空斩' : `普通攻击，战意 ${state.focus}/3`);
 
@@ -439,12 +439,17 @@ async function perform(kind) {
     if (OFFENSIVE.has(kind)) {
       if (kind === 'attack' || kind === 'weapon') { dashed = true; await dashIn(gen); }
       else await castCharge(kind, gen);
-      grade = await timing('strike', gen);
+      // Only the weapon skill (a full focus gauge) earns a timing check; everything else strikes at once.
+      if (kind === 'weapon') grade = await timing('strike', gen);
       dealt = await strike(kind, grade, gen);
     } else if (kind === 'guard') {
-      enemyEl.classList.add('windup');
-      lean(enemyEl, 4, 300, gen).catch(() => {});
-      grade = await timing('parry', gen);
+      shieldMark(heroChest(), '#f2c475', false);
+      // Only a telegraphed heavy blow can be parried; an ordinary guard resolves immediately.
+      if (intent.heavy) {
+        enemyEl.classList.add('windup');
+        lean(enemyEl, 4, 300, gen).catch(() => {});
+        grade = await timing('parry', gen);
+      }
     } else if (kind === 'pill') {
       await drinkPill(gen);
     }
@@ -457,7 +462,6 @@ async function perform(kind) {
       : kind === 'guard' ? (intent.heavy ? 2 : 1) + (grade === 'perfect' ? 1 : 0)
         : 1;
     state.focus = Math.max(0, Math.min(3, state.focus + focusGain));
-    state.streak = OFFENSIVE.has(kind) ? (grade === 'perfect' ? state.streak + 1 : 0) : state.streak;
     state.turn++;
     report(kind, grade, dealt, taken, intent);
     if (state.enemyHp <= 0) await victory(gen);
@@ -476,8 +480,8 @@ async function castCharge(kind, gen) {
   const rune = svg('circle', { cx: chest.x, cy: chest.y + heroH() * .5, r: heroH() * .3, fill: 'none', stroke: color, 'stroke-width': 2.5, 'stroke-dasharray': '6 5' });
   rune.setAttribute('transform', `translate(0 0)`);
   rune.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200, fill: 'forwards' });
-  setTimeout(() => fade(rune, 240), 1100);
-  await lean(heroSprite, -4, 180, gen);
+  setTimeout(() => fade(rune, 200), 420);
+  await lean(heroSprite, -4, 220, gen);
 }
 
 async function strike(kind, grade, gen) {
@@ -524,7 +528,7 @@ async function counterAttack(kind, grade, intent, gen) {
   const enemy = enemyFoot();
   // Enemy lunges toward the hero, strikes, and returns to its mark.
   enemyEl.classList.add('windup');
-  if (kind !== 'guard') await wait(intent.heavy ? 260 : 160, gen);
+  if (grade === 'none') await wait(intent.heavy ? 260 : 160, gen);
   const reach = { x: hero.x + heroH() * .52 - enemy.x, y: hero.y - 10 - enemy.y };
   await animate(enemyEl, [{ transform: 'translate(0,0)' }, { transform: `translate(${reach.x}px,${reach.y}px)` }], { duration: 150, easing: 'ease-in' }, gen);
   const chest = heroChest();
@@ -614,10 +618,10 @@ function footButton(text, onClick, className = '') {
   button.addEventListener('click', onClick);
   $('#sheet-footer').append(button);
 }
-function card({ id, name, effect, timing, reason, qte }) {
+function card({ id, name, effect, timing, reason }) {
   const button = document.createElement('button');
   button.type = 'button'; button.className = 'card'; button.disabled = Boolean(reason);
-  button.innerHTML = `<strong>${name}</strong><p>${effect}</p><small>${reason || timing}${qte && !reason ? ' · <span class="qte-tag">可会心</span>' : ''}</small>`;
+  button.innerHTML = `<strong>${name}</strong><p>${effect}</p><small>${reason || timing}</small>`;
   button.addEventListener('click', () => perform(id));
   $('#sheet-content').append(button);
 }
@@ -626,7 +630,7 @@ function openGroup(group) {
   if (group === 'spells') {
     openSheet('法术', '点选即释放');
     $('#sheet-content').classList.add('cols');
-    card({ id: 'art', name: '术法攻击', effect: `术法伤害 ${state.breath ? 32 : 24}`, timing: '1 回合', qte: true });
+    card({ id: 'art', name: '术法攻击', effect: `术法伤害 ${state.breath ? 32 : 24}`, timing: '1 回合 · 敌人反击' });
     card({ id: 'mist', name: '归息', effect: '获得 1 层蓄息', timing: '每场一次 · 不耗回合', reason: state.used.has('mist') ? '本场已使用' : '' });
     card({ id: 'iron', name: '镇岳', effect: '进入守势', timing: '每场一次 · 不耗回合', reason: state.used.has('iron') ? '本场已使用' : '' });
   } else {
@@ -637,7 +641,7 @@ function openGroup(group) {
 }
 function openTalismanInfo() {
   openSheet('雷火符');
-  $('#sheet-content').innerHTML = '<div class="info"><h2>雷火符</h2><p>落雷造成术法伤害，出手时可打出会心。</p><p>本轮未携行雷火符，库存 0。</p></div>';
+  $('#sheet-content').innerHTML = '<div class="info"><h2>雷火符</h2><p>落雷造成术法伤害。</p><p>本轮未携行雷火符，库存 0。</p></div>';
   footButton('返回战斗', () => sheet.close(), 'wide');
 }
 function openFlee() {
@@ -651,7 +655,7 @@ function openPanel(panel) {
   if (panel === 'menu') {
     openSheet('菜单');
     $('#sheet-content').innerHTML = `<div class="info"><h2>战斗记录</h2><ol>${state.log.length ? state.log.map(line => `<li>${line}</li>`).join('') : '<li>尚未采取行动。</li>'}</ol></div>
-      <div class="info"><h2>时机操作</h2><p>攻击、战技、术法、雷火符：白圈与金圈重合时点击，打出会心（伤害 ×1.5）。</p><p>防御：红圈收拢到护盾时点击，完美格挡（承伤减半，战意额外 +1）。</p><p>不点或点偏按普通结算，不会比原来更差。</p></div>`;
+      <div class="info"><h2>时机操作</h2><p>只在两个关键时刻出现：战意攒满释放战技时，白圈与金圈重合点击打出会心（伤害 ×1.5）；敌人预告重击时按防御，红圈收拢点击完美格挡（承伤减半，战意额外 +1）。</p><p>普通攻击、普通防御、术法、符箓、药品都直接结算。不点或点偏按普通结算。</p></div>`;
   } else {
     openSheet('背包');
     $('#sheet-content').innerHTML = `<div class="info"><p>止血丹 × ${state.pills}</p><p>雷火符 × ${state.talismans}</p></div>`;
