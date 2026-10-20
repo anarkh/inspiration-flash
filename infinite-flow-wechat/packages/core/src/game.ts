@@ -154,7 +154,7 @@ import {
   resolveCombatUtilityAction
 } from './combat-mechanics';
 import { getPetPassiveTags, getPetStatBonus, getPetUpgradeCost, PETS } from './pet-system';
-import { getWeaponSkillDefinition, resolveWeaponSkill } from './weapon-skills';
+import { getChargedStrikeDefinition, getWeaponSkillDefinition, resolveWeaponSkill } from './weapon-skills';
 import type { WeaponSkillDefinition, WeaponSkillResolution } from './weapon-skills';
 import {
   consumeMirrorCityShell,
@@ -4193,24 +4193,13 @@ export function getCurrentWeaponResonanceProgress(state: GameState): EquipmentAt
 export function getWeaponSkillStatus(state: GameState): WeaponSkillStatus {
   const weaponId = state.equipped.weapon;
   const weaponName = EQUIPMENT[weaponId].name;
-  const definition = getWeaponSkillDefinition(weaponId);
+  const definition = getWeaponSkillDefinition(weaponId) ?? getChargedStrikeDefinition(weaponId);
   const resonance = getCurrentWeaponResonanceProgress(state);
   const currentFocus = normalizeCombatFocus(state.combat?.weaponFocus);
   const focus = {
     currentFocus,
     requiredFocus: COMBAT_FOCUS_MAX
   };
-
-  if (!definition) {
-    return {
-      weaponId,
-      weaponName,
-      resonance,
-      ...focus,
-      available: false,
-      unavailableReason: `${weaponName}没有可用战技。`
-    };
-  }
 
   if (state.phase !== 'combat' || !state.combat) {
     return {

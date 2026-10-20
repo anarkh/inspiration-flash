@@ -23,14 +23,15 @@ export type WeaponSkillId =
   | 'starforged_finale'
   | 'chronal_reversal'
   | 'breach_salvo'
-  | 'phase_coil_acceleration';
+  | 'phase_coil_acceleration'
+  | 'charged_strike';
 export type WeaponSkillDamageKind = 'physical' | 'art';
 
 export type WeaponSkillDefinition = Readonly<{
   id: WeaponSkillId;
   name: string;
   description: string;
-  weaponId: WeaponSkillWeaponId;
+  weaponId: EquipmentId;
 }>;
 
 export type WeaponSkillResonanceContext = Readonly<
@@ -54,6 +55,8 @@ export type WeaponSkillResolution = Readonly<{
 }>;
 
 const MAX_COMBAT_STAT = 10_000;
+// Mini-game divergence: weapons without a signature skill spend full focus on a charged strike.
+const CHARGED_STRIKE_DAMAGE_RATE = 1.8;
 const MAX_RESOLUTION_VALUE = 100_000;
 const ATTUNEMENT_SET_BY_BRANCH: Readonly<Record<EquipmentAttunementId, EquipmentSetTag>> = {
   mist_vanguard: 'mist',
@@ -153,6 +156,16 @@ function getActiveResonanceBranch(
 export function getWeaponSkillDefinition(weaponId: EquipmentId): WeaponSkillDefinition | undefined {
   if (!Object.prototype.hasOwnProperty.call(WEAPON_SKILL_DEFINITIONS, weaponId)) return undefined;
   return WEAPON_SKILL_DEFINITIONS[weaponId as WeaponSkillWeaponId];
+}
+
+/** Fallback skill for weapons without a signature skill, so full focus is never a dead end. */
+export function getChargedStrikeDefinition(weaponId: EquipmentId): WeaponSkillDefinition {
+  return {
+    id: 'charged_strike',
+    name: '蓄势斩',
+    description: `以满溢战意全力一斩，造成普通攻击 ${CHARGED_STRIKE_DAMAGE_RATE} 倍的物理伤害。`,
+    weaponId
+  };
 }
 
 export function resolveWeaponSkill(context: WeaponSkillContext): WeaponSkillResolution {
@@ -395,5 +408,7 @@ export function resolveWeaponSkill(context: WeaponSkillContext): WeaponSkillReso
     return createResolution(damage, 'art', healing, statusLines);
   }
 
-  return createResolution(0, 'physical', 0, []);
+  // Same physical formula as a basic attack, scaled up.
+  const damage = Math.ceil(Math.max(3, attack - Math.floor(targetDefense * 0.6)) * CHARGED_STRIKE_DAMAGE_RATE);
+  return createResolution(damage, 'physical', 0, [`【蓄势斩】战意灌注刀锋，造成 ${damage} 点物理伤害。`]);
 }

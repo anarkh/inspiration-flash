@@ -72,15 +72,8 @@ function hasEquipment(input: CombatIntentInput, equipmentId: GameState['equipped
   return Object.values(input.equipped).includes(equipmentId);
 }
 
-function getWeaponSkillEffectAction(input: CombatIntentInput): 'attack' | 'art' | undefined {
+function getWeaponSkillEffectAction(input: CombatIntentInput): 'attack' | 'art' {
   // Combat effects classify weapon skills by their damage kind before recording the previous action.
-  if (
-    input.equipped.weapon === 'armor_piercing_sword' ||
-    input.equipped.weapon === 'bone_spear' ||
-    input.equipped.weapon === 'breach_shotgun'
-  ) {
-    return 'attack';
-  }
   if (
     input.equipped.weapon === 'ember_staff' ||
     input.equipped.weapon === 'starforged_edge' ||
@@ -89,7 +82,8 @@ function getWeaponSkillEffectAction(input: CombatIntentInput): 'attack' | 'art' 
   ) {
     return 'art';
   }
-  return undefined;
+  // Signature physical skills and the generic charged strike all deal physical damage.
+  return 'attack';
 }
 
 function getEchoConsequence(input: CombatIntentInput): string {
@@ -178,15 +172,13 @@ export function getCombatIntent(input: CombatIntentInput): CombatIntent {
       : ['attack', 'use_thunder_talisman'];
     const dangerousActions: CombatAction[] = shieldsPhysical ? ['attack'] : ['art'];
 
-    if (weaponSkillAction) {
-      if (
-        (shieldsPhysical && weaponSkillAction === 'attack') ||
-        (!shieldsPhysical && weaponSkillAction === 'art')
-      ) {
-        dangerousActions.push('weapon_skill');
-      } else {
-        recommendedActions.splice(1, 0, 'weapon_skill');
-      }
+    if (
+      (shieldsPhysical && weaponSkillAction === 'attack') ||
+      (!shieldsPhysical && weaponSkillAction === 'art')
+    ) {
+      dangerousActions.push('weapon_skill');
+    } else {
+      recommendedActions.splice(1, 0, 'weapon_skill');
     }
 
     const shieldLabel = shieldsPhysical ? '奇数回合物理相位盾' : '偶数回合术法相位盾';

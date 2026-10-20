@@ -38,6 +38,12 @@ halves the remainder and adds 1 focus. Ordinary encounters and every other turn 
 source rules; the timing option is ignored wherever a perfect parry is impossible. This is
 an intentional rule change from the source web project.
 
+Weapons without a signature skill (the starter `training_blade` and eight others) no longer
+leave full focus unusable: `getWeaponSkillStatus` falls back to the generic `charged_strike`
+(蓄势斩), a physical hit for 1.8x the basic-attack formula that spends focus like any weapon
+skill. Signature skills are unchanged. This is an intentional rule change from the source
+web project.
+
 The two `Array.prototype.at()` reads in copied `src/dungeon-laws.ts` use equivalent
 length-indexed access so the same rules compile against the WeChat/Cocos ES2020
 library surface. This changes neither ordering nor fallback behavior.

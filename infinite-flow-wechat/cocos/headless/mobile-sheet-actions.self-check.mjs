@@ -1463,13 +1463,14 @@ function renderCarry(state, sheetState = { kind: 'character', page: 0, tab: 'car
   const retreat = model.sections[2].actions.find(action => action.actionId === 'combat.retreat-run');
   const confirmation = render(model, menu.nextState());
   assert.equal(confirmation.actions.get('MobileSheetExecute:combat.retreat-run'), retreat, 'retreat remains an explicit confirmed original command');
-  for (const focus of [0, 3]) {
-    const focusModel = add({ ...state, ownedEquipment: [...new Set([...state.ownedEquipment, 'armor_piercing_sword'])],
-      equipped: { ...state.equipped, weapon: 'armor_piercing_sword' }, combat: { ...state.combat, weaponFocus: focus } });
+  // The starter blade has no signature skill; it must still release the generic charged strike.
+  for (const [weapon, focus] of [['armor_piercing_sword', 0], ['armor_piercing_sword', 3], ['training_blade', 3]]) {
+    const focusModel = add({ ...state, ownedEquipment: [...new Set([...state.ownedEquipment, weapon])],
+      equipped: { ...state.equipped, weapon }, combat: { ...state.combat, weaponFocus: focus } });
     const hud = renderCombatHud(focusModel);
     const actionId = `combat.action:${focus === 3 ? 'weapon_skill' : 'attack'}`;
     const action = focusModel.sections[2].actions.find(candidate => candidate.actionId === actionId);
-    assert.ok(action.enabled, `${actionId}: fixture reaches its usable core state`);
+    assert.ok(action.enabled, `${weapon} ${actionId}: fixture reaches its usable core state`);
     assert.equal(hud.actions.get(`WalkCombatAction:${actionId}`), action, 'unified button switches between actual basic and weapon commands');
     const nodes = nodesIn(hud.rootNode);
     assert.equal(nodes.find(node => node.name === `WalkCombatAction:${actionId}Label`).getComponent(api.Label).string,
