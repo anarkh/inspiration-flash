@@ -31,6 +31,13 @@ history, rewards, and defeat settlement remain intact; an unsuccessful escape
 that leaves combat active does not heal. This recovery is independent of ordinary
 healing modifiers and is an intentional rule change from the source web project.
 
+Elite and boss encounters telegraph a `heavy-blow` intent on turns 2, 5, 8, ...
+whenever no monster-specific intent applies: the counter deals 50% more, a guard keeps
+only a quarter of it, and `performCombatAction(..., { timing: 'perfect' })` on that guard
+halves the remainder and adds 1 focus. Ordinary encounters and every other turn keep the
+source rules; the timing option is ignored wherever a perfect parry is impossible. This is
+an intentional rule change from the source web project.
+
 The two `Array.prototype.at()` reads in copied `src/dungeon-laws.ts` use equivalent
 length-indexed access so the same rules compile against the WeChat/Cocos ES2020
 library surface. This changes neither ordering nor fallback behavior.

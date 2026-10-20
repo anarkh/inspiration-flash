@@ -146,6 +146,8 @@ export type ViewActionModel = Readonly<{
   riskReason?: string;
   readout?: string;
   combatAction?: CombatAction;
+  /** Guard only, on a telegraphed heavy blow: submit this instead of `event` after a well-timed tap. */
+  parryEvent?: PresentationEvent;
 }>;
 
 export type StatusMetric = Readonly<{
@@ -720,6 +722,8 @@ export type CombatDetailViewModel = Readonly<{
     consequence: string;
     recommendedActions: readonly CombatAction[];
     dangerousActions: readonly CombatAction[];
+    /** A heavy blow: guarding this turn can be timed into a perfect parry. */
+    parryable: boolean;
   }>;
   boss?: Readonly<{
     phase: 'sealed' | 'awakened';

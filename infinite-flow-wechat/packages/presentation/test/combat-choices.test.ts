@@ -184,6 +184,39 @@ function verifyMedicineAndBasicArt(): void {
   assert(turnEvent?.type === 'combat.turn-resolved' && turnEvent.turnAfter - turnEvent.turnBefore === 1, 'basic art advances one combat turn');
 }
 
+function verifyHeavyBlowParry(): void {
+  const base = enterCombat(false);
+  const elite = (turn: number): GameState => ({
+    ...base,
+    combat: { ...base.combat!, nodeId: 'butcher_turn', monsterId: 'tower_butcher', monsterHp: 1000, turn }
+  });
+  const ordinary = buildGameViewModel(base, {});
+  const ordinaryDetail = ordinary.sections[1].detail;
+  assert(ordinaryDetail.kind === 'combat' && !ordinaryDetail.intent.parryable, 'ordinary combat is not parryable');
+  assert(ordinary.sections[2].actions.every(action => action.parryEvent === undefined), 'ordinary combat exposes no parry command');
+
+  const heavy = buildGameViewModel(elite(2), {});
+  const detail = heavy.sections[1].detail;
+  assert(detail.kind === 'combat' && detail.intent.id === 'heavy-blow' && detail.intent.parryable, 'elite heavy blow is parryable');
+  const guard = heavy.sections[2].actions.find(action => action.actionId === 'combat.action:guard');
+  assert(guard?.enabled && guard.recommendation === 'recommended', 'guard is recommended against a heavy blow');
+  assert(guard.event?.kind === 'command' && guard.event.command.type === 'combat/act' && guard.event.command.timing === undefined,
+    'the ordinary guard command stays untimed');
+  assert(guard.parryEvent?.kind === 'command' && guard.parryEvent.command.type === 'combat/act'
+    && guard.parryEvent.command.action === 'guard' && guard.parryEvent.command.timing === 'perfect',
+    'guard carries the perfect-parry command');
+  assert(guard.readout?.includes('完美格挡'), 'guard explains the parry window');
+  assert(heavy.sections[2].actions.filter(action => action.parryEvent !== undefined).length === 1, 'only guard can parry');
+  const parried = commit(elite(2), guard.parryEvent.command);
+  assert(parried.combat?.weaponFocus === 3, 'the parry command reaches the core and fills focus');
+
+  const calm = buildGameViewModel(elite(3), {});
+  const calmDetail = calm.sections[1].detail;
+  assert(calmDetail.kind === 'combat' && !calmDetail.intent.parryable, 'turns between heavy blows are not parryable');
+  assert(calm.sections[2].actions.every(action => action.parryEvent === undefined), 'no parry command between heavy blows');
+}
+
 verifyMethodChoices();
 verifyMedicineAndBasicArt();
 verifyConfiguredAbilitiesAndFocus();
+verifyHeavyBlowParry();

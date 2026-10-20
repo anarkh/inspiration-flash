@@ -1,5 +1,6 @@
 import './permanent-equipment.test.js';
 import './combat-presentation.test.js';
+import './heavy-blow.test.js';
 import './postcombat-recovery.test.js';
 import {
   createInitialState,

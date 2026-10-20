@@ -2806,6 +2806,8 @@ type CombatPlayback = {
   actionId: string;
   playerHp: number;
   enemyHp: number;
+  /** The turn's counter is a telegraphed heavy blow. */
+  heavy: boolean;
   resolved: boolean;
 };
 
@@ -3342,11 +3344,15 @@ export class InfiniteFlowView {
     // before windup. The real command is still dispatched exactly once at hit.
     this.render(this.lastModel, { ...this.lastChrome, busyActionId: action.actionId }, this.lastSafeInsets);
     const playback: CombatPlayback = { actionId: action.actionId, playerHp: detail.player.hp,
-      enemyHp: detail.enemy.hp, resolved: false };
+      enemyHp: detail.enemy.hp, heavy: detail.intent.parryable, resolved: false };
     this.combatPlayback = playback;
-    const started = this.walkScene?.startCombatAction(kind, () => {
-      if (this.combatPlayback === playback && !this.destroyed) this.delegate.activate(physicalId, action.actionId, event);
-    });
+    // A guard against a heavy blow runs the parry ring first; the tap only picks
+    // which presentation event is dispatched, the core decides the outcome.
+    const parryEvent = kind === 'guard' ? action.parryEvent : undefined;
+    const started = this.walkScene?.startCombatAction(kind, (grade) => {
+      if (this.combatPlayback !== playback || this.destroyed) return;
+      this.delegate.activate(physicalId, action.actionId, grade === 'perfect' && parryEvent !== undefined ? parryEvent : event);
+    }, { parry: parryEvent !== undefined });
     if (!started) {
       this.cancelCombatPlayback(true);
       throw new Error('战斗动画未能启动，行动尚未提交。');
@@ -3375,6 +3381,8 @@ export class InfiniteFlowView {
         : Math.max(0, impact.playerHp - counter.playerHp),
       counter: counter !== undefined,
       guarded: counter?.guarded === true,
+      perfectParry: counter?.perfectParry === true,
+      heavy: playback.heavy,
       playerHpAfterImpact: impact.playerHp,
       enemyHpAfterImpact: impact.enemyHp,
       ...(counter === undefined ? {} : { playerHpAfterCounter: counter.playerHp, enemyHpAfterCounter: counter.enemyHp }),
@@ -3716,7 +3724,7 @@ export class InfiniteFlowView {
     });
     if (enabled && this.mobileSheet === undefined && !this.chapterCodexOpen && model.sections[4].active === undefined) {
       this.walkInput = new InfiniteFlowWalkInput(this.walkScene.joystick, this.walkScene.joystickThumb,
-        () => this.walkScene?.cancelApproach());
+        () => this.walkScene?.cancelApproach(), () => { this.walkScene?.tapCombatTiming(); });
     }
   }
 

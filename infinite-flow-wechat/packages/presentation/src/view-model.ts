@@ -65,6 +65,7 @@ import {
   getTacticalLoadoutStatus,
   getWeaponSkillStatus,
   isCurrentDungeonFeatureAvailable,
+  isParryableCombatIntent,
   isTacticalItemAvailable,
   listRouteContracts,
   type CombatAction,
@@ -223,6 +224,7 @@ type ActionInput = Readonly<{
   emphasis?: ViewActionModel['emphasis'];
   recommendation?: ViewActionRecommendation;
   combatAction?: CombatAction;
+  parryEvent?: PresentationEvent;
 }>;
 
 type PhaseProjection = Readonly<{
@@ -279,7 +281,8 @@ function makeAction(input: ActionInput): ViewActionModel {
     ...(!enabled && input.disabledReason ? { disabledReason: input.disabledReason } : {}),
     ...(input.riskReason ? { riskReason: input.riskReason } : {}),
     ...(input.readout ? { readout: input.readout } : {}),
-    ...(input.combatAction ? { combatAction: input.combatAction } : {})
+    ...(input.combatAction ? { combatAction: input.combatAction } : {}),
+    ...(enabled && input.parryEvent ? { parryEvent: input.parryEvent } : {})
   };
 }
 
@@ -3286,7 +3289,7 @@ function buildCombatProjection(state: GameState, localUiState: PresentationLocal
       kind: 'combat',
       player: { hp: state.player.hp, maxHp: state.player.maxHp, hpPercent: clampPercent(state.player.hp, state.player.maxHp) },
       enemy: { id: 'missing', name: '未知敌人', hp: 0, maxHp: 1, hpPercent: 0, ability: '战斗快照缺失。' },
-      intent: { id: 'missing', name: '未知意图', severity: 'danger', consequence: '宿主应恢复最近一次有效快照。', recommendedActions: [], dangerousActions: [] },
+      intent: { id: 'missing', name: '未知意图', severity: 'danger', consequence: '宿主应恢复最近一次有效快照。', recommendedActions: [], dangerousActions: [], parryable: false },
       turn: 0,
       focus,
       guarding: Boolean(combat?.guarding),
@@ -3312,6 +3315,7 @@ function buildCombatProjection(state: GameState, localUiState: PresentationLocal
   const availability = new Map<CombatAction, Readonly<{ available: boolean; reason?: string }>>();
   const baseActions: CombatAction[] = ['attack', 'art', 'guard', 'weapon_skill', 'use_healing_pill', 'use_thunder_talisman', 'escape'];
   for (const action of baseActions) availability.set(action, getCombatActionAvailability(state, action));
+  const parryable = isParryableCombatIntent(intent);
   const usableRecommendation = intent.recommendedActions.find((action) => availability.get(action)?.available);
   const recommendedAction = usableRecommendation ?? (availability.get('guard')?.available ? 'guard' : undefined);
   const actions: ViewActionModel[] = baseActions.map((action) => {
@@ -3328,7 +3332,9 @@ function buildCombatProjection(state: GameState, localUiState: PresentationLocal
             ? `库存 ${state.inventory.healing_pill}；基础回复 36 点生命（受场域影响）。推进 1 回合，敌人会反击。`
             : action === 'use_thunder_talisman'
               ? `库存 ${state.inventory.thunder_talisman}`
-              : undefined;
+              : action === 'guard' && parryable
+                ? '挡下蓄力重击的大部分伤害；重击来临时把握时机可完美格挡，再减半并额外获得 1 点战意。'
+                : undefined;
     if (!status.available) return disabledAction(`combat.action:${action}`, COMBAT_ACTION_LABELS[action], 'combat', status.reason ?? '当前动作不可用。', { combatAction: action, readout });
     return commandAction(
       `combat.action:${action}`,
@@ -3340,7 +3346,10 @@ function buildCombatProjection(state: GameState, localUiState: PresentationLocal
         emphasis: dangerous ? 'danger' : action === recommendedAction ? 'primary' : 'secondary',
         recommendation: dangerous ? 'high-risk' : action === recommendedAction ? 'recommended' : 'neutral',
         ...(dangerous ? { riskReason: preview?.playerWillFall ? '该动作预估会使玩家濒死并触发强制回收。' : intent.consequence } : {}),
-        ...(readout ? { readout } : {})
+        ...(readout ? { readout } : {}),
+        ...(action === 'guard' && parryable
+          ? { parryEvent: { kind: 'command', command: { type: 'combat/act', action, timing: 'perfect' } } as const }
+          : {})
       }
     );
   });
@@ -3406,7 +3415,8 @@ function buildCombatProjection(state: GameState, localUiState: PresentationLocal
       severity: intent.severity,
       consequence: intent.consequence,
       recommendedActions: [...intent.recommendedActions],
-      dangerousActions: [...intent.dangerousActions]
+      dangerousActions: [...intent.dangerousActions],
+      parryable
     },
     ...(profile.boss ? {
       boss: {

@@ -1472,8 +1472,10 @@ function renderCarry(state, sheetState = { kind: 'character', page: 0, tab: 'car
     assert.ok(action.enabled, `${actionId}: fixture reaches its usable core state`);
     assert.equal(hud.actions.get(`WalkCombatAction:${actionId}`), action, 'unified button switches between actual basic and weapon commands');
     const nodes = nodesIn(hud.rootNode);
+    assert.equal(nodes.find(node => node.name === `WalkCombatAction:${actionId}Label`).getComponent(api.Label).string,
+      focus === 3 ? '战技' : '攻击', 'the large attack button names the action that will be released');
     assert.equal(nodes.find(node => node.name === 'WalkCombatAttackMode').getComponent(api.Label).string,
-      focus === 3 ? '战技' : '普攻', 'attack mode explains the action that will be released');
+      focus === 3 ? '战意已满' : '普攻', 'attack mode explains why the weapon skill is ready');
     assert.equal(nodes.find(node => node.name === 'WalkCombatFocus').getComponent(api.Label).string.replace(/\s/gu, ''),
       `战意${focus}/${focusModel.sections[1].detail.focus.required}`, 'HUD focus readout uses the projected core threshold');
   }
@@ -1623,6 +1625,41 @@ function viewLifecycle(initialState, { resolve = true, reject = false } = {}) {
     'missing outcome frames cancel animation and restore unlocked controls');
   assert.equal(rejected.state(), state, 'rejected command leaves domain state unchanged');
   rejected.controller.destroy();
+}
+
+// --- Heavy-blow parry: the tap chooses between the two presentation events; the core decides ---
+{
+  const heavy = { ...trainedCombat, inventory: { ...trainedCombat.inventory, armor_patch: 0 },
+    combat: { ...trainedCombat.combat, nodeId: 'butcher_turn', monsterId: 'tower_butcher', monsterHp: 1000, turn: 2, weaponFocus: 0 } };
+  const heavyModel = api.buildGameViewModel(heavy, {});
+  assert.equal(heavyModel.sections[1].detail.intent.parryable, true, 'fixture telegraphs a parryable heavy blow');
+  const guard = heavyModel.sections[2].actions.find(action => action.actionId === 'combat.action:guard');
+  assert.ok(guard?.parryEvent, 'guard carries the perfect-parry event');
+  let parryCases = 0;
+  // Ticks are 0.1s: two finish the shield windup, then the ring needs ~0.51-0.68s to reach its band.
+  for (const [label, tapAfter, perfect] of [['on the ring', 6, true], ['too early', 2, false], ['untouched', undefined, false]]) {
+    const flow = viewLifecycle(heavy);
+    assert.ok(flow.node('WalkEnemyIntentChip'), `${label}: the intent callout marks the parry window`);
+    assert.ok(flow.node('WalkCombatGuardChip'), `${label}: the guard control marks the parry window`);
+    const shownGuard = flow.model().sections[2].actions.find(action => action.actionId === 'combat.action:guard');
+    touch(flow.node('WalkCombatAction:combat.action:guard'));
+    flow.tick(2);
+    const catcher = flow.node('WalkCombatTimingCatcher');
+    assert.equal(catcher.active, true, `${label}: the full-screen catcher opens with the ring`);
+    assert.equal(flow.dispatched.length, 0, `${label}: nothing dispatches while the ring closes`);
+    if (tapAfter === undefined) flow.tick(10);
+    else { flow.tick(tapAfter); touch(catcher); }
+    assert.equal(flow.dispatched.length, 1, `${label}: exactly one guard command`);
+    assert.equal(flow.dispatched[0].event, perfect ? shownGuard.parryEvent : shownGuard.event, `${label}: the matching presentation event object is submitted`);
+    const counter = flow.frames().find(frame => frame.stage === 'counter');
+    assert.equal(counter?.perfectParry === true, perfect, `${label}: the core confirms the parry in its counter frame`);
+    assert.equal(flow.state().combat.weaponFocus, perfect ? 3 : 2, `${label}: focus follows the authoritative result`);
+    flow.tick(12);
+    assert.equal(flow.controller.walkScene?.isCombatAnimating() ?? false, false, `${label}: playback completes`);
+    flow.controller.destroy();
+    parryCases += 1;
+  }
+  assert.equal(parryCases, 3);
 }
 
 // --- Character equipment tooltip stays read-only, even in hub ---
@@ -3076,8 +3113,18 @@ for (const model of models) {
       const fixedControl = node => /^WalkCombat(?:Choice:(?:spells|medicines)|Action:combat\.action:(?:attack|weapon_skill|guard|use_thunder_talisman|escape))$/.test(node.name);
       const controls = hudNodes.filter(fixedControl);
       assert.equal(controls.length, 6, 'combat HUD exposes exactly six fixed controls');
-      assert.equal(new Set(controls.map(node => JSON.stringify(node.getComponent(api.UITransform).contentSize))).size, 1,
-        'all six combat controls have equal compact dimensions');
+      // Combat v2: one large attack control, four equal satellites and a small escape control.
+      const sizeOf = node => node.getComponent(api.UITransform).contentSize.width;
+      const attackSize = sizeOf(controls.find(node => /combat\.action:(?:attack|weapon_skill)$/.test(node.name)));
+      const satellites = controls.filter(node => /^WalkCombat(?:Choice:|Action:combat\.action:(?:guard|use_thunder_talisman)$)/.test(node.name));
+      assert.equal(satellites.length, 4, 'guard, spells, talisman and medicines circle the attack control');
+      assert.equal(new Set(satellites.map(sizeOf)).size, 1, 'the four satellites share one size');
+      assert.ok(attackSize > sizeOf(satellites[0]) * 1.5, 'the attack control is the dominant target');
+      for (const node of controls) {
+        const { width, height } = node.getComponent(api.UITransform).contentSize;
+        assert.equal(width, height, `${node.name}: round control keeps a square touch box`);
+        assert.ok(width >= 44 * 750 / 390 - 1e-6, `${node.name}: touch target stays at least 44 visible pixels`);
+      }
       const weapon = original.find(action => action.combatAction === 'weapon_skill' && action.enabled && action.event);
       const expectedAttack = weapon ?? original.find(action => action.combatAction === 'attack');
       const attackNodes = controls.filter(node => /combat\.action:(?:attack|weapon_skill)$/.test(node.name));

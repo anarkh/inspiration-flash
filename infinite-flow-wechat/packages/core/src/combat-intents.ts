@@ -10,12 +10,19 @@ export type CombatIntentId =
   | 'furnace-repeat-verdict'
   | 'pulse-wave'
   | 'dream-item-lock'
-  | 'echo-copy-pressure';
+  | 'echo-copy-pressure'
+  | 'heavy-blow';
 
 export type CombatIntentSeverity = 'normal' | 'warning' | 'danger';
 
+export type CombatEncounterRank = 'elite' | 'boss';
+
 export type CombatIntentInput = Readonly<
-  Pick<CombatState, 'monsterId' | 'turn' | 'effects'> & Pick<GameState, 'equipped' | 'learnedMethods'>
+  Pick<CombatState, 'monsterId' | 'turn' | 'effects'> &
+    Pick<GameState, 'equipped' | 'learnedMethods'> & {
+      /** Elite and boss encounters telegraph heavy blows; ordinary encounters omit this. */
+      encounterRank?: CombatEncounterRank;
+    }
 >;
 
 export type CombatIntent = Readonly<{
@@ -35,6 +42,27 @@ const REGULAR_PURSUIT: CombatIntent = {
   recommendedActions: ['attack', 'art', 'guard'],
   dangerousActions: []
 };
+
+/** Elite and boss encounters wind up a heavy blow on turns 2, 5, 8, ... */
+export const HEAVY_BLOW_TURN_INTERVAL = 3;
+
+const HEAVY_BLOW: CombatIntent = {
+  id: 'heavy-blow',
+  name: '蓄力重击',
+  severity: 'danger',
+  consequence: '敌人蓄力重击，本回合反击伤害提高 50%；防御可挡下大部分伤害，重击来临时把握时机可完美格挡。',
+  recommendedActions: ['guard'],
+  dangerousActions: ['attack', 'art', 'weapon_skill', 'use_healing_pill', 'use_thunder_talisman']
+};
+
+function isHeavyBlowTurn(input: CombatIntentInput): boolean {
+  return input.encounterRank !== undefined && input.turn > 0 && input.turn % HEAVY_BLOW_TURN_INTERVAL === 2;
+}
+
+/** Only a telegraphed heavy blow can be perfectly parried. */
+export function isParryableCombatIntent(intent: Pick<CombatIntent, 'id'> | undefined): boolean {
+  return intent?.id === 'heavy-blow';
+}
 
 function hasMethod(input: CombatIntentInput, methodId: GameState['learnedMethods'][number]): boolean {
   return input.learnedMethods.includes(methodId);
@@ -228,6 +256,9 @@ export function getCombatIntent(input: CombatIntentInput): CombatIntent {
       dangerousActions: ['attack', 'art', 'weapon_skill', 'use_healing_pill', 'use_thunder_talisman']
     };
   }
+
+  // Monster-specific mechanics above keep priority; the heavy blow only fills ordinary turns.
+  if (isHeavyBlowTurn(input)) return HEAVY_BLOW;
 
   return REGULAR_PURSUIT;
 }

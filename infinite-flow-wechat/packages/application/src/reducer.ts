@@ -456,7 +456,12 @@ function applyDomainCommand(
     case 'law/select-panopticon-route':
       return selectPanopticonRoute(state, command.route);
     case 'combat/act':
-      return performCombatAction(state, command.action, combatObserver);
+      return performCombatAction(
+        state,
+        command.action,
+        combatObserver,
+        command.timing === undefined ? {} : { timing: command.timing }
+      );
     case 'combat/capture':
       return capturePet(state, command.petId);
     case 'combat/use-method-technique':

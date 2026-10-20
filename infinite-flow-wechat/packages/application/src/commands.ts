@@ -2,6 +2,7 @@ import type {
   BloodlineId,
   CausalLedgerChoice,
   CombatAction,
+  CombatActionOptions,
   CompanionId,
   DungeonId,
   EntropyHeadingChoice,
@@ -38,6 +39,9 @@ export type PersistedRunSeeds = Readonly<{
 }>;
 
 type NoPayloadCommand<Type extends string> = Readonly<{ type: Type }>;
+
+/** Player-timed combat input; the core only honours it on a parryable heavy blow. */
+export type CombatActionTiming = NonNullable<CombatActionOptions['timing']>;
 
 export type GameCommand =
   | NoPayloadCommand<'game/new'>
@@ -153,7 +157,7 @@ export type GameCommand =
       route: CombatReplayRoute;
     }>
   | Readonly<{ type: 'law/select-panopticon-route'; route: PanopticonRoute }>
-  | Readonly<{ type: 'combat/act'; action: CombatAction }>
+  | Readonly<{ type: 'combat/act'; action: CombatAction; timing?: CombatActionTiming }>
   | Readonly<{ type: 'combat/capture'; petId: PetId }>
   | Readonly<{ type: 'combat/use-method-technique'; methodId?: MethodId }>
   | NoPayloadCommand<'combat/use-companion-assist'>
@@ -395,7 +399,8 @@ function isCommandPayloadValid(command: Record<string, unknown>, type: GameComma
     case 'law/select-panopticon-route':
       return isString(command.route);
     case 'combat/act':
-      return COMBAT_ACTIONS.has(command.action as CombatAction);
+      return COMBAT_ACTIONS.has(command.action as CombatAction)
+        && (command.timing === undefined || command.timing === 'perfect');
     case 'combat/use-method-technique':
       return isOptionalString(command.methodId);
     case 'result/archive-relic':

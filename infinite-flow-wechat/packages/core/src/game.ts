@@ -8,8 +8,8 @@ import { applyMonsterCombatEffects } from './combat-effects';
 import type { CombatDamageKind, CombatEffectAction, CombatEffectState } from './combat-effects';
 import { COMBAT_FOCUS_MAX, normalizeCombatFocus, resolveCombatFocus } from './combat-focus';
 import type { CombatFocus } from './combat-focus';
-import { getCombatIntent } from './combat-intents';
-import type { CombatIntent } from './combat-intents';
+import { getCombatIntent, isParryableCombatIntent } from './combat-intents';
+import type { CombatEncounterRank, CombatIntent } from './combat-intents';
 import {
   getEquipmentAttunementDefinition,
   getEquipmentAttunementOptions,
@@ -134,6 +134,7 @@ import {
 } from './run-economy';
 import type { RunExitStatus, RunLootBag, RunLootSettlement } from './run-economy';
 import {
+  DUNGEON_ELITE_MONSTERS,
   DUNGEON_MATERIAL_REWARDS,
   getDungeonLootOffer,
   getEquipmentRecipe
@@ -4156,15 +4157,28 @@ export function getCombatEncounterProfile(state: GameState): CombatEncounterProf
   };
 }
 
+export function getCombatEncounterRank(state: GameState): CombatEncounterRank | undefined {
+  if (!state.combat || !state.run) return undefined;
+  if (getBossDefinitionForNode(state.run.dungeonId, state.combat.nodeId)) return 'boss';
+  return DUNGEON_ELITE_MONSTERS[state.run.dungeonId] === state.combat.monsterId ? 'elite' : undefined;
+}
+
 export function getCurrentCombatIntent(state: GameState): CombatIntent | undefined {
   if (!state.combat) return undefined;
+  const encounterRank = getCombatEncounterRank(state);
   return getCombatIntent({
     monsterId: state.combat.monsterId,
     turn: state.combat.turn,
     effects: state.combat.effects,
     equipped: state.equipped,
-    learnedMethods: getAvailableLearnedMethods(state)
+    learnedMethods: getAvailableLearnedMethods(state),
+    ...(encounterRank ? { encounterRank } : {})
   });
+}
+
+/** True when guarding this turn can be upgraded to a perfect parry. */
+export function isCurrentCombatParryable(state: GameState): boolean {
+  return isParryableCombatIntent(getCurrentCombatIntent(state));
 }
 
 export function getCurrentWeaponResonanceProgress(state: GameState): EquipmentAttunementResonanceProgress {
@@ -9206,6 +9220,21 @@ export function useBloodlineSurge(
   return nextState;
 }
 
+function getGuardReduction(
+  state: GameState,
+  combat: CombatState,
+  strikeDamage: number,
+  keptRate: number,
+  directGuardMultiplier: number
+): number {
+  const guardedDamage = Math.floor(strikeDamage * keptRate);
+  const guardEffectPercent = getCurrentDungeonLaw(state)?.modifiers.guardEffectPercent ?? 0;
+  const fullGuardReduction = combat.guarding
+    ? scaleByPercent(strikeDamage - guardedDamage, guardEffectPercent, 0)
+    : 0;
+  return Math.max(0, Math.floor(fullGuardReduction * directGuardMultiplier));
+}
+
 function getPureGuardReduction(
   state: GameState,
   monster: MonsterDefinition,
@@ -9214,27 +9243,39 @@ function getPureGuardReduction(
 ): number {
   const stats = getDerivedStats(state);
   const baseDamage = calculatePhysicalDamage(monster.attack, stats.defense);
-  const baseGuardedDamage = Math.floor(baseDamage * 0.5);
-  const guardEffectPercent = getCurrentDungeonLaw(state)?.modifiers.guardEffectPercent ?? 0;
-  const fullGuardReduction = combat.guarding
-    ? scaleByPercent(baseDamage - baseGuardedDamage, guardEffectPercent, 0)
-    : 0;
-  return Math.max(0, Math.floor(fullGuardReduction * directGuardMultiplier));
+  return getGuardReduction(state, combat, baseDamage, 0.5, directGuardMultiplier);
 }
+
+/** Heavy blows hit 50% harder, a guard keeps only a quarter, and a perfect parry halves what remains. */
+const HEAVY_BLOW_DAMAGE_RATE = 1.5;
+const HEAVY_BLOW_GUARD_KEPT_RATE = 0.25;
+
+type CounterBlow = Readonly<{ heavy: boolean; perfectParry: boolean }>;
+
+export type CombatActionOptions = Readonly<{
+  /** Player-timed input; only a guard against a telegraphed heavy blow honours it. */
+  timing?: 'perfect';
+}>;
 
 function monsterAttack(
   state: GameState,
   monster: MonsterDefinition,
   combat: CombatState,
   effectDamageToPlayer = 0,
-  directGuardMultiplier = 1
+  directGuardMultiplier = 1,
+  blow: CounterBlow = { heavy: false, perfectParry: false }
 ): GameState {
   const stats = getDerivedStats(state);
   const baseDamage = calculatePhysicalDamage(monster.attack, stats.defense);
-  const guardReduction = getPureGuardReduction(state, monster, combat, directGuardMultiplier);
-  const guardedDamage = Math.max(0, baseDamage - guardReduction);
+  const strikeDamage = blow.heavy ? Math.ceil(baseDamage * HEAVY_BLOW_DAMAGE_RATE) : baseDamage;
+  const guardReduction = blow.heavy
+    ? getGuardReduction(state, combat, strikeDamage, HEAVY_BLOW_GUARD_KEPT_RATE, directGuardMultiplier)
+    : getPureGuardReduction(state, monster, combat, directGuardMultiplier);
+  const guardedDamage = Math.max(0, strikeDamage - guardReduction);
   const ironBodyGuard = combat.guarding && getAvailableLearnedMethods(state).includes('iron_body');
-  const incomingDamage = ironBodyGuard ? Math.floor(guardedDamage * 0.7) : guardedDamage;
+  const ironBodyDamage = ironBodyGuard ? Math.floor(guardedDamage * 0.7) : guardedDamage;
+  const perfectParry = blow.heavy && blow.perfectParry && combat.guarding;
+  const incomingDamage = perfectParry ? Math.ceil(ironBodyDamage / 2) : ironBodyDamage;
   let damage = Math.max(1, incomingDamage) + effectDamageToPlayer;
   const counterDamage = ironBodyGuard ? Math.max(2, Math.floor(stats.defense * 0.25)) : 0;
   let nextState = state;
@@ -9298,7 +9339,10 @@ function monsterAttack(
       log: [
         ...statusLines,
         ...(ironBodyGuard ? [`铁衣诀守反卸力，承伤降至 ${damage} 点并反震 ${counterDamage} 点。`] : []),
-        `${monster.name}反击造成 ${damage} 点伤害。`,
+        ...(perfectParry ? ['完美格挡！重击余力再减半。'] : []),
+        blow.heavy
+          ? `${monster.name}蓄力重击造成 ${damage} 点伤害。`
+          : `${monster.name}反击造成 ${damage} 点伤害。`,
         ...combat.log
       ].slice(0, 8)
     }
@@ -9358,12 +9402,29 @@ function applyContinuingCombatFocus(
   };
 }
 
+function applyPerfectParryFocus(state: GameState): GameState {
+  if (state.phase !== 'combat' || !state.combat || state.player.hp <= 0) return state;
+  const before = normalizeCombatFocus(state.combat.weaponFocus);
+  const after = normalizeCombatFocus(before + 1);
+  if (after === before) return state;
+  return {
+    ...state,
+    combat: {
+      ...state.combat,
+      weaponFocus: after,
+      log: [`完美格挡，战意额外 +1，当前 ${after}/${COMBAT_FOCUS_MAX}。`, ...state.combat.log].slice(0, 8)
+    }
+  };
+}
+
 /** Transient display snapshots. These values are not part of GameState or saves. */
 export type CombatPresentationFrame = Readonly<{
   stage: 'impact' | 'counter';
   playerHp: number;
   enemyHp: number;
   guarded?: boolean;
+  /** Counter frames only: the guard met a heavy blow with a perfect parry. */
+  perfectParry?: boolean;
 }>;
 
 export type CombatPresentationObserver = (frame: CombatPresentationFrame) => void;
@@ -9373,15 +9434,23 @@ function observeCombatPresentation(
   stage: CombatPresentationFrame['stage'],
   state: GameState,
   combat: CombatState,
-  guarded = combat.guarding
+  guarded = combat.guarding,
+  perfectParry = false
 ): void {
-  observer?.(Object.freeze({ stage, playerHp: state.player.hp, enemyHp: combat.monsterHp, guarded }));
+  observer?.(Object.freeze({
+    stage,
+    playerHp: state.player.hp,
+    enemyHp: combat.monsterHp,
+    guarded,
+    ...(perfectParry ? { perfectParry: true } : {})
+  }));
 }
 
 export function performCombatAction(
   state: GameState,
   action: CombatAction,
-  observer?: CombatPresentationObserver
+  observer?: CombatPresentationObserver,
+  options: CombatActionOptions = {}
 ): GameState {
   if (state.phase !== 'combat' || !state.combat) return appendLog(state, '当前没有战斗。');
   if (action === 'art' && !isCurrentDungeonFeatureAvailable(state, 'method')) {
@@ -9390,6 +9459,11 @@ export function performCombatAction(
 
   // Focus resolves after retaliation, but intent must describe the turn before the action mutates it.
   const actionIntent = getCurrentCombatIntent(state);
+  const heavyBlow = isParryableCombatIntent(actionIntent);
+  const counterBlow: CounterBlow = {
+    heavy: heavyBlow,
+    perfectParry: heavyBlow && action === 'guard' && options.timing === 'perfect'
+  };
   const encounter = getCombatEncounterProfile(state);
   const monster = encounter?.monster ?? MONSTERS[state.combat.monsterId];
   const directAction = action === 'attack' || action === 'art' || action === 'guard'
@@ -9449,10 +9523,18 @@ export function performCombatAction(
       getCombatEncounterProfile(nextState)?.monster ?? monster,
       nextCombat,
       effects.damageToPlayer,
-      directMultiplier
+      directMultiplier,
+      counterBlow
     );
     afterMonster = releasePendingAfterbeat(afterMonster);
-    observeCombatPresentation(observer, 'counter', afterMonster, afterMonster.combat!, nextCombat.guarding);
+    observeCombatPresentation(
+      observer,
+      'counter',
+      afterMonster,
+      afterMonster.combat!,
+      nextCombat.guarding,
+      counterBlow.perfectParry && nextCombat.guarding
+    );
     if (afterMonster.player.hp <= 0) {
       return resolveRunFailure(afterMonster, `${monster.name}把你逼到濒死，主神强制回收。`);
     }
@@ -9465,12 +9547,13 @@ export function performCombatAction(
       afterMonster = advanceBossPhase(afterMonster);
     }
 
+    const guardedState = applyContinuingCombatFocus(
+      replayBeforeCounter?.boss ? afterMonster : advanceBossPhase(afterMonster),
+      action,
+      actionIntent
+    );
     return appendLog(
-      applyContinuingCombatFocus(
-        replayBeforeCounter?.boss ? afterMonster : advanceBossPhase(afterMonster),
-        action,
-        actionIntent
-      ),
+      counterBlow.perfectParry && nextCombat.guarding ? applyPerfectParryFocus(guardedState) : guardedState,
       '你选择防御，降低本回合承伤。'
     );
   }
@@ -9502,7 +9585,9 @@ export function performCombatAction(
       { ...nextState, combat: nextCombat },
       monster,
       nextCombat,
-      effects.damageToPlayer
+      effects.damageToPlayer,
+      1,
+      counterBlow
     );
     observeCombatPresentation(observer, 'counter', afterMonster, afterMonster.combat!, nextCombat.guarding);
     if (afterMonster.player.hp <= 0) {
@@ -9596,7 +9681,9 @@ export function performCombatAction(
       { ...nextState, combat: nextCombat },
       monster,
       nextCombat,
-      effects.damageToPlayer
+      effects.damageToPlayer,
+      1,
+      counterBlow
     );
     observeCombatPresentation(observer, 'counter', afterMonster, afterMonster.combat!, nextCombat.guarding);
     if (afterMonster.player.hp <= 0) {
@@ -9711,7 +9798,7 @@ export function performCombatAction(
   }
   nextCombat = nextState.combat ?? nextCombat;
   const retaliationMonster = getCombatEncounterProfile(nextState)?.monster ?? monster;
-  let afterMonster = monsterAttack(nextState, retaliationMonster, nextCombat, effects.damageToPlayer);
+  let afterMonster = monsterAttack(nextState, retaliationMonster, nextCombat, effects.damageToPlayer, 1, counterBlow);
   afterMonster = releasePendingAfterbeat(afterMonster);
   observeCombatPresentation(observer, 'counter', afterMonster, afterMonster.combat!, nextCombat.guarding);
   if (afterMonster.player.hp <= 0) {
