@@ -1,5 +1,5 @@
-import { Color, Graphics, Label, Mask, Node, Size, Sprite, UITransform, Vec2, Vec3 } from 'cc';
-import type { SpriteFrame } from 'cc';
+import { Color, Graphics, Input, KeyCode, Label, Mask, Node, Size, Sprite, UITransform, Vec2, Vec3, input } from 'cc';
+import type { EventKeyboard, SpriteFrame } from 'cc';
 import type { GameViewModel, ViewActionModel } from '@infinite-flow/presentation';
 import { formatInfiniteFlowPlayerChrome, isInfiniteFlowPlayerActivityFailure } from './InfiniteFlowView';
 import type { InfiniteFlowRuntimeChrome } from './InfiniteFlowView';
@@ -52,7 +52,7 @@ export type WalkSceneHandle = Readonly<{
   joystick: Node;
   joystickThumb: Node;
   startCombatAction: (kind: CombatEffectKind, onImpact: (grade: CombatTimingGrade) => void, options?: CombatEffectStartOptions) => boolean;
-  /** Keyboard or touch tap during the parry window. */
+  /** Touch or Space during the parry window; also callable directly. */
   tapCombatTiming: () => boolean;
   resolveCombatAction: (result: CombatEffectResult, onComplete: () => void) => boolean;
   cancelCombatAction: () => void;
@@ -870,7 +870,7 @@ export type CombatDuelLayout = Readonly<{
   ticker: WorldRect;
   intent: WorldRect;
   attack: Readonly<{ x: number; y: number; diameter: number }>;
-  /** Guard, spells, talisman and medicines on a quarter arc around the attack button. */
+  /** Guard, spells, talisman and medicines on an arc around the attack button; square touch boxes never overlap. */
   skills: readonly Readonly<{ x: number; y: number; diameter: number }>[];
   escape: Readonly<{ x: number; y: number; diameter: number }>;
 }>;
@@ -888,8 +888,10 @@ export function getCombatDuelLayout(input: DungeonHtmlRoomInput): CombatDuelLayo
   const skillSize = (compact ? 48 : 56) * px;
   const radius = (compact ? 98 : 120) * px;
   const escapeSize = (compact ? 46 : 54) * px;
-  const attack = { x: right - 14 * px - attackSize / 2, y: bottom + 16 * px + attackSize / 2, diameter: attackSize };
-  const skills = [180, 150, 120, 90].map(degrees => ({
+  // 30px below the button holds the focus readout inside the safe area.
+  const attack = { x: right - 14 * px - attackSize / 2, y: bottom + 30 * px + attackSize / 2, diameter: attackSize };
+  // Uneven spacing keeps each satellite's square touch box clear of its neighbours (>= 3.9px at 320px).
+  const skills = [188, 157, 113, 82].map(degrees => ({
     x: attack.x + Math.cos(degrees * Math.PI / 180) * radius,
     y: attack.y + Math.sin(degrees * Math.PI / 180) * radius,
     diameter: skillSize,
@@ -1060,7 +1062,7 @@ function combatDuelControls(scene: Node, model: GameViewModel, options: WalkScen
   title.isBold = true;
   text(base, 'WalkCombatAttackMode', weapon === undefined ? '普攻' : '战意已满', 0, -slot.diameter * 0.29, slot.diameter * 0.8, 12 * px,
     (duel.compact ? 8 : 9) * px, ready ? DUEL.focusOn : DARK_UI.muted);
-  text(base, 'WalkCombatFocus', `战意 ${focus.current} / ${focus.required}`, 0, -slot.diameter / 2 - 20 * px, slot.diameter + 20 * px, 12 * px,
+  text(base, 'WalkCombatFocus', `战意 ${focus.current} / ${focus.required}`, 0, -slot.diameter / 2 - 22 * px, slot.diameter + 20 * px, 12 * px,
     (duel.compact ? 8 : 9) * px, weapon === undefined ? DARK_UI.muted : DUEL.focusOn);
   options.bindAction(base, attack);
 }
@@ -1421,6 +1423,16 @@ export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, sc
   const enemySprite = enemyArt?.getComponent(Sprite) ?? undefined;
   const timingCatcher = duel === undefined ? undefined : makeNode(scene, 'WalkCombatTimingCatcher', 0, 0, 750, options.surfaceHeight);
   if (timingCatcher !== undefined) timingCatcher.active = false;
+  // Busy renders dispose walking input, so the parry window owns its own Space
+  // listener and releases it whenever the window closes, cancels or disposes.
+  const timingKey = (event: EventKeyboard): void => { if (event.keyCode === KeyCode.SPACE) effects?.tap(); };
+  let timingKeyBound = false;
+  const bindTimingKey = (active: boolean): void => {
+    if (active === timingKeyBound) return;
+    timingKeyBound = active;
+    if (active) input.on(Input.EventType.KEY_DOWN, timingKey);
+    else input.off(Input.EventType.KEY_DOWN, timingKey);
+  };
   const viewportRest = viewportCenter;
   const effects = effectsMask === undefined ? undefined : createInfiniteFlowCombatEffects(effectsMask, {
     pixel: hudPixel,
@@ -1428,7 +1440,11 @@ export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, sc
     shakeWorld: offset => viewport.setPosition(new Vec3(viewportRest.x + offset.x, viewportRest.y + offset.y, 0)),
     tintPlayer: color => { playerSprite.color = color ?? new Color(255, 255, 255, 255); },
     tintEnemy: color => { if (enemySprite !== undefined) enemySprite.color = color ?? new Color(255, 255, 255, 255); },
-    setTimingCatcher: active => { if (timingCatcher !== undefined) timingCatcher.active = active; },
+    setTimingCatcher: active => {
+      if (timingCatcher === undefined) return;
+      timingCatcher.active = active;
+      bindTimingKey(active);
+    },
     getAnchors: () => {
       if (roomFit !== undefined) {
         const playerFoot = roomFit.project(duelMark ?? position);

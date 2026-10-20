@@ -11,8 +11,6 @@ export class InfiniteFlowWalkInput {
     private readonly joystick: Node,
     private readonly thumb: Node,
     private readonly onReset: () => void,
-    /** Space taps the combat parry window on desktop previews. */
-    private readonly onTimingKey?: () => void,
   ) {
     joystick.on(Node.EventType.TOUCH_START, this.touchStart, this);
     joystick.on(Node.EventType.TOUCH_MOVE, this.touchMove, this);
@@ -36,7 +34,6 @@ export class InfiniteFlowWalkInput {
 
   private readonly keyDown = (event: EventKeyboard): void => {
     if (this.disposed) return;
-    if (event.keyCode === KeyCode.SPACE) this.onTimingKey?.();
     this.keys.add(event.keyCode);
   };
 

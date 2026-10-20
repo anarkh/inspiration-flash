@@ -3724,7 +3724,7 @@ export class InfiniteFlowView {
     });
     if (enabled && this.mobileSheet === undefined && !this.chapterCodexOpen && model.sections[4].active === undefined) {
       this.walkInput = new InfiniteFlowWalkInput(this.walkScene.joystick, this.walkScene.joystickThumb,
-        () => this.walkScene?.cancelApproach(), () => { this.walkScene?.tapCombatTiming(); });
+        () => this.walkScene?.cancelApproach());
     }
   }
 

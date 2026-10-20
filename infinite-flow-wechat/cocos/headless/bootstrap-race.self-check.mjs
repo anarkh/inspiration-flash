@@ -1339,6 +1339,17 @@ function assertDarkWalkingUi(root, model, insets, viewportWidth = 320) {
       assert.ok(darkContrast(labelComponent(findNode(node, `${node.name}Label`)).color, face.color) >= 4.5,
         `${node.name}: label stays readable on its face`);
     });
+    // Engine hit-testing uses each node's square box: no two controls may share a touch point.
+    const touchBoxes = collectNodes(root, ({ name }) => /^WalkCombat(?:Action|Choice):[^:]/.test(name) && !name.endsWith('Label') && !name.endsWith('Icon'))
+      .map(node => ({ name: node.name, bounds: absoluteNodeBounds(node) }));
+    assert.ok(touchBoxes.length >= 3, 'combat: the attack and both picker controls are present');
+    touchBoxes.forEach((a, index) => touchBoxes.slice(index + 1).forEach((b) => {
+      const separated = a.bounds.right <= b.bounds.left + 1e-6 || b.bounds.right <= a.bounds.left + 1e-6
+        || a.bounds.top <= b.bounds.bottom + 1e-6 || b.bounds.top <= a.bounds.bottom + 1e-6;
+      assert.ok(separated, `combat: ${a.name} and ${b.name} touch boxes do not overlap`);
+    }));
+    const focus = absoluteNodeBounds(findNode(root, 'WalkCombatFocus'));
+    assert.ok(focus.bottom >= bottom - 1e-6, `combat: the focus readout stays inside the safe bottom (${focus.bottom} >= ${bottom})`);
   }
 }
 
@@ -11563,6 +11574,37 @@ for (const viewportWidth of [320, 390]) {
   const battlePos = pos();
   key(68, true); advance(12); key(68, false);
   assert.deepEqual(pos(), battlePos, 'combat v2 holds the avatar on its duel mark; walking resumes after the encounter');
+  // Space must reach the parry window even though the busy render disposes walking input.
+  const keyListeners = () => (globalThis.__walkingTestInput.listeners.get('key-down') ?? []).length;
+  const parryGuard = { ...battle.sections[2].actions[1],
+    parryEvent: { kind: 'command', command: { type: 'combat/act', action: 'guard', timing: 'perfect' } } };
+  const heavyBattle = combatModel(combatChapterContextFixture(), {
+    actions: [battle.sections[2].actions[0], parryGuard], turn: 2,
+    intent: { id: 'heavy-blow', name: '蓄力重击', severity: 'danger', consequence: '蓄力重击。',
+      recommendedActions: ['guard'], dangerousActions: ['attack'], parryable: true },
+  });
+  // 1/60s frames: 11 finish the guard windup, then ~31-40 more reach the target band.
+  for (const [index, [label, pressAfter, perfect]] of [['Space on the ring', 36, true], ['Space too early', 6, false]].entries()) {
+    view.render(heavyBattle, chrome, EXPLORE_INSETS_390);
+    const idleListeners = keyListeners();
+    const beforeParry = calls.length;
+    key(32, true); key(32, false);
+    assert.equal(calls.length, beforeParry, `${label}: Space outside the window dispatches nothing`);
+    emitTouch(findNode(root(), 'WalkCombatAction:combat.action:guard'), 940 + index);
+    advance(11);
+    assert.equal(findNode(root(), 'WalkCombatTimingCatcher').active, true, `${label}: the window is open on the busy scene`);
+    assert.equal(keyListeners(), idleListeners, `${label}: walking input is gone and the window holds the only Space listener`);
+    advance(pressAfter);
+    key(32, true); key(32, false);
+    assert.equal(calls.length, beforeParry + 1, `${label}: Space closes the window with exactly one dispatch`);
+    assert.equal(calls.at(-1).event, perfect ? parryGuard.parryEvent : parryGuard.event, `${label}: Space selects the matching event`);
+    assert.equal(keyListeners(), idleListeners - 1, `${label}: the window releases its Space listener`);
+    view.resolveCombatPresentation('combat.action:guard', [{ stage: 'impact', playerHp: 42, enemyHp: 30, guarded: true },
+      { stage: 'counter', playerHp: 40, enemyHp: 30, guarded: true, ...(perfect ? { perfectParry: true } : {}) }]);
+    advance(70);
+    assert.equal(view.walkScene.isCombatAnimating(), false, `${label}: playback completes`);
+  }
+  view.render(battle, chrome, EXPLORE_INSETS_390);
   const unavailable = { ...battle.sections[2].actions[0], actionId: 'combat.action:art', combatAction: 'art', label: '术法攻击',
     enabled: false, event: undefined, disabledReason: '术法尚未就绪。' };
   const unavailableBattle = combatModel(combatChapterContextFixture(), { actions: [unavailable] });
