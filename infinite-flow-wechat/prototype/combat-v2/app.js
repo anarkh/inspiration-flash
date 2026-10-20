@@ -56,7 +56,6 @@ function setHeroFrame(index) {
 const CANCELLED = Symbol('cancelled');
 const MAX_HP = 116;
 const DAMAGE = { attack: 18, weapon: 32, art: 24, talisman: 30 };
-const CRIT_RATE = 1.5;
 const OFFENSIVE = new Set(['attack', 'weapon', 'art', 'talisman']);
 const NAMES = { attack: '普攻', weapon: '战技·裂空斩', art: '术法', talisman: '雷火符', guard: '防御', pill: '止血丹', mist: '归息', iron: '镇岳' };
 let state;
@@ -87,7 +86,7 @@ function reset() {
   enemyEl.querySelector('.enemy-art').style.height = boss ? 'calc(var(--enemy-h) * 1.12)' : '';
   if (sheet.open) sheet.close();
   setHeroFrame(8);
-  ticker(`迎战<em>${state.enemyName}</em> · 战技与重击回合可把握时机`);
+  ticker(`迎战<em>${state.enemyName}</em> · 重击回合防御可完美格挡`);
   render();
 }
 
@@ -130,7 +129,7 @@ function render() {
   $('#attack-icon').dataset.icon = ready ? 'weapon' : 'attack';
   paintIcons(attack);
   $('#attack-label').textContent = ready ? '战技' : '攻击';
-  $('#attack-mode').textContent = ready ? '裂空斩 · 可会心' : `普攻 · 战意 ${state.focus}/3`;
+  $('#attack-mode').textContent = ready ? '裂空斩 · 战意满' : `普攻 · 战意 ${state.focus}/3`;
   attack.querySelectorAll('.seg').forEach((seg, index) => seg.classList.toggle('on', index < state.focus));
   attack.setAttribute('aria-label', ready ? '释放武器战技裂空斩' : `普通攻击，战意 ${state.focus}/3`);
 
@@ -265,23 +264,21 @@ async function lean(element, degrees, ms, gen) {
 }
 
 // ---------- Timing check ----------
-// The ring shrinks at a constant speed; overlapping the gold band when tapped is "perfect".
-function timing(mode, gen) {
-  const strike = mode === 'strike';
-  const center = strike ? enemyChest() : heroChest();
-  const unit = strike ? enemyH() / 262 : heroH() / 200;
+// Parry only: the ring shrinks at a constant speed; overlapping the target band when tapped is "perfect".
+function parryTiming(gen) {
+  const center = heroChest();
+  const unit = heroH() / 200;
   const start = 128 * unit;
   const end = 10 * unit;
-  const target = (strike ? 44 : 50) * unit;
+  const target = 50 * unit;
   const half = 11 * unit;
-  const duration = ($('#assist').checked ? 1.7 : 1) * (strike ? 950 : 900);
-  const color = strike ? '#f2c475' : '#ff7a62';
+  const duration = ($('#assist').checked ? 1.7 : 1) * 900;
+  const color = '#ff7a62';
   const band = svg('circle', { cx: center.x, cy: center.y, r: target, fill: 'none', stroke: color, 'stroke-width': half * 2, opacity: .22 });
   const guide = svg('circle', { cx: center.x, cy: center.y, r: target, fill: 'none', stroke: color, 'stroke-width': 2, opacity: .9 });
   const ring = svg('circle', { cx: center.x, cy: center.y, r: start, fill: 'none', stroke: '#fff', 'stroke-width': 3 });
-  showHint(strike ? '金圈重合时点击 · 会心' : '红圈收拢时点击 · 完美格挡', strike ? center.y + start + 8 : center.y - start - 40, !strike);
+  showHint('红圈收拢时点击 · 完美格挡', center.y - start - 40);
   game.classList.add('qte');
-  $('#attack').classList.toggle('aiming', strike);
   return new Promise((resolve, reject) => {
     const begun = performance.now();
     let done = false;
@@ -292,7 +289,6 @@ function timing(mode, gen) {
       window.removeEventListener('pointerdown', onTap, true);
       window.removeEventListener('keydown', onKey, true);
       game.classList.remove('qte');
-      $('#attack').classList.remove('aiming');
       hideHint();
       window.__qte = { active: false, grade };
       ring.setAttribute('stroke', grade === 'perfect' ? color : '#888');
@@ -316,18 +312,17 @@ function timing(mode, gen) {
       ring.setAttribute('r', r);
       const inBand = Math.abs(r - target) <= half;
       guide.setAttribute('stroke-width', inBand ? 4 : 2);
-      window.__qte = { active: true, mode, r, target, half, inBand };
+      window.__qte = { active: true, r, target, half, inBand };
       if (now - begun >= duration) finish('normal');
       else requestAnimationFrame(frame);
     };
     requestAnimationFrame(frame);
   });
 }
-function showHint(text, y, defend) {
+function showHint(text, y) {
   const hint = $('#qte-hint');
   hint.textContent = text;
   hint.style.top = `${Math.max(120, Math.min(y, game.clientHeight - 260))}px`;
-  hint.classList.toggle('defend', defend);
   hint.classList.add('show');
 }
 function hideHint() { $('#qte-hint').classList.remove('show'); }
@@ -439,16 +434,14 @@ async function perform(kind) {
     if (OFFENSIVE.has(kind)) {
       if (kind === 'attack' || kind === 'weapon') { dashed = true; await dashIn(gen); }
       else await castCharge(kind, gen);
-      // Only the weapon skill (a full focus gauge) earns a timing check; everything else strikes at once.
-      if (kind === 'weapon') grade = await timing('strike', gen);
-      dealt = await strike(kind, grade, gen);
+      dealt = await strike(kind, gen);
     } else if (kind === 'guard') {
       shieldMark(heroChest(), '#f2c475', false);
       // Only a telegraphed heavy blow can be parried; an ordinary guard resolves immediately.
       if (intent.heavy) {
         enemyEl.classList.add('windup');
         lean(enemyEl, 4, 300, gen).catch(() => {});
-        grade = await timing('parry', gen);
+        grade = await parryTiming(gen);
       }
     } else if (kind === 'pill') {
       await drinkPill(gen);
@@ -484,10 +477,9 @@ async function castCharge(kind, gen) {
   await lean(heroSprite, -4, 220, gen);
 }
 
-async function strike(kind, grade, gen) {
-  const perfect = grade === 'perfect';
+async function strike(kind, gen) {
   const base = kind === 'art' && state.breath ? 32 : DAMAGE[kind];
-  const damage = Math.min(state.enemyHp, perfect ? Math.round(base * CRIT_RATE) : base);
+  const damage = Math.min(state.enemyHp, base);
   const target = enemyChest();
   const color = kind === 'art' ? '#8fe0d2' : '#f2c475';
   heroSprite.getAnimations().forEach(animation => animation.cancel());
@@ -495,27 +487,27 @@ async function strike(kind, grade, gen) {
     setHeroFrame(9);
     animate(heroSprite, [{ transform: 'rotate(0)' }, { transform: 'rotate(8deg) translateX(8px)' }, { transform: 'rotate(0)' }], { duration: 220, fill: 'none' }, gen).catch(() => {});
     slash(target, { color, size: kind === 'weapon' ? 1.25 : 1, width: kind === 'weapon' ? 13 : 9 });
-    if (kind === 'weapon' || perfect) { await wait(80, gen); slash(target, { color: perfect ? '#ffd36b' : color, size: 1.15, width: 11, reverse: true }); }
+    if (kind === 'weapon') { await wait(80, gen); slash(target, { color: '#ffd36b', size: 1.15, width: 11, reverse: true }); }
   } else if (kind === 'art') {
     await projectile(heroChest(), target, color, gen);
   } else if (kind === 'talisman') {
     lightning(target);
   }
-  // Impact: hit-stop, flash, shake, number.
+  // Impact: hit-stop, flash, shake, number. The weapon skill hits harder on screen.
+  const heavy = kind === 'weapon';
   enemyEl.classList.add('flash');
-  sparks(target, color, perfect ? 16 : 10, perfect ? 90 : 60);
-  if (perfect) burst(target, '#ffd36b', 50);
+  sparks(target, color, heavy ? 16 : 10, heavy ? 90 : 60);
+  if (heavy) burst(target, '#ffd36b', 50);
   state.enemyHp -= damage;
   if (kind === 'art') state.breath = false;
   if (kind === 'talisman') state.talismans--;
-  number(`${damage}`, { x: target.x, y: target.y - enemyH() * .2 }, perfect ? 'crit' : '');
+  number(`${damage}`, { x: target.x, y: target.y - enemyH() * .2 }, heavy ? 'skill' : '');
   render();
-  const stop = perfect ? 110 : 70;
-  await wait(stop, gen);
+  await wait(heavy ? 110 : 70, gen);
   enemyEl.classList.remove('flash');
-  const push = perfect ? 18 : 10;
+  const push = heavy ? 18 : 10;
   animate(enemyEl, [{ transform: 'translate(0,0)' }, { transform: `translate(${push}px,-2px)` }, { transform: 'translate(0,0)' }], { duration: 240, fill: 'none' }, gen).catch(() => {});
-  await shake(perfect ? 9 : 5, gen);
+  await shake(heavy ? 9 : 5, gen);
   setHeroFrame(8);
   return damage;
 }
@@ -579,7 +571,7 @@ async function methodTechnique(kind, gen) {
 function report(kind, grade, dealt, taken, intent) {
   const perfect = grade === 'perfect';
   const parts = [`第 ${state.turn - 1} 回合`];
-  if (OFFENSIVE.has(kind)) parts.push(`${NAMES[kind]} ${perfect ? '<span class="crit">会心</span> ' : ''}<em>${dealt}</em>`);
+  if (OFFENSIVE.has(kind)) parts.push(`${NAMES[kind]} <em>${dealt}</em>`);
   else if (kind === 'guard') parts.push(perfect ? '<span class="crit">完美格挡</span>' : '防御');
   else parts.push(NAMES[kind]);
   if (state.enemyHp > 0) parts.push(`<span class="hurt">${intent.heavy ? '重击' : '反击'} ${taken}</span>`);
@@ -655,7 +647,7 @@ function openPanel(panel) {
   if (panel === 'menu') {
     openSheet('菜单');
     $('#sheet-content').innerHTML = `<div class="info"><h2>战斗记录</h2><ol>${state.log.length ? state.log.map(line => `<li>${line}</li>`).join('') : '<li>尚未采取行动。</li>'}</ol></div>
-      <div class="info"><h2>时机操作</h2><p>只在两个关键时刻出现：战意攒满释放战技时，白圈与金圈重合点击打出会心（伤害 ×1.5）；敌人预告重击时按防御，红圈收拢点击完美格挡（承伤减半，战意额外 +1）。</p><p>普通攻击、普通防御、术法、符箓、药品都直接结算。不点或点偏按普通结算。</p></div>`;
+      <div class="info"><h2>时机操作</h2><p>只在敌人预告重击时出现：按防御后，红圈收拢到护盾时点击，完美格挡（承伤减半，战意额外 +1）。</p><p>其余行动都直接结算。不点或点偏按普通防御结算。</p></div>`;
   } else {
     openSheet('背包');
     $('#sheet-content').innerHTML = `<div class="info"><p>止血丹 × ${state.pills}</p><p>雷火符 × ${state.talismans}</p></div>`;
