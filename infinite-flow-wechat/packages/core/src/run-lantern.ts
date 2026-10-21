@@ -67,6 +67,11 @@ export function getRunLanternDefinition(dungeonId: string): RunLanternDefinition
   return isRunLanternDungeonId(dungeonId) ? RUN_LANTERN_CATALOG[dungeonId] : undefined;
 }
 
+/** The most oil a run can ever hold: the starting lamp plus every supply room refilling once. */
+export function getRunLanternMaxOil(definition: RunLanternDefinition): number {
+  return definition.startOil + definition.supplyOil * definition.supplyNodeIds.length;
+}
+
 export function createRunLanternState(dungeonId: string): RunLanternState | undefined {
   const definition = getRunLanternDefinition(dungeonId);
   if (!definition) return undefined;
@@ -86,7 +91,8 @@ export function normalizeRunLanternState(value: unknown): RunLanternState | unde
     !isRunLanternDungeonId(value.dungeonId) ||
     typeof value.oil !== 'number' ||
     !Number.isSafeInteger(value.oil) ||
-    value.oil < 0
+    value.oil < 0 ||
+    value.oil > getRunLanternMaxOil(RUN_LANTERN_CATALOG[value.dungeonId])
   ) {
     return undefined;
   }
@@ -122,7 +128,7 @@ export function refillRunLanternAtNode(state: RunLanternState, nodeId: string): 
   const definition: RunLanternDefinition = RUN_LANTERN_CATALOG[state.dungeonId];
   if (!definition.supplyNodeIds.includes(nodeId)) return { state, gained: 0 };
 
-  const gained = Math.min(definition.supplyOil, Number.MAX_SAFE_INTEGER - state.oil);
+  const gained = Math.max(0, Math.min(definition.supplyOil, getRunLanternMaxOil(definition) - state.oil));
   return {
     state: { ...state, oil: state.oil + gained },
     gained

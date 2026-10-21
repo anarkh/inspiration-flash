@@ -48,12 +48,15 @@ web project.
 Runs entered through the stage-2 flow on `demon_tower_1` (standard or imprint protocol) carry
 a `lanternState` from the new `src/run-lantern.ts`: 12 drops of lamp oil, one burnt per
 `moveToNode`, four more when one of its four supply rooms is cleared, and two more lost on a
-pursuer contact. The burn that empties the lamp sets `breachForced` on the run's pressure
+pursuer contact. A lamp never holds more than its start plus every supply refill (28 drops);
+a snapshot above that is malformed. The burn that empties the lamp sets `breachForced` on the run's pressure
 state, which `getRunPressureStatus` reads as breach whatever the cleared count, and wakes a
 dormant pursuer at once. A pursuer now also makes contact when the player walks into its
 room, even on its resting step. `getRouteForecasts` previews every adjacent room (kind,
 a three-step risk read from the basic-attack exchange or the trap roll, reward bonus, oil,
-the pursuer's approach and the containment room) without changing state. Runs without a
+boss fusion, the pursuer's approach and the containment room) without changing state. It
+reads bonus, fusion and risk from the state that very step would leave, through the same
+move effects `moveToNode` applies (burnt drop, forced breach, woken or colliding pursuer). Runs without a
 lamp, other chapters and deep runs keep the source movement rules. These are intentional
 rule changes from the source web project.
 

@@ -4054,7 +4054,6 @@ export function getRouteForecasts(state: GameState): RouteForecast[] {
   const current = run && dungeon ? getNodeById(dungeon, run.currentNodeId) : undefined;
   if (!run || !dungeon || !current) return [];
 
-  const pressure = getRunPressureStatus(run.pressureState);
   const lanternState = getStrictRunLanternState(run);
   const pursuitState = getStrictRunPursuitState(run);
   const pursuitDefinition = pursuitState ? getRunPursuitDefinition(pursuitState.dungeonId) : undefined;
@@ -4070,6 +4069,12 @@ export function getRouteForecasts(state: GameState): RouteForecast[] {
   return dungeon.nodes
     .filter((node) => node.id !== current.id && areRunNodesAdjacent(run, current, node))
     .map((node): RouteForecast => {
+      // Rewards, fusion and danger are read from the state this very step would leave behind:
+      // the burnt drop (and a forced breach), a woken or colliding pursuer, its damage included.
+      const stepped = applyNodeMove(state, dungeon, node);
+      const after = stepped.phase !== 'result' && stepped.run?.currentNodeId === node.id ? stepped : undefined;
+      const afterPursuit = after?.run ? getStrictRunPursuitState(after.run) : undefined;
+      const pressure = getRunPressureStatus((after?.run ?? run).pressureState);
       const cleared = run.clearedNodeIds.includes(node.id);
       const bossDefinition = getBossDefinitionForNode(run.dungeonId, node.id);
       const kind: RouteForecastKind = node.type === 'monster'
@@ -4081,12 +4086,12 @@ export function getRouteForecasts(state: GameState): RouteForecast[] {
           : node.type;
       const forecast: { -readonly [K in keyof RouteForecast]: RouteForecast[K] } = { nodeId: node.id, kind, cleared };
       if (!cleared && node.type === 'monster') {
-        const fuseBoss = Boolean(bossDefinition) && pursuitState?.status === 'stalking';
-        forecast.risk = getEncounterForecastRisk(state, node, fuseBoss);
+        const fuseBoss = Boolean(bossDefinition) && afterPursuit?.status === 'stalking';
+        forecast.risk = after ? getEncounterForecastRisk(after, node, fuseBoss) : 3;
         if (fuseBoss) forecast.bossFusionPercent = RUN_PURSUIT_BOSS_FUSION_PERCENT;
       }
       if (!cleared && node.type === 'trap') {
-        const resolution = getTrapRiskResolution(state, node);
+        const resolution = after ? getTrapRiskResolution(after, node) : undefined;
         const counterItem = node.trap?.counterItem;
         if (
           counterItem &&
@@ -4099,7 +4104,9 @@ export function getRouteForecasts(state: GameState): RouteForecast[] {
         }
         if (resolution) {
           const damage = Math.max(4, Math.floor(resolution.naturallyPassed ? resolution.trap.damage * 0.45 : resolution.trap.damage));
-          forecast.risk = forecast.counterItemId ? 1 : getRouteForecastRisk(damage, state.player.hp);
+          forecast.risk = forecast.counterItemId ? 1 : getRouteForecastRisk(damage, after!.player.hp);
+        } else {
+          forecast.risk = 3;
         }
       }
       if (!cleared && node.type === 'reward' && pressure) forecast.rewardBonusPercent = pressure.rewardBonusPercent;
@@ -6783,6 +6790,12 @@ export function moveToNode(state: GameState, nodeId: string): GameState {
     return appendLog(state, `路线封闭：${routeBlockReason}`);
   }
 
+  return applyNodeMove(state, dungeon, targetNode);
+}
+
+/** Everything one step does once it is allowed: position, discovery, scans, lamp oil and the pursuer. */
+function applyNodeMove(state: GameState, dungeon: DungeonDefinition, targetNode: DungeonNode): GameState {
+  if (!state.run) return state;
   const movedRun = withRunDiscovery(
     {
       ...state.run,

@@ -949,6 +949,8 @@ function routePressurePanel(scene: Node, detail: ExploreDetailViewModel, metrics
     pressure.breachForced ? PRESSURE_FILLS.breach : DARK_UI.muted, false));
 }
 
+const LANTERN_PIP_LIMIT = 28;
+
 /** Lamp oil under the header buttons: the count, plus one pip per step it still lights. */
 function routeLanternChip(scene: Node, lantern: NonNullable<ExploreDetailViewModel['lantern']>, options: WalkSceneOptions, top: number): number {
   const px = 750 / (options.viewportWidth ?? 320);
@@ -972,13 +974,16 @@ function routeLanternChip(scene: Node, lantern: NonNullable<ExploreDetailViewMod
   inkDotTextShadow(text(chip, 'WalkLanternLabel', '灯油', -width / 2 + 34 * px, 5 * px, 22 * px, 14 * px, 8 * px, DARK_UI.muted, false));
   const value = inkDotTextShadow(text(chip, 'WalkLanternValue', String(lantern.oil), -width / 2 + 58 * px, 5 * px, 28 * px, 16 * px, 13 * px, accent, false));
   value.isBold = true;
+  // One pip per drop up to a fixed count; beyond it the strip shows the lit share, never more drawing.
   const total = Math.max(lantern.startOil, lantern.oil, 1);
+  const pips = Math.min(total, LANTERN_PIP_LIMIT);
+  const lit = pips === total ? lantern.oil : Math.round(lantern.oil / total * pips);
   const pipsLeft = -width / 2 + 22 * px;
   const pipsWidth = width - 22 * px - 6 * px;
-  const pitch = pipsWidth / total;
-  for (let index = 0; index < total; index += 1) {
+  const pitch = pipsWidth / pips;
+  for (let index = 0; index < pips; index += 1) {
     rect(g, pipsLeft + index * pitch, -height / 2 + 5 * px, Math.max(px, pitch - px), 3 * px,
-      index < lantern.oil ? accent : new Color(60, 58, 48, 255));
+      index < lit ? accent : new Color(60, 58, 48, 255));
   }
   return top - 98 * px - height;
 }

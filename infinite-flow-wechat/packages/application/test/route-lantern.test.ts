@@ -56,6 +56,8 @@ assert(atSupply.run?.lanternState?.oil === 4, 'walking into the supply room stil
 const refilled = apply(atSupply, { type: 'node/collect-reward' });
 assert(refilled.run?.lanternState?.oil === 8, 'clearing a supply room adds four drops');
 assert(refilled.log.some(line => line.includes('灯油 +4')), 'the refill is logged');
+const brimming = apply(apply(standAt('mist_herb_cache', lamp(27)), { type: 'run/move', nodeId: 'north_supply_niche' }), { type: 'node/collect-reward' });
+assert(brimming.run?.lanternState?.oil === 28, 'a refill never passes the 28-drop ceiling (start plus every supply room)');
 const atCache = apply(standAt('fog_patrol_pair', lamp(5)), { type: 'run/move', nodeId: 'mist_herb_cache' });
 const plainReward = apply(atCache, { type: 'node/collect-reward' });
 assert(plainReward.run?.lanternState?.oil === 4, 'an ordinary reward room adds no oil');
@@ -104,6 +106,18 @@ assert(far.length === 1 && far[0]!.nodeId === 'fog_patrol_pair' && far[0]!.pursu
   'only the doorway on the pursuer\'s own path hears its footsteps');
 assert(getRouteForecasts(standAt('mist_herb_cache')).every(forecast => forecast.pursuerDistance === undefined),
   'a dormant pursuer is never heard');
+
+// Forecasts read the state the step itself leaves behind: with one drop left, every door burns the lamp.
+const lastDrop = getRouteForecasts(standAt('fog_patrol_pair', lamp(1)));
+assert(lastDrop.find(forecast => forecast.nodeId === 'mist_herb_cache')?.rewardBonusPercent === 0,
+  'the step that empties the lamp forecasts the breach bonus, not the stable one');
+const wakingBoss = getRouteForecasts(standAt('mist_herb_cache', lamp(1))).find(forecast => forecast.nodeId === 'bone_lane_monster');
+assert(wakingBoss?.bossFusionPercent === 15, 'the pursuer woken by this step is forecast to fuse into the boss');
+const enteredBoss = apply(apply(standAt('mist_herb_cache', lamp(1)), { type: 'run/move', nodeId: 'bone_lane_monster' }),
+  { type: 'run/select-node', nodeId: 'bone_lane_monster' });
+assert(enteredBoss.run?.pursuitState?.status === 'fused', 'the forecast fusion is what the boss fight actually gets');
+const litBoss = getRouteForecasts(standAt('mist_herb_cache', lamp(6))).find(forecast => forecast.nodeId === 'bone_lane_monster');
+assert(litBoss?.bossFusionPercent === undefined, 'a dormant pursuer that stays asleep is not forecast to fuse');
 
 // Runs without a lamp keep the source rules.
 const legacy = standAt('fog_lesser_demon', { lanternState: undefined });

@@ -38,7 +38,8 @@ Deliberate differences are narrow and observable:
 5. Future version rejection is explicit so the host cannot downgrade and overwrite
    an unknown envelope.
 6. Lantern runs (a WeChat-only rule, see the core README): a run's `lanternState`
-   survives only as an exact v1 snapshot of its own chapter; anything else is dropped
+   survives only as an exact v1 snapshot of its own chapter, within that chapter's
+   oil ceiling; anything else is dropped
    and that run never burns oil. A pressure settlement whose state carries
    `breachForced` must record the breach tier regardless of its cleared count.
 

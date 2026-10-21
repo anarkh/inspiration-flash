@@ -53,7 +53,9 @@ assert(doors.get('fog_patrol_pair')?.risk !== undefined, 'monster doors carry a 
 const seal = doors.get('sealed_cache');
 assert(seal?.threat?.level === 'near' && seal.threat.label === '血阶监猎者就在门后', 'the pursuer is named behind its door');
 assert(seal.containment?.ready === false && seal.containment.label === '封印点 · 先清空', 'an uncleared containment room says so');
-assert(seal.hint === '奖励 +15%', 'reward doors show the stable bonus');
+// Walking into the pursuer burns a drop and spills two: the last three drops go, forcing breach.
+assert(seal.hint === '无加成', 'a reward behind the pursuer is forecast at the bonus the step leaves');
+assert(doors.get('north_supply_niche')?.hint === '灯油 +4', 'an ordinary step keeps the lamp lit');
 
 // Chapters without a lamp still forecast doors, but never show oil or supply rooms.
 const metro = explore(enter('metro_abyss'));

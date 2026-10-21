@@ -44,9 +44,17 @@ describe('lantern runs', () => {
     expect(run.pressureState).toEqual({ rulesVersion: 1, clearedNodeCount: 1, breachForced: true });
   });
 
-  it('drops malformed or foreign lamps instead of rejecting the save', () => {
+  it('keeps a lamp topped up by every supply room', () => {
+    expect(decodeRun(exploringRun({ lanternState: { rulesVersion: 1, dungeonId: 'demon_tower_1', oil: 28 } })).lanternState)
+      .toEqual({ rulesVersion: 1, dungeonId: 'demon_tower_1', oil: 28 });
+  });
+
+  it('drops malformed, oversized or foreign lamps instead of rejecting the save', () => {
     for (const lanternState of [
       { rulesVersion: 1, dungeonId: 'demon_tower_1', oil: -1 },
+      { rulesVersion: 1, dungeonId: 'demon_tower_1', oil: 29 },
+      { rulesVersion: 1, dungeonId: 'demon_tower_1', oil: 1_000_000 },
+      { rulesVersion: 1, dungeonId: 'demon_tower_1', oil: Number.MAX_SAFE_INTEGER },
       { rulesVersion: 1, dungeonId: 'demon_tower_1', oil: 3, extra: true },
       { rulesVersion: 2, dungeonId: 'demon_tower_1', oil: 3 },
       { rulesVersion: 1, dungeonId: 'metro_abyss', oil: 3 }
