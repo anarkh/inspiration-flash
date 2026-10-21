@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <title>妖塔 · 选路与追兵 / HTML 原型</title>
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <main class="workspace">
+    <section class="preview" aria-label="妖塔选路原型">
+      <div class="game-stage" id="stage" data-size="390">
+        <img class="scene-background" src="../../cocos/assets/resources/dungeon-world/demon_tower_1-v1.png" alt="" draggable="false">
+        <div class="room-area" id="room" aria-label="当前房间"></div>
+        <div class="hero" id="hero" aria-hidden="true"><div class="hero-sprite" id="hero-sprite"></div></div>
+
+        <header class="hud-header">
+          <div class="portrait"><img src="../../cocos/assets/resources/character/reincarnator-v2.png" alt="" draggable="false"><span>角色</span></div>
+          <div class="vitals">
+            <div class="name-line"><span class="character-name">轮回者</span><span class="points" id="points">0</span></div>
+            <p class="health-number">生命 <strong id="hp-text">102<span>/102</span></strong></p>
+            <div class="health-track"><span id="hp-bar"></span></div>
+          </div>
+          <div class="oil" id="oil" role="meter" aria-label="灯油">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c3 4 5 6.5 5 10a5 5 0 0 1-10 0c0-3.5 2-6 5-10Z"/><path d="M12 11c1.3 1.8 2 2.8 2 4a2 2 0 0 1-4 0c0-1.2.7-2.2 2-4Z"/></svg>
+            <div><span class="oil-label">灯油</span><strong id="oil-value">12</strong></div>
+            <div class="oil-pips" id="oil-pips"></div>
+          </div>
+        </header>
+
+        <section class="pressure" id="pressure" aria-label="塔内压力">
+          <div class="pressure-head"><span class="pressure-tier" id="pressure-tier">稳定</span><span class="pressure-effect" id="pressure-effect"></span></div>
+          <div class="pressure-track">
+            <span class="seg seg-stable"><i id="fill-stable"></i></span>
+            <span class="seg seg-hunted"><i id="fill-hunted"></i></span>
+            <span class="seg seg-breach"><i id="fill-breach"></i></span>
+          </div>
+          <p class="pressure-foot" id="pressure-foot"></p>
+        </section>
+
+        <div class="minimap" id="minimap" aria-label="小地图"></div>
+
+        <div class="world-controls">
+          <button type="button" class="control control-retreat" id="retreat"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7"/></svg><span>撤离</span></button>
+          <button type="button" class="control control-event" id="reopen" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v12h-8l-5 4v-4H5Z"/></svg><span>处理</span></button>
+        </div>
+        <div class="banner" id="banner" hidden></div>
+        <div class="sheet" id="sheet" hidden></div>
+        <p class="game-toast" id="toast" role="status" hidden></p>
+        <span class="prototype-mark">HTML 原型 · 灯油与战斗为示意规则</span>
+        <button type="button" class="mobile-notes-button" id="mobile-notes">说明</button>
+      </div>
+    </section>
+
+    <aside class="design-notes" id="notes" aria-label="原型说明">
+      <div class="notes-heading"><p class="eyebrow">妖塔一层 · 选路与追兵 / V1</p><h1>每次选门<br>都是一次取舍</h1><button type="button" class="close-notes" id="close-notes" aria-label="关闭说明">×</button></div>
+      <p class="notes-intro">点门走到隔壁房间。门上会预告下一间是什么、有多危险；追兵、压力和灯油一直摆在眼前。</p>
+      <div class="size-switch"><button type="button" data-size="390" aria-pressed="true">390 × 844</button><button type="button" data-size="320" aria-pressed="false">320 × 568</button></div>
+      <dl class="design-rules">
+        <div><dt>方案一</dt><dd>血阶监猎者在小地图上是红点；它在哪个方向，那扇门就渗红光，只隔一间时门口出现剪影。顶部压力条随清理房间数推进，换档时全屏提示。</dd></div>
+        <div><dt>方案二</dt><dd>门上显示下一间的类型和危险度，没进过的房间不显示名字。灯油每走一步耗 1，补给房 +4；烧完后压力直接进入破界，监猎者立即苏醒。</dd></div>
+        <div><dt>沿用规则</dt><dd>清 6 间进入追猎（怪物 +10%，奖励加成 +5%），清 12 间进入破界（怪物 +20%，无加成）；稳定期奖励 +15%。监猎者在清 6 间后苏醒，你走一步它走一步，撞上扣 15% 生命并退回巢穴；先清掉「雾后暗格」再把它引过去可以封印；没处理就会融进首领，首领 +15%。出口要先击败骨巷首领。战斗胜利后回满生命。</dd></div>
+        <div><dt>示意规则</dt><dd>灯油数值、被监猎者撞上额外掉 2 灯油、战斗自动结算、陷阱检定公式和传送门不开放，都只为这个原型简化，不代表正式数值。</dd></div>
+      </dl>
+      <button type="button" class="reset-button" id="restart">重新开始一局</button>
+      <p class="desktop-status" id="desktop-status" role="status"></p>
+    </aside>
+  </main>
+</body>
+</html>
