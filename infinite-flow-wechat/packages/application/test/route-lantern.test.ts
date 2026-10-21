@@ -1,5 +1,6 @@
 import {
   createInitialState,
+  getCombatEncounterProfile,
   getCurrentEncounterPreview,
   getCurrentTrapPreview,
   getRouteForecasts,
@@ -132,6 +133,18 @@ assert(getCurrentEncounterPreview(standAt('fog_patrol_pair')) === undefined, 'a 
 const trapRoom = getCurrentTrapPreview(standAt('blood_rune_trap', { clearedNodeIds: [] }));
 const forced = apply(standAt('blood_rune_trap', { clearedNodeIds: [] }), { type: 'node/handle-trap', choice: 'risk' });
 assert(trapRoom !== undefined && forced.player.hp === entered.player.hp - trapRoom.damage, 'the trap preview is what forcing through costs');
+
+// A boss sheet shows the stats the fight opens at (sealed, fused when a stalking pursuer joins), plus its awakening.
+for (const patch of [{}, stalking('tower_butcher_patrol')]) {
+  const bossRoom = standAt('bone_lane_monster', { clearedNodeIds: [], ...patch });
+  const preview = getCurrentEncounterPreview(bossRoom);
+  const opened = getCombatEncounterProfile(apply(bossRoom, { type: 'run/select-node', nodeId: 'bone_lane_monster' }))!.monster;
+  const fused = 'pursuitState' in patch;
+  assert(preview?.rank === 'boss' && preview.fusionPercent === (fused ? 15 : 0), `boss preview names its fusion (fused ${fused})`);
+  assert(preview.maxHp === opened.maxHp && preview.attack === opened.attack && preview.defense === opened.defense,
+    `the boss sheet shows the opening stats the fight really starts with (fused ${fused})`);
+  assert(preview.awakened !== undefined && preview.awakened.attack > preview.attack, `the awakened stats are listed separately (fused ${fused})`);
+}
 
 // Runs without a lamp keep the source rules.
 const legacy = standAt('fog_lesser_demon', { lanternState: undefined });

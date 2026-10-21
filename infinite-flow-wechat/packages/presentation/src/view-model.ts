@@ -3102,6 +3102,9 @@ function buildRoomEvent(
     const survives = encounter.expectedDamage < encounter.playerHp;
     const rows: RoomEventRow[] = [
       { id: 'enemy', label: '敌人', value: `生命 ${encounter.maxHp} · 攻击 ${encounter.attack} · 防御 ${encounter.defense}${encounter.pressurePercent > 0 ? `（压力 +${encounter.pressurePercent}%）` : ''}`, tone: encounter.pressurePercent > 0 ? 'bad' : 'neutral' },
+      ...(encounter.awakened
+        ? [{ id: 'awakened', label: '觉醒', value: `半血后觉醒：攻击 ${encounter.awakened.attack} · 防御 ${encounter.awakened.defense}`, tone: 'bad' as const }]
+        : []),
       ...(encounter.fusionPercent > 0
         ? [{ id: 'fusion', label: '融合', value: `${getCurrentRunPursuit(state).definition?.name ?? '追兵'}融入首领，全属性 +${encounter.fusionPercent}%`, tone: 'bad' as const }]
         : []),

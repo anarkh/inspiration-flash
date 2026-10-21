@@ -67,6 +67,8 @@ function roomAt(nodeId: string, cleared: readonly string[] = []) {
 const fight = roomAt('fog_patrol_pair');
 assert(fight.detail.roomEvent?.kind === 'encounter' && fight.detail.roomEvent.kicker === '遭遇战', 'a monster room opens an encounter');
 assert(fight.detail.roomEvent.rows.map(row => row.label).join('|') === '敌人|你|结果|奖励', 'the encounter rows follow the prototype');
+const bossSheet = roomAt('bone_lane_monster');
+assert(bossSheet.detail.roomEvent?.kicker === '首领战' && bossSheet.detail.roomEvent.rows.some(row => row.id === 'awakened'), 'a boss sheet lists its awakening');
 const blood = roomAt('loose_tile_trap');
 assert(blood.detail.roomEvent?.kind === 'trap' && blood.detail.roomEvent.buttons[blood.detail.roomEvent.buttons.length - 1]?.label === '强行通过', 'a trap room offers its existing choices');
 const supplyRoom = roomAt('north_supply_niche');

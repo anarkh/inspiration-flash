@@ -3998,9 +3998,12 @@ function getRouteForecastRisk(cost: number, hp: number): RouteForecastRisk {
 }
 
 type EncounterEstimate = {
+  /** Stats the fight opens at: a boss starts sealed. */
+  readonly opening: MonsterDefinition;
+  /** Stats the estimate reads: a boss at its awakened strength. */
   readonly monster: MonsterDefinition;
   readonly rank: 'normal' | 'elite' | 'boss';
-  readonly playerHit: number;
+  readonly openingHit: number;
   readonly cost: number;
 };
 
@@ -4014,14 +4017,12 @@ function estimateEncounter(state: GameState, node: DungeonNode, fuseBoss: boolea
   const encounterState: GameState = fuseBoss && pursuitState
     ? { ...state, run: { ...run, pursuitState: fuseRunPursuitAtBoss(pursuitState) } }
     : state;
+  const anchorCompleted = bossDefinition ? isProtocolAnchorCompletedBeforeBoss(encounterState) : undefined;
+  const opening = getProtocolMonster(encounterState, monsterDefinition, bossDefinition, 'sealed', anchorCompleted);
   // Bosses are read at their awakened strength; the forecast should never undersell a door.
-  const monster = getProtocolMonster(
-    encounterState,
-    monsterDefinition,
-    bossDefinition,
-    bossDefinition ? 'awakened' : 'sealed',
-    bossDefinition ? isProtocolAnchorCompletedBeforeBoss(encounterState) : undefined
-  );
+  const monster = bossDefinition
+    ? getProtocolMonster(encounterState, monsterDefinition, bossDefinition, 'awakened', anchorCompleted)
+    : opening;
   const stats = getDerivedStats(state);
   const dealt = calculatePhysicalDamage(stats.attack, monster.defense);
   const taken = calculatePhysicalDamage(monster.attack, stats.defense);
@@ -4031,7 +4032,13 @@ function estimateEncounter(state: GameState, node: DungeonNode, fuseBoss: boolea
   for (let turn = 1; turn < Math.min(hits, 99); turn += 1) {
     cost += heavyBlows && turn % HEAVY_BLOW_TURN_INTERVAL === 2 ? Math.ceil(taken * HEAVY_BLOW_DAMAGE_RATE) : taken;
   }
-  return { monster, rank: bossDefinition ? 'boss' : heavyBlows ? 'elite' : 'normal', playerHit: dealt, cost };
+  return {
+    opening,
+    monster,
+    rank: bossDefinition ? 'boss' : heavyBlows ? 'elite' : 'normal',
+    openingHit: calculatePhysicalDamage(stats.attack, opening.defense),
+    cost
+  };
 }
 
 function getEncounterForecastRisk(state: GameState, node: DungeonNode, fuseBoss: boolean): RouteForecastRisk {
@@ -4045,9 +4052,12 @@ export type EncounterPreview = {
   readonly monsterId: MonsterId;
   readonly name: string;
   readonly rank: 'normal' | 'elite' | 'boss';
+  /** Opening stats; a boss starts sealed. */
   readonly maxHp: number;
   readonly attack: number;
   readonly defense: number;
+  /** A boss's stats once it awakens, which the danger estimate reads. */
+  readonly awakened?: { readonly attack: number; readonly defense: number };
   readonly pressurePercent: number;
   /** Set when a stalking pursuer will fuse into this boss as the fight starts. */
   readonly fusionPercent: number;
@@ -4078,14 +4088,15 @@ export function getCurrentEncounterPreview(state: GameState): EncounterPreview |
     monsterId: node.monsterId,
     name: MONSTERS[node.monsterId].name,
     rank: estimate.rank,
-    maxHp: estimate.monster.maxHp,
-    attack: estimate.monster.attack,
-    defense: estimate.monster.defense,
+    maxHp: estimate.opening.maxHp,
+    attack: estimate.opening.attack,
+    defense: estimate.opening.defense,
+    ...(bossDefinition ? { awakened: { attack: estimate.monster.attack, defense: estimate.monster.defense } } : {}),
     pressurePercent: getRunPressureStatus(run.pressureState)?.pressurePercent ?? 0,
     fusionPercent: fuseBoss ? RUN_PURSUIT_BOSS_FUSION_PERCENT : 0,
     playerHp: state.player.hp,
     playerMaxHp: state.player.maxHp,
-    playerHit: estimate.playerHit,
+    playerHit: estimate.openingHit,
     expectedDamage: estimate.cost,
     rewardPoints: scaledRewardPoints
       + (bossDefinition?.bonusReward.rewardPoints ?? 0)
