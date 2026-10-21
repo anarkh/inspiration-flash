@@ -30,7 +30,7 @@ import { renderInfiniteFlowWalkScene } from './InfiniteFlowWalkScene';
 import type { WalkSceneHandle } from './InfiniteFlowWalkScene';
 import type { HudPopoverKind } from './hud-layout';
 import { InfiniteFlowWalkInput } from './InfiniteFlowWalkInput';
-import { captureInfiniteFlowInfoSheetState, renderInfiniteFlowInfoSheet } from './InfiniteFlowInfoSheet';
+import { captureInfiniteFlowInfoSheetState, getInfiniteFlowMobilePanelActions, renderInfiniteFlowInfoSheet } from './InfiniteFlowInfoSheet';
 import type { MobilePanelKind, MobileSheetState } from './InfiniteFlowInfoSheet';
 import { buildWalkWorld, describeRouteChange } from './walk-world';
 import type { WorldPoint, WorldTarget } from './walk-world';
@@ -3041,6 +3041,15 @@ export class InfiniteFlowView {
       }
       this.relicDraftKey = relicDraftKey;
       this.relicDraftSelection = undefined;
+    }
+    // As in the approved route prototype, stepping through a door opens the new room's own
+    // interaction sheet. It only lists the room's existing actions and never picks one;
+    // closing it leaves the room to walk. Portals stay passages and cleared rooms stay quiet.
+    if (mobileDetail?.kind === 'explore' && previousDetail?.kind === 'explore' && roomKey !== this.mobileRoomKey
+      && this.mobileSheet === undefined && mobileDetail.currentNode.nodeType !== 'portal'
+      && (!nodeCleared || mobileDetail.pending !== undefined)
+      && model !== undefined && getInfiniteFlowMobilePanelActions(model, 'interaction').length > 0) {
+      this.mobileSheet = { kind: 'interaction', page: 0 };
     }
     this.mobileRoomKey = roomKey;
     this.mobilePendingKey = pendingKey;

@@ -1496,6 +1496,46 @@ function touch(node) {
   node.emit(api.Node.EventType.TOUCH_END, event);
   node.emit(api.Node.EventType.TOUCH_END, event);
 }
+{
+  // Route prototype: stepping through a door opens the new room's own interaction sheet and never picks an action.
+  const canvas = new api.Node('RouteArrivalCanvas');
+  canvas.addComponent(api.UITransform).setContentSize({ width: 750, height: 1334 });
+  const dispatched = [];
+  const controller = new api.InfiniteFlowView(canvas, { activate(_physicalId, actionId) { dispatched.push(actionId); } });
+  const show = state => {
+    const model = api.buildGameViewModel(state, {});
+    supplySceneVisualFixtures(controller, model);
+    controller.render(model, chrome, safeInsets);
+  };
+  const entered = api.reduceGameCommand(api.createInitialState(), {
+    type: 'run/enter', dungeonId: 'demon_tower_1', protocolId: 'standard', seeds: { rulesVersion: 1, hiddenTaskSeed: 0x1234_abcd },
+  }).state;
+  const doorway = (from, cleared) => ({ ...entered, run: { ...entered.run, currentNodeId: from, clearedNodeIds: [from, ...cleared] } });
+  const arrive = (from, cleared, nodeId) => {
+    show(doorway(from, cleared));
+    controller.mobileSheet = undefined;
+    const moved = api.reduceGameCommand(doorway(from, cleared), { type: 'run/move', nodeId });
+    assert.equal(moved.status, 'committed', `${nodeId}: fixture move commits`);
+    show(moved.state);
+    return moved.state;
+  };
+  show(doorway('mist_herb_cache', []));
+  assert.equal(controller.mobileSheet, undefined, 'the first room render opens nothing by itself');
+  const monsterRoom = arrive('mist_herb_cache', [], 'fog_patrol_pair');
+  assert.equal(controller.mobileSheet?.kind, 'interaction', 'stepping into a monster room opens its interaction sheet');
+  assert.ok(nodesIn(canvas).some(node => node.name === 'MobileSheetAction:node.select:fog_patrol_pair'), 'the sheet lists the room\'s own encounter action');
+  controller.mobileSheet = undefined;
+  show(monsterRoom);
+  assert.equal(controller.mobileSheet, undefined, 'a closed sheet stays closed while the player remains in the room');
+  arrive('fog_patrol_pair', [], 'cracked_portal');
+  assert.equal(controller.mobileSheet, undefined, 'portal rooms stay passages');
+  arrive('fog_patrol_pair', ['mist_herb_cache'], 'mist_herb_cache');
+  assert.equal(controller.mobileSheet, undefined, 'cleared rooms stay quiet');
+  arrive('fog_patrol_pair', [], 'mist_herb_cache');
+  assert.equal(controller.mobileSheet?.kind, 'interaction', 'an unclaimed reward room opens its sheet');
+  assert.equal(dispatched.length, 0, 'arrival sheets never submit a command');
+  controller.destroy();
+}
 function viewLifecycle(initialState, { resolve = true, reject = false } = {}) {
   const canvas = new api.Node('CombatLifecycleCanvas');
   canvas.addComponent(api.UITransform).setContentSize({ width: 750, height: 1334 });
