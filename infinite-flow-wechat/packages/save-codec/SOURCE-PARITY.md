@@ -37,6 +37,10 @@ Deliberate differences are narrow and observable:
    string and therefore had no byte-decoding boundary.
 5. Future version rejection is explicit so the host cannot downgrade and overwrite
    an unknown envelope.
+6. Lantern runs (a WeChat-only rule, see the core README): a run's `lanternState`
+   survives only as an exact v1 snapshot of its own chapter; anything else is dropped
+   and that run never burns oil. A pressure settlement whose state carries
+   `breachForced` must record the breach tier regardless of its cleared count.
 
 Any future change to Web `Saved*`, `sanitizeSaved*`, `isSaved*`,
 `normalizeSavedState`, the encounter migration table, or recovery ordering requires

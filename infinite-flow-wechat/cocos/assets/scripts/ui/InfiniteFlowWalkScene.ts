@@ -1,13 +1,13 @@
 import { Color, Graphics, Input, KeyCode, Label, Mask, Node, Size, Sprite, UITransform, Vec2, Vec3, input } from 'cc';
 import type { EventKeyboard, SpriteFrame } from 'cc';
-import type { GameViewModel, ViewActionModel } from '@infinite-flow/presentation';
+import type { ExploreDetailViewModel, GameViewModel, RouteForecastViewModel, StatusMetric, ViewActionModel } from '@infinite-flow/presentation';
 import { formatInfiniteFlowPlayerChrome, isInfiniteFlowPlayerActivityFailure } from './InfiniteFlowView';
 import type { InfiniteFlowRuntimeChrome } from './InfiniteFlowView';
 import { findWalkPath, nearestWalkTarget, stepWalkPosition } from './walk-world';
 import type { WalkWorldSpec, WorldPoint, WorldProp, WorldRect, WorldTarget } from './walk-world';
 import { HUB_WORLD_THEME } from './dungeon-world-theme';
 import type { WorldTint } from './dungeon-world-theme';
-import { getInfiniteFlowNpcWorldVisualKey, getInfiniteFlowRunRelicVisualKey, getInfiniteFlowSceneVisualKeys, INFINITE_FLOW_DUNGEON_PROP_VISUAL_KEYS, INFINITE_FLOW_DUNGEON_TRANSITION_GATE_VISUAL_KEY, INFINITE_FLOW_HUB_DUNGEON_PORTAL_VISUAL_KEY } from './scene-visuals';
+import { getInfiniteFlowNpcWorldVisualKey, getInfiniteFlowPursuerVisualKey, getInfiniteFlowRunRelicVisualKey, getInfiniteFlowSceneVisualKeys, INFINITE_FLOW_DUNGEON_PROP_VISUAL_KEYS, INFINITE_FLOW_DUNGEON_TRANSITION_GATE_VISUAL_KEY, INFINITE_FLOW_HUB_DUNGEON_PORTAL_VISUAL_KEY } from './scene-visuals';
 import { DARK_UI, paintDarkFrame, paintDarkIcon } from './dark-ui';
 import { getWalkHudLayout } from './hud-layout';
 import type { HudPopoverKind } from './hud-layout';
@@ -453,9 +453,19 @@ function drawHubDungeonPortal(body: Node, options: ReadyWalkSceneOptions): void 
 }
 
 /** The recommended stone gate keeps the original transition's feet and footprint. */
-function drawTransitionGate(body: Node, target: WorldTarget, options: ReadyWalkSceneOptions): void {
+function drawTransitionGate(body: Node, target: WorldTarget, model: GameViewModel, options: ReadyWalkSceneOptions): void {
   const unavailable = target.disabledReason !== undefined;
-  if (!unavailable) {
+  const threat = target.forecast?.threat?.level;
+  if (threat !== undefined) {
+    // A pursuer on the far side bleeds red light through the doorway; closer means brighter.
+    const pixel = options.dungeonView?.worldPixel ?? 1;
+    const gateHeight = (options.dungeonView?.gateHeight ?? 80) * pixel;
+    const glow = makeNode(body, 'WalkTransitionThreatGlow', 0, gateHeight * 0.48, gateHeight * 1.5, gateHeight * 1.5).addComponent(Graphics);
+    for (let ring = 6; ring > 0; ring -= 1) {
+      const scale = ring / 6;
+      ellipse(glow, 0, 0, gateHeight * 0.62 * scale, gateHeight * 0.7 * scale, new Color(214, 58, 40, threat === 'near' ? 30 : 16));
+    }
+  } else if (!unavailable) {
     const light = makeNode(body, 'WalkTransitionGroundLight', 0, -16, 116, 66).addComponent(Graphics);
     // Concentric translucent ellipses keep the warm guidance low on the floor.
     for (let ring = 5; ring > 0; ring -= 1) {
@@ -475,6 +485,44 @@ function drawTransitionGate(body: Node, target: WorldTarget, options: ReadyWalkS
   sprite.color = unavailable ? new Color(128, 128, 128, 255) : new Color(255, 255, 255, 255);
   sprite.grayscale = unavailable;
   options.trackSprite(sprite);
+  const detail = model.sections[1].detail;
+  if (threat === 'near' && detail.kind === 'explore' && options.dungeonView !== undefined) {
+    // Only a silhouette shows in the doorway: the pursuer's chapter art, inked almost black.
+    const lurker = options.visual(getInfiniteFlowPursuerVisualKey(detail.map.dungeonId));
+    const lurkerHeight = height * 0.7;
+    const lurkerWidth = lurker.width * lurkerHeight / lurker.height;
+    const shade = makeNode(body, 'WalkTransitionLurker', 0, height * 0.06 + lurkerHeight / 2, lurkerWidth, lurkerHeight).addComponent(Sprite);
+    shade.sizeMode = Sprite.SizeMode.CUSTOM;
+    shade.spriteFrame = lurker.frame;
+    shade.color = new Color(44, 10, 8, 236);
+    options.trackSprite(shade);
+  }
+}
+
+const RISK_COLORS: Readonly<Record<1 | 2 | 3, Color>> = {
+  1: new Color(176, 206, 160, 255),
+  2: new Color(232, 182, 98, 255),
+  3: new Color(236, 112, 92, 255),
+};
+
+/** First caption line under a door: what kind of room waits behind it and how risky it reads. */
+export function getRouteForecastCaption(forecast: RouteForecastViewModel): Readonly<{ text: string; color: Color }> {
+  if (forecast.cleared && forecast.kind !== 'exit') return { text: '已清空', color: DARK_UI.muted };
+  const pips = forecast.risk === undefined ? '' : ` ${'◆'.repeat(forecast.risk)}${'◇'.repeat(3 - forecast.risk)}`;
+  const encounter = forecast.kind === 'monster' || forecast.kind === 'elite' || forecast.kind === 'boss';
+  if (encounter || (forecast.kind === 'trap' && forecast.hint === undefined)) {
+    return { text: `${forecast.kindLabel}${pips}`, color: forecast.risk === undefined ? DARK_UI.bone : RISK_COLORS[forecast.risk] };
+  }
+  const text = forecast.hint === undefined ? forecast.kindLabel : `${forecast.kindLabel} · ${forecast.hint}`;
+  return { text, color: forecast.kind === 'reward' || forecast.kind === 'supply' ? GOLD : DARK_UI.bone };
+}
+
+/** Second caption line: the pursuer outranks a boss fusion warning, which outranks the seal. */
+function forecastNotice(forecast: RouteForecastViewModel): Readonly<{ text: string; color: Color }> | undefined {
+  if (forecast.threat !== undefined) return { text: forecast.threat.label, color: RISK_COLORS[3] };
+  if (forecast.kind === 'boss' && forecast.hint !== undefined && !forecast.cleared) return { text: forecast.hint, color: RISK_COLORS[3] };
+  if (forecast.containment !== undefined) return { text: forecast.containment.label, color: new Color(150, 214, 198, 255) };
+  return undefined;
 }
 
 /** Keep the artwork's bottom on the same world feet used for depth and interaction. */
@@ -531,7 +579,23 @@ function targetActor(parent: Node, target: WorldTarget, model: GameViewModel, op
   text(base, 'WalkTargetName', `${target.rank === 'boss' ? '首领 · ' : target.rank === 'elite' ? '精英 · ' : ''}${target.label}`, nameX, nameY, nameWidth, nameHeight, pixel === undefined ? 21 : (compact ? 12 : 13) * pixel, target.disabledReason === undefined ? DARK_UI.bone : DARK_UI.muted);
   if (target.kind === 'transition') {
     const stateY = pixel === undefined ? -54 : compact && target.doorSide === 'south' ? 12 * pixel : -(compact ? 27 : 30) * pixel;
-    text(base, 'WalkTransitionState', target.action === undefined ? '封闭' : target.disabledReason === undefined ? '入口畅通' : '入口未开放', nameX, stateY, pixel === undefined ? 192 : (compact ? 78 : 84) * pixel, pixel === undefined ? 24 : (compact ? 14 : 16) * pixel, pixel === undefined ? 16 : (compact ? 9 : 10) * pixel, target.disabledReason === undefined ? new Color(209, 225, 207, 255) : DARK_UI.muted);
+    const forecast = target.forecast;
+    const caption = forecast === undefined ? undefined : getRouteForecastCaption(forecast);
+    // Forecast captions run a little wider; side doors lean inward to stay on screen.
+    const captionWidth = pixel === undefined ? 192 : (caption === undefined ? compact ? 78 : 84 : compact ? 88 : 98) * pixel;
+    const captionX = pixel === undefined || caption === undefined ? nameX
+      : target.doorSide === 'west' ? (captionWidth - nameWidth) / 2 : target.doorSide === 'east' ? (nameWidth - captionWidth) / 2 : nameX;
+    const captionHeight = pixel === undefined ? 24 : (compact ? 14 : 16) * pixel;
+    const captionSize = pixel === undefined ? 16 : (compact ? 9 : 10) * pixel;
+    text(base, 'WalkTransitionState', caption?.text ?? (target.action === undefined ? '封闭' : target.disabledReason === undefined ? '入口畅通' : '入口未开放'),
+      captionX, stateY, captionWidth, captionHeight, captionSize,
+      caption?.color ?? (target.disabledReason === undefined ? new Color(209, 225, 207, 255) : DARK_UI.muted));
+    const notice = forecast === undefined ? undefined : forecastNotice(forecast);
+    if (notice !== undefined && pixel !== undefined) {
+      // The south door sits on the controls band, so its notice rides above the gate instead.
+      const noticeY = target.doorSide === 'south' ? (options.dungeonView!.gateHeight + 8) * pixel : stateY - (compact ? 12 : 14) * pixel;
+      inkDotTextShadow(text(base, 'WalkTransitionNotice', notice.text, captionX, noticeY, captionWidth, captionHeight, captionSize, notice.color));
+    }
   }
   return { node: base, y: target.y };
 }
@@ -542,7 +606,7 @@ function drawTargetObject(body: Node, base: Node, target: WorldTarget, model: Ga
     return;
   }
   if (target.kind === 'transition') {
-    drawTransitionGate(body, target, options);
+    drawTransitionGate(body, target, model, options);
     return;
   }
   if (target.kind === 'monster') {
@@ -683,11 +747,12 @@ function paintPlayerHealth(g: Graphics, hp: number, maxHp: number, width: number
   rect(g, -width / 2, -height / 2, width * Math.max(0, Math.min(1, hp / maxHp)), height, WALK_HUD.health);
 }
 
-function inkDotTextShadow(label: Label): void {
+function inkDotTextShadow(label: Label): Label {
   label.enableShadow = true;
   label.shadowColor = INK_DOT_HUD.shadow;
   label.shadowOffset = new Vec2(0, -1);
   label.shadowBlur = 2;
+  return label;
 }
 
 /** The same portrait crop is used in the courtyard, exploration, and combat. */
@@ -833,12 +898,152 @@ function courtyardMinimap(scene: Node, spec: WalkWorldSpec, options: WalkSceneOp
   return player;
 }
 
+const PRESSURE_FILLS: Readonly<Record<'stable' | 'hunted' | 'breach', Color>> = {
+  stable: new Color(157, 178, 132, 255),
+  hunted: new Color(219, 166, 84, 255),
+  breach: new Color(214, 92, 72, 255),
+};
+
+/** Exit seal and law warnings ride on the pressure panel's foot instead of a separate strip. */
+function routeRiskSuffix(metrics: readonly StatusMetric[]): string {
+  return metrics.flatMap(({ id, severity }) => id === 'boss-seal' && severity !== 'positive' ? ['出口封印']
+    : id === 'law' && (severity === 'danger' || severity === 'warning') ? [`法则${severity === 'danger' ? '危险' : '警戒'}`] : []).map(item => ` · ${item}`).join('');
+}
+
+/** Pressure tier, its three-stage bar and how many rooms remain until the next tier. */
+function routePressurePanel(scene: Node, detail: ExploreDetailViewModel, metrics: readonly StatusMetric[], options: WalkSceneOptions, top: number): void {
+  const pressure = detail.chapterDecision?.pressure;
+  const px = 750 / (options.viewportWidth ?? 320);
+  const width = Math.min((options.viewportWidth ?? 320) - 124, 244) * px;
+  const height = 46 * px;
+  const panel = makeNode(scene, 'WalkPressurePanel', -375 + 10 * px + width / 2, top - 84 * px - height / 2, width, height);
+  const g = panel.addComponent(Graphics);
+  rect(g, -width / 2, -height / 2, width, height, HUD_WASH);
+  const tier = pressure?.present ? pressure.tier : undefined;
+  if (pressure === undefined || tier === undefined) {
+    const label = pressure?.legacyDisabled ? '侵蚀：旧档禁用' : '侵蚀：稳定';
+    inkDotTextShadow(text(panel, 'WalkPressureFoot', `${label}${routeRiskSuffix(metrics)}`, 0, 0, width - 12 * px, 24 * px, 9 * px, DARK_UI.bone, false));
+    return;
+  }
+  const inset = 8 * px;
+  const tierLabel = inkDotTextShadow(text(panel, 'WalkPressureTier', pressure.label ?? tier, -width / 2 + inset + 15 * px, height / 2 - 11 * px, 30 * px, 18 * px, 12 * px, PRESSURE_FILLS[tier], false));
+  tierLabel.isBold = true;
+  const monster = (pressure.pressurePercent ?? 0) > 0 ? `+${pressure.pressurePercent}%` : '原始强度';
+  const reward = (pressure.rewardBonusPercent ?? 0) > 0 ? `+${pressure.rewardBonusPercent}%` : '无加成';
+  inkDotTextShadow(text(panel, 'WalkPressureEffect', `怪物 ${monster} · 奖励 ${reward}`, inset + 22 * px, height / 2 - 11 * px, width - inset * 2 - 44 * px, 16 * px, 9 * px, DARK_UI.bone, false));
+  const count = pressure.clearedNodeCount ?? 0;
+  const fills = [Math.min(1, count / 6), Math.min(1, Math.max(0, count - 6) / 6), tier === 'breach' ? 1 : 0];
+  const gap = 3 * px;
+  const segment = (width - inset * 2 - gap * 2) / 3;
+  const barY = height / 2 - 24 * px;
+  (['stable', 'hunted', 'breach'] as const).forEach((id, index) => {
+    const x = -width / 2 + inset + index * (segment + gap);
+    rect(g, x, barY - 2 * px, segment, 4 * px, new Color(12, 14, 11, 220));
+    if (fills[index]! > 0) rect(g, x, barY - 2 * px, segment * fills[index]!, 4 * px, PRESSURE_FILLS[id]);
+  });
+  const next = pressure.nextTierAt;
+  const foot = pressure.breachForced ? '灯油耗尽，压力已直接进入破界'
+    : next === null || next === undefined ? `已清 ${count} 间，压力已到顶`
+      : `已清 ${count} 间，再清 ${Math.max(0, next - count)} 间进入${tier === 'stable' ? '追猎' : '破界'}`;
+  inkDotTextShadow(text(panel, 'WalkPressureFoot', `${foot}${routeRiskSuffix(metrics)}`, 0, -height / 2 + 10 * px, width - inset * 2, 14 * px, 8.5 * px,
+    pressure.breachForced ? PRESSURE_FILLS.breach : DARK_UI.muted, false));
+}
+
+/** Lamp oil under the header buttons: the count, plus one pip per step it still lights. */
+function routeLanternChip(scene: Node, lantern: NonNullable<ExploreDetailViewModel['lantern']>, options: WalkSceneOptions, top: number): number {
+  const px = 750 / (options.viewportWidth ?? 320);
+  const width = 92 * px;
+  const height = 28 * px;
+  const chip = makeNode(scene, 'WalkLantern', 375 - 10 * px - width / 2, top - 98 * px - height / 2, width, height);
+  const g = chip.addComponent(Graphics);
+  const accent = lantern.level === 'out' ? PRESSURE_FILLS.breach : lantern.level === 'low' ? PRESSURE_FILLS.hunted : GOLD;
+  g.lineWidth = px;
+  rect(g, -width / 2, -height / 2, width, height, HUD_WASH, new Color(accent.r, accent.g, accent.b, 120));
+  // The flame mirrors the prototype's 24×24 drop path.
+  const flame = makeNode(chip, 'WalkLanternFlame', -width / 2 + 11 * px, 0, 14 * px, 14 * px).addComponent(Graphics);
+  const k = 13 * px / 24;
+  flame.moveTo(0, 9 * k);
+  flame.bezierCurveTo(4 * k, 3.5 * k, 5 * k, 1 * k, 5 * k, -1 * k);
+  flame.bezierCurveTo(5 * k, -6 * k, -5 * k, -6 * k, -5 * k, -1 * k);
+  flame.bezierCurveTo(-5 * k, 1 * k, -4 * k, 3.5 * k, 0, 9 * k);
+  flame.close();
+  flame.fillColor = new Color(accent.r, accent.g, accent.b, lantern.level === 'out' ? 90 : 220);
+  flame.fill();
+  inkDotTextShadow(text(chip, 'WalkLanternLabel', '灯油', -width / 2 + 34 * px, 5 * px, 22 * px, 14 * px, 8 * px, DARK_UI.muted, false));
+  const value = inkDotTextShadow(text(chip, 'WalkLanternValue', String(lantern.oil), -width / 2 + 58 * px, 5 * px, 28 * px, 16 * px, 13 * px, accent, false));
+  value.isBold = true;
+  const total = Math.max(lantern.startOil, lantern.oil, 1);
+  const pipsLeft = -width / 2 + 22 * px;
+  const pipsWidth = width - 22 * px - 6 * px;
+  const pitch = pipsWidth / total;
+  for (let index = 0; index < total; index += 1) {
+    rect(g, pipsLeft + index * pitch, -height / 2 + 5 * px, Math.max(px, pitch - px), 3 * px,
+      index < lantern.oil ? accent : new Color(60, 58, 48, 255));
+  }
+  return top - 98 * px - height;
+}
+
+/** The chapter grid, with the pursuer's red dot and the containment ring always in view. */
+function routeMinimap(scene: Node, detail: ExploreDetailViewModel, options: WalkSceneOptions, top: number): void {
+  const map = detail.map;
+  if (map.width <= 0 || map.height <= 0) return;
+  const px = 750 / (options.viewportWidth ?? 320);
+  const cell = ((options.viewportWidth ?? 320) <= 350 ? 10 : 12) * px;
+  const gap = 2 * px;
+  const pad = 4 * px;
+  const width = map.width * cell + (map.width - 1) * gap + pad * 2;
+  const height = map.height * cell + (map.height - 1) * gap + pad * 2;
+  const minimap = makeNode(scene, 'WalkRouteMinimap', 375 - 10 * px - width / 2, top - 6 * px - height / 2, width, height);
+  const g = minimap.addComponent(Graphics);
+  rect(g, -width / 2, -height / 2, width, height, HUD_WASH);
+  const center = (x: number, y: number): WorldPoint => ({
+    x: -width / 2 + pad + x * (cell + gap) + cell / 2,
+    y: height / 2 - pad - y * (cell + gap) - cell / 2,
+  });
+  const typeColors: Readonly<Record<string, Color>> = {
+    monster: new Color(196, 102, 84, 255), trap: new Color(214, 160, 82, 255), reward: GOLD,
+    portal: new Color(118, 196, 196, 255), exit: new Color(236, 230, 210, 255),
+  };
+  const cellsById = new Map(map.nodes.map(node => [node.cellId, node]));
+  for (const node of map.nodes) {
+    const point = center(node.x, node.y);
+    const known = node.state !== 'fogged';
+    const fill = node.state === 'current' ? new Color(120, 104, 62, 255) : node.state === 'cleared' ? new Color(52, 58, 46, 230)
+      : known ? new Color(44, 46, 38, 230) : new Color(20, 22, 18, 160);
+    g.lineWidth = px;
+    rect(g, point.x - cell / 2, point.y - cell / 2, cell, cell, fill, node.state === 'current' ? GOLD : undefined);
+    const dot = typeColors[node.nodeType];
+    if (known && node.state !== 'cleared' && node.state !== 'current' && dot !== undefined) ellipse(g, point.x, point.y, cell * 0.18, cell * 0.18, dot);
+  }
+  const pursuit = detail.chapterDecision?.pursuit;
+  const containment = pursuit?.containmentCellId === undefined ? undefined : cellsById.get(pursuit.containmentCellId);
+  if (containment !== undefined && (pursuit?.status === 'dormant' || pursuit?.status === 'stalking')) {
+    const point = center(containment.x, containment.y);
+    g.lineWidth = 1.2 * px;
+    ellipse(g, point.x, point.y, cell * 0.42, cell * 0.42, undefined, new Color(150, 214, 198, 230));
+  }
+  const pursuer = pursuit?.status === 'stalking' && pursuit.currentCellId !== undefined ? cellsById.get(pursuit.currentCellId) : undefined;
+  if (pursuer !== undefined) {
+    const point = center(pursuer.x, pursuer.y);
+    ellipse(g, point.x, point.y, cell * 0.46, cell * 0.46, new Color(214, 58, 40, 70));
+    ellipse(g, point.x, point.y, cell * 0.26, cell * 0.26, new Color(236, 84, 62, 255), new Color(255, 214, 200, 255));
+  }
+  options.bindLocal(minimap, () => options.openPanel === undefined ? options.openDetails() : options.openPanel('map'));
+}
+
 function header(scene: Node, model: GameViewModel, options: ReadyWalkSceneOptions, top: number): void {
   sharedHeader(scene, model, options, top);
   // Combat shows the enemy card, ticker and intent callout instead of the risk strip.
   if (model.phase === 'hub' || model.phase === 'combat') return;
   const detail = model.sections[1].detail;
   const metrics = model.sections[1].metrics;
+  if (detail.kind === 'explore' && options.dungeonView !== undefined) {
+    routePressurePanel(scene, detail, metrics, options, top);
+    const below = detail.lantern === undefined ? top - 98 * (750 / (options.viewportWidth ?? 320))
+      : routeLanternChip(scene, detail.lantern, options, top);
+    routeMinimap(scene, detail, options, below);
+    return;
+  }
   const px = 750 / (options.viewportWidth ?? 320);
   const roleWidth = Math.min((options.viewportWidth ?? 320) - 124, 244) * px;
   const riskReadouts = detail.kind === 'combat'
@@ -1382,7 +1587,14 @@ export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, sc
   const activity = formatInfiniteFlowPlayerChrome(options.chrome, model.phase).activityMessage;
   const failed = isInfiniteFlowPlayerActivityFailure(activity);
   const feedbackText = failed ? activity : options.feedback?.text;
-  const toast = feedbackText === undefined ? undefined
+  // Exploration keeps the band under the header for the pressure panel; its notices sit between the controls.
+  const toastBand = model.phase === 'explore' && roomFit !== undefined ? {
+    left: controlsLeft + ((roomFit.artwork.compact ? 17 : 18) + joystickSize + 6) * hudPixel,
+    right: controlsRight - 17 * hudPixel - interactWidth - 6 * hudPixel,
+  } : undefined;
+  const toast = feedbackText === undefined ? undefined : toastBand !== undefined
+    ? inkDotTextShadow(text(scene, 'WalkFeedback', feedbackText, (toastBand.left + toastBand.right) / 2, bottom + 60 * hudPixel,
+      toastBand.right - toastBand.left, 34 * hudPixel, 10 * hudPixel, failed ? DARK_UI.red : DARK_UI.gold))
     : text(scene, 'WalkFeedback', feedbackText, -49, top - 124 * hudPixel, 554, 24 * hudPixel, 10 * hudPixel, failed ? DARK_UI.red : DARK_UI.gold);
   const monster = spec.targets.find((target) => target.kind === 'monster');
   const enemyNode = monster === undefined ? undefined : actors.getChildByName(`WalkTarget:${monster.id}`);
@@ -1475,8 +1687,11 @@ export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, sc
     interactionInitialized = true;
     targetId = nearby?.id;
     for (const entry of transitionStates) {
-      entry.label.string = entry.target.action === undefined ? '封闭' : entry.target.disabledReason !== undefined ? '入口未开放'
-        : entry.target.id === targetId ? '已到达入口' : '入口畅通';
+      const forecast = entry.target.forecast;
+      entry.label.string = forecast !== undefined
+        ? entry.target.id === targetId && entry.target.disabledReason === undefined ? '已到达入口' : getRouteForecastCaption(forecast).text
+        : entry.target.action === undefined ? '封闭' : entry.target.disabledReason !== undefined ? '入口未开放'
+          : entry.target.id === targetId ? '已到达入口' : '入口畅通';
     }
     const ready = !busy && nearby !== undefined;
     if (interactLabel !== null && interactLabel !== undefined) {

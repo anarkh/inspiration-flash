@@ -82,7 +82,7 @@ const bundle = await build({
       export { EQUIPMENT_SOUL_SKILL_CATALOG } from '@infinite-flow/core/equipment-soul-skills';
       export { RUN_RELIC_IDS, RUN_RELIC_DEFINITIONS, RUN_RELIC_FRAME_DEFINITIONS, generateRunRelicDraft } from '@infinite-flow/core/run-relics';
       export { renderInfiniteFlowInfoSheet, captureInfiniteFlowInfoSheetState, getInfiniteFlowMobilePanelActions, getInfiniteFlowCombatChoiceActions, productionFrameGeometry } from './cocos/assets/scripts/ui/InfiniteFlowInfoSheet.ts';
-      export { renderInfiniteFlowWalkScene, fitDungeonHtmlTargets, getDungeonHtmlRoomLayout } from './cocos/assets/scripts/ui/InfiniteFlowWalkScene.ts';
+      export { renderInfiniteFlowWalkScene, fitDungeonHtmlTargets, getDungeonHtmlRoomLayout, getRouteForecastCaption } from './cocos/assets/scripts/ui/InfiniteFlowWalkScene.ts';
       export { buildWalkWorld } from './cocos/assets/scripts/ui/walk-world.ts';
       export { getInfiniteFlowSceneVisualKeys } from './cocos/assets/scripts/ui/scene-visuals.ts';
       export { HERO_WALK_ATLAS } from './cocos/assets/scripts/ui/hero-walk-atlas.ts';
@@ -402,8 +402,11 @@ let checkedStoneGates = 0;
         const body = node.getChildByName('WorldObjectBody');
         const artwork = body.getChildByName('WalkTransitionGateSprite');
         const status = node.getChildByName('WalkTransitionState').getComponent(api.Label).string;
-        assert.equal(status, target.action === undefined ? '封闭' : target.disabledReason !== undefined ? '入口未开放'
-          : target.id === selectedDoor.id ? '已到达入口' : '入口畅通');
+        // A door with a route forecast previews the room behind it; arrival still reads as such.
+        assert.equal(status, target.forecast !== undefined
+          ? target.id === selectedDoor.id && target.disabledReason === undefined ? '已到达入口' : api.getRouteForecastCaption(target.forecast).text
+          : target.action === undefined ? '封闭' : target.disabledReason !== undefined ? '入口未开放'
+            : target.id === selectedDoor.id ? '已到达入口' : '入口畅通');
         assert.ok(node.getChildByName('WalkTargetName').getComponent(api.Label).string.includes(target.label),
           'stone gate retains its original visible destination title');
         const sprite = artwork?.getComponent(api.Sprite);

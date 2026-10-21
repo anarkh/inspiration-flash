@@ -8,6 +8,7 @@ import './entry-services.test.js';
 import './task-list.test.js';
 import './combat-choices.test.js';
 import './map-topology.test.js';
+import './route-forecast.test.js';
 import './action-legality.test.js';
 import { reduceGameCommand } from '@infinite-flow/application';
 import {
@@ -2542,11 +2543,14 @@ function verifyResultSettlement(): void {
   }
 
   const exitFlow = driveNormalExit();
+  // This twelve-step route skips every supply room, so the step onto the exit burns the
+  // twelfth and last drop of lamp oil and forces breach before the exit settles.
+  equal(exitFlow.result.run?.lanternState?.oil, 0, 'normal exit route burns the whole lamp');
   const exitDetail = assertFlowSettlementContract(exitFlow, {
     outcome: '稳定通关',
     lootMode: 'full',
     pursuitReason: '成功撤离',
-    pressureTier: '追猎'
+    pressureTier: '破界'
   });
   verifyActionContract(buildGameViewModel(exitFlow.result, {}));
   assert(getActions(buildGameViewModel(exitFlow.result, {})).length < 20, 'exit result actions under 20');

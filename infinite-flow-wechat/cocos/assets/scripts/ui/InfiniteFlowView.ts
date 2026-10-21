@@ -32,7 +32,7 @@ import type { HudPopoverKind } from './hud-layout';
 import { InfiniteFlowWalkInput } from './InfiniteFlowWalkInput';
 import { captureInfiniteFlowInfoSheetState, renderInfiniteFlowInfoSheet } from './InfiniteFlowInfoSheet';
 import type { MobilePanelKind, MobileSheetState } from './InfiniteFlowInfoSheet';
-import { buildWalkWorld } from './walk-world';
+import { buildWalkWorld, describeRouteChange } from './walk-world';
 import type { WorldPoint, WorldTarget } from './walk-world';
 import { DARK_UI, paintDarkFrame } from './dark-ui';
 import { COMPACT_SHEET_THEME } from './sheet-theme';
@@ -46,6 +46,7 @@ import type {
   ChapterRouteContractViewModel,
   CombatChapterContextViewModel,
   EquipmentCommissionDetailViewModel,
+  ExploreDetailViewModel,
   EquipmentCommissionSettlementViewModel,
   EquipmentMemoryCombatViewModel,
   EquipmentMemoryHuntViewModel,
@@ -2875,6 +2876,8 @@ export class InfiniteFlowView {
   private sceneMapCurrentCoordinate = '';
   private sceneCombatSnapshot: { enemyId: string; playerHp: number; enemyHp: number } | undefined;
   private sceneFeedback: { text: string; damage?: number } | undefined;
+  /** The last explore projection, kept across fights so a clear's tier change is still announced. */
+  private lastExploreDetail: ExploreDetailViewModel | undefined;
   private walkScene: WalkSceneHandle | undefined;
   private walkInput: InfiniteFlowWalkInput | undefined;
   private walkWorldKey = '';
@@ -2987,6 +2990,13 @@ export class InfiniteFlowView {
     else if (nodeCleared && previousDetail?.kind === 'explore' && !previousDetail.currentNode.cleared && previousDetail.rewardPreview) {
       this.rewardReceipt = previousDetail.rewardPreview;
       this.sceneFeedback = { text: '已领取物资' };
+    }
+    if (mobileDetail?.kind === 'explore') {
+      const routeChange = this.lastExploreDetail === undefined ? undefined : describeRouteChange(this.lastExploreDetail, mobileDetail);
+      if (routeChange !== undefined) this.sceneFeedback = { text: routeChange };
+      this.lastExploreDetail = mobileDetail;
+    } else if (mobileDetail?.kind !== 'combat') {
+      this.lastExploreDetail = undefined;
     }
     if (this.mobileSheet?.kind === 'interaction') {
       if (roomKey !== this.mobileRoomKey || (this.mobilePendingKey !== '' && pendingKey === '')

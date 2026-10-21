@@ -3,6 +3,8 @@ export type RunPressureTier = 'stable' | 'hunted' | 'breach';
 export type RunPressureState = {
   rulesVersion: 1;
   clearedNodeCount: number;
+  /** Set once a burnt-out lantern drops the run straight into breach; never cleared. */
+  breachForced?: true;
 };
 
 export type RunPressureStatus = {
@@ -12,6 +14,7 @@ export type RunPressureStatus = {
   pressurePercent: number;
   rewardBonusPercent: number;
   nextTierAt: number | null;
+  breachForced: boolean;
 };
 
 type RunPressureMonster = {
@@ -54,14 +57,16 @@ export function normalizeRunPressureState(value: unknown): RunPressureState | un
     value.rulesVersion !== 1 ||
     typeof value.clearedNodeCount !== 'number' ||
     !Number.isSafeInteger(value.clearedNodeCount) ||
-    value.clearedNodeCount < 0
+    value.clearedNodeCount < 0 ||
+    (value.breachForced !== undefined && value.breachForced !== true)
   ) {
     return undefined;
   }
 
   return {
     rulesVersion: 1,
-    clearedNodeCount: value.clearedNodeCount
+    clearedNodeCount: value.clearedNodeCount,
+    ...(value.breachForced === true ? { breachForced: true as const } : {})
   };
 }
 
@@ -81,9 +86,24 @@ export function advanceRunPressureOnNodeClear(
   if (!normalized) return undefined;
 
   return {
-    rulesVersion: 1,
+    ...normalized,
     clearedNodeCount: Math.min(Number.MAX_SAFE_INTEGER, normalized.clearedNodeCount + 1)
   };
+}
+
+export function forceRunPressureBreach(state: RunPressureState): RunPressureState;
+export function forceRunPressureBreach(state: undefined): undefined;
+export function forceRunPressureBreach(
+  state: RunPressureState | undefined
+): RunPressureState | undefined;
+export function forceRunPressureBreach(
+  state: RunPressureState | undefined
+): RunPressureState | undefined {
+  const normalized = normalizeRunPressureState(state);
+  if (!normalized) return undefined;
+  if (normalized.breachForced) return normalized;
+
+  return { ...normalized, breachForced: true };
 }
 
 export function getRunPressureStatus(state: RunPressureState): RunPressureStatus;
@@ -97,14 +117,16 @@ export function getRunPressureStatus(
   const normalized = normalizeRunPressureState(state);
   if (!normalized) return undefined;
 
-  if (normalized.clearedNodeCount >= BREACH_AT) {
+  const breachForced = normalized.breachForced === true;
+  if (breachForced || normalized.clearedNodeCount >= BREACH_AT) {
     return {
       state: normalized,
       tier: 'breach',
       label: '破界',
       pressurePercent: 20,
       rewardBonusPercent: 0,
-      nextTierAt: null
+      nextTierAt: null,
+      breachForced
     };
   }
 
@@ -115,7 +137,8 @@ export function getRunPressureStatus(
       label: '追猎',
       pressurePercent: 10,
       rewardBonusPercent: 5,
-      nextTierAt: BREACH_AT
+      nextTierAt: BREACH_AT,
+      breachForced
     };
   }
 
@@ -125,7 +148,8 @@ export function getRunPressureStatus(
     label: '稳定',
     pressurePercent: 0,
     rewardBonusPercent: 15,
-    nextTierAt: HUNTED_AT
+    nextTierAt: HUNTED_AT,
+    breachForced
   };
 }
 

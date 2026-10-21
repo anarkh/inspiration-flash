@@ -553,6 +553,42 @@ function findShortestPathNextStep(
   return undefined;
 }
 
+function findShortestPath(
+  topology: RunPursuitTopology,
+  startNodeId: string,
+  targetNodeId: string
+): string[] | undefined {
+  if (startNodeId === targetNodeId) return [startNodeId];
+
+  let cursorNodeId = startNodeId;
+  const path = [startNodeId];
+  // Each hop repeats the pursuit's own tie-break, so the path is exactly the one it will walk.
+  while (cursorNodeId !== targetNodeId && path.length <= topology.nodeById.size) {
+    const nextNodeId = findShortestPathNextStep(topology, cursorNodeId, targetNodeId);
+    if (!nextNodeId) return undefined;
+    path.push(nextNodeId);
+    cursorNodeId = nextNodeId;
+  }
+  return cursorNodeId === targetNodeId ? path : undefined;
+}
+
+function createContactResult(state: RunPursuitState, to: string): AdvanceRunPursuitResult {
+  return {
+    state: {
+      ...state,
+      nodeId: RUN_PURSUIT_CATALOG[state.dungeonId].spawnNodeId,
+      contacts: Math.min(Number.MAX_SAFE_INTEGER, state.contacts + 1),
+      graceMoves: 1
+    },
+    contact: true,
+    moved: true,
+    from: state.nodeId,
+    to,
+    contained: false,
+    rewardGranted: false
+  };
+}
+
 function createNoAdvanceResult(state: RunPursuitState): AdvanceRunPursuitResult {
   return {
     state,
@@ -717,6 +753,9 @@ export function advanceRunPursuit(
     return createNoAdvanceResult(state);
   }
 
+  // Walking into the pursuer's room is a contact as well, even on its resting step.
+  if (state.nodeId === input.playerNodeId) return createContactResult(state, input.playerNodeId);
+
   if (state.graceMoves === 1) {
     return {
       ...createNoAdvanceResult(state),
@@ -746,22 +785,7 @@ export function advanceRunPursuit(
     };
   }
 
-  if (nextNodeId === input.playerNodeId) {
-    return {
-      state: {
-        ...state,
-        nodeId: definition.spawnNodeId,
-        contacts: Math.min(Number.MAX_SAFE_INTEGER, state.contacts + 1),
-        graceMoves: 1
-      },
-      contact: true,
-      moved: true,
-      from,
-      to: nextNodeId,
-      contained: false,
-      rewardGranted: false
-    };
-  }
+  if (nextNodeId === input.playerNodeId) return createContactResult(state, nextNodeId);
 
   return {
     state: { ...state, nodeId: nextNodeId },
@@ -772,6 +796,17 @@ export function advanceRunPursuit(
     contained: false,
     rewardGranted: false
   };
+}
+
+/** The cells a stalking pursuer will walk to reach the player, both ends included. */
+export function getRunPursuitPath(
+  state: RunPursuitState,
+  input: AdvanceRunPursuitInput
+): readonly string[] | undefined {
+  if (state.status !== 'stalking' || state.nodeId === null) return undefined;
+  const topology = createTopology(input);
+  if (!topology || !topology.nodeById.has(state.nodeId)) return undefined;
+  return findShortestPath(topology, state.nodeId, input.playerNodeId);
 }
 
 export function fuseRunPursuitAtBoss(state: RunPursuitState): RunPursuitState {

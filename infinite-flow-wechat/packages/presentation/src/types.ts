@@ -591,6 +591,10 @@ export type ChapterPressureViewModel = Readonly<{
   pressurePercent?: number;
   rewardBonusPercent?: number;
   nextTierAt?: number | null;
+  /** Rooms counted toward the tiers; drives the segmented pressure bar. */
+  clearedNodeCount?: number;
+  /** A burnt-out lantern dropped the run straight into breach. */
+  breachForced?: boolean;
 }>;
 
 export type ChapterPursuitViewModel = Readonly<{
@@ -606,6 +610,12 @@ export type ChapterPursuitViewModel = Readonly<{
   contactDamagePercent?: number;
   bossFusionPercent?: number;
   rewardAmount?: number;
+  /** The room that seals the pursuer once it is cleared and the pursuer walks in. */
+  containmentNodeId?: string;
+  containmentTitle?: string;
+  containmentCellId?: string;
+  /** Map cell of a stalking pursuer, shown even inside the fog. */
+  currentCellId?: string;
   progress?: Readonly<{
     active: boolean;
     currentNodeId: string | null;
@@ -629,6 +639,33 @@ export type ChapterDecisionViewModel = Readonly<{
   pursuit: ChapterPursuitViewModel;
 }>;
 
+export type LanternViewModel = Readonly<{
+  oil: number;
+  startOil: number;
+  supplyOil: number;
+  contactOilLoss: number;
+  /** `low` at three or fewer steps left, `out` once the lamp is empty. */
+  level: 'ok' | 'low' | 'out';
+}>;
+
+export type RouteForecastKind = 'monster' | 'elite' | 'boss' | 'trap' | 'reward' | 'supply' | 'portal' | 'exit';
+
+/** What one doorway reveals about the next room; copied from the core route forecast. */
+export type RouteForecastViewModel = Readonly<{
+  /** Same id as the map cell, so a door can find its own forecast. */
+  cellId: string;
+  nodeId: string;
+  kind: RouteForecastKind;
+  kindLabel: string;
+  cleared: boolean;
+  /** 1 to 3: share of current HP an uncleared fight or trap is likely to cost. */
+  risk?: 1 | 2 | 3;
+  /** Short caption such as 奖励 +15%, 灯油 +4 or 首领封印中. */
+  hint?: string;
+  threat?: Readonly<{ level: 'near' | 'far'; label: string }>;
+  containment?: Readonly<{ ready: boolean; label: string }>;
+}>;
+
 export type ExploreDetailViewModel = Readonly<{
   kind: 'explore';
   map: MapViewModel;
@@ -643,6 +680,10 @@ export type ExploreDetailViewModel = Readonly<{
   }>;
   /** Read-only chapter decision projection; present for every healthy run, never gated by pending. */
   chapterDecision?: ChapterDecisionViewModel;
+  /** Present only for runs that burn lamp oil. */
+  lantern?: LanternViewModel;
+  /** One preview per room reachable from the current room. */
+  routeForecasts?: readonly RouteForecastViewModel[];
   pending?: PendingChoiceViewModel;
   /** Only present for an available, uncleared reward-claim command. */
   rewardPreview?: RewardPreviewViewModel;

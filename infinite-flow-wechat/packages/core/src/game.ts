@@ -8,7 +8,7 @@ import { applyMonsterCombatEffects } from './combat-effects';
 import type { CombatDamageKind, CombatEffectAction, CombatEffectState } from './combat-effects';
 import { COMBAT_FOCUS_MAX, normalizeCombatFocus, resolveCombatFocus } from './combat-focus';
 import type { CombatFocus } from './combat-focus';
-import { getCombatIntent, isParryableCombatIntent } from './combat-intents';
+import { getCombatIntent, HEAVY_BLOW_TURN_INTERVAL, isParryableCombatIntent } from './combat-intents';
 import type { CombatEncounterRank, CombatIntent } from './combat-intents';
 import {
   getEquipmentAttunementDefinition,
@@ -275,6 +275,7 @@ import {
   advanceRunPressureOnNodeClear,
   calculateRunPressureBonus,
   createRunPressureState,
+  forceRunPressureBreach,
   getRunPressureStatus,
   isRunPressureState,
   scaleMonsterForRunPressure,
@@ -357,9 +358,12 @@ import {
   getRunPursuitContactDamage,
   getRunPursuitDefinition,
   getRunPursuitDisplay,
+  getRunPursuitPath,
   getRunPursuitProgress,
   normalizeRunPursuitState,
   repelRunPursuitAtStablePortal,
+  RUN_PURSUIT_BOSS_FUSION_PERCENT,
+  RUN_PURSUIT_SPAWN_CLEAR_COUNT,
   settleRunPursuit
 } from './run-pursuit';
 import type {
@@ -369,6 +373,16 @@ import type {
   RunPursuitProgress,
   RunPursuitState
 } from './run-pursuit';
+import {
+  burnRunLanternOil,
+  createRunLanternState,
+  getRunLanternDefinition,
+  isRunLanternSupplyNode,
+  normalizeRunLanternState,
+  refillRunLanternAtNode,
+  RUN_LANTERN_CATALOG
+} from './run-lantern';
+import type { RunLanternDefinition, RunLanternState } from './run-lantern';
 import {
   COMPANION_RULES_VERSION,
   createCompanionRunSnapshot,
@@ -427,6 +441,7 @@ export { PETS } from './pet-system';
 export { ROUTE_CONTRACT_CATALOG, getRouteContractById, listRouteContracts };
 export * from './equipment-memory-hunts';
 export * from './run-pursuit';
+export * from './run-lantern';
 export * from './companion-system';
 export * from './method-cultivation';
 export * from './bloodline-system';
@@ -1039,6 +1054,8 @@ export type DungeonRun = {
   falseTestimonyEntryGear?: FalseTestimonyEntryGear;
   routeContractState?: RouteContractRunState;
   pursuitState?: RunPursuitState;
+  /** Lamp oil for lantern chapters; missing on older runs, which never burn oil. */
+  lanternState?: RunLanternState;
   combatReplayState?: CombatReplayRunState;
   companionSnapshot?: CompanionRunSnapshot;
   methodSnapshots?: readonly MethodRunSnapshot[];
@@ -2391,12 +2408,20 @@ function markNodeCleared(state: GameState, nodeId: string, damageTaken = 0): Gam
           connectionIdsByNodeId: getInfernoConnectionIds(advancedRun.infernoMap)
         })
       : undefined;
-  const run = discoveredHiddenTask
+  const routedRun = discoveredHiddenTask
     ? { ...advancedRun, routeContractState: discoveredHiddenTask }
     : advancedRun;
+  const lanternState = getStrictRunLanternState(routedRun);
+  const lanternRefill = lanternState ? refillRunLanternAtNode(lanternState, nodeId) : undefined;
+  const run = lanternRefill && lanternRefill.gained > 0
+    ? { ...routedRun, lanternState: lanternRefill.state }
+    : routedRun;
+  const refilledState = lanternRefill && lanternRefill.gained > 0
+    ? appendLog(state, `补给点添灯：灯油 +${lanternRefill.gained}，当前 ${lanternRefill.state.oil}。`)
+    : state;
   const clearedState = applyRunReward(
     {
-      ...state,
+      ...refilledState,
       run
     },
     explorationReward
@@ -3927,6 +3952,173 @@ export function getCurrentRunPursuit(state: GameState): CurrentRunPursuit {
     display: getRunPursuitDisplay(displayState, clearedNodeCount),
     ...(lastSettlement === undefined ? {} : { lastSettlement })
   };
+}
+
+export type CurrentRunLantern = {
+  readonly definition: RunLanternDefinition;
+  readonly oil: number;
+};
+
+export function getCurrentRunLantern(state: GameState): CurrentRunLantern | undefined {
+  if (!state.run) return undefined;
+  const lanternState = getStrictRunLanternState(state.run);
+  const definition = lanternState ? getRunLanternDefinition(lanternState.dungeonId) : undefined;
+  return lanternState && definition ? { definition, oil: lanternState.oil } : undefined;
+}
+
+export type RouteForecastKind = 'monster' | 'elite' | 'boss' | 'trap' | 'reward' | 'supply' | 'portal' | 'exit';
+export type RouteForecastRisk = 1 | 2 | 3;
+
+/** What a doorway reveals about the adjacent room before the player commits to it. */
+export type RouteForecast = {
+  readonly nodeId: string;
+  readonly kind: RouteForecastKind;
+  readonly cleared: boolean;
+  /** Blunt read of how much of the current HP an uncleared fight or trap is likely to cost. */
+  readonly risk?: RouteForecastRisk;
+  /** Only while a stalking pursuer would fuse into this boss on entry. */
+  readonly bossFusionPercent?: number;
+  readonly rewardBonusPercent?: number;
+  readonly lanternOil?: number;
+  readonly counterItemId?: ItemId;
+  readonly exitSealed?: boolean;
+  /** Rooms between this doorway and the pursuer walking toward it (0: it is already in there). */
+  readonly pursuerDistance?: number;
+  /** The containment room while the pursuer can still be sealed there. */
+  readonly containment?: 'ready' | 'pending';
+};
+
+const ROUTE_FORECAST_PURSUER_RANGE = 3;
+
+function getRouteForecastRisk(cost: number, hp: number): RouteForecastRisk {
+  if (hp <= 0) return 3;
+  const share = cost / hp;
+  return share < 0.15 ? 1 : share < 0.45 ? 2 : 3;
+}
+
+function getEncounterForecastRisk(state: GameState, node: DungeonNode, fuseBoss: boolean): RouteForecastRisk {
+  const run = state.run;
+  const monsterDefinition = node.monsterId ? MONSTERS[node.monsterId] : undefined;
+  if (!run || !monsterDefinition) return 3;
+  const bossDefinition = getBossDefinitionForNode(run.dungeonId, node.id);
+  const pursuitState = getStrictRunPursuitState(run);
+  const encounterState: GameState = fuseBoss && pursuitState
+    ? { ...state, run: { ...run, pursuitState: fuseRunPursuitAtBoss(pursuitState) } }
+    : state;
+  // Bosses are read at their awakened strength; the forecast should never undersell a door.
+  const monster = getProtocolMonster(
+    encounterState,
+    monsterDefinition,
+    bossDefinition,
+    bossDefinition ? 'awakened' : 'sealed',
+    bossDefinition ? isProtocolAnchorCompletedBeforeBoss(encounterState) : undefined
+  );
+  const stats = getDerivedStats(state);
+  const dealt = calculatePhysicalDamage(stats.attack, monster.defense);
+  const taken = calculatePhysicalDamage(monster.attack, stats.defense);
+  const hits = Math.ceil(Math.max(1, monster.maxHp) / dealt);
+  const heavyBlows = Boolean(bossDefinition) || DUNGEON_ELITE_MONSTERS[run.dungeonId] === monsterDefinition.id;
+  let cost = 0;
+  for (let turn = 1; turn < Math.min(hits, 99); turn += 1) {
+    cost += heavyBlows && turn % HEAVY_BLOW_TURN_INTERVAL === 2 ? Math.ceil(taken * HEAVY_BLOW_DAMAGE_RATE) : taken;
+  }
+  return getRouteForecastRisk(cost, state.player.hp);
+}
+
+function getRunPursuitTopologyInput(state: GameState, dungeon: DungeonDefinition) {
+  const run = state.run!;
+  const lawState = getNormalizedDungeonLawState(state);
+  const blockedEdges: Array<{ fromNodeId: string; toNodeId: string }> = [];
+  for (const source of dungeon.nodes) {
+    for (const target of dungeon.nodes) {
+      if (!areAdjacentNodes(source, target)) continue;
+      if (
+        !areRunNodesAdjacent(run, source, target) ||
+        (lawState && getRouteBlockReason(dungeon.id, source.id, target.id, lawState))
+      ) {
+        blockedEdges.push({ fromNodeId: source.id, toNodeId: target.id });
+      }
+    }
+  }
+  return {
+    nodes: dungeon.nodes.map((node) => ({ id: node.id, x: node.position.x, y: node.position.y })),
+    blockedEdges,
+    playerNodeId: run.currentNodeId
+  };
+}
+
+/** Read-only previews for every room reachable through the current room's doors. */
+export function getRouteForecasts(state: GameState): RouteForecast[] {
+  const run = state.run;
+  const dungeon = getCurrentDungeonDefinition(state);
+  const current = run && dungeon ? getNodeById(dungeon, run.currentNodeId) : undefined;
+  if (!run || !dungeon || !current) return [];
+
+  const pressure = getRunPressureStatus(run.pressureState);
+  const lanternState = getStrictRunLanternState(run);
+  const pursuitState = getStrictRunPursuitState(run);
+  const pursuitDefinition = pursuitState ? getRunPursuitDefinition(pursuitState.dungeonId) : undefined;
+  const topology = pursuitState?.status === 'stalking' ? getRunPursuitTopologyInput(state, dungeon) : undefined;
+  const pursuitPath = pursuitState && topology
+    ? getRunPursuitPath(pursuitState, {
+        ...topology,
+        containmentReady: pursuitDefinition ? run.clearedNodeIds.includes(pursuitDefinition.containmentNodeId) : false
+      })
+    : undefined;
+  const bossSeal = getBossSealStatus(state);
+
+  return dungeon.nodes
+    .filter((node) => node.id !== current.id && areRunNodesAdjacent(run, current, node))
+    .map((node): RouteForecast => {
+      const cleared = run.clearedNodeIds.includes(node.id);
+      const bossDefinition = getBossDefinitionForNode(run.dungeonId, node.id);
+      const kind: RouteForecastKind = node.type === 'monster'
+        ? bossDefinition
+          ? 'boss'
+          : node.monsterId && DUNGEON_ELITE_MONSTERS[run.dungeonId] === node.monsterId ? 'elite' : 'monster'
+        : node.type === 'reward' && lanternState && isRunLanternSupplyNode(lanternState.dungeonId, node.id)
+          ? 'supply'
+          : node.type;
+      const forecast: { -readonly [K in keyof RouteForecast]: RouteForecast[K] } = { nodeId: node.id, kind, cleared };
+      if (!cleared && node.type === 'monster') {
+        const fuseBoss = Boolean(bossDefinition) && pursuitState?.status === 'stalking';
+        forecast.risk = getEncounterForecastRisk(state, node, fuseBoss);
+        if (fuseBoss) forecast.bossFusionPercent = RUN_PURSUIT_BOSS_FUSION_PERCENT;
+      }
+      if (!cleared && node.type === 'trap') {
+        const resolution = getTrapRiskResolution(state, node);
+        const counterItem = node.trap?.counterItem;
+        if (
+          counterItem &&
+          state.inventory[counterItem] > 0 &&
+          (isTacticalItemId(counterItem)
+            ? isTacticalItemAvailable(state, counterItem)
+            : isDungeonConsumableAvailable(state, counterItem))
+        ) {
+          forecast.counterItemId = counterItem;
+        }
+        if (resolution) {
+          const damage = Math.max(4, Math.floor(resolution.naturallyPassed ? resolution.trap.damage * 0.45 : resolution.trap.damage));
+          forecast.risk = forecast.counterItemId ? 1 : getRouteForecastRisk(damage, state.player.hp);
+        }
+      }
+      if (!cleared && node.type === 'reward' && pressure) forecast.rewardBonusPercent = pressure.rewardBonusPercent;
+      if (!cleared && kind === 'supply' && lanternState) forecast.lanternOil = RUN_LANTERN_CATALOG[lanternState.dungeonId].supplyOil;
+      if (node.type === 'exit') forecast.exitSealed = bossSeal ? !bossSeal.cleared : false;
+      // Only the doorway the pursuer will come through, and only once it is close enough to be heard.
+      const pursuerIndex = pursuitPath ? pursuitPath.indexOf(node.id) : -1;
+      if (pursuitPath && pursuerIndex >= 0 && pursuerIndex === pursuitPath.length - 2 && pursuerIndex <= ROUTE_FORECAST_PURSUER_RANGE) {
+        forecast.pursuerDistance = pursuerIndex;
+      }
+      if (
+        pursuitDefinition &&
+        node.id === pursuitDefinition.containmentNodeId &&
+        (pursuitState?.status === 'dormant' || pursuitState?.status === 'stalking')
+      ) {
+        forecast.containment = cleared ? 'ready' : 'pending';
+      }
+      return forecast;
+    });
 }
 
 export type CurrentRouteContract = {
@@ -6002,6 +6194,10 @@ export function enterDungeon(
           priorityNodeIds: getRunProtocolRequiredNodeIds(protocolDefinition)
         })
     : undefined;
+  // Lamp oil is tuned for the fixed chapter grid; layered inferno maps keep their own clock.
+  const lanternState = simplifiedEntry && protocolDefinition.id !== 'deep'
+    ? createRunLanternState(dungeonId)
+    : undefined;
 
   const nextState: GameState = {
     ...entryState,
@@ -6060,7 +6256,8 @@ export function enterDungeon(
       pursuitState: createRunPursuitState(
         dungeonId,
         entryState.completedDungeonIds.includes(dungeonId)
-      )
+      ),
+      ...(lanternState === undefined ? {} : { lanternState })
     },
     combat: undefined,
     lastOutcome: undefined
@@ -6185,6 +6382,49 @@ export function selectPanopticonRoute(state: GameState, route: PanopticonRoute):
   );
 }
 
+function getStrictRunLanternState(run: DungeonRun): RunLanternState | undefined {
+  const lanternState = normalizeRunLanternState(run.lanternState);
+  return lanternState?.dungeonId === run.dungeonId ? lanternState : undefined;
+}
+
+/** Burns lamp oil; the burn that empties it forces breach and wakes a dormant pursuer. */
+function burnCurrentRunLantern(state: GameState, amount: number): GameState {
+  if (!state.run) return state;
+  const lanternState = getStrictRunLanternState(state.run);
+  if (!lanternState) return state;
+  const burn = burnRunLanternOil(lanternState, amount);
+  if (burn.burned === 0) return state;
+
+  const litState: GameState = {
+    ...state,
+    run: { ...state.run, lanternState: burn.state }
+  };
+  if (!burn.exhausted || !litState.run) return litState;
+
+  const pressureState = forceRunPressureBreach(litState.run.pressureState);
+  const pursuitState = getStrictRunPursuitState(litState.run);
+  const wokenPursuitState = pursuitState
+    ? activateRunPursuit(pursuitState, RUN_PURSUIT_SPAWN_CLEAR_COUNT)
+    : undefined;
+  const exhaustedState = appendSecondaryLog(
+    {
+      ...litState,
+      run: {
+        ...litState.run,
+        ...(pressureState === undefined ? {} : { pressureState }),
+        ...(wokenPursuitState === undefined ? {} : { pursuitState: wokenPursuitState })
+      }
+    },
+    '灯油耗尽：黑暗中的副本开始反扑，侵蚀压力直接进入破界。'
+  );
+  if (!wokenPursuitState || wokenPursuitState === pursuitState) return exhaustedState;
+  const definition = getRunPursuitDefinition(wokenPursuitState.dungeonId);
+  return appendSecondaryLog(
+    exhaustedState,
+    `破界追兵「${definition?.name ?? wokenPursuitState.dungeonId}」被黑暗唤醒，开始追猎。`
+  );
+}
+
 function advanceCurrentRunPursuitAfterMove(state: GameState): GameState {
   if (!state.run) return state;
   const pursuitState = getStrictRunPursuitState(state.run);
@@ -6192,30 +6432,11 @@ function advanceCurrentRunPursuitAfterMove(state: GameState): GameState {
 
   const dungeon = getCurrentDungeonDefinition(state);
   if (!dungeon) return state;
-  const lawState = getNormalizedDungeonLawState(state);
-  const blockedEdges: Array<{ fromNodeId: string; toNodeId: string }> = [];
-  for (const source of dungeon.nodes) {
-    for (const target of dungeon.nodes) {
-      if (!areAdjacentNodes(source, target)) continue;
-      if (
-        !areRunNodesAdjacent(state.run, source, target) ||
-        (lawState && getRouteBlockReason(dungeon.id, source.id, target.id, lawState))
-      ) {
-          blockedEdges.push({ fromNodeId: source.id, toNodeId: target.id });
-      }
-    }
-  }
 
   const definition = getRunPursuitDefinition(pursuitState.dungeonId);
   if (!definition) return state;
   const advanced = advanceRunPursuit(pursuitState, {
-    nodes: dungeon.nodes.map((node) => ({
-      id: node.id,
-      x: node.position.x,
-      y: node.position.y
-    })),
-    blockedEdges,
-    playerNodeId: state.run.currentNodeId,
+    ...getRunPursuitTopologyInput(state, dungeon),
     containmentReady: state.run.clearedNodeIds.includes(definition.containmentNodeId)
   });
 
@@ -6248,9 +6469,13 @@ function advanceCurrentRunPursuitAfterMove(state: GameState): GameState {
   );
   const damagedState = applyPlayerDamage(nextState, contactDamage);
   const actualDamage = nextState.player.hp - damagedState.player.hp;
-  const contactedState = appendSecondaryLog(
-    damagedState,
-    `破界追兵「${definition.name}」与你接触，造成 ${actualDamage} 点伤害。`
+  const lanternDefinition = getRunLanternDefinition(damagedState.run?.dungeonId ?? '');
+  const contactedState = burnCurrentRunLantern(
+    appendSecondaryLog(
+      damagedState,
+      `破界追兵「${definition.name}」与你接触，造成 ${actualDamage} 点伤害。`
+    ),
+    lanternDefinition?.contactOilLoss ?? 0
   );
   return contactedState.player.hp <= 0
     ? resolveRunFailure(contactedState, `破界追兵「${definition.name}」完成猎杀，主神强制回收。`)
@@ -6577,7 +6802,7 @@ export function moveToNode(state: GameState, nodeId: string): GameState {
   const scannedState = advancePanopticonAfterMove(movedState, targetNode);
   return scannedState.phase === 'result'
     ? scannedState
-    : advanceCurrentRunPursuitAfterMove(scannedState);
+    : advanceCurrentRunPursuitAfterMove(burnCurrentRunLantern(scannedState, 1));
 }
 
 export function selectNode(state: GameState, nodeId: string): GameState {

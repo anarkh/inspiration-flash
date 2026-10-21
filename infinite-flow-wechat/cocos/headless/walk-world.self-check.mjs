@@ -27,7 +27,7 @@ const bundle = await build({
   absWorkingDir: resolve(root),
 });
 const {
-  buildWalkWorld, stepWalkPosition, nearestWalkTarget, findWalkPath, isWalkPointClear, isWalkSegmentClear, getInfiniteFlowSceneVisualKeys,
+  buildWalkWorld, describeRouteChange, stepWalkPosition, nearestWalkTarget, findWalkPath, isWalkPointClear, isWalkSegmentClear, getInfiniteFlowSceneVisualKeys,
   createInitialState, reduceGameCommand, buildGameViewModel,
   DUNGEON_ORDER, DUNGEONS, MONSTERS, getBossDefinition, DUNGEON_ELITE_MONSTERS, DUNGEON_WORLD_THEMES,
 } = await import(`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString('base64')}`);
@@ -862,6 +862,49 @@ check('a locked chapter keeps the hub portal inspectable without enabling its en
   assert.equal(portal.disabledReason, undefined, 'the portal itself must still open chapter selection');
   assert.equal(portal.interactionLabel, '进入');
   assert.equal(nearestWalkTarget(world, portal), portal);
+});
+
+check('doors carry their own route forecast and the pursuer art stays loaded for the hunt', () => {
+  const entered = commit({ ...createInitialState(), completedDungeonIds: ['demon_tower_1'] }, {
+    type: 'run/enter', dungeonId: 'demon_tower_1', protocolId: 'standard', seeds: { rulesVersion: 1, hiddenTaskSeed: 0x1234_abcd },
+  });
+  const run = entered.run;
+  const herb = { ...entered, run: { ...run, currentNodeId: 'mist_herb_cache', clearedNodeIds: ['mist_herb_cache'],
+    pursuitState: { ...run.pursuitState, status: 'stalking', nodeId: 'sealed_cache' } } };
+  const model = buildGameViewModel(herb, {});
+  const detail = model.sections[1].detail;
+  const doors = buildWalkWorld(model).targets.filter(target => target.id.startsWith('door:'));
+  assert.equal(doors.length, 4, 'four real doorways');
+  for (const door of doors) {
+    const expected = detail.routeForecasts.find(forecast => `door:${forecast.cellId}` === door.id);
+    assert.deepEqual(door.forecast, expected, `${door.id} carries the ViewModel forecast for its own cell`);
+    assert.equal(door.forecast.nodeId, door.destinationNodeId, `${door.id} forecast matches its destination`);
+  }
+  assert.equal(doors.find(door => door.destinationNodeId === 'sealed_cache').forecast.threat.level, 'near', 'the pursuer is behind the containment door');
+  assert.equal(getInfiniteFlowSceneVisualKeys(model).lurker, `monster:${DUNGEON_WORLD_THEMES.demon_tower_1.eliteMonsterId}_world`, 'silhouette art is declared while stalking');
+  const firstRun = buildGameViewModel(commit(createInitialState(), {
+    type: 'run/enter', dungeonId: 'demon_tower_1', protocolId: 'standard', seeds: { rulesVersion: 1, hiddenTaskSeed: 0x1234_abcd },
+  }), {});
+  assert.equal(getInfiniteFlowSceneVisualKeys(firstRun).lurker, undefined, 'a disabled first-clear pursuer loads no silhouette');
+});
+
+check('route notices name what the last step changed', () => {
+  const entered = commit({ ...createInitialState(), completedDungeonIds: ['demon_tower_1'] }, {
+    type: 'run/enter', dungeonId: 'demon_tower_1', protocolId: 'standard', seeds: { rulesVersion: 1, hiddenTaskSeed: 0x1234_abcd },
+  });
+  const explore = state => buildGameViewModel(state, {}).sections[1].detail;
+  const patched = patch => explore({ ...entered, run: { ...entered.run, ...patch } });
+  const lamp = oil => ({ lanternState: { rulesVersion: 1, dungeonId: 'demon_tower_1', oil } });
+  const stalking = { ...entered.run.pursuitState, status: 'stalking', nodeId: 'tower_butcher_patrol' };
+  const base = patched(lamp(5));
+  assert.equal(describeRouteChange(base, base), undefined, 'nothing changed, nothing announced');
+  assert.equal(describeRouteChange(base, patched({ ...lamp(0), pressureState: { rulesVersion: 1, clearedNodeCount: 0, breachForced: true } })),
+    '灯油耗尽 · 压力直接进入破界');
+  assert.equal(describeRouteChange(base, patched({ ...lamp(4), pursuitState: stalking })), '血阶监猎者醒了 · 你走一步它走一步');
+  assert.equal(describeRouteChange(patched({ ...lamp(5), pursuitState: stalking }), patched({ ...lamp(2), pursuitState: { ...stalking, contacts: 1, graceMoves: 1 } })),
+    '被血阶监猎者追上 · 它退回巢穴，下一步不动');
+  assert.equal(describeRouteChange(base, patched({ ...lamp(5), pressureState: { rulesVersion: 1, clearedNodeCount: 6 } })), '压力进入追猎 · 怪物 +10%');
+  assert.equal(describeRouteChange(base, patched(lamp(9))), '补给添灯 · 灯油 +4');
 });
 
 console.log(`Walk world self-check passed (${checks} checks; ${enteredChapters.size} chapters, ${realNodesCovered} real-node projections, ${originalNeighborBindingsCovered} original neighbor bindings, ${nodeMonsterIdsCovered.size} catalog identities, ${visibleMonsterIdsCovered.size} visible exploration identities, ${combatMonsterIdsCovered.size} combat identities, ${combatChaptersCovered} boss arenas, ${pendingFixtures.size} pending kinds).`);

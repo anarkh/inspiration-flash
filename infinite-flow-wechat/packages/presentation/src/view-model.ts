@@ -35,6 +35,7 @@ import {
   getCurrentRouteBlockReason,
   getCurrentRouteContract,
   getCurrentRunMethodSnapshots,
+  getCurrentRunLantern,
   getCurrentRunPursuit,
   getDirectiveEvaluation,
   getDirectiveForDungeon,
@@ -43,6 +44,7 @@ import {
   getCurrentEquipmentMemoryCombatStatus,
   getCurrentEquipmentMemoryHuntStatus,
   getCurrentRunPressure,
+  getRouteForecasts,
   getDerivedStats,
   getEquipmentCommissionStatus,
   getEquipmentMemoryStatus,
@@ -86,7 +88,7 @@ import { getEquipmentAttunementOptions } from '@infinite-flow/core/equipment-sys
 import { getExplorationGuide } from '@infinite-flow/core/exploration-guide';
 import { normalizeRouteContractRunState } from '@infinite-flow/core/route-contracts';
 import type { RunOutcome } from '@infinite-flow/core/run-economy';
-import { normalizeRunPressureState } from '@infinite-flow/core/run-pressure';
+import { getRunPressureStatus, normalizeRunPressureState } from '@infinite-flow/core/run-pressure';
 import { getRunProtocolDefinition } from '@infinite-flow/core/run-protocols';
 import {
   RUN_PROTOCOL_IDS,
@@ -151,6 +153,7 @@ import {
   type HubEntryServiceViewModel,
   type HubOwnedLoadoutViewModel,
   type HubPanel,
+  type LanternViewModel,
   type LogsSection,
   type MapNodeState,
   type MapNodeViewModel,
@@ -169,6 +172,8 @@ import {
   type ResultProtocolSettlementViewModel,
   type ResultRouteContractSettlementViewModel,
   type RewardPreviewViewModel,
+  type RouteForecastKind,
+  type RouteForecastViewModel,
   type ResultSettlementCard,
   type ResultSettlementInvalid,
   type RiskItem,
@@ -2955,7 +2960,9 @@ function buildChapterPressure(state: GameState): ChapterPressureViewModel {
     label: status.label,
     pressurePercent: status.pressurePercent,
     rewardBonusPercent: status.rewardBonusPercent,
-    nextTierAt: status.nextTierAt
+    nextTierAt: status.nextTierAt,
+    clearedNodeCount: status.state.clearedNodeCount,
+    breachForced: status.breachForced
   };
 }
 
@@ -2966,6 +2973,9 @@ function buildChapterPursuit(state: GameState): ChapterPursuitViewModel {
     return { legacyDisabled: pursuit.legacyDisabled, present: false };
   }
   const { display, progress } = pursuit;
+  const nodes = (getCurrentDungeonDefinition(state) ?? DUNGEONS[pursuit.definition.dungeonId]).nodes;
+  const containment = nodes.find((node) => node.id === pursuit.definition!.containmentNodeId);
+  const current = progress.currentNodeId === null ? undefined : nodes.find((node) => node.id === progress.currentNodeId);
   return {
     legacyDisabled: pursuit.legacyDisabled,
     present: true,
@@ -2978,6 +2988,10 @@ function buildChapterPursuit(state: GameState): ChapterPursuitViewModel {
     contactDamagePercent: display.contactDamagePercent,
     bossFusionPercent: display.bossFusionPercent,
     rewardAmount: display.rewardAmount,
+    containmentNodeId: pursuit.definition.containmentNodeId,
+    containmentTitle: containment?.title ?? pursuit.definition.containmentNodeId,
+    ...(containment ? { containmentCellId: `map.cell:${containment.position.x}:${containment.position.y}` } : {}),
+    ...(current ? { currentCellId: `map.cell:${current.position.x}:${current.position.y}` } : {}),
     progress: {
       active: progress.active,
       currentNodeId: progress.currentNodeId,
@@ -2990,6 +3004,77 @@ function buildChapterPursuit(state: GameState): ChapterPursuitViewModel {
       clearsRemaining: progress.clearsRemaining
     }
   };
+}
+
+function buildLantern(state: GameState): LanternViewModel | undefined {
+  const lantern = getCurrentRunLantern(state);
+  if (!lantern) return undefined;
+  return {
+    oil: lantern.oil,
+    startOil: lantern.definition.startOil,
+    supplyOil: lantern.definition.supplyOil,
+    contactOilLoss: lantern.definition.contactOilLoss,
+    level: lantern.oil <= 0 ? 'out' : lantern.oil <= 3 ? 'low' : 'ok'
+  };
+}
+
+const ROUTE_FORECAST_KIND_LABELS: Readonly<Record<RouteForecastKind, string>> = {
+  monster: '怪物',
+  elite: '精英',
+  boss: '首领',
+  trap: '陷阱',
+  reward: '宝箱',
+  supply: '补给',
+  portal: '传送门',
+  exit: '出口'
+};
+
+/** Copies the core route forecasts into door captions; no danger or reward is recomputed here. */
+function buildRouteForecasts(state: GameState): RouteForecastViewModel[] {
+  const dungeon = getCurrentDungeonDefinition(state);
+  if (!state.run || !dungeon) return [];
+  const pursuitName = getCurrentRunPursuit(state).definition?.name ?? '追兵';
+  return getRouteForecasts(state).flatMap((forecast) => {
+    const node = dungeon.nodes.find((candidate) => candidate.id === forecast.nodeId);
+    if (!node) return [];
+    const hint = forecast.kind === 'exit'
+      ? forecast.exitSealed ? '首领封印中' : '可撤离'
+      : forecast.cleared
+        ? '已清空'
+        : forecast.bossFusionPercent !== undefined
+          ? `融合 +${forecast.bossFusionPercent}%`
+          : forecast.counterItemId !== undefined
+            ? `可用${ITEMS[forecast.counterItemId].name}`
+            : forecast.lanternOil !== undefined
+              ? `灯油 +${forecast.lanternOil}`
+              : forecast.rewardBonusPercent !== undefined
+                ? forecast.rewardBonusPercent > 0 ? `奖励 +${forecast.rewardBonusPercent}%` : '无加成'
+                : undefined;
+    return [{
+      cellId: `map.cell:${node.position.x}:${node.position.y}`,
+      nodeId: node.id,
+      kind: forecast.kind,
+      kindLabel: ROUTE_FORECAST_KIND_LABELS[forecast.kind],
+      cleared: forecast.cleared,
+      ...(forecast.risk === undefined ? {} : { risk: forecast.risk }),
+      ...(hint === undefined ? {} : { hint }),
+      ...(forecast.pursuerDistance === undefined
+        ? {}
+        : {
+            threat: forecast.pursuerDistance === 0
+              ? { level: 'near' as const, label: `${pursuitName}就在门后` }
+              : { level: 'far' as const, label: `脚步声 · 隔 ${forecast.pursuerDistance} 间` }
+          }),
+      ...(forecast.containment === undefined
+        ? {}
+        : {
+            containment: {
+              ready: forecast.containment === 'ready',
+              label: forecast.containment === 'ready' ? '封印点 · 已就绪' : '封印点 · 先清空'
+            }
+          })
+    }];
+  });
 }
 
 function buildChapterDecision(state: GameState, dungeonId: DungeonId, dungeonName: string): ChapterDecisionViewModel {
@@ -3153,6 +3238,8 @@ function buildExploreProjection(state: GameState): PhaseProjection {
   const rewardPreview = currentNode.type === 'reward'
     ? buildRewardNodePreview(state, actions)
     : undefined;
+  const lantern = buildLantern(state);
+  const routeForecasts = buildRouteForecasts(state);
   const detail: ExploreDetailViewModel = {
     kind: 'explore',
     map,
@@ -3165,6 +3252,8 @@ function buildExploreProjection(state: GameState): PhaseProjection {
       ...(currentNode.monsterId === undefined ? {} : { monsterId: currentNode.monsterId })
     },
     chapterDecision,
+    ...(lantern ? { lantern } : {}),
+    ...(routeForecasts.length > 0 ? { routeForecasts } : {}),
     ...(pendingProjection.pending ? { pending: pendingProjection.pending } : {}),
     ...(rewardPreview ? { rewardPreview } : {}),
     ...(equipmentMemoryHunt ? { equipmentMemoryHunt } : {})
@@ -3916,11 +4005,13 @@ function buildResultPressureSettlement(
   if (pressure === undefined) return undefined;
   try {
     if (!isSettlementRecord(pressure)) return invalidSettlement('pressure', '侵蚀压力结算记录不可用');
-    if (normalizeRunPressureState(pressure.state) === undefined) {
+    const pressureState = normalizeRunPressureState(pressure.state);
+    if (pressureState === undefined) {
       return invalidSettlement('pressure', '侵蚀压力结算记录不可用');
     }
     const tier = pressure.tier;
-    if (tier !== 'stable' && tier !== 'hunted' && tier !== 'breach') {
+    // The recorded tier must be the one its own state implies, forced breach included.
+    if ((tier !== 'stable' && tier !== 'hunted' && tier !== 'breach') || getRunPressureStatus(pressureState).tier !== tier) {
       return invalidSettlement('pressure', '侵蚀压力结算记录不可用');
     }
     if (!isNonNegativeInteger(pressure.rewardPointBonus)) {

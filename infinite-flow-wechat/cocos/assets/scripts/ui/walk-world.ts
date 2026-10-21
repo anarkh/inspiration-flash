@@ -3,6 +3,7 @@ import type {
   GameViewModel,
   HubCatalogPanel,
   MapNodeViewModel,
+  RouteForecastViewModel,
   ViewActionModel,
 } from '@infinite-flow/presentation';
 import { DUNGEON_WORLD_THEMES, HUB_WORLD_THEME } from './dungeon-world-theme';
@@ -36,6 +37,8 @@ export type WorldTarget = Readonly<{
   destinationNodeId?: string;
   disabledReason?: string;
   doorSide?: 'north' | 'south' | 'west' | 'east';
+  /** The ViewModel's own preview of the room behind this door. */
+  forecast?: RouteForecastViewModel;
 }>;
 export type WalkWorldSpec = Readonly<{
   key: string;
@@ -172,6 +175,7 @@ function roomDoors(detail: ExploreDetailViewModel, actions: readonly ViewActionM
         : side === 'south' ? { x: offset, y: 875 }
           : side === 'west' ? { x: 125, y: offset } : { x: 875, y: offset };
       const visible = node.state !== 'fogged' && node.nodeId !== undefined;
+      const forecast = visible ? detail.routeForecasts?.find((entry) => entry.cellId === node.cellId && entry.nodeId === node.nodeId) : undefined;
       const candidate = node.moveActionId === undefined ? undefined : uniqueAction(actions, node.moveActionId);
       // Never construct a command or substitute another destination's map action.
       const action = visible && node.canMove && candidate?.enabled
@@ -188,6 +192,7 @@ function roomDoors(detail: ExploreDetailViewModel, actions: readonly ViewActionM
         ...point,
         radius: 110,
         ...(visible ? { destinationNodeId: node.nodeId } : {}),
+        ...(forecast === undefined ? {} : { forecast }),
         ...(action === undefined
           ? { disabledReason: visible ? node.disabledReason ?? '当前入口没有可用的移动操作。' : '尚未发现此区域。' }
           : { action }),
@@ -248,6 +253,30 @@ function exploreWorld(model: GameViewModel, detail: ExploreDetailViewModel): Wal
     obstacles: perimeter(1000, 1000),
     targets: [...currentRoomTarget(detail, actions), ...roomDoors(detail, actions)],
   };
+}
+
+/** A one-line notice for what the last step changed on the route; undefined when nothing did. */
+export function describeRouteChange(previous: ExploreDetailViewModel, next: ExploreDetailViewModel): string | undefined {
+  if (previous.map.dungeonId !== next.map.dungeonId) return undefined;
+  const before = previous.chapterDecision;
+  const after = next.chapterDecision;
+  const name = after?.pursuit.name ?? '追兵';
+  const oilBefore = previous.lantern?.oil;
+  const oilAfter = next.lantern?.oil;
+  if ((after?.pursuit.progress?.contacts ?? 0) > (before?.pursuit.progress?.contacts ?? 0)) return `被${name}追上 · 它退回巢穴，下一步不动`;
+  if (oilBefore !== undefined && oilBefore > 0 && oilAfter === 0) return '灯油耗尽 · 压力直接进入破界';
+  const statusBefore = before?.pursuit.status;
+  const statusAfter = after?.pursuit.status;
+  if (statusBefore === 'dormant' && statusAfter === 'stalking') return `${name}醒了 · 你走一步它走一步`;
+  if (statusBefore === 'stalking' && statusAfter === 'contained') return `${name}被封印 · 成功撤离时带回奖励`;
+  if (statusBefore === 'stalking' && statusAfter === 'fused') return `${name}融入首领 · 首领 +${after?.pursuit.bossFusionPercent ?? 0}%`;
+  const tiers = ['stable', 'hunted', 'breach'];
+  const pressure = after?.pressure;
+  if (pressure?.tier !== undefined && before?.pressure.tier !== undefined && tiers.indexOf(pressure.tier) > tiers.indexOf(before.pressure.tier)) {
+    return `压力进入${pressure.label ?? pressure.tier} · 怪物 +${pressure.pressurePercent ?? 0}%`;
+  }
+  if (oilBefore !== undefined && oilAfter !== undefined && oilAfter > oilBefore) return `补给添灯 · 灯油 +${oilAfter - oilBefore}`;
+  return undefined;
 }
 
 /** Projects only public, currently visible presentation data into a small playable room. */
