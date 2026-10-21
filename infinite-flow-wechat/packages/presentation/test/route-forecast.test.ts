@@ -53,9 +53,31 @@ assert(doors.get('fog_patrol_pair')?.risk !== undefined, 'monster doors carry a 
 const seal = doors.get('sealed_cache');
 assert(seal?.threat?.level === 'near' && seal.threat.label === '血阶监猎者就在门后', 'the pursuer is named behind its door');
 assert(seal.containment?.ready === false && seal.containment.label === '封印点 · 先清空', 'an uncleared containment room says so');
-// Walking into the pursuer burns a drop and spills two: the last three drops go, forcing breach.
-assert(seal.hint === '无加成', 'a reward behind the pursuer is forecast at the bonus the step leaves');
+assert(/^\d+ 点$/.test(seal.hint ?? ''), 'reward doors show the points the room really adds');
 assert(doors.get('north_supply_niche')?.hint === '灯油 +4', 'an ordinary step keeps the lamp lit');
+
+// The room's own event sheet: fights, traps, rewards and the exit, each bound to an existing action.
+function roomAt(nodeId: string, cleared: readonly string[] = []) {
+  const state: GameState = { ...tower, run: { ...tower.run!, currentNodeId: nodeId, clearedNodeIds: [...cleared] } };
+  const model = buildGameViewModel(state, {});
+  const detail = model.sections[1].detail;
+  assert(detail.kind === 'explore', `${nodeId}: explore`);
+  return { detail, actionIds: new Set(model.sections[2].actions.map(action => action.actionId)) };
+}
+const fight = roomAt('fog_patrol_pair');
+assert(fight.detail.roomEvent?.kind === 'encounter' && fight.detail.roomEvent.kicker === '遭遇战', 'a monster room opens an encounter');
+assert(fight.detail.roomEvent.rows.map(row => row.label).join('|') === '敌人|你|结果|奖励', 'the encounter rows follow the prototype');
+const blood = roomAt('loose_tile_trap');
+assert(blood.detail.roomEvent?.kind === 'trap' && blood.detail.roomEvent.buttons[blood.detail.roomEvent.buttons.length - 1]?.label === '强行通过', 'a trap room offers its existing choices');
+const supplyRoom = roomAt('north_supply_niche');
+assert(supplyRoom.detail.roomEvent === undefined && supplyRoom.detail.rewardPreview !== undefined, 'reward rooms keep the chest claim sheet');
+const exit = roomAt('tower_exit');
+assert(exit.detail.roomEvent?.kind === 'exit' && exit.detail.roomEvent.rows[0]?.id === 'seal', 'the sealed exit says what is missing');
+for (const room of [fight, blood, exit]) {
+  assert(room.detail.roomEvent!.buttons.every(button => room.actionIds.has(button.actionId)), 'every sheet button is an existing action');
+}
+assert(roomAt('fog_patrol_pair', ['fog_patrol_pair']).detail.roomEvent === undefined, 'cleared rooms open nothing');
+assert(roomAt('cracked_portal').detail.roomEvent === undefined, 'portal rooms keep their own choices');
 
 // Chapters without a lamp still forecast doors, but never show oil or supply rooms.
 const metro = explore(enter('metro_abyss'));

@@ -2878,6 +2878,8 @@ export class InfiniteFlowView {
   private sceneFeedback: { text: string; damage?: number } | undefined;
   /** The last explore projection, kept across fights so a clear's tier change is still announced. */
   private lastExploreDetail: ExploreDetailViewModel | undefined;
+  /** The route prototype's room sheet, drawn by the walk scene while walking is suspended. */
+  private roomEventOpen = false;
   private walkScene: WalkSceneHandle | undefined;
   private walkInput: InfiniteFlowWalkInput | undefined;
   private walkWorldKey = '';
@@ -3042,14 +3044,18 @@ export class InfiniteFlowView {
       this.relicDraftKey = relicDraftKey;
       this.relicDraftSelection = undefined;
     }
+    if (mobileDetail?.kind !== 'explore' || mobileDetail.roomEvent === undefined || roomKey !== this.mobileRoomKey) this.roomEventOpen = false;
     // As in the approved route prototype, stepping through a door opens the new room's own
-    // interaction sheet. It only lists the room's existing actions and never picks one;
-    // closing it leaves the room to walk. Portals stay passages and cleared rooms stay quiet.
+    // sheet: the prototype-style room sheet for a single event, the existing interaction list
+    // for pending choices. Neither picks an action; closing leaves the room to walk.
+    // Portals stay passages and cleared rooms stay quiet.
     if (mobileDetail?.kind === 'explore' && previousDetail?.kind === 'explore' && roomKey !== this.mobileRoomKey
       && this.mobileSheet === undefined && mobileDetail.currentNode.nodeType !== 'portal'
-      && (!nodeCleared || mobileDetail.pending !== undefined)
-      && model !== undefined && getInfiniteFlowMobilePanelActions(model, 'interaction').length > 0) {
-      this.mobileSheet = { kind: 'interaction', page: 0 };
+      && (!nodeCleared || mobileDetail.pending !== undefined)) {
+      if (mobileDetail.roomEvent !== undefined) this.roomEventOpen = true;
+      else if (model !== undefined && getInfiniteFlowMobilePanelActions(model, 'interaction').length > 0) {
+        this.mobileSheet = { kind: 'interaction', page: 0 };
+      }
     }
     this.mobileRoomKey = roomKey;
     this.mobilePendingKey = pendingKey;
@@ -3659,6 +3665,12 @@ export class InfiniteFlowView {
         this.openMobilePanel('npc');
         return;
       }
+      // The room's own event reopens its prototype sheet, fights included; the sheet's button commits.
+      if (detail.kind === 'explore' && detail.roomEvent !== undefined && target.id === `node:${detail.currentNode.nodeId}`) {
+        this.roomEventOpen = true;
+        this.renderAgain();
+        return;
+      }
       if (target.disabledReason !== undefined) {
         this.openMobilePanel(target.kind === 'transition' ? 'map' : 'interaction');
         return;
@@ -3707,8 +3719,17 @@ export class InfiniteFlowView {
       },
       ...(frames === undefined ? {} : { walkerFrames: frames }),
       bindInteract: (node, getTarget) => {
-        this.bindPhysical(node, enabled && this.mobileSheet === undefined, (physicalId) => interact(getTarget(), physicalId));
+        this.bindPhysical(node, enabled && this.mobileSheet === undefined && !this.roomEventOpen, (physicalId) => interact(getTarget(), physicalId));
       },
+      ...(this.roomEventOpen && detail.kind === 'explore' && detail.roomEvent !== undefined ? {
+        roomEventSheet: {
+          close: () => {
+            if (!isCurrent()) return;
+            this.roomEventOpen = false;
+            this.renderAgain();
+          },
+        },
+      } : {}),
       bindWorldTap: (node, callback) => {
         if (!enabled || this.mobileSheet !== undefined) return;
         const starts = new Map<number, Vec3>();
@@ -3741,7 +3762,7 @@ export class InfiniteFlowView {
         });
       },
     });
-    if (enabled && this.mobileSheet === undefined && !this.chapterCodexOpen && model.sections[4].active === undefined) {
+    if (enabled && this.mobileSheet === undefined && !this.roomEventOpen && !this.chapterCodexOpen && model.sections[4].active === undefined) {
       this.walkInput = new InfiniteFlowWalkInput(this.walkScene.joystick, this.walkScene.joystickThumb,
         () => this.walkScene?.cancelApproach());
     }

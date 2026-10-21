@@ -35,8 +35,10 @@ import {
   getCurrentRouteBlockReason,
   getCurrentRouteContract,
   getCurrentRunMethodSnapshots,
+  getCurrentEncounterPreview,
   getCurrentRunLantern,
   getCurrentRunPursuit,
+  getCurrentTrapPreview,
   getDirectiveEvaluation,
   getDirectiveForDungeon,
   getCompanionRecruitmentStatus,
@@ -172,6 +174,7 @@ import {
   type ResultProtocolSettlementViewModel,
   type ResultRouteContractSettlementViewModel,
   type RewardPreviewViewModel,
+  type RoomEventViewModel,
   type RouteForecastKind,
   type RouteForecastViewModel,
   type ResultSettlementCard,
@@ -3047,8 +3050,8 @@ function buildRouteForecasts(state: GameState): RouteForecastViewModel[] {
             ? `可用${ITEMS[forecast.counterItemId].name}`
             : forecast.lanternOil !== undefined
               ? `灯油 +${forecast.lanternOil}`
-              : forecast.rewardBonusPercent !== undefined
-                ? forecast.rewardBonusPercent > 0 ? `奖励 +${forecast.rewardBonusPercent}%` : '无加成'
+              : forecast.rewardPoints !== undefined
+                ? `${forecast.rewardPoints} 点`
                 : undefined;
     return [{
       cellId: `map.cell:${node.position.x}:${node.position.y}`,
@@ -3075,6 +3078,91 @@ function buildRouteForecasts(state: GameState): RouteForecastViewModel[] {
           })
     }];
   });
+}
+
+type RoomEventRow = RoomEventViewModel['rows'][number];
+
+/**
+ * Rows and buttons for the room's own fight, trap or exit; every number comes from a core preview.
+ * Reward rooms keep the chest claim sheet, which already shows the real contents and relic follow-ups.
+ */
+function buildRoomEvent(
+  state: GameState,
+  actions: readonly ViewActionModel[],
+  lantern: LanternViewModel | undefined
+): RoomEventViewModel | undefined {
+  const run = state.run;
+  const dungeon = getCurrentDungeonDefinition(state);
+  const node = run && dungeon ? dungeon.nodes.find((candidate) => candidate.id === run.currentNodeId) : undefined;
+  if (!run || !node) return undefined;
+  const has = (actionId: string): boolean => actions.some((action) => action.actionId === actionId);
+  const encounter = getCurrentEncounterPreview(state);
+  if (encounter && has(`node.select:${node.id}`)) {
+    const share = encounter.playerHp > 0 ? encounter.expectedDamage / encounter.playerHp : Infinity;
+    const survives = encounter.expectedDamage < encounter.playerHp;
+    const rows: RoomEventRow[] = [
+      { id: 'enemy', label: '敌人', value: `生命 ${encounter.maxHp} · 攻击 ${encounter.attack} · 防御 ${encounter.defense}${encounter.pressurePercent > 0 ? `（压力 +${encounter.pressurePercent}%）` : ''}`, tone: encounter.pressurePercent > 0 ? 'bad' : 'neutral' },
+      ...(encounter.fusionPercent > 0
+        ? [{ id: 'fusion', label: '融合', value: `${getCurrentRunPursuit(state).definition?.name ?? '追兵'}融入首领，全属性 +${encounter.fusionPercent}%`, tone: 'bad' as const }]
+        : []),
+      { id: 'player', label: '你', value: `生命 ${encounter.playerHp}/${encounter.playerMaxHp} · 每击 ${encounter.playerHit}`, tone: 'neutral' },
+      { id: 'outcome', label: '结果', value: survives ? `预计受伤 ${encounter.expectedDamage}` : `预计受伤 ${encounter.expectedDamage}，撑不住`, tone: survives && share < 0.45 ? 'good' : 'bad' },
+      { id: 'reward', label: '奖励', value: `${encounter.rewardPoints} 轮回点`, tone: 'gold' }
+    ];
+    return {
+      kind: 'encounter',
+      kicker: encounter.rank === 'boss' ? '首领战' : encounter.rank === 'elite' ? '精英战' : '遭遇战',
+      title: node.title === encounter.name ? node.title : `${node.title} · ${encounter.name}`,
+      description: node.description,
+      monsterId: encounter.monsterId,
+      rows,
+      buttons: [{ actionId: `node.select:${node.id}`, label: '战斗', caption: '战后生命回满', primary: true }]
+    };
+  }
+  const trap = getCurrentTrapPreview(state);
+  if (trap && has(`node.trap:${node.id}:risk`)) {
+    const counterName = trap.counterItemId === undefined ? undefined : ITEMS[trap.counterItemId].name;
+    const counterAction = actions.find((action) => action.actionId === `node.trap:${node.id}:counter`);
+    const counterReady = counterAction?.enabled === true;
+    return {
+      kind: 'trap',
+      kicker: '陷阱',
+      title: node.title,
+      description: node.description,
+      rows: [
+        { id: 'damage', label: '伤害', value: trap.seenThrough ? `已看破，强行通过只受伤 ${trap.damage}` : `强行通过受伤 ${trap.damage}`, tone: trap.seenThrough ? 'good' : 'bad' },
+        { id: 'check', label: '检定', value: `察觉 ${trap.trapCheck} / 难度 ${trap.dc}${trap.pressurePercent > 0 ? `（压力 +${trap.pressurePercent}%）` : ''}`, tone: 'neutral' },
+        ...(counterName === undefined ? [] : [{ id: 'counter', label: '克制', value: `${counterName}（持有 ${trap.counterCount}）`, tone: counterReady ? 'good' as const : 'neutral' as const }])
+      ],
+      buttons: [
+        ...(counterAction === undefined || counterName === undefined ? [] : [{
+          actionId: counterAction.actionId,
+          label: `用${counterName}`,
+          caption: counterReady ? '无伤通过' : counterAction.disabledReason ?? '暂不可用',
+          primary: counterReady
+        }]),
+        { actionId: `node.trap:${node.id}:risk`, label: '强行通过', caption: `受伤 ${trap.damage}`, primary: !counterReady }
+      ]
+    };
+  }
+  if (node.type === 'exit' && has(`node.exit:${node.id}`)) {
+    const seal = getBossSealStatus(state, run.dungeonId);
+    const sealed = seal !== undefined && !seal.cleared;
+    return {
+      kind: 'exit',
+      kicker: '出口',
+      title: node.title,
+      description: node.description,
+      rows: [
+        sealed
+          ? { id: 'seal', label: '封印', value: `先击败首领「${seal.definition.bossTitle}」`, tone: 'bad' }
+          : { id: 'leave', label: '撤离', value: '结算本局收获，带走战利品袋', tone: 'good' },
+        ...(lantern ? [{ id: 'oil', label: '灯油', value: `剩余 ${lantern.oil}`, tone: 'neutral' as const }] : [])
+      ],
+      buttons: [{ actionId: `node.exit:${node.id}`, label: '撤离', caption: sealed ? '出口仍被封印' : '结算本局', primary: true }]
+    };
+  }
+  return undefined;
 }
 
 function buildChapterDecision(state: GameState, dungeonId: DungeonId, dungeonName: string): ChapterDecisionViewModel {
@@ -3240,6 +3328,7 @@ function buildExploreProjection(state: GameState): PhaseProjection {
     : undefined;
   const lantern = buildLantern(state);
   const routeForecasts = buildRouteForecasts(state);
+  const roomEvent = pendingProjection.pending ? undefined : buildRoomEvent(state, actions, lantern);
   const detail: ExploreDetailViewModel = {
     kind: 'explore',
     map,
@@ -3254,6 +3343,7 @@ function buildExploreProjection(state: GameState): PhaseProjection {
     chapterDecision,
     ...(lantern ? { lantern } : {}),
     ...(routeForecasts.length > 0 ? { routeForecasts } : {}),
+    ...(roomEvent ? { roomEvent } : {}),
     ...(pendingProjection.pending ? { pending: pendingProjection.pending } : {}),
     ...(rewardPreview ? { rewardPreview } : {}),
     ...(equipmentMemoryHunt ? { equipmentMemoryHunt } : {})

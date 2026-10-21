@@ -3978,7 +3978,8 @@ export type RouteForecast = {
   readonly risk?: RouteForecastRisk;
   /** Only while a stalking pursuer would fuse into this boss on entry. */
   readonly bossFusionPercent?: number;
-  readonly rewardBonusPercent?: number;
+  /** Points an uncleared reward room actually adds to the loot bag once the step is taken. */
+  readonly rewardPoints?: number;
   readonly lanternOil?: number;
   readonly counterItemId?: ItemId;
   readonly exitSealed?: boolean;
@@ -3996,10 +3997,18 @@ function getRouteForecastRisk(cost: number, hp: number): RouteForecastRisk {
   return share < 0.15 ? 1 : share < 0.45 ? 2 : 3;
 }
 
-function getEncounterForecastRisk(state: GameState, node: DungeonNode, fuseBoss: boolean): RouteForecastRisk {
+type EncounterEstimate = {
+  readonly monster: MonsterDefinition;
+  readonly rank: 'normal' | 'elite' | 'boss';
+  readonly playerHit: number;
+  readonly cost: number;
+};
+
+/** A blunt basic-attack exchange: the player swings first, heavy blows land on their telegraphed turns. */
+function estimateEncounter(state: GameState, node: DungeonNode, fuseBoss: boolean): EncounterEstimate | undefined {
   const run = state.run;
   const monsterDefinition = node.monsterId ? MONSTERS[node.monsterId] : undefined;
-  if (!run || !monsterDefinition) return 3;
+  if (!run || !monsterDefinition) return undefined;
   const bossDefinition = getBossDefinitionForNode(run.dungeonId, node.id);
   const pursuitState = getStrictRunPursuitState(run);
   const encounterState: GameState = fuseBoss && pursuitState
@@ -4022,7 +4031,98 @@ function getEncounterForecastRisk(state: GameState, node: DungeonNode, fuseBoss:
   for (let turn = 1; turn < Math.min(hits, 99); turn += 1) {
     cost += heavyBlows && turn % HEAVY_BLOW_TURN_INTERVAL === 2 ? Math.ceil(taken * HEAVY_BLOW_DAMAGE_RATE) : taken;
   }
-  return getRouteForecastRisk(cost, state.player.hp);
+  return { monster, rank: bossDefinition ? 'boss' : heavyBlows ? 'elite' : 'normal', playerHit: dealt, cost };
+}
+
+function getEncounterForecastRisk(state: GameState, node: DungeonNode, fuseBoss: boolean): RouteForecastRisk {
+  const estimate = estimateEncounter(state, node, fuseBoss);
+  return estimate ? getRouteForecastRisk(estimate.cost, state.player.hp) : 3;
+}
+
+/** What the current room's uncleared encounter will be fought at, before the player commits to it. */
+export type EncounterPreview = {
+  readonly nodeId: string;
+  readonly monsterId: MonsterId;
+  readonly name: string;
+  readonly rank: 'normal' | 'elite' | 'boss';
+  readonly maxHp: number;
+  readonly attack: number;
+  readonly defense: number;
+  readonly pressurePercent: number;
+  /** Set when a stalking pursuer will fuse into this boss as the fight starts. */
+  readonly fusionPercent: number;
+  readonly playerHp: number;
+  readonly playerMaxHp: number;
+  readonly playerHit: number;
+  /** The same blunt estimate the door forecast reads. */
+  readonly expectedDamage: number;
+  readonly rewardPoints: number;
+};
+
+export function getCurrentEncounterPreview(state: GameState): EncounterPreview | undefined {
+  const run = state.run;
+  const node = getCurrentNode(state);
+  if (state.phase !== 'explore' || !run || !node?.monsterId || node.type !== 'monster' || run.clearedNodeIds.includes(node.id)) {
+    return undefined;
+  }
+  const bossDefinition = getBossDefinitionForNode(run.dungeonId, node.id);
+  const fuseBoss = Boolean(bossDefinition) && getStrictRunPursuitState(run)?.status === 'stalking';
+  const estimate = estimateEncounter(state, node, fuseBoss);
+  if (!estimate) return undefined;
+  const combatRewardPoints = getAdjustedCombatRewardPoints(state, MONSTERS[node.monsterId].rewardPoints);
+  const scaledRewardPoints = getRunProtocolId(run) === 'deep'
+    ? scaleInfernoRewardPoints(combatRewardPoints, getRunInfernoTier(run))
+    : combatRewardPoints;
+  return {
+    nodeId: node.id,
+    monsterId: node.monsterId,
+    name: MONSTERS[node.monsterId].name,
+    rank: estimate.rank,
+    maxHp: estimate.monster.maxHp,
+    attack: estimate.monster.attack,
+    defense: estimate.monster.defense,
+    pressurePercent: getRunPressureStatus(run.pressureState)?.pressurePercent ?? 0,
+    fusionPercent: fuseBoss ? RUN_PURSUIT_BOSS_FUSION_PERCENT : 0,
+    playerHp: state.player.hp,
+    playerMaxHp: state.player.maxHp,
+    playerHit: estimate.playerHit,
+    expectedDamage: estimate.cost,
+    rewardPoints: scaledRewardPoints
+      + (bossDefinition?.bonusReward.rewardPoints ?? 0)
+      + (getExplorationClearRewardForNode(state, node.id).rewardPoints ?? 0)
+  };
+}
+
+/** What forcing or countering the current room's trap costs right now. */
+export type TrapPreview = {
+  readonly nodeId: string;
+  /** HP lost by forcing through; reduced when the trap is seen through. */
+  readonly damage: number;
+  readonly seenThrough: boolean;
+  readonly trapCheck: number;
+  readonly dc: number;
+  readonly pressurePercent: number;
+  readonly counterItemId?: ItemId;
+  readonly counterCount: number;
+};
+
+export function getCurrentTrapPreview(state: GameState): TrapPreview | undefined {
+  const run = state.run;
+  const node = getCurrentNode(state);
+  if (state.phase !== 'explore' || !run || !node?.trap || run.clearedNodeIds.includes(node.id)) return undefined;
+  const resolution = getTrapRiskResolution(state, node);
+  if (!resolution) return undefined;
+  const counterItemId = node.trap.counterItem;
+  return {
+    nodeId: node.id,
+    damage: getTrapRiskDamage(state, resolution, resolution.naturallyPassed).damage,
+    seenThrough: resolution.naturallyPassed,
+    trapCheck: resolution.utility.trapCheck,
+    dc: resolution.trap.dc,
+    pressurePercent: getRunPressureStatus(run.pressureState)?.pressurePercent ?? 0,
+    ...(counterItemId === undefined ? {} : { counterItemId }),
+    counterCount: counterItemId === undefined ? 0 : state.inventory[counterItemId] ?? 0
+  };
 }
 
 function getRunPursuitTopologyInput(state: GameState, dungeon: DungeonDefinition) {
@@ -4074,7 +4174,6 @@ export function getRouteForecasts(state: GameState): RouteForecast[] {
       const stepped = applyNodeMove(state, dungeon, node);
       const after = stepped.phase !== 'result' && stepped.run?.currentNodeId === node.id ? stepped : undefined;
       const afterPursuit = after?.run ? getStrictRunPursuitState(after.run) : undefined;
-      const pressure = getRunPressureStatus((after?.run ?? run).pressureState);
       const cleared = run.clearedNodeIds.includes(node.id);
       const bossDefinition = getBossDefinitionForNode(run.dungeonId, node.id);
       const kind: RouteForecastKind = node.type === 'monster'
@@ -4109,7 +4208,10 @@ export function getRouteForecasts(state: GameState): RouteForecast[] {
           forecast.risk = 3;
         }
       }
-      if (!cleared && node.type === 'reward' && pressure) forecast.rewardBonusPercent = pressure.rewardBonusPercent;
+      if (!cleared && node.type === 'reward' && after?.run) {
+        const claimed = collectReward(after);
+        forecast.rewardPoints = Math.max(0, (claimed.run?.lootBag.rewardPoints ?? 0) - (after.run.lootBag.rewardPoints ?? 0));
+      }
       if (!cleared && kind === 'supply' && lanternState) forecast.lanternOil = RUN_LANTERN_CATALOG[lanternState.dungeonId].supplyOil;
       if (node.type === 'exit') forecast.exitSealed = bossSeal ? !bossSeal.cleared : false;
       // Only the doorway the pursuer will come through, and only once it is close enough to be heard.
@@ -6987,6 +7089,23 @@ function getTrapRiskResolution(state: GameState, node: DungeonNode) {
   };
 }
 
+function getTrapRiskDamage(
+  state: GameState,
+  resolution: NonNullable<ReturnType<typeof getTrapRiskResolution>>,
+  passed: boolean
+): { damageBeforeRelic: number; damage: number } {
+  const ironBodyReduction = resolution.availableMethods.includes('iron_body') ? 0.8 : 1;
+  const damageBeforeRelic = Math.max(
+    4,
+    Math.floor((passed ? resolution.trap.damage * 0.45 : resolution.trap.damage) * ironBodyReduction)
+  );
+  const relicEffects = getCurrentRunRelicEffects(state);
+  return {
+    damageBeforeRelic,
+    damage: Math.max(0, Math.floor(damageBeforeRelic * relicEffects.trapDamageMultiplier))
+  };
+}
+
 function resolveTrapRisk(
   state: GameState,
   node: DungeonNode,
@@ -6995,13 +7114,7 @@ function resolveTrapRisk(
   prefix = ''
 ): GameState {
   if (!state.run) return state;
-  const ironBodyReduction = resolution.availableMethods.includes('iron_body') ? 0.8 : 1;
-  const damageBeforeRelic = Math.max(
-    4,
-    Math.floor((passed ? resolution.trap.damage * 0.45 : resolution.trap.damage) * ironBodyReduction)
-  );
-  const relicEffects = getCurrentRunRelicEffects(state);
-  const damage = Math.max(0, Math.floor(damageBeforeRelic * relicEffects.trapDamageMultiplier));
+  const { damageBeforeRelic, damage } = getTrapRiskDamage(state, resolution, passed);
   const statusPrefix = resolution.utility.statusLines.length > 0
     ? `${resolution.utility.statusLines.join(' ')} `
     : '';

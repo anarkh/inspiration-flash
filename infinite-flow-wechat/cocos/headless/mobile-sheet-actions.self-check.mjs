@@ -1497,11 +1497,12 @@ function touch(node) {
   node.emit(api.Node.EventType.TOUCH_END, event);
 }
 {
-  // Route prototype: stepping through a door opens the new room's own interaction sheet and never picks an action.
+  // Route prototype: stepping through a door opens the room's own sheet; only the sheet's buttons submit commands.
   const canvas = new api.Node('RouteArrivalCanvas');
   canvas.addComponent(api.UITransform).setContentSize({ width: 750, height: 1334 });
   const dispatched = [];
   const controller = new api.InfiniteFlowView(canvas, { activate(_physicalId, actionId) { dispatched.push(actionId); } });
+  const named = name => nodesIn(canvas).find(node => node.name === name);
   const show = state => {
     const model = api.buildGameViewModel(state, {});
     supplySceneVisualFixtures(controller, model);
@@ -1514,26 +1515,38 @@ function touch(node) {
   const arrive = (from, cleared, nodeId) => {
     show(doorway(from, cleared));
     controller.mobileSheet = undefined;
+    controller.roomEventOpen = false;
     const moved = api.reduceGameCommand(doorway(from, cleared), { type: 'run/move', nodeId });
     assert.equal(moved.status, 'committed', `${nodeId}: fixture move commits`);
     show(moved.state);
     return moved.state;
   };
   show(doorway('mist_herb_cache', []));
-  assert.equal(controller.mobileSheet, undefined, 'the first room render opens nothing by itself');
+  assert.ok(controller.mobileSheet === undefined && !controller.roomEventOpen, 'the first room render opens nothing by itself');
   const monsterRoom = arrive('mist_herb_cache', [], 'fog_patrol_pair');
-  assert.equal(controller.mobileSheet?.kind, 'interaction', 'stepping into a monster room opens its interaction sheet');
-  assert.ok(nodesIn(canvas).some(node => node.name === 'MobileSheetAction:node.select:fog_patrol_pair'), 'the sheet lists the room\'s own encounter action');
-  controller.mobileSheet = undefined;
+  assert.ok(controller.roomEventOpen && controller.mobileSheet === undefined, 'stepping into a monster room opens its prototype sheet');
+  assert.ok(named('WalkRoomEventButton:node.select:fog_patrol_pair'), 'the sheet offers the room\'s own fight');
+  assert.equal(named('WalkRoomEventRowLabel:outcome')?.getComponent(api.Label).string, '结果', 'the sheet shows the predicted outcome');
+  assert.equal(named('WalkJoystick')?.active, false, 'the open sheet suspends the joystick');
+  touch(named('WalkRoomEventButton:close'));
+  assert.ok(!controller.roomEventOpen && !named('WalkRoomEventSheet'), '收起 closes the sheet');
   show(monsterRoom);
-  assert.equal(controller.mobileSheet, undefined, 'a closed sheet stays closed while the player remains in the room');
+  assert.equal(controller.roomEventOpen, false, 'a closed sheet stays closed while the player remains in the room');
+  assert.equal(dispatched.length, 0, 'opening and closing the sheet submit nothing');
+  controller.roomEventOpen = true;
+  show(monsterRoom);
+  touch(named('WalkRoomEventButton:node.select:fog_patrol_pair'));
+  assert.deepEqual(dispatched, ['node.select:fog_patrol_pair'], 'one tap on 战斗 submits the existing encounter action once');
+  dispatched.length = 0;
   arrive('fog_patrol_pair', [], 'cracked_portal');
-  assert.equal(controller.mobileSheet, undefined, 'portal rooms stay passages');
+  assert.ok(controller.mobileSheet === undefined && !controller.roomEventOpen, 'portal rooms stay passages');
   arrive('fog_patrol_pair', ['mist_herb_cache'], 'mist_herb_cache');
-  assert.equal(controller.mobileSheet, undefined, 'cleared rooms stay quiet');
+  assert.ok(controller.mobileSheet === undefined && !controller.roomEventOpen, 'cleared rooms stay quiet');
   arrive('fog_patrol_pair', [], 'mist_herb_cache');
-  assert.equal(controller.mobileSheet?.kind, 'interaction', 'an unclaimed reward room opens its sheet');
-  assert.equal(dispatched.length, 0, 'arrival sheets never submit a command');
+  assert.ok(controller.mobileSheet?.kind === 'interaction' && !controller.roomEventOpen, 'an unclaimed reward room opens its chest claim sheet');
+  arrive('cracked_portal', [], 'blood_rune_trap');
+  assert.ok(controller.mobileSheet?.kind === 'interaction' && !controller.roomEventOpen, 'pending choices keep the existing interaction list');
+  assert.equal(dispatched.length, 0, 'arrival never submits a command');
   controller.destroy();
 }
 function viewLifecycle(initialState, { resolve = true, reject = false } = {}) {

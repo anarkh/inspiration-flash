@@ -660,10 +660,23 @@ export type RouteForecastViewModel = Readonly<{
   cleared: boolean;
   /** 1 to 3: share of current HP an uncleared fight or trap is likely to cost. */
   risk?: 1 | 2 | 3;
-  /** Short caption such as 奖励 +15%, 灯油 +4 or 首领封印中. */
+  /** Short caption such as 85 点, 灯油 +4 or 首领封印中. */
   hint?: string;
   threat?: Readonly<{ level: 'near' | 'far'; label: string }>;
   containment?: Readonly<{ ready: boolean; label: string }>;
+}>;
+
+/** The current room's own event, laid out like the route prototype's bottom sheet. */
+export type RoomEventViewModel = Readonly<{
+  kind: 'encounter' | 'trap' | 'exit';
+  kicker: string;
+  title: string;
+  description: string;
+  /** Present for encounters; drives the sheet's portrait. */
+  monsterId?: string;
+  rows: readonly Readonly<{ id: string; label: string; value: string; tone: 'neutral' | 'good' | 'bad' | 'gold' }>[];
+  /** Existing node actions shown as one-tap buttons, primary last. Legality stays on the action; the caption already reads right when it is shut. */
+  buttons: readonly Readonly<{ actionId: string; label: string; caption?: string; primary: boolean }>[];
 }>;
 
 export type ExploreDetailViewModel = Readonly<{
@@ -684,6 +697,8 @@ export type ExploreDetailViewModel = Readonly<{
   lantern?: LanternViewModel;
   /** One preview per room reachable from the current room. */
   routeForecasts?: readonly RouteForecastViewModel[];
+  /** Present while the current room has a single event of its own and nothing pending. */
+  roomEvent?: RoomEventViewModel;
   pending?: PendingChoiceViewModel;
   /** Only present for an available, uncleared reward-claim command. */
   rewardPreview?: RewardPreviewViewModel;

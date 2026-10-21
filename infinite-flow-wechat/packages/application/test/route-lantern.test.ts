@@ -1,5 +1,7 @@
 import {
   createInitialState,
+  getCurrentEncounterPreview,
+  getCurrentTrapPreview,
   getRouteForecasts,
   getRunPursuitContactDamage,
   type GameState,
@@ -94,7 +96,7 @@ const herb = standAt('mist_herb_cache', { ...lamp(6), ...stalking('sealed_cache'
 const forecasts = new Map(getRouteForecasts(herb).map(forecast => [forecast.nodeId, forecast]));
 assert(forecasts.size === 4, 'one forecast per doorway');
 const supply = forecasts.get('north_supply_niche');
-assert(supply?.kind === 'supply' && supply.lanternOil === 4 && supply.rewardBonusPercent === 15, 'supply doors promise oil and the stable bonus');
+assert(supply?.kind === 'supply' && supply.lanternOil === 4 && (supply.rewardPoints ?? 0) > 0, 'supply doors promise oil and their points');
 const boss = forecasts.get('bone_lane_monster');
 assert(boss?.kind === 'boss' && boss.bossFusionPercent === 15 && boss.risk !== undefined, 'a stalking pursuer would fuse into the boss');
 assert(forecasts.get('fog_patrol_pair')?.kind === 'monster' && forecasts.get('fog_patrol_pair')?.risk !== undefined, 'monster doors carry a risk read');
@@ -108,9 +110,11 @@ assert(getRouteForecasts(standAt('mist_herb_cache')).every(forecast => forecast.
   'a dormant pursuer is never heard');
 
 // Forecasts read the state the step itself leaves behind: with one drop left, every door burns the lamp.
-const lastDrop = getRouteForecasts(standAt('fog_patrol_pair', lamp(1)));
-assert(lastDrop.find(forecast => forecast.nodeId === 'mist_herb_cache')?.rewardBonusPercent === 0,
-  'the step that empties the lamp forecasts the breach bonus, not the stable one');
+const lastDrop = getRouteForecasts(standAt('fog_patrol_pair', lamp(1))).find(forecast => forecast.nodeId === 'mist_herb_cache');
+const steppedIn = apply(standAt('fog_patrol_pair', lamp(1)), { type: 'run/move', nodeId: 'mist_herb_cache' });
+const collected = apply(steppedIn, { type: 'node/collect-reward' });
+assert(lastDrop?.rewardPoints === collected.run!.lootBag.rewardPoints! - (steppedIn.run!.lootBag.rewardPoints ?? 0),
+  'a reward door forecasts exactly what claiming it after this step adds');
 const wakingBoss = getRouteForecasts(standAt('mist_herb_cache', lamp(1))).find(forecast => forecast.nodeId === 'bone_lane_monster');
 assert(wakingBoss?.bossFusionPercent === 15, 'the pursuer woken by this step is forecast to fuse into the boss');
 const enteredBoss = apply(apply(standAt('mist_herb_cache', lamp(1)), { type: 'run/move', nodeId: 'bone_lane_monster' }),
@@ -118,6 +122,16 @@ const enteredBoss = apply(apply(standAt('mist_herb_cache', lamp(1)), { type: 'ru
 assert(enteredBoss.run?.pursuitState?.status === 'fused', 'the forecast fusion is what the boss fight actually gets');
 const litBoss = getRouteForecasts(standAt('mist_herb_cache', lamp(6))).find(forecast => forecast.nodeId === 'bone_lane_monster');
 assert(litBoss?.bossFusionPercent === undefined, 'a dormant pursuer that stays asleep is not forecast to fuse');
+
+// The room's own previews: the fight preview reads the same estimate as the door, the trap preview what forcing costs.
+const atPatrol = standAt('fog_patrol_pair', { clearedNodeIds: [] });
+const patrol = getCurrentEncounterPreview(atPatrol);
+assert(patrol?.monsterId === 'fog_lesser_demon' && patrol.playerHit > 0 && patrol.rewardPoints >= 160 && patrol.fusionPercent === 0,
+  'an uncleared monster room previews its fight');
+assert(getCurrentEncounterPreview(standAt('fog_patrol_pair')) === undefined, 'a cleared room previews no fight');
+const trapRoom = getCurrentTrapPreview(standAt('blood_rune_trap', { clearedNodeIds: [] }));
+const forced = apply(standAt('blood_rune_trap', { clearedNodeIds: [] }), { type: 'node/handle-trap', choice: 'risk' });
+assert(trapRoom !== undefined && forced.player.hp === entered.player.hp - trapRoom.damage, 'the trap preview is what forcing through costs');
 
 // Runs without a lamp keep the source rules.
 const legacy = standAt('fog_lesser_demon', { lanternState: undefined });

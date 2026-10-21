@@ -1,13 +1,13 @@
-import { Color, Graphics, Input, KeyCode, Label, Mask, Node, Size, Sprite, UITransform, Vec2, Vec3, input } from 'cc';
+import { BlockInputEvents, Color, Graphics, Input, KeyCode, Label, Mask, Node, Size, Sprite, UITransform, Vec2, Vec3, input } from 'cc';
 import type { EventKeyboard, SpriteFrame } from 'cc';
-import type { ExploreDetailViewModel, GameViewModel, RouteForecastViewModel, StatusMetric, ViewActionModel } from '@infinite-flow/presentation';
+import type { ExploreDetailViewModel, GameViewModel, RoomEventViewModel, RouteForecastViewModel, StatusMetric, ViewActionModel } from '@infinite-flow/presentation';
 import { formatInfiniteFlowPlayerChrome, isInfiniteFlowPlayerActivityFailure } from './InfiniteFlowView';
 import type { InfiniteFlowRuntimeChrome } from './InfiniteFlowView';
 import { findWalkPath, nearestWalkTarget, stepWalkPosition } from './walk-world';
 import type { WalkWorldSpec, WorldPoint, WorldProp, WorldRect, WorldTarget } from './walk-world';
 import { HUB_WORLD_THEME } from './dungeon-world-theme';
 import type { WorldTint } from './dungeon-world-theme';
-import { getInfiniteFlowNpcWorldVisualKey, getInfiniteFlowPursuerVisualKey, getInfiniteFlowRunRelicVisualKey, getInfiniteFlowSceneVisualKeys, INFINITE_FLOW_DUNGEON_PROP_VISUAL_KEYS, INFINITE_FLOW_DUNGEON_TRANSITION_GATE_VISUAL_KEY, INFINITE_FLOW_HUB_DUNGEON_PORTAL_VISUAL_KEY } from './scene-visuals';
+import { getInfiniteFlowMonsterWorldVisualKey, getInfiniteFlowNpcWorldVisualKey, getInfiniteFlowPursuerVisualKey, getInfiniteFlowRunRelicVisualKey, getInfiniteFlowSceneVisualKeys, INFINITE_FLOW_DUNGEON_PROP_VISUAL_KEYS, INFINITE_FLOW_DUNGEON_TRANSITION_GATE_VISUAL_KEY, INFINITE_FLOW_HUB_DUNGEON_PORTAL_VISUAL_KEY } from './scene-visuals';
 import { DARK_UI, paintDarkFrame, paintDarkIcon } from './dark-ui';
 import { getWalkHudLayout } from './hud-layout';
 import type { HudPopoverKind } from './hud-layout';
@@ -43,6 +43,8 @@ export type WalkSceneOptions = Readonly<{
   setPage: (page: number) => void;
   chrome: InfiniteFlowRuntimeChrome;
   feedback?: Readonly<{ text: string; damage?: number }>;
+  /** Open while the room's own event sheet is shown; walking stays suspended until it closes. */
+  roomEventSheet?: Readonly<{ close: () => void }>;
 }>;
 
 export type WalkSceneHandle = Readonly<{
@@ -1068,6 +1070,103 @@ function header(scene: Node, model: GameViewModel, options: ReadyWalkSceneOption
   }
 }
 
+const ROOM_EVENT_TONES: Readonly<Record<RoomEventViewModel['rows'][number]['tone'], Color>> = {
+  neutral: DARK_UI.bone,
+  good: new Color(156, 214, 150, 255),
+  bad: new Color(236, 128, 106, 255),
+  gold: GOLD,
+};
+
+function roomEventArtKey(event: RoomEventViewModel): string {
+  if (event.kind === 'encounter' && event.monsterId !== undefined) return getInfiniteFlowMonsterWorldVisualKey(event.monsterId);
+  const keys = INFINITE_FLOW_DUNGEON_PROP_VISUAL_KEYS;
+  return event.kind === 'trap' ? keys.propTrap : keys.propExit;
+}
+
+/** The route prototype's bottom sheet: portrait, kicker, title, story, numbers, then one-tap buttons. */
+function roomEventSheet(scene: Node, model: GameViewModel, event: RoomEventViewModel, options: ReadyWalkSceneOptions, bottom: number, close: () => void): number {
+  const vw = options.viewportWidth ?? 320;
+  const px = 750 / vw;
+  const compact = vw <= 350;
+  const width = 750 - options.safeInsets.left - options.safeInsets.right - 20 * px;
+  const pad = 14 * px;
+  const headerHeight = 56 * px;
+  const descSize = (compact ? 11.5 : 12.5) * px;
+  const descLines = Math.max(1, Math.ceil(event.description.length * descSize / (width - pad * 2)));
+  const descHeight = descLines * descSize * 1.45;
+  const rowHeight = (compact ? 26 : 29) * px;
+  const buttonHeight = (compact ? 46 : 52) * px;
+  const height = pad + headerHeight + 8 * px + descHeight + 8 * px + event.rows.length * rowHeight + 12 * px + buttonHeight + pad;
+  const sheet = makeNode(scene, 'WalkRoomEventSheet', (options.safeInsets.left - options.safeInsets.right) / 2, bottom + 10 * px + height / 2, width, height);
+  sheet.addComponent(BlockInputEvents);
+  paintDarkFrame(sheet.addComponent(Graphics), width, height, { fill: new Color(28, 23, 17, 246), edge: DARK_UI.edgeLight, accent: DARK_UI.gold, cut: 10 * px });
+  let cursor = height / 2 - pad;
+  const left = -width / 2 + pad;
+  // Header: framed portrait, then kicker and title beside it.
+  const art = 52 * px;
+  const frame = makeNode(sheet, 'WalkRoomEventArtFrame', left + art / 2, cursor - art / 2, art, art).addComponent(Graphics);
+  frame.lineWidth = px;
+  rect(frame, -art / 2, -art / 2, art, art, new Color(14, 12, 10, 255), DARK_UI.edgeLight);
+  const visual = options.visual(roomEventArtKey(event));
+  const fit = Math.min((art - 4 * px) / visual.width, (art - 4 * px) / visual.height);
+  const portrait = makeNode(frame.node, 'WalkRoomEventArt', 0, 0, visual.width * fit, visual.height * fit).addComponent(Sprite);
+  portrait.sizeMode = Sprite.SizeMode.CUSTOM;
+  portrait.spriteFrame = visual.frame;
+  portrait.color = new Color(255, 255, 255, 255);
+  options.trackSprite(portrait);
+  const textLeft = left + art + 12 * px;
+  const textWidth = width / 2 - pad - textLeft;
+  text(sheet, 'WalkRoomEventKicker', event.kicker, textLeft + textWidth / 2, cursor - 12 * px, textWidth, 16 * px, 11 * px, DARK_UI.gold, false);
+  const title = text(sheet, 'WalkRoomEventTitle', event.title, textLeft + textWidth / 2, cursor - 36 * px, textWidth, 26 * px, (compact ? 17 : 19) * px, DARK_UI.bone, false);
+  title.isBold = true;
+  cursor -= headerHeight + 8 * px;
+  const desc = text(sheet, 'WalkRoomEventDescription', event.description, 0, cursor - descHeight / 2, width - pad * 2, descHeight, descSize, DARK_UI.muted, false);
+  desc.verticalAlign = Label.VerticalAlign.TOP;
+  cursor -= descHeight + 8 * px;
+  // Number rows: label on the left, the value right-aligned in its tone.
+  const rules = makeNode(sheet, 'WalkRoomEventRules', 0, 0, width, height).addComponent(Graphics);
+  rules.lineWidth = Math.max(1, 0.6 * px);
+  rules.strokeColor = new Color(DARK_UI.edge.r, DARK_UI.edge.g, DARK_UI.edge.b, 150);
+  event.rows.forEach((row, index) => {
+    const y = cursor - rowHeight / 2;
+    rules.moveTo(left, cursor); rules.lineTo(width / 2 - pad, cursor); rules.stroke();
+    text(sheet, `WalkRoomEventRowLabel:${row.id}`, row.label, left + 30 * px, y, 60 * px, rowHeight, 12.5 * px, DARK_UI.muted, false);
+    const value = text(sheet, `WalkRoomEventRowValue:${row.id}`, row.value, (left + 64 * px + width / 2 - pad) / 2, y, width / 2 - pad - left - 64 * px, rowHeight, 12.5 * px, ROOM_EVENT_TONES[row.tone], false);
+    value.horizontalAlign = Label.HorizontalAlign.RIGHT;
+    if (index === event.rows.length - 1) { rules.moveTo(left, cursor - rowHeight); rules.lineTo(width / 2 - pad, cursor - rowHeight); rules.stroke(); }
+    cursor -= rowHeight;
+  });
+  cursor -= 12 * px;
+  // Buttons: 收起 first, then the room's existing actions with the primary one last.
+  const actions = model.sections[2].actions;
+  const buttons: readonly Readonly<{ id: string; label: string; caption?: string; primary: boolean; action?: ViewActionModel }>[] = [
+    { id: 'close', label: '收起', caption: '先看看门', primary: false },
+    ...event.buttons.map(button => ({ ...button, id: button.actionId, action: actions.find(action => action.actionId === button.actionId) })),
+  ];
+  const gap = 8 * px;
+  const buttonWidth = (width - pad * 2 - gap * (buttons.length - 1)) / buttons.length;
+  buttons.forEach((button, index) => {
+    const x = left + buttonWidth / 2 + index * (buttonWidth + gap);
+    const node = makeNode(sheet, `WalkRoomEventButton:${button.id}`, x, cursor - buttonHeight / 2, buttonWidth, buttonHeight);
+    const enabled = button.action === undefined ? button.id === 'close' : button.action.enabled;
+    const g = node.addComponent(Graphics);
+    paintDarkFrame(g, buttonWidth, buttonHeight, button.primary && enabled
+      ? { fill: new Color(196, 160, 92, 255), edge: new Color(236, 206, 140, 255), accent: new Color(255, 236, 190, 255), cut: 6 * px }
+      : { fill: enabled ? DARK_UI.raised : DARK_UI.quiet, edge: enabled ? DARK_UI.edgeLight : DARK_UI.edge, accent: enabled ? DARK_UI.gold : DARK_UI.edge, cut: 6 * px });
+    const ink = button.primary && enabled ? new Color(38, 24, 8, 255) : enabled ? DARK_UI.bone : DARK_UI.muted;
+    const caption = button.caption;
+    const label = text(node, `WalkRoomEventButtonLabel:${button.id}`, button.label, 0, caption === undefined ? 0 : 8 * px, buttonWidth - 8 * px, 22 * px, (compact ? 14 : 15) * px, ink);
+    label.isBold = true;
+    if (caption !== undefined) {
+      text(node, `WalkRoomEventButtonCaption:${button.id}`, caption, 0, -12 * px, buttonWidth - 8 * px, 16 * px, 10 * px,
+        button.primary && enabled ? new Color(70, 46, 16, 255) : DARK_UI.muted);
+    }
+    if (button.id === 'close') options.bindLocal(node, close);
+    else if (button.action !== undefined) options.bindAction(node, button.action);
+  });
+  return bottom + 10 * px + height;
+}
+
 /** Approved combat v2 prototype geometry, in scene coordinates. */
 export type CombatDuelLayout = Readonly<{
   pixel: number;
@@ -1510,6 +1609,14 @@ export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, sc
     options.bindLocal(codex, () => options.openPanel === undefined ? options.openCodex() : options.openPanel('objectives'));
   }
   header(scene, model, options, top);
+  const roomEvent = detail.kind === 'explore' && options.roomEventSheet !== undefined ? detail.roomEvent : undefined;
+  let roomEventTop: number | undefined;
+  if (roomEvent !== undefined) {
+    // The sheet owns the controls band while it is open; walking resumes once it closes.
+    joystick.active = false;
+    interact.active = false;
+    roomEventTop = roomEventSheet(scene, model, roomEvent, options, bottom, options.roomEventSheet!.close);
+  }
   if (duel !== undefined) {
     // Combat suspends walking: the stage, not the joystick, positions both fighters.
     joystick.active = false;
@@ -1597,7 +1704,9 @@ export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, sc
     left: controlsLeft + ((roomFit.artwork.compact ? 17 : 18) + joystickSize + 6) * hudPixel,
     right: controlsRight - 17 * hudPixel - interactWidth - 6 * hudPixel,
   } : undefined;
-  const toast = feedbackText === undefined ? undefined : toastBand !== undefined
+  const toast = feedbackText === undefined ? undefined : roomEventTop !== undefined
+    ? inkDotTextShadow(text(scene, 'WalkFeedback', feedbackText, 0, roomEventTop + 16 * hudPixel, 600, 24 * hudPixel, 10 * hudPixel, failed ? DARK_UI.red : DARK_UI.gold))
+    : toastBand !== undefined
     ? inkDotTextShadow(text(scene, 'WalkFeedback', feedbackText, (toastBand.left + toastBand.right) / 2, bottom + 60 * hudPixel,
       toastBand.right - toastBand.left, 34 * hudPixel, 10 * hudPixel, failed ? DARK_UI.red : DARK_UI.gold))
     : text(scene, 'WalkFeedback', feedbackText, -49, top - 124 * hudPixel, 554, 24 * hudPixel, 10 * hudPixel, failed ? DARK_UI.red : DARK_UI.gold);

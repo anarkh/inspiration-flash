@@ -12548,7 +12548,12 @@ let dungeonMultiNeighborCases = 0;
           assert.deepEqual({ ...marker.position }, { ...actor.position }, `${label}: proximity marker names the same rendered target foot`);
           assert.deepEqual(projectedNodePoint(marker), projectedNodePoint(actor), `${label}: proximity marker has no screen drift`);
           emitTouch(findNode(root(), 'WalkInteract'), 16000 + dungeonHtmlInteractionCases);
-          assert.equal(calls.length, 1, `${label}: deliberate proximity interaction dispatches exactly one original action`);
+          // Route prototype: interacting with the room's encounter opens its sheet; only 战斗 submits.
+          assert.equal(calls.length, 0, `${label}: deliberate proximity interaction opens the encounter sheet without a command`);
+          const fight = findNode(root(), `WalkRoomEventButton:${currentTarget.action.actionId}`);
+          assert.ok(fight, `${label}: the encounter sheet offers the target's own action`);
+          emitTouch(fight, 16500 + dungeonHtmlInteractionCases);
+          assert.equal(calls.length, 1, `${label}: one tap on 战斗 dispatches exactly one original action`);
           assert.equal(calls[0].actionId, currentTarget.action.actionId, `${label}: the target retains the authoritative action ID`);
           assert.equal(calls[0].event, currentTarget.action.event, `${label}: the target retains the authoritative event object`);
           view.walkScene.cancelCombatAction();
