@@ -2009,7 +2009,7 @@ function verifyCombatChapterContext(): void {
     );
     const m = context.law.modifiers;
     for (const value of [
-      m.enemyAllStatsPercent, m.enemyDefensePercent, m.enemyArtPowerPercent,
+      m.enemyAllStatsPercent, m.enemyDefensePercent, m.enemyAttackPercent,
       m.outgoingForcePercent, m.outgoingArtPercent, m.healingPercent, m.guardEffectPercent
     ]) {
       assert(typeof value === 'number' && Number.isFinite(value), `${chapter.dungeonId} law modifier is a finite number`);

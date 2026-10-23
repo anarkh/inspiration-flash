@@ -1,5 +1,6 @@
 import {
   createInitialState,
+  getCombatEncounterProfile,
   getCurrentDungeonLaw,
   getDerivedStats,
   getHealingPillBaseHealing,
@@ -117,6 +118,9 @@ const polluted: GameState = {
   }
 };
 assert(getCurrentDungeonLaw(polluted)?.modifiers.healingPercent === -20, 'pollution fixture modifies healing');
+const calm: GameState = { ...polluted, run: { ...polluted.run!, lawState: { ...polluted.run!.lawState!, law: { kind: 'rust_hospital', pollution: 0 } } } };
+assert(getCombatEncounterProfile(polluted)!.monster.attack === Math.ceil(getCombatEncounterProfile(calm)!.monster.attack * 1.2),
+  'high pollution really raises the enemy attack instead of an art power enemies never use');
 const reducedHeal = observe(polluted, 'use_healing_pill');
 assert(reducedHeal.frames[0].playerHp - polluted.player.hp === Math.ceil(getHealingPillBaseHealing(polluted) * 0.8),
   'medicine snapshot includes actual law-modified healing');

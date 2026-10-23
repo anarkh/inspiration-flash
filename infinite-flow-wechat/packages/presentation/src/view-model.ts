@@ -3271,7 +3271,7 @@ function buildCombatChapterContext(state: GameState): CombatChapterContextViewMo
         modifiers: {
           enemyAllStatsPercent: law.display.modifiers.encounter.allStatsPercent,
           enemyDefensePercent: law.display.modifiers.encounter.defensePercent,
-          enemyArtPowerPercent: law.display.modifiers.encounter.artPowerPercent,
+          enemyAttackPercent: law.display.modifiers.encounter.artPowerPercent,
           outgoingForcePercent: law.display.modifiers.outgoingDamage.forcePercent,
           outgoingArtPercent: law.display.modifiers.outgoingDamage.artPercent,
           healingPercent: law.display.modifiers.healingPercent,
@@ -3286,7 +3286,7 @@ function buildCombatChapterContext(state: GameState): CombatChapterContextViewMo
         modifiers: {
           enemyAllStatsPercent: 0,
           enemyDefensePercent: 0,
-          enemyArtPowerPercent: 0,
+          enemyAttackPercent: 0,
           outgoingForcePercent: 0,
           outgoingArtPercent: 0,
           healingPercent: 0,

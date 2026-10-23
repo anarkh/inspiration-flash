@@ -4423,12 +4423,13 @@ function getProtocolMonster(
     ? {
         ...encounterMonster,
         maxHp: scaleByPercent(encounterMonster.maxHp, allStatsPercent, 1),
-        attack: scaleByPercent(encounterMonster.attack, allStatsPercent, 1),
-        artPower: scaleByPercent(
-          scaleByPercent(encounterMonster.artPower, allStatsPercent, 0),
+        // The law's art pressure lands on attack, the only enemy stat that deals damage.
+        attack: scaleByPercent(
+          scaleByPercent(encounterMonster.attack, allStatsPercent, 1),
           lawModifiers.encounter.artPowerPercent,
-          0
+          1
         ),
+        artPower: scaleByPercent(encounterMonster.artPower, allStatsPercent, 0),
         defense: scaleByPercent(
           scaleByPercent(encounterMonster.defense, allStatsPercent, 0),
           lawModifiers.encounter.defensePercent,

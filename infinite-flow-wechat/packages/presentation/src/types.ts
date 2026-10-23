@@ -779,7 +779,7 @@ export type CombatChapterLawContextViewModel = Readonly<{
   modifiers: Readonly<{
     enemyAllStatsPercent: number;
     enemyDefensePercent: number;
-    enemyArtPowerPercent: number;
+    enemyAttackPercent: number;
     outgoingForcePercent: number;
     outgoingArtPercent: number;
     healingPercent: number;
