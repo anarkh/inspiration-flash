@@ -3142,6 +3142,7 @@ assert.doesNotMatch(metroLawText, /warning/);
 assert.match(metroLawText, /计量 1\/2/);
 assert.match(metroLawText, /目标 未达成/);
 assert.match(metroLawText, /全属性-10%/);
+assert.match(metroLawText, /攻击-10%/, 'the law art pressure is shown on the enemy stat it really changes');
 assert.match(metroLawText, /治疗-20%/);
 assert.match(metroLawText, /守御-10%/);
 

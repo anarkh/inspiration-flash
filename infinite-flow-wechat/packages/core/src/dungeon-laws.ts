@@ -466,6 +466,8 @@ export type DungeonLawModifiers = {
   encounter: {
     allStatsPercent: number;
     defensePercent: number;
+    // Raises enemy attack: enemies deal no art damage, so their art power would make this cost free.
+    // The name stays because recorded law snapshots and acceptance fixtures use it.
     artPowerPercent: number;
   };
   trap: {

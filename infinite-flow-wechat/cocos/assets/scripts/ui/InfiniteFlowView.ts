@@ -1808,7 +1808,7 @@ export function formatInfiniteFlowChapterLaw(
     `严重度 ${CHAPTER_LAW_SEVERITY_LABELS[law.severity]} · 目标 ${law.targetReached ? '已达成' : '未达成'}${
       law.meter === undefined ? '' : ` · 计量 ${law.meter.value}/${law.meter.max}`
     }`,
-    `遭遇 全属性${signedPercent(modifiers.encounter.allStatsPercent)}% 防御${signedPercent(modifiers.encounter.defensePercent)}%`,
+    `遭遇 全属性${signedPercent(modifiers.encounter.allStatsPercent)}% 攻击${signedPercent(modifiers.encounter.artPowerPercent)}% 防御${signedPercent(modifiers.encounter.defensePercent)}%`,
     `陷阱 伤害${signedPercent(modifiers.trap.damagePercent)}% 检定${signedPercent(modifiers.trap.dcPercent)}% · 治疗${signedPercent(modifiers.healingPercent)}%`,
     `出伤 武力${signedPercent(modifiers.outgoingDamage.forcePercent)}% 术法${signedPercent(modifiers.outgoingDamage.artPercent)}% · 守御${signedPercent(modifiers.guardEffectPercent)}%`,
   ];
