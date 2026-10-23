@@ -45,10 +45,11 @@ leave full focus unusable: `getWeaponSkillStatus` falls back to the generic `cha
 skill. Signature skills are unchanged. This is an intentional rule change from the source
 web project.
 
-Runs entered through the stage-2 flow on `demon_tower_1` (standard or imprint protocol) carry
+Runs entered through the stage-2 flow on any chapter (standard or imprint protocol) carry
 a `lanternState` from the new `src/run-lantern.ts`: 12 drops of lamp oil, one burnt per
-`moveToNode`, four more when one of its four supply rooms is cleared, and two more lost on a
-pursuer contact. A lamp never holds more than its start plus every supply refill (28 drops);
+`moveToNode` into a room the lamp has not lit yet (lit and cleared rooms are free), four more
+when one of the chapter's four supply rooms is cleared, and two more lost on a pursuer contact.
+Such runs meet a dormant pursuer even on a first clear. A lamp never holds more than its start plus every supply refill (28 drops);
 a snapshot above that is malformed. The burn that empties the lamp sets `breachForced` on the run's pressure
 state, which `getRunPressureStatus` reads as breach whatever the cleared count, and wakes a
 dormant pursuer at once. A pursuer now also makes contact when the player walks into its
@@ -57,7 +58,7 @@ a three-step risk read from the basic-attack exchange or the trap roll, reward b
 boss fusion, the pursuer's approach and the containment room) without changing state. It
 reads bonus, fusion and risk from the state that very step would leave, through the same
 move effects `moveToNode` applies (burnt drop, forced breach, woken or colliding pursuer). Runs without a
-lamp, other chapters and deep runs keep the source movement rules. These are intentional
+lamp (older saves and deep runs) keep the source movement rules. These are intentional
 rule changes from the source web project.
 
 The two `Array.prototype.at()` reads in copied `src/dungeon-laws.ts` use equivalent

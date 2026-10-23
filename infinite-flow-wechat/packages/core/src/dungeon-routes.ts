@@ -2081,7 +2081,7 @@ export function getRouteSectorDisplay(
     sectors.set(sector.id, current);
   }
 
-  return [...sectors].map(([id, sector]) => {
+  return Array.from(sectors).map(([id, sector]) => {
     const closedGateCount = sector.gateCount - sector.openGateCount;
     return {
       id,

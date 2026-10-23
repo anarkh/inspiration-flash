@@ -450,7 +450,7 @@ export class ManifestCocosAssetPort implements AssetPort {
     return {
       group,
       revision: this.manifestRevision,
-      loadedKeys: [...alreadyLoaded].sort(),
+      loadedKeys: Array.from(alreadyLoaded).sort(),
       failures: failures.sort((left, right) =>
         left.key < right.key ? -1 : left.key > right.key ? 1 : 0,
       ),

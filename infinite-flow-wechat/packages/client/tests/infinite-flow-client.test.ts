@@ -247,6 +247,62 @@ describe('InfiniteFlowClient', () => {
     expect(recovered.getRevisionStatus().durableRevision).toBe(1);
   });
 
+  it('persists a pursuer fight through the session and recovers it', async () => {
+    const storage = new InMemoryStoragePort({ durability: 'requires-flush' });
+    const client = await createInfiniteFlowClient({
+      storage,
+      hashPort: new PortableSha256HashPort(),
+      seedPort: new SequenceSeedPort([101, 102, 103]),
+    });
+    const send = async (command: Parameters<typeof client.dispatch>[0]) => {
+      const result = await client.dispatch(command);
+      expect(result.status, JSON.stringify(command)).toBe('committed');
+    };
+    const fight = async () => {
+      for (let turn = 0; client.getState().phase === 'combat' && turn < 40; turn += 1) {
+        await send({ type: 'combat/act', action: 'attack' });
+      }
+    };
+    await send({ type: 'hub/buy-item', itemId: 'healing_pill' });
+    await send({ type: 'hub/buy-item', itemId: 'healing_pill' });
+    await client.enterRun({ dungeonId: 'demon_tower_1', protocolId: 'standard' });
+    await send({ type: 'run/select-node', nodeId: 'fog_lesser_demon' });
+    await fight();
+    await send({ type: 'run/move', nodeId: 'broken_sigil_reward' });
+    await send({ type: 'node/collect-reward' });
+    await send({ type: 'run/move', nodeId: 'fog_lesser_demon' });
+    await send({ type: 'run/move', nodeId: 'blood_rune_trap' });
+    await send({ type: 'node/handle-trap', choice: 'risk' });
+    expect(client.getState().run?.pursuitState?.status).toBe('stalking');
+    await send({ type: 'run/move', nodeId: 'fog_lesser_demon' });
+    // The pursuer steps toward the player and catches them on the way back: the fight is persisted like any other.
+    await send({ type: 'run/move', nodeId: 'blood_rune_trap' });
+    expect(client.getState().phase).toBe('combat');
+    expect(client.getState().combat?.pursuer).toBe(true);
+    expect(client.getState().combat?.nodeId).toBe('tower_butcher_patrol');
+    await client.retryPendingPersistence();
+    client.dispose();
+    storage.crash();
+
+    const recovered = await createInfiniteFlowClient({
+      storage,
+      hashPort: new PortableSha256HashPort(),
+      seedPort: new SequenceSeedPort([]),
+    });
+    expect(recovered.getState().combat?.pursuer).toBe(true);
+    // A caught, wounded hero needs the pills: each restores half of the maximum HP.
+    for (let turn = 0; recovered.getState().phase === 'combat' && turn < 40; turn += 1) {
+      const { hp, maxHp } = recovered.getState().player;
+      const action = hp < maxHp * 0.45 && (recovered.getState().inventory.healing_pill ?? 0) > 0 ? 'use_healing_pill' : 'attack';
+      expect((await recovered.dispatch({ type: 'combat/act', action })).status).toBe('committed');
+    }
+    expect(recovered.getState().phase).toBe('explore');
+    // A beaten pursuer is gone for the rest of the run, and that state persists like any other.
+    expect(recovered.getState().run?.pursuitState).toMatchObject({ status: 'repelled', repelledReason: 'defeated', nodeId: null });
+    expect(recovered.getState().run?.clearedNodeIds).not.toContain('tower_butcher_patrol');
+    recovered.dispose();
+  });
+
   it('wires lifecycle events and removes every listener on dispose', async () => {
     const lifecycle = new FakeLifecyclePort();
     const diagnostics: LifecycleDiagnostic[] = [];

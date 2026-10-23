@@ -122,7 +122,7 @@ import {
   getExplorationClearReward,
   usesCurrentExplorationRewardRules
 } from './exploration-rewards';
-import { evaluateTask, getMainlineRequirementText, getTaskById, getUnlockedDungeonIdsFromMainline } from './task-system';
+import { evaluateTask, evaluateVisibleTasks, getMainlineRequirementText, getTaskById, getUnlockedDungeonIdsFromMainline } from './task-system';
 import { evaluateEventOptions, getDungeonEvents, resolveDungeonEventChoice } from './dungeon-events';
 import type { DungeonEvent, DungeonEventContext, DungeonEventRequirement, EvaluatedDungeonEventOption } from './dungeon-events';
 import {
@@ -276,6 +276,7 @@ import {
   calculateRunPressureBonus,
   createRunPressureState,
   forceRunPressureBreach,
+  liftRunPressureBreach,
   getRunPressureStatus,
   isRunPressureState,
   scaleMonsterForRunPressure,
@@ -353,9 +354,9 @@ import {
   advanceRunPursuit,
   carryRunPursuitThroughForcedPortal,
   createRunPursuitState,
+  defeatRunPursuit,
   fuseRunPursuitAtBoss,
   getRunPursuitBossFusionPercent,
-  getRunPursuitContactDamage,
   getRunPursuitDefinition,
   getRunPursuitDisplay,
   getRunPursuitPath,
@@ -377,7 +378,9 @@ import {
   burnRunLanternOil,
   createRunLanternState,
   getRunLanternDefinition,
+  isRunLanternNodeLit,
   isRunLanternSupplyNode,
+  lightRunLanternNodes,
   normalizeRunLanternState,
   refillRunLanternAtNode,
   RUN_LANTERN_CATALOG
@@ -1104,6 +1107,8 @@ export type CombatState = {
   effects?: CombatEffectState;
   equipmentMemoryState?: EquipmentMemoryCombatState;
   combatReplayState?: CombatReplayCombatState;
+  /** A pursuer that caught the player, fought as its lair room's monster; beating it clears no room. */
+  pursuer?: boolean;
   log: string[];
 };
 
@@ -1369,7 +1374,7 @@ export const ITEMS: Record<ItemId, ItemDefinition> = {
     id: 'healing_pill',
     name: '止血丹',
     kind: 'combat',
-    description: '战斗中回复 36 点生命。',
+    description: '战斗中回复最大生命一半的生命。',
     cost: { rewardPoints: 120 }
   },
   thunder_talisman: {
@@ -1995,6 +2000,11 @@ function getCombatMechanicsContext(state: GameState) {
   };
 }
 
+/** A healing pill restores half of the current maximum HP before field modifiers. */
+export function getHealingPillBaseHealing(state: GameState): number {
+  return Math.floor(state.player.maxHp / 2);
+}
+
 function getAdjustedDungeonHealing(state: GameState, healing: number): number {
   const healingPercent = getCurrentDungeonLaw(state)?.modifiers.healingPercent ?? 0;
   return scaleByPercent(healing, healingPercent, 0);
@@ -2413,11 +2423,15 @@ function markNodeCleared(state: GameState, nodeId: string, damageTaken = 0): Gam
     : advancedRun;
   const lanternState = getStrictRunLanternState(routedRun);
   const lanternRefill = lanternState ? refillRunLanternAtNode(lanternState, nodeId) : undefined;
+  // Oil back in the lamp relights it: a breach the empty lamp forced is lifted (an awake pursuer stays awake).
+  const relitPressure = lanternRefill && lanternRefill.gained > 0 && routedRun.pressureState?.breachForced === true
+    ? liftRunPressureBreach(routedRun.pressureState)
+    : undefined;
   const run = lanternRefill && lanternRefill.gained > 0
-    ? { ...routedRun, lanternState: lanternRefill.state }
+    ? { ...routedRun, lanternState: lanternRefill.state, ...(relitPressure ? { pressureState: relitPressure } : {}) }
     : routedRun;
   const refilledState = lanternRefill && lanternRefill.gained > 0
-    ? appendLog(state, `补给点添灯：灯油 +${lanternRefill.gained}，当前 ${lanternRefill.state.oil}。`)
+    ? appendLog(state, `补给点添灯：灯油 +${lanternRefill.gained}，当前 ${lanternRefill.state.oil}。${relitPressure ? '灯重新点亮，强制破界解除。' : ''}`)
     : state;
   const clearedState = applyRunReward(
     {
@@ -2433,7 +2447,10 @@ function markNodeCleared(state: GameState, nodeId: string, damageTaken = 0): Gam
     ? appendLog(clearedState, `发现隐藏任务「${hiddenTaskDefinition.name}」。继续探索，任务线索会在地图中显现。`)
     : clearedState;
   if (!pursuitState || !activatedPursuitState || activatedPursuitState === pursuitState) {
-    return hiddenTaskState;
+    // Handling a room takes time: a pursuer already on the hunt closes in one step.
+    return node && node.type !== 'exit' && pursuitState?.status === 'stalking'
+      ? advanceCurrentRunPursuitStep(hiddenTaskState)
+      : hiddenTaskState;
   }
 
   const definition = getRunPursuitDefinition(activatedPursuitState.dungeonId);
@@ -6316,7 +6333,7 @@ export function enterDungeon(
     : undefined;
   // Lamp oil is tuned for the fixed chapter grid; layered inferno maps keep their own clock.
   const lanternState = simplifiedEntry && protocolDefinition.id !== 'deep'
-    ? createRunLanternState(dungeonId)
+    ? createRunLanternState(dungeonId, dungeon.grid.startNodeId)
     : undefined;
 
   const nextState: GameState = {
@@ -6373,9 +6390,10 @@ export function enterDungeon(
       methodSnapshots,
       ...(methodSnapshot === undefined ? {} : { methodSnapshot }),
       ...(bloodlineSnapshot === undefined ? {} : { bloodlineSnapshot }),
+      // Replays meet the pursuer; lamp runs are built around it, so a first clear does too.
       pursuitState: createRunPursuitState(
         dungeonId,
-        entryState.completedDungeonIds.includes(dungeonId)
+        entryState.completedDungeonIds.includes(dungeonId) || lanternState !== undefined
       ),
       ...(lanternState === undefined ? {} : { lanternState })
     },
@@ -6545,7 +6563,8 @@ function burnCurrentRunLantern(state: GameState, amount: number): GameState {
   );
 }
 
-function advanceCurrentRunPursuitAfterMove(state: GameState): GameState {
+/** One pursuer step toward the player, after a move or a room cleared. Being caught starts a fight (see beginPursuerAmbush). */
+function advanceCurrentRunPursuitStep(state: GameState): GameState {
   if (!state.run) return state;
   const pursuitState = getStrictRunPursuitState(state.run);
   if (!pursuitState) return state;
@@ -6583,23 +6602,68 @@ function advanceCurrentRunPursuitAfterMove(state: GameState): GameState {
   }
   if (!advanced.contact) return nextState;
 
-  const contactDamage = getRunPursuitContactDamage(
-    nextState.player.maxHp,
-    DUNGEONS[nextState.run?.dungeonId ?? pursuitState.dungeonId].tier
-  );
-  const damagedState = applyPlayerDamage(nextState, contactDamage);
-  const actualDamage = nextState.player.hp - damagedState.player.hp;
-  const lanternDefinition = getRunLanternDefinition(damagedState.run?.dungeonId ?? '');
-  const contactedState = burnCurrentRunLantern(
-    appendSecondaryLog(
-      damagedState,
-      `破界追兵「${definition.name}」与你接触，造成 ${actualDamage} 点伤害。`
-    ),
+  const lanternDefinition = getRunLanternDefinition(nextState.run?.dungeonId ?? '');
+  return burnCurrentRunLantern(
+    appendSecondaryLog(nextState, `破界追兵「${definition.name}」追上了你。`),
     lanternDefinition?.contactOilLoss ?? 0
   );
-  return contactedState.player.hp <= 0
-    ? resolveRunFailure(contactedState, `破界追兵「${definition.name}」完成猎杀，主神强制回收。`)
-    : contactedState;
+}
+
+/**
+ * Once a command settles, a pursuer that caught the player during it (its contact count rose)
+ * fights them: the chapter's lair monster, at the run's current pressure. Escaping leaves it
+ * hunting from its lair; beating it ends the hunt for the rest of the run.
+ */
+export function beginPursuerAmbush(before: GameState, after: GameState): GameState {
+  if (after.phase !== 'explore' || after.combat || !after.run || before.run?.dungeonId !== after.run.dungeonId) return after;
+  const pursuitState = getStrictRunPursuitState(after.run);
+  const contactsBefore = getStrictRunPursuitState(before.run)?.contacts ?? 0;
+  if (!pursuitState || pursuitState.status !== 'stalking' || pursuitState.contacts <= contactsBefore) return after;
+  const definition = getRunPursuitDefinition(pursuitState.dungeonId);
+  const lair = definition ? getNodeById(getCurrentDungeonDefinition(after) ?? DUNGEONS[after.run.dungeonId], definition.spawnNodeId) : undefined;
+  const monster = lair?.monsterId ? MONSTERS[lair.monsterId] : undefined;
+  if (!definition || !monster) return after;
+
+  const combatStats = getProtocolMonster(after, monster);
+  const initialFocus = normalizeCombatFocus(getCurrentRunRelicEffects(after).combatStartFocusBonus);
+  return appendLog(
+    {
+      ...after,
+      phase: 'combat',
+      combat: {
+        // Its lair room: the room whose monster it fights as, so the save stays a valid encounter.
+        nodeId: definition.spawnNodeId,
+        monsterId: monster.id,
+        monsterHp: combatStats.maxHp,
+        turn: 1,
+        guarding: false,
+        companionAssistUsed: false,
+        methodTechniqueUsedIds: [],
+        methodTechniqueUsed: false,
+        bloodlineSurgeUsed: false,
+        bloodlineBarrier: 0,
+        damageTakenAtStart: after.run.damageTaken,
+        weaponFocus: initialFocus,
+        effects: {},
+        pursuer: true,
+        log: [`${definition.name}追上了你：${monster.ability}`]
+      }
+    },
+    `破界追兵「${definition.name}」追上了你，被迫迎战。`
+  );
+}
+
+/** Beating a pursuer clears no room and drops nothing; it ends the hunt for the rest of the run. */
+function finishPursuerVictory(state: GameState, monster: MonsterDefinition): GameState {
+  const pursuitState = state.run ? getStrictRunPursuitState(state.run) : undefined;
+  const definition = pursuitState ? getRunPursuitDefinition(pursuitState.dungeonId) : undefined;
+  const defeatedState = pursuitState && state.run
+    ? { ...state, run: { ...state.run, pursuitState: defeatRunPursuit(pursuitState) } }
+    : state;
+  return appendLog(
+    restoreHealthAfterCombat({ ...defeatedState, phase: 'explore', combat: undefined }),
+    `你击败了${definition?.name ?? monster.name}，本局它不会再出现。`
+  );
 }
 
 const COMBAT_REPLAY_ROUTE_PERCENT: Record<CombatReplayRoute, number> = {
@@ -6928,7 +6992,20 @@ function applyNodeMove(state: GameState, dungeon: DungeonDefinition, targetNode:
   const scannedState = advancePanopticonAfterMove(movedState, targetNode);
   return scannedState.phase === 'result'
     ? scannedState
-    : advanceCurrentRunPursuitAfterMove(burnCurrentRunLantern(scannedState, 1));
+    : advanceCurrentRunPursuitStep(walkCurrentRunLantern(scannedState, state.run.currentNodeId, targetNode.id));
+}
+
+/** A step into a room the lamp has not lit burns one drop; lit or cleared rooms are free to walk back through. */
+function walkCurrentRunLantern(state: GameState, fromNodeId: string, toNodeId: string): GameState {
+  if (!state.run) return state;
+  const lanternState = getStrictRunLanternState(state.run);
+  if (!lanternState) return state;
+  const revisit = isRunLanternNodeLit(lanternState, toNodeId) || state.run.clearedNodeIds.includes(toNodeId);
+  const litState: GameState = {
+    ...state,
+    run: { ...state.run, lanternState: lightRunLanternNodes(lanternState, [fromNodeId, toNodeId]) }
+  };
+  return revisit ? litState : burnCurrentRunLantern(litState, 1);
 }
 
 export function selectNode(state: GameState, nodeId: string): GameState {
@@ -7899,7 +7976,7 @@ function getFieldSurveyRewardChangeLog(base: RewardBundle, reward: RewardBundle)
     ...(Object.keys(base.items ?? {}) as ItemId[]),
     ...(Object.keys(reward.items ?? {}) as ItemId[])
   ]);
-  const itemChanges = [...itemIds].flatMap((itemId) => {
+  const itemChanges = Array.from(itemIds).flatMap((itemId) => {
     const delta = (reward.items?.[itemId] ?? 0) - (base.items?.[itemId] ?? 0);
     return delta === 0 ? [] : [`${ITEMS[itemId].name} ${delta > 0 ? '+' : ''}${delta}`];
   });
@@ -8155,6 +8232,16 @@ export function claimTaskReward(state: GameState, taskId: string): GameState {
   );
 }
 
+/** Claims every finished task, including any a claim itself reveals already finished (a newly unlocked chapter's). */
+export function claimAllTaskRewards(state: GameState): GameState {
+  let current = state;
+  for (let ready = evaluateVisibleTasks(current).find(({ status }) => status === 'completed'); ready;
+    ready = evaluateVisibleTasks(current).find(({ status }) => status === 'completed')) {
+    current = claimTaskReward(current, ready.task.id);
+  }
+  return current === state ? appendLog(state, '当前没有可领取的主神任务。') : current;
+}
+
 function calculatePhysicalDamage(attack: number, defense: number): number {
   return Math.max(3, attack - Math.floor(defense * 0.6));
 }
@@ -8390,6 +8477,7 @@ function getAdjustedCombatRewardPoints(state: GameState, baseRewardPoints: numbe
 }
 
 function finishCombatVictory(state: GameState, monster: MonsterDefinition): GameState {
+  if (state.combat?.pursuer) return finishPursuerVictory(state, monster);
   const signaled = signalCurrentCombatVictory(state);
   const combatDamageTaken = getCurrentCombatDamageTaken(signaled);
   const adjustedCombatRewardPoints = getAdjustedCombatRewardPoints(signaled, monster.rewardPoints);
@@ -8980,7 +9068,7 @@ function resolveMonsterEffects(
 }
 
 export function getReadyCombatCapturePetId(state: GameState): PetId | undefined {
-  if (state.phase !== 'combat' || !state.combat) return undefined;
+  if (state.phase !== 'combat' || !state.combat || state.combat.pursuer) return undefined;
   const monster = getCombatEncounterProfile(state)?.monster ?? MONSTERS[state.combat.monsterId];
   if (!isCurrentDungeonFeatureAvailable(state, 'consumable')) return undefined;
 
@@ -9009,6 +9097,7 @@ export function getReadyCombatCapturePetId(state: GameState): PetId | undefined 
 
 export function capturePet(state: GameState, petId: PetId): GameState {
   if (state.phase !== 'combat' || !state.combat) return appendLog(state, '当前没有可捕获目标。');
+  if (state.combat.pursuer) return appendLog(state, '破界追兵无法捕获。');
   if (state.ownedPets.includes(petId)) return appendLog(state, `你已经拥有${PETS[petId].name}。`);
 
   const pet = PETS[petId];
@@ -9917,10 +10006,11 @@ export function performCombatAction(
     if (state.player.hp >= state.player.maxHp) {
       return appendLog(state, '当前生命已满，无需使用止血丹。');
     }
-    const pillHealing = getAdjustedDungeonHealing(state, 36);
+    const pillBaseHealing = getHealingPillBaseHealing(state);
+    const pillHealing = getAdjustedDungeonHealing(state, pillBaseHealing);
     nextState = consumeItem(state, 'healing_pill');
     nextState = recordUsedItem(nextState, 'healing_pill');
-    nextState = normalizeHealth(nextState, 36);
+    nextState = normalizeHealth(nextState, pillBaseHealing);
     nextCombat = {
       ...nextCombat,
       log: [`你吞下止血丹，生命回复 ${pillHealing} 点。`, ...nextCombat.log].slice(0, 8)
@@ -10209,7 +10299,10 @@ export function getCombatActionDamagePreview(
         action
       )
     : projected;
-  const defeatedTarget = damageProjection.run?.clearedNodeIds.includes(state.combat.nodeId) === true;
+  // A beaten pursuer clears no room (its lair may be cleared already); its fight simply ends back in exploration.
+  const defeatedTarget = state.combat.pursuer === true
+    ? damageProjection.combat === undefined && damageProjection.phase === 'explore'
+    : damageProjection.run?.clearedNodeIds.includes(state.combat.nodeId) === true;
   const monsterHpAfter = defeatedTarget
     ? 0
     : damageProjection.combat?.nodeId === state.combat.nodeId
@@ -10311,9 +10404,9 @@ export function resolveExit(state: GameState): GameState {
           lawState: runWithExit.lawState
         })
       : undefined;
-  // Repeat clears can farm run rewards, but first-clear directive rewards stay one-time.
+  // The directive reward pays once, on whichever clear first meets it; repeat clears can still earn a missed one.
   const shouldClaimDirective =
-    !isRepeatClear && directive && directiveEvaluation?.status === 'completed' && !state.claimedDirectiveIds.includes(directive.id);
+    directive && directiveEvaluation?.status === 'completed' && !state.claimedDirectiveIds.includes(directive.id);
   const economy = getRunEconomyPreview(state, 'cleared', true);
   const pressureStatus = getCurrentRunPressure(state).status;
   const pressureRewardPointBonus = economy && pressureStatus

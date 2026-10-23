@@ -73,6 +73,8 @@ const blood = roomAt('loose_tile_trap');
 assert(blood.detail.roomEvent?.kind === 'trap' && blood.detail.roomEvent.buttons[blood.detail.roomEvent.buttons.length - 1]?.label === '强行通过', 'a trap room offers its existing choices');
 const supplyRoom = roomAt('north_supply_niche');
 assert(supplyRoom.detail.roomEvent === undefined && supplyRoom.detail.rewardPreview !== undefined, 'reward rooms keep the chest claim sheet');
+assert(supplyRoom.detail.rewardPreview.lanternOil === 4, 'a supply room claim previews the oil it really adds');
+assert(roomAt('watch_post_cache').detail.rewardPreview?.lanternOil === undefined, 'an ordinary cache adds no oil');
 const exit = roomAt('tower_exit');
 assert(exit.detail.roomEvent?.kind === 'exit' && exit.detail.roomEvent.rows[0]?.id === 'seal', 'the sealed exit says what is missing');
 for (const room of [fight, blood, exit]) {
@@ -81,7 +83,9 @@ for (const room of [fight, blood, exit]) {
 assert(roomAt('fog_patrol_pair', ['fog_patrol_pair']).detail.roomEvent === undefined, 'cleared rooms open nothing');
 assert(roomAt('cracked_portal').detail.roomEvent === undefined, 'portal rooms keep their own choices');
 
-// Chapters without a lamp still forecast doors, but never show oil or supply rooms.
+// Every chapter lights the same lamp; each has its own supply rooms.
 const metro = explore(enter('metro_abyss'));
-assert(metro.lantern === undefined, 'metro abyss burns no oil');
-assert((metro.routeForecasts ?? []).length > 0 && metro.routeForecasts!.every(door => door.kind !== 'supply'), 'lamp-free chapters keep plain rewards');
+assert(metro.lantern?.oil === 12 && metro.lantern.startOil === 12, 'metro abyss lights the same 12-drop lamp');
+const metroDrain = metro.routeForecasts?.find(door => door.nodeId === 'drainage_cache');
+assert(metroDrain?.kindLabel === '补给' && metroDrain.hint === '灯油 +4', 'metro supply doors promise oil');
+assert(metro.rewardPreview !== undefined && metro.rewardPreview.lanternOil === undefined, 'an ordinary metro reward room previews no oil');

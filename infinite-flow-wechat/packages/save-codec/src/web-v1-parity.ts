@@ -1915,6 +1915,7 @@ function isSavedCombatState(value: unknown, run: unknown): boolean {
       normalizeBloodlineRunSnapshot(run.bloodlineSnapshot) !== undefined &&
       isIntegerInRange(value.bloodlineBarrier, 0, 50)
     )) &&
+    (value.pursuer === undefined || value.pursuer === true) &&
     isStringArray(value.log)
   );
 }

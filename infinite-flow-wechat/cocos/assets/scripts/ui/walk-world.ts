@@ -31,6 +31,8 @@ export type WorldTarget = Readonly<{
   kind: 'npc' | 'portal' | 'monster' | 'chest' | 'exit' | 'transition' | 'trap' | 'event' | 'survey' | 'relic' | 'shrine' | 'law';
   interactionLabel?: string;
   purpose?: string;
+  /** A hub NPC with something waiting, such as finished tasks to turn in. */
+  ready?: boolean;
   rank?: 'normal' | 'elite' | 'boss';
   visualAssetKey?: string;
   action?: ViewActionModel;
@@ -54,9 +56,16 @@ export type WalkWorldSpec = Readonly<{
 }>;
 
 const FOOT_RADIUS = 14;
-const WALK_SPEED = 220;
+// Rooms are 1000 units across; at this pace a door is about a second from the spawn.
+const WALK_SPEED = 440;
+const COURTYARD_SPEED: WorldPoint = Object.freeze({ x: 260, y: 145 });
 const MAX_FRAME_SECONDS = 0.1;
 const MAX_STEP_DISTANCE = FOOT_RADIUS / 2;
+
+/** Full-stick feet speed per axis: the courtyard keeps its shallow depth, rooms walk evenly. */
+export function walkAxisSpeed(spec: WalkWorldSpec): WorldPoint {
+  return spec.key === 'hub' ? COURTYARD_SPEED : { x: WALK_SPEED, y: WALK_SPEED };
+}
 
 const HUB_PEOPLE: readonly Readonly<{
   panel: HubCatalogPanel;
@@ -104,6 +113,7 @@ function targetAction(action: ViewActionModel | undefined): Pick<WorldTarget, 'a
 
 function hubWorld(model: GameViewModel): WalkWorldSpec {
   const actions = model.sections[2].actions;
+  const claimable = model.tasks.filter((task) => task.status === 'completed').length;
   // The entry confirmation exists only while the entry panel is selected.
   const entry = uniqueAction(actions, 'hub.entry.confirm') ?? uniqueAction(actions, 'hub.panel:entry');
   return {
@@ -122,7 +132,8 @@ function hubWorld(model: GameViewModel): WalkWorldSpec {
       ...HUB_PEOPLE.map((person): WorldTarget => ({
         id: `npc:${person.panel}`,
         label: person.label,
-        purpose: person.purpose,
+        purpose: person.panel === 'tasks' && claimable > 0 ? `${claimable} 项已完成` : person.purpose,
+        ...(person.panel === 'tasks' && claimable > 0 ? { ready: true } : {}),
         kind: 'npc',
         interactionLabel: '交谈',
         x: person.x,
@@ -255,6 +266,10 @@ function exploreWorld(model: GameViewModel, detail: ExploreDetailViewModel): Wal
   };
 }
 
+export function describePursuerWake(name: string | undefined): string {
+  return `${name ?? '追兵'}醒了 · 你走一步它走一步`;
+}
+
 /** A one-line notice for what the last step changed on the route; undefined when nothing did. */
 export function describeRouteChange(previous: ExploreDetailViewModel, next: ExploreDetailViewModel): string | undefined {
   if (previous.map.dungeonId !== next.map.dungeonId) return undefined;
@@ -263,11 +278,13 @@ export function describeRouteChange(previous: ExploreDetailViewModel, next: Expl
   const name = after?.pursuit.name ?? '追兵';
   const oilBefore = previous.lantern?.oil;
   const oilAfter = next.lantern?.oil;
-  if ((after?.pursuit.progress?.contacts ?? 0) > (before?.pursuit.progress?.contacts ?? 0)) return `被${name}追上 · 它退回巢穴，下一步不动`;
+  if ((after?.pursuit.progress?.contacts ?? 0) > (before?.pursuit.progress?.contacts ?? 0)) {
+    return after?.pursuit.status === 'repelled' ? `击败了${name} · 本局它不会再出现` : `甩开了${name} · 它退回巢穴，下一步不动`;
+  }
   if (oilBefore !== undefined && oilBefore > 0 && oilAfter === 0) return '灯油耗尽 · 压力直接进入破界';
   const statusBefore = before?.pursuit.status;
   const statusAfter = after?.pursuit.status;
-  if (statusBefore === 'dormant' && statusAfter === 'stalking') return `${name}醒了 · 你走一步它走一步`;
+  if (statusBefore === 'dormant' && statusAfter === 'stalking') return describePursuerWake(after?.pursuit.name);
   if (statusBefore === 'stalking' && statusAfter === 'contained') return `${name}被封印 · 成功撤离时带回奖励`;
   if (statusBefore === 'stalking' && statusAfter === 'fused') return `${name}融入首领 · 首领 +${after?.pursuit.bossFusionPercent ?? 0}%`;
   const tiers = ['stable', 'hunted', 'breach'];
@@ -275,7 +292,40 @@ export function describeRouteChange(previous: ExploreDetailViewModel, next: Expl
   if (pressure?.tier !== undefined && before?.pressure.tier !== undefined && tiers.indexOf(pressure.tier) > tiers.indexOf(before.pressure.tier)) {
     return `压力进入${pressure.label ?? pressure.tier} · 怪物 +${pressure.pressurePercent ?? 0}%`;
   }
+  if (before?.pressure.breachForced === true && after !== undefined && after.pressure.breachForced !== true) {
+    return `重新点灯 · 破界解除，压力回到${after.pressure.label ?? '原档位'}`;
+  }
   if (oilBefore !== undefined && oilAfter !== undefined && oilAfter > oilBefore) return `补给添灯 · 灯油 +${oilAfter - oilBefore}`;
+  return undefined;
+}
+
+/** A short notice when the run's open directive or its hidden task moves; undefined when neither did. */
+export function describeTaskChange(previous: ExploreDetailViewModel, next: ExploreDetailViewModel): string | undefined {
+  if (previous.map.dungeonId !== next.map.dungeonId) return undefined;
+  const before = previous.chapterDecision?.directive;
+  const after = next.chapterDecision?.directive;
+  // A directive already paid out has nothing left to announce.
+  if (before !== undefined && after !== undefined && next.taskTracker?.lines.some((line) => line.id === 'directive')) {
+    for (const objective of after.objectives) {
+      const was = before.objectives.find((candidate) => candidate.id === objective.id);
+      if (was !== undefined && was.completed !== objective.completed) {
+        return objective.completed ? `指令达成 · ${objective.label}` : `指令失败 · ${objective.label}`;
+      }
+    }
+    if (before.status !== 'completed' && after.status === 'completed') return '指令条件已全部满足 · 从出口通关即可结算';
+  }
+  const contractBefore = previous.chapterDecision?.routeContract;
+  const contract = next.chapterDecision?.routeContract;
+  if (contractBefore === undefined || contract === undefined) return undefined;
+  const name = `「${contract.name ?? '隐藏任务'}」`;
+  if (contractBefore.status === 'disabled' && contract.status === 'active') {
+    return `发现隐藏任务${name} · 先去${contract.nextTarget?.nodeTitle ?? '标记的房间'}`;
+  }
+  if (contract.status === 'active' && contract.completedTargetCount > contractBefore.completedTargetCount) {
+    return `${name} ${contract.completedReadout.replace(/ /g, '')} · 下一站${contract.nextTarget?.nodeTitle ?? ''}`;
+  }
+  if (contractBefore.status === 'active' && contract.status === 'secured') return `${name}完成 · 出口结算 +${contract.potentialRewardPoints}`;
+  if (contractBefore.status === 'active' && contract.status === 'failed') return `${name}失败 · 走错了顺序`;
   return undefined;
 }
 
@@ -345,10 +395,10 @@ function stepAxis(spec: WalkWorldSpec, position: WorldPoint, axis: 'x' | 'y', di
 export function stepWalkPosition(spec: WalkWorldSpec, position: WorldPoint, axis: WorldPoint, dt: number): WorldPoint {
   const magnitude = Math.hypot(axis.x, axis.y);
   if (!Number.isFinite(dt) || dt <= 0 || !Number.isFinite(magnitude) || magnitude === 0) return { ...position };
-  const courtyard = spec.key === 'hub';
-  const scale = Math.min(dt, courtyard ? 0.05 : MAX_FRAME_SECONDS) / Math.max(1, magnitude);
-  const dx = axis.x * (courtyard ? 260 : WALK_SPEED) * scale;
-  const dy = axis.y * (courtyard ? 145 : WALK_SPEED) * scale;
+  const speed = walkAxisSpeed(spec);
+  const scale = Math.min(dt, spec.key === 'hub' ? 0.05 : MAX_FRAME_SECONDS) / Math.max(1, magnitude);
+  const dx = axis.x * speed.x * scale;
+  const dy = axis.y * speed.y * scale;
   const steps = Math.max(1, Math.ceil(Math.hypot(dx, dy) / MAX_STEP_DISTANCE));
   let next = position;
   for (let index = 0; index < steps; index += 1) {
@@ -376,6 +426,21 @@ export function isWalkPointClear(point: WorldPoint, spec: WalkWorldSpec): boolea
   return point.x >= b.x + FOOT_RADIUS && point.x <= b.x + b.width - FOOT_RADIUS
     && point.y >= b.y + FOOT_RADIUS && point.y <= b.y + b.height - FOOT_RADIUS
     && !overlapsWall(spec, point);
+}
+
+/**
+ * Where to walk for a target: its own feet when they are walkable, otherwise the nearest
+ * walkable point toward `from` within its radius. Room doors stand in the wall line.
+ */
+export function walkApproachPoint(spec: WalkWorldSpec, target: WorldTarget, from: WorldPoint): WorldPoint {
+  const feet = { x: target.x, y: target.y };
+  if (isWalkPointClear(feet, spec)) return feet;
+  const distance = Math.hypot(from.x - target.x, from.y - target.y);
+  for (let step = 4; step <= Math.min(target.radius, distance); step += 4) {
+    const candidate = { x: target.x + (from.x - target.x) * step / distance, y: target.y + (from.y - target.y) * step / distance };
+    if (isWalkPointClear(candidate, spec)) return candidate;
+  }
+  return feet;
 }
 
 function pointSegmentDistanceSquared(p: WorldPoint, a: WorldPoint, b: WorldPoint): number {
@@ -449,7 +514,7 @@ export function findWalkPath(spec: WalkWorldSpec, start: WorldPoint, destination
   }
   const startId = -1;
   const goalId = -2;
-  const startLinks = [...nodes].filter(([, point]) => isWalkSegmentClear(start, point, spec)).map(([id]) => id);
+  const startLinks = Array.from(nodes).filter(([, point]) => isWalkSegmentClear(start, point, spec)).map(([id]) => id);
   nodes.set(startId, { ...start, row: -1, column: -1 });
   nodes.set(goalId, { ...destination, row: -1, column: -1 });
   const open = new Set([startId]);

@@ -52,7 +52,7 @@ import {
   type InfiniteFlowRuntimeChrome,
   type InfiniteFlowSafeInsets,
 } from './ui/InfiniteFlowView';
-import { getInfiniteFlowSceneVisualKeys } from './ui/scene-visuals';
+import { getInfiniteFlowRoomSheetArtKey, getInfiniteFlowSceneVisualKeys, INFINITE_FLOW_TASK_ENVOY_PORTRAIT_KEY } from './ui/scene-visuals';
 import {
   SHEET_PORTRAIT_KEY,
   sheetEquipmentKey,
@@ -2661,6 +2661,8 @@ export class InfiniteFlowApp extends Component {
       ...loadout.ownedEquipment.map((entry) => sheetEquipmentKey(entry.equipmentId)),
       ...(detail?.kind === 'explore'
         ? detail.pending?.equipmentOptions?.map(entry => sheetEquipmentKey(entry.equipmentId)) ?? [] : []),
+      ...(detail?.kind === 'explore' ? [getInfiniteFlowRoomSheetArtKey(detail)] : []),
+      ...(detail?.kind === 'hub' && this.viewModel?.tasks.some((task) => task.status === 'completed') ? [INFINITE_FLOW_TASK_ENVOY_PORTRAIT_KEY] : []),
       ...(detail?.kind === 'explore' && detail.rewardPreview ? [
         'scene:dungeon_prop_chest',
         ...detail.rewardPreview.items.flatMap(entry => entry.visualAssetKey ? [entry.visualAssetKey] : []),

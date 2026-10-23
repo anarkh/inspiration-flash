@@ -3304,7 +3304,7 @@ const fallbackPursuit = chapterPursuitFixture({
   },
 });
 const fallbackPursuitText = pursuitText(fallbackPursuit);
-assert.match(fallbackPursuitText, /状态 已击退.*接触伤害 未知.*原因 未知/s);
+assert.match(fallbackPursuitText, /状态 已击退.*被追上即迎战.*原因 未知/s);
 assert.doesNotMatch(fallbackPursuitText, /repelled|unknown|internal_node_id|unexpected_reason|\b0%\b/iu);
 
 // Combat chapter context: compact law + pursuit readout for the combat status panel.
@@ -3365,7 +3365,7 @@ const stalkingContext = formatInfiniteFlowCombatChapterContext(combatChapterCont
 }));
 assert.ok(stalkingContext.pursuitLine, 'stalking pursuit produces a pursuit line');
 assert.match(stalkingContext.pursuitLine, /追兵 镜潮尾影 追猎中/);
-assert.match(stalkingContext.pursuitLine, /接触15%/);
+assert.match(stalkingContext.pursuitLine, /追上即战/);
 assert.doesNotMatch(stalkingContext.pursuitLine, /融合/, 'stalking (not fused) shows no fusion');
 
 const fusedContext = formatInfiniteFlowCombatChapterContext(combatChapterContextFixture({
@@ -4120,6 +4120,12 @@ function nodesOverlap(leftNode, rightNode) {
 function emitTouch(node, touchId) {
   node.emit('touch-start', { getID: () => touchId, propagationStopped: false });
   node.emit('touch-end', { getID: () => touchId, propagationStopped: false });
+}
+/** Entering from the courtyard opens the first room's own sheet; 收起 returns to walking. */
+function closeArrivalSheet(root, touchId) {
+  const close = findNode(root, 'MobileSheetClose') ?? findNode(root, 'WalkRoomEventButton:close');
+  assert.ok(close, 'entering from the courtyard opens the first room\'s sheet');
+  emitTouch(close, touchId);
 }
 function exploreInsets(windowWidth, windowHeight) {
   const designPerViewport = 750 / windowWidth;
@@ -11043,6 +11049,7 @@ for (const viewportWidth of [320, 390]) {
     assert.equal(getInfiniteFlowSceneVisualKeys(model).portrait, portraitKey, `${model.phase}: scene composition requests the HUD portrait lease`);
     supplySceneVisualFixtures(view, model);
     view.render(model, chrome, insets);
+    if (model.phase === 'explore') closeArrivalSheet(root(), 9399);
     assertDarkWalkingUi(root(), model, insets, viewportWidth);
     const avatar = findNode(root(), 'WalkAvatarArt');
     const avatarSprite = [...avatar.components.values()].find((component) => 'spriteFrame' in component);
@@ -11462,6 +11469,7 @@ for (const viewportWidth of [320, 390]) {
 
   const explore = walkingExploreModel(chapterDecisionFixture('metro_abyss'));
   view.render(explore, chrome, EXPLORE_INSETS_320);
+  closeArrivalSheet(root(), 911);
   assertDarkWalkingUi(root(), explore, EXPLORE_INSETS_320);
   const dungeonBody = findNode(root(), 'WalkPlayerBody');
   const dungeonSprite = Array.from(dungeonBody.components.values()).find((component) => 'spriteFrame' in component);
@@ -11923,7 +11931,8 @@ for (const viewportWidth of [320, 390]) {
       'real walking approaches the reward before opening its interaction');
     emitTouch(findNode(root(), 'WalkInteract'), touchBase);
     assert.ok(findNode(root(), 'MobileInfoSheet:interaction'));
-    assert.ok(findNode(root(), 'RewardChestImage'), 'the reward opens directly with its chest and actual contents');
+    assert.ok(findNode(root(), 'MobileSheetRoomArtFigure') && labelComponent(findNode(root(), 'MobileSheetKicker')).string
+      === (nodeId === 'north_supply_niche' ? '补给' : '宝箱'), 'the reward opens directly as the room sheet with its chest and actual contents');
     assert.equal(collectNodes(root(), node => node.name.startsWith('MobileSheetExecute:')).length, 0,
       'reward collection omits the old generic action confirmation step');
     const preview = model.sections[1].detail.rewardPreview;
@@ -12196,10 +12205,10 @@ globalThis.__walkingTestFrameSize = beforeRewardFrameSize;
     }
     assertNoBoundaryFills(root(), spec);
     globalThis.__walkingTestInput.emit('key-down', { keyCode: 65 });
-    for (let frame = 0; frame < 90; frame += 1) view.tick(1 / 60);
+    for (let frame = 0; frame < 45; frame += 1) view.tick(1 / 60);
     globalThis.__walkingTestInput.emit('key-up', { keyCode: 65 });
     const collisionPosition = view.walkScene.getPosition();
-    assert.ok(Math.abs(collisionPosition.x - 170) < 0.01, `${dungeonId}: 90 leftward frames still move 330 original world units`);
+    assert.ok(Math.abs(collisionPosition.x - 170) < 0.01, `${dungeonId}: 45 leftward frames still move 330 original world units`);
     assert.equal(collisionPosition.y, 700);
 
     view.render(model, chrome, EXPLORE_INSETS_320);
@@ -12506,7 +12515,7 @@ let dungeonMultiNeighborCases = 0;
             const height = (bounds.top - bounds.bottom) / pixel;
             if (node.name === 'WalkTransitionGateSprite') close(height, viewportWidth === 320 ? 60 : 90, `${label}: HTML gate height`);
             else if (node.name.startsWith('WalkMonsterSprite:')) close(height, viewportWidth === 320 ? 108 : 158, `${label}: HTML monster height`);
-            else close(height * 308 / 336, viewportWidth === 320 ? 50 : 65, `${label}: HTML visible hero height`);
+            else close(height * 308 / 336, viewportWidth === 320 ? 68 : 88, `${label}: visible hero stands about a doorway tall`);
             if (node.name !== 'WalkPlayerBody') {
               const foot = projectedNodePoint(node.parent.parent);
               close(bounds.bottom, foot.y, `${label}/${node.name}: original image bottom is on its target foot`);
@@ -12523,17 +12532,17 @@ let dungeonMultiNeighborCases = 0;
           view.walkScene.tick(0.1, { x: 1, y: 0 });
           const horizontalPosition = view.walkScene.getPosition();
           const playerScreenAfter = projectedNodePoint(findNode(root(), 'WalkPlayer'));
-          close(horizontalPosition.x - positionBefore.x, 22, `${label}: movement uses the original world speed`);
+          close(horizontalPosition.x - positionBefore.x, 44, `${label}: movement uses the room walking speed`);
           assert.equal(horizontalPosition.y, positionBefore.y);
-          close(playerScreenAfter.x - playerScreenBefore.x, 22 * layout.scale.x, `${label}: horizontal movement is a straight affine axis`);
+          close(playerScreenAfter.x - playerScreenBefore.x, 44 * layout.scale.x, `${label}: horizontal movement is a straight affine axis`);
           close(playerScreenAfter.y, playerScreenBefore.y, `${label}: rightward walking cannot drift in depth`);
           view.walkScene.tick(0.1, { x: 0, y: -1 });
           const positionAfter = view.walkScene.getPosition();
           const verticalScreenAfter = projectedNodePoint(findNode(root(), 'WalkPlayer'));
-          close(horizontalPosition.y - positionAfter.y, 22, `${label}: vertical movement keeps the original world speed`);
+          close(horizontalPosition.y - positionAfter.y, 44, `${label}: vertical movement keeps the room walking speed`);
           assert.equal(positionAfter.x, horizontalPosition.x);
           close(verticalScreenAfter.x, playerScreenAfter.x, `${label}: depth walking cannot drift horizontally`);
-          close(verticalScreenAfter.y - playerScreenAfter.y, 22 * layout.scale.y, `${label}: depth movement is a straight affine axis`);
+          close(verticalScreenAfter.y - playerScreenAfter.y, 44 * layout.scale.y, `${label}: depth movement is a straight affine axis`);
           assert.deepEqual({ ...camera.position }, cameraBefore, `${label}: the fixed camera never follows the avatar`);
           assert.deepEqual(projectedNodeBounds(bg), backgroundBoundsBefore, `${label}: walking cannot resize or move the original background`);
           assert.deepEqual({ ...findNode(root(), 'WalkPlayer').position }, { x: positionAfter.x, y: -positionAfter.y, z: 0 });
@@ -12617,17 +12626,32 @@ let compactModalCloseCases = 0;
         view.openMobilePanel(kind);
         const panel = findNode(root(), `MobileInfoSheet:${kind}`);
         assert.ok(panel, `${viewportWidth}px/${kind}: real host renders the requested sheet`);
-        assert.ok(panel.size.width / unit <= 304 + 0.6 && panel.size.width / unit <= viewportWidth - 40 + 0.6,
-          `${viewportWidth}px/${kind}: compact width leaves physical side margins`);
-        assert.ok(panel.size.height / unit <= 464 + 0.6
-          && panel.size.height <= surfaceHeight - insets.top - insets.bottom - 88 * unit + 0.6,
-          `${viewportWidth}px/${kind}: frame remains inside the safe vertical surface`);
+        if (kind === 'interaction') {
+          // A room's own interactions dock at the bottom like the route prototype's room sheet.
+          assert.ok(Math.abs(panel.size.width - (750 - 20 * unit)) < 0.6, `${viewportWidth}px/interaction: room sheet keeps 10px side margins`);
+          assert.ok(Math.abs(panel.position.y - panel.size.height / 2 - (-surfaceHeight / 2 + insets.bottom + 10 * unit)) < 0.6,
+            `${viewportWidth}px/interaction: room sheet docks 10px above the safe bottom`);
+          assert.ok(panel.size.height <= surfaceHeight - insets.top - insets.bottom - 54 * unit + 0.6,
+            `${viewportWidth}px/interaction: room sheet stays 44px under the safe top`);
+          assert.equal(findNode(panel, 'MobileSheetTitleBand'), undefined, 'interaction: the room sheet has no window band');
+        } else {
+          assert.ok(panel.size.width / unit <= 304 + 0.6 && panel.size.width / unit <= viewportWidth - 40 + 0.6,
+            `${viewportWidth}px/${kind}: compact width leaves physical side margins`);
+          assert.ok(panel.size.height / unit <= 464 + 0.6
+            && panel.size.height <= surfaceHeight - insets.top - insets.bottom - 88 * unit + 0.6,
+            `${viewportWidth}px/${kind}: frame remains inside the safe vertical surface`);
+          const header = findNode(panel, 'MobileSheetTitleBand');
+          assert.ok(Math.abs(header.size.height / unit - 48) < 0.6, `${kind}: header is compact at both widths`);
+        }
         assert.ok(hasComponentNamed(panel, 'BlockInputEvents'), `${kind}: sheet blocks world input`);
-        const header = findNode(panel, 'MobileSheetTitleBand');
-        assert.ok(Math.abs(header.size.height / unit - 48) < 0.6, `${kind}: header is compact at both widths`);
         const close = findNode(panel, 'MobileSheetClose');
-        assert.ok(Math.abs(close.size.width / unit - 44) < 0.6 && Math.abs(close.size.height / unit - 44) < 0.6,
-          `${kind}: close retains its complete physical touch region`);
+        if (kind === 'interaction') {
+          assert.ok(Math.abs(close.size.height / unit - (viewportWidth <= 350 ? 46 : 52)) < 0.6 && close.size.width / unit >= 44,
+            'interaction: 收起 keeps the room sheet button size');
+        } else {
+          assert.ok(Math.abs(close.size.width / unit - 44) < 0.6 && Math.abs(close.size.height / unit - 44) < 0.6,
+            `${kind}: close retains its complete physical touch region`);
+        }
         const firstTouch = 14000 + compactModalCloseCases * 10;
         emitTouch(close, firstTouch);
         close.emit('touch-end', { getID: () => firstTouch, propagationStopped: false });

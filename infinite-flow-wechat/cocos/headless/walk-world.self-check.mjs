@@ -27,7 +27,8 @@ const bundle = await build({
   absWorkingDir: resolve(root),
 });
 const {
-  buildWalkWorld, describeRouteChange, stepWalkPosition, nearestWalkTarget, findWalkPath, isWalkPointClear, isWalkSegmentClear, getInfiniteFlowSceneVisualKeys,
+  buildWalkWorld, describeRouteChange, describeTaskChange, stepWalkPosition, nearestWalkTarget, findWalkPath, isWalkPointClear, isWalkSegmentClear, getInfiniteFlowSceneVisualKeys,
+  walkApproachPoint, walkAxisSpeed,
   createInitialState, reduceGameCommand, buildGameViewModel,
   DUNGEON_ORDER, DUNGEONS, MONSTERS, getBossDefinition, DUNGEON_ELITE_MONSTERS, DUNGEON_WORLD_THEMES,
 } = await import(`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString('base64')}`);
@@ -164,26 +165,42 @@ check('up, down, left and right are continuous and reversible', () => {
   const start = spec.spawn;
   const up = walkFor(spec, start, { x: 0, y: -1 }, 1);
   const down = walkFor(spec, up, { x: 0, y: 1 }, 1);
-  approximately(up.y, 280, 'up moves towards the top');
+  approximately(up.y, 60, 'up moves towards the top');
   approximately(down.y, start.y, 'down restores the original position');
-  approximately(walkFor(spec, start, { x: -1, y: 0 }, 1).x, 280, 'left');
-  approximately(walkFor(spec, start, { x: 1, y: 0 }, 1).x, 720, 'right');
-  approximately(stepWalkPosition(spec, start, { x: 0, y: -1 }, 0.007).y, 498.46, 'no grid snapping');
+  approximately(walkFor(spec, start, { x: -1, y: 0 }, 1).x, 60, 'left');
+  approximately(walkFor(spec, start, { x: 1, y: 0 }, 1).x, 940, 'right');
+  approximately(stepWalkPosition(spec, start, { x: 0, y: -1 }, 0.007).y, 496.92, 'no grid snapping');
 });
 
 check('diagonal walking has the same speed, with proportional joystick input', () => {
   const spec = emptyWorld();
   const start = spec.spawn;
   const diagonal = walkFor(spec, start, { x: 1, y: 1 }, 1);
-  approximately(Math.hypot(diagonal.x - start.x, diagonal.y - start.y), 220, 'diagonal speed');
+  approximately(Math.hypot(diagonal.x - start.x, diagonal.y - start.y), 440, 'diagonal speed');
   approximately(diagonal.x, diagonal.y, 'diagonal axes');
   const half = walkFor(spec, start, { x: 0.5, y: 0 }, 1);
-  approximately(half.x - start.x, 110, 'joystick magnitude');
+  approximately(half.x - start.x, 220, 'joystick magnitude');
+});
+
+check('rooms walk evenly at twice the original pace while the courtyard keeps its depth', () => {
+  assert.deepEqual(walkAxisSpeed(emptyWorld()), { x: 440, y: 440 });
+  assert.deepEqual(walkAxisSpeed({ ...emptyWorld(), key: 'hub' }), { x: 260, y: 145 });
+});
+
+check('a door standing in the wall is approached from the nearest walkable point in reach', () => {
+  const spec = emptyWorld({ obstacles: [{ x: 960, y: 0, width: 40, height: 1000 }] });
+  const door = { id: 'door:east', label: '东', kind: 'transition', x: 975, y: 500, radius: 110 };
+  const from = { x: 500, y: 500 };
+  const point = walkApproachPoint(spec, door, from);
+  assert.ok(isWalkPointClear(point, spec), 'the approach point is walkable');
+  assert.ok(Math.hypot(point.x - door.x, point.y - door.y) <= door.radius, 'the approach point is within the door reach');
+  assert.ok(findWalkPath(spec, from, point).length > 0, 'the door can be reached');
+  assert.deepEqual(walkApproachPoint(spec, { ...door, x: 800 }, from), { x: 800, y: 500 }, 'walkable feet stay the destination');
 });
 
 check('frame stalls are clamped and zero or invalid time does not move', () => {
   const spec = emptyWorld();
-  approximately(stepWalkPosition(spec, spec.spawn, { x: 1, y: 0 }, 10).x, 522, 'frame clamp');
+  approximately(stepWalkPosition(spec, spec.spawn, { x: 1, y: 0 }, 10).x, 544, 'frame clamp');
   for (const dt of [0, -1, NaN, Infinity]) {
     assert.deepEqual(stepWalkPosition(spec, spec.spawn, { x: 1, y: 0 }, dt), spec.spawn);
   }
@@ -196,7 +213,7 @@ check('the circular feet stop at thin walls and slide along their face', () => {
   approximately(stopped.x, 86, 'foot radius at a one-pixel wall');
   const slid = stepWalkPosition(spec, { x: 85, y: 100 }, { x: 1, y: 1 }, 0.1);
   approximately(slid.x, 86, 'horizontal wall contact');
-  approximately(slid.y, 100 + 22 / Math.SQRT2, 'vertical sliding');
+  approximately(slid.y, 100 + 44 / Math.SQRT2, 'vertical sliding');
   assert.ok(stopped.x < 100, 'a long frame cannot tunnel through the wall');
 });
 
@@ -365,7 +382,7 @@ check('exploration starts in one room with an original combat target and blocked
   requireFourRoomDirections(explore, exploreView, 'opening room');
   assert.deepEqual(explore.obstacles, EXPLORE_PERIMETER, 'the original perimeter remains while interior debris is removed');
   assert.ok(doors.every((door) => door.action === undefined && door.disabledReason));
-  assert.equal(nearestWalkTarget(explore, walkFor(explore, explore.spawn, { x: 0, y: -1 }, 1.7)), monster);
+  assert.equal(nearestWalkTarget(explore, walkFor(explore, explore.spawn, { x: 0, y: -1 }, 0.85)), monster);
 });
 
 state = commit(state, explore.targets.find((target) => target.kind === 'monster').action.event.command);
@@ -882,10 +899,13 @@ check('doors carry their own route forecast and the pursuer art stays loaded for
   }
   assert.equal(doors.find(door => door.destinationNodeId === 'sealed_cache').forecast.threat.level, 'near', 'the pursuer is behind the containment door');
   assert.equal(getInfiniteFlowSceneVisualKeys(model).lurker, `monster:${DUNGEON_WORLD_THEMES.demon_tower_1.eliteMonsterId}_world`, 'silhouette art is declared while stalking');
-  const firstRun = buildGameViewModel(commit(createInitialState(), {
+  const firstRunState = commit(createInitialState(), {
     type: 'run/enter', dungeonId: 'demon_tower_1', protocolId: 'standard', seeds: { rulesVersion: 1, hiddenTaskSeed: 0x1234_abcd },
-  }), {});
-  assert.equal(getInfiniteFlowSceneVisualKeys(firstRun).lurker, undefined, 'a disabled first-clear pursuer loads no silhouette');
+  });
+  assert.equal(getInfiniteFlowSceneVisualKeys(buildGameViewModel(firstRunState, {})).lurker, `monster:${DUNGEON_WORLD_THEMES.demon_tower_1.eliteMonsterId}_world`,
+    'a lamp chapter meets its pursuer on the first clear, so the silhouette is declared up front');
+  const disabled = { ...firstRunState, run: { ...firstRunState.run, pursuitState: { ...firstRunState.run.pursuitState, status: 'disabled' } } };
+  assert.equal(getInfiniteFlowSceneVisualKeys(buildGameViewModel(disabled, {})).lurker, undefined, 'a disabled pursuer loads no silhouette');
 });
 
 check('route notices name what the last step changed', () => {
@@ -902,9 +922,32 @@ check('route notices name what the last step changed', () => {
     '灯油耗尽 · 压力直接进入破界');
   assert.equal(describeRouteChange(base, patched({ ...lamp(4), pursuitState: stalking })), '血阶监猎者醒了 · 你走一步它走一步');
   assert.equal(describeRouteChange(patched({ ...lamp(5), pursuitState: stalking }), patched({ ...lamp(2), pursuitState: { ...stalking, contacts: 1, graceMoves: 1 } })),
-    '被血阶监猎者追上 · 它退回巢穴，下一步不动');
+    '甩开了血阶监猎者 · 它退回巢穴，下一步不动');
+  assert.equal(describeRouteChange(patched({ ...lamp(5), pursuitState: stalking }),
+    patched({ ...lamp(2), pursuitState: { ...stalking, status: 'repelled', nodeId: null, contacts: 1, graceMoves: 0, repelledReason: 'defeated' } })),
+    '击败了血阶监猎者 · 本局它不会再出现');
   assert.equal(describeRouteChange(base, patched({ ...lamp(5), pressureState: { rulesVersion: 1, clearedNodeCount: 6 } })), '压力进入追猎 · 怪物 +10%');
   assert.equal(describeRouteChange(base, patched(lamp(9))), '补给添灯 · 灯油 +4');
+  assert.equal(describeRouteChange(patched({ ...lamp(0), pressureState: { rulesVersion: 1, clearedNodeCount: 3, breachForced: true } }),
+    patched({ ...lamp(4), pressureState: { rulesVersion: 1, clearedNodeCount: 4 } })), '重新点灯 · 破界解除，压力回到稳定');
+});
+
+check('task notices follow the hidden task from discovery to its end', () => {
+  const entered = commit(createInitialState(), {
+    type: 'run/enter', dungeonId: 'demon_tower_1', protocolId: 'standard', seeds: { rulesVersion: 1, hiddenTaskSeed: 0x1234_abcd },
+  });
+  const base = buildGameViewModel(entered, {}).sections[1].detail;
+  const withContract = routeContract => ({ ...base, chapterDecision: { ...base.chapterDecision, routeContract } });
+  const unfound = base.chapterDecision.routeContract;
+  assert.equal(unfound.status, 'disabled', 'a fresh run has found no hidden task');
+  assert.equal(describeTaskChange(base, base), undefined, 'nothing changed, nothing announced');
+  const found = { ...unfound, status: 'active', name: '灰坑引刃', completedTargetCount: 0, completedReadout: '0 / 2',
+    nextTarget: { order: 1, nodeId: 'ash_pit_trap', nodeTitle: '灰坑回声' }, potentialRewardPoints: 60 };
+  assert.equal(describeTaskChange(withContract(unfound), withContract(found)), '发现隐藏任务「灰坑引刃」 · 先去灰坑回声');
+  const halfway = { ...found, completedTargetCount: 1, completedReadout: '1 / 2', nextTarget: { order: 2, nodeId: 'loose_tile_trap', nodeTitle: '松砖机关' } };
+  assert.equal(describeTaskChange(withContract(found), withContract(halfway)), '「灰坑引刃」 1/2 · 下一站松砖机关');
+  assert.equal(describeTaskChange(withContract(halfway), withContract({ ...halfway, status: 'secured' })), '「灰坑引刃」完成 · 出口结算 +60');
+  assert.equal(describeTaskChange(withContract(halfway), withContract({ ...halfway, status: 'failed' })), '「灰坑引刃」失败 · 走错了顺序');
 });
 
 console.log(`Walk world self-check passed (${checks} checks; ${enteredChapters.size} chapters, ${realNodesCovered} real-node projections, ${originalNeighborBindingsCovered} original neighbor bindings, ${nodeMonsterIdsCovered.size} catalog identities, ${visibleMonsterIdsCovered.size} visible exploration identities, ${combatMonsterIdsCovered.size} combat identities, ${combatChaptersCovered} boss arenas, ${pendingFixtures.size} pending kinds).`);

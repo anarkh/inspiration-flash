@@ -160,7 +160,9 @@ function verifyMedicineAndBasicArt(): void {
   const full = enterCombat(false);
   const fullPill = requireAction(full, 'combat.action:use_healing_pill');
   assert(!fullPill.enabled && !fullPill.event && fullPill.disabledReason?.includes('生命已满'), 'full health disables medicine without an executable command');
-  assert(fullPill.readout?.includes('库存 2') && fullPill.readout.includes('基础回复 36') && fullPill.readout.includes('受场域影响'), 'medicine shows stock and qualified base healing');
+  const pillHealing = Math.floor(full.player.maxHp / 2);
+  assert(fullPill.readout?.includes('库存 2') && fullPill.readout.includes(`基础回复 ${pillHealing}`) && fullPill.readout.includes('最大生命一半')
+    && fullPill.readout.includes('受场域影响'), 'medicine shows stock and its half-of-max-HP base healing');
   assert(fullPill.readout?.includes('推进 1 回合') && fullPill.readout.includes('反击'), 'medicine describes its turn cost and counterattack');
   const injured: GameState = { ...full, player: { ...full.player, hp: full.player.maxHp - 50 } };
   const pill = requireAction(injured, 'combat.action:use_healing_pill');
@@ -169,7 +171,9 @@ function verifyMedicineAndBasicArt(): void {
   const recovered = commit(injured, commandFrom(pill));
   assert(recovered.inventory.healing_pill === injured.inventory.healing_pill - 1, 'using medicine consumes one inventory item');
   assert(recovered.combat?.turn === injured.combat!.turn + 1, 'medicine advances exactly one turn');
-  assert(recovered.player.hp > injured.player.hp && recovered.player.hp < injured.player.hp + 36, 'medicine heals before the enemy counterattack');
+  assert(recovered.player.hp > injured.player.hp && recovered.player.hp < injured.player.hp + pillHealing, 'medicine heals before the enemy counterattack');
+  assert(recovered.log.some(line => line.includes(`生命回复 ${pillHealing} 点`)) || recovered.combat?.log.some(line => line.includes(`生命回复 ${pillHealing} 点`)),
+    'medicine restores half of the maximum HP');
   const empty: GameState = { ...injured, inventory: { ...injured.inventory, healing_pill: 0 } };
   const unavailable = requireAction(empty, 'combat.action:use_healing_pill');
   assert(!unavailable.enabled && !unavailable.event && unavailable.disabledReason?.includes('库存不足'), 'no stock remains visible with an unavailable reason');

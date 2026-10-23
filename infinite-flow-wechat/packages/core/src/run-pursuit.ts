@@ -1,5 +1,5 @@
 export const RUN_PURSUIT_RULES_VERSION = 1 as const;
-export const RUN_PURSUIT_SPAWN_CLEAR_COUNT = 6;
+export const RUN_PURSUIT_SPAWN_CLEAR_COUNT = 3;
 export const RUN_PURSUIT_BOSS_FUSION_PERCENT = 15;
 
 const RUN_PURSUIT_DUNGEON_IDS = [
@@ -37,7 +37,8 @@ const RUN_PURSUIT_REPELLED_REASONS = [
   'stable_portal',
   'successful_exit',
   'retreat',
-  'failure'
+  'failure',
+  'defeated'
 ] as const;
 
 const RUN_PURSUIT_STATE_KEYS = [
@@ -85,7 +86,7 @@ export type RunPursuitDefinition = {
   readonly rewardAmount: 1;
   readonly contactDamagePercent: 15;
   readonly bossFusionPercent: 15;
-  readonly spawnClearCount: 6;
+  readonly spawnClearCount: 3;
   readonly flavorDescription: string;
   readonly fusionDescription: string;
 };
@@ -100,7 +101,7 @@ export const RUN_PURSUIT_CATALOG = {
     rewardAmount: 1,
     contactDamagePercent: 15,
     bossFusionPercent: 15,
-    spawnClearCount: 6,
+    spawnClearCount: 3,
     flavorDescription: '血阶深处的监猎者循着轮回侵蚀醒来，沿雾塔石阶追索闯入者。',
     fusionDescription: '监猎者融入塔主血甲，使首领的躯壳与攻势一同增幅。'
   },
@@ -113,7 +114,7 @@ export const RUN_PURSUIT_CATALOG = {
     rewardAmount: 1,
     contactDamagePercent: 15,
     bossFusionPercent: 15,
-    spawnClearCount: 6,
+    spawnClearCount: 3,
     flavorDescription: '镜潮尾影借废弃轨道反复折返，只在信号灯熄灭后显出轮廓。',
     fusionDescription: '尾影汇入深渊主宰的倒影，让每一道镜潮都更为沉重。'
   },
@@ -126,7 +127,7 @@ export const RUN_PURSUIT_CATALOG = {
     rewardAmount: 1,
     contactDamagePercent: 15,
     bossFusionPercent: 15,
-    spawnClearCount: 6,
+    spawnClearCount: 3,
     flavorDescription: '裂门蜕兽在失衡矿道间蜕壳，以星铁震颤辨认猎物的方位。',
     fusionDescription: '蜕兽钻入矿主核心，把破碎重力压进首领的每次扑击。'
   },
@@ -139,7 +140,7 @@ export const RUN_PURSUIT_CATALOG = {
     rewardAmount: 1,
     contactDamagePercent: 15,
     bossFusionPercent: 15,
-    spawnClearCount: 6,
+    spawnClearCount: 3,
     flavorDescription: '锈疫巡诊者推着空药车逐室查房，把尚有脉搏的人列入病历。',
     fusionDescription: '巡诊者把锈疫病历缝入院长，使首领的污染循环骤然加深。'
   },
@@ -152,7 +153,7 @@ export const RUN_PURSUIT_CATALOG = {
     rewardAmount: 1,
     contactDamagePercent: 15,
     bossFusionPercent: 15,
-    spawnClearCount: 6,
+    spawnClearCount: 3,
     flavorDescription: '灰烬追裁者越过熄灭的擂台，以未决胜负为名追索离场者。',
     fusionDescription: '追裁者献上残火判词，令竞技场首领获得更猛烈的裁决之力。'
   },
@@ -165,7 +166,7 @@ export const RUN_PURSUIT_CATALOG = {
     rewardAmount: 1,
     contactDamagePercent: 15,
     bossFusionPercent: 15,
-    spawnClearCount: 6,
+    spawnClearCount: 3,
     flavorDescription: '缺页狱卒从被删去的索引中巡回，脚步声总比读者迟上一行。',
     fusionDescription: '狱卒补进馆主缺失的篇章，使首领能以更完整的梦境压迫来客。'
   },
@@ -178,7 +179,7 @@ export const RUN_PURSUIT_CATALOG = {
     rewardAmount: 1,
     contactDamagePercent: 15,
     bossFusionPercent: 15,
-    spawnClearCount: 6,
+    spawnClearCount: 3,
     flavorDescription: '身份猎影沿回声逐一核验姓名，任何迟疑都会成为它的新面孔。',
     fusionDescription: '猎影归还窃取的身份，让城主的虚界映身获得额外强度。'
   },
@@ -191,7 +192,7 @@ export const RUN_PURSUIT_CATALOG = {
     rewardAmount: 1,
     contactDamagePercent: 15,
     bossFusionPercent: 15,
-    spawnClearCount: 6,
+    spawnClearCount: 3,
     flavorDescription: '零时哨兵从停摆的一刻出发，在每条时间支流上重复同一次追捕。',
     fusionDescription: '哨兵折回零点融入摄政者，使首领同时占据更多时间切面。'
   },
@@ -204,7 +205,7 @@ export const RUN_PURSUIT_CATALOG = {
     rewardAmount: 1,
     contactDamagePercent: 15,
     bossFusionPercent: 15,
-    spawnClearCount: 6,
+    spawnClearCount: 3,
     flavorDescription: '零和追缴者沿未结清的因果债逐项核账，每次接触都会把逃逸者重新登记为债务人。',
     fusionDescription: '追缴者把未收回的债权并入主审，使首领从每段未决因果中抽取额外强度。'
   },
@@ -217,7 +218,7 @@ export const RUN_PURSUIT_CATALOG = {
     rewardAmount: 1,
     contactDamagePercent: 15,
     bossFusionPercent: 15,
-    spawnClearCount: 6,
+    spawnClearCount: 3,
     flavorDescription: '熵潮弃航者沿耗散航迹逆流而来，把仍在前进的乘员逐一登记为弃航目标。',
     fusionDescription: '弃航者把耗散航图并入末舵手，使首领能从每次航向偏移中抽取额外强度。'
   },
@@ -230,7 +231,7 @@ export const RUN_PURSUIT_CATALOG = {
     rewardAmount: 1,
     contactDamagePercent: 15,
     bossFusionPercent: 15,
-    spawnClearCount: 6,
+    spawnClearCount: 3,
     flavorDescription: '无面追像从镜相猎手脱落的轮廓中现身，沿每次相位切换追索唯一的本体。',
     fusionDescription: '追像把所有失败倒影并入无名镜王，使首领从每层镜壳中抽取额外强度。'
   },
@@ -243,7 +244,7 @@ export const RUN_PURSUIT_CATALOG = {
     rewardAmount: 1,
     contactDamagePercent: 15,
     bossFusionPercent: 15,
-    spawnClearCount: 6,
+    spawnClearCount: 3,
     flavorDescription: '终稿追删者沿校样边缘逼近，把仍未被删去的句子逐行标成追猎目标。',
     fusionDescription: '追删者将删改痕迹并入终稿主审，使首领从每处勘误中抽取额外强度。'
   },
@@ -256,7 +257,7 @@ export const RUN_PURSUIT_CATALOG = {
     rewardAmount: 1,
     contactDamagePercent: 15,
     bossFusionPercent: 15,
-    spawnClearCount: 6,
+    spawnClearCount: 3,
     flavorDescription: '流拍追索者循着亡队遗产的未结报价逼近，把每个离席者重新登记为竞买人。',
     fusionDescription: '追索者将流拍名录并入拍卖主审，使首领从每笔未决出价中抽取额外强度。'
   },
@@ -269,7 +270,7 @@ export const RUN_PURSUIT_CATALOG = {
     rewardAmount: 1,
     contactDamagePercent: 15,
     bossFusionPercent: 15,
-    spawnClearCount: 6,
+    spawnClearCount: 3,
     flavorDescription: '失控原型从首代猎犬的学习序列中脱离，沿探索者重复留下的生命选择持续改写自身。',
     fusionDescription: '失控原型并入典藏官的原始蓝本，使首领以本轮已暴露的每种选择重塑战斗形态。'
   },
@@ -282,7 +283,7 @@ export const RUN_PURSUIT_CATALOG = {
     rewardAmount: 1,
     contactDamagePercent: 15,
     bossFusionPercent: 15,
-    spawnClearCount: 6,
+    spawnClearCount: 3,
     flavorDescription: '走音替身从死频拟声体脱落的人声中成形，沿每次重复行动修正自己的追猎音准。',
     fusionDescription: '替身把失真的全城声纹并入末频道播音主，使首领从每次走音中抽取额外强度。'
   },
@@ -295,7 +296,7 @@ export const RUN_PURSUIT_CATALOG = {
     rewardAmount: 1,
     contactDamagePercent: 15,
     bossFusionPercent: 15,
-    spawnClearCount: 6,
+    spawnClearCount: 3,
     flavorDescription: '失联接管体从拟声幸存者的错误回应中脱离，沿护送队每次点名持续逼近真实生命信号。',
     fusionDescription: '接管体把失联名单并入避难所总控，使首领从每个未封闭的身份编号中抽取额外强度。'
   },
@@ -308,7 +309,7 @@ export const RUN_PURSUIT_CATALOG = {
     rewardAmount: 1,
     contactDamagePercent: 15,
     bossFusionPercent: 15,
-    spawnClearCount: 6,
+    spawnClearCount: 3,
     flavorDescription: '伪证执行官从敌意证人的矛盾口供中成形，沿每次重复回答追索可以被改写的新证人。',
     fusionDescription: '执行官把伪造证言并入终审判词，使伪证主审从每处未锁定的矛盾中抽取额外强度。'
   },
@@ -321,7 +322,7 @@ export const RUN_PURSUIT_CATALOG = {
     rewardAmount: 1,
     contactDamagePercent: 15,
     bossFusionPercent: 15,
-    spawnClearCount: 6,
+    spawnClearCount: 3,
     flavorDescription: '删镜执行体从场记潜猎者记录的重复动作中成形，沿每段未封存镜头追索可以被删除的战痕。',
     fusionDescription: '执行体把废弃镜头并入终剪母带，使终剪导演从每处未锁定的战痕中抽取额外强度。'
   },
@@ -334,7 +335,7 @@ export const RUN_PURSUIT_CATALOG = {
     rewardAmount: 1,
     contactDamagePercent: 15,
     bossFusionPercent: 15,
-    spawnClearCount: 6,
+    spawnClearCount: 3,
     flavorDescription: '盲区巡猎体从曝光替身遗留的完整轮廓中成形，沿每次被天幕记录的动作持续逼近真实本体。',
     fusionDescription: '巡猎体把全部曝光轮廓并入全视监察官，使首领从每处未关闭的观测缝隙中抽取额外强度。'
   }
@@ -530,7 +531,8 @@ function findShortestPathNextStep(
     const current = topology.nodeById.get(currentNodeId);
     if (!current) continue;
 
-    const neighbors = [...topology.nodeById.values()]
+    // Array.from, not a spread: the WeChat build lowers [...iterator] to [].concat(iterator), which never yields the nodes.
+    const neighbors = Array.from(topology.nodeById.values())
       .filter(
         (candidate) =>
           !visited.has(candidate.id) &&
@@ -809,6 +811,19 @@ export function getRunPursuitPath(
   return findShortestPath(topology, state.nodeId, input.playerNodeId);
 }
 
+/** A pursuer beaten in its fight is gone for the rest of the run: it neither hunts nor fuses again. */
+export function defeatRunPursuit(state: RunPursuitState): RunPursuitState {
+  if (state.status !== 'stalking') return state;
+
+  return {
+    ...state,
+    status: 'repelled',
+    nodeId: null,
+    graceMoves: 0,
+    repelledReason: 'defeated'
+  };
+}
+
 export function fuseRunPursuitAtBoss(state: RunPursuitState): RunPursuitState {
   if (state.status !== 'stalking') return state;
 
@@ -912,12 +927,15 @@ export function getRunPursuitDisplay(
     repelled: { label: '已驱离', description: '追兵已离开本次行动。' }
   };
 
+  const copy = state.status === 'repelled' && state.repelledReason === 'defeated'
+    ? { label: '已击败', description: '追兵已被你击败，本局不会再出现。' }
+    : statusCopy[state.status];
   return {
     dungeonId: state.dungeonId,
     name: definition.name,
     status: state.status,
-    statusLabel: statusCopy[state.status].label,
-    statusDescription: statusCopy[state.status].description,
+    statusLabel: copy.label,
+    statusDescription: copy.description,
     flavorDescription: definition.flavorDescription,
     fusionDescription: definition.fusionDescription,
     materialId: definition.materialId,

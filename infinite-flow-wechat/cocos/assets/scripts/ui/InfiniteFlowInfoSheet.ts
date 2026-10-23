@@ -1,6 +1,6 @@
 import { BlockInputEvents, Color, Graphics, Label, Mask, Node, ScrollView, Size, Sprite, SpriteFrame, UITransform, Vec2, Vec3, view } from 'cc';
 import { EQUIPMENT, ITEMS, getGameAsset, type ItemId } from '@infinite-flow/core';
-import type { GameViewModel, HelpEntryViewModel, HubPanel, HubOwnedLoadoutViewModel, HubShopCatalogViewModel, HubShopRowViewModel, MapNodeViewModel, RewardPreviewViewModel, StatusMetric, ViewActionModel } from '@infinite-flow/presentation';
+import type { ExploreDetailViewModel, GameViewModel, HelpEntryViewModel, HubPanel, HubOwnedLoadoutViewModel, HubShopCatalogViewModel, HubShopRowViewModel, MapNodeViewModel, RewardPreviewViewModel, StatusMetric, ViewActionModel } from '@infinite-flow/presentation';
 import {
   buildInfiniteFlowChapterCodexPages,
   buildInfiniteFlowResultPages,
@@ -38,7 +38,8 @@ import {
 import { EMPTY_SHEET_IMAGE_LIBRARY, SHEET_PORTRAIT_KEY, sheetEquipmentKey, sheetItemKey } from './sheet-kit';
 import { getSheetFigures } from './sheet-figures';
 import { getWalkHudLayout } from './hud-layout';
-import { getInfiniteFlowRunRelicVisualKey } from './scene-visuals';
+import { getInfiniteFlowRoomSheetArtKey, getInfiniteFlowRunRelicVisualKey, INFINITE_FLOW_TASK_ENVOY_PORTRAIT_KEY } from './scene-visuals';
+import { DARK_UI, ROOM_SHEET, paintRoomSheetButton, paintRoomSheetFrame } from './dark-ui';
 import type {
   MobileSheetPage,
   SheetFigureFallback,
@@ -51,7 +52,7 @@ import type {
   SheetTarget,
 } from './sheet-kit';
 
-export type MobilePanelKind = 'character' | 'inventory' | 'map' | 'objectives' | 'log' | 'menu' | 'interaction' | 'entry' | 'npc' | 'help' | 'result';
+export type MobilePanelKind = 'character' | 'inventory' | 'map' | 'objectives' | 'log' | 'menu' | 'interaction' | 'entry' | 'npc' | 'help' | 'result' | 'claims';
 export type MobileSheetTip = Readonly<{
   kind: 'item' | 'equip';
   id: string;
@@ -133,7 +134,7 @@ const palette = (): SheetPalette => activeTheme.palette;
 const TITLES: Readonly<Record<MobilePanelKind, string>> = Object.freeze({
   character: '角色信息', inventory: '行囊', map: '区域地图', objectives: '任务目标',
   log: '冒险记录', menu: '主菜单', interaction: '当前交互', entry: '轮回之门',
-  npc: '整备交谈', help: '冒险指南', result: '本轮结算',
+  npc: '整备交谈', help: '冒险指南', result: '本轮结算', claims: '主神任务',
 });
 type SheetPage = Readonly<{ title: string; lines: readonly string[]; helpId?: string }>;
 type SheetContext = Readonly<{
@@ -508,6 +509,7 @@ export function getInfiniteFlowMobilePanelActions(model: GameViewModel, kind: Mo
       ...actions.filter((action) => action.actionId === 'hub.entry.confirm')]
     : actions.filter((action) => action.placement === 'preparation' && action.event?.kind === 'local' && action.event.action.type === 'hub/select-panel' && action.event.action.panel === 'entry');
   if (kind === 'npc') return detail.shop ? [...detail.shop.rows.flatMap((row) => row.actions), ...detail.shop.services] : [];
+  if (kind === 'claims') return detail.taskClaims ? [detail.taskClaims.action] : [];
   if (kind === 'inventory') return actions.filter((action) => {
     if (action.placement === 'preparation' && action.event?.kind === 'local' && action.event.action.type === 'hub/select-panel') return action.event.action.panel === 'supplies' || action.event.action.panel === 'equipment';
     return (detail.activePanel === 'supplies' || detail.activePanel === 'equipment') && hubPanelAction(action, detail.activePanel);
@@ -622,8 +624,10 @@ function actionContent(model: GameViewModel, state: MobileSheetState, width: num
   const wrap = (value: string, size: number, inset = 16) => value.split('\n')
     .flatMap(line => wrapInfiniteFlowLine(readable(line), Math.max(6, Math.floor((width / u - inset) / size))));
   const introFont = npc ? 11 : 12;
+  // The room sheet's header already carries the pending message.
+  const room = roomSheetDetail(model, state) !== undefined;
   const intro = npc ? wrap(npc.panelSummary, introFont)
-    : state.kind === 'interaction' && detail.kind === 'explore' && detail.pending
+    : state.kind === 'interaction' && detail.kind === 'explore' && detail.pending && !room
       ? wrap(detail.pending.message, 12) : [];
   const introHeight = intro.length ? intro.length * 18 + 8 : 0;
   const rows = choices.map(action => {
@@ -644,7 +648,7 @@ function actionContent(model: GameViewModel, state: MobileSheetState, width: num
   const navigationHeight = navigation.length * 44 + Math.max(0, navigation.length - 1) * 6;
   const contentHeight = Math.max(48, introHeight + navigationHeight + (navigation.length && rows.length ? 8 : 0)
     + rows.reduce((sum, row) => sum + row.height, 0) + Math.max(0, rows.length - 1) * 6 + detailHeight);
-  const footerHeight = choices.length ? 52 : 0;
+  const footerHeight = room ? roomSheetFooterHeight(u) / u : choices.length ? 52 : 0;
   return { selected, intro, introFont, introHeight, navigation, navigationHeight, rows, selectedTitle, detailLines, detailHeight,
     footerHeight: footerHeight * u, contentHeight: contentHeight * u, bodyHeight: (contentHeight + footerHeight) * u };
 }
@@ -662,9 +666,13 @@ const NPC_ACTION_TAB_LABELS: Readonly<Record<HubPanel, string>> = Object.freeze(
 
 function renderActions(context: SheetContext, actions: readonly ViewActionModel[], empty = '当前没有可执行选项。', back?: SheetActionBack): void {
   const u = catalogUnit(context);
+  const room = roomSheetDetail(context.model, context.state) !== undefined;
+  const roomBack = (): RoomSheetButton => back === undefined ? roomSheetClose(context)
+    : { name: back.name, label: back.label, enabled: true, activate: () => context.options.setState({ kind: back.kind, page: 0 }) };
   if (actions.length === 0) {
-    drawScrollDoc(context, [{ title: '当前状态', lines: [empty] }], back ? 52 * u : 0);
-    if (back) {
+    drawScrollDoc(context, [{ title: '当前状态', lines: [empty] }], room ? roomSheetFooterHeight(u) : back ? 52 * u : 0);
+    if (room) roomSheetFooter(context, [roomBack()]);
+    else if (back) {
       const width = Math.min(148 * u, context.width);
       const control = catalogButton(context, context.body, back.name, back.label,
         context.width / 2 - width / 2, -context.bodyHeight / 2 + 22 * u, width, true);
@@ -673,7 +681,7 @@ function renderActions(context: SheetContext, actions: readonly ViewActionModel[
     return;
   }
   const data = actionContent(context.model, context.state, context.width, u, actions, context.options.chrome);
-  const reserve = Math.max(data.footerHeight, back ? 52 * u : 0);
+  const reserve = room ? data.footerHeight : Math.max(data.footerHeight, back ? 52 * u : 0);
   const region = scrollRegion(context, data.contentHeight, reserve);
   const content = scrollContentNode(region);
   let cursor = 0;
@@ -720,7 +728,15 @@ function renderActions(context: SheetContext, actions: readonly ViewActionModel[
       scrollItemY(region, cursor, data.detailLines.length * 18 * u), context.width - 16 * u,
       data.detailLines.length * 18 * u, 12, palette().text);
   }
-  if (reserve > 0) {
+  if (room) {
+    const action = data.selected;
+    const enabled = action !== undefined && canExecute(context, action);
+    roomSheetFooter(context, [roomBack(), ...(data.rows.length > 0 ? [{
+      name: action ? `MobileSheetExecute:${action.actionId}` : 'MobileSheetExecute:none',
+      label: context.options.chrome.busyActionId ? '正在处理' : action ? enabled ? '确认执行' : '当前不可用' : '请选择一项',
+      primary: true, enabled, ...(enabled ? { action } : {}),
+    }] : [])]);
+  } else if (reserve > 0) {
     const gap = 7 * u;
     const executeWidth = Math.min(148 * u, back ? (context.width - gap) / 2 : context.width);
     const y = -context.bodyHeight / 2 + 22 * u;
@@ -1841,7 +1857,8 @@ function renderEquipmentOffer(context: SheetContext): void {
   if (!offer) { renderActions(context, getInfiniteFlowMobilePanelActions(context.model, 'interaction')); return; }
   const title = context.panel.getChildByName('MobileSheetTitle')?.getComponent(Label);
   if (title) title.string = '选择一件装备';
-  const footerHeight = 52 * u;
+  const room = roomSheetDetail(context.model, context.state) !== undefined;
+  const footerHeight = room ? roomSheetFooterHeight(u) : 52 * u;
   const bodyHeight = context.bodyHeight - footerHeight;
   const body = node(context.body, 'MobileSheetEquipmentOfferBody', 0, footerHeight / 2, context.width, bodyHeight);
   const region = scrollRegion({ ...context, body, bodyHeight }, offer.contentHeight);
@@ -1888,6 +1905,12 @@ function renderEquipmentOffer(context: SheetContext): void {
   }
   const action = context.model.sections[2].actions.find(entry => entry.actionId === offer.selected?.actionId);
   const enabled = action !== undefined && canExecute(context, action);
+  if (room) {
+    roomSheetFooter(context, [roomSheetClose(context), { name: 'MobileSheetEquipmentClaim',
+      label: context.options.chrome.busyActionId ? '正在收入背包' : '收入背包', caption: offer.selected ? offer.selected.name : '先选一件',
+      primary: true, enabled, ...(enabled ? { action } : {}) }]);
+    return;
+  }
   const claimWidth = Math.min(148 * u, context.width);
   const claim = catalogButton(context, context.body, 'MobileSheetEquipmentClaim',
     context.options.chrome.busyActionId ? '正在收入背包' : '收入背包', context.width / 2 - claimWidth / 2,
@@ -2021,7 +2044,8 @@ function renderRelicDraft(context: SheetContext): void {
   if (!draft) return;
   const title = context.panel.getChildByName('MobileSheetTitle')?.getComponent(Label);
   if (title) title.string = '选择一份回响';
-  const footerHeight = 52 * u;
+  const room = roomSheetDetail(context.model, context.state) !== undefined;
+  const footerHeight = room ? roomSheetFooterHeight(u) : 52 * u;
   const bodyHeight = context.bodyHeight - footerHeight;
   const body = node(context.body, 'MobileSheetRelicDraftBody', 0, footerHeight / 2, context.width, bodyHeight);
   const region = scrollRegion({ ...context, body, bodyHeight }, draft.contentHeight);
@@ -2069,11 +2093,328 @@ function renderRelicDraft(context: SheetContext): void {
     draft.footnoteLines.length * 17 * u, 11, palette().textMuted);
   const action = context.model.sections[2].actions.find(candidate => candidate.actionId === draft.selected?.actionId);
   const enabled = action !== undefined && canExecute(context, action);
+  if (room) {
+    roomSheetFooter(context, [roomSheetClose(context), { name: 'MobileSheetRelicClaim',
+      label: context.options.chrome.busyActionId ? '正在获得' : draft.selected ? `获得${draft.selected.name}` : '请选择一份回响',
+      caption: '本局立即生效', primary: true, enabled, ...(enabled ? { action } : {}) }]);
+    return;
+  }
   const confirmWidth = Math.min(148 * u, context.width);
   const confirm = catalogButton(context, context.body, 'MobileSheetRelicClaim', context.options.chrome.busyActionId ? '正在获得'
     : draft.selected ? `获得${draft.selected.name}` : '请选择一份回响', context.width / 2 - confirmWidth / 2,
     -context.bodyHeight / 2 + 22 * u, confirmWidth, enabled, undefined, true);
   if (enabled) context.options.bindAction(confirm, action!);
+}
+
+// --- Room bottom sheet ---------------------------------------------------------
+// A room's own interactions dock at the bottom like the route prototype's room sheet:
+// portrait, kicker, title and story above the room's content, then a button row that
+// starts with 收起. The room stays visible above it; gallery engines keep their frames.
+
+const ROOM_SHEET_PENDING_KICKERS: Readonly<Record<NonNullable<ExploreDetailViewModel['pending']>['kind'], string>> = Object.freeze({
+  'equipment-offer': '精英战', 'relic-draft': '回响', 'soul-recharge': '共鸣',
+  'dungeon-event': '事件', 'field-survey': '调查', law: '法则',
+});
+const ROOM_SHEET_NODE_KICKERS: Readonly<Record<ExploreDetailViewModel['currentNode']['nodeType'], string>> = Object.freeze({
+  monster: '遭遇战', trap: '陷阱', portal: '传送门', reward: '宝箱', exit: '出口',
+});
+
+function roomSheetDetail(model: GameViewModel, state: MobileSheetState): ExploreDetailViewModel | undefined {
+  const detail = model.sections[1].detail;
+  return activeCompact && state.kind === 'interaction' && detail.kind === 'explore' ? detail : undefined;
+}
+
+function roomSheetCompact(u: number): boolean {
+  return 750 / u <= 350;
+}
+
+/** Absorbs float drift in the content-fit frame, so a list that fits never shows a scrollbar. */
+const ROOM_SHEET_FIT_SLACK = 0.01;
+
+/** The button row's band: a 12px gap above 52px buttons (46px on the narrow phone). */
+function roomSheetFooterHeight(u: number): number {
+  return ((roomSheetCompact(u) ? 46 : 52) + 12) * u;
+}
+
+type RoomSheetHeading = Readonly<{
+  kicker: string;
+  title: string;
+  description: readonly string[];
+  descriptionSize: number;
+  descriptionHeight: number;
+  artKey: string;
+}>;
+
+/** Wraps like wrapInfiniteFlowLine, but a line never starts with closing punctuation: the character before it moves down too. */
+function wrapKeepingPunctuation(line: string, maxUnits: number): readonly string[] {
+  const lines: string[] = [];
+  let rest = line;
+  while (rest.length > 0) {
+    let head = wrapInfiniteFlowLine(rest, maxUnits)[0]!;
+    const characters = Array.from(head);
+    if (/^[，。！？、；：,.!?;:）」』】》]/u.test(rest.slice(head.length)) && characters.length >= 2) head = characters.slice(0, -1).join('');
+    lines.push(head);
+    rest = rest.slice(head.length);
+  }
+  return lines.length > 0 ? lines : [''];
+}
+
+type RoomSheetHeadingOf = (bodyWidth: number, u: number) => RoomSheetHeading;
+
+function roomSheetHeadingFrom(kicker: string, title: string, source: string, artKey: string, bodyWidth: number, u: number): RoomSheetHeading {
+  const descriptionSize = roomSheetCompact(u) ? 11.5 : 12.5;
+  const description = source.length === 0 ? []
+    : source.split('\n').flatMap(line => wrapKeepingPunctuation(line, Math.max(8, Math.floor(bodyWidth / u / descriptionSize))));
+  return {
+    kicker,
+    title,
+    description,
+    descriptionSize,
+    descriptionHeight: description.length * Math.ceil(Math.round(descriptionSize * u) * 1.5),
+    artKey,
+  };
+}
+
+function roomSheetHeading(detail: ExploreDetailViewModel, bodyWidth: number, u: number): RoomSheetHeading {
+  const pending = detail.pending;
+  const kicker = pending !== undefined ? ROOM_SHEET_PENDING_KICKERS[pending.kind]
+    : detail.rewardPreview !== undefined ? detail.rewardPreview.lanternOil === undefined ? '宝箱' : '补给'
+      : detail.currentNode.cleared ? '共鸣台' : ROOM_SHEET_NODE_KICKERS[detail.currentNode.nodeType];
+  return roomSheetHeadingFrom(kicker, readable(pending?.title ?? detail.currentNode.title),
+    readable(pending?.message ?? detail.currentNode.description), getInfiniteFlowRoomSheetArtKey(detail), bodyWidth, u);
+}
+
+/** The hub's claim sheet lists the tasks that wait to be turned in; it only exists while one does. */
+function claimSheetTasks(model: GameViewModel, state: MobileSheetState): readonly GameViewModel['tasks'][number][] | undefined {
+  const detail = model.sections[1].detail;
+  if (!activeCompact || state.kind !== 'claims' || detail.kind !== 'hub' || detail.taskClaims === undefined) return undefined;
+  const ready = model.tasks.filter(task => task.status === 'completed');
+  return ready.length > 0 ? ready : undefined;
+}
+
+function claimSheetHeading(tasks: readonly GameViewModel['tasks'][number][]): RoomSheetHeadingOf {
+  return (bodyWidth, u) => roomSheetHeadingFrom('主神任务', `${tasks.length} 项任务可领取`,
+    tasks.some(task => task.kind === 'mainline') ? '奖励领取后立即入账；领取主线奖励会开启下一章。' : '奖励领取后立即入账。',
+    INFINITE_FLOW_TASK_ENVOY_PORTRAIT_KEY, bodyWidth, u);
+}
+
+/** Bottom-docked frame with 10px side and bottom margins; like the window it replaces, it keeps 44px clear below the safe top. */
+export function roomSheetFrameGeometry(detail: ExploreDetailViewModel, safeInsets: InfiniteFlowInfoSheetOptions['safeInsets'],
+  surfaceHeight: number, viewportWidth = 390): SheetFrameGeometry {
+  return headedSheetFrameGeometry((bodyWidth, u) => roomSheetHeading(detail, bodyWidth, u), safeInsets, surfaceHeight, viewportWidth);
+}
+
+function headedSheetFrameGeometry(headingOf: RoomSheetHeadingOf, safeInsets: InfiniteFlowInfoSheetOptions['safeInsets'],
+  surfaceHeight: number, viewportWidth: number): SheetFrameGeometry {
+  const u = 750 / viewportWidth;
+  const pad = 14 * u;
+  const width = 750 - safeInsets.left - safeInsets.right - 20 * u;
+  const heading = headingOf(width - 2 * pad, u);
+  const chromeHeight = 2 * pad + 64 * u + heading.descriptionHeight + (heading.description.length > 0 ? 8 * u : 0);
+  const height = surfaceHeight - safeInsets.top - safeInsets.bottom - 54 * u;
+  return {
+    centerX: (safeInsets.left - safeInsets.right) / 2,
+    centerY: -surfaceHeight / 2 + safeInsets.bottom + 10 * u + height / 2,
+    width, height, bodyWidth: width - 2 * pad, bodyHeight: height - chromeHeight,
+  };
+}
+
+function roomText(context: SheetContext, parent: Node, name: string, value: string, x: number, y: number,
+  width: number, height: number, size: number, color: Color, centered = false): Label {
+  catalogText(context, parent, name, value, x, y, width, height, size, color, centered);
+  const label = parent.getChildByName(name)!.getComponent(Label)!;
+  label.lineHeight = Math.ceil(label.fontSize * 1.3);
+  return label;
+}
+
+function renderRoomSheetChrome(input: SheetChromeInput, headingOf: RoomSheetHeadingOf, frameName = 'MobileInfoSheet:interaction'): SheetLayoutChrome {
+  const { root, options, geometry } = input;
+  const { centerX, centerY, width, height, bodyWidth, bodyHeight } = geometry;
+  const context = { options } as SheetContext;
+  const u = catalogUnit(context);
+  const pad = 14 * u;
+  const heading = headingOf(bodyWidth, u);
+  const frame = node(root, frameName, centerX, centerY, width, height);
+  paintRoomSheetFrame(frame.addComponent(Graphics), width, height, u);
+  frame.addComponent(BlockInputEvents);
+  const top = height / 2 - pad;
+  const left = -width / 2 + pad;
+  // Header: framed portrait, then kicker and title beside it.
+  const art = 52 * u;
+  const artFrame = node(frame, 'MobileSheetRoomArt', left + art / 2, top - art / 2, art, art);
+  const backing = artFrame.addComponent(Graphics);
+  backing.lineWidth = u;
+  backing.fillColor = DARK_UI.ink;
+  backing.strokeColor = DARK_UI.edgeLight;
+  backing.rect(-art / 2, -art / 2, art, art);
+  backing.fill(); backing.stroke();
+  figureNode(context, artFrame, 'MobileSheetRoomArtFigure', heading.artKey, 0, 0, art - 4 * u, art - 4 * u,
+    { glyph: heading.kicker.slice(0, 1), glyphSize: 22, glyphColor: DARK_UI.gold }, options.images ?? getSheetFigures());
+  const textLeft = left + art + 12 * u;
+  const textWidth = width / 2 - pad - textLeft;
+  roomText(context, frame, 'MobileSheetKicker', heading.kicker, textLeft + textWidth / 2, top - 12 * u, textWidth, 16 * u, 11, DARK_UI.gold);
+  roomText(context, frame, 'MobileSheetTitle', heading.title, textLeft + textWidth / 2, top - 36 * u, textWidth, 26 * u,
+    roomSheetCompact(u) ? 17 : 19, DARK_UI.bone).isBold = true;
+  let cursor = top - 64 * u;
+  if (heading.description.length > 0) {
+    const description = roomText(context, frame, 'MobileSheetDescription', heading.description.join('\n'), 0,
+      cursor - heading.descriptionHeight / 2, bodyWidth, heading.descriptionHeight, heading.descriptionSize, DARK_UI.muted);
+    description.lineHeight = Math.ceil(description.fontSize * 1.5);
+    description.verticalAlign = Label.VerticalAlign.TOP;
+    cursor -= heading.descriptionHeight + 8 * u;
+  }
+  const body = node(frame, 'MobileSheetBody', 0, cursor - bodyHeight / 2, bodyWidth, bodyHeight);
+  return { frame, body, width: bodyWidth, bodyHeight };
+}
+
+type RoomSheetButton = Readonly<{
+  name: string;
+  label: string;
+  caption?: string;
+  primary?: boolean;
+  enabled: boolean;
+  action?: ViewActionModel;
+  activate?: () => void;
+}>;
+
+/** The prototype's one-tap row along the sheet's bottom; only enabled buttons bind. */
+function roomSheetFooter(context: SheetContext, buttons: readonly RoomSheetButton[]): void {
+  const u = catalogUnit(context);
+  const compact = roomSheetCompact(u);
+  const height = (compact ? 46 : 52) * u;
+  const gap = 8 * u;
+  const width = (context.width - gap * (buttons.length - 1)) / buttons.length;
+  buttons.forEach((button, index) => {
+    const control = node(context.body, button.name, -context.width / 2 + width / 2 + index * (width + gap),
+      -context.bodyHeight / 2 + height / 2, width, height);
+    const lit = button.primary === true && button.enabled;
+    paintRoomSheetButton(control.addComponent(Graphics), width, height, u, button.primary === true, button.enabled);
+    roomText(context, control, 'Label', button.label, 0, button.caption === undefined ? 0 : 8 * u, width - 8 * u, 24 * u,
+      compact ? 14 : 15, lit ? ROOM_SHEET.primaryInk : button.enabled ? DARK_UI.bone : DARK_UI.muted, true).isBold = true;
+    if (button.caption !== undefined) {
+      roomText(context, control, 'Caption', button.caption, 0, -12 * u, width - 8 * u, 16 * u, 10,
+        lit ? ROOM_SHEET.primaryCaption : DARK_UI.muted, true);
+    }
+    if (!button.enabled) return;
+    if (button.action !== undefined) context.options.bindAction(control, button.action);
+    else if (button.activate !== undefined) context.options.bindLocal(control, button.activate);
+  });
+}
+
+function roomSheetClose(context: SheetContext): RoomSheetButton {
+  return { name: 'MobileSheetClose', label: '收起', caption: '先看看门', enabled: true, activate: () => context.options.close() };
+}
+
+type RoomRewardRow = Readonly<{ id: string; name: string; value: string; tone: keyof typeof ROOM_SHEET.tones; visualAssetKey?: string }>;
+
+/** The claim's actual gains as label/value rows, lamp oil included for supply rooms. */
+function roomRewardContent(model: GameViewModel, state: MobileSheetState, u: number) {
+  const detail = model.sections[1].detail;
+  if (detail.kind !== 'explore' || !detail.rewardPreview || state.tab === 'reward-services'
+    || (detail.pending && detail.pending.kind !== 'dungeon-event')) return undefined;
+  const reward = detail.rewardPreview;
+  const rows: readonly RoomRewardRow[] = [
+    ...(reward.rewardPoints > 0 ? [{ id: 'reward-points', name: '奖励点', value: `+${reward.rewardPoints}`, tone: 'gold' as const }] : []),
+    ...(reward.lingyun > 0 ? [{ id: 'lingyun', name: '灵蕴', value: `+${reward.lingyun}`, tone: 'gold' as const }] : []),
+    ...reward.items.map(item => ({ id: item.itemId, name: item.name, value: `×${item.count}`, tone: 'neutral' as const,
+      ...(item.visualAssetKey === undefined ? {} : { visualAssetKey: item.visualAssetKey }) })),
+    ...(reward.healing > 0 ? [{ id: 'healing', name: '生命恢复', value: `+${reward.healing}`, tone: 'good' as const }] : []),
+    ...(reward.lanternOil === undefined ? [] : [{ id: 'lantern-oil', name: '灯油', value: `+${reward.lanternOil}`, tone: 'gold' as const }]),
+  ];
+  const rowHeight = (roomSheetCompact(u) ? 26 : 29) * u;
+  const contentHeight = rows.length * rowHeight;
+  return { reward, rows, rowHeight, contentHeight, bodyHeight: contentHeight + roomSheetFooterHeight(u) };
+}
+
+function renderRoomRewardClaim(context: SheetContext): void {
+  const u = catalogUnit(context);
+  const content = roomRewardContent(context.model, context.state, u);
+  if (!content) return;
+  const footerHeight = roomSheetFooterHeight(u);
+  const listHeight = context.bodyHeight - footerHeight;
+  const body = node(context.body, 'MobileSheetRewardBody', 0, footerHeight / 2, context.width, listHeight);
+  const region = scrollRegion({ ...context, body, bodyHeight: listHeight }, content.contentHeight);
+  const list = scrollContentNode(region);
+  const width = context.width;
+  const rules = node(list, 'MobileSheetRewardRules', 0, 0, width, region.contentHeight).addComponent(Graphics);
+  rules.lineWidth = Math.max(1, 0.6 * u);
+  rules.strokeColor = new Color(DARK_UI.edge.r, DARK_UI.edge.g, DARK_UI.edge.b, 150);
+  content.rows.forEach((row, index) => {
+    const y = scrollItemY(region, index * content.rowHeight, content.rowHeight);
+    for (const edge of index === content.rows.length - 1 ? [1, -1] : [1]) {
+      rules.moveTo(-width / 2, y + edge * content.rowHeight / 2);
+      rules.lineTo(width / 2, y + edge * content.rowHeight / 2);
+      rules.stroke();
+    }
+    const item = node(list, `MobileSheetRewardItem:${row.id}`, 0, y, width, content.rowHeight);
+    let nameLeft = -width / 2;
+    if (row.visualAssetKey !== undefined) {
+      figureNode(context, item, `RewardItemIcon:${row.id}`, row.visualAssetKey, nameLeft + 10 * u, 0, 20 * u, 20 * u,
+        { glyph: row.name.slice(-1), glyphSize: 22, glyphColor: palette().accent }, context.images);
+      nameLeft += 26 * u;
+    }
+    const nameWidth = width * 0.6 - (nameLeft + width / 2);
+    roomText(context, item, 'RewardItemName', row.name, nameLeft + nameWidth / 2, 0, nameWidth, content.rowHeight, 12.5, DARK_UI.muted);
+    roomText(context, item, 'RewardItemValue', row.value, width * 0.3, 0, width * 0.4, content.rowHeight, 12.5,
+      ROOM_SHEET.tones[row.tone]).horizontalAlign = Label.HorizontalAlign.RIGHT;
+  });
+  const reward = content.reward;
+  const action = context.model.sections[2].actions.find(candidate => candidate.actionId === reward.actionId);
+  const enabled = action !== undefined && canExecute(context, action);
+  const extras = getInfiniteFlowMobilePanelActions(context.model, 'interaction').filter(candidate => candidate.actionId !== reward.actionId);
+  roomSheetFooter(context, [
+    roomSheetClose(context),
+    ...(extras.length > 0 ? [{ name: 'MobileSheetRewardServices', label: '其他行动', enabled: true,
+      activate: () => context.options.setState({ kind: 'interaction', tab: 'reward-services', page: 0 }) }] : []),
+    { name: 'MobileSheetRewardClaim', label: context.options.chrome.busyActionId ? '正在领取' : '领取奖励',
+      caption: action?.disabledReason ? readable(action.disabledReason) : reward.relicDraftId ? '领取后选一份回响' : '物资收入战利品袋',
+      primary: true, enabled, ...(enabled ? { action } : {}) },
+  ]);
+}
+
+function claimSheetContent(tasks: readonly GameViewModel['tasks'][number][], u: number) {
+  const rowHeight = (roomSheetCompact(u) ? 38 : 42) * u;
+  return { rowHeight, contentHeight: tasks.length * rowHeight };
+}
+
+/** Each finished task with its reward, then 收起 and one button that claims them all. */
+function renderTaskClaims(context: SheetContext): void {
+  const tasks = claimSheetTasks(context.model, context.state);
+  if (!tasks) return;
+  const u = catalogUnit(context);
+  const content = claimSheetContent(tasks, u);
+  const footerHeight = roomSheetFooterHeight(u);
+  const listHeight = context.bodyHeight - footerHeight;
+  const body = node(context.body, 'MobileSheetClaimBody', 0, footerHeight / 2, context.width, listHeight);
+  const region = scrollRegion({ ...context, body, bodyHeight: listHeight }, content.contentHeight);
+  const list = scrollContentNode(region);
+  const width = context.width;
+  const rules = node(list, 'MobileSheetClaimRules', 0, 0, width, region.contentHeight).addComponent(Graphics);
+  rules.lineWidth = Math.max(1, 0.6 * u);
+  rules.strokeColor = new Color(DARK_UI.edge.r, DARK_UI.edge.g, DARK_UI.edge.b, 150);
+  const tagWidth = 30 * u;
+  tasks.forEach((task, index) => {
+    const y = scrollItemY(region, index * content.rowHeight, content.rowHeight);
+    rules.moveTo(-width / 2, y - content.rowHeight / 2);
+    rules.lineTo(width / 2, y - content.rowHeight / 2);
+    rules.stroke();
+    const row = node(list, `MobileSheetClaimTask:${task.id}`, 0, y, width, content.rowHeight);
+    const mainline = task.kind === 'mainline';
+    roomText(context, row, 'ClaimTaskKind', mainline ? '主线' : '支线', -width / 2 + tagWidth / 2, 8 * u, tagWidth, 18 * u, 10.5,
+      mainline ? DARK_UI.gold : DARK_UI.muted, true);
+    const textLeft = -width / 2 + tagWidth + 6 * u;
+    const textWidth = width / 2 - textLeft;
+    roomText(context, row, 'ClaimTaskTitle', readable(task.title), textLeft + textWidth / 2, 8 * u, textWidth, 20 * u, 13, DARK_UI.bone).isBold = true;
+    roomText(context, row, 'ClaimTaskReward', readable(task.rewardText), textLeft + textWidth / 2, -10 * u, textWidth, 16 * u, 11, ROOM_SHEET.tones.gold);
+  });
+  const detail = context.model.sections[1].detail;
+  const action = detail.kind === 'hub' ? detail.taskClaims?.action : undefined;
+  const enabled = action !== undefined && canExecute(context, action);
+  roomSheetFooter(context, [
+    { name: 'MobileSheetClose', label: '收起', caption: '稍后找任务使者', enabled: true, activate: () => context.options.close() },
+    { name: 'MobileSheetClaimAll', label: context.options.chrome.busyActionId ? '正在领取' : '全部领取',
+      caption: action?.disabledReason ? readable(action.disabledReason) : '奖励立即入账', primary: true, enabled, ...(enabled ? { action } : {}) },
+  ]);
 }
 
 /** Compact production frame limits, also used by the gallery baseline. */
@@ -3273,6 +3614,7 @@ function renderSheetKind(context: SheetContext): void {
     if (detail.kind === 'hub' && detail.shop) renderHubCatalog(context, detail.shop);
     else renderTextPages(context, [{ title: '交谈', lines: ['请在主神空间走近 NPC 后交谈。'] }]);
   }
+  else if (state.kind === 'claims') renderTaskClaims(context);
   else if (state.kind === 'result') renderTabbedActions(context, detail.kind === 'result' ? buildInfiniteFlowResultPages(detail) : [], ['结算明细', '归档与回城']);
   else if (state.kind === 'interaction') {
     if (detail.kind === 'explore' && detail.pending?.kind === 'equipment-offer') {
@@ -3288,7 +3630,13 @@ function renderSheetKind(context: SheetContext): void {
         renderActions(context, getInfiniteFlowMobilePanelActions(model, 'interaction')
           .filter(action => action.actionId !== detail.rewardPreview!.actionId), '暂无其他行动。',
           { kind: 'interaction', label: '返回奖励', name: 'MobileSheetRewardBack' });
-      } else renderRewardClaim(context);
+      } else if (roomSheetDetail(model, state)) renderRoomRewardClaim(context);
+      else renderRewardClaim(context);
+      return;
+    }
+    // The room sheet's header already tells the story, so its choices come straight away.
+    if (roomSheetDetail(model, state)) {
+      renderActions(context, getInfiniteFlowMobilePanelActions(model, 'interaction'));
       return;
     }
     const pages: readonly SheetPage[] = detail.kind === 'explore'
@@ -3495,18 +3843,24 @@ function renderInfiniteFlowInfoSheetBody(root: Node, model: GameViewModel, state
     return;
   }
   const compactCombat = model.phase === 'combat' && (combatChoiceGroup(state) !== undefined || state.tab === 'confirm-combat');
-  const backdrop = buildBackdrop(root, surfaceHeight, compactCombat);
+  // The room sheet leaves the room in view above it, like the room event sheet.
+  const roomDetail = roomSheetDetail(model, state);
+  const claimTasks = claimSheetTasks(model, state);
+  const backdrop = buildBackdrop(root, surfaceHeight, compactCombat || roomDetail !== undefined || claimTasks !== undefined);
   if (compactCombat) options.bindLocal(backdrop, options.close);
   const activeLayout = options.layout && options.layout.id !== BASELINE_LAYOUT_ID ? options.layout : undefined;
   const baseGeometry = activeLayout
     ? activeLayout.frameGeometry({ safeInsets: options.safeInsets, surfaceHeight, kind: state.kind, viewportWidth: options.viewportWidth })
-    : productionFrameGeometry(options.safeInsets, surfaceHeight, state.kind, 750 / activeUnit);
+    : roomDetail ? roomSheetFrameGeometry(roomDetail, options.safeInsets, surfaceHeight, 750 / activeUnit)
+      : claimTasks ? headedSheetFrameGeometry(claimSheetHeading(claimTasks), options.safeInsets, surfaceHeight, 750 / activeUnit)
+        : productionFrameGeometry(options.safeInsets, surfaceHeight, state.kind, 750 / activeUnit);
   const u = 750 / (options.viewportWidth ?? 390);
   const group = combatChoiceGroup(state);
   const equipmentContent = state.kind === 'interaction'
     ? equipmentOfferContent(model, state, baseGeometry.bodyWidth, u) : undefined;
-  const claimContent = state.kind === 'interaction' ? rewardClaimContent(model, state, baseGeometry.bodyWidth, u)
-    ?? relicDraftContent(model, state, baseGeometry.bodyWidth, u, options.rewardReceipt) : undefined;
+  const claimContent = state.kind === 'interaction'
+    ? (roomDetail ? roomRewardContent(model, state, u) : rewardClaimContent(model, state, baseGeometry.bodyWidth, u))
+      ?? relicDraftContent(model, state, baseGeometry.bodyWidth, u, options.rewardReceipt) : undefined;
   const actionSize = compactCombat
     ? group ? combatPickerContent(model, baseGeometry.bodyWidth, u, group)
       : actionDetailContent(model, state, baseGeometry.bodyWidth, u, options.chrome) : undefined;
@@ -3532,7 +3886,12 @@ function renderInfiniteFlowInfoSheetBody(root: Node, model: GameViewModel, state
     } else generalBodyHeight = 300 * u;
   } else if (state.kind === 'objectives') generalBodyHeight = 348 * u;
   else if (state.kind === 'interaction' && !equipmentContent && !claimContent) {
-    if (state.tab === 'overview') generalBodyHeight = 51 * u + documentHeight(detail.kind === 'explore'
+    if (roomDetail) {
+      const rewardActionId = state.tab === 'reward-services' ? roomDetail.rewardPreview?.actionId : undefined;
+      const actions = getInfiniteFlowMobilePanelActions(model, 'interaction').filter(action => action.actionId !== rewardActionId);
+      generalBodyHeight = ROOM_SHEET_FIT_SLACK + (actions.length === 0 ? documentHeight([{ title: '当前状态', lines: ['当前没有可执行选项。'] }], roomSheetFooterHeight(u))
+        : Math.min(300 * u, actionContent(model, state, baseGeometry.bodyWidth, u, actions, options.chrome).contentHeight) + roomSheetFooterHeight(u));
+    } else if (state.tab === 'overview') generalBodyHeight = 51 * u + documentHeight(detail.kind === 'explore'
       ? [{ title: detail.pending?.title ?? detail.currentNode.title, lines: [detail.pending?.message ?? detail.currentNode.description] }]
       : [{ title: '当前交互', lines: ['走近场景中的交互点后查看。'] }]);
     else {
@@ -3540,15 +3899,21 @@ function renderInfiniteFlowInfoSheetBody(root: Node, model: GameViewModel, state
       generalBodyHeight = 51 * u + Math.min(300 * u, action.contentHeight) + action.footerHeight;
     }
   }
-  const compactContent = equipmentContent ?? claimContent ?? actionSize
-    ?? (generalBodyHeight === undefined ? undefined : { bodyHeight: generalBodyHeight });
+  const roomList = roomDetail ? equipmentContent ?? claimContent : claimTasks ? claimSheetContent(claimTasks, u) : undefined;
+  const compactContent = roomList ? { bodyHeight: Math.min(300 * u, roomList.contentHeight) + roomSheetFooterHeight(u) + ROOM_SHEET_FIT_SLACK }
+    : equipmentContent ?? claimContent ?? actionSize
+      ?? (generalBodyHeight === undefined ? undefined : { bodyHeight: generalBodyHeight });
   const chromeHeight = baseGeometry.height - baseGeometry.bodyHeight;
   const height = !activeLayout && compactContent
     ? Math.min(baseGeometry.height, compactContent.bodyHeight + chromeHeight) : baseGeometry.height;
-  const geometry = { ...baseGeometry, height, bodyHeight: height - chromeHeight };
+  // The room sheet keeps its bottom edge docked while its height follows the content.
+  const geometry = { ...baseGeometry, height, bodyHeight: height - chromeHeight,
+    ...(roomDetail || claimTasks ? { centerY: baseGeometry.centerY - (baseGeometry.height - height) / 2 } : {}) };
   const chrome = activeLayout
     ? activeLayout.renderChrome({ root: backdrop, model, state, options, surfaceHeight, geometry })
-    : productionRenderChrome({ root: backdrop, model, state, options, surfaceHeight, geometry });
+    : roomDetail ? renderRoomSheetChrome({ root: backdrop, model, state, options, surfaceHeight, geometry }, (bodyWidth, unit) => roomSheetHeading(roomDetail, bodyWidth, unit))
+      : claimTasks ? renderRoomSheetChrome({ root: backdrop, model, state, options, surfaceHeight, geometry }, claimSheetHeading(claimTasks), 'MobileInfoSheet:claims')
+        : productionRenderChrome({ root: backdrop, model, state, options, surfaceHeight, geometry });
   // Gallery tiers pass images explicitly (EMPTY/FAKE); production reads the
   // module-level registry populated by the app's best-effort preload.
   const images = options.images ?? getSheetFigures();

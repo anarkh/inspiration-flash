@@ -41,6 +41,7 @@ import {
   getCurrentTrapPreview,
   getDirectiveEvaluation,
   getDirectiveForDungeon,
+  getHealingPillBaseHealing,
   getCompanionRecruitmentStatus,
   getCompanionUpgradeStatus,
   getCurrentEquipmentMemoryCombatStatus,
@@ -130,6 +131,8 @@ import {
   type CharacterLoadoutViewModel,
   type ChapterDirectiveViewModel,
   type ChapterLawCardViewModel,
+  type TaskTrackerLineViewModel,
+  type TaskTrackerViewModel,
   type ChapterPressureViewModel,
   type ChapterPursuitViewModel,
   type ChapterRouteContractViewModel,
@@ -1966,6 +1969,12 @@ function directiveObjectiveAction(objective: DirectiveObjective, result: Directi
   }
 }
 
+const DIRECTIVE_FAILED_PREFIX = '本轮未满足：';
+
+function directiveExitObjective(dungeonName: string): string {
+  return `从出口通关${dungeonName}并结算指令 0/1`;
+}
+
 function getTaskDirectiveEvaluation(state: GameState, dungeonId: DungeonId) {
   // A different chapter's run must not hide this task's durable equipment/pet/method progress.
   return getDirectiveEvaluation(state.run?.dungeonId === dungeonId ? state : { ...state, run: undefined }, dungeonId);
@@ -1974,7 +1983,7 @@ function getTaskDirectiveEvaluation(state: GameState, dungeonId: DungeonId) {
 function buildDirectiveTaskObjectives(state: GameState, evaluation: MainGodTaskEvaluation): readonly string[] {
   const dungeonId = evaluation.task.chapterDungeonId;
   const dungeonName = DUNGEONS[dungeonId].name;
-  if (evaluation.completed) return [`首通${dungeonName}并完成指令 1/1`];
+  if (evaluation.completed) return [`通关${dungeonName}并完成指令 1/1`];
   const directive = getDirectiveForDungeon(dungeonId);
   const progress = getTaskDirectiveEvaluation(state, dungeonId);
   const clearedCount = state.run?.dungeonId === dungeonId ? state.run.clearedNodeIds.length : 0;
@@ -1988,11 +1997,9 @@ function buildDirectiveTaskObjectives(state: GameState, evaluation: MainGodTaskE
     }),
     ...progress.objectiveResults.flatMap((objective) => !objective.completed &&
       (objective.kind === 'low_damage' || objective.kind === 'no_item')
-      ? [`本轮未满足：${objective.label}`]
+      ? [`${DIRECTIVE_FAILED_PREFIX}${objective.label}`]
       : []),
-    ...(progress.status === 'completed'
-      ? [`从出口完成${dungeonName}首通结算 0/1`]
-      : [`首通${dungeonName} ${Number(state.completedDungeonIds.includes(dungeonId))}/1`])
+    directiveExitObjective(dungeonName)
   ];
   return objectives;
 }
@@ -2061,14 +2068,14 @@ function buildCurrentTasks(state: GameState): readonly TaskViewModel[] {
         detailObjectives: [
           directive.progressText,
           ...directive.objectiveResults.map((objective) => `${objective.label} · ${objective.progressText}`),
-          `首通${DUNGEONS[task.chapterDungeonId].name} ${Number(state.completedDungeonIds.includes(task.chapterDungeonId))}/1`,
-          '首通时满足全部指令目标，由出口自动结算'
+          directiveExitObjective(DUNGEONS[task.chapterDungeonId].name),
+          '任意一次通关时满足全部指令目标，由出口自动结算；奖励只发一次'
         ]
       } : completedDirective ? {
         detailObjectives: [
           `清理节点 ${completedDirective.requiredClears}/${completedDirective.requiredClears}`,
-          ...completedDirective.optionalObjectives.map((objective) => `${objective.label} · 首通时已满足`),
-          `首通${DUNGEONS[task.chapterDungeonId].name} 1/1`,
+          ...completedDirective.optionalObjectives.map((objective) => `${objective.label} · 通关时已满足`),
+          `通关${DUNGEONS[task.chapterDungeonId].name} 1/1`,
           '指令奖励已结算 1/1'
         ]
       } : {}),
@@ -2077,6 +2084,58 @@ function buildCurrentTasks(state: GameState): readonly TaskViewModel[] {
       rewardText: rewardReadout(evaluation)
     }];
   });
+}
+
+/** The directive's next open step, or why it can no longer pay this run. */
+function buildDirectiveTrackerLine(state: GameState, evaluation: MainGodTaskEvaluation, dungeonName: string): TaskTrackerLineViewModel {
+  const objectives = buildTaskObjectives(state, evaluation);
+  const failed = objectives.find((line) => line.startsWith(DIRECTIVE_FAILED_PREFIX));
+  if (failed) return { id: 'directive', kicker: '指令', text: `${failed.slice(DIRECTIVE_FAILED_PREFIX.length)} 已失败`, tone: 'failed' };
+  // Clears come with any route; the conditions a player can forget lead.
+  const clears = `清理${dungeonName}节点`;
+  const open = objectives
+    .filter((line) => line !== directiveExitObjective(dungeonName) && !/ (\d+)\/\1$/.test(line))
+    .sort((a, b) => Number(a.startsWith(clears)) - Number(b.startsWith(clears)))
+    .map((line) => line.replace(clears, '清理节点'));
+  if (open.length === 0) return { id: 'directive', kicker: '指令', text: '条件已满足 · 去出口结算', tone: 'done' };
+  return { id: 'directive', kicker: '指令', text: open.length > 1 ? `${open[0]} +${open.length - 1}` : open[0]!, tone: 'active' };
+}
+
+function buildTaskTracker(state: GameState, routeContract: ChapterRouteContractViewModel): TaskTrackerViewModel | undefined {
+  const run = state.run;
+  if (!run) return undefined;
+  const dungeonName = DUNGEONS[run.dungeonId].name;
+  const evaluations = evaluateVisibleTasks(state);
+  const mainline = evaluations.find(({ task }) => task.id === `mainline_clear_${run.dungeonId}`);
+  const directive = evaluations.find(({ task }) => task.id === `side_directive_${run.dungeonId}`);
+  const hiddenKicker = run.entryFlowVersion === 2 ? '隐藏' : '契约';
+  const claimable = evaluations.filter(({ status }) => status === 'completed').length;
+  const lines: TaskTrackerLineViewModel[] = [
+    ...(mainline?.status === 'active' ? [{ id: 'mainline' as const, kicker: '主线', text: `通关${dungeonName}`, tone: 'active' as const }] : []),
+    ...(directive?.status === 'active' ? [buildDirectiveTrackerLine(state, directive, dungeonName)] : []),
+    ...(routeContract.status === 'active' && routeContract.nextTarget
+      ? [{ id: 'hidden' as const, kicker: hiddenKicker, text: `前往${routeContract.nextTarget.nodeTitle} ${routeContract.completedTargetCount}/2`, tone: 'active' as const }]
+      : routeContract.status === 'secured'
+        ? [{ id: 'hidden' as const, kicker: hiddenKicker, text: `已完成 · 出口结算 +${routeContract.potentialRewardPoints}`, tone: 'done' as const }]
+        : routeContract.status === 'failed'
+          ? [{ id: 'hidden' as const, kicker: hiddenKicker, text: '顺序错误 · 本轮已失败', tone: 'failed' as const }]
+          : []),
+    ...(claimable > 0 ? [{ id: 'claims' as const, kicker: '待领', text: `${claimable} 项 · 回主神空间领取`, tone: 'done' as const }] : [])
+  ];
+  return lines.length > 0 ? { lines } : undefined;
+}
+
+/** One tap claims every finished task; offered only while at least one waits. */
+function buildTaskClaims(state: GameState): HubDetailViewModel['taskClaims'] {
+  const ready = evaluateVisibleTasks(state).filter(({ status }) => status === 'completed');
+  if (ready.length === 0) return undefined;
+  return {
+    count: ready.length,
+    action: previewCommandAction(state, 'hub.tasks.claim-all', `全部领取（${ready.length} 项）`, 'primary', { type: 'hub/claim-all-tasks' }, {
+      recommendation: 'recommended',
+      readout: `领取全部 ${ready.length} 项已完成主神任务的奖励，奖励立即入账；主线奖励会开启下一章。`
+    })
+  };
 }
 
 function buildTasksPanel(state: GameState, requestedId: string | undefined): HubPanelProjection {
@@ -2155,6 +2214,7 @@ function buildHubProjection(state: GameState, localUiState: PresentationLocalUiS
   const panel = buildHubPanelProjection(state, localUiState, draft, activePanel);
   const actions = [...panel.actions, ...buildHubNavigation(activePanel)];
   const entryBuild = panel.entryBuild ?? buildEntryBuildProjection(state, draft).detail;
+  const taskClaims = buildTaskClaims(state);
   const detail: HubDetailViewModel = {
     kind: 'hub',
     activePanel,
@@ -2179,7 +2239,8 @@ function buildHubProjection(state: GameState, localUiState: PresentationLocalUiS
         draft,
         activePanel
       ))
-    })
+    }),
+    ...(taskClaims ? { taskClaims } : {})
   };
   const metrics: StatusMetric[] = [
     { id: 'hp', label: '生命', value: `${state.player.hp}/${state.player.maxHp}`, symbol: '♥', severity: state.player.hp < state.player.maxHp / 3 ? 'danger' : 'neutral' },
@@ -2979,6 +3040,7 @@ function buildChapterPursuit(state: GameState): ChapterPursuitViewModel {
   const nodes = (getCurrentDungeonDefinition(state) ?? DUNGEONS[pursuit.definition.dungeonId]).nodes;
   const containment = nodes.find((node) => node.id === pursuit.definition!.containmentNodeId);
   const current = progress.currentNodeId === null ? undefined : nodes.find((node) => node.id === progress.currentNodeId);
+  const lair = display.status === 'dormant' ? nodes.find((node) => node.id === pursuit.definition!.spawnNodeId) : undefined;
   return {
     legacyDisabled: pursuit.legacyDisabled,
     present: true,
@@ -2995,6 +3057,7 @@ function buildChapterPursuit(state: GameState): ChapterPursuitViewModel {
     containmentTitle: containment?.title ?? pursuit.definition.containmentNodeId,
     ...(containment ? { containmentCellId: `map.cell:${containment.position.x}:${containment.position.y}` } : {}),
     ...(current ? { currentCellId: `map.cell:${current.position.x}:${current.position.y}` } : {}),
+    ...(lair ? { lairCellId: `map.cell:${lair.position.x}:${lair.position.y}` } : {}),
     progress: {
       active: progress.active,
       currentNodeId: progress.currentNodeId,
@@ -3259,6 +3322,7 @@ function buildRewardNodePreview(
   if (preview.status === 'rejected') return undefined;
   const next = preview.state;
   const pendingDraft = next.run?.relicState?.pendingDraft;
+  const lanternOil = (getCurrentRunLantern(next)?.oil ?? 0) - (getCurrentRunLantern(state)?.oil ?? 0);
   return {
     nodeId,
     actionId: action.actionId,
@@ -3279,6 +3343,7 @@ function buildRewardNodePreview(
       }];
     }),
     healing: Math.max(0, next.player.hp - state.player.hp),
+    ...(lanternOil > 0 ? { lanternOil } : {}),
     ...(pendingDraft && pendingDraft.candidateIds.length > 0
       ? { relicDraftId: pendingDraft.draftId }
       : {})
@@ -3332,6 +3397,7 @@ function buildExploreProjection(state: GameState): PhaseProjection {
   const lantern = buildLantern(state);
   const routeForecasts = buildRouteForecasts(state);
   const roomEvent = pendingProjection.pending ? undefined : buildRoomEvent(state, actions, lantern);
+  const taskTracker = buildTaskTracker(state, chapterDecision.routeContract);
   const detail: ExploreDetailViewModel = {
     kind: 'explore',
     map,
@@ -3349,7 +3415,8 @@ function buildExploreProjection(state: GameState): PhaseProjection {
     ...(roomEvent ? { roomEvent } : {}),
     ...(pendingProjection.pending ? { pending: pendingProjection.pending } : {}),
     ...(rewardPreview ? { rewardPreview } : {}),
-    ...(equipmentMemoryHunt ? { equipmentMemoryHunt } : {})
+    ...(equipmentMemoryHunt ? { equipmentMemoryHunt } : {}),
+    ...(taskTracker ? { taskTracker } : {})
   };
   const lootPoints = loot.rewardPoints ?? 0;
   const metrics: StatusMetric[] = [
@@ -3511,7 +3578,7 @@ function buildCombatProjection(state: GameState, localUiState: PresentationLocal
         : action === 'weapon_skill'
           ? `战意 ${focus.current}/${focus.required}`
           : action === 'use_healing_pill'
-            ? `库存 ${state.inventory.healing_pill}；基础回复 36 点生命（受场域影响）。推进 1 回合，敌人会反击。`
+            ? `库存 ${state.inventory.healing_pill}；基础回复 ${getHealingPillBaseHealing(state)} 点生命（最大生命一半，受场域影响）。推进 1 回合，敌人会反击。`
             : action === 'use_thunder_talisman'
               ? `库存 ${state.inventory.thunder_talisman}`
               : action === 'guard' && parryable
@@ -3585,7 +3652,8 @@ function buildCombatProjection(state: GameState, localUiState: PresentationLocal
     player: { hp: state.player.hp, maxHp: state.player.maxHp, hpPercent: clampPercent(state.player.hp, state.player.maxHp) },
     enemy: {
       id: profile.monster.id,
-      name: profile.monster.name,
+      // A caught pursuer fights in its lair monster's body, under its own name.
+      name: combat.pursuer ? getCurrentRunPursuit(state).definition?.name ?? profile.monster.name : profile.monster.name,
       hp: combat.monsterHp,
       maxHp,
       hpPercent: clampPercent(combat.monsterHp, maxHp),
@@ -3612,6 +3680,7 @@ function buildCombatProjection(state: GameState, localUiState: PresentationLocal
     focus,
     guarding: combat.guarding,
     advancedExpanded: Boolean(localUiState.advancedCombatExpanded),
+    ...(combat.pursuer ? { pursuer: true } : {}),
     ...(chapterContext ? { chapterContext } : {}),
     ...(equipmentMemory ? { equipmentMemory } : {})
   };
@@ -3656,7 +3725,7 @@ function buildCombatProjection(state: GameState, localUiState: PresentationLocal
           label: `追兵：${chapterContext.pursuit.name ?? chapterContext.pursuit.statusLabel ?? '未知'}`,
           reason: chapterContext.pursuit.status === 'fused'
             ? `追兵已与首领融合（首领强化 +${chapterContext.pursuit.bossFusionPercent ?? 0}%）。`
-            : `追兵追踪中；节点接触将造成 ${chapterContext.pursuit.contactDamagePercent ?? 0}% 生命伤害。`
+            : '追兵追踪中；被它追上就要与它战斗。'
         }]
       : [])
   ];

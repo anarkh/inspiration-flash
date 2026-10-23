@@ -26,13 +26,13 @@ import type { ItemId, CombatPresentationFrame } from '@infinite-flow/core';
 import type { CombatEffectKind } from './InfiniteFlowCombatEffects';
 import { renderInfiniteFlowScene } from './InfiniteFlowScene';
 import type { InfiniteFlowSceneOptions } from './InfiniteFlowScene';
-import { renderInfiniteFlowWalkScene } from './InfiniteFlowWalkScene';
+import { ALARM_BANNER_SECONDS, renderInfiniteFlowWalkScene } from './InfiniteFlowWalkScene';
 import type { WalkSceneHandle } from './InfiniteFlowWalkScene';
 import type { HudPopoverKind } from './hud-layout';
 import { InfiniteFlowWalkInput } from './InfiniteFlowWalkInput';
 import { captureInfiniteFlowInfoSheetState, getInfiniteFlowMobilePanelActions, renderInfiniteFlowInfoSheet } from './InfiniteFlowInfoSheet';
 import type { MobilePanelKind, MobileSheetState } from './InfiniteFlowInfoSheet';
-import { buildWalkWorld, describeRouteChange } from './walk-world';
+import { buildWalkWorld, describePursuerWake, describeRouteChange, describeTaskChange } from './walk-world';
 import type { WorldPoint, WorldTarget } from './walk-world';
 import { DARK_UI, paintDarkFrame } from './dark-ui';
 import { COMPACT_SHEET_THEME } from './sheet-theme';
@@ -1783,6 +1783,7 @@ const CHAPTER_PURSUIT_REPELLED_REASON_LABELS: Readonly<Record<string, string>> =
   successful_exit: '成功离开副本',
   retreat: '主动撤退',
   failure: '探索失败',
+  defeated: '追上后被你击败',
 });
 
 function signedPercent(value: number): string {
@@ -1921,9 +1922,6 @@ export function formatInfiniteFlowChapterPursuit(
       : CHAPTER_PURSUIT_STATUS_LABELS[pursuit.status];
   const playerDescription = (pursuit.statusDescription ?? pursuit.flavorDescription ?? '状态描述未提供')
     .replace(/\bunknown\b/giu, '未知');
-  const contactDamage = pursuit.contactDamagePercent === undefined
-    ? '未知'
-    : `${pursuit.contactDamagePercent}%`;
   const bossFusion = pursuit.bossFusionPercent === undefined
     ? '未知'
     : `${pursuit.bossFusionPercent}%`;
@@ -1935,7 +1933,7 @@ export function formatInfiniteFlowChapterPursuit(
         progress === undefined
           ? '进度未提供'
           : `活跃 ${progress.active ? '是' : '否'} · 接触 ${progress.contacts} · 宽限 ${progress.graceMoves} · 清理 ${progress.clearedNodeCount}/${progress.spawnClearCount} · 余 ${progress.clearsRemaining}`,
-        `接触伤害 ${contactDamage} · 首领融合 ${bossFusion} · 奖励 ${reward}`,
+        `被追上即迎战 · 首领融合 ${bossFusion} · 奖励 ${reward}`,
         progress === undefined
           ? '位置未提供'
           : progress.repelledReason !== null
@@ -1984,7 +1982,7 @@ export function formatInfiniteFlowCombatChapterContext(
     && pursuit.status !== 'disabled'
     && pursuit.status !== 'dormant';
   const pursuitLine = pursuitActive
-    ? `追兵 ${pursuit.name ?? '未知'} ${pursuit.statusLabel ?? pursuit.status ?? ''} · 接触${pursuit.contactDamagePercent ?? 0}%${pursuit.status === 'fused' ? ` · 融合${pursuit.bossFusionPercent ?? 0}%` : ''}`
+    ? `追兵 ${pursuit.name ?? '未知'} ${pursuit.statusLabel ?? pursuit.status ?? ''} · 追上即战${pursuit.status === 'fused' ? ` · 融合${pursuit.bossFusionPercent ?? 0}%` : ''}`
     : undefined;
   return Object.freeze({
     lawLine,
@@ -2876,6 +2874,8 @@ export class InfiniteFlowView {
   private sceneMapCurrentCoordinate = '';
   private sceneCombatSnapshot: { enemyId: string; playerHp: number; enemyHp: number } | undefined;
   private sceneFeedback: { text: string; damage?: number } | undefined;
+  /** An alarm banner (pursuer woke, pursuer caught you); its age runs on engine ticks so re-renders keep fading it. */
+  private sceneBanner: { title: string; line: string; age: number } | undefined;
   /** The last explore projection, kept across fights so a clear's tier change is still announced. */
   private lastExploreDetail: ExploreDetailViewModel | undefined;
   /** The route prototype's room sheet, drawn by the walk scene while walking is suspended. */
@@ -2995,10 +2995,23 @@ export class InfiniteFlowView {
     }
     if (mobileDetail?.kind === 'explore') {
       const routeChange = this.lastExploreDetail === undefined ? undefined : describeRouteChange(this.lastExploreDetail, mobileDetail);
-      if (routeChange !== undefined) this.sceneFeedback = { text: routeChange };
+      const pursuit = mobileDetail.chapterDecision?.pursuit;
+      const woke = this.lastExploreDetail?.map.dungeonId === mobileDetail.map.dungeonId
+        && this.lastExploreDetail.chapterDecision?.pursuit.status === 'dormant' && pursuit?.status === 'stalking';
+      if (woke) {
+        // As in the route prototype, the wake gets its own banner instead of the small route notice.
+        this.sceneBanner = { title: `${pursuit.name ?? '追兵'}醒了`, line: `你走一步它走一步，小地图上的红点就是它${
+          pursuit.containmentTitle === undefined ? '' : `；先清空「${pursuit.containmentTitle}」再把它引过去，可以封印它`}`, age: 0 };
+      }
+      const taskChange = this.lastExploreDetail === undefined ? undefined : describeTaskChange(this.lastExploreDetail, mobileDetail);
+      if (routeChange !== undefined && !(woke && routeChange === describePursuerWake(pursuit?.name))) this.sceneFeedback = { text: routeChange };
+      else if (taskChange !== undefined) this.sceneFeedback = { text: taskChange };
       this.lastExploreDetail = mobileDetail;
     } else if (mobileDetail?.kind !== 'combat') {
       this.lastExploreDetail = undefined;
+    } else if (mobileDetail.pursuer && !(previousDetail?.kind === 'combat' && previousDetail.pursuer)) {
+      // Being caught starts the fight at once, so the catch itself gets the banner.
+      this.sceneBanner = { title: `${mobileDetail.enemy.name}追上了你`, line: '击败它，本局它就不会再出现；也可以脱离', age: 0 };
     }
     if (this.mobileSheet?.kind === 'interaction') {
       if (roomKey !== this.mobileRoomKey || (this.mobilePendingKey !== '' && pendingKey === '')
@@ -3045,17 +3058,27 @@ export class InfiniteFlowView {
       this.relicDraftSelection = undefined;
     }
     if (mobileDetail?.kind !== 'explore' || mobileDetail.roomEvent === undefined || roomKey !== this.mobileRoomKey) this.roomEventOpen = false;
-    // As in the approved route prototype, stepping through a door opens the new room's own
-    // sheet: the prototype-style room sheet for a single event, the existing interaction list
-    // for pending choices. Neither picks an action; closing leaves the room to walk.
-    // Portals stay passages and cleared rooms stay quiet.
-    if (mobileDetail?.kind === 'explore' && previousDetail?.kind === 'explore' && roomKey !== this.mobileRoomKey
+    // As in the approved route prototype, stepping through a door, or into the first room from
+    // the hub, opens the new room's own sheet: the prototype-style room sheet for a single
+    // event, the room's bottom interaction sheet otherwise. Neither picks an action; closing
+    // leaves the room to walk. Portals stay passages and cleared rooms stay quiet.
+    if (mobileDetail?.kind === 'explore' && (previousDetail?.kind === 'explore' || previousDetail?.kind === 'hub')
+      && roomKey !== this.mobileRoomKey
       && this.mobileSheet === undefined && mobileDetail.currentNode.nodeType !== 'portal'
       && (!nodeCleared || mobileDetail.pending !== undefined)) {
       if (mobileDetail.roomEvent !== undefined) this.roomEventOpen = true;
       else if (model !== undefined && getInfiniteFlowMobilePanelActions(model, 'interaction').length > 0) {
         this.mobileSheet = { kind: 'interaction', page: 0 };
       }
+    }
+    // Arriving in 主神空间 with finished tasks offers them at once; once all are claimed the sheet steps aside.
+    const claimable = mobileDetail?.kind === 'hub' ? mobileDetail.taskClaims?.count ?? 0 : 0;
+    if (model?.phase === 'hub' && previousModel?.phase !== 'hub' && claimable > 0 && this.mobileSheet === undefined) {
+      this.mobileSheet = { kind: 'claims', page: 0 };
+    } else if (this.mobileSheet?.kind === 'claims' && claimable === 0) {
+      const claimed = previousDetail?.kind === 'hub' ? previousDetail.taskClaims?.count ?? 0 : 0;
+      this.mobileSheet = undefined;
+      if (claimed > 0) this.sceneFeedback = { text: `已领取 ${claimed} 项任务奖励` };
     }
     this.mobileRoomKey = roomKey;
     this.mobilePendingKey = pendingKey;
@@ -3435,6 +3458,11 @@ export class InfiniteFlowView {
   }
 
   tick(deltaTime: number): void {
+    // The banner only ages while a walk or duel scene shows it, and a stalled frame (an art load) counts as one short frame.
+    if (this.sceneBanner !== undefined && this.walkScene !== undefined) {
+      this.sceneBanner.age += Math.min(Math.max(0, deltaTime), 0.1);
+      if (this.sceneBanner.age >= ALARM_BANNER_SECONDS) this.sceneBanner = undefined;
+    }
     if (this.combatPlayback !== undefined && !this.destroyed) {
       this.walkScene?.tick(deltaTime, { x: 0, y: 0 });
       return;
@@ -3640,6 +3668,7 @@ export class InfiniteFlowView {
       ...(this.sceneMapOrigin === undefined ? {} : { mapOrigin: this.sceneMapOrigin }),
       setMapOrigin: (origin) => { this.sceneMapOrigin = origin; this.renderAgain(); },
       ...(this.sceneFeedback === undefined ? {} : { feedback: this.sceneFeedback }),
+      ...(this.sceneBanner === undefined ? {} : { banner: { ...this.sceneBanner } }),
     };
     if (detail.kind === 'result') {
       renderInfiniteFlowScene(root, model, options);

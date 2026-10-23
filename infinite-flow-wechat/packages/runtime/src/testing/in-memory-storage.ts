@@ -57,7 +57,7 @@ export class InMemoryStoragePort implements StoragePort {
   }
 
   async listKeys(prefix: string): Promise<string[]> {
-    return [...this.volatileData.keys()]
+    return Array.from(this.volatileData.keys())
       .filter((key) => key.startsWith(prefix))
       .sort();
   }

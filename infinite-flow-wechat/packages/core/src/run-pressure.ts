@@ -3,7 +3,7 @@ export type RunPressureTier = 'stable' | 'hunted' | 'breach';
 export type RunPressureState = {
   rulesVersion: 1;
   clearedNodeCount: number;
-  /** Set once a burnt-out lantern drops the run straight into breach; never cleared. */
+  /** Set while a burnt-out lantern holds the run in breach; relighting the lamp clears it. */
   breachForced?: true;
 };
 
@@ -104,6 +104,14 @@ export function forceRunPressureBreach(
   if (normalized.breachForced) return normalized;
 
   return { ...normalized, breachForced: true };
+}
+
+/** A relit lamp lifts the breach it forced; the cleared count sets the tier again. */
+export function liftRunPressureBreach(state: RunPressureState | undefined): RunPressureState | undefined {
+  const normalized = normalizeRunPressureState(state);
+  if (!normalized?.breachForced) return normalized;
+
+  return { rulesVersion: normalized.rulesVersion, clearedNodeCount: normalized.clearedNodeCount };
 }
 
 export function getRunPressureStatus(state: RunPressureState): RunPressureStatus;

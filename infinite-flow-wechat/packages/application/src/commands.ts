@@ -100,6 +100,7 @@ export type GameCommand =
     }>
   | NoPayloadCommand<'hub/recall-equipment-commission'>
   | Readonly<{ type: 'hub/claim-task'; taskId: string }>
+  | NoPayloadCommand<'hub/claim-all-tasks'>
   | Readonly<{
       type: 'run/enter';
       dungeonId: DungeonId;
@@ -208,6 +209,7 @@ const COMMAND_TYPES: ReadonlySet<string> = new Set<GameCommandType>([
   'hub/start-equipment-commission',
   'hub/recall-equipment-commission',
   'hub/claim-task',
+  'hub/claim-all-tasks',
   'run/enter',
   'run/move',
   'run/select-node',
@@ -248,6 +250,7 @@ const NO_PAYLOAD_COMMAND_TYPES: ReadonlySet<GameCommandType> = new Set([
   'game/new',
   'hub/recover',
   'hub/recall-equipment-commission',
+  'hub/claim-all-tasks',
   'node/collect-reward',
   'node/activate-soul-recharge',
   'node/cancel-soul-recharge',
@@ -475,6 +478,7 @@ const HUB_COMMANDS: ReadonlySet<GameCommandType> = new Set([
   'hub/start-equipment-commission',
   'hub/recall-equipment-commission',
   'hub/claim-task',
+  'hub/claim-all-tasks',
   'run/enter'
 ]);
 

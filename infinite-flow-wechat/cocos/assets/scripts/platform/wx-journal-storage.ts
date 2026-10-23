@@ -161,7 +161,7 @@ function compareEntries(left: JournalEntry, right: JournalEntry): number {
 }
 
 function mapToEntries(values: ReadonlyMap<string, string>): JournalEntry[] {
-  return [...values.entries()]
+  return Array.from(values.entries())
     .map(([key, value]) => [key, value] as const)
     .sort(compareEntries);
 }

@@ -7,11 +7,13 @@ import {
   activateOwnedEquipmentMemory,
   activatePet,
   attuneEquipment,
+  beginPursuerAmbush,
   buyEquipment,
   buyItem,
   buyPet,
   cancelCurrentEquipmentSoulSkillRecharge,
   capturePet,
+  claimAllTaskRewards,
   claimTaskReward,
   collectReward,
   configureRunRelicPreparation,
@@ -386,6 +388,8 @@ function applyDomainCommand(
       return recallEquipmentCommission(state);
     case 'hub/claim-task':
       return claimTaskReward(state, command.taskId);
+    case 'hub/claim-all-tasks':
+      return claimAllTaskRewards(state);
     case 'run/enter':
       return enterDungeon(
         state,
@@ -522,7 +526,10 @@ function deriveEvents(
     });
   }
 
-  if (!before.combat && after.combat) {
+  // A pursuer can catch the player right as a fight is won, so one command may end a fight and start the next.
+  const combatReplaced = before.combat !== undefined && after.combat !== undefined
+    && (before.combat.nodeId !== after.combat.nodeId || before.combat.pursuer !== after.combat.pursuer);
+  if (after.combat && (!before.combat || combatReplaced)) {
     events.push({
       type: 'combat.started',
       nodeId: after.combat.nodeId,
@@ -555,10 +562,13 @@ function deriveEvents(
     events.push({ type: 'boss.awakened', nodeId: after.combat.nodeId });
   }
 
-  if (before.combat && !after.combat) {
-    const defeated = after.run?.clearedNodeIds.includes(before.combat.nodeId) === true;
+  if (before.combat && (!after.combat || combatReplaced)) {
     // A lethal escape scrape or counter settles the run as a failure.
     const escaped = command.type === 'combat/act' && command.action === 'escape' && after.phase !== 'result';
+    // A beaten pursuer clears no room (its lair may be cleared already): its fight just ends without a flight or a fall.
+    const defeated = before.combat.pursuer === true
+      ? !escaped && after.phase !== 'result'
+      : after.run?.clearedNodeIds.includes(before.combat.nodeId) === true;
     events.push({
       type: 'combat.finished',
       nodeId: before.combat.nodeId,
@@ -622,7 +632,8 @@ export function reduceGameCommand(
   let nextState: GameState;
   const combatFrames: CombatPresentationFrame[] = [];
   try {
-    nextState = applyDomainCommand(state, command, frame => combatFrames.push(frame));
+    // A pursuer that caught the player during the command fights them once it settles.
+    nextState = beginPursuerAmbush(state, applyDomainCommand(state, command, frame => combatFrames.push(frame)));
   } catch (cause) {
     const message = cause instanceof Error ? cause.message : 'The domain transition threw an unknown error.';
     return reject(readonlyState, command.type, 'domain-rejected', message);

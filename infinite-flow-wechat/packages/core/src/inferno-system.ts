@@ -361,7 +361,7 @@ function createInfernoTopologyPlan(
     componentIndexByNodeId,
     protectedOrdinaryConnections,
     protectedConnectionKeys,
-    bossSourceNodeIds: [...bossSourceNodeIds].sort()
+    bossSourceNodeIds: Array.from(bossSourceNodeIds).sort()
   };
 }
 
@@ -535,7 +535,7 @@ export function createInfernoMapSnapshot(input: InfernoMapInput): InfernoMapSnap
       nodeId,
       x,
       y,
-      connectionIds: [...(connections.get(nodeId) ?? [])].sort()
+      connectionIds: Array.from(connections.get(nodeId) ?? []).sort()
     }))
   };
   const validation = validateInfernoMapTopology(snapshot, dungeon, bossNodeId);
@@ -673,7 +673,7 @@ export function validateInfernoMapTopology(
   const actualBossNeighbors = connectionIdsByNodeId.get(bossNodeId) ?? new Set<string>();
   if (
     actualBossNeighbors.size !== expectedBossNeighbors.size ||
-    [...actualBossNeighbors].some((nodeId) => !expectedBossNeighbors.has(nodeId))
+    Array.from(actualBossNeighbors).some((nodeId) => !expectedBossNeighbors.has(nodeId))
   ) {
     errors.push('invalid_boss_boundary');
   }

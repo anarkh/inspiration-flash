@@ -123,7 +123,7 @@ export class WxLifecycleAdapter implements LifecyclePort {
       reason: 'hide',
       ...(remainingTimeMs === undefined ? {} : { remainingTimeMs }),
     };
-    const listeners = [...this.suspendListeners];
+    const listeners = Array.from(this.suspendListeners);
     this.lastSuspendWork = Promise.all(
       listeners.map(async (listener) => {
         try {
@@ -150,7 +150,7 @@ export class WxLifecycleAdapter implements LifecyclePort {
 
   private readonly handleShow = (): void => {
     if (this.disposed) return;
-    for (const listener of [...this.resumeListeners]) {
+    for (const listener of Array.from(this.resumeListeners)) {
       try {
         listener();
       } catch (error) {
@@ -161,7 +161,7 @@ export class WxLifecycleAdapter implements LifecyclePort {
 
   private readonly handleMemoryWarning = (): void => {
     if (this.disposed) return;
-    for (const listener of [...this.memoryWarningListeners]) {
+    for (const listener of Array.from(this.memoryWarningListeners)) {
       try {
         listener();
       } catch (error) {

@@ -81,6 +81,30 @@ export function paintDarkFrame(g: Graphics, width: number, height: number, optio
   g.fill();
 }
 
+/** The route prototype's room sheet, shared by room events and room interactions. */
+export const ROOM_SHEET = Object.freeze({
+  fill: new Color(28, 23, 17, 246),
+  primaryInk: new Color(38, 24, 8, 255),
+  primaryCaption: new Color(70, 46, 16, 255),
+  tones: Object.freeze({
+    neutral: DARK_UI.bone,
+    good: new Color(156, 214, 150, 255),
+    bad: new Color(236, 128, 106, 255),
+    gold: new Color(236, 195, 117, 255),
+  }),
+});
+
+export function paintRoomSheetFrame(g: Graphics, width: number, height: number, pixel: number): void {
+  paintDarkFrame(g, width, height, { fill: ROOM_SHEET.fill, edge: DARK_UI.edgeLight, accent: DARK_UI.gold, cut: 10 * pixel });
+}
+
+/** One-tap sheet button; only an available primary action is lit gold. */
+export function paintRoomSheetButton(g: Graphics, width: number, height: number, pixel: number, primary: boolean, enabled: boolean): void {
+  paintDarkFrame(g, width, height, primary && enabled
+    ? { fill: new Color(196, 160, 92, 255), edge: new Color(236, 206, 140, 255), accent: new Color(255, 236, 190, 255), cut: 6 * pixel }
+    : { fill: enabled ? DARK_UI.raised : DARK_UI.quiet, edge: enabled ? DARK_UI.edgeLight : DARK_UI.edge, accent: enabled ? DARK_UI.gold : DARK_UI.edge, cut: 6 * pixel });
+}
+
 export type DarkIcon = 'character' | 'bag' | 'map' | 'target' | 'menu' | 'sword' | 'guard' | 'arcane' | 'interact' | 'left' | 'right' | 'close';
 
 /** One engraved glyph family, rendered by the existing Cocos Graphics pipeline. */

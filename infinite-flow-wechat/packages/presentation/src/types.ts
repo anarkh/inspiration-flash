@@ -239,6 +239,8 @@ export type RewardPreviewViewModel = Readonly<{
   }>[];
   /** Actual restored HP after clamping to the current maximum. */
   healing: number;
+  /** Lamp oil the claim actually adds; present only for supply rooms of a lamp-lit run. */
+  lanternOil?: number;
   /** Present only when this claim really creates a nonempty pending relic draft. */
   relicDraftId?: string;
 }>;
@@ -471,6 +473,8 @@ export type HubDetailViewModel = Readonly<{
   equipmentCommission?: EquipmentCommissionDetailViewModel;
   equipmentMemory?: EquipmentMemoryLibraryViewModel;
   shop?: HubShopCatalogViewModel;
+  /** Present while finished tasks wait in any panel; its action claims them all. Kept out of the panel's action list. */
+  taskClaims?: Readonly<{ count: number; action: ViewActionModel }>;
 }>;
 
 export type EquipmentMemoryHuntSignalViewModel = Readonly<{
@@ -616,6 +620,8 @@ export type ChapterPursuitViewModel = Readonly<{
   containmentCellId?: string;
   /** Map cell of a stalking pursuer, shown even inside the fog. */
   currentCellId?: string;
+  /** Map cell where a dormant pursuer waits to wake, shown even inside the fog. */
+  lairCellId?: string;
   progress?: Readonly<{
     active: boolean;
     currentNodeId: string | null;
@@ -703,6 +709,21 @@ export type ExploreDetailViewModel = Readonly<{
   /** Only present for an available, uncleared reward-claim command. */
   rewardPreview?: RewardPreviewViewModel;
   equipmentMemoryHunt?: EquipmentMemoryHuntViewModel;
+  /** The run's tasks at a glance; absent when none of them has anything left to show. */
+  taskTracker?: TaskTrackerViewModel;
+}>;
+
+export type TaskTrackerLineViewModel = Readonly<{
+  id: 'mainline' | 'directive' | 'hidden' | 'claims';
+  /** Two-character tag, such as 主线, 指令, 隐藏 or 待领. */
+  kicker: string;
+  text: string;
+  tone: 'active' | 'done' | 'failed';
+}>;
+
+/** This chapter's mainline and directive, a hidden task once found, and how many finished tasks wait in the hub. */
+export type TaskTrackerViewModel = Readonly<{
+  lines: readonly TaskTrackerLineViewModel[];
 }>;
 
 export type EquipmentMemoryCombatViewModel = Readonly<{
@@ -793,6 +814,8 @@ export type CombatDetailViewModel = Readonly<{
   guarding: boolean;
   /** Retained for older hosts; combat actions no longer depend on this local toggle. */
   advancedExpanded: boolean;
+  /** Present when the chapter's pursuer caught the player: beating it clears no room. */
+  pursuer?: true;
   /** Read-only chapter law/pursuit context for the active run; absent when no run snapshot exists. */
   chapterContext?: CombatChapterContextViewModel;
   equipmentMemory?: EquipmentMemoryCombatViewModel;

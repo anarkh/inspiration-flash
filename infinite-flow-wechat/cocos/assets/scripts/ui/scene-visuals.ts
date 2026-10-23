@@ -1,4 +1,4 @@
-import type { GameViewModel, HubCatalogPanel, HubPanel } from '@infinite-flow/presentation';
+import type { ExploreDetailViewModel, GameViewModel, HubCatalogPanel, HubPanel } from '@infinite-flow/presentation';
 import type { RunRelicId } from '@infinite-flow/core/run-relics';
 import { DUNGEON_WORLD_THEMES, getDungeonWorldBackgroundKey } from './dungeon-world-theme';
 
@@ -16,6 +16,9 @@ export const INFINITE_FLOW_DUNGEON_PROP_VISUAL_KEYS = Object.freeze({
   propDebris: 'scene:dungeon_prop_debris',
 });
 
+/** 任务使者's portrait, shared by the tasks NPC sheet and the hub's claim sheet. */
+export const INFINITE_FLOW_TASK_ENVOY_PORTRAIT_KEY = 'npc:main_god_projection';
+
 const HUB_OPPONENTS: Readonly<Partial<Record<HubPanel, string>>> = Object.freeze({
   equipment: 'npc:equipment_quartermaster',
   supplies: 'npc:supply_trader',
@@ -23,7 +26,7 @@ const HUB_OPPONENTS: Readonly<Partial<Record<HubPanel, string>>> = Object.freeze
   methods: 'npc:method_master',
   bloodlines: 'npc:bloodline_priest',
   companions: 'npc:companion_guide',
-  tasks: 'npc:main_god_projection',
+  tasks: INFINITE_FLOW_TASK_ENVOY_PORTRAIT_KEY,
 });
 
 /** Separate full-body world art from the existing shop portraits. */
@@ -44,6 +47,21 @@ export function getInfiniteFlowNpcWorldVisualKey(targetId: string): string | und
 
 export function getInfiniteFlowMonsterWorldVisualKey(monsterId: string): string {
   return `monster:${monsterId}_world`;
+}
+
+/** Portrait of the room's bottom interaction sheet: the same object the room shows. */
+export function getInfiniteFlowRoomSheetArtKey(detail: ExploreDetailViewModel): string {
+  const keys = INFINITE_FLOW_DUNGEON_PROP_VISUAL_KEYS;
+  const pending = detail.pending?.kind;
+  if (pending === 'equipment-offer') return keys.propChest;
+  if (pending === 'relic-draft') return keys.propRelic;
+  if (pending === 'dungeon-event') return keys.propEvent;
+  if (pending === 'field-survey') return keys.propSurvey;
+  if (pending === 'law') return keys.propLaw;
+  if (pending === 'soul-recharge' || detail.currentNode.cleared) return keys.propShrine;
+  const node = detail.currentNode;
+  if (node.nodeType === 'monster' && node.monsterId !== undefined) return getInfiniteFlowMonsterWorldVisualKey(node.monsterId);
+  return node.nodeType === 'trap' ? keys.propTrap : node.nodeType === 'exit' || node.nodeType === 'portal' ? keys.propExit : keys.propChest;
 }
 
 export function getInfiniteFlowRunRelicVisualKey(relicId: RunRelicId): string {
