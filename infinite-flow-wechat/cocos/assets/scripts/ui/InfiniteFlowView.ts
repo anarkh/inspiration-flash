@@ -1807,7 +1807,7 @@ export function formatInfiniteFlowChapterLaw(
     `严重度 ${CHAPTER_LAW_SEVERITY_LABELS[law.severity]} · 目标 ${law.targetReached ? '已达成' : '未达成'}${
       law.meter === undefined ? '' : ` · 计量 ${law.meter.value}/${law.meter.max}`
     }`,
-    `遭遇 全属性${signedPercent(modifiers.encounter.allStatsPercent)}% 防御${signedPercent(modifiers.encounter.defensePercent)}% 术攻${signedPercent(modifiers.encounter.artPowerPercent)}%`,
+    `遭遇 全属性${signedPercent(modifiers.encounter.allStatsPercent)}% 防御${signedPercent(modifiers.encounter.defensePercent)}%`,
     `陷阱 伤害${signedPercent(modifiers.trap.damagePercent)}% 检定${signedPercent(modifiers.trap.dcPercent)}% · 治疗${signedPercent(modifiers.healingPercent)}%`,
     `出伤 武力${signedPercent(modifiers.outgoingDamage.forcePercent)}% 术法${signedPercent(modifiers.outgoingDamage.artPercent)}% · 守御${signedPercent(modifiers.guardEffectPercent)}%`,
   ];
@@ -1899,7 +1899,7 @@ export function formatInfiniteFlowChapterPressure(
             : `${pressure.nextTierAt} 节点`
         }`,
       ]
-    : [`状态 ${pressure.legacyDisabled ? '旧档禁用' : '未提供'}`];
+    : [`状态 ${pressure.legacyDisabled ? '未启用' : '未提供'}`];
   return Object.freeze({
     kind: 'pressure',
     title: CHAPTER_SECTION_TITLES.pressure,
@@ -1942,7 +1942,7 @@ export function formatInfiniteFlowChapterPursuit(
               ? '追兵位置已锁定'
               : `距苏醒 ${progress.clearsRemaining} 节点`,
       ]
-    : [`状态 ${pursuit.legacyDisabled ? '旧档禁用' : '本章无追兵'}`];
+    : [`状态 ${pursuit.legacyDisabled ? '未启用' : '本章无追兵'}`];
   return Object.freeze({
     kind: 'pursuit',
     title: CHAPTER_SECTION_TITLES.pursuit,
@@ -2017,16 +2017,16 @@ export function formatInfiniteFlowEquipmentMemoryCombat(
   const status = memory.status === 'active'
     ? `激活 ${memory.activeName ?? memory.memoryId ?? '未知记忆'}`
     : memory.status === 'legacy-disabled'
-      ? 'legacy fail-closed'
-      : '格式故障 fail-closed';
+      ? '旧存档已停用'
+      : '存档异常已停用';
   const matching = memory.matchingEquipmentNames.length === 0
     ? '无匹配装备'
     : `匹配装备 ${memory.matchingEquipmentNames.join('、')}`;
   const overflow = memory.overflowState === 'stored'
-    ? 'overflow 已储存'
+    ? '溢出战意已暂存'
     : memory.overflowState === 'restored'
-      ? 'overflow 已恢复'
-      : 'overflow 空';
+      ? '溢出战意已返还'
+      : '无暂存战意';
   return Object.freeze({
     title: `装备记忆 · ${status}`,
     summary: matching,
@@ -2043,7 +2043,7 @@ export function formatInfiniteFlowEquipmentMemoryResult(
   const modern = memory.modernLibrary;
   const legacySummary = legacy === undefined
     ? undefined
-    : `legacy ${legacy.displayLabel} · ${legacy.equipmentName} · ${legacy.memoryName} · ${legacy.granted ? '已收录' : '未收录'}`;
+    : `旧版 ${legacy.displayLabel} · ${legacy.equipmentName} · ${legacy.memoryName} · ${legacy.granted ? '已收录' : '未收录'}`;
   const legacyDetail = legacy === undefined
     ? undefined
     : `${legacy.displayDetail} · ${legacy.rewardReadout}`;
@@ -2059,10 +2059,10 @@ export function formatInfiniteFlowEquipmentMemoryResult(
     : `收录装备 ${modern.recordedEquipmentNames.join('、') || '无'} · 激活装备 ${modern.activeEquipmentNames.join('、') || '无'}`;
   return Object.freeze({
     title: legacy !== undefined && modern !== undefined
-      ? '装备记忆 · legacy 结算 / 现代记忆库'
+      ? '装备记忆 · 旧版结算 / 记忆库'
       : legacy !== undefined
-        ? '装备记忆 · legacy 结算'
-        : '装备记忆 · 现代记忆库',
+        ? '装备记忆 · 旧版结算'
+        : '装备记忆 · 记忆库',
     summary: [legacySummary, modernSummary].filter((value) => value !== undefined).join('；'),
     detail: [legacyDetail, modernDetail].filter((value) => value !== undefined).join('\n'),
   });

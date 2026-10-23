@@ -207,10 +207,22 @@ function verifyHubAndHelp(): void {
     memoryHelp?.guidance,
     memoryHelp?.readout
   ].join(' ');
-  for (const requiredCopy of ['已装备', '满级', '合法铭刻', '淬炼达到 II', '成功抵达出口', '自动收录并激活', '装备面板', '现代入场', 'legacy', '双信号']) {
+  for (const requiredCopy of ['已装备', '满级', '合法铭刻', '淬炼达到 II', '成功抵达出口', '自动收录并激活', '装备面板']) {
     assert(memoryHelpCopy.includes(requiredCopy), `modern equipment-memory help covers ${requiredCopy}`);
   }
+  for (const developerTerm of ['legacy', 'flowVersion', '现代', '兼容']) {
+    assert(!memoryHelpCopy.includes(developerTerm), `equipment-memory help keeps developer term ${developerTerm} out of player copy`);
+  }
   assert(!memoryHelpCopy.includes('副本页只显示当前记忆任务'), 'modern help does not restore the obsolete hunt-first summary');
+  // Every help card a player can open stays free of build, save-format and desktop-only wording.
+  for (const helpId of [...DUNGEON_FEATURE_HELP_IDS, 'equipmentCommission'] as const) {
+    const card = buildGameViewModel(hub, { activeHelpId: helpId }).sections[4].active;
+    assert(card?.id === helpId && card.mechanic.length > 0, `${helpId} help card opens`);
+    const copy = [card?.title, card?.summary, card?.mechanic, card?.guidance, card?.readout, ...(card?.keywords ?? [])].join(' ');
+    for (const developerTerm of ['MVP', 'charge', 'flowVersion', 'legacy', 'fail-closed', '快照', '刷新页面', '现代', '旧存档', '原型', '悬停']) {
+      assert(!copy.includes(developerTerm), `${helpId} help keeps ${developerTerm} out of player copy`);
+    }
+  }
   const initialHp = viewModel.sections[1].metrics.find((metric) => metric.id === 'hp')?.value;
   hub.player.hp = 1;
   equal(viewModel.sections[1].metrics.find((metric) => metric.id === 'hp')?.value, initialHp, 'VM is detached from domain state');

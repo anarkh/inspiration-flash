@@ -1608,10 +1608,10 @@ export const METHODS: Record<MethodId, MethodDefinition> = {
   beast_taming: {
     id: 'beast_taming',
     name: '御灵印',
-    description: '降低捕获宠物时的心神反噬。',
+    description: '让虚弱的目标更早进入可捕获状态。',
     cost: { rewardPoints: 520, lingyun: 1, items: { demon_bone: 1 } },
     stats: { luck: 1 },
-    passive: '捕获类行动的失败惩罚降低。'
+    passive: '目标生命降到 50% 以下即可捕获（原为 35%）。'
   },
   void_heart: {
     id: 'void_heart',
