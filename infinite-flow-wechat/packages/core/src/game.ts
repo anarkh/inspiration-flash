@@ -6,7 +6,7 @@ import type { PlayerPowerBreakdown, ProgressionReadiness } from './progression';
 
 import { applyMonsterCombatEffects } from './combat-effects';
 import type { CombatDamageKind, CombatEffectAction, CombatEffectState } from './combat-effects';
-import { COMBAT_FOCUS_MAX, normalizeCombatFocus, resolveCombatFocus } from './combat-focus';
+import { COMBAT_ART_FOCUS_COST, COMBAT_FOCUS_MAX, normalizeCombatFocus, resolveCombatFocus } from './combat-focus';
 import type { CombatFocus } from './combat-focus';
 import { getCombatIntent, HEAVY_BLOW_TURN_INTERVAL, isParryableCombatIntent } from './combat-intents';
 import type { CombatEncounterRank, CombatIntent } from './combat-intents';
@@ -1608,10 +1608,10 @@ export const METHODS: Record<MethodId, MethodDefinition> = {
   beast_taming: {
     id: 'beast_taming',
     name: '御灵印',
-    description: '降低捕获宠物时的心神反噬。',
+    description: '让虚弱的目标更早进入可捕获状态。',
     cost: { rewardPoints: 520, lingyun: 1, items: { demon_bone: 1 } },
     stats: { luck: 1 },
-    passive: '捕获类行动的失败惩罚降低。'
+    passive: '目标生命降到 50% 以下即可捕获（原为 35%）。'
   },
   void_heart: {
     id: 'void_heart',
@@ -2035,7 +2035,24 @@ function normalizeEquipmentHealth(state: GameState): GameState {
   };
 }
 
-/** Combat recovery uses the settled maximum, independently of healing modifiers. */
+/** A won encounter (victory, capture or a beaten pursuer) restores this share of the settled maximum HP. */
+export const POST_COMBAT_RECOVERY_PERCENT = 20;
+
+/** Victory recovery uses the settled maximum, independently of healing modifiers; wounds carry into the next room. */
+function recoverHealthAfterVictory(state: GameState): { state: GameState; recovered: number } {
+  const maxHp = getDerivedStats(state).maxHp;
+  const hp = Math.min(maxHp, state.player.hp + Math.floor((maxHp * POST_COMBAT_RECOVERY_PERCENT) / 100));
+  return {
+    state: { ...state, player: { ...state.player, hp, maxHp } },
+    recovered: Math.max(0, hp - state.player.hp)
+  };
+}
+
+function getVictoryRecoveryText(recovered: number): string {
+  return recovered > 0 ? ` 战后调息，回复 ${recovered} 点生命。` : '';
+}
+
+/** A run-ending settlement uses the settled maximum, independently of healing modifiers. */
 function restoreHealthAfterCombat(state: GameState): GameState {
   const maxHp = getDerivedStats(state).maxHp;
   return {
@@ -6152,6 +6169,16 @@ function appendEnteredDungeonId(
     : [...(enteredDungeonIds ?? []), dungeonId];
 }
 
+/** The opening chapter before its first clear: the run that leaves the lamp and the pursuer out. */
+export function isOpeningChapterFirstClear(state: Pick<GameState, 'completedDungeonIds'>, dungeonId: DungeonId): boolean {
+  return dungeonId === DUNGEON_ORDER[0] && !state.completedDungeonIds.includes(dungeonId);
+}
+
+/** While only the opening chapter is cleared, lamp runs open with a one-banner introduction. */
+export function isLanternIntroductionStage(state: Pick<GameState, 'completedDungeonIds'>): boolean {
+  return state.completedDungeonIds.length === 1 && state.completedDungeonIds[0] === DUNGEON_ORDER[0];
+}
+
 export function enterDungeon(
   state: GameState,
   dungeonId: DungeonId,
@@ -6332,7 +6359,8 @@ export function enterDungeon(
         })
     : undefined;
   // Lamp oil is tuned for the fixed chapter grid; layered inferno maps keep their own clock.
-  const lanternState = simplifiedEntry && protocolDefinition.id !== 'deep'
+  // A first clear of the opening chapter teaches fights and doors only: no lamp, so no pursuer either.
+  const lanternState = simplifiedEntry && protocolDefinition.id !== 'deep' && !isOpeningChapterFirstClear(state, dungeonId)
     ? createRunLanternState(dungeonId, dungeon.grid.startNodeId)
     : undefined;
 
@@ -6660,9 +6688,10 @@ function finishPursuerVictory(state: GameState, monster: MonsterDefinition): Gam
   const defeatedState = pursuitState && state.run
     ? { ...state, run: { ...state.run, pursuitState: defeatRunPursuit(pursuitState) } }
     : state;
+  const recovery = recoverHealthAfterVictory({ ...defeatedState, phase: 'explore', combat: undefined });
   return appendLog(
-    restoreHealthAfterCombat({ ...defeatedState, phase: 'explore', combat: undefined }),
-    `你击败了${definition?.name ?? monster.name}，本局它不会再出现。`
+    recovery.state,
+    `你击败了${definition?.name ?? monster.name}，本局它不会再出现。${getVictoryRecoveryText(recovery.recovered)}`
   );
 }
 
@@ -8504,17 +8533,18 @@ function finishCombatVictory(state: GameState, monster: MonsterDefinition): Game
     items: itemDrops
   });
 
+  const recovery = recoverHealthAfterVictory(markNodeCleared(
+    {
+      ...encounterLoot.state,
+      phase: 'explore',
+      combat: undefined
+    },
+    nodeId,
+    combatDamageTaken
+  ));
   return appendLog(
-    restoreHealthAfterCombat(markNodeCleared(
-      {
-        ...encounterLoot.state,
-        phase: 'explore',
-        combat: undefined
-      },
-      nodeId,
-      combatDamageTaken
-    )),
-    `${monster.name}倒下，${combatRewardText}进入战利品袋。${explorationRewardLine ? ` ${explorationRewardLine}` : ''}${statusLines ? ` ${statusLines}` : ''}`
+    recovery.state,
+    `${monster.name}倒下，${combatRewardText}进入战利品袋。${explorationRewardLine ? ` ${explorationRewardLine}` : ''}${statusLines ? ` ${statusLines}` : ''}${getVictoryRecoveryText(recovery.recovered)}`
   );
 }
 
@@ -9189,9 +9219,10 @@ export function capturePet(state: GameState, petId: PetId): GameState {
     items: itemDrops
   });
 
+  const recovery = recoverHealthAfterVictory(markNodeCleared(encounterLoot.state, nodeId, combatDamageTaken));
   return appendLog(
-    restoreHealthAfterCombat(markNodeCleared(encounterLoot.state, nodeId, combatDamageTaken)),
-    `${captureEffect.statusLines.join('')}${ITEMS[captureItem].name}收束灵光，${pet.name}被捕获并进入出战位，${captureRewardText}进入战利品袋。${explorationRewardLine ? ` ${explorationRewardLine}` : ''}${statusLines ? ` ${statusLines}` : ''}`
+    recovery.state,
+    `${captureEffect.statusLines.join('')}${ITEMS[captureItem].name}收束灵光，${pet.name}被捕获并进入出战位，${captureRewardText}进入战利品袋。${explorationRewardLine ? ` ${explorationRewardLine}` : ''}${statusLines ? ` ${statusLines}` : ''}${getVictoryRecoveryText(recovery.recovered)}`
   );
 }
 
@@ -9809,11 +9840,13 @@ function applyContinuingCombatFocus(
   );
   const focusLine = resolution.spent
     ? `战技消耗 ${resolution.before - resolution.after} 点战意，当前 ${resolution.after}/${COMBAT_FOCUS_MAX}。`
-    : resolution.delta > 0
-      ? `战意 +${resolution.delta}，当前 ${resolution.after}/${COMBAT_FOCUS_MAX}。`
-      : resolution.delta < 0
-        ? `战意回落 ${Math.abs(resolution.delta)} 点，当前 ${resolution.after}/${COMBAT_FOCUS_MAX}。`
-        : undefined;
+    : resolution.reason === 'art-spent'
+      ? `术法消耗 ${COMBAT_ART_FOCUS_COST} 点战意，当前 ${resolution.after}/${COMBAT_FOCUS_MAX}。`
+      : resolution.delta > 0
+        ? `战意 +${resolution.delta}，当前 ${resolution.after}/${COMBAT_FOCUS_MAX}。`
+        : resolution.delta < 0
+          ? `战意回落 ${Math.abs(resolution.delta)} 点，当前 ${resolution.after}/${COMBAT_FOCUS_MAX}。`
+          : undefined;
   const memoryDefinition = equipmentMemoryResult.state
     ? getEquipmentMemoryById(equipmentMemoryResult.state.memoryId)
     : undefined;
@@ -9840,6 +9873,11 @@ function applyContinuingCombatFocus(
     ...state,
     combat: nextCombat
   };
+}
+
+/** The basic art spends focus that attacks and guards build. */
+export function hasCombatArtFocus(state: GameState): boolean {
+  return normalizeCombatFocus(state.combat?.weaponFocus) >= COMBAT_ART_FOCUS_COST;
 }
 
 function applyPerfectParryFocus(state: GameState): GameState {
@@ -9895,6 +9933,9 @@ export function performCombatAction(
   if (state.phase !== 'combat' || !state.combat) return appendLog(state, '当前没有战斗。');
   if (action === 'art' && !isCurrentDungeonFeatureAvailable(state, 'method')) {
     return appendLog(state, '梦档案馆已封存功法，本场暂时无法运转术法。');
+  }
+  if (action === 'art' && !hasCombatArtFocus(state)) {
+    return appendLog(state, `战意不足：术法需要 ${COMBAT_ART_FOCUS_COST} 点战意，攻击或防御可以积攒。`);
   }
 
   // Focus resolves after retaliation, but intent must describe the turn before the action mutates it.
@@ -10098,8 +10139,9 @@ export function performCombatAction(
         );
       }
 
+      // Escaping heals nothing: the wounds and the scrape follow you out of the room.
       return appendLog(
-        restoreHealthAfterCombat({
+        normalizeEquipmentHealth({
           ...damagedState,
           phase: 'explore',
           combat: undefined
@@ -10273,11 +10315,16 @@ export function getCombatActionDamagePreview(
   if (state.phase !== 'combat' || !state.combat) return undefined;
 
   const monsterHpBefore = state.combat.monsterHp;
+  // An art preview still shows its damage while the focus to cast it is short.
+  const previewFocus = action === 'art'
+    ? Math.max(COMBAT_ART_FOCUS_COST, normalizeCombatFocus(state.combat.weaponFocus)) as CombatFocus
+    : state.combat.weaponFocus;
   const previewInput: GameState = {
     ...state,
     log: [],
     combat: {
       ...state.combat,
+      ...(previewFocus === undefined ? {} : { weaponFocus: previewFocus }),
       log: []
     }
   };
@@ -10365,6 +10412,10 @@ function advanceEquipmentCommissionOnExit(state: GameState, dungeonId: DungeonId
   );
 }
 
+function getRunLootBagRewardPoints(run: DungeonRun | undefined): number {
+  return run?.lootBag.rewardPoints ?? 0;
+}
+
 export function resolveExit(state: GameState): GameState {
   state = promoteRunEquipmentOwnership(state);
   if (getCurrentEquipmentSoulSkillRunState(state)?.pendingRecharge) {
@@ -10408,9 +10459,14 @@ export function resolveExit(state: GameState): GameState {
   const shouldClaimDirective =
     directive && directiveEvaluation?.status === 'completed' && !state.claimedDirectiveIds.includes(directive.id);
   const economy = getRunEconomyPreview(state, 'cleared', true);
+  // Pressure and difficulty bonuses scale the whole run's reward points (the bag plus the exit share);
+  // the performance multiplier stays on the exit share alone.
+  const bonusBaseRewardPoints = economy
+    ? economy.rewardPoints + getRunLootBagRewardPoints(state.run)
+    : 0;
   const pressureStatus = getCurrentRunPressure(state).status;
   const pressureRewardPointBonus = economy && pressureStatus
-    ? calculateRunPressureBonus(economy.rewardPoints, pressureStatus.state)
+    ? calculateRunPressureBonus(bonusBaseRewardPoints, pressureStatus.state)
     : 0;
   const pressureSettlement: RunPressureSettlement | undefined =
     economy && pressureStatus
@@ -10429,7 +10485,7 @@ export function resolveExit(state: GameState): GameState {
         dungeonId: runWithExit.dungeonId,
         protocolId,
         clearedNodeIds: runWithExit.clearedNodeIds,
-        baseRewardPoints: economy.rewardPoints
+        baseRewardPoints: bonusBaseRewardPoints
       })
     : undefined;
   const simplifiedProtocol = runWithExit?.entryFlowVersion === 2;
@@ -10455,25 +10511,25 @@ export function resolveExit(state: GameState): GameState {
               protocolId === 'deep'
                 ? scaleInfernoRewardPoints(
                     scaleRunProtocolRewardPoints(
-                      economy?.rewardPoints ?? 0,
+                      bonusBaseRewardPoints,
                       runWithExit.dungeonId,
                       protocolId
                     ),
                     infernoTier ?? 1
                   )
                 : scaleRunProtocolRewardPoints(
-                    economy?.rewardPoints ?? 0,
+                    bonusBaseRewardPoints,
                     runWithExit.dungeonId,
                     protocolId
                   )
             )
-          : economy?.rewardPoints ?? 0,
+          : bonusBaseRewardPoints,
         imprint: undefined,
         materialReward: undefined
       }
     : baseProtocolEvaluation;
   const protocolRewardPointBonus = economy && protocolEvaluation
-    ? Math.max(0, protocolEvaluation.rewardPoints - economy.rewardPoints)
+    ? Math.max(0, protocolEvaluation.rewardPoints - bonusBaseRewardPoints)
     : 0;
   const protocolSucceeded = protocolId !== 'standard' && protocolEvaluation?.canGrantProtocolReward === true;
   const nextInfernoProgress = protocolSucceeded && infernoTier !== undefined && state.run
@@ -10499,7 +10555,7 @@ export function resolveExit(state: GameState): GameState {
           status: protocolSucceeded ? 'succeeded' : 'failed',
           bossDefeated: protocolEvaluation.bossDefeated,
           anchorCompletedBeforeBoss: protocolEvaluation.anchorCompletedBeforeBoss,
-          baseRewardPoints: economy?.rewardPoints ?? 0,
+          baseRewardPoints: bonusBaseRewardPoints,
           protocolRewardPoints: protocolEvaluation.rewardPoints,
           rewardPointBonus: protocolSucceeded ? protocolRewardPointBonus : 0,
           cycleImprintGranted: !simplifiedProtocol && protocolSucceeded && protocolId === 'imprint',
@@ -10599,7 +10655,7 @@ export function resolveExit(state: GameState): GameState {
       : ` 深层轮回协议失败：双锚点 ${anchorProgress} 未在首领战前全部完成，不发放协议奖励或材料；入场轮回刻印不返还。`;
   }
   const pressureLog = pressureSettlement
-    ? ` 侵蚀结算「${pressureStatus?.label ?? pressureSettlement.tier}」：累计清理 ${pressureSettlement.state.clearedNodeCount} 个节点，出口加成 +${pressureSettlement.rewardPointBonus} 奖励点。`
+    ? ` 侵蚀结算「${pressureStatus?.label ?? pressureSettlement.tier}」：累计清理 ${pressureSettlement.state.clearedNodeCount} 个节点，整局奖励点加成 +${pressureSettlement.rewardPointBonus}。`
     : '';
   const routeContractDefinition = routeContractSettlement?.state
     ? getRouteContractById(routeContractSettlement.state.contractId, routeContractSettlement.state.dungeonId)

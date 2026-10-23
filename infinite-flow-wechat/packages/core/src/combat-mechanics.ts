@@ -216,11 +216,8 @@ export function getCaptureCombatEffect(input: CaptureCombatEffectInput): Capture
     statusLines.unshift(...bait.statusLines);
   }
 
+  // A capture is only offered once the target is weak enough, so no failure penalty ever lands; say nothing about it.
   const failureDamageReduction = Math.floor(input.baseFailureDamage * Math.min(failureReductionRatio, 0.8));
-
-  if (failureDamageReduction > 0) {
-    statusLines.push(`御灵印压住反噬，捕获失败惩罚降低 ${failureDamageReduction} 点。`);
-  }
 
   return {
     weakThreshold: Math.floor(input.monsterMaxHp * thresholdRatio),

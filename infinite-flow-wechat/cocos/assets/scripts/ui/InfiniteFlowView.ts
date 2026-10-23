@@ -26,7 +26,7 @@ import type { ItemId, CombatPresentationFrame } from '@infinite-flow/core';
 import type { CombatEffectKind } from './InfiniteFlowCombatEffects';
 import { renderInfiniteFlowScene } from './InfiniteFlowScene';
 import type { InfiniteFlowSceneOptions } from './InfiniteFlowScene';
-import { ALARM_BANNER_SECONDS, renderInfiniteFlowWalkScene } from './InfiniteFlowWalkScene';
+import { ALARM_BANNER_SECONDS, RUN_INTRODUCTION_SECONDS, renderInfiniteFlowWalkScene } from './InfiniteFlowWalkScene';
 import type { WalkSceneHandle } from './InfiniteFlowWalkScene';
 import type { HudPopoverKind } from './hud-layout';
 import { InfiniteFlowWalkInput } from './InfiniteFlowWalkInput';
@@ -1807,7 +1807,7 @@ export function formatInfiniteFlowChapterLaw(
     `严重度 ${CHAPTER_LAW_SEVERITY_LABELS[law.severity]} · 目标 ${law.targetReached ? '已达成' : '未达成'}${
       law.meter === undefined ? '' : ` · 计量 ${law.meter.value}/${law.meter.max}`
     }`,
-    `遭遇 全属性${signedPercent(modifiers.encounter.allStatsPercent)}% 防御${signedPercent(modifiers.encounter.defensePercent)}% 术攻${signedPercent(modifiers.encounter.artPowerPercent)}%`,
+    `遭遇 全属性${signedPercent(modifiers.encounter.allStatsPercent)}% 防御${signedPercent(modifiers.encounter.defensePercent)}%`,
     `陷阱 伤害${signedPercent(modifiers.trap.damagePercent)}% 检定${signedPercent(modifiers.trap.dcPercent)}% · 治疗${signedPercent(modifiers.healingPercent)}%`,
     `出伤 武力${signedPercent(modifiers.outgoingDamage.forcePercent)}% 术法${signedPercent(modifiers.outgoingDamage.artPercent)}% · 守御${signedPercent(modifiers.guardEffectPercent)}%`,
   ];
@@ -1890,7 +1890,7 @@ export function formatInfiniteFlowChapterPressure(
   const lines = pressure.present
     ? [
         `段位 ${playerTierLabel}`,
-        `侵蚀 ${pressurePercent} · 出口加成 ${rewardBonusPercent}`,
+        `侵蚀 ${pressurePercent} · 通关加成 ${rewardBonusPercent}`,
         `下一段位 ${
           pressure.nextTierAt === undefined
             ? '未知'
@@ -1899,7 +1899,7 @@ export function formatInfiniteFlowChapterPressure(
             : `${pressure.nextTierAt} 节点`
         }`,
       ]
-    : [`状态 ${pressure.legacyDisabled ? '旧档禁用' : '未提供'}`];
+    : [`状态 ${pressure.legacyDisabled ? '未启用' : '未提供'}`];
   return Object.freeze({
     kind: 'pressure',
     title: CHAPTER_SECTION_TITLES.pressure,
@@ -1942,7 +1942,7 @@ export function formatInfiniteFlowChapterPursuit(
               ? '追兵位置已锁定'
               : `距苏醒 ${progress.clearsRemaining} 节点`,
       ]
-    : [`状态 ${pursuit.legacyDisabled ? '旧档禁用' : '本章无追兵'}`];
+    : [`状态 ${pursuit.legacyDisabled ? '未启用' : '本章无追兵'}`];
   return Object.freeze({
     kind: 'pursuit',
     title: CHAPTER_SECTION_TITLES.pursuit,
@@ -2017,16 +2017,16 @@ export function formatInfiniteFlowEquipmentMemoryCombat(
   const status = memory.status === 'active'
     ? `激活 ${memory.activeName ?? memory.memoryId ?? '未知记忆'}`
     : memory.status === 'legacy-disabled'
-      ? 'legacy fail-closed'
-      : '格式故障 fail-closed';
+      ? '旧存档已停用'
+      : '存档异常已停用';
   const matching = memory.matchingEquipmentNames.length === 0
     ? '无匹配装备'
     : `匹配装备 ${memory.matchingEquipmentNames.join('、')}`;
   const overflow = memory.overflowState === 'stored'
-    ? 'overflow 已储存'
+    ? '溢出战意已暂存'
     : memory.overflowState === 'restored'
-      ? 'overflow 已恢复'
-      : 'overflow 空';
+      ? '溢出战意已返还'
+      : '无暂存战意';
   return Object.freeze({
     title: `装备记忆 · ${status}`,
     summary: matching,
@@ -2043,7 +2043,7 @@ export function formatInfiniteFlowEquipmentMemoryResult(
   const modern = memory.modernLibrary;
   const legacySummary = legacy === undefined
     ? undefined
-    : `legacy ${legacy.displayLabel} · ${legacy.equipmentName} · ${legacy.memoryName} · ${legacy.granted ? '已收录' : '未收录'}`;
+    : `旧版 ${legacy.displayLabel} · ${legacy.equipmentName} · ${legacy.memoryName} · ${legacy.granted ? '已收录' : '未收录'}`;
   const legacyDetail = legacy === undefined
     ? undefined
     : `${legacy.displayDetail} · ${legacy.rewardReadout}`;
@@ -2059,10 +2059,10 @@ export function formatInfiniteFlowEquipmentMemoryResult(
     : `收录装备 ${modern.recordedEquipmentNames.join('、') || '无'} · 激活装备 ${modern.activeEquipmentNames.join('、') || '无'}`;
   return Object.freeze({
     title: legacy !== undefined && modern !== undefined
-      ? '装备记忆 · legacy 结算 / 现代记忆库'
+      ? '装备记忆 · 旧版结算 / 记忆库'
       : legacy !== undefined
-        ? '装备记忆 · legacy 结算'
-        : '装备记忆 · 现代记忆库',
+        ? '装备记忆 · 旧版结算'
+        : '装备记忆 · 记忆库',
     summary: [legacySummary, modernSummary].filter((value) => value !== undefined).join('；'),
     detail: [legacyDetail, modernDetail].filter((value) => value !== undefined).join('\n'),
   });
@@ -2279,7 +2279,7 @@ export function formatInfiniteFlowResultSettlement(
         id: 'pressure',
         title: RESULT_SETTLEMENT_TITLES.pressure,
         lines: [
-          `段位 ${pressure.tierLabel} · 奖励加成 +${pressure.rewardPointBonus}%`,
+          `段位 ${pressure.tierLabel} · 奖励加成 +${pressure.rewardPointBonus} 点`,
         ],
       });
     } else {
@@ -2875,7 +2875,7 @@ export class InfiniteFlowView {
   private sceneCombatSnapshot: { enemyId: string; playerHp: number; enemyHp: number } | undefined;
   private sceneFeedback: { text: string; damage?: number } | undefined;
   /** An alarm banner (pursuer woke, pursuer caught you); its age runs on engine ticks so re-renders keep fading it. */
-  private sceneBanner: { title: string; line: string; age: number } | undefined;
+  private sceneBanner: { title: string; line: string; age: number; seconds?: number } | undefined;
   /** The last explore projection, kept across fights so a clear's tier change is still announced. */
   private lastExploreDetail: ExploreDetailViewModel | undefined;
   /** The route prototype's room sheet, drawn by the walk scene while walking is suspended. */
@@ -2998,6 +2998,10 @@ export class InfiniteFlowView {
       const pursuit = mobileDetail.chapterDecision?.pursuit;
       const woke = this.lastExploreDetail?.map.dungeonId === mobileDetail.map.dungeonId
         && this.lastExploreDetail.chapterDecision?.pursuit.status === 'dormant' && pursuit?.status === 'stalking';
+      if (this.lastExploreDetail === undefined && mobileDetail.runIntroduction !== undefined) {
+        // The first lamp runs open with what the lamp and the pursuer do.
+        this.sceneBanner = { ...mobileDetail.runIntroduction, age: 0, seconds: RUN_INTRODUCTION_SECONDS };
+      }
       if (woke) {
         // As in the route prototype, the wake gets its own banner instead of the small route notice.
         this.sceneBanner = { title: `${pursuit.name ?? '追兵'}醒了`, line: `你走一步它走一步，小地图上的红点就是它${
@@ -3461,7 +3465,7 @@ export class InfiniteFlowView {
     // The banner only ages while a walk or duel scene shows it, and a stalled frame (an art load) counts as one short frame.
     if (this.sceneBanner !== undefined && this.walkScene !== undefined) {
       this.sceneBanner.age += Math.min(Math.max(0, deltaTime), 0.1);
-      if (this.sceneBanner.age >= ALARM_BANNER_SECONDS) this.sceneBanner = undefined;
+      if (this.sceneBanner.age >= (this.sceneBanner.seconds ?? ALARM_BANNER_SECONDS)) this.sceneBanner = undefined;
     }
     if (this.combatPlayback !== undefined && !this.destroyed) {
       this.walkScene?.tick(deltaTime, { x: 0, y: 0 });

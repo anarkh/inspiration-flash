@@ -701,6 +701,8 @@ export type ExploreDetailViewModel = Readonly<{
   chapterDecision?: ChapterDecisionViewModel;
   /** Present only for runs that burn lamp oil. */
   lantern?: LanternViewModel;
+  /** The lamp and pursuer introduction, on a lamp run's opening room while only the opening chapter is cleared. */
+  runIntroduction?: Readonly<{ title: string; line: string }>;
   /** One preview per room reachable from the current room. */
   routeForecasts?: readonly RouteForecastViewModel[];
   /** Present while the current room has a single event of its own and nothing pending. */

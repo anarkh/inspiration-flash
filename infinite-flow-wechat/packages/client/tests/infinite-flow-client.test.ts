@@ -252,7 +252,7 @@ describe('InfiniteFlowClient', () => {
     const client = await createInfiniteFlowClient({
       storage,
       hashPort: new PortableSha256HashPort(),
-      seedPort: new SequenceSeedPort([101, 102, 103]),
+      seedPort: new SequenceSeedPort([101, 102, 103, 104, 105, 106]),
     });
     const send = async (command: Parameters<typeof client.dispatch>[0]) => {
       const result = await client.dispatch(command);
@@ -263,8 +263,44 @@ describe('InfiniteFlowClient', () => {
         await send({ type: 'combat/act', action: 'attack' });
       }
     };
-    await send({ type: 'hub/buy-item', itemId: 'healing_pill' });
-    await send({ type: 'hub/buy-item', itemId: 'healing_pill' });
+    // Fights with medicine when low, then answers any relic draft or equipment offer the step raised.
+    const settle = async () => {
+      for (let step = 0; step < 60; step += 1) {
+        const state = client.getState();
+        if (state.phase === 'combat') {
+          const low = state.player.hp < state.player.maxHp * 0.45 && state.inventory.healing_pill > 0;
+          await send({ type: 'combat/act', action: low ? 'use_healing_pill' : 'attack' });
+        } else if (state.run?.relicState?.pendingDraft) {
+          await send({ type: 'node/resolve-relic-draft', relicId: state.run.relicState.pendingDraft.candidateIds[0]! });
+        } else if (state.run?.pendingEquipmentOffer) {
+          await send({ type: 'node/resolve-equipment-loot', equipmentId: state.run.pendingEquipmentOffer.equipmentIds[0] });
+        } else {
+          return;
+        }
+      }
+    };
+    for (let pill = 0; pill < 4; pill += 1) await send({ type: 'hub/buy-item', itemId: 'healing_pill' });
+    // The opening chapter's first clear has no pursuer, so clear it by the short boss route first.
+    await client.enterRun({ dungeonId: 'demon_tower_1', protocolId: 'standard' });
+    for (const command of [
+      { type: 'run/select-node', nodeId: 'fog_lesser_demon' },
+      { type: 'run/move', nodeId: 'blood_rune_trap' },
+      { type: 'node/handle-trap', choice: 'risk' },
+      { type: 'run/move', nodeId: 'cracked_portal' },
+      { type: 'run/move', nodeId: 'sealed_cache' },
+      { type: 'run/move', nodeId: 'tower_exit' },
+      { type: 'run/move', nodeId: 'bone_lane_monster' },
+      { type: 'run/select-node', nodeId: 'bone_lane_monster' },
+      { type: 'run/move', nodeId: 'tower_exit' },
+      { type: 'run/resolve-exit' }
+    ] as const) {
+      await send(command);
+      await settle();
+    }
+    expect(client.getState().run?.pursuitState?.status).toBe('disabled');
+    expect(client.getState().completedDungeonIds).toContain('demon_tower_1');
+    if (client.getState().run?.lastRelicSettlement?.status === 'pending') await send({ type: 'result/archive-relic' });
+    await send({ type: 'result/return-hub' });
     await client.enterRun({ dungeonId: 'demon_tower_1', protocolId: 'standard' });
     await send({ type: 'run/select-node', nodeId: 'fog_lesser_demon' });
     await fight();

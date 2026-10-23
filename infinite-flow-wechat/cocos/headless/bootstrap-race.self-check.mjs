@@ -2644,7 +2644,7 @@ const storedCombatReadout = formatInfiniteFlowEquipmentMemoryCombat({
 });
 assert.match(storedCombatReadout.title, /激活 镇魔余响/);
 assert.match(storedCombatReadout.summary, /匹配装备 破甲剑/);
-assert.match(storedCombatReadout.detail, /overflow 已储存/);
+assert.match(storedCombatReadout.detail, /溢出战意已暂存/);
 
 const restoredCombatReadout = formatInfiniteFlowEquipmentMemoryCombat({
   helpId: 'equipmentMemory',
@@ -2658,7 +2658,7 @@ const restoredCombatReadout = formatInfiniteFlowEquipmentMemoryCombat({
   overflowStored: false,
   restored: true,
 });
-assert.match(restoredCombatReadout.detail, /overflow 已恢复/);
+assert.match(restoredCombatReadout.detail, /溢出战意已返还/);
 
 const legacyDisabledCombatReadout = formatInfiniteFlowEquipmentMemoryCombat({
   helpId: 'equipmentMemory',
@@ -2671,9 +2671,9 @@ const legacyDisabledCombatReadout = formatInfiniteFlowEquipmentMemoryCombat({
   restored: false,
   disabledReason: '导入局缺少装备记忆入场快照，效果已禁用。',
 });
-assert.match(legacyDisabledCombatReadout.title, /legacy fail-closed/);
+assert.match(legacyDisabledCombatReadout.title, /旧存档已停用/);
 assert.match(legacyDisabledCombatReadout.summary, /无匹配装备/);
-assert.match(legacyDisabledCombatReadout.detail, /overflow 空.*效果已禁用/);
+assert.match(legacyDisabledCombatReadout.detail, /无暂存战意.*效果已禁用/);
 
 const malformedCombatReadout = formatInfiniteFlowEquipmentMemoryCombat({
   helpId: 'equipmentMemory',
@@ -2686,7 +2686,7 @@ const malformedCombatReadout = formatInfiniteFlowEquipmentMemoryCombat({
   restored: false,
   disabledReason: '装备记忆战斗状态格式异常，效果已禁用。',
 });
-assert.match(malformedCombatReadout.title, /格式故障 fail-closed/);
+assert.match(malformedCombatReadout.title, /存档异常已停用/);
 assert.match(malformedCombatReadout.detail, /格式异常.*效果已禁用/);
 
 const legacyMemoryResult = {
@@ -2709,7 +2709,7 @@ const legacyMemoryResult = {
 const legacyMemoryResultReadout = formatInfiniteFlowEquipmentMemoryResult(
   legacyMemoryResult,
 );
-assert.match(legacyMemoryResultReadout.title, /legacy 结算/);
+assert.match(legacyMemoryResultReadout.title, /旧版结算/);
 assert.match(legacyMemoryResultReadout.summary, /狩猎已失效.*破甲剑.*镇魔余响.*未收录/);
 assert.match(legacyMemoryResultReadout.detail, /双信号未完成.*本局记忆不入库/);
 
@@ -3221,7 +3221,7 @@ assert.match(pressureText(chapterPressureFixtures.breach), /段位 破界/);
 assert.match(pressureText(chapterPressureFixtures.breach), /侵蚀 20%/);
 assert.match(pressureText(chapterPressureFixtures.breach), /\+0%/);
 assert.match(pressureText(chapterPressureFixtures.breach), /下一段位 无/);
-assert.match(pressureText(chapterPressureFixtures.legacy), /旧档禁用/);
+assert.match(pressureText(chapterPressureFixtures.legacy), /未启用/);
 for (const [tier, label] of [['stable', '稳定'], ['hunted', '追猎'], ['breach', '破界']]) {
   const text = pressureText({ ...chapterPressureFixtures[tier], label: tier });
   assert.match(text, new RegExp(`段位 ${label}`));
@@ -3229,7 +3229,7 @@ for (const [tier, label] of [['stable', '稳定'], ['hunted', '追猎'], ['breac
 }
 assert.match(
   pressureText({ legacyDisabled: false, present: true, tier: 'stable' }),
-  /侵蚀 未知 · 出口加成 未知.*下一段位 未知/s,
+  /侵蚀 未知 · 通关加成 未知.*下一段位 未知/s,
   'missing pressure values stay unknown rather than becoming zero or no-next-tier',
 );
 
@@ -7241,7 +7241,7 @@ const resultPendingActionsFive = Object.freeze([
       { page: 'protocol', pattern: /Boss 已击败/ },
       { page: 'directive', pattern: /状态 进行中 · 3\/3 已满足/ },
       { page: 'routeContract', pattern: /已发放/ },
-      { page: 'pressure', pattern: /奖励加成 \+15%/ },
+      { page: 'pressure', pattern: /奖励加成 \+15 点/ },
       { page: 'pursuit', pattern: /奖励 时砂/ },
     ];
     for (const marker of markers) {
@@ -11862,7 +11862,8 @@ for (const viewportWidth of [320, 390]) {
   globalThis.__walkingTestFrameSize = { width: viewportWidth, height: viewportWidth === 320 ? 568 : 844 };
   for (const candidateCount of [1, 2, 3, 0]) {
     const initial = createInitialState();
-    const hub = { ...initial, preparedRelicFrame: 'assault', ...(candidateCount === 3 ? {
+    // A replay, so the supply room is a lamp supply room (the opening first clear carries no lamp).
+    const hub = { ...initial, completedDungeonIds: ['demon_tower_1'], preparedRelicFrame: 'assault', ...(candidateCount === 3 ? {
       ownedEquipment: [...initial.ownedEquipment, 'armor_piercing_sword'],
       equipmentLevels: { ...initial.equipmentLevels, armor_piercing_sword: 2 },
       equipped: { ...initial.equipped, weapon: 'armor_piercing_sword' },

@@ -17,6 +17,7 @@ import {
   METHOD_TECHNIQUE_CATALOG,
   METHODS,
   PETS,
+  POST_COMBAT_RECOVERY_PERCENT,
   getAvailableDungeonEvents,
   getBossSealStatus,
   getBloodlineProgress,
@@ -28,6 +29,8 @@ import {
   getCurrentCombatIntent,
   getCurrentCompanionAssistStatus,
   getCurrentDungeonDefinition,
+  hasCombatArtFocus,
+  isLanternIntroductionStage,
   getCurrentDungeonLaw,
   getCurrentFieldSurveyStatus,
   getCurrentLegalAdjacentTargetIds,
@@ -84,6 +87,7 @@ import {
   type ItemId,
   type NodeDepartureBlock
 } from '@infinite-flow/core';
+import { COMBAT_ART_FOCUS_COST } from '@infinite-flow/core/combat-focus';
 import { getEquipmentMemoryForDungeon } from '@infinite-flow/core/equipment-memory-hunts';
 import { getEquipmentRelicConduitFrameMatch } from '@infinite-flow/core/equipment-relic-conduits';
 import { isEquipmentRoll } from '@infinite-flow/core/equipment-rolls';
@@ -205,11 +209,11 @@ const EQUIPMENT_COMMISSION_HELP = Object.freeze({
 
 const EQUIPMENT_MEMORY_HELP = Object.freeze({
   title: '装备记忆',
-  summary: '现代流程会为已装备、满级、采用合法铭刻且淬炼达到 II 的成熟装备，在成功抵达出口后自动收录并激活当前章节记忆。',
-  mechanic: '装备记忆是长期装备能力：入场时只冻结已装备且已激活的记忆，现代 flowVersion 2 不再选择或准备记忆狩猎。已经收录多段记忆时，可在装备面板聚焦该装备并循环切换当前激活记忆。',
-  guidance: '想收录本章记忆时，先在主神空间完成装备、满级、合法铭刻与淬炼 II 的整备，再正常通关；现代入场无需额外接取狩猎，也不要寻找旧版预选入口。',
-  readout: '导入的 legacy 狩猎局仍按“目标节点 + 目标事件”双信号、冻结铭刻和原结算结果显示；这只用于兼容恢复，不会重新成为现代入场选项。',
-  keywords: ['装备记忆', '自动收录', '成功出口', '装备面板切换', '入场冻结', 'legacy 双信号'] as const
+  summary: '已装备、满级、采用合法铭刻且淬炼达到 II 的成熟装备，会在成功抵达出口后自动收录并激活当前章节记忆。',
+  mechanic: '装备记忆是长期装备能力：入场时只锁定已装备且已激活的记忆。已经收录多段记忆时，可在装备面板聚焦该装备并循环切换当前激活记忆。',
+  guidance: '想收录本章记忆时，先在主神空间完成装备、满级、合法铭刻与淬炼 II 的整备，再正常通关；不需要额外接取任务。',
+  readout: '已收录的记忆显示在对应装备上；当前激活的一段在下次入场时生效。',
+  keywords: ['装备记忆', '自动收录', '成功出口', '装备面板切换', '入场锁定'] as const
 });
 
 const PRESENTATION_HELP_IDS: readonly PresentationHelpId[] = Object.freeze([
@@ -3182,7 +3186,7 @@ function buildRoomEvent(
       description: node.description,
       monsterId: encounter.monsterId,
       rows,
-      buttons: [{ actionId: `node.select:${node.id}`, label: '战斗', caption: '战后生命回满', primary: true }]
+      buttons: [{ actionId: `node.select:${node.id}`, label: '战斗', caption: `胜利后回复 ${POST_COMBAT_RECOVERY_PERCENT}% 生命`, primary: true }]
     };
   }
   const trap = getCurrentTrapPreview(state);
@@ -3395,6 +3399,13 @@ function buildExploreProjection(state: GameState): PhaseProjection {
     ? buildRewardNodePreview(state, actions)
     : undefined;
   const lantern = buildLantern(state);
+  const runIntroduction = lantern && isLanternIntroductionStage(state) && state.run.clearedNodeIds.length === 0
+    && currentNode.id === dungeon.grid.startNodeId
+    ? {
+        title: '灯油与破界追兵',
+        line: `走进没点亮的房间耗 1 点灯油，补给房 +4，烧完直接破界；清 3 间后${chapterDecision.pursuit.name ?? '追兵'}苏醒，被追上就要迎战`
+      }
+    : undefined;
   const routeForecasts = buildRouteForecasts(state);
   const roomEvent = pendingProjection.pending ? undefined : buildRoomEvent(state, actions, lantern);
   const taskTracker = buildTaskTracker(state, chapterDecision.routeContract);
@@ -3411,6 +3422,7 @@ function buildExploreProjection(state: GameState): PhaseProjection {
     },
     chapterDecision,
     ...(lantern ? { lantern } : {}),
+    ...(runIntroduction ? { runIntroduction } : {}),
     ...(routeForecasts.length > 0 ? { routeForecasts } : {}),
     ...(roomEvent ? { roomEvent } : {}),
     ...(pendingProjection.pending ? { pending: pendingProjection.pending } : {}),
@@ -3423,7 +3435,7 @@ function buildExploreProjection(state: GameState): PhaseProjection {
     { id: 'hp', label: '生命', value: `${state.player.hp}/${state.player.maxHp}`, symbol: '♥', severity: state.player.hp <= state.player.maxHp * 0.3 ? 'danger' : 'neutral' },
     { id: 'loot', label: '袋中奖励点', value: String(lootPoints), symbol: '袋', severity: lootPoints > 0 ? 'positive' : 'neutral' },
     { id: 'cleared', label: '已清理', value: `${state.run.clearedNodeIds.length}/${dungeon.nodes.length}`, symbol: '✓', severity: 'neutral' },
-    { id: 'pressure', label: '侵蚀', value: pressure.status?.label ?? (pressure.legacyDisabled ? '旧档禁用' : '稳定'), symbol: '侵', severity: pressure.status?.tier === 'breach' ? 'danger' : pressure.status?.tier === 'hunted' ? 'warning' : 'neutral' },
+    { id: 'pressure', label: '侵蚀', value: pressure.status?.label ?? (pressure.legacyDisabled ? '未启用' : '稳定'), symbol: '侵', severity: pressure.status?.tier === 'breach' ? 'danger' : pressure.status?.tier === 'hunted' ? 'warning' : 'neutral' },
     { id: 'boss-seal', label: '出口封印', value: seal?.cleared ? '1/1 已解除' : '0/1 未解除', symbol: seal?.cleared ? '✓' : '锁', severity: seal?.cleared ? 'positive' : 'warning' },
     ...(equipmentMemoryHunt
       ? [{
@@ -3478,6 +3490,7 @@ const COMBAT_ACTION_LABELS: Readonly<Record<CombatAction, string>> = {
 function getCombatActionAvailability(state: GameState, action: CombatAction): Readonly<{ available: boolean; reason?: string }> {
   if (action === 'attack' && !isCurrentDungeonFeatureAvailable(state, 'attack')) return { available: false, reason: '当前场域封存了普通攻击。' };
   if (action === 'art' && !isCurrentDungeonFeatureAvailable(state, 'method')) return { available: false, reason: '当前场域封存了功法与术法。' };
+  if (action === 'art' && !hasCombatArtFocus(state)) return { available: false, reason: `战意不足：术法需要 ${COMBAT_ART_FOCUS_COST} 点战意，攻击或防御可以积攒。` };
   if (action === 'guard' && !isCurrentDungeonFeatureAvailable(state, 'defense')) return { available: false, reason: '当前场域封存了防御。' };
   if (action === 'weapon_skill') {
     const status = getWeaponSkillStatus(state);
@@ -3565,14 +3578,24 @@ function buildCombatProjection(state: GameState, localUiState: PresentationLocal
   const baseActions: CombatAction[] = ['attack', 'art', 'guard', 'weapon_skill', 'use_healing_pill', 'use_thunder_talisman', 'escape'];
   for (const action of baseActions) availability.set(action, getCombatActionAvailability(state, action));
   const parryable = isParryableCombatIntent(intent);
-  const usableRecommendation = intent.recommendedActions.find((action) => availability.get(action)?.available);
+  const strikePreviews = {
+    attack: getCombatActionDamagePreview(state, 'attack'),
+    art: getCombatActionDamagePreview(state, 'art')
+  };
+  const usableRecommendations = intent.recommendedActions.filter((action) => availability.get(action)?.available);
+  // When both strikes are on the table, recommend the one that actually hits harder.
+  const strongerStrike = usableRecommendations.includes('attack') && usableRecommendations.includes('art')
+    && (strikePreviews.art?.damage ?? 0) > (strikePreviews.attack?.damage ?? 0)
+    ? 'art'
+    : undefined;
+  const usableRecommendation = strongerStrike ?? usableRecommendations[0];
   const recommendedAction = usableRecommendation ?? (availability.get('guard')?.available ? 'guard' : undefined);
   const actions: ViewActionModel[] = baseActions.map((action) => {
     const status = availability.get(action)!;
-    const preview = action === 'attack' || action === 'art' ? getCombatActionDamagePreview(state, action) : undefined;
+    const preview = action === 'attack' || action === 'art' ? strikePreviews[action] : undefined;
     const dangerous = intent.dangerousActions.includes(action) || preview?.playerWillFall === true;
     const readout = action === 'art'
-      ? `${preview ? `术法伤害 ${preview.damage}；敌方余血 ${preview.monsterHpAfter}。` : '造成术法伤害。'}推进 1 回合，敌人存活时反击。${preview?.playerWillFall ? ' 行动后将濒死。' : ''}`
+      ? `${preview ? `术法伤害 ${preview.damage}；敌方余血 ${preview.monsterHpAfter}。` : '造成术法伤害。'}消耗 ${COMBAT_ART_FOCUS_COST} 点战意（当前 ${focus.current}），推进 1 回合，敌人存活时反击。${preview?.playerWillFall ? ' 行动后将濒死。' : ''}`
       : preview
         ? `预计伤害 ${preview.damage}；敌方余血 ${preview.monsterHpAfter}。${preview.playerWillFall ? ' 行动后将濒死。' : ''}`
         : action === 'weapon_skill'
@@ -4373,8 +4396,8 @@ function buildResultProjection(state: GameState): PhaseProjection {
       ? {}
       : { visualAssetKey: verifiedVisualAssetKey('dungeon', dungeonId) }),
     objective: settlement?.status === 'pending'
-      ? { kind: 'objective', title: '归档本轮回响', summary: '选择一件回响作为下轮种子，或明确跳过；归档完成后才能回大厅。' }
-      : { kind: 'objective', title: '返回主神空间', summary: '本轮结算已完成；重复提交出口或归档不会出现在可执行动作中。' },
+      ? { kind: 'objective', title: '归档本轮回响', summary: '选择一件回响带入下一局，或明确跳过；归档完成后才能回大厅。' }
+      : { kind: 'objective', title: '返回主神空间', summary: '本轮结算已完成，可以返回主神空间。' },
     status: { kind: 'status', metrics, detail },
     actions,
     logs: state.log.slice(0, 12)

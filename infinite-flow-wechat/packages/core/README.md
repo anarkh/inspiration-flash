@@ -26,11 +26,24 @@ needs a generated seed must provide `DungeonEntryOptions.seedSource`; explicit
 `hiddenTaskSeed` and `infernoMapSeed` values continue to take precedence. The source
 web project is unchanged.
 
-Completed encounters restore the player's HP to the final derived maximum after
-victory, capture, successful escape, defeat, or retreat during combat. Damage
-history, rewards, and defeat settlement remain intact; an unsuccessful escape
-that leaves combat active does not heal. This recovery is independent of ordinary
+A won encounter (victory, capture, or a beaten pursuer) restores 20% of the
+final derived maximum HP, capped at that maximum, so wounds carry into later rooms.
+A successful escape heals nothing. Defeat and retreat during combat end the run and
+still restore the player's HP to the final derived maximum. Damage history, rewards,
+and defeat settlement remain intact. This recovery is independent of ordinary
 healing modifiers and is an intentional rule change from the source web project.
+
+The basic art (`art`) spends 1 focus and needs at least 1 to be cast. On regular
+turns it gains no focus, while attacks and guards still add 1. An intent that
+recommends the art still adds its +2 after the cost, and one that marks it
+dangerous still takes 1 more. This is an intentional rule change from the source
+web project.
+
+On a successful exit the pressure-tier bonus and the difficulty (imprint / inferno)
+reward-point multiplier scale the whole run's reward points, the loot bag plus the
+exit share, instead of the exit share alone. The performance multiplier
+(damage taken, clear depth, captures) still applies to the exit share only. This is
+an intentional rule change from the source web project.
 
 Elite and boss encounters telegraph a `heavy-blow` intent on turns 2, 5, 8, ...
 whenever no monster-specific intent applies: the counter deals 50% more, a guard keeps
@@ -46,7 +59,9 @@ skill. Signature skills are unchanged. This is an intentional rule change from t
 web project.
 
 Runs entered through the stage-2 flow on any chapter (standard or imprint protocol) carry
-a `lanternState` from the new `src/run-lantern.ts`: 12 drops of lamp oil, one burnt per
+a `lanternState`, except the opening chapter's first clear (`isOpeningChapterFirstClear`),
+which teaches fights and doors with neither lamp nor pursuer. The lamp comes from the new
+`src/run-lantern.ts`: 12 drops of lamp oil, one burnt per
 `moveToNode` into a room the lamp has not lit yet (lit and cleared rooms are free), four more
 when one of the chapter's four supply rooms is cleared, and two more lost on a pursuer contact.
 Such runs meet a dormant pursuer even on a first clear. A lamp never holds more than its start plus every supply refill (28 drops);

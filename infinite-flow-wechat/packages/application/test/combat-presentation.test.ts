@@ -4,6 +4,7 @@ import {
   getDerivedStats,
   getHealingPillBaseHealing,
   performCombatAction,
+  POST_COMBAT_RECOVERY_PERCENT,
   useBloodlineSurge,
   type CombatAction,
   type CombatPresentationFrame,
@@ -14,6 +15,12 @@ import { reduceGameCommand, type GameCommand } from '../src/index.js';
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
+}
+
+/** Victory recovers a fixed share of the settled maximum on top of the HP the fight left. */
+function recoveredHp(hp: number, state: GameState): number {
+  const maxHp = getDerivedStats(state).maxHp;
+  return Math.min(maxHp, hp + Math.floor((maxHp * POST_COMBAT_RECOVERY_PERCENT) / 100));
 }
 
 function apply(state: GameState, command: GameCommand): GameState {
@@ -70,7 +77,7 @@ assert(attacked.frames[0].stage === 'impact' && attacked.frames[1].stage === 'co
 assert(attacked.frames[0].playerHp === durable.player.hp, 'attack impact precedes retaliation');
 assert(attacked.frames[0].enemyHp < 1000, 'attack impact records actual damage');
 assert(attacked.frames[1].playerHp === attacked.after.player.hp, 'counter records final HP');
-observe(durable, 'art');
+observe({ ...durable, combat: { ...durable.combat!, weaponFocus: 1 } }, 'art');
 
 const lethal = observe({
   ...durable,
@@ -79,8 +86,8 @@ const lethal = observe({
 }, 'attack');
 assert(lethal.frames.length === 1 && lethal.frames[0].enemyHp === 0, 'lethal hit captures zero before victory removes combat');
 assert(lethal.after.phase === 'explore' && !lethal.after.combat, 'lethal action still settles victory');
-assert(lethal.frames[0].playerHp === 13 && lethal.after.player.hp === getDerivedStats(lethal.after).maxHp,
-  'victory restores settled HP without changing the actual impact frame');
+assert(lethal.frames[0].playerHp === 13 && lethal.after.player.hp === recoveredHp(13, lethal.after),
+  'victory recovers part of the settled HP without changing the actual impact frame');
 
 const guarded = observe(durable, 'guard');
 assert(guarded.frames[0].guarded && guarded.frames[1].guarded, 'counter retains the guard it consumed');
@@ -115,8 +122,8 @@ assert(reducedHeal.frames[0].playerHp - polluted.player.hp === Math.ceil(getHeal
   'medicine snapshot includes actual law-modified healing');
 const pollutedVictory = observe({ ...polluted, combat: { ...polluted.combat!, monsterHp: 1 } }, 'attack');
 assert(pollutedVictory.frames[0].playerHp === 10
-  && pollutedVictory.after.player.hp === getDerivedStats(pollutedVictory.after).maxHp,
-  'pollution still reduces medicine healing but cannot reduce post-combat full recovery');
+  && pollutedVictory.after.player.hp === recoveredHp(10, pollutedVictory.after),
+  'pollution still reduces medicine healing but cannot reduce post-combat recovery');
 
 const staff: GameState = {
   ...durable,
@@ -134,8 +141,8 @@ const escaped = observe({
 }, 'escape');
 assert(escaped.frames.length === 1 && escaped.after.phase === 'explore', 'successful escape has no invented counter');
 assert(escaped.frames[0].playerHp === durable.player.hp - 8, 'escape impact includes the real scrape cost');
-assert(escaped.after.player.hp === getDerivedStats(escaped.after).maxHp,
-  'escape settles at full HP only after its real scrape is captured');
+assert(escaped.after.player.hp === durable.player.hp - 8,
+  'escape heals nothing: the real scrape cost carries out of the fight');
 const escapeFallen = observe({
   ...durable,
   player: { ...durable.player, hp: 1, base: { ...durable.player.base, agility: 100, luck: 100 } }

@@ -1,6 +1,7 @@
 import { reduceGameCommand, type GameCommand } from '@infinite-flow/application';
 import {
   createInitialState,
+  getCombatActionDamagePreview,
   getCurrentBloodlineSurgeStatus,
   getCurrentCompanionAssistStatus,
   getEquipmentSoulSkillActionStatus,
@@ -178,14 +179,30 @@ function verifyMedicineAndBasicArt(): void {
   const unavailable = requireAction(empty, 'combat.action:use_healing_pill');
   assert(!unavailable.enabled && !unavailable.event && unavailable.disabledReason?.includes('库存不足'), 'no stock remains visible with an unavailable reason');
 
-  const art = requireAction(full, 'combat.action:art');
+  const unfocusedArt = requireAction(full, 'combat.action:art');
+  assert(full.combat?.weaponFocus === undefined || full.combat.weaponFocus === 0, 'combat opens without focus');
+  assert(!unfocusedArt.enabled && !unfocusedArt.event && unfocusedArt.disabledReason?.includes('战意不足'),
+    'basic art needs focus and says how to build it');
+  assert(unfocusedArt.readout?.includes('术法伤害') && unfocusedArt.readout.includes('消耗 1 点战意'),
+    'a short-on-focus art still previews its damage and cost');
+  const focused: GameState = { ...full, combat: { ...full.combat!, turn: 2, weaponFocus: 1 } };
+  const art = requireAction(focused, 'combat.action:art');
   assert(art.enabled && art.readout?.includes('术法伤害') && art.readout.includes('推进 1 回合') && art.readout.includes('反击'), 'basic art is available without learned methods and explains its combat timing');
   const artCommand = commandFrom(art);
   assert(artCommand.type === 'combat/act' && artCommand.action === 'art', 'basic art preserves the original combat action');
-  const result = reduceGameCommand(full, artCommand);
+  const result = reduceGameCommand(focused, artCommand);
   assert(result.status === 'committed', 'basic art commits');
   const turnEvent = result.events.find(event => event.type === 'combat.turn-resolved');
   assert(turnEvent?.type === 'combat.turn-resolved' && turnEvent.turnAfter - turnEvent.turnBefore === 1, 'basic art advances one combat turn');
+  assert(result.state.combat?.weaponFocus === 0, 'a regular-turn art spends its focus and gains none');
+
+  // On a regular turn the harder strike carries the recommendation, not the first listed one.
+  const attack = requireAction(focused, 'combat.action:attack');
+  const artDamage = getCombatActionDamagePreview(focused, 'art')?.damage ?? 0;
+  const attackDamage = getCombatActionDamagePreview(focused, 'attack')?.damage ?? 0;
+  assert(artDamage > attackDamage, 'the opening build hits harder with the art than with the blade');
+  assert(art.recommendation === 'recommended' && attack.recommendation === 'neutral', 'the harder strike is recommended');
+  assert(unfocusedArt.recommendation !== 'recommended', 'an art without focus is never the recommended action');
 }
 
 function verifyHeavyBlowParry(): void {
