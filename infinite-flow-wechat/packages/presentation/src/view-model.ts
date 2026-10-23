@@ -30,6 +30,7 @@ import {
   getCurrentCompanionAssistStatus,
   getCurrentDungeonDefinition,
   hasCombatArtFocus,
+  isLanternIntroductionStage,
   getCurrentDungeonLaw,
   getCurrentFieldSurveyStatus,
   getCurrentLegalAdjacentTargetIds,
@@ -3398,6 +3399,13 @@ function buildExploreProjection(state: GameState): PhaseProjection {
     ? buildRewardNodePreview(state, actions)
     : undefined;
   const lantern = buildLantern(state);
+  const runIntroduction = lantern && isLanternIntroductionStage(state) && state.run.clearedNodeIds.length === 0
+    && currentNode.id === dungeon.grid.startNodeId
+    ? {
+        title: '灯油与破界追兵',
+        line: `走进没点亮的房间耗 1 点灯油，补给房 +4，烧完直接破界；清 3 间后${chapterDecision.pursuit.name ?? '追兵'}苏醒，被追上就要迎战`
+      }
+    : undefined;
   const routeForecasts = buildRouteForecasts(state);
   const roomEvent = pendingProjection.pending ? undefined : buildRoomEvent(state, actions, lantern);
   const taskTracker = buildTaskTracker(state, chapterDecision.routeContract);
@@ -3414,6 +3422,7 @@ function buildExploreProjection(state: GameState): PhaseProjection {
     },
     chapterDecision,
     ...(lantern ? { lantern } : {}),
+    ...(runIntroduction ? { runIntroduction } : {}),
     ...(routeForecasts.length > 0 ? { routeForecasts } : {}),
     ...(roomEvent ? { roomEvent } : {}),
     ...(pendingProjection.pending ? { pending: pendingProjection.pending } : {}),

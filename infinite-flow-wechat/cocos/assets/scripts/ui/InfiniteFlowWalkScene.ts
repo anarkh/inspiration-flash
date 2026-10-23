@@ -44,7 +44,7 @@ export type WalkSceneOptions = Readonly<{
   chrome: InfiniteFlowRuntimeChrome;
   feedback?: Readonly<{ text: string; damage?: number }>;
   /** An alarm banner across the room, such as the pursuer waking; `age` is how long it has already shown. */
-  banner?: Readonly<{ title: string; line: string; age: number }>;
+  banner?: Readonly<{ title: string; line: string; age: number; seconds?: number }>;
   /** Open while the room's own event sheet is shown; walking stays suspended until it closes. */
   roomEventSheet?: Readonly<{ close: () => void }>;
 }>;
@@ -1137,9 +1137,11 @@ function roomEventArtKey(event: RoomEventViewModel): string {
 }
 
 export const ALARM_BANNER_SECONDS = 2.8;
+/** The lamp and pursuer introduction carries two rules, so it stays up longer than an alarm. */
+export const RUN_INTRODUCTION_SECONDS = 6;
 
 /** The route prototype's alarm banner: a dark band across the room that fades after a few seconds and never takes input. */
-function alarmBanner(scene: Node, banner: Readonly<{ title: string; line: string }>, y: number, px: number): Readonly<{ node: Node; fade: (age: number) => void }> {
+function alarmBanner(scene: Node, banner: Readonly<{ title: string; line: string; seconds?: number }>, y: number, px: number): Readonly<{ node: Node; fade: (age: number) => void }> {
   const height = 66 * px;
   const node = makeNode(scene, 'WalkAlarmBanner', 0, y, 750, height);
   const g = node.addComponent(Graphics);
@@ -1158,7 +1160,7 @@ function alarmBanner(scene: Node, banner: Readonly<{ title: string; line: string
   return {
     node,
     fade: (age) => {
-      const alpha = Math.max(0, Math.min(1, (ALARM_BANNER_SECONDS - age) / 0.5));
+      const alpha = Math.max(0, Math.min(1, ((banner.seconds ?? ALARM_BANNER_SECONDS) - age) / 0.5));
       title.color = new Color(255, 107, 82, Math.round(255 * alpha));
       line.color = new Color(225, 220, 203, Math.round(255 * alpha));
       if (alpha === 0) node.active = false;

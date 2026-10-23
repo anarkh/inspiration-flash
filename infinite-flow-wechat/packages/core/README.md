@@ -59,7 +59,9 @@ skill. Signature skills are unchanged. This is an intentional rule change from t
 web project.
 
 Runs entered through the stage-2 flow on any chapter (standard or imprint protocol) carry
-a `lanternState` from the new `src/run-lantern.ts`: 12 drops of lamp oil, one burnt per
+a `lanternState`, except the opening chapter's first clear (`isOpeningChapterFirstClear`),
+which teaches fights and doors with neither lamp nor pursuer. The lamp comes from the new
+`src/run-lantern.ts`: 12 drops of lamp oil, one burnt per
 `moveToNode` into a room the lamp has not lit yet (lit and cleared rooms are free), four more
 when one of the chapter's four supply rooms is cleared, and two more lost on a pursuer contact.
 Such runs meet a dormant pursuer even on a first clear. A lamp never holds more than its start plus every supply refill (28 drops);

@@ -9,6 +9,7 @@ import './task-list.test.js';
 import './combat-choices.test.js';
 import './map-topology.test.js';
 import './route-forecast.test.js';
+import './run-introduction.test.js';
 import './action-legality.test.js';
 import { reduceGameCommand } from '@infinite-flow/application';
 import {
@@ -2414,9 +2415,9 @@ function verifyResultSettlement(): void {
     equal(security.clearedNodeCount, expected, `${label} non-exit cleared count`);
   }
 
-  // --- Flow 1: normal exit through the verified first-chapter route. ---
+  // --- Flow 1: normal exit through the verified first-chapter route, replayed so the pursuer hunts. ---
   function driveNormalExit(): FlowResult {
-    let state = createInitialState();
+    let state: GameState = { ...createInitialState(), completedDungeonIds: ['demon_tower_1'] };
     state = committed(state, { type: 'hub/buy-item', itemId: 'healing_pill' }, 'buy first healing pill');
     state = committed(state, { type: 'hub/buy-item', itemId: 'healing_pill' }, 'buy second healing pill');
     state = committed(state, {

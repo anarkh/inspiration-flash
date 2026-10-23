@@ -1548,7 +1548,8 @@ function touch(node) {
     supplySceneVisualFixtures(controller, model);
     controller.render(model, chrome, safeInsets);
   };
-  const entered = api.reduceGameCommand(api.createInitialState(), {
+  // A replay of the opening chapter: its first clear carries no lamp, and these rooms read the lamp.
+  const entered = api.reduceGameCommand({ ...api.createInitialState(), completedDungeonIds: ['demon_tower_1'] }, {
     type: 'run/enter', dungeonId: 'demon_tower_1', protocolId: 'standard', seeds: { rulesVersion: 1, hiddenTaskSeed: 0x1234_abcd },
   }).state;
   const doorway = (from, cleared) => ({ ...entered, run: { ...entered.run, currentNodeId: from, clearedNodeIds: [from, ...cleared] } });
@@ -1752,10 +1753,14 @@ function touch(node) {
   assert.equal(named('WalkTarget:npc:tasks')?.getChildByName('WalkTargetReady'), null, 'the turn-in mark clears');
 
   // A burnt-out lamp refilled at a supply room lifts the forced breach; the pressure foot stops saying the lamp is out.
-  const dark = { ...entered, run: { ...entered.run, currentNodeId: 'north_supply_niche', clearedNodeIds: ['fog_lesser_demon', 'blood_rune_trap'],
-    lanternState: { ...entered.run.lanternState, oil: 0 }, pressureState: { rulesVersion: 1, clearedNodeCount: 2, breachForced: true },
+  // The opening chapter's first clear carries no lamp, so this runs on a replay.
+  const lampRun = api.reduceGameCommand({ ...api.createInitialState(), completedDungeonIds: ['demon_tower_1'] }, {
+    type: 'run/enter', dungeonId: 'demon_tower_1', protocolId: 'standard', seeds: { rulesVersion: 1, hiddenTaskSeed: 0x1234_abcd },
+  }).state;
+  const dark = { ...lampRun, run: { ...lampRun.run, currentNodeId: 'north_supply_niche', clearedNodeIds: ['fog_lesser_demon', 'blood_rune_trap'],
+    lanternState: { ...lampRun.run.lanternState, oil: 0 }, pressureState: { rulesVersion: 1, clearedNodeCount: 2, breachForced: true },
     // The dark already woke the pursuer.
-    pursuitState: { ...entered.run.pursuitState, status: 'stalking', nodeId: 'tower_butcher_patrol' } } };
+    pursuitState: { ...lampRun.run.pursuitState, status: 'stalking', nodeId: 'tower_butcher_patrol' } } };
   show(dark);
   controller.mobileSheet = undefined;
   show(dark);

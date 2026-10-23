@@ -6169,6 +6169,16 @@ function appendEnteredDungeonId(
     : [...(enteredDungeonIds ?? []), dungeonId];
 }
 
+/** The opening chapter before its first clear: the run that leaves the lamp and the pursuer out. */
+export function isOpeningChapterFirstClear(state: Pick<GameState, 'completedDungeonIds'>, dungeonId: DungeonId): boolean {
+  return dungeonId === DUNGEON_ORDER[0] && !state.completedDungeonIds.includes(dungeonId);
+}
+
+/** While only the opening chapter is cleared, lamp runs open with a one-banner introduction. */
+export function isLanternIntroductionStage(state: Pick<GameState, 'completedDungeonIds'>): boolean {
+  return state.completedDungeonIds.length === 1 && state.completedDungeonIds[0] === DUNGEON_ORDER[0];
+}
+
 export function enterDungeon(
   state: GameState,
   dungeonId: DungeonId,
@@ -6349,7 +6359,8 @@ export function enterDungeon(
         })
     : undefined;
   // Lamp oil is tuned for the fixed chapter grid; layered inferno maps keep their own clock.
-  const lanternState = simplifiedEntry && protocolDefinition.id !== 'deep'
+  // A first clear of the opening chapter teaches fights and doors only: no lamp, so no pursuer either.
+  const lanternState = simplifiedEntry && protocolDefinition.id !== 'deep' && !isOpeningChapterFirstClear(state, dungeonId)
     ? createRunLanternState(dungeonId, dungeon.grid.startNodeId)
     : undefined;
 

@@ -82,12 +82,23 @@ for (const litNodeIds of [['fog_lesser_demon', 'fog_lesser_demon'], [''], 'fog_l
 }
 assert(normalizeRunLanternState({ ...lampShape, extra: true }) === undefined, 'unknown lamp keys stay rejected');
 
-// A lamp chapter meets its pursuer on the first clear too, and it wakes on the third cleared room.
-const firstRun = apply(createInitialState(), {
+// The opening chapter's first clear teaches fights and doors only: no lamp, no pursuer.
+const openingRun = apply(createInitialState(), {
   type: 'run/enter', dungeonId: 'demon_tower_1', protocolId: 'standard',
   seeds: { rulesVersion: 1, hiddenTaskSeed: 0x1234_abcd }
 });
-assert(firstRun.run?.pursuitState?.status === 'dormant', 'a first lamp run keeps the pursuer dormant instead of disabled');
+assert(openingRun.run && openingRun.run.lanternState === undefined, 'the opening chapter first clear carries no lamp');
+assert(openingRun.run.pursuitState?.status === 'disabled', 'the opening chapter first clear leaves the pursuer out');
+const openingWalk = apply(openingRun, { type: 'run/select-node', nodeId: 'fog_lesser_demon' });
+assert(openingWalk.run?.lanternState === undefined, 'a lampless run never grows a lamp');
+
+// Every other lamp chapter meets its pursuer on the first clear too, and it wakes on the third cleared room.
+const firstRun = apply({ ...createInitialState(), completedDungeonIds: ['demon_tower_1'], claimedTaskIds: ['mainline_clear_demon_tower_1'] }, {
+  type: 'run/enter', dungeonId: 'metro_abyss', protocolId: 'standard',
+  seeds: { rulesVersion: 1, hiddenTaskSeed: 0x1234_abcd }
+});
+assert(firstRun.run?.lanternState?.oil === 12, 'the second chapter first clear lights the lamp');
+assert(firstRun.run.pursuitState?.status === 'dormant', 'a first lamp run keeps the pursuer dormant instead of disabled');
 const twoCleared = { clearedNodeIds: ['fog_lesser_demon', 'blood_rune_trap'], pressureState: { rulesVersion: 1 as const, clearedNodeCount: 2 } };
 const beforeWake = { ...entered, phase: 'explore' as const, run: { ...run, currentNodeId: 'broken_sigil_reward', ...twoCleared } };
 const woken = apply(beforeWake, { type: 'node/collect-reward' });

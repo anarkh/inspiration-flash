@@ -899,10 +899,15 @@ check('doors carry their own route forecast and the pursuer art stays loaded for
   }
   assert.equal(doors.find(door => door.destinationNodeId === 'sealed_cache').forecast.threat.level, 'near', 'the pursuer is behind the containment door');
   assert.equal(getInfiniteFlowSceneVisualKeys(model).lurker, `monster:${DUNGEON_WORLD_THEMES.demon_tower_1.eliteMonsterId}_world`, 'silhouette art is declared while stalking');
-  const firstRunState = commit(createInitialState(), {
+  const openingRunState = commit(createInitialState(), {
     type: 'run/enter', dungeonId: 'demon_tower_1', protocolId: 'standard', seeds: { rulesVersion: 1, hiddenTaskSeed: 0x1234_abcd },
   });
-  assert.equal(getInfiniteFlowSceneVisualKeys(buildGameViewModel(firstRunState, {})).lurker, `monster:${DUNGEON_WORLD_THEMES.demon_tower_1.eliteMonsterId}_world`,
+  assert.equal(getInfiniteFlowSceneVisualKeys(buildGameViewModel(openingRunState, {})).lurker, undefined,
+    'the opening first clear has no pursuer, so no silhouette is loaded');
+  const firstRunState = commit({ ...createInitialState(), completedDungeonIds: ['demon_tower_1'], claimedTaskIds: ['mainline_clear_demon_tower_1'] }, {
+    type: 'run/enter', dungeonId: 'metro_abyss', protocolId: 'standard', seeds: { rulesVersion: 1, hiddenTaskSeed: 0x1234_abcd },
+  });
+  assert.equal(getInfiniteFlowSceneVisualKeys(buildGameViewModel(firstRunState, {})).lurker, `monster:${DUNGEON_WORLD_THEMES.metro_abyss.eliteMonsterId}_world`,
     'a lamp chapter meets its pursuer on the first clear, so the silhouette is declared up front');
   const disabled = { ...firstRunState, run: { ...firstRunState.run, pursuitState: { ...firstRunState.run.pursuitState, status: 'disabled' } } };
   assert.equal(getInfiniteFlowSceneVisualKeys(buildGameViewModel(disabled, {})).lurker, undefined, 'a disabled pursuer loads no silhouette');

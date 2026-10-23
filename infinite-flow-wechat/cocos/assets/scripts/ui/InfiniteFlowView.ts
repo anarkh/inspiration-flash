@@ -26,7 +26,7 @@ import type { ItemId, CombatPresentationFrame } from '@infinite-flow/core';
 import type { CombatEffectKind } from './InfiniteFlowCombatEffects';
 import { renderInfiniteFlowScene } from './InfiniteFlowScene';
 import type { InfiniteFlowSceneOptions } from './InfiniteFlowScene';
-import { ALARM_BANNER_SECONDS, renderInfiniteFlowWalkScene } from './InfiniteFlowWalkScene';
+import { ALARM_BANNER_SECONDS, RUN_INTRODUCTION_SECONDS, renderInfiniteFlowWalkScene } from './InfiniteFlowWalkScene';
 import type { WalkSceneHandle } from './InfiniteFlowWalkScene';
 import type { HudPopoverKind } from './hud-layout';
 import { InfiniteFlowWalkInput } from './InfiniteFlowWalkInput';
@@ -2875,7 +2875,7 @@ export class InfiniteFlowView {
   private sceneCombatSnapshot: { enemyId: string; playerHp: number; enemyHp: number } | undefined;
   private sceneFeedback: { text: string; damage?: number } | undefined;
   /** An alarm banner (pursuer woke, pursuer caught you); its age runs on engine ticks so re-renders keep fading it. */
-  private sceneBanner: { title: string; line: string; age: number } | undefined;
+  private sceneBanner: { title: string; line: string; age: number; seconds?: number } | undefined;
   /** The last explore projection, kept across fights so a clear's tier change is still announced. */
   private lastExploreDetail: ExploreDetailViewModel | undefined;
   /** The route prototype's room sheet, drawn by the walk scene while walking is suspended. */
@@ -2998,6 +2998,10 @@ export class InfiniteFlowView {
       const pursuit = mobileDetail.chapterDecision?.pursuit;
       const woke = this.lastExploreDetail?.map.dungeonId === mobileDetail.map.dungeonId
         && this.lastExploreDetail.chapterDecision?.pursuit.status === 'dormant' && pursuit?.status === 'stalking';
+      if (this.lastExploreDetail === undefined && mobileDetail.runIntroduction !== undefined) {
+        // The first lamp runs open with what the lamp and the pursuer do.
+        this.sceneBanner = { ...mobileDetail.runIntroduction, age: 0, seconds: RUN_INTRODUCTION_SECONDS };
+      }
       if (woke) {
         // As in the route prototype, the wake gets its own banner instead of the small route notice.
         this.sceneBanner = { title: `${pursuit.name ?? '追兵'}醒了`, line: `你走一步它走一步，小地图上的红点就是它${
@@ -3461,7 +3465,7 @@ export class InfiniteFlowView {
     // The banner only ages while a walk or duel scene shows it, and a stalled frame (an art load) counts as one short frame.
     if (this.sceneBanner !== undefined && this.walkScene !== undefined) {
       this.sceneBanner.age += Math.min(Math.max(0, deltaTime), 0.1);
-      if (this.sceneBanner.age >= ALARM_BANNER_SECONDS) this.sceneBanner = undefined;
+      if (this.sceneBanner.age >= (this.sceneBanner.seconds ?? ALARM_BANNER_SECONDS)) this.sceneBanner = undefined;
     }
     if (this.combatPlayback !== undefined && !this.destroyed) {
       this.walkScene?.tick(deltaTime, { x: 0, y: 0 });

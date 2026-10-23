@@ -11862,7 +11862,8 @@ for (const viewportWidth of [320, 390]) {
   globalThis.__walkingTestFrameSize = { width: viewportWidth, height: viewportWidth === 320 ? 568 : 844 };
   for (const candidateCount of [1, 2, 3, 0]) {
     const initial = createInitialState();
-    const hub = { ...initial, preparedRelicFrame: 'assault', ...(candidateCount === 3 ? {
+    // A replay, so the supply room is a lamp supply room (the opening first clear carries no lamp).
+    const hub = { ...initial, completedDungeonIds: ['demon_tower_1'], preparedRelicFrame: 'assault', ...(candidateCount === 3 ? {
       ownedEquipment: [...initial.ownedEquipment, 'armor_piercing_sword'],
       equipmentLevels: { ...initial.equipmentLevels, armor_piercing_sword: 2 },
       equipped: { ...initial.equipped, weapon: 'armor_piercing_sword' },
