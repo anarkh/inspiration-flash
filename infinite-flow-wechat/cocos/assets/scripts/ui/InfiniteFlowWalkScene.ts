@@ -1,20 +1,20 @@
-import { Color, Graphics, Label, Mask, Node, Size, Sprite, UITransform, Vec2, Vec3 } from 'cc';
-import type { SpriteFrame } from 'cc';
-import type { GameViewModel, ViewActionModel } from '@infinite-flow/presentation';
-import { formatInfiniteFlowPlayerChrome } from './InfiniteFlowView';
+import { BlockInputEvents, Color, Graphics, Input, KeyCode, Label, Mask, Node, Size, Sprite, UITransform, Vec2, Vec3, input } from 'cc';
+import type { EventKeyboard, SpriteFrame } from 'cc';
+import type { ExploreDetailViewModel, GameViewModel, RoomEventViewModel, RouteForecastViewModel, StatusMetric, ViewActionModel } from '@infinite-flow/presentation';
+import { formatInfiniteFlowPlayerChrome, isInfiniteFlowPlayerActivityFailure } from './InfiniteFlowView';
 import type { InfiniteFlowRuntimeChrome } from './InfiniteFlowView';
-import { findWalkPath, nearestWalkTarget, stepWalkPosition } from './walk-world';
+import { findWalkPath, nearestWalkTarget, stepWalkPosition, walkApproachPoint, walkAxisSpeed } from './walk-world';
 import type { WalkWorldSpec, WorldPoint, WorldProp, WorldRect, WorldTarget } from './walk-world';
 import { HUB_WORLD_THEME } from './dungeon-world-theme';
 import type { WorldTint } from './dungeon-world-theme';
-import { getInfiniteFlowNpcWorldVisualKey, getInfiniteFlowRunRelicVisualKey, getInfiniteFlowSceneVisualKeys, INFINITE_FLOW_DUNGEON_PROP_VISUAL_KEYS, INFINITE_FLOW_DUNGEON_TRANSITION_GATE_VISUAL_KEY, INFINITE_FLOW_HUB_DUNGEON_PORTAL_VISUAL_KEY } from './scene-visuals';
-import { DARK_UI, paintDarkFrame, paintDarkIcon } from './dark-ui';
+import { getInfiniteFlowMonsterWorldVisualKey, getInfiniteFlowNpcWorldVisualKey, getInfiniteFlowPursuerVisualKey, getInfiniteFlowRunRelicVisualKey, getInfiniteFlowSceneVisualKeys, INFINITE_FLOW_DUNGEON_PROP_VISUAL_KEYS, INFINITE_FLOW_DUNGEON_TRANSITION_GATE_VISUAL_KEY, INFINITE_FLOW_HUB_DUNGEON_PORTAL_VISUAL_KEY } from './scene-visuals';
+import { DARK_UI, ROOM_SHEET, paintDarkFrame, paintDarkIcon, paintRoomSheetButton, paintRoomSheetFrame } from './dark-ui';
 import { getWalkHudLayout } from './hud-layout';
 import type { HudPopoverKind } from './hud-layout';
 import { createInfiniteFlowCombatEffects } from './InfiniteFlowCombatEffects';
-import type { CombatEffectKind, CombatEffectResult } from './InfiniteFlowCombatEffects';
+import type { CombatEffectKind, CombatEffectResult, CombatEffectStartOptions, CombatTimingGrade } from './InfiniteFlowCombatEffects';
 
-export type { CombatEffectKind, CombatEffectResult } from './InfiniteFlowCombatEffects';
+export type { CombatEffectKind, CombatEffectResult, CombatEffectStartOptions, CombatTimingGrade } from './InfiniteFlowCombatEffects';
 
 export type WalkSceneOptions = Readonly<{
   spec: WalkWorldSpec;
@@ -43,6 +43,10 @@ export type WalkSceneOptions = Readonly<{
   setPage: (page: number) => void;
   chrome: InfiniteFlowRuntimeChrome;
   feedback?: Readonly<{ text: string; damage?: number }>;
+  /** An alarm banner across the room, such as the pursuer waking; `age` is how long it has already shown. */
+  banner?: Readonly<{ title: string; line: string; age: number }>;
+  /** Open while the room's own event sheet is shown; walking stays suspended until it closes. */
+  roomEventSheet?: Readonly<{ close: () => void }>;
 }>;
 
 export type WalkSceneHandle = Readonly<{
@@ -51,7 +55,9 @@ export type WalkSceneHandle = Readonly<{
   getFacing: () => 'down' | 'left' | 'right' | 'up';
   joystick: Node;
   joystickThumb: Node;
-  startCombatAction: (kind: CombatEffectKind, onImpact: () => void) => boolean;
+  startCombatAction: (kind: CombatEffectKind, onImpact: (grade: CombatTimingGrade) => void, options?: CombatEffectStartOptions) => boolean;
+  /** Touch or Space during the parry window; also callable directly. */
+  tapCombatTiming: () => boolean;
   resolveCombatAction: (result: CombatEffectResult, onComplete: () => void) => boolean;
   cancelCombatAction: () => void;
   isCombatAnimating: () => boolean;
@@ -95,7 +101,8 @@ export function getDungeonHtmlRoomLayout(input: DungeonHtmlRoomInput): DungeonHt
   const controlsHeight = 120 * hudPixel;
   const safeWidth = 750 - input.safeInsets.left - input.safeInsets.right;
   const compact = input.viewportWidth <= 350;
-  const artwork = { gateHeight: compact ? 60 : 90, monsterHeight: compact ? 108 : 158, heroVisibleHeight: compact ? 50 : 65, compact };
+  // The hero stands about as tall as a doorway, so it reads at a glance beside gates and monsters.
+  const artwork = { gateHeight: compact ? 60 : 90, monsterHeight: compact ? 108 : 158, heroVisibleHeight: compact ? 68 : 88, compact };
   const safeTop = input.surfaceHeight / 2 - input.safeInsets.top;
   const safeBottom = -input.surfaceHeight / 2 + input.safeInsets.bottom;
   const roomRect = {
@@ -451,9 +458,19 @@ function drawHubDungeonPortal(body: Node, options: ReadyWalkSceneOptions): void 
 }
 
 /** The recommended stone gate keeps the original transition's feet and footprint. */
-function drawTransitionGate(body: Node, target: WorldTarget, options: ReadyWalkSceneOptions): void {
+function drawTransitionGate(body: Node, target: WorldTarget, model: GameViewModel, options: ReadyWalkSceneOptions): void {
   const unavailable = target.disabledReason !== undefined;
-  if (!unavailable) {
+  const threat = target.forecast?.threat?.level;
+  if (threat !== undefined) {
+    // A pursuer on the far side bleeds red light through the doorway; closer means brighter.
+    const pixel = options.dungeonView?.worldPixel ?? 1;
+    const gateHeight = (options.dungeonView?.gateHeight ?? 80) * pixel;
+    const glow = makeNode(body, 'WalkTransitionThreatGlow', 0, gateHeight * 0.48, gateHeight * 1.5, gateHeight * 1.5).addComponent(Graphics);
+    for (let ring = 6; ring > 0; ring -= 1) {
+      const scale = ring / 6;
+      ellipse(glow, 0, 0, gateHeight * 0.62 * scale, gateHeight * 0.7 * scale, new Color(214, 58, 40, threat === 'near' ? 30 : 16));
+    }
+  } else if (!unavailable) {
     const light = makeNode(body, 'WalkTransitionGroundLight', 0, -16, 116, 66).addComponent(Graphics);
     // Concentric translucent ellipses keep the warm guidance low on the floor.
     for (let ring = 5; ring > 0; ring -= 1) {
@@ -473,6 +490,44 @@ function drawTransitionGate(body: Node, target: WorldTarget, options: ReadyWalkS
   sprite.color = unavailable ? new Color(128, 128, 128, 255) : new Color(255, 255, 255, 255);
   sprite.grayscale = unavailable;
   options.trackSprite(sprite);
+  const detail = model.sections[1].detail;
+  if (threat === 'near' && detail.kind === 'explore' && options.dungeonView !== undefined) {
+    // Only a silhouette shows in the doorway: the pursuer's chapter art, inked almost black.
+    const lurker = options.visual(getInfiniteFlowPursuerVisualKey(detail.map.dungeonId));
+    const lurkerHeight = height * 0.7;
+    const lurkerWidth = lurker.width * lurkerHeight / lurker.height;
+    const shade = makeNode(body, 'WalkTransitionLurker', 0, height * 0.06 + lurkerHeight / 2, lurkerWidth, lurkerHeight).addComponent(Sprite);
+    shade.sizeMode = Sprite.SizeMode.CUSTOM;
+    shade.spriteFrame = lurker.frame;
+    shade.color = new Color(44, 10, 8, 236);
+    options.trackSprite(shade);
+  }
+}
+
+const RISK_COLORS: Readonly<Record<1 | 2 | 3, Color>> = {
+  1: new Color(176, 206, 160, 255),
+  2: new Color(232, 182, 98, 255),
+  3: new Color(236, 112, 92, 255),
+};
+
+/** First caption line under a door: what kind of room waits behind it and how risky it reads. */
+export function getRouteForecastCaption(forecast: RouteForecastViewModel): Readonly<{ text: string; color: Color }> {
+  if (forecast.cleared && forecast.kind !== 'exit') return { text: '已清空', color: DARK_UI.muted };
+  const pips = forecast.risk === undefined ? '' : ` ${'◆'.repeat(forecast.risk)}${'◇'.repeat(3 - forecast.risk)}`;
+  const encounter = forecast.kind === 'monster' || forecast.kind === 'elite' || forecast.kind === 'boss';
+  if (encounter || (forecast.kind === 'trap' && forecast.hint === undefined)) {
+    return { text: `${forecast.kindLabel}${pips}`, color: forecast.risk === undefined ? DARK_UI.bone : RISK_COLORS[forecast.risk] };
+  }
+  const text = forecast.hint === undefined ? forecast.kindLabel : `${forecast.kindLabel} · ${forecast.hint}`;
+  return { text, color: forecast.kind === 'reward' || forecast.kind === 'supply' ? GOLD : DARK_UI.bone };
+}
+
+/** Second caption line: the pursuer outranks a boss fusion warning, which outranks the seal. */
+function forecastNotice(forecast: RouteForecastViewModel): Readonly<{ text: string; color: Color }> | undefined {
+  if (forecast.threat !== undefined) return { text: forecast.threat.label, color: RISK_COLORS[3] };
+  if (forecast.kind === 'boss' && forecast.hint !== undefined && !forecast.cleared) return { text: forecast.hint, color: RISK_COLORS[3] };
+  if (forecast.containment !== undefined) return { text: forecast.containment.label, color: new Color(150, 214, 198, 255) };
+  return undefined;
 }
 
 /** Keep the artwork's bottom on the same world feet used for depth and interaction. */
@@ -509,10 +564,16 @@ function targetActor(parent: Node, target: WorldTarget, model: GameViewModel, op
   if (courtyard) {
     if (target.kind === 'portal') body.setScale(new Vec3(HUB_PORTAL_BODY_SCALE.x, HUB_PORTAL_BODY_SCALE.y, 1));
     text(base, 'WalkTargetName', target.label, 0, target.kind === 'portal' ? 255 : 222, 192, 26, target.kind === 'portal' ? 17 : 14, new Color(239, 222, 176, 255));
-    if (target.purpose !== undefined) text(base, 'WalkTargetPurpose', target.purpose, 0, 204, 192, 22, 11, new Color(206, 200, 183, 255));
+    if (target.purpose !== undefined) text(base, 'WalkTargetPurpose', target.purpose, 0, 204, 192, 22, 11, target.ready ? GOLD : new Color(206, 200, 183, 255));
+    if (target.ready) {
+      // As in WoW, a gold question mark over a quest giver means something is ready to turn in.
+      inkDotTextShadow(text(base, 'WalkTargetReady', '?', 0, 258, 40, 40, 34, GOLD)).isBold = true;
+    }
     if (target.kind === 'portal') text(base, 'WalkTargetPurpose', '进入副本', 0, 232, 192, 22, 11, new Color(180, 216, 210, 255));
     return { node: base, y: target.y };
   }
+  // The duel's enemy card names the opponent; its feet stay clear of plates.
+  if (model.phase === 'combat' && target.kind === 'monster' && pixel !== undefined) return { node: base, y: target.y };
   const compact = options.dungeonView?.compactLabels ?? false;
   const nameWidth = pixel === undefined ? target.kind === 'monster' ? 260 : 192 : (target.kind === 'monster' ? compact ? 100 : 110 : compact ? 78 : 84) * pixel;
   const nameHeight = pixel === undefined ? 35 : (compact ? 23 : 25) * pixel;
@@ -527,7 +588,23 @@ function targetActor(parent: Node, target: WorldTarget, model: GameViewModel, op
   text(base, 'WalkTargetName', `${target.rank === 'boss' ? '首领 · ' : target.rank === 'elite' ? '精英 · ' : ''}${target.label}`, nameX, nameY, nameWidth, nameHeight, pixel === undefined ? 21 : (compact ? 12 : 13) * pixel, target.disabledReason === undefined ? DARK_UI.bone : DARK_UI.muted);
   if (target.kind === 'transition') {
     const stateY = pixel === undefined ? -54 : compact && target.doorSide === 'south' ? 12 * pixel : -(compact ? 27 : 30) * pixel;
-    text(base, 'WalkTransitionState', target.action === undefined ? '封闭' : target.disabledReason === undefined ? '入口畅通' : '入口未开放', nameX, stateY, pixel === undefined ? 192 : (compact ? 78 : 84) * pixel, pixel === undefined ? 24 : (compact ? 14 : 16) * pixel, pixel === undefined ? 16 : (compact ? 9 : 10) * pixel, target.disabledReason === undefined ? new Color(209, 225, 207, 255) : DARK_UI.muted);
+    const forecast = target.forecast;
+    const caption = forecast === undefined ? undefined : getRouteForecastCaption(forecast);
+    // Forecast captions run a little wider; side doors lean inward to stay on screen.
+    const captionWidth = pixel === undefined ? 192 : (caption === undefined ? compact ? 78 : 84 : compact ? 88 : 98) * pixel;
+    const captionX = pixel === undefined || caption === undefined ? nameX
+      : target.doorSide === 'west' ? (captionWidth - nameWidth) / 2 : target.doorSide === 'east' ? (nameWidth - captionWidth) / 2 : nameX;
+    const captionHeight = pixel === undefined ? 24 : (compact ? 14 : 16) * pixel;
+    const captionSize = pixel === undefined ? 16 : (compact ? 9 : 10) * pixel;
+    text(base, 'WalkTransitionState', caption?.text ?? (target.action === undefined ? '封闭' : target.disabledReason === undefined ? '入口畅通' : '入口未开放'),
+      captionX, stateY, captionWidth, captionHeight, captionSize,
+      caption?.color ?? (target.disabledReason === undefined ? new Color(209, 225, 207, 255) : DARK_UI.muted));
+    const notice = forecast === undefined ? undefined : forecastNotice(forecast);
+    if (notice !== undefined && pixel !== undefined) {
+      // The south door sits on the controls band, so its notice rides above the gate instead.
+      const noticeY = target.doorSide === 'south' ? (options.dungeonView!.gateHeight + 8) * pixel : stateY - (compact ? 12 : 14) * pixel;
+      inkDotTextShadow(text(base, 'WalkTransitionNotice', notice.text, captionX, noticeY, captionWidth, captionHeight, captionSize, notice.color));
+    }
   }
   return { node: base, y: target.y };
 }
@@ -538,7 +615,7 @@ function drawTargetObject(body: Node, base: Node, target: WorldTarget, model: Ga
     return;
   }
   if (target.kind === 'transition') {
-    drawTransitionGate(body, target, options);
+    drawTransitionGate(body, target, model, options);
     return;
   }
   if (target.kind === 'monster') {
@@ -567,7 +644,8 @@ function drawTargetObject(body: Node, base: Node, target: WorldTarget, model: Ga
       }
     }
     const detail = model.sections[1].detail;
-    if (detail.kind === 'combat') {
+    // Room combat reads HP from the enemy card; only the legacy world keeps the overhead bar.
+    if (detail.kind === 'combat' && pixel === undefined) {
       const healthY = pixel === undefined ? target.rank === 'boss' ? 231 : target.rank === 'elite' ? 205 : 183 : Math.min(height * 0.74, options.dungeonView!.monsterHudTop);
       const healthWidth = pixel === undefined ? 142 : 64 * pixel;
       const healthHeight = pixel === undefined ? 12 : 4 * pixel;
@@ -678,11 +756,12 @@ function paintPlayerHealth(g: Graphics, hp: number, maxHp: number, width: number
   rect(g, -width / 2, -height / 2, width * Math.max(0, Math.min(1, hp / maxHp)), height, WALK_HUD.health);
 }
 
-function inkDotTextShadow(label: Label): void {
+function inkDotTextShadow(label: Label): Label {
   label.enableShadow = true;
   label.shadowColor = INK_DOT_HUD.shadow;
   label.shadowOffset = new Vec2(0, -1);
   label.shadowBlur = 2;
+  return label;
 }
 
 /** The same portrait crop is used in the courtyard, exploration, and combat. */
@@ -828,11 +907,210 @@ function courtyardMinimap(scene: Node, spec: WalkWorldSpec, options: WalkSceneOp
   return player;
 }
 
+const PRESSURE_FILLS: Readonly<Record<'stable' | 'hunted' | 'breach', Color>> = {
+  stable: new Color(157, 178, 132, 255),
+  hunted: new Color(219, 166, 84, 255),
+  breach: new Color(214, 92, 72, 255),
+};
+
+/** Exit seal and law warnings ride on the pressure panel's foot instead of a separate strip. */
+function routeRiskSuffix(metrics: readonly StatusMetric[]): string {
+  return metrics.flatMap(({ id, severity }) => id === 'boss-seal' && severity !== 'positive' ? ['出口封印']
+    : id === 'law' && (severity === 'danger' || severity === 'warning') ? [`法则${severity === 'danger' ? '危险' : '警戒'}`] : []).map(item => ` · ${item}`).join('');
+}
+
+/** Pressure tier, its three-stage bar and how many rooms remain until the next tier. */
+function routePressurePanel(scene: Node, detail: ExploreDetailViewModel, metrics: readonly StatusMetric[], options: WalkSceneOptions, top: number): void {
+  const pressure = detail.chapterDecision?.pressure;
+  const px = 750 / (options.viewportWidth ?? 320);
+  const width = Math.min((options.viewportWidth ?? 320) - 124, 244) * px;
+  const height = 46 * px;
+  const panel = makeNode(scene, 'WalkPressurePanel', -375 + 10 * px + width / 2, top - 84 * px - height / 2, width, height);
+  const g = panel.addComponent(Graphics);
+  rect(g, -width / 2, -height / 2, width, height, HUD_WASH);
+  const tier = pressure?.present ? pressure.tier : undefined;
+  if (pressure === undefined || tier === undefined) {
+    const label = pressure?.legacyDisabled ? '侵蚀：旧档禁用' : '侵蚀：稳定';
+    inkDotTextShadow(text(panel, 'WalkPressureFoot', `${label}${routeRiskSuffix(metrics)}`, 0, 0, width - 12 * px, 24 * px, 9 * px, DARK_UI.bone, false));
+    return;
+  }
+  const inset = 8 * px;
+  const tierLabel = inkDotTextShadow(text(panel, 'WalkPressureTier', pressure.label ?? tier, -width / 2 + inset + 15 * px, height / 2 - 11 * px, 30 * px, 18 * px, 12 * px, PRESSURE_FILLS[tier], false));
+  tierLabel.isBold = true;
+  const monster = (pressure.pressurePercent ?? 0) > 0 ? `+${pressure.pressurePercent}%` : '原始强度';
+  const reward = (pressure.rewardBonusPercent ?? 0) > 0 ? `+${pressure.rewardBonusPercent}%` : '无加成';
+  inkDotTextShadow(text(panel, 'WalkPressureEffect', `怪物 ${monster} · 奖励 ${reward}`, inset + 22 * px, height / 2 - 11 * px, width - inset * 2 - 44 * px, 16 * px, 9 * px, DARK_UI.bone, false));
+  const count = pressure.clearedNodeCount ?? 0;
+  const fills = [Math.min(1, count / 6), Math.min(1, Math.max(0, count - 6) / 6), tier === 'breach' ? 1 : 0];
+  const gap = 3 * px;
+  const segment = (width - inset * 2 - gap * 2) / 3;
+  const barY = height / 2 - 24 * px;
+  (['stable', 'hunted', 'breach'] as const).forEach((id, index) => {
+    const x = -width / 2 + inset + index * (segment + gap);
+    rect(g, x, barY - 2 * px, segment, 4 * px, new Color(12, 14, 11, 220));
+    if (fills[index]! > 0) rect(g, x, barY - 2 * px, segment * fills[index]!, 4 * px, PRESSURE_FILLS[id]);
+  });
+  const next = pressure.nextTierAt;
+  // A dormant pursuer is the nearer threat, so its wake countdown takes the line until it rises.
+  const pursuit = detail.chapterDecision?.pursuit;
+  const wakeIn = pursuit?.status === 'dormant' ? pursuit.progress?.clearsRemaining : undefined;
+  const foot = pressure.breachForced ? '灯油耗尽，压力已直接进入破界'
+    : wakeIn !== undefined && wakeIn > 0 ? `已清 ${count} 间，再清 ${wakeIn} 间${pursuit?.name ?? '追兵'}苏醒`
+      : next === null || next === undefined ? `已清 ${count} 间，压力已到顶`
+        : `已清 ${count} 间，再清 ${Math.max(0, next - count)} 间进入${tier === 'stable' ? '追猎' : '破界'}`;
+  inkDotTextShadow(text(panel, 'WalkPressureFoot', `${foot}${routeRiskSuffix(metrics)}`, 0, -height / 2 + 10 * px, width - inset * 2, 14 * px, 8.5 * px,
+    pressure.breachForced ? PRESSURE_FILLS.breach : DARK_UI.muted, false));
+}
+
+const TASK_TRACKER_TONES: Readonly<Record<'active' | 'done' | 'failed', Readonly<{ kicker: Color; text: Color }>>> = {
+  active: { kicker: GOLD, text: WHITE },
+  done: { kicker: PRESSURE_FILLS.stable, text: PRESSURE_FILLS.stable },
+  failed: { kicker: PRESSURE_FILLS.breach, text: PRESSURE_FILLS.breach },
+};
+
+/**
+ * The run's tasks under the pressure panel, one tagged line each; narrow enough to stay clear of
+ * the north door. Tapping opens the full objectives sheet.
+ */
+function routeTaskTracker(scene: Node, tracker: NonNullable<ExploreDetailViewModel['taskTracker']>, options: WalkSceneOptions, top: number): void {
+  const viewport = options.viewportWidth ?? 320;
+  const px = 750 / viewport;
+  const width = (viewport * 0.425 - 14) * px;
+  // Wider phones leave room for a larger line; long lines still shrink to fit.
+  const narrow = viewport <= 350;
+  const pad = 4 * px;
+  const lineHeight = (narrow ? 15 : 17) * px;
+  const visibleHeight = tracker.lines.length * lineHeight + pad * 2;
+  // The touch target never drops below 104 design units, even for a single line.
+  const height = Math.max(visibleHeight, 104);
+  const panel = makeNode(scene, 'WalkTaskTracker', -375 + 10 * px + width / 2, top - 134 * px - height / 2, width, height);
+  rect(panel.addComponent(Graphics), -width / 2, height / 2 - visibleHeight, width, visibleHeight, HUD_WASH);
+  const tagWidth = 22 * px;
+  tracker.lines.forEach((line, index) => {
+    const tone = TASK_TRACKER_TONES[line.tone];
+    const row = makeNode(panel, `WalkTaskLine:${line.id}`, 0, height / 2 - pad - lineHeight * (index + 0.5), width, lineHeight);
+    const tag = makeNode(row, 'WalkTaskKicker', -width / 2 + pad + tagWidth / 2, 0, tagWidth, 12 * px);
+    const tagFrame = tag.addComponent(Graphics);
+    tagFrame.lineWidth = Math.max(1, 0.8 * px);
+    rect(tagFrame, -tagWidth / 2, -6 * px, tagWidth, 12 * px, new Color(12, 14, 11, 200), new Color(tone.kicker.r, tone.kicker.g, tone.kicker.b, 170));
+    const kicker = text(tag, 'Label', line.kicker, 0, 0, tagWidth, 12 * px, (narrow ? 8 : 8.5) * px, tone.kicker);
+    kicker.enableWrapText = false;
+    const textLeft = -width / 2 + pad + tagWidth + 4 * px;
+    const textWidth = width / 2 - pad - textLeft;
+    const label = inkDotTextShadow(text(row, 'WalkTaskText', line.text, textLeft + textWidth / 2, 0, textWidth, lineHeight, (narrow ? 9 : 10.5) * px, tone.text, false));
+    label.enableWrapText = false;
+  });
+  options.bindLocal(panel, () => options.openPanel === undefined ? options.openDetails() : options.openPanel('objectives'));
+}
+
+const LANTERN_PIP_LIMIT = 28;
+
+/** Lamp oil under the header buttons: the count, plus one pip per step it still lights. */
+function routeLanternChip(scene: Node, lantern: NonNullable<ExploreDetailViewModel['lantern']>, options: WalkSceneOptions, top: number): number {
+  const px = 750 / (options.viewportWidth ?? 320);
+  const width = 92 * px;
+  const height = 28 * px;
+  const chip = makeNode(scene, 'WalkLantern', 375 - 10 * px - width / 2, top - 98 * px - height / 2, width, height);
+  const g = chip.addComponent(Graphics);
+  const accent = lantern.level === 'out' ? PRESSURE_FILLS.breach : lantern.level === 'low' ? PRESSURE_FILLS.hunted : GOLD;
+  g.lineWidth = px;
+  rect(g, -width / 2, -height / 2, width, height, HUD_WASH, new Color(accent.r, accent.g, accent.b, 120));
+  // The flame mirrors the prototype's 24×24 drop path.
+  const flame = makeNode(chip, 'WalkLanternFlame', -width / 2 + 11 * px, 0, 14 * px, 14 * px).addComponent(Graphics);
+  const k = 13 * px / 24;
+  flame.moveTo(0, 9 * k);
+  flame.bezierCurveTo(4 * k, 3.5 * k, 5 * k, 1 * k, 5 * k, -1 * k);
+  flame.bezierCurveTo(5 * k, -6 * k, -5 * k, -6 * k, -5 * k, -1 * k);
+  flame.bezierCurveTo(-5 * k, 1 * k, -4 * k, 3.5 * k, 0, 9 * k);
+  flame.close();
+  flame.fillColor = new Color(accent.r, accent.g, accent.b, lantern.level === 'out' ? 90 : 220);
+  flame.fill();
+  inkDotTextShadow(text(chip, 'WalkLanternLabel', '灯油', -width / 2 + 34 * px, 5 * px, 22 * px, 14 * px, 8 * px, DARK_UI.muted, false));
+  const value = inkDotTextShadow(text(chip, 'WalkLanternValue', String(lantern.oil), -width / 2 + 58 * px, 5 * px, 28 * px, 16 * px, 13 * px, accent, false));
+  value.isBold = true;
+  // One pip per drop up to a fixed count; beyond it the strip shows the lit share, never more drawing.
+  const total = Math.max(lantern.startOil, lantern.oil, 1);
+  const pips = Math.min(total, LANTERN_PIP_LIMIT);
+  const lit = pips === total ? lantern.oil : Math.round(lantern.oil / total * pips);
+  const pipsLeft = -width / 2 + 22 * px;
+  const pipsWidth = width - 22 * px - 6 * px;
+  const pitch = pipsWidth / pips;
+  for (let index = 0; index < pips; index += 1) {
+    rect(g, pipsLeft + index * pitch, -height / 2 + 5 * px, Math.max(px, pitch - px), 3 * px,
+      index < lit ? accent : new Color(60, 58, 48, 255));
+  }
+  return top - 98 * px - height;
+}
+
+/** The chapter grid, with the pursuer's red dot and the containment ring always in view. */
+function routeMinimap(scene: Node, detail: ExploreDetailViewModel, options: WalkSceneOptions, top: number): void {
+  const map = detail.map;
+  if (map.width <= 0 || map.height <= 0) return;
+  const px = 750 / (options.viewportWidth ?? 320);
+  const cell = ((options.viewportWidth ?? 320) <= 350 ? 10 : 12) * px;
+  const gap = 2 * px;
+  const pad = 4 * px;
+  const width = map.width * cell + (map.width - 1) * gap + pad * 2;
+  const height = map.height * cell + (map.height - 1) * gap + pad * 2;
+  const minimap = makeNode(scene, 'WalkRouteMinimap', 375 - 10 * px - width / 2, top - 6 * px - height / 2, width, height);
+  const g = minimap.addComponent(Graphics);
+  rect(g, -width / 2, -height / 2, width, height, HUD_WASH);
+  const center = (x: number, y: number): WorldPoint => ({
+    x: -width / 2 + pad + x * (cell + gap) + cell / 2,
+    y: height / 2 - pad - y * (cell + gap) - cell / 2,
+  });
+  const typeColors: Readonly<Record<string, Color>> = {
+    monster: new Color(196, 102, 84, 255), trap: new Color(214, 160, 82, 255), reward: GOLD,
+    portal: new Color(118, 196, 196, 255), exit: new Color(236, 230, 210, 255),
+  };
+  const cellsById = new Map(map.nodes.map(node => [node.cellId, node]));
+  for (const node of map.nodes) {
+    const point = center(node.x, node.y);
+    const known = node.state !== 'fogged';
+    const fill = node.state === 'current' ? new Color(120, 104, 62, 255) : node.state === 'cleared' ? new Color(52, 58, 46, 230)
+      : known ? new Color(44, 46, 38, 230) : new Color(20, 22, 18, 160);
+    g.lineWidth = px;
+    rect(g, point.x - cell / 2, point.y - cell / 2, cell, cell, fill, node.state === 'current' ? GOLD : undefined);
+    const dot = typeColors[node.nodeType];
+    if (known && node.state !== 'cleared' && node.state !== 'current' && dot !== undefined) ellipse(g, point.x, point.y, cell * 0.18, cell * 0.18, dot);
+  }
+  const pursuit = detail.chapterDecision?.pursuit;
+  const containment = pursuit?.containmentCellId === undefined ? undefined : cellsById.get(pursuit.containmentCellId);
+  if (containment !== undefined && (pursuit?.status === 'dormant' || pursuit?.status === 'stalking')) {
+    const point = center(containment.x, containment.y);
+    g.lineWidth = 1.2 * px;
+    ellipse(g, point.x, point.y, cell * 0.42, cell * 0.42, undefined, new Color(150, 214, 198, 230));
+  }
+  const lair = pursuit?.status === 'dormant' && pursuit.lairCellId !== undefined ? cellsById.get(pursuit.lairCellId) : undefined;
+  if (lair !== undefined) {
+    // A dormant pursuer shows as a dim ember where it will wake.
+    const point = center(lair.x, lair.y);
+    g.lineWidth = 1.2 * px;
+    ellipse(g, point.x, point.y, cell * 0.26, cell * 0.26, new Color(120, 40, 30, 200), new Color(214, 84, 62, 200));
+  }
+  const pursuer = pursuit?.status === 'stalking' && pursuit.currentCellId !== undefined ? cellsById.get(pursuit.currentCellId) : undefined;
+  if (pursuer !== undefined) {
+    const point = center(pursuer.x, pursuer.y);
+    ellipse(g, point.x, point.y, cell * 0.46, cell * 0.46, new Color(214, 58, 40, 70));
+    ellipse(g, point.x, point.y, cell * 0.26, cell * 0.26, new Color(236, 84, 62, 255), new Color(255, 214, 200, 255));
+  }
+  options.bindLocal(minimap, () => options.openPanel === undefined ? options.openDetails() : options.openPanel('map'));
+}
+
 function header(scene: Node, model: GameViewModel, options: ReadyWalkSceneOptions, top: number): void {
   sharedHeader(scene, model, options, top);
-  if (model.phase === 'hub') return;
+  // Combat shows the enemy card, ticker and intent callout instead of the risk strip.
+  if (model.phase === 'hub' || model.phase === 'combat') return;
   const detail = model.sections[1].detail;
   const metrics = model.sections[1].metrics;
+  if (detail.kind === 'explore' && options.dungeonView !== undefined) {
+    routePressurePanel(scene, detail, metrics, options, top);
+    if (detail.taskTracker !== undefined) routeTaskTracker(scene, detail.taskTracker, options, top);
+    const below = detail.lantern === undefined ? top - 98 * (750 / (options.viewportWidth ?? 320))
+      : routeLanternChip(scene, detail.lantern, options, top);
+    routeMinimap(scene, detail, options, below);
+    return;
+  }
   const px = 750 / (options.viewportWidth ?? 320);
   const roleWidth = Math.min((options.viewportWidth ?? 320) - 124, 244) * px;
   const riskReadouts = detail.kind === 'combat'
@@ -852,61 +1130,400 @@ function header(scene: Node, model: GameViewModel, options: ReadyWalkSceneOption
   }
 }
 
-function combatControls(scene: Node, model: GameViewModel, options: WalkSceneOptions, bottom: number): void {
-  if (model.phase !== 'combat') return;
-  const pixel = 750 / (options.viewportWidth ?? 320);
-  const right = 375 - (options.safeInsets.left + options.safeInsets.right) / 2;
-  const left = -right;
+function roomEventArtKey(event: RoomEventViewModel): string {
+  if (event.kind === 'encounter' && event.monsterId !== undefined) return getInfiniteFlowMonsterWorldVisualKey(event.monsterId);
+  const keys = INFINITE_FLOW_DUNGEON_PROP_VISUAL_KEYS;
+  return event.kind === 'trap' ? keys.propTrap : keys.propExit;
+}
+
+export const ALARM_BANNER_SECONDS = 2.8;
+
+/** The route prototype's alarm banner: a dark band across the room that fades after a few seconds and never takes input. */
+function alarmBanner(scene: Node, banner: Readonly<{ title: string; line: string }>, y: number, px: number): Readonly<{ node: Node; fade: (age: number) => void }> {
+  const height = 66 * px;
+  const node = makeNode(scene, 'WalkAlarmBanner', 0, y, 750, height);
+  const g = node.addComponent(Graphics);
+  // Solid in the middle, fading out over the outer 18% on both sides.
+  const edge = 750 * 0.18;
+  rect(g, -375 + edge, -height / 2, 750 - edge * 2, height, new Color(11, 8, 6, 238));
+  for (let step = 0; step < 8; step += 1) {
+    const alpha = Math.round(238 * (step + 0.5) / 8);
+    const width = edge / 8;
+    rect(g, -375 + step * width, -height / 2, width, height, new Color(11, 8, 6, alpha));
+    rect(g, 375 - (step + 1) * width, -height / 2, width, height, new Color(11, 8, 6, alpha));
+  }
+  const title = text(node, 'WalkAlarmBannerTitle', banner.title, 0, 12 * px, 600, 30 * px, 22 * px, new Color(255, 107, 82, 255));
+  title.isBold = true;
+  const line = text(node, 'WalkAlarmBannerLine', banner.line, 0, -16 * px, 640, 30 * px, 11 * px, new Color(225, 220, 203, 255));
+  return {
+    node,
+    fade: (age) => {
+      const alpha = Math.max(0, Math.min(1, (ALARM_BANNER_SECONDS - age) / 0.5));
+      title.color = new Color(255, 107, 82, Math.round(255 * alpha));
+      line.color = new Color(225, 220, 203, Math.round(255 * alpha));
+      if (alpha === 0) node.active = false;
+    },
+  };
+}
+
+/** The route prototype's bottom sheet: portrait, kicker, title, story, numbers, then one-tap buttons. */
+function roomEventSheet(scene: Node, model: GameViewModel, event: RoomEventViewModel, options: ReadyWalkSceneOptions, bottom: number, close: () => void): number {
+  const vw = options.viewportWidth ?? 320;
+  const px = 750 / vw;
+  const compact = vw <= 350;
+  const width = 750 - options.safeInsets.left - options.safeInsets.right - 20 * px;
+  const pad = 14 * px;
+  const headerHeight = 56 * px;
+  const descSize = (compact ? 11.5 : 12.5) * px;
+  const descLines = Math.max(1, Math.ceil(event.description.length * descSize / (width - pad * 2)));
+  const descHeight = descLines * descSize * 1.45;
+  const rowHeight = (compact ? 26 : 29) * px;
+  const buttonHeight = (compact ? 46 : 52) * px;
+  const height = pad + headerHeight + 8 * px + descHeight + 8 * px + event.rows.length * rowHeight + 12 * px + buttonHeight + pad;
+  const sheet = makeNode(scene, 'WalkRoomEventSheet', (options.safeInsets.left - options.safeInsets.right) / 2, bottom + 10 * px + height / 2, width, height);
+  sheet.addComponent(BlockInputEvents);
+  paintRoomSheetFrame(sheet.addComponent(Graphics), width, height, px);
+  let cursor = height / 2 - pad;
+  const left = -width / 2 + pad;
+  // Header: framed portrait, then kicker and title beside it.
+  const art = 52 * px;
+  const frame = makeNode(sheet, 'WalkRoomEventArtFrame', left + art / 2, cursor - art / 2, art, art).addComponent(Graphics);
+  frame.lineWidth = px;
+  rect(frame, -art / 2, -art / 2, art, art, new Color(14, 12, 10, 255), DARK_UI.edgeLight);
+  const visual = options.visual(roomEventArtKey(event));
+  const fit = Math.min((art - 4 * px) / visual.width, (art - 4 * px) / visual.height);
+  const portrait = makeNode(frame.node, 'WalkRoomEventArt', 0, 0, visual.width * fit, visual.height * fit).addComponent(Sprite);
+  portrait.sizeMode = Sprite.SizeMode.CUSTOM;
+  portrait.spriteFrame = visual.frame;
+  portrait.color = new Color(255, 255, 255, 255);
+  options.trackSprite(portrait);
+  const textLeft = left + art + 12 * px;
+  const textWidth = width / 2 - pad - textLeft;
+  text(sheet, 'WalkRoomEventKicker', event.kicker, textLeft + textWidth / 2, cursor - 12 * px, textWidth, 16 * px, 11 * px, DARK_UI.gold, false);
+  const title = text(sheet, 'WalkRoomEventTitle', event.title, textLeft + textWidth / 2, cursor - 36 * px, textWidth, 26 * px, (compact ? 17 : 19) * px, DARK_UI.bone, false);
+  title.isBold = true;
+  cursor -= headerHeight + 8 * px;
+  const desc = text(sheet, 'WalkRoomEventDescription', event.description, 0, cursor - descHeight / 2, width - pad * 2, descHeight, descSize, DARK_UI.muted, false);
+  desc.verticalAlign = Label.VerticalAlign.TOP;
+  cursor -= descHeight + 8 * px;
+  // Number rows: label on the left, the value right-aligned in its tone.
+  const rules = makeNode(sheet, 'WalkRoomEventRules', 0, 0, width, height).addComponent(Graphics);
+  rules.lineWidth = Math.max(1, 0.6 * px);
+  rules.strokeColor = new Color(DARK_UI.edge.r, DARK_UI.edge.g, DARK_UI.edge.b, 150);
+  event.rows.forEach((row, index) => {
+    const y = cursor - rowHeight / 2;
+    rules.moveTo(left, cursor); rules.lineTo(width / 2 - pad, cursor); rules.stroke();
+    text(sheet, `WalkRoomEventRowLabel:${row.id}`, row.label, left + 30 * px, y, 60 * px, rowHeight, 12.5 * px, DARK_UI.muted, false);
+    const value = text(sheet, `WalkRoomEventRowValue:${row.id}`, row.value, (left + 64 * px + width / 2 - pad) / 2, y, width / 2 - pad - left - 64 * px, rowHeight, 12.5 * px, ROOM_SHEET.tones[row.tone], false);
+    value.horizontalAlign = Label.HorizontalAlign.RIGHT;
+    if (index === event.rows.length - 1) { rules.moveTo(left, cursor - rowHeight); rules.lineTo(width / 2 - pad, cursor - rowHeight); rules.stroke(); }
+    cursor -= rowHeight;
+  });
+  cursor -= 12 * px;
+  // Buttons: 收起 first, then the room's existing actions with the primary one last.
   const actions = model.sections[2].actions;
+  const buttons: readonly Readonly<{ id: string; label: string; caption?: string; primary: boolean; action?: ViewActionModel }>[] = [
+    { id: 'close', label: '收起', caption: '先看看门', primary: false },
+    ...event.buttons.map(button => ({ ...button, id: button.actionId, action: actions.find(action => action.actionId === button.actionId) })),
+  ];
+  const gap = 8 * px;
+  const buttonWidth = (width - pad * 2 - gap * (buttons.length - 1)) / buttons.length;
+  buttons.forEach((button, index) => {
+    const x = left + buttonWidth / 2 + index * (buttonWidth + gap);
+    const node = makeNode(sheet, `WalkRoomEventButton:${button.id}`, x, cursor - buttonHeight / 2, buttonWidth, buttonHeight);
+    const enabled = button.action === undefined ? button.id === 'close' : button.action.enabled;
+    const g = node.addComponent(Graphics);
+    paintRoomSheetButton(g, buttonWidth, buttonHeight, px, button.primary, enabled);
+    const ink = button.primary && enabled ? ROOM_SHEET.primaryInk : enabled ? DARK_UI.bone : DARK_UI.muted;
+    const caption = button.caption;
+    const label = text(node, `WalkRoomEventButtonLabel:${button.id}`, button.label, 0, caption === undefined ? 0 : 8 * px, buttonWidth - 8 * px, 22 * px, (compact ? 14 : 15) * px, ink);
+    label.isBold = true;
+    if (caption !== undefined) {
+      text(node, `WalkRoomEventButtonCaption:${button.id}`, caption, 0, -12 * px, buttonWidth - 8 * px, 16 * px, 10 * px,
+        button.primary && enabled ? ROOM_SHEET.primaryCaption : DARK_UI.muted);
+    }
+    if (button.id === 'close') options.bindLocal(node, close);
+    else if (button.action !== undefined) options.bindAction(node, button.action);
+  });
+  return bottom + 10 * px + height;
+}
+
+/** Approved combat v2 prototype geometry, in scene coordinates. */
+export type CombatDuelLayout = Readonly<{
+  pixel: number;
+  compact: boolean;
+  hero: WorldPoint;
+  heroHeight: number;
+  enemy: WorldPoint;
+  enemyHeight: number;
+  card: WorldRect;
+  ticker: WorldRect;
+  intent: WorldRect;
+  attack: Readonly<{ x: number; y: number; diameter: number }>;
+  /** Guard, spells, talisman and medicines on an arc around the attack button; square touch boxes never overlap. */
+  skills: readonly Readonly<{ x: number; y: number; diameter: number }>[];
+  escape: Readonly<{ x: number; y: number; diameter: number }>;
+}>;
+
+/** Combat stands the hero and the enemy diagonally across the room; movement is suspended. */
+export function getCombatDuelLayout(input: DungeonHtmlRoomInput): CombatDuelLayout {
+  const px = 750 / input.viewportWidth;
+  const compact = input.viewportWidth <= 350;
+  const safeWidth = 750 - input.safeInsets.left - input.safeInsets.right;
+  const left = -safeWidth / 2;
+  const right = safeWidth / 2;
+  const top = input.surfaceHeight / 2 - input.safeInsets.top;
+  const bottom = -input.surfaceHeight / 2 + input.safeInsets.bottom;
+  const attackSize = (compact ? 76 : 92) * px;
+  const skillSize = (compact ? 48 : 56) * px;
+  const radius = (compact ? 98 : 120) * px;
+  const escapeSize = (compact ? 46 : 54) * px;
+  // 30px below the button holds the focus readout inside the safe area.
+  const attack = { x: right - 14 * px - attackSize / 2, y: bottom + 30 * px + attackSize / 2, diameter: attackSize };
+  // Uneven spacing keeps each satellite's square touch box clear of its neighbours (>= 3.9px at 320px).
+  const skills = [188, 157, 113, 82].map(degrees => ({
+    x: attack.x + Math.cos(degrees * Math.PI / 180) * radius,
+    y: attack.y + Math.sin(degrees * Math.PI / 180) * radius,
+    diameter: skillSize,
+  }));
+  const cardHeight = (compact ? 42 : 46) * px;
+  const cardTop = top - 98 * px;
+  const card = { x: left + 10 * px, y: cardTop - cardHeight, width: safeWidth - 20 * px, height: cardHeight };
+  const tickerHeight = 22 * px;
+  const tickerWidth = Math.min(safeWidth - 24 * px, 340 * px);
+  const ticker = { x: -tickerWidth / 2, y: card.y - 6 * px - tickerHeight, width: tickerWidth, height: tickerHeight };
+  const stageTop = ticker.y - 8 * px;
+  const stageBottom = bottom + 16 * px;
+  const band = (stageTop - stageBottom) / px;
+  const enemyHeight = Math.max(130, Math.min(260, band * 0.44)) * px;
+  const heroHeight = Math.max(100, Math.min(200, band * 0.36)) * px;
+  const enemy = { x: left + safeWidth * 0.7, y: stageTop - 6 * px - enemyHeight };
+  const hero = { x: left + safeWidth * 0.27, y: stageBottom + band * 0.12 * px };
+  const intentWidth = (compact ? 128 : 150) * px;
+  const intentHeight = (compact ? 40 : 44) * px;
+  const intentRight = enemy.x - enemyHeight * 0.17;
+  const intent = { x: Math.max(left + 8 * px, intentRight - intentWidth), y: enemy.y + enemyHeight * 0.66 - intentHeight / 2, width: intentWidth, height: intentHeight };
+  return {
+    pixel: px, compact, hero, heroHeight, enemy, enemyHeight, card, ticker, intent, attack, skills,
+    escape: { x: left + 12 * px + escapeSize / 2, y: bottom + 16 * px + escapeSize / 2, diameter: escapeSize },
+  };
+}
+
+const DUEL = Object.freeze({
+  face: new Color(42, 33, 21, 236),
+  faceReady: new Color(98, 66, 25, 244),
+  faceMuted: new Color(27, 25, 21, 224),
+  rim: new Color(198, 163, 107, 255),
+  rimReady: new Color(255, 224, 160, 255),
+  rimMuted: new Color(86, 79, 63, 255),
+  glow: new Color(242, 196, 117, 90),
+  focusOff: new Color(59, 49, 34, 255),
+  focusOn: new Color(242, 196, 117, 255),
+  enemyFace: new Color(29, 15, 12, 236),
+  enemyRim: new Color(122, 62, 46, 255),
+  danger: new Color(229, 128, 111, 255),
+  dangerFace: new Color(62, 22, 14, 238),
+  chip: new Color(242, 196, 117, 255),
+  chipText: new Color(42, 21, 5, 255),
+  hp: new Color(205, 74, 56, 255),
+  hpTrack: new Color(12, 10, 8, 255),
+});
+
+const INTENT_ACTION_LABELS: Readonly<Partial<Record<NonNullable<ViewActionModel['combatAction']>, string>>> = {
+  guard: '防御', attack: '攻击', art: '法术', weapon_skill: '战技', use_thunder_talisman: '雷火符', use_healing_pill: '止血丹',
+};
+
+function duelCircle(node: Node, diameter: number, face: Color, rim: Color, rimWidth: number, glow?: Color): void {
+  const g = node.addComponent(Graphics);
+  if (glow !== undefined) {
+    g.circle(0, 0, diameter / 2 + rimWidth * 2.5);
+    g.fillColor = glow;
+    g.fill();
+  }
+  g.circle(0, 0, diameter / 2);
+  g.fillColor = face;
+  g.fill();
+  g.lineWidth = rimWidth;
+  g.strokeColor = rim;
+  g.stroke();
+  g.circle(0, 0, diameter / 2 - rimWidth * 2.2);
+  g.lineWidth = Math.max(1, rimWidth * 0.5);
+  g.strokeColor = new Color(0, 0, 0, 90);
+  g.stroke();
+}
+
+function duelIcon(parent: Node, name: string, icon: Parameters<typeof paintDarkIcon>[1], size: number, x: number, y: number, color: Color): void {
+  const mark = makeNode(parent, name, x, y, 50, 50).addComponent(Graphics);
+  paintDarkIcon(mark, icon, color);
+  mark.node.setScale(new Vec3(size / 50, size / 50, 1));
+}
+
+function duelChip(parent: Node, name: string, value: string, x: number, y: number, px: number): void {
+  const width = (value.length * 9 + 8) * px;
+  const chip = makeNode(parent, name, x, y, width, 14 * px);
+  rect(chip.addComponent(Graphics), -width / 2, -7 * px, width, 14 * px, DUEL.chip);
+  text(chip, `${name}Label`, value, 0, 0, width, 14 * px, 9 * px, DUEL.chipText);
+}
+
+/** Round touch control; the real action binding and disabled reasons stay with the View. */
+function duelButton(scene: Node, name: string, label: string, icon: Parameters<typeof paintDarkIcon>[1],
+  slot: Readonly<{ x: number; y: number; diameter: number }>, state: 'ready' | 'muted' | 'recommended', px: number): Node {
+  const base = makeNode(scene, name, slot.x, slot.y, slot.diameter, slot.diameter);
+  const muted = state === 'muted';
+  duelCircle(base, slot.diameter, muted ? DUEL.faceMuted : DUEL.face, state === 'recommended' ? DUEL.rimReady : muted ? DUEL.rimMuted : DUEL.rim,
+    (state === 'recommended' ? 2.5 : 1.5) * px, state === 'recommended' ? DUEL.glow : undefined);
+  duelIcon(base, `${name}Icon`, icon, slot.diameter * 0.36, 0, slot.diameter * 0.12, muted ? DARK_UI.muted : DUEL.focusOn);
+  const title = text(base, `${name}Label`, label, 0, -slot.diameter * 0.24, slot.diameter * 0.9, 14 * px, (slot.diameter < 50 * px ? 9 : 10) * px,
+    muted ? DARK_UI.muted : WALK_HUD.text);
+  title.enableWrapText = false;
+  return base;
+}
+
+function combatDuelControls(scene: Node, model: GameViewModel, options: WalkSceneOptions, duel: CombatDuelLayout): void {
+  if (model.phase !== 'combat') return;
+  const px = duel.pixel;
+  const actions = model.sections[2].actions;
+  const detail = model.sections[1].detail;
   const weapon = actions.find(action => action.combatAction === 'weapon_skill' && action.enabled && action.event !== undefined);
   const attack = weapon ?? actions.find(action => action.combatAction === 'attack');
   const busy = options.chrome.busyActionId !== undefined || options.chrome.modeKind === 'blocked';
-  const x = (column: number): number => right - (130 - 50 * column) * pixel;
-  const y = (row: number): number => bottom + (92 - 52 * row) * pixel;
-  const decorate = (node: Node, name: string): void => {
-    const mark = node.getChildByName(`${name}Icon`);
-    mark?.setScale(new Vec3(16 * pixel / 46, 16 * pixel / 46, 1));
-    mark?.setPosition(new Vec3(0, 8 * pixel, 0));
-    const title = node.getChildByName(`${name}Label`);
-    title?.setPosition(new Vec3(0, -10 * pixel, 0));
-    const label = title?.getComponent(Label);
-    if (label != null) {
-      label.fontSize = 10 * pixel;
-      label.lineHeight = 12 * pixel;
-      title!.getComponent(UITransform)!.setContentSize(new Size(42 * pixel, 14 * pixel));
-    }
-  };
-  // Six 44 CSS-pixel actions fit in two rows above the safe bottom edge.
-  for (const [row, group] of (['spells', 'medicines'] as const).entries()) {
-    const name = `WalkCombatChoice:${group}`;
-    const choice = button(scene, name, group === 'spells' ? '法术' : '药品', x(0), y(row), 44 * pixel,
-      !busy, DARK_UI.gold, group === 'spells' ? 'arcane' : 'bag');
-    decorate(choice, name);
-    if (!busy) options.bindLocal(choice, () => options.openCombatChoices(group));
-  }
+  const stateOf = (action: ViewActionModel | undefined): 'ready' | 'muted' | 'recommended' =>
+    action === undefined || !action.enabled || action.event === undefined || busy ? 'muted'
+      : action.recommendation === 'recommended' ? 'recommended' : 'ready';
+  const guard = actions.find(action => action.combatAction === 'guard');
+  const talisman = actions.find(action => action.combatAction === 'use_thunder_talisman');
+  const escape = actions.find(action => action.combatAction === 'escape');
   const slots = [
-    { action: attack, label: '攻击', column: 1, row: 0, icon: 'sword' as const },
-    { action: actions.find(action => action.combatAction === 'guard'), label: '防御', column: 2, row: 0, icon: 'guard' as const },
-    { action: actions.find(action => action.combatAction === 'use_thunder_talisman'), label: '雷火符', column: 1, row: 1, icon: 'arcane' as const },
-    { action: actions.find(action => action.combatAction === 'escape'), label: '脱离战斗', column: 2, row: 1, icon: 'left' as const },
+    { kind: 'action', action: guard, label: '防御', icon: 'guard' as const, slot: duel.skills[0]! },
+    { kind: 'choice', group: 'spells' as const, label: '法术', icon: 'arcane' as const, slot: duel.skills[1]! },
+    { kind: 'action', action: talisman, label: '雷火符', icon: 'arcane' as const, slot: duel.skills[2]! },
+    { kind: 'choice', group: 'medicines' as const, label: '药品', icon: 'bag' as const, slot: duel.skills[3]! },
   ];
-  for (const { action, label, column, row, icon } of slots) {
-    if (action === undefined) continue;
-    const ready = action.enabled && action.event !== undefined && !busy;
-    const accent = action === weapon || action.recommendation === 'recommended' ? DARK_UI.gold
-      : action.emphasis === 'danger' ? DARK_UI.red : DARK_UI.muted;
-    const name = `WalkCombatAction:${action.actionId}`;
-    const actionNode = button(scene, name, label, x(column), y(row), 44 * pixel, ready, accent, icon);
-    decorate(actionNode, name);
-    if (action === attack) {
-      actionNode.getChildByName(`${name}Label`)?.setPosition(new Vec3(0, -5 * pixel, 0));
-      text(actionNode, 'WalkCombatAttackMode', weapon === undefined ? '普攻' : '战技', 0, -16 * pixel, 40 * pixel, 12 * pixel, 8 * pixel, ready ? accent : DARK_UI.muted);
+  for (const entry of slots) {
+    if (entry.kind === 'choice') {
+      const name = `WalkCombatChoice:${entry.group}`;
+      const choice = duelButton(scene, name, entry.label, entry.icon, entry.slot, busy ? 'muted' : 'ready', px);
+      if (!busy) options.bindLocal(choice, () => options.openCombatChoices(entry.group!));
+      continue;
     }
-    options.bindAction(actionNode, action);
+    const action = entry.action;
+    if (action === undefined) continue;
+    const state = stateOf(action);
+    const node = duelButton(scene, `WalkCombatAction:${action.actionId}`, entry.label, entry.icon, entry.slot, state, px);
+    if (action.combatAction === 'guard' && (state === 'recommended' || action.parryEvent !== undefined) && !busy) {
+      duelChip(node, 'WalkCombatGuardChip', action.parryEvent !== undefined ? '可格挡' : '推荐', -entry.slot.diameter * 0.18, entry.slot.diameter / 2 + 2 * px, px);
+    }
+    options.bindAction(node, action);
   }
+  if (escape !== undefined) {
+    const node = duelButton(scene, `WalkCombatAction:${escape.actionId}`, '脱离', 'left', duel.escape, stateOf(escape) === 'muted' ? 'muted' : 'ready', px);
+    options.bindAction(node, escape);
+  }
+  if (attack === undefined) return;
+  const ready = attack.enabled && attack.event !== undefined && !busy;
+  const name = `WalkCombatAction:${attack.actionId}`;
+  const slot = duel.attack;
+  const base = makeNode(scene, name, slot.x, slot.y, slot.diameter, slot.diameter);
+  const focus = detail.kind === 'combat' ? detail.focus : { current: 0, required: 3 };
+  // Three focus segments circle the button; a full gauge turns it into the weapon skill.
+  const ring = makeNode(base, 'WalkCombatFocusRing', 0, 0, slot.diameter + 18 * px, slot.diameter + 18 * px).addComponent(Graphics);
+  ring.lineWidth = 6 * px;
+  ring.lineCap = Graphics.LineCap.ROUND;
+  const segmentRadius = slot.diameter / 2 + 9 * px;
+  const segments = Math.max(1, focus.required);
+  for (let index = 0; index < segments; index += 1) {
+    const from = Math.PI / 2 - index * Math.PI * 2 / segments - 0.14;
+    const to = Math.PI / 2 - (index + 1) * Math.PI * 2 / segments + 0.14;
+    ring.strokeColor = index < focus.current ? DUEL.focusOn : DUEL.focusOff;
+    for (let step = 0; step <= 12; step += 1) {
+      const angle = from + (to - from) * step / 12;
+      const x = Math.cos(angle) * segmentRadius;
+      const y = Math.sin(angle) * segmentRadius;
+      if (step === 0) ring.moveTo(x, y); else ring.lineTo(x, y);
+    }
+    ring.stroke();
+  }
+  duelCircle(base, slot.diameter, weapon !== undefined && ready ? DUEL.faceReady : ready ? DUEL.face : DUEL.faceMuted,
+    weapon !== undefined && ready ? DUEL.rimReady : ready ? DUEL.rim : DUEL.rimMuted, 2.5 * px, weapon !== undefined && ready ? DUEL.glow : undefined);
+  duelIcon(base, `${name}Icon`, 'sword', slot.diameter * 0.34, 0, slot.diameter * 0.16, ready ? DUEL.focusOn : DARK_UI.muted);
+  const title = text(base, `${name}Label`, weapon === undefined ? '攻击' : '战技', 0, -slot.diameter * 0.12, slot.diameter * 0.8, 18 * px,
+    (duel.compact ? 13 : 15) * px, ready ? WALK_HUD.text : DARK_UI.muted);
+  title.enableWrapText = false;
+  title.isBold = true;
+  text(base, 'WalkCombatAttackMode', weapon === undefined ? '普攻' : '战意已满', 0, -slot.diameter * 0.29, slot.diameter * 0.8, 12 * px,
+    (duel.compact ? 8 : 9) * px, ready ? DUEL.focusOn : DARK_UI.muted);
+  text(base, 'WalkCombatFocus', `战意 ${focus.current} / ${focus.required}`, 0, -slot.diameter / 2 - 22 * px, slot.diameter + 20 * px, 12 * px,
+    (duel.compact ? 8 : 9) * px, weapon === undefined ? DARK_UI.muted : DUEL.focusOn);
+  options.bindAction(base, attack);
+}
+
+/** Enemy card, last log line and the intent callout that replace the exploration risk strip. */
+function combatDuelHud(scene: Node, model: GameViewModel, options: ReadyWalkSceneOptions, duel: CombatDuelLayout): void {
   const detail = model.sections[1].detail;
-  if (detail.kind === 'combat') text(scene, 'WalkCombatFocus', `战意\n${detail.focus.current} / ${detail.focus.required}`,
-    left + 134 * pixel, bottom + 88 * pixel, 60 * pixel, 38 * pixel, 10 * pixel, weapon === undefined ? DARK_UI.muted : DARK_UI.gold);
+  if (detail.kind !== 'combat') return;
+  const px = duel.pixel;
+  const monster = options.spec.targets.find(target => target.kind === 'monster');
+  const rank = detail.pursuer ? '追兵 · ' : monster?.rank === 'boss' ? '首领 · ' : monster?.rank === 'elite' ? '精英 · ' : '';
+  const card = makeNode(scene, 'WalkEnemyCard', duel.card.x + duel.card.width / 2, duel.card.y + duel.card.height / 2, duel.card.width, duel.card.height);
+  paintDarkFrame(card.addComponent(Graphics), duel.card.width, duel.card.height, { fill: DUEL.enemyFace, edge: DUEL.enemyRim, accent: DUEL.danger, cut: 8 * px });
+  const cardLeft = -duel.card.width / 2;
+  const medalSize = duel.card.height - 10 * px;
+  const medal = makeNode(card, 'WalkCombatTurn', cardLeft + 6 * px + medalSize / 2, 0, medalSize, medalSize);
+  const diamond = medal.addComponent(Graphics);
+  diamond.lineWidth = 1.5 * px;
+  polygon(diamond, [[0, medalSize / 2], [medalSize / 2, 0], [0, -medalSize / 2], [-medalSize / 2, 0]], new Color(43, 34, 20, 255), DUEL.rim);
+  text(medal, 'WalkCombatTurnCaption', '回合', 0, medalSize * 0.2, medalSize, 10 * px, 7 * px, DARK_UI.muted);
+  text(medal, 'WalkCombatTurnValue', `${detail.turn}`, 0, -medalSize * 0.12, medalSize, 16 * px, 14 * px, DUEL.focusOn).isBold = true;
+  const bodyLeft = cardLeft + 12 * px + medalSize;
+  const bodyWidth = duel.card.width / 2 - 8 * px - bodyLeft;
+  const name = text(card, 'WalkEnemyName', `${rank}${detail.enemy.name}`, bodyLeft + bodyWidth * 0.33, 8 * px, bodyWidth * 0.66, 16 * px,
+    (duel.compact ? 11 : 12) * px, DARK_UI.bone, false);
+  name.isBold = true;
+  text(card, 'WalkEnemyHealthLabel', `${detail.enemy.hp} / ${detail.enemy.maxHp}`, bodyLeft + bodyWidth * 0.83, 8 * px, bodyWidth * 0.34, 16 * px,
+    (duel.compact ? 10 : 11) * px, new Color(239, 214, 196, 255));
+  const healthHeight = 9 * px;
+  const health = makeNode(card, 'WalkEnemyHealth', bodyLeft + bodyWidth / 2, -9 * px, bodyWidth, healthHeight).addComponent(Graphics);
+  paintEnemyHealth(health, detail.enemy.hpPercent / 100, bodyWidth, healthHeight);
+
+  const latest = model.sections[5].lines[0];
+  if (latest !== undefined) {
+    const ticker = makeNode(scene, 'WalkCombatTicker', duel.ticker.x + duel.ticker.width / 2, duel.ticker.y + duel.ticker.height / 2, duel.ticker.width, duel.ticker.height);
+    const backing = ticker.addComponent(Graphics);
+    backing.lineWidth = px;
+    rect(backing, -duel.ticker.width / 2, -duel.ticker.height / 2, duel.ticker.width, duel.ticker.height, new Color(14, 12, 9, 200), new Color(75, 61, 39, 255));
+    const line = text(ticker, 'WalkCombatTickerText', latest, 0, 0, duel.ticker.width - 16 * px, duel.ticker.height, (duel.compact ? 10 : 11) * px, new Color(231, 217, 189, 255));
+    line.enableWrapText = false;
+  }
+
+  // The callout steps aside while a turn plays out, like the prototype.
+  if (options.chrome.busyActionId !== undefined) return;
+  const parry = detail.intent.parryable;
+  const danger = detail.intent.severity === 'danger' || parry;
+  const intent = makeNode(scene, 'WalkEnemyIntent', duel.intent.x + duel.intent.width / 2, duel.intent.y + duel.intent.height / 2, duel.intent.width, duel.intent.height);
+  const bubble = intent.addComponent(Graphics);
+  bubble.lineWidth = 1.5 * px;
+  const halfWidth = duel.intent.width / 2;
+  const halfHeight = duel.intent.height / 2;
+  polygon(bubble, [[-halfWidth, -halfHeight], [halfWidth, -halfHeight], [halfWidth, -6 * px], [halfWidth + 8 * px, 0], [halfWidth, 6 * px], [halfWidth, halfHeight], [-halfWidth, halfHeight]],
+    danger ? DUEL.dangerFace : new Color(32, 26, 18, 240), danger ? DUEL.danger : new Color(139, 112, 70, 255));
+  duelIcon(intent, 'WalkEnemyIntentIcon', parry ? 'guard' : 'sword', 22 * px, -halfWidth + 17 * px, 0, danger ? new Color(255, 180, 163, 255) : DUEL.focusOn);
+  const recommended = detail.intent.recommendedActions.map(action => INTENT_ACTION_LABELS[action]).filter((label): label is string => label !== undefined);
+  const summary = parry ? '重击 · 防御大减伤' : detail.intent.id === 'regular-pursuit' ? '行动后常规反击'
+    : recommended.length > 0 ? `建议：${recommended.slice(0, 2).join('、')}` : '留意敌方机制';
+  const textLeft = -halfWidth + 32 * px;
+  const textWidth = duel.intent.width - 38 * px - (parry ? 34 * px : 0);
+  const title = text(intent, 'WalkEnemyIntentName', detail.intent.name, textLeft + textWidth / 2, 7 * px, textWidth, 16 * px,
+    (duel.compact ? 11 : 12) * px, danger ? new Color(255, 190, 175, 255) : DUEL.focusOn, false);
+  title.isBold = true;
+  text(intent, 'WalkEnemyIntentSummary', summary, textLeft + (duel.intent.width - 38 * px) / 2, -8 * px, duel.intent.width - 38 * px, 13 * px,
+    (duel.compact ? 9 : 10) * px, danger ? new Color(243, 201, 188, 255) : DARK_UI.muted, false);
+  if (parry) duelChip(intent, 'WalkEnemyIntentChip', '可格挡', halfWidth - 20 * px, 7 * px, px);
+}
+
+function paintEnemyHealth(g: Graphics, ratio: number, width: number, height: number): void {
+  g.clear();
+  rect(g, -width / 2, -height / 2, width, height, DUEL.hpTrack, new Color(63, 51, 34, 255));
+  rect(g, -width / 2 + 1, -height / 2 + 1, (width - 2) * Math.max(0, Math.min(1, ratio)), height - 2, DUEL.hp);
 }
 
 /** Creates one persistent world. tick moves actors/camera and never recreates the root. */
@@ -916,8 +1533,17 @@ export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, sc
     worldWidth: readyOptions.spec.width, worldHeight: readyOptions.spec.height,
     surfaceHeight: readyOptions.surfaceHeight, viewportWidth: readyOptions.viewportWidth ?? 320, safeInsets: readyOptions.safeInsets,
   }) : undefined;
-  const options: ReadyWalkSceneOptions = roomFit === undefined ? readyOptions : { ...readyOptions, spec: fitDungeonHtmlTargets(readyOptions.spec, roomFit), dungeonView: {
-    worldPixel: roomFit.hudPixel, gateHeight: roomFit.artwork.gateHeight, monsterHeight: roomFit.artwork.monsterHeight,
+  const duel = roomFit !== undefined && model.phase === 'combat' ? getCombatDuelLayout({
+    worldWidth: readyOptions.spec.width, worldHeight: readyOptions.spec.height,
+    surfaceHeight: readyOptions.surfaceHeight, viewportWidth: readyOptions.viewportWidth ?? 320, safeInsets: readyOptions.safeInsets,
+  }) : undefined;
+  const fittedSpec = roomFit === undefined ? readyOptions.spec : fitDungeonHtmlTargets(readyOptions.spec, roomFit);
+  // The duel only moves view-local feet; every target keeps its action, radius and identity.
+  const stagedSpec = duel === undefined || roomFit === undefined ? fittedSpec : { ...fittedSpec, targets: fittedSpec.targets.map(target =>
+    target.kind === 'monster' ? { ...target, ...roomFit.unproject(duel.enemy) } : target) };
+  const options: ReadyWalkSceneOptions = roomFit === undefined ? readyOptions : { ...readyOptions, spec: stagedSpec, dungeonView: {
+    worldPixel: roomFit.hudPixel, gateHeight: roomFit.artwork.gateHeight,
+    monsterHeight: duel === undefined ? roomFit.artwork.monsterHeight : duel.enemyHeight / roomFit.hudPixel,
     monsterHudTop: roomFit.targetFeet.north.y - roomFit.targetFeet.main.y - (roomFit.artwork.compact ? 54 : 58) * roomFit.hudPixel,
     compactLabels: roomFit.artwork.compact,
   } };
@@ -929,10 +1555,13 @@ export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, sc
   const top = halfSurface - options.safeInsets.top;
   const bottom = -halfSurface + options.safeInsets.bottom;
   const safeHeight = options.surfaceHeight - options.safeInsets.top - options.safeInsets.bottom;
-  const viewportHeight = roomFit?.roomRect.height ?? options.surfaceHeight;
-  const viewportWidth = roomFit?.roomRect.width ?? 750;
-  const viewportCenter = roomFit === undefined ? { x: (options.safeInsets.right - options.safeInsets.left) / 2, y: 0 }
-    : { x: roomFit.roomRect.x + viewportWidth / 2, y: roomFit.roomRect.y + viewportHeight / 2 };
+  // The duel stands the hero below the exploration controls band, so its clip reaches the safe bottom.
+  const roomRect = roomFit === undefined ? undefined : duel === undefined ? roomFit.roomRect
+    : { ...roomFit.roomRect, y: bottom, height: roomFit.roomRect.y + roomFit.roomRect.height - bottom };
+  const viewportHeight = roomRect?.height ?? options.surfaceHeight;
+  const viewportWidth = roomRect?.width ?? 750;
+  const viewportCenter = roomRect === undefined ? { x: (options.safeInsets.right - options.safeInsets.left) / 2, y: 0 }
+    : { x: roomRect.x + viewportWidth / 2, y: roomRect.y + viewportHeight / 2 };
   const cameraOffset = roomFit === undefined ? { x: 0, y: 0 } : { x: roomFit.offset.x - viewportCenter.x, y: roomFit.offset.y - viewportCenter.y };
   const worldZoom = courtyard ? safeHeight / spec.height : WORLD_ZOOM;
   const cameraScale = roomFit?.scale ?? { x: worldZoom, y: worldZoom };
@@ -961,6 +1590,7 @@ export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, sc
   if (actorScale !== undefined) depth.forEach(entry => entry.node.setScale(new Vec3(actorScale.x, actorScale.y, 1)));
   const transitionStates: { target: WorldTarget; label: Label }[] = [];
   spec.targets.forEach((target) => {
+    if (duel !== undefined && target.kind === 'transition') return;
     const actor = targetActor(actors, target, model, options);
     if (actorScale !== undefined) actor.node.setScale(new Vec3(actorScale.x, actorScale.y, 1));
     depth.push(actor);
@@ -971,12 +1601,23 @@ export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, sc
       options.bindLocal(actor.node, begin);
       const touch = makeNode(actor.node, 'WalkTargetTouch', 0, target.kind === 'portal' ? 110 : 95, target.kind === 'portal' ? 160 : 148, target.kind === 'portal' ? 220 : 190);
       options.bindLocal(touch, begin);
+    } else if (roomFit !== undefined && duel === undefined && options.roomEventSheet === undefined
+      && target.kind === 'transition' && target.id.startsWith('door:')) {
+      // As in the route prototype, tapping a door walks there and goes through on arrival;
+      // a shut door stays put and says why instead.
+      const pixel = roomFit.hudPixel;
+      const gateHeight = roomFit.artwork.gateHeight * pixel;
+      const touch = makeNode(actor.node, 'WalkTargetTouch', 0, (gateHeight - 30 * pixel) / 2, Math.max(104, 84 * pixel), gateHeight + 30 * pixel);
+      options.bindLocal(touch, () => target.disabledReason === undefined ? approachTarget(target) : showNotice(target.disabledReason));
     }
   });
 
-  const player = makeNode(actors, 'WalkPlayer', options.position.x, -options.position.y, 104, 108);
+  const duelMark = duel === undefined || roomFit === undefined ? undefined : roomFit.unproject(duel.hero);
+  const shownPosition = duelMark ?? options.position;
+  const player = makeNode(actors, 'WalkPlayer', shownPosition.x, -shownPosition.y, 104, 108);
   if (actorScale !== undefined) player.setScale(new Vec3(actorScale.x, actorScale.y, 1));
-  const playerSize = roomFit === undefined ? courtyard ? 172 : 104 : roomFit.artwork.heroVisibleHeight * 336 / 308 * hudPixel;
+  const playerSize = roomFit === undefined ? courtyard ? 172 : 104
+    : (duel === undefined ? roomFit.artwork.heroVisibleHeight * hudPixel : duel.heroHeight) * 336 / 308;
   const playerBodyY = roomFit === undefined ? courtyard ? 78 : 47 : playerSize * (320.16 - 168) / 336;
   shadow(player, roomFit === undefined ? courtyard ? 31 : 24 : 15 * options.dungeonView!.worldPixel, roomFit === undefined ? courtyard ? 7.5 : 9 : 3 * options.dungeonView!.worldPixel);
   const body = makeNode(player, 'WalkPlayerBody', 0, 0, playerSize, playerSize);
@@ -986,11 +1627,11 @@ export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, sc
   playerSprite.sizeMode = Sprite.SizeMode.CUSTOM;
   // Keep the shared logical canvas so trimmed poses retain one ground point.
   playerSprite.trim = false;
-  playerSprite.spriteFrame = walkerFrames[courtyard ? 8 : 0]!;
+  playerSprite.spriteFrame = walkerFrames[courtyard || duel !== undefined ? 8 : 0]!;
   playerSprite.color = new Color(255, 255, 255, 255);
   options.trackSprite(playerSprite);
   if (courtyard) text(player, 'WalkPlayerName', '轮回者', 0, 180, 150, 24, 12, new Color(190, 241, 217, 255));
-  const playerDepth: DepthItem = { node: player, y: options.position.y };
+  const playerDepth: DepthItem = { node: player, y: shownPosition.y };
   depth.push(playerDepth);
   const sortDepth = (): void => {
     depth.sort((a, b) => a.y - b.y);
@@ -1056,11 +1697,25 @@ export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, sc
     const codex = headerButton(scene, 'SceneCodex', '目标', 'target', 1, 1, options, top);
     options.bindLocal(codex, () => options.openPanel === undefined ? options.openCodex() : options.openPanel('objectives'));
   }
-  combatControls(scene, model, options, bottom);
   header(scene, model, options, top);
+  const roomEvent = detail.kind === 'explore' && options.roomEventSheet !== undefined ? detail.roomEvent : undefined;
+  let roomEventTop: number | undefined;
+  if (roomEvent !== undefined) {
+    // The sheet owns the controls band while it is open; walking resumes once it closes.
+    joystick.active = false;
+    interact.active = false;
+    roomEventTop = roomEventSheet(scene, model, roomEvent, options, bottom, options.roomEventSheet!.close);
+  }
+  if (duel !== undefined) {
+    // Combat suspends walking: the stage, not the joystick, positions both fighters.
+    joystick.active = false;
+    interact.active = false;
+    combatDuelHud(scene, model, options, duel);
+    combatDuelControls(scene, model, options, duel);
+  }
 
   let position: WorldPoint = { x: options.position.x, y: options.position.y };
-  let facing: Facing = courtyard ? 'right' : 'down';
+  let facing: Facing = courtyard || duel !== undefined ? 'right' : 'down';
   let previousFacing: Facing = facing;
   let frameIndex = 0;
   let gait = 0;
@@ -1085,12 +1740,28 @@ export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, sc
   let cameraPoint = clampCamera(position);
   camera.setPosition(new Vec3(cameraOffset.x - cameraPoint.x * cameraScale.x, cameraOffset.y + cameraPoint.y * cameraScale.y, 0));
 
+  // Exploration keeps the band under the header for the pressure panel; its notices sit between the controls.
+  const toastBand = model.phase === 'explore' && roomFit !== undefined ? {
+    left: controlsLeft + ((roomFit.artwork.compact ? 17 : 18) + joystickSize + 6) * hudPixel,
+    right: controlsRight - 17 * hudPixel - interactWidth - 6 * hudPixel,
+  } : undefined;
   const destinationMarker = courtyard ? makeNode(camera, 'WalkDestinationMarker', 0, 0, 36, 17).addComponent(Graphics) : undefined;
   let path: WorldPoint[] = [];
   let pendingTarget: WorldTarget | undefined;
   let stuckTime = 0;
-  const routeNotice = courtyard ? text(scene, 'WalkRouteNotice', '', 0, top - 155 * hudPixel, 310 * hudPixel, 26 * hudPixel, 11 * hudPixel, DARK_UI.gold) : undefined;
+  const routeNotice = courtyard ? text(scene, 'WalkRouteNotice', '', 0, top - 155 * hudPixel, 310 * hudPixel, 26 * hudPixel, 11 * hudPixel, DARK_UI.gold)
+    : toastBand !== undefined && options.roomEventSheet === undefined
+      ? inkDotTextShadow(text(scene, 'WalkRouteNotice', '', (toastBand.left + toastBand.right) / 2, bottom + 60 * hudPixel,
+        toastBand.right - toastBand.left, 34 * hudPixel, 10 * hudPixel, DARK_UI.gold))
+      : undefined;
   let noticeExpires = 0;
+  const showNotice = (message: string): void => {
+    if (routeNotice === undefined) return;
+    // In a room the notice shares the toast's band, so it replaces the fading toast.
+    if (toastBand !== undefined && toast !== undefined) toast.node.active = false;
+    routeNotice.string = message;
+    noticeExpires = age + 3;
+  };
   const cancelApproach = (): void => {
     path = [];
     pendingTarget = undefined;
@@ -1106,10 +1777,7 @@ export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, sc
     }
     path = findWalkPath(spec, position, destination);
     if (path.length === 0) {
-      if (routeNotice !== undefined) {
-        routeNotice.string = '此处无法到达，请从旁边绕行。';
-        noticeExpires = age + 3;
-      }
+      showNotice('此处无法到达，请从旁边绕行。');
       return;
     }
     pendingTarget = target;
@@ -1121,7 +1789,7 @@ export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, sc
       rect(destinationMarker, -0.5, -3, 1, 6, new Color(224, 210, 164, 171));
     }
   };
-  const approachTarget = (target: WorldTarget): void => beginRoute({ x: target.x, y: target.y }, target);
+  const approachTarget = (target: WorldTarget): void => beginRoute(walkApproachPoint(spec, target, position), target);
   if (courtyard) options.bindWorldTap?.(viewport, (point) => {
     const bounds = spec.bounds!;
     beginRoute({
@@ -1131,10 +1799,17 @@ export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, sc
   });
 
   const activity = formatInfiniteFlowPlayerChrome(options.chrome, model.phase).activityMessage;
-  const failed = activity !== undefined && /不可执行|失败|异常|无效|内存紧张|暂不可用/.test(activity);
+  const failed = isInfiniteFlowPlayerActivityFailure(activity);
   const feedbackText = failed ? activity : options.feedback?.text;
-  const toast = feedbackText === undefined ? undefined
+  const toast = feedbackText === undefined ? undefined : roomEventTop !== undefined
+    ? inkDotTextShadow(text(scene, 'WalkFeedback', feedbackText, 0, roomEventTop + 16 * hudPixel, 600, 24 * hudPixel, 10 * hudPixel, failed ? DARK_UI.red : DARK_UI.gold))
+    : toastBand !== undefined
+    ? inkDotTextShadow(text(scene, 'WalkFeedback', feedbackText, (toastBand.left + toastBand.right) / 2, bottom + 60 * hudPixel,
+      toastBand.right - toastBand.left, 34 * hudPixel, 10 * hudPixel, failed ? DARK_UI.red : DARK_UI.gold))
     : text(scene, 'WalkFeedback', feedbackText, -49, top - 124 * hudPixel, 554, 24 * hudPixel, 10 * hudPixel, failed ? DARK_UI.red : DARK_UI.gold);
+  const banner = options.banner === undefined ? undefined : alarmBanner(scene, options.banner, top - safeHeight * 0.36, hudPixel);
+  const bannerStart = options.banner?.age ?? 0;
+  banner?.fade(bannerStart);
   const monster = spec.targets.find((target) => target.kind === 'monster');
   const enemyNode = monster === undefined ? undefined : actors.getChildByName(`WalkTarget:${monster.id}`);
   const enemyBody = enemyNode?.getChildByName('WorldObjectBody');
@@ -1151,15 +1826,13 @@ export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, sc
       }
     }
     if (values.enemyHp !== undefined) {
-      const label = enemyNode?.getChildByName('WalkEnemyHealthLabel')?.getComponent(Label);
+      const card = scene.getChildByName('WalkEnemyCard');
+      const label = card?.getChildByName('WalkEnemyHealthLabel')?.getComponent(Label);
       if (label !== undefined && label !== null) label.string = `${values.enemyHp} / ${detail.enemy.maxHp}`;
-      const health = enemyNode?.getChildByName('WalkEnemyHealth')?.getComponent(Graphics);
+      const health = card?.getChildByName('WalkEnemyHealth')?.getComponent(Graphics);
       if (health !== undefined && health !== null) {
         const size = health.node.getComponent(UITransform)!.contentSize;
-        const inset = roomFit === undefined ? 3 : options.dungeonView!.worldPixel;
-        health.clear();
-        rect(health, -size.width / 2, -size.height / 2, size.width, size.height, INK, EDGE);
-        rect(health, -size.width / 2 + inset, -size.height / 2 + inset, (size.width - inset * 2) * Math.max(0, Math.min(1, values.enemyHp / detail.enemy.maxHp)), size.height - inset * 2, RED);
+        paintEnemyHealth(health, values.enemyHp / detail.enemy.maxHp, size.width, size.height);
       }
     }
   };
@@ -1173,10 +1846,34 @@ export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, sc
   if (effectsMask !== undefined) effectsMask.addComponent(Mask).type = Mask.Type.GRAPHICS_RECT;
   const enemyArt = monster?.visualAssetKey === undefined ? undefined : enemyBody?.getChildByName(`WalkMonsterSprite:${monster.visualAssetKey}`);
   const enemyAnchorY = roomFit === undefined ? 66 : (enemyArt?.getComponent(UITransform)?.contentSize.height ?? 0) / 2;
+  const enemySprite = enemyArt?.getComponent(Sprite) ?? undefined;
+  const timingCatcher = duel === undefined ? undefined : makeNode(scene, 'WalkCombatTimingCatcher', 0, 0, 750, options.surfaceHeight);
+  if (timingCatcher !== undefined) timingCatcher.active = false;
+  // Busy renders dispose walking input, so the parry window owns its own Space
+  // listener and releases it whenever the window closes, cancels or disposes.
+  const timingKey = (event: EventKeyboard): void => { if (event.keyCode === KeyCode.SPACE) effects?.tap(); };
+  let timingKeyBound = false;
+  const bindTimingKey = (active: boolean): void => {
+    if (active === timingKeyBound) return;
+    timingKeyBound = active;
+    if (active) input.on(Input.EventType.KEY_DOWN, timingKey);
+    else input.off(Input.EventType.KEY_DOWN, timingKey);
+  };
+  const viewportRest = viewportCenter;
   const effects = effectsMask === undefined ? undefined : createInfiniteFlowCombatEffects(effectsMask, {
+    pixel: hudPixel,
+    ...(duel === undefined ? {} : { actorUnit: duel.heroHeight / 200, dashGap: duel.enemyHeight * 0.42 }),
+    shakeWorld: offset => viewport.setPosition(new Vec3(viewportRest.x + offset.x, viewportRest.y + offset.y, 0)),
+    tintPlayer: color => { playerSprite.color = color ?? new Color(255, 255, 255, 255); },
+    tintEnemy: color => { if (enemySprite !== undefined) enemySprite.color = color ?? new Color(255, 255, 255, 255); },
+    setTimingCatcher: active => {
+      if (timingCatcher === undefined) return;
+      timingCatcher.active = active;
+      bindTimingKey(active);
+    },
     getAnchors: () => {
       if (roomFit !== undefined) {
-        const playerFoot = roomFit.project(position);
+        const playerFoot = roomFit.project(duelMark ?? position);
         const enemyFoot = roomFit.project(monster ?? position);
         return {
           player: { x: playerFoot.x - viewportCenter.x, y: playerFoot.y - viewportCenter.y + playerBodyY - effectCenterY },
@@ -1193,14 +1890,22 @@ export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, sc
     moveEnemy: offset => enemyBody?.setPosition(new Vec3(offset.x / (roomFit === undefined ? worldZoom : 1), offset.y / (roomFit === undefined ? worldZoom : 1), 0)),
   });
 
+  timingCatcher?.on(Node.EventType.TOUCH_START, (event: { propagationStopped?: boolean }) => {
+    effects?.tap();
+    event.propagationStopped = true;
+  });
+
   const updateInteraction = (): void => {
     nearby = nearestWalkTarget(spec, position);
     if (interactionInitialized && targetId === nearby?.id) return;
     interactionInitialized = true;
     targetId = nearby?.id;
     for (const entry of transitionStates) {
-      entry.label.string = entry.target.action === undefined ? '封闭' : entry.target.disabledReason !== undefined ? '入口未开放'
-        : entry.target.id === targetId ? '已到达入口' : '入口畅通';
+      const forecast = entry.target.forecast;
+      entry.label.string = forecast !== undefined
+        ? entry.target.id === targetId && entry.target.disabledReason === undefined ? '已到达入口' : getRouteForecastCaption(forecast).text
+        : entry.target.action === undefined ? '封闭' : entry.target.disabledReason !== undefined ? '入口未开放'
+          : entry.target.id === targetId ? '已到达入口' : '入口畅通';
     }
     const ready = !busy && nearby !== undefined;
     if (interactLabel !== null && interactLabel !== undefined) {
@@ -1220,7 +1925,7 @@ export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, sc
         pixel === undefined ? nearby.kind === 'npc' ? 15 : 24 : 9 * pixel, new Color(197, 168, 106, 25), ready ? TEAL : RED);
     }
   };
-  updateInteraction();
+  if (duel === undefined) updateInteraction();
 
   return {
     joystick,
@@ -1230,10 +1935,11 @@ export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, sc
     cancelApproach,
     updateCombatReadout,
     isCombatAnimating: () => effects?.isPlaying() ?? false,
-    startCombatAction: (kind, onImpact) => {
+    startCombatAction: (kind, onImpact, startOptions) => {
       if (disposed || effects === undefined) return false;
-      return effects.start(kind, onImpact);
+      return effects.start(kind, onImpact, startOptions);
     },
+    tapCombatTiming: () => !disposed && (effects?.tap() ?? false),
     resolveCombatAction: (result, onComplete) => {
       if (disposed || effects === undefined) return false;
       const accepted = effects.resolve({ ...result, onCounterImpact: () => {
@@ -1249,19 +1955,20 @@ export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, sc
       if (disposed) return;
       const elapsed = Math.min(Math.max(dt, 0), courtyard ? 0.05 : 0.1);
       age += elapsed;
-      const movingBlocked = busy || (effects?.isPlaying() ?? false);
+      const movingBlocked = busy || duel !== undefined || (effects?.isPlaying() ?? false);
       let movement = axis;
       let next = movingBlocked ? position : stepWalkPosition(spec, position, axis, elapsed);
       if (axis.x !== 0 || axis.y !== 0) cancelApproach();
-      else if (courtyard && path.length > 0 && !movingBlocked) {
+      else if (path.length > 0 && !movingBlocked) {
         let remaining = elapsed;
+        const speed = walkAxisSpeed(spec);
         // Reach each clear segment's endpoint before turning. Consume only its
         // actual travel time, so touching a tangent never cuts the foot corner
         // and crossing a waypoint cannot add movement to the current frame.
         while (path.length > 0 && remaining > 1e-10) {
           const waypoint = path[0]!;
-          const dx = (waypoint.x - next.x) / 260;
-          const dy = (waypoint.y - next.y) / 145;
+          const dx = (waypoint.x - next.x) / speed.x;
+          const dy = (waypoint.y - next.y) / speed.y;
           const magnitude = Math.hypot(dx, dy);
           if (magnitude < 1e-10) { path.shift(); continue; }
           movement = { x: dx / magnitude, y: dy / magnitude };
@@ -1284,13 +1991,14 @@ export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, sc
         player.setPosition(new Vec3(position.x, -position.y, 0));
         playerDepth.y = position.y;
         sortDepth();
-        gait += elapsed * 9;
+        // Rooms walk at twice the original pace, so their 9 fps stride doubles to keep the feet planted.
+        gait += elapsed * (courtyard ? 9 : 18);
       } else gait = 0;
-      if (courtyard && path.length > 0) {
+      if (path.length > 0) {
         stuckTime = moved ? 0 : stuckTime + elapsed;
         if (stuckTime > 0.4) {
           cancelApproach();
-          if (routeNotice !== undefined) { routeNotice.string = '前方有障碍，请从旁边绕行。'; noticeExpires = age + 3; }
+          showNotice('前方有障碍，请从旁边绕行。');
         }
       }
       if (!movingBlocked && pendingTarget !== undefined && Math.hypot(pendingTarget.x - position.x, pendingTarget.y - position.y) <= pendingTarget.radius) {
@@ -1318,8 +2026,9 @@ export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, sc
         cameraPoint = { x: cameraPoint.x + (desired.x - cameraPoint.x) * smoothing, y: cameraPoint.y + (desired.y - cameraPoint.y) * smoothing };
         camera.setPosition(new Vec3(-cameraPoint.x * worldZoom, cameraPoint.y * worldZoom, 0));
       }
-      updateInteraction();
+      if (duel === undefined) updateInteraction();
       if (toast !== undefined && !failed) toast.color = new Color(DARK_UI.gold.r, DARK_UI.gold.g, DARK_UI.gold.b, Math.round(255 * Math.max(0, Math.min(1, 4 - age))));
+      if (banner !== undefined && banner.node.active) banner.fade(bannerStart + age);
       effects?.tick(elapsed);
     },
     dispose: () => { disposed = true; cancelApproach(); effects?.dispose(); scene.destroy(); },

@@ -148,6 +148,14 @@ function fakeClient(label) {
       assert.ok(result, 'unexpected dispatchPhysical call');
       return result;
     },
+    retryPersistenceCalls: 0,
+    retryPersistenceResults: [],
+    retryPendingPersistence() {
+      this.retryPersistenceCalls += 1;
+      const result = this.retryPersistenceResults.shift();
+      assert.ok(result, 'unexpected retryPendingPersistence call');
+      return result;
+    },
   };
 }
 
@@ -822,7 +830,7 @@ const viewBundle = await build({
       export * from './InfiniteFlowView';
       export { getInfiniteFlowSceneVisualKeys } from './scene-visuals';
       export { buildWalkWorld } from './walk-world';
-      export { getDungeonHtmlRoomLayout, fitDungeonHtmlTargets } from './InfiniteFlowWalkScene';
+      export { getDungeonHtmlRoomLayout, fitDungeonHtmlTargets, getCombatDuelLayout } from './InfiniteFlowWalkScene';
       export { DARK_UI, paintDarkFrame } from './dark-ui';
       export { Graphics as TestGraphics, SpriteFrame as TestSpriteFrame } from 'cc';
     `,
@@ -855,6 +863,7 @@ const {
   buildWalkWorld,
   getDungeonHtmlRoomLayout,
   fitDungeonHtmlTargets,
+  getCombatDuelLayout,
   DARK_UI,
   paintDarkFrame,
   TestGraphics,
@@ -882,6 +891,7 @@ const {
   formatInfiniteFlowOutcomeSummary,
   formatInfiniteFlowOutcomeMetric,
   formatInfiniteFlowPlayerChrome,
+  isInfiniteFlowPlayerActivityFailure,
   formatInfiniteFlowVisualFallbackDiagnostic,
   formatInfiniteFlowResultAltar,
   formatInfiniteFlowResultOverview,
@@ -1016,6 +1026,17 @@ function sceneDungeonLayout(root, model, insets) {
   const layout = getDungeonHtmlRoomLayout({ worldWidth: spec.width, worldHeight: spec.height,
     surfaceHeight: scene.size.height, viewportWidth, safeInsets: insets });
   return { spec, layout, transientSpec: fitDungeonHtmlTargets(spec, layout) };
+}
+/** Combat v2 stands both fighters on fixed duel marks inside the same room projection. */
+function sceneDuelLayout(root, model, insets) {
+  const { spec, layout } = sceneDungeonLayout(root, model, insets);
+  const scene = findNode(root, 'WalkScene');
+  const frame = globalThis.__walkingTestFrameSize ?? { width: 0, height: 0 };
+  const viewportWidth = frame.width > 0 && frame.height > 0
+    ? Math.min(frame.width, frame.height * 750 / scene.size.height) : 320;
+  const duel = getCombatDuelLayout({ worldWidth: spec.width, worldHeight: spec.height,
+    surfaceHeight: scene.size.height, viewportWidth, safeInsets: insets });
+  return { spec, layout, duel, enemyFoot: layout.unproject(duel.enemy), heroFoot: layout.unproject(duel.hero) };
 }
 function walkTowardRenderedTarget(view, root, id, radius) {
   const actor = findNode(root, `WalkTarget:${id}`);
@@ -1267,13 +1288,19 @@ function assertDarkWalkingUi(root, model, insets, viewportWidth = 320) {
   const top = 667 - insets.top, bottom = -667 + insets.bottom;
   const px = 750 / viewportWidth;
   const interact = findNode(root, 'WalkInteract');
-  const interactWidth = (model.phase === 'combat' ? 60 : viewportWidth <= 350 ? 64 : 68) * px;
-  const interactHeight = (model.phase === 'combat' ? 44 : viewportWidth <= 350 ? 65 : 69) * px;
-  assert.deepEqual({ ...interact.size }, { width: interactWidth, height: interactHeight }, `${model.phase}: interaction retains the HTML physical touch size`);
-  assertDarkFrameGeometry(interact.getComponent(TestGraphics), interactWidth, interactHeight, `${model.phase}/WalkInteract`, model.phase === 'explore');
-  const interactBounds = absoluteNodeBounds(interact);
-  assert.ok(interactBounds.bottom >= bottom && interactBounds.top <= bottom + 120 * px,
-    `${model.phase}: interaction fits below the fixed room`);
+  if (model.phase === 'combat') {
+    // Combat v2 suspends walking: the duel stage hides the joystick and proximity control.
+    assert.equal(interact.active, false, 'combat: proximity interaction is hidden');
+    assert.equal(findNode(root, 'WalkJoystick').active, false, 'combat: joystick is hidden');
+  } else {
+    const interactWidth = (viewportWidth <= 350 ? 64 : 68) * px;
+    const interactHeight = (viewportWidth <= 350 ? 65 : 69) * px;
+    assert.deepEqual({ ...interact.size }, { width: interactWidth, height: interactHeight }, `${model.phase}: interaction retains the HTML physical touch size`);
+    assertDarkFrameGeometry(interact.getComponent(TestGraphics), interactWidth, interactHeight, `${model.phase}/WalkInteract`, true);
+    const interactBounds = absoluteNodeBounds(interact);
+    assert.ok(interactBounds.bottom >= bottom && interactBounds.top <= bottom + 120 * px,
+      `${model.phase}: interaction fits below the fixed room`);
+  }
   const hud = findNode(root, 'WalkHud');
   const graphics = hud.getComponent(TestGraphics);
   assert.ok(!graphics || graphics.fills.length + graphics.strokes.length === 0, `${model.phase}: HUD04 has no painted header panel`);
@@ -1297,15 +1324,32 @@ function assertDarkWalkingUi(root, model, insets, viewportWidth = 320) {
     const actions = collectNodes(root, ({ name }) => actionNames.has(name));
     assert.ok(actions.length > 0);
     actions.forEach((node) => {
-      const frame = assertDarkFrameGeometry(node.getComponent(TestGraphics), node.size.width, node.size.height, node.name);
-      assert.ok(node.size.width / px >= 44 && node.size.height / px >= 44, `${node.name}: the compact action retains its physical touch minimum`);
+      // Round duel controls: an opaque circular face sized to the square touch box.
+      const graphics = node.getComponent(TestGraphics);
+      const face = graphics?.fills.find(({ color, shape }) => shape?.kind === 'circle' && color.a >= 220);
+      assert.ok(face, `${node.name}: opaque round face`);
+      assert.ok(Math.abs(face.shape.radius * 2 - node.size.width) < 1e-6 && node.size.width === node.size.height,
+        `${node.name}: the face fills its square touch box`);
+      assert.ok(node.size.width / px >= 44, `${node.name}: the action retains its physical touch minimum`);
       const action = model.sections[2].actions.find(action => node.name === `WalkCombatAction:${action.actionId}`);
       assert.ok(action, `${node.name}: the visible control belongs to an original combat action`);
       const bounds = absoluteNodeBounds(node);
-      assert.ok(bounds.bottom >= bottom && bounds.top <= bottom + 120 * px,
-        `${node.name}: compact combat actions fit below the fixed room`);
-      assert.ok(darkContrast(labelComponent(findNode(node, `${node.name}Label`)).color, frame.color) >= 4.5);
+      assert.ok(bounds.bottom >= bottom - 1e-6 && bounds.top <= bottom + 240 * px,
+        `${node.name}: duel controls stay in the bottom control band`);
+      assert.ok(darkContrast(labelComponent(findNode(node, `${node.name}Label`)).color, face.color) >= 4.5,
+        `${node.name}: label stays readable on its face`);
     });
+    // Engine hit-testing uses each node's square box: no two controls may share a touch point.
+    const touchBoxes = collectNodes(root, ({ name }) => /^WalkCombat(?:Action|Choice):[^:]/.test(name) && !name.endsWith('Label') && !name.endsWith('Icon'))
+      .map(node => ({ name: node.name, bounds: absoluteNodeBounds(node) }));
+    assert.ok(touchBoxes.length >= 3, 'combat: the attack and both picker controls are present');
+    touchBoxes.forEach((a, index) => touchBoxes.slice(index + 1).forEach((b) => {
+      const separated = a.bounds.right <= b.bounds.left + 1e-6 || b.bounds.right <= a.bounds.left + 1e-6
+        || a.bounds.top <= b.bounds.bottom + 1e-6 || b.bounds.top <= a.bounds.bottom + 1e-6;
+      assert.ok(separated, `combat: ${a.name} and ${b.name} touch boxes do not overlap`);
+    }));
+    const focus = absoluteNodeBounds(findNode(root, 'WalkCombatFocus'));
+    assert.ok(focus.bottom >= bottom - 1e-6, `combat: the focus readout stays inside the safe bottom (${focus.bottom} >= ${bottom})`);
   }
 }
 
@@ -1561,6 +1605,16 @@ function assertSceneAssetGate(view, root, status) {
       '界面已切换',
     ],
     [
+      'persistence-retried',
+      { activityMessage: '已补写 wx-fixture:42 · revision 42' },
+      '存档已补写 · 可继续游戏',
+    ],
+    [
+      'persistence-retried-rejected',
+      { activityMessage: '已补写 wx-fixture:42 · 规则拒绝，状态未改变' },
+      '当前行动不可执行 · 进度未改变',
+    ],
+    [
       'unknown-normal',
       { activityMessage: 'opaque command token revision=42' },
       '战斗进行中',
@@ -1583,6 +1637,15 @@ function assertSceneAssetGate(view, root, status) {
     );
     assert.equal(JSON.stringify(chrome), before, `${label} raw activity stays unchanged`);
   }
+  const failureActivityLabels = new Set([
+    'rule-rejected', 'local-rejected', 'invalid', 'action-failure', 'visual-fallback', 'memory-warning',
+    'lifecycle-failure', 'lifecycle-timeout', 'random-source-failure', 'persistence-retried-rejected',
+  ]);
+  for (const [label, , expected] of activityCases) {
+    assert.equal(isInfiniteFlowPlayerActivityFailure(expected), failureActivityLabels.has(label),
+      `${label} player activity failure tone`);
+  }
+  assert.equal(isInfiniteFlowPlayerActivityFailure(undefined), false);
   for (const [label, overrides, legacyActivity] of activityCases.filter(([label]) =>
     ['visual-recovered', 'visual-fallback', 'memory-warning'].includes(label))) {
     const chrome = Object.freeze({
@@ -3241,7 +3304,7 @@ const fallbackPursuit = chapterPursuitFixture({
   },
 });
 const fallbackPursuitText = pursuitText(fallbackPursuit);
-assert.match(fallbackPursuitText, /状态 已击退.*接触伤害 未知.*原因 未知/s);
+assert.match(fallbackPursuitText, /状态 已击退.*被追上即迎战.*原因 未知/s);
 assert.doesNotMatch(fallbackPursuitText, /repelled|unknown|internal_node_id|unexpected_reason|\b0%\b/iu);
 
 // Combat chapter context: compact law + pursuit readout for the combat status panel.
@@ -3302,7 +3365,7 @@ const stalkingContext = formatInfiniteFlowCombatChapterContext(combatChapterCont
 }));
 assert.ok(stalkingContext.pursuitLine, 'stalking pursuit produces a pursuit line');
 assert.match(stalkingContext.pursuitLine, /追兵 镜潮尾影 追猎中/);
-assert.match(stalkingContext.pursuitLine, /接触15%/);
+assert.match(stalkingContext.pursuitLine, /追上即战/);
 assert.doesNotMatch(stalkingContext.pursuitLine, /融合/, 'stalking (not fused) shows no fusion');
 
 const fusedContext = formatInfiniteFlowCombatChapterContext(combatChapterContextFixture({
@@ -4057,6 +4120,12 @@ function nodesOverlap(leftNode, rightNode) {
 function emitTouch(node, touchId) {
   node.emit('touch-start', { getID: () => touchId, propagationStopped: false });
   node.emit('touch-end', { getID: () => touchId, propagationStopped: false });
+}
+/** Entering from the courtyard opens the first room's own sheet; 收起 returns to walking. */
+function closeArrivalSheet(root, touchId) {
+  const close = findNode(root, 'MobileSheetClose') ?? findNode(root, 'WalkRoomEventButton:close');
+  assert.ok(close, 'entering from the courtyard opens the first room\'s sheet');
+  emitTouch(close, touchId);
 }
 function exploreInsets(windowWidth, windowHeight) {
   const designPerViewport = 750 / windowWidth;
@@ -8238,6 +8307,81 @@ for (const result of [
   app.onDestroy();
 }
 
+// A recoverable write block offers a retry that only re-persists the pending
+// candidate: no second domain command, no early state change, and the original
+// runtime chrome returns once the write is durable.
+{
+  delete globalThis.wx;
+  const client = fakeClient('preview-persistence-retry');
+  client.dispatchResults.push(Promise.resolve({
+    status: 'persistence-blocked',
+    error: { code: 'storage-write', message: 'synthetic quota' },
+  }));
+  controller.clientFactories.push(() => Promise.resolve(client));
+  const app = new InfiniteFlowApp();
+  app.start();
+  await settleUntil(() => app.client === client, 'persistence retry preview client was not handed off');
+  const view = controller.views.at(-1);
+  const modeBefore = view.lastRender.chrome.modeKind;
+  assert.notEqual(modeBefore, 'blocked');
+  assert.equal(view.lastRender.chrome.persistenceRetry, undefined);
+  view.callbacks.retryPersistence();
+  await drainMicrotasks();
+  assert.equal(client.retryPersistenceCalls, 0, 'retry is inert without a persistence block');
+
+  view.callbacks.activate('touch:persistence:block', 'hub.recover', {
+    kind: 'command',
+    command: { type: 'hub/recover' },
+  });
+  await settleUntil(
+    () => view.lastRender.chrome.modeKind === 'blocked',
+    'persistence-blocked dispatch did not block the runtime',
+  );
+  assert.equal(view.lastRender.chrome.persistenceRetry, true);
+  assert.match(view.lastRender.chrome.blockingMessage, /storage-write/);
+
+  const stillBlocked = deferred();
+  client.retryPersistenceResults.push(stillBlocked.promise);
+  view.callbacks.retryPersistence();
+  view.callbacks.retryPersistence();
+  await drainMicrotasks();
+  assert.equal(client.retryPersistenceCalls, 1, 'a retry in flight ignores repeated taps');
+  assert.equal(view.lastRender.chrome.busyActionId, 'runtime.persistence.retry');
+  stillBlocked.resolve({
+    status: 'persistence-blocked',
+    error: { code: 'storage-flush', message: 'synthetic flush failure' },
+  });
+  await settleUntil(
+    () => view.lastRender.chrome.busyActionId === undefined,
+    'blocked retry did not settle',
+  );
+  assert.equal(view.lastRender.chrome.modeKind, 'blocked');
+  assert.equal(view.lastRender.chrome.persistenceRetry, true);
+  assert.match(view.lastRender.chrome.blockingMessage, /storage-flush/);
+
+  client.retryPersistenceResults.push(Promise.resolve({
+    status: 'committed',
+    commandId: 'preview:1',
+    stateRevision: 1,
+    ledgerRevision: 1,
+    events: [],
+  }));
+  view.callbacks.retryPersistence();
+  await settleUntil(
+    () => view.lastRender.chrome.modeKind === modeBefore,
+    'durable retry did not restore the runtime mode',
+  );
+  assert.equal(view.lastRender.chrome.blockingMessage, undefined);
+  assert.equal(view.lastRender.chrome.persistenceRetry, undefined);
+  assert.match(view.lastRender.chrome.activityMessage, /已补写 preview:1/);
+  assert.equal(client.retryPersistenceCalls, 2);
+  assert.equal(client.dispatchPhysicalCalls.length, 1, 'retry never re-dispatches the domain command');
+  view.callbacks.retryPersistence();
+  await drainMicrotasks();
+  assert.equal(client.retryPersistenceCalls, 2, 'retry is inert after the block clears');
+  app.onDestroy();
+}
+
 // Recall uses the same command path. Both successful result variants clear any
 // transient draft retained by the host and emit exactly one physical command.
 for (const resultStatus of ['committed', 'duplicate']) {
@@ -10720,14 +10864,15 @@ for (const viewportWidth of [320, 390]) {
     const body = findNode(actor, 'WorldObjectBody');
     const art = findNode(body, `WalkMonsterSprite:${key}`);
     const sprite = spriteOf(art);
-    const { transientSpec } = sceneDungeonLayout(root(), model, EXPLORE_INSETS_320);
-    const visibleTarget = transientSpec.targets.find(entry => entry.id === target.id);
-    assert.deepEqual({ ...actor.position }, { x: visibleTarget.x, y: -visibleTarget.y, z: 0 }, `${id} uses the HTML foot for the same world identity`);
+    const { duel, enemyFoot } = sceneDuelLayout(root(), model, EXPLORE_INSETS_320);
+    assert.ok(Math.abs(actor.position.x - enemyFoot.x) < 1e-6 && Math.abs(actor.position.y + enemyFoot.y) < 1e-6,
+      `${id} stands on the duel mark for the same world identity`);
+    const duelHeight = duel.enemyHeight * 320 / 750;
     assert.deepEqual({ ...body.position }, { x: 0, y: 0, z: 0 }, `${id} keeps the recoil container at its foot origin`);
     assert.equal(art.size.width / art.size.height, 1024 / 1536, `${id} contains the full source without aspect distortion`);
     const visibleBounds = projectedNodeBounds(art);
-    assert.ok(Math.abs((visibleBounds.top - visibleBounds.bottom) * 320 / 750 - 108) < 0.001,
-      `${id} retains the HTML monster image height after affine projection`);
+    assert.ok(Math.abs((visibleBounds.top - visibleBounds.bottom) * 320 / 750 - duelHeight) < 0.001,
+      `${id} retains the duel monster image height after affine projection`);
     assert.equal(art.position.y, art.size.height / 2, `${id} anchors the original file bottom at its rendered target foot`);
     assert.equal(body.getComponent(TestGraphics), null, `${id} replaces the fallback drawing`);
     assert.equal(sprite.sizeMode, 0, `${id} uses the explicit custom sprite dimensions`);
@@ -10740,9 +10885,9 @@ for (const viewportWidth of [320, 390]) {
   assert.equal(distinctFrames.size, 59, '59 monster identities use 59 independent frames');
 
   const rankCases = [
-    { id: 'fog_lesser_demon', rank: 'normal', height: 108 },
-    { id: 'tower_butcher', rank: 'elite', height: 108 },
-    { id: 'tower_butcher', rank: 'boss', height: 108,
+    { id: 'fog_lesser_demon', rank: 'normal' },
+    { id: 'tower_butcher', rank: 'elite' },
+    { id: 'tower_butcher', rank: 'boss',
       boss: { title: '古塔屠夫', phase: 'awakened', phaseLabel: '觉醒', sealName: '古塔封印' } },
   ];
   for (const fixture of rankCases) {
@@ -10751,25 +10896,28 @@ for (const viewportWidth of [320, 390]) {
     const actor = findNode(root(), `WalkTarget:monster:${fixture.id}`);
     const body = findNode(actor, 'WorldObjectBody');
     const art = findNode(body, `WalkMonsterSprite:monster:${fixture.id}_world`);
-    const health = findNode(actor, 'WalkEnemyHealth');
-    const healthLabel = findNode(actor, 'WalkEnemyHealthLabel');
+    const card = findNode(root(), 'WalkEnemyCard');
+    const health = findNode(card, 'WalkEnemyHealth');
+    const healthLabel = findNode(card, 'WalkEnemyHealthLabel');
     const rank = findNode(actor, 'WalkEnemyRank');
+    const { duel } = sceneDuelLayout(root(), model, EXPLORE_INSETS_320);
     assert.equal(buildWalkWorld(model).targets[0].rank, fixture.rank);
     assert.equal(body.scale?.x ?? 1, 1, `${fixture.rank} keeps recoil in the original foot coordinate system`);
     assert.equal(body.scale?.y ?? 1, 1);
     const bounds = projectedNodeBounds(art);
-    assert.ok(Math.abs((bounds.top - bounds.bottom) * 320 / 750 - fixture.height) < 0.001,
-      `${fixture.rank} keeps the HTML image size while retaining its rank mark`);
-    assert.ok(health.position.y > 0 && health.position.y < art.size.height,
-      `${fixture.rank} health bar stays at its readable HTML body anchor`);
+    assert.ok(Math.abs((bounds.top - bounds.bottom) * 320 / 750 - duel.enemyHeight * 320 / 750) < 0.001,
+      `${fixture.rank} keeps the duel image size while retaining its rank mark`);
+    assert.equal(findNode(actor, 'WalkEnemyHealth'), undefined, `${fixture.rank} HP moved from the body to the enemy card`);
+    const expectedName = `${fixture.rank === 'boss' ? '首领 · ' : fixture.rank === 'elite' ? '精英 · ' : ''}${MONSTERS[fixture.id].name}`;
+    assert.equal(labelComponent(findNode(card, 'WalkEnemyName')).string, expectedName, `${fixture.rank} card names the rank and enemy`);
     const healthLabelPosition = { ...healthLabel.position };
     const healthLabelSize = { ...healthLabel.size };
     assert.ok(healthLabel.position.y - healthLabel.size.height / 2 >= health.position.y + health.size.height / 2,
       `${fixture.rank} HP digits remain fully above the health bar`);
     assert.equal(Boolean(rank), fixture.rank !== 'normal', 'elite and boss rank marks remain distinct from ordinary enemies');
-    assert.equal(health.parent, actor, 'health stays outside the recoiling body');
-    assert.equal(healthLabel.parent, actor, 'HP digits stay outside the recoiling body');
-    assert.ok(findNode(actor, 'WalkTargetName').position.y < 0, 'monster name remains below its feet');
+    assert.equal(health.parent, card, 'health lives on the enemy card, outside the recoiling body');
+    assert.equal(healthLabel.parent, card, 'HP digits live on the enemy card');
+    assert.equal(findNode(actor, 'WalkTargetName'), undefined, 'the duel stage leaves the feet clear of a name plate');
     const fullHealthTrackWidth = health.getComponent(TestGraphics).fills.at(-1).shape.width
       / (model.sections[1].detail.enemy.hpPercent / 100);
     view.walkScene.updateCombatReadout({ enemyHp: 17 });
@@ -10812,8 +10960,9 @@ for (const viewportWidth of [320, 390]) {
   view.render(normal, chrome, EXPLORE_INSETS_320);
   const wideArt = findNode(root(), `WalkMonsterSprite:${firstKey}`);
   const wideBounds = projectedNodeBounds(wideArt);
-  assert.ok(Math.abs((wideBounds.top - wideBounds.bottom) * 320 / 750 - 108) < 0.001,
-    'a wide source retains the HTML image height with its complete original aspect ratio');
+  const wideDuel = sceneDuelLayout(root(), normal, EXPLORE_INSETS_320).duel;
+  assert.ok(Math.abs((wideBounds.top - wideBounds.bottom) - wideDuel.enemyHeight) < 0.001,
+    'a wide source retains the duel image height with its complete original aspect ratio');
   assert.equal(wideArt.size.width / wideArt.size.height, 1536 / 1024, 'a wide source keeps its aspect ratio');
   assert.equal(wideArt.position.y, wideArt.size.height / 2);
 
@@ -10823,9 +10972,10 @@ for (const viewportWidth of [320, 390]) {
   const art = findNode(body, `WalkMonsterSprite:monster:${boss.id}_world`);
   const artPosition = { ...art.position };
   const artSize = { ...art.size };
-  const bossHealthLabel = findNode(actor, 'WalkEnemyHealthLabel');
+  const bossCard = findNode(root(), 'WalkEnemyCard');
+  const bossHealthLabel = findNode(bossCard, 'WalkEnemyHealthLabel');
   const bossHealthLabelPosition = { ...bossHealthLabel.position };
-  const bossHealthY = findNode(actor, 'WalkEnemyHealth').position.y;
+  const bossHealthY = findNode(bossCard, 'WalkEnemyHealth').position.y;
   const tick = () => view.walkScene.tick(0.1, { x: 0, y: 0 });
   for (const boundary of ['complete', 'cancel', 'destroy']) {
     let impacts = 0;
@@ -10839,7 +10989,7 @@ for (const viewportWidth of [320, 390]) {
     assert.deepEqual({ ...art.position }, artPosition, 'recoil preserves the child foot-margin offset');
     assert.deepEqual({ ...art.size }, artSize, 'recoil preserves contain dimensions');
     assert.equal(body.scale?.x ?? 1, 1, 'recoil preserves the fitted boss coordinate system');
-    assert.equal(findNode(actor, 'WalkEnemyHealth').position.y, bossHealthY, 'recoil cannot move the health bar');
+    assert.equal(findNode(bossCard, 'WalkEnemyHealth').position.y, bossHealthY, 'recoil cannot move the health bar');
     assert.equal(labelComponent(bossHealthLabel).string, '17 / 80', 'impact still updates the relocated boss HP digits');
     assert.deepEqual({ ...bossHealthLabel.position }, bossHealthLabelPosition, 'recoil and impact HP updates preserve boss digit placement');
     if (boundary === 'complete') for (let i = 0; i < 6; i += 1) tick();
@@ -10899,6 +11049,7 @@ for (const viewportWidth of [320, 390]) {
     assert.equal(getInfiniteFlowSceneVisualKeys(model).portrait, portraitKey, `${model.phase}: scene composition requests the HUD portrait lease`);
     supplySceneVisualFixtures(view, model);
     view.render(model, chrome, insets);
+    if (model.phase === 'explore') closeArrivalSheet(root(), 9399);
     assertDarkWalkingUi(root(), model, insets, viewportWidth);
     const avatar = findNode(root(), 'WalkAvatarArt');
     const avatarSprite = [...avatar.components.values()].find((component) => 'spriteFrame' in component);
@@ -11318,6 +11469,7 @@ for (const viewportWidth of [320, 390]) {
 
   const explore = walkingExploreModel(chapterDecisionFixture('metro_abyss'));
   view.render(explore, chrome, EXPLORE_INSETS_320);
+  closeArrivalSheet(root(), 911);
   assertDarkWalkingUi(root(), explore, EXPLORE_INSETS_320);
   const dungeonBody = findNode(root(), 'WalkPlayerBody');
   const dungeonSprite = Array.from(dungeonBody.components.values()).find((component) => 'spriteFrame' in component);
@@ -11429,7 +11581,38 @@ for (const viewportWidth of [320, 390]) {
   assert.equal(view.walkScene.isCombatAnimating(), false, 'actual result playback completes before walking resumes');
   const battlePos = pos();
   key(68, true); advance(12); key(68, false);
-  assert.ok(pos().x > battlePos.x + 40, 'combat avatar remains controllable');
+  assert.deepEqual(pos(), battlePos, 'combat v2 holds the avatar on its duel mark; walking resumes after the encounter');
+  // Space must reach the parry window even though the busy render disposes walking input.
+  const keyListeners = () => (globalThis.__walkingTestInput.listeners.get('key-down') ?? []).length;
+  const parryGuard = { ...battle.sections[2].actions[1],
+    parryEvent: { kind: 'command', command: { type: 'combat/act', action: 'guard', timing: 'perfect' } } };
+  const heavyBattle = combatModel(combatChapterContextFixture(), {
+    actions: [battle.sections[2].actions[0], parryGuard], turn: 2,
+    intent: { id: 'heavy-blow', name: '蓄力重击', severity: 'danger', consequence: '蓄力重击。',
+      recommendedActions: ['guard'], dangerousActions: ['attack'], parryable: true },
+  });
+  // 1/60s frames: 11 finish the guard windup, then ~31-40 more reach the target band.
+  for (const [index, [label, pressAfter, perfect]] of [['Space on the ring', 36, true], ['Space too early', 6, false]].entries()) {
+    view.render(heavyBattle, chrome, EXPLORE_INSETS_390);
+    const idleListeners = keyListeners();
+    const beforeParry = calls.length;
+    key(32, true); key(32, false);
+    assert.equal(calls.length, beforeParry, `${label}: Space outside the window dispatches nothing`);
+    emitTouch(findNode(root(), 'WalkCombatAction:combat.action:guard'), 940 + index);
+    advance(11);
+    assert.equal(findNode(root(), 'WalkCombatTimingCatcher').active, true, `${label}: the window is open on the busy scene`);
+    assert.equal(keyListeners(), idleListeners, `${label}: walking input is gone and the window holds the only Space listener`);
+    advance(pressAfter);
+    key(32, true); key(32, false);
+    assert.equal(calls.length, beforeParry + 1, `${label}: Space closes the window with exactly one dispatch`);
+    assert.equal(calls.at(-1).event, perfect ? parryGuard.parryEvent : parryGuard.event, `${label}: Space selects the matching event`);
+    assert.equal(keyListeners(), idleListeners - 1, `${label}: the window releases its Space listener`);
+    view.resolveCombatPresentation('combat.action:guard', [{ stage: 'impact', playerHp: 42, enemyHp: 30, guarded: true },
+      { stage: 'counter', playerHp: 40, enemyHp: 30, guarded: true, ...(perfect ? { perfectParry: true } : {}) }]);
+    advance(70);
+    assert.equal(view.walkScene.isCombatAnimating(), false, `${label}: playback completes`);
+  }
+  view.render(battle, chrome, EXPLORE_INSETS_390);
   const unavailable = { ...battle.sections[2].actions[0], actionId: 'combat.action:art', combatAction: 'art', label: '术法攻击',
     enabled: false, event: undefined, disabledReason: '术法尚未就绪。' };
   const unavailableBattle = combatModel(combatChapterContextFixture(), { actions: [unavailable] });
@@ -11748,7 +11931,8 @@ for (const viewportWidth of [320, 390]) {
       'real walking approaches the reward before opening its interaction');
     emitTouch(findNode(root(), 'WalkInteract'), touchBase);
     assert.ok(findNode(root(), 'MobileInfoSheet:interaction'));
-    assert.ok(findNode(root(), 'RewardChestImage'), 'the reward opens directly with its chest and actual contents');
+    assert.ok(findNode(root(), 'MobileSheetRoomArtFigure') && labelComponent(findNode(root(), 'MobileSheetKicker')).string
+      === (nodeId === 'north_supply_niche' ? '补给' : '宝箱'), 'the reward opens directly as the room sheet with its chest and actual contents');
     assert.equal(collectNodes(root(), node => node.name.startsWith('MobileSheetExecute:')).length, 0,
       'reward collection omits the old generic action confirmation step');
     const preview = model.sections[1].detail.rewardPreview;
@@ -11932,6 +12116,12 @@ globalThis.__walkingTestFrameSize = beforeRewardFrameSize;
       assert.ok(graphics.fillColor.channels[3] >= 200, 'backing opacity remains sufficient on light floors');
     };
     const labels = collectNodes(root, ({ name }) => name === 'WalkTargetName');
+    if (findNode(root, 'WalkEnemyCard') !== undefined) {
+      // Combat v2: closed doors leave the duel stage and the enemy card carries the name.
+      assert.equal(labels.length, 0, 'the duel stage paints no world name plates');
+      assert.ok(labelComponent(findNode(root, 'WalkEnemyName')).string.length > 0, 'the enemy card names the opponent');
+      return;
+    }
     assert.ok(labels.length > 0, 'chapter fixture contains at least one named world target');
     assert.equal(collectNodes(root, ({ name }) => name === 'WalkTargetNameBacking').length, labels.length);
     for (const label of labels) {
@@ -12015,10 +12205,10 @@ globalThis.__walkingTestFrameSize = beforeRewardFrameSize;
     }
     assertNoBoundaryFills(root(), spec);
     globalThis.__walkingTestInput.emit('key-down', { keyCode: 65 });
-    for (let frame = 0; frame < 90; frame += 1) view.tick(1 / 60);
+    for (let frame = 0; frame < 45; frame += 1) view.tick(1 / 60);
     globalThis.__walkingTestInput.emit('key-up', { keyCode: 65 });
     const collisionPosition = view.walkScene.getPosition();
-    assert.ok(Math.abs(collisionPosition.x - 170) < 0.01, `${dungeonId}: 90 leftward frames still move 330 original world units`);
+    assert.ok(Math.abs(collisionPosition.x - 170) < 0.01, `${dungeonId}: 45 leftward frames still move 330 original world units`);
     assert.equal(collisionPosition.y, 700);
 
     view.render(model, chrome, EXPLORE_INSETS_320);
@@ -12190,6 +12380,98 @@ let dungeonMultiNeighborCases = 0;
           const camera = findNode(root(), 'WalkCamera');
           const { spec, layout, transientSpec } = sceneDungeonLayout(root(), model, insets);
           assertCloneContract(spec, transientSpec, label);
+          if (model.phase === 'combat') {
+            // Combat v2 duel: both fighters stand on fixed marks inside the room projection,
+            // doors leave the stage, walking is suspended and the HUD replaces world plates.
+            const { duel, enemyFoot, heroFoot } = sceneDuelLayout(root(), model, insets);
+            assert.equal(camera.scale.x, layout.scale.x, `${label}: the duel keeps the room projection`);
+            assert.equal(camera.scale.y, layout.scale.y);
+            const sceneBottom = -surfaceHeight / 2 + insets.bottom;
+            const lower = projectedNodePoint(scene, { x: layout.roomRect.x, y: sceneBottom });
+            const upper = projectedNodePoint(scene, { x: layout.roomRect.x + layout.roomRect.width, y: layout.roomRect.y + layout.roomRect.height });
+            const stage = { left: lower.x, bottom: lower.y, right: upper.x, top: upper.y };
+            const monster = transientSpec.targets.find(target => target.kind === 'monster');
+            const monsterActor = findNode(root(), `WalkTarget:${monster.id}`);
+            close(monsterActor.position.x, enemyFoot.x, `${label}: enemy stands on its duel mark`);
+            close(monsterActor.position.y, -enemyFoot.y, `${label}: enemy stands on its duel mark`);
+            const enemyScreen = projectedNodePoint(monsterActor);
+            const enemyMark = projectedNodePoint(scene, duel.enemy);
+            close(enemyScreen.x, enemyMark.x, `${label}: enemy foot x`);
+            close(enemyScreen.y, enemyMark.y, `${label}: enemy foot y`);
+            const playerNode = findNode(root(), 'WalkPlayer');
+            const heroScreen = projectedNodePoint(playerNode);
+            const heroMark = projectedNodePoint(scene, duel.hero);
+            close(heroScreen.x, heroMark.x, `${label}: hero foot x`);
+            close(heroScreen.y, heroMark.y, `${label}: hero foot y`);
+            close(playerNode.position.x, heroFoot.x, `${label}: hero uses the same projection`);
+            assert.equal(collectNodes(root(), node => node.name === 'WalkTransitionGateSprite').length, 0, `${label}: closed doors leave the duel stage`);
+            const enemyArt = collectNodes(root(), node => node.name.startsWith('WalkMonsterSprite:'))[0];
+            const enemyBounds = projectedNodeBounds(enemyArt);
+            close(enemyBounds.top - enemyBounds.bottom, duel.enemyHeight, `${label}: duel enemy height`);
+            inside(enemyBounds, stage, `${label}/${enemyArt.name}`);
+            const playerBody = findNode(root(), 'WalkPlayerBody');
+            const heroBounds = projectedNodeBounds(playerBody);
+            close((heroBounds.top - heroBounds.bottom) * 308 / 336, duel.heroHeight, `${label}: duel hero visible height`);
+            // The square atlas canvas is wider than the hero; its foot column and height stay on stage.
+            inside({ left: heroScreen.x, right: heroScreen.x, bottom: heroBounds.bottom, top: heroBounds.top }, stage, `${label}/WalkPlayerBody`);
+            const ticker = findNode(root(), 'WalkCombatTicker') ?? findNode(root(), 'WalkEnemyCard');
+            assert.ok(enemyBounds.top <= absoluteNodeBounds(ticker).bottom + 0.001, `${label}: the enemy stays below the HUD`);
+            for (const name of ['WalkEnemyCard', 'WalkEnemyIntent']) {
+              const bounds = absoluteNodeBounds(findNode(root(), name));
+              inside(bounds, { left: -375 + insets.left, right: 375 - insets.right, bottom: sceneBottom, top: surfaceHeight / 2 - insets.top }, `${label}/${name}`);
+              dungeonCombatHudClearanceCases += 1;
+            }
+            view.walkScene.updateCombatReadout({ enemyHp: 17 });
+            assert.equal(labelComponent(findNode(root(), 'WalkEnemyHealthLabel')).string,
+              `17 / ${model.sections[1].detail.enemy.maxHp}`, `${label}: the live enemy HP readout remains authoritative`);
+            const mask = findNode(root(), 'WalkCombatEffectsViewport');
+            assert.ok(hasComponentNamed(mask, 'Mask'), `${label}: effects retain native clipping`);
+            const maskBounds = projectedNodeBounds(mask);
+            for (const edge of ['left', 'right', 'bottom', 'top']) close(maskBounds[edge], stage[edge], `${label}: effect clip shares the duel stage ${edge}`);
+            const positionBefore = view.walkScene.getPosition();
+            view.walkScene.tick(0.5, { x: 1, y: -1 });
+            assert.deepEqual(view.walkScene.getPosition(), positionBefore, `${label}: walking is suspended during the duel`);
+            assert.deepEqual(projectedNodePoint(playerNode), heroScreen, `${label}: the hero holds its duel mark`);
+            const playerCenter = projectedNodePoint(playerBody);
+            const playerBodyPosition = { ...playerBody.position };
+            assert.equal(view.walkScene.startCombatAction('guard', () => {}), true);
+            const effect = findNode(root(), 'WalkCombatEffects');
+            const shield = effect.getComponent(TestGraphics).segments[0];
+            assert.ok(shield, `${label}: native guard effect is drawn`);
+            const unit = duel.heroHeight / 200;
+            const guardAnchor = projectedNodePoint(effect, { x: shield.from.x, y: shield.from.y - 57 * unit });
+            close(guardAnchor.x, playerCenter.x, `${label}: guard begins at the projected player body`);
+            close(guardAnchor.y, playerCenter.y, `${label}: guard follows the projected body offset`, 3 * pixel);
+            view.walkScene.cancelCombatAction();
+            let impacts = 0;
+            assert.equal(view.walkScene.startCombatAction('attack', () => { impacts += 1; }), true);
+            for (let frame = 0; frame < 3; frame += 1) view.walkScene.tick(0.1, { x: 0, y: 0 });
+            assert.equal(impacts, 1, `${label}: original effect impact is delivered once`);
+            assert.equal(view.walkScene.resolveCombatAction({ enemyDamage: 13 }, () => {}), true);
+            const damage = findNode(root(), 'WalkDamage');
+            assert.equal(labelComponent(damage).string, '−13');
+            const enemyAnchor = projectedNodePoint(damage, { x: 0, y: -70 * unit });
+            const enemyCenter = projectedNodePoint(enemyArt);
+            close(enemyAnchor.x, enemyCenter.x, `${label}: damage begins at the projected enemy body`);
+            close(enemyAnchor.y, enemyCenter.y, `${label}: damage follows the projected image body offset`, 3 * pixel);
+            view.walkScene.cancelCombatAction();
+            assert.deepEqual({ ...playerBody.position }, playerBodyPosition, `${label}: cancelled dash restores the player's body offset`);
+            assert.deepEqual({ ...enemyArt.parent.position }, { x: 0, y: 0, z: 0 }, `${label}: cancelled recoil restores the enemy's foot origin`);
+            assert.deepEqual(view.walkScene.getPosition(), positionBefore, `${label}: effects never change saved walking coordinates`);
+            dungeonRoomEffectAnchorCases += 1;
+            assert.equal(calls.length, 0, `${label}: rendering and isolated effects cannot manufacture a domain command`);
+            const attackAction = model.sections[2].actions.find(action => action.combatAction === 'attack');
+            emitTouch(findNode(root(), `WalkCombatAction:${attackAction.actionId}`), 16000 + dungeonHtmlInteractionCases);
+            for (let frame = 0; frame < 3; frame += 1) view.tick(0.1);
+            assert.equal(calls.length, 1, `${label}: the attack control dispatches exactly one original action`);
+            assert.equal(calls[0].event, attackAction.event, `${label}: the control retains the authoritative event object`);
+            view.walkScene.cancelCombatAction();
+            dungeonHtmlInteractionCases += 1;
+            assert.equal(JSON.stringify(model), snapshot, `${label}: presentation keeps the authoritative model unchanged`);
+            assert.equal(JSON.stringify(buildWalkWorld(model)), specSnapshot, `${label}: rendering cannot alter the authoritative world spec`);
+            dungeonRoomFitCases += 1;
+            continue;
+          }
           const lower = projectedNodePoint(scene, { x: layout.roomRect.x, y: layout.roomRect.y });
           const upper = projectedNodePoint(scene, { x: layout.roomRect.x + layout.roomRect.width, y: layout.roomRect.y + layout.roomRect.height });
           const room = { left: lower.x, bottom: lower.y, right: upper.x, top: upper.y };
@@ -12233,7 +12515,7 @@ let dungeonMultiNeighborCases = 0;
             const height = (bounds.top - bounds.bottom) / pixel;
             if (node.name === 'WalkTransitionGateSprite') close(height, viewportWidth === 320 ? 60 : 90, `${label}: HTML gate height`);
             else if (node.name.startsWith('WalkMonsterSprite:')) close(height, viewportWidth === 320 ? 108 : 158, `${label}: HTML monster height`);
-            else close(height * 308 / 336, viewportWidth === 320 ? 50 : 65, `${label}: HTML visible hero height`);
+            else close(height * 308 / 336, viewportWidth === 320 ? 68 : 88, `${label}: visible hero stands about a doorway tall`);
             if (node.name !== 'WalkPlayerBody') {
               const foot = projectedNodePoint(node.parent.parent);
               close(bounds.bottom, foot.y, `${label}/${node.name}: original image bottom is on its target foot`);
@@ -12250,77 +12532,23 @@ let dungeonMultiNeighborCases = 0;
           view.walkScene.tick(0.1, { x: 1, y: 0 });
           const horizontalPosition = view.walkScene.getPosition();
           const playerScreenAfter = projectedNodePoint(findNode(root(), 'WalkPlayer'));
-          close(horizontalPosition.x - positionBefore.x, 22, `${label}: movement uses the original world speed`);
+          close(horizontalPosition.x - positionBefore.x, 44, `${label}: movement uses the room walking speed`);
           assert.equal(horizontalPosition.y, positionBefore.y);
-          close(playerScreenAfter.x - playerScreenBefore.x, 22 * layout.scale.x, `${label}: horizontal movement is a straight affine axis`);
+          close(playerScreenAfter.x - playerScreenBefore.x, 44 * layout.scale.x, `${label}: horizontal movement is a straight affine axis`);
           close(playerScreenAfter.y, playerScreenBefore.y, `${label}: rightward walking cannot drift in depth`);
           view.walkScene.tick(0.1, { x: 0, y: -1 });
           const positionAfter = view.walkScene.getPosition();
           const verticalScreenAfter = projectedNodePoint(findNode(root(), 'WalkPlayer'));
-          close(horizontalPosition.y - positionAfter.y, 22, `${label}: vertical movement keeps the original world speed`);
+          close(horizontalPosition.y - positionAfter.y, 44, `${label}: vertical movement keeps the room walking speed`);
           assert.equal(positionAfter.x, horizontalPosition.x);
           close(verticalScreenAfter.x, playerScreenAfter.x, `${label}: depth walking cannot drift horizontally`);
-          close(verticalScreenAfter.y - playerScreenAfter.y, 22 * layout.scale.y, `${label}: depth movement is a straight affine axis`);
+          close(verticalScreenAfter.y - playerScreenAfter.y, 44 * layout.scale.y, `${label}: depth movement is a straight affine axis`);
           assert.deepEqual({ ...camera.position }, cameraBefore, `${label}: the fixed camera never follows the avatar`);
           assert.deepEqual(projectedNodeBounds(bg), backgroundBoundsBefore, `${label}: walking cannot resize or move the original background`);
           assert.deepEqual({ ...findNode(root(), 'WalkPlayer').position }, { x: positionAfter.x, y: -positionAfter.y, z: 0 });
           view.render(model, chrome, insets);
           assert.deepEqual(view.walkScene.getPosition(), positionAfter, `${label}: same-world refresh retains the exact live world position`);
           assert.deepEqual({ ...findNode(root(), 'WalkCamera').position }, cameraBefore, `${label}: refresh retains the fixed projection`);
-          if (model.phase === 'combat') {
-            const north = transientSpec.targets.find(target => target.doorSide === 'north');
-            const northActor = findNode(root(), `WalkTarget:${north.id}`);
-            const northState = findNode(northActor, 'WalkTransitionState');
-            const northernCaptionBounds = projectedNodeBounds(northState);
-            const assertCombatHudClearsNorth = (stage) => {
-              for (const name of ['WalkEnemyHealth', 'WalkEnemyHealthLabel']) {
-                const bounds = projectedNodeBounds(findNode(root(), name));
-                inside(bounds, room, `${label}/${stage}/${name}`);
-                assert.ok(bounds.top < northernCaptionBounds.bottom - 0.001,
-                  `${label}/${stage}/${name}: projected top ${bounds.top} stays below north caption bottom ${northernCaptionBounds.bottom}`);
-              }
-              dungeonCombatHudClearanceCases += 1;
-            };
-            assertCombatHudClearsNorth('initial');
-            view.walkScene.updateCombatReadout({ enemyHp: 17 });
-            assert.equal(labelComponent(findNode(root(), 'WalkEnemyHealthLabel')).string,
-              `17 / ${model.sections[1].detail.enemy.maxHp}`, `${label}: the live enemy HP readout remains authoritative`);
-            assertCombatHudClearsNorth('live HP update');
-            const mask = findNode(root(), 'WalkCombatEffectsViewport');
-            assert.ok(hasComponentNamed(mask, 'Mask'), `${label}: effects retain native clipping`);
-            const maskBounds = projectedNodeBounds(mask);
-            for (const edge of ['left', 'right', 'bottom', 'top']) close(maskBounds[edge], room[edge], `${label}: effect clip shares room ${edge}`);
-            const playerBody = findNode(root(), 'WalkPlayerBody');
-            const playerCenter = projectedNodePoint(playerBody);
-            const playerBodyPosition = { ...playerBody.position };
-            assert.equal(view.walkScene.startCombatAction('guard', () => {}), true);
-            const effect = findNode(root(), 'WalkCombatEffects');
-            const shield = effect.getComponent(TestGraphics).segments[0];
-            assert.ok(shield, `${label}: native guard effect is drawn`);
-            const guardAnchor = projectedNodePoint(effect, { x: shield.from.x, y: shield.from.y - 57 });
-            close(guardAnchor.x, playerCenter.x, `${label}: guard begins at the projected player body`);
-            close(guardAnchor.y, playerCenter.y, `${label}: guard follows the projected body offset`, 3 * pixel);
-            view.walkScene.cancelCombatAction();
-            let impacts = 0;
-            assert.equal(view.walkScene.startCombatAction('attack', () => { impacts += 1; }), true);
-            for (let frame = 0; frame < 3; frame += 1) view.walkScene.tick(0.1, { x: 0, y: 0 });
-            assert.equal(impacts, 1, `${label}: original effect impact is delivered once`);
-            assert.equal(view.walkScene.resolveCombatAction({ enemyDamage: 13 }, () => {}), true);
-            const damage = findNode(root(), 'WalkDamage');
-            assert.equal(labelComponent(damage).string, '−13');
-            const enemyAnchor = projectedNodePoint(damage, { x: 0, y: -60 });
-            const enemyArt = collectNodes(root(), node => node.name.startsWith('WalkMonsterSprite:'))[0];
-            const enemyCenter = projectedNodePoint(enemyArt);
-            close(enemyAnchor.x, enemyCenter.x, `${label}: damage begins at the projected enemy body`);
-            close(enemyAnchor.y, enemyCenter.y, `${label}: damage follows the projected image body offset`, 3 * pixel);
-            inside({ left: enemyAnchor.x, right: enemyAnchor.x, bottom: enemyAnchor.y, top: enemyAnchor.y }, room,
-              `${label}: damage remains inside the effect clip`);
-            view.walkScene.cancelCombatAction();
-            assert.deepEqual({ ...playerBody.position }, playerBodyPosition, `${label}: cancelled recoil restores the player's body offset`);
-            assert.deepEqual({ ...enemyArt.parent.position }, { x: 0, y: 0, z: 0 }, `${label}: cancelled recoil restores the enemy's foot origin`);
-            assert.deepEqual(view.walkScene.getPosition(), positionAfter, `${label}: effect recoil never changes saved walking coordinates`);
-            dungeonRoomEffectAnchorCases += 1;
-          }
           assert.equal(calls.length, 0, `${label}: rendering, walking and isolated effects cannot manufacture a domain command`);
           const currentTarget = transientSpec.targets.find(target => target.kind === 'monster');
           walkTowardRenderedTarget(view, root(), currentTarget.id, currentTarget.radius);
@@ -12329,8 +12557,12 @@ let dungeonMultiNeighborCases = 0;
           assert.deepEqual({ ...marker.position }, { ...actor.position }, `${label}: proximity marker names the same rendered target foot`);
           assert.deepEqual(projectedNodePoint(marker), projectedNodePoint(actor), `${label}: proximity marker has no screen drift`);
           emitTouch(findNode(root(), 'WalkInteract'), 16000 + dungeonHtmlInteractionCases);
-          if (model.phase === 'combat') for (let frame = 0; frame < 3; frame += 1) view.tick(0.1);
-          assert.equal(calls.length, 1, `${label}: deliberate proximity interaction dispatches exactly one original action`);
+          // Route prototype: interacting with the room's encounter opens its sheet; only 战斗 submits.
+          assert.equal(calls.length, 0, `${label}: deliberate proximity interaction opens the encounter sheet without a command`);
+          const fight = findNode(root(), `WalkRoomEventButton:${currentTarget.action.actionId}`);
+          assert.ok(fight, `${label}: the encounter sheet offers the target's own action`);
+          emitTouch(fight, 16500 + dungeonHtmlInteractionCases);
+          assert.equal(calls.length, 1, `${label}: one tap on 战斗 dispatches exactly one original action`);
           assert.equal(calls[0].actionId, currentTarget.action.actionId, `${label}: the target retains the authoritative action ID`);
           assert.equal(calls[0].event, currentTarget.action.event, `${label}: the target retains the authoritative event object`);
           view.walkScene.cancelCombatAction();
@@ -12394,17 +12626,32 @@ let compactModalCloseCases = 0;
         view.openMobilePanel(kind);
         const panel = findNode(root(), `MobileInfoSheet:${kind}`);
         assert.ok(panel, `${viewportWidth}px/${kind}: real host renders the requested sheet`);
-        assert.ok(panel.size.width / unit <= 304 + 0.6 && panel.size.width / unit <= viewportWidth - 40 + 0.6,
-          `${viewportWidth}px/${kind}: compact width leaves physical side margins`);
-        assert.ok(panel.size.height / unit <= 464 + 0.6
-          && panel.size.height <= surfaceHeight - insets.top - insets.bottom - 88 * unit + 0.6,
-          `${viewportWidth}px/${kind}: frame remains inside the safe vertical surface`);
+        if (kind === 'interaction') {
+          // A room's own interactions dock at the bottom like the route prototype's room sheet.
+          assert.ok(Math.abs(panel.size.width - (750 - 20 * unit)) < 0.6, `${viewportWidth}px/interaction: room sheet keeps 10px side margins`);
+          assert.ok(Math.abs(panel.position.y - panel.size.height / 2 - (-surfaceHeight / 2 + insets.bottom + 10 * unit)) < 0.6,
+            `${viewportWidth}px/interaction: room sheet docks 10px above the safe bottom`);
+          assert.ok(panel.size.height <= surfaceHeight - insets.top - insets.bottom - 54 * unit + 0.6,
+            `${viewportWidth}px/interaction: room sheet stays 44px under the safe top`);
+          assert.equal(findNode(panel, 'MobileSheetTitleBand'), undefined, 'interaction: the room sheet has no window band');
+        } else {
+          assert.ok(panel.size.width / unit <= 304 + 0.6 && panel.size.width / unit <= viewportWidth - 40 + 0.6,
+            `${viewportWidth}px/${kind}: compact width leaves physical side margins`);
+          assert.ok(panel.size.height / unit <= 464 + 0.6
+            && panel.size.height <= surfaceHeight - insets.top - insets.bottom - 88 * unit + 0.6,
+            `${viewportWidth}px/${kind}: frame remains inside the safe vertical surface`);
+          const header = findNode(panel, 'MobileSheetTitleBand');
+          assert.ok(Math.abs(header.size.height / unit - 48) < 0.6, `${kind}: header is compact at both widths`);
+        }
         assert.ok(hasComponentNamed(panel, 'BlockInputEvents'), `${kind}: sheet blocks world input`);
-        const header = findNode(panel, 'MobileSheetTitleBand');
-        assert.ok(Math.abs(header.size.height / unit - 48) < 0.6, `${kind}: header is compact at both widths`);
         const close = findNode(panel, 'MobileSheetClose');
-        assert.ok(Math.abs(close.size.width / unit - 44) < 0.6 && Math.abs(close.size.height / unit - 44) < 0.6,
-          `${kind}: close retains its complete physical touch region`);
+        if (kind === 'interaction') {
+          assert.ok(Math.abs(close.size.height / unit - (viewportWidth <= 350 ? 46 : 52)) < 0.6 && close.size.width / unit >= 44,
+            'interaction: 收起 keeps the room sheet button size');
+        } else {
+          assert.ok(Math.abs(close.size.width / unit - 44) < 0.6 && Math.abs(close.size.height / unit - 44) < 0.6,
+            `${kind}: close retains its complete physical touch region`);
+        }
         const firstTouch = 14000 + compactModalCloseCases * 10;
         emitTouch(close, firstTouch);
         close.emit('touch-end', { getID: () => firstTouch, propagationStopped: false });
@@ -12451,6 +12698,7 @@ let compactOverlayCases = 0;
       for (const [kind, model, chrome, panelName, blockerName, scrollName] of [
         ['boot', undefined, { modeKind: 'boot', modeLabel: 'bootstrap', modeDetail: diagnostic }, 'RuntimeDiagnostic', 'RuntimeDiagnosticBlocker', 'DiagnosticScroll'],
         ['blocked', hub, { modeKind: 'blocked', modeLabel: 'storage', modeDetail: '', blockingMessage: diagnostic }, 'RuntimeDiagnostic', 'RuntimeDiagnosticBlocker', 'DiagnosticScroll'],
+        ['persistence', hub, { modeKind: 'blocked', modeLabel: 'storage', modeDetail: '', blockingMessage: diagnostic, persistenceRetry: true }, 'RuntimeDiagnostic', 'RuntimeDiagnosticBlocker', 'DiagnosticScroll'],
         ['loading', hub, { modeKind: 'preview', modeLabel: '', modeDetail: '', sceneAssets: 'loading' }, 'SceneAssetLoading', 'SceneAssetOverlayBlocker', undefined],
         ['error', hub, { modeKind: 'preview', modeLabel: '', modeDetail: '', sceneAssets: 'error' }, 'SceneAssetError', 'SceneAssetOverlayBlocker', undefined],
         ['help', help, { modeKind: 'preview', modeLabel: '', modeDetail: '' }, 'HelpDialog', 'HelpOverlayBlocker', 'HelpScroll'],
@@ -12458,11 +12706,14 @@ let compactOverlayCases = 0;
         const canvas = { name: `compact-overlay-${viewportWidth}-${kind}`, children: [],
           getComponent() { return { contentSize: { width: 750, height: surfaceHeight } }; },
           addChild(child) { this.children.push(child); child.parent = this; } };
+        let persistenceRetries = 0;
         const view = new SceneFixtureView(canvas, {
           activate() { assert.fail('rendering compact overlays cannot dispatch actions'); },
           retrySceneAssets() { assert.fail('rendering recovery controls cannot start a retry'); },
+          retryPersistence() { persistenceRetries += 1; },
         });
         view.render(model, chrome, insets);
+        assert.equal(persistenceRetries, 0, `${kind}: rendering cannot start a persistence retry`);
         const root = canvas.children.at(-1);
         const panel = findNode(root, panelName);
         assert.ok(panel, `${viewportWidth}px/${kind}: real host overlay exists`);
@@ -12493,9 +12744,11 @@ let compactOverlayCases = 0;
             assert.ok(thumb.position.y < initialY, `${kind}: overflow scrolling updates its thumb`);
           }
         }
-        if (kind === 'boot' || kind === 'blocked') {
+        if (kind === 'boot' || kind === 'blocked' || kind === 'persistence') {
           assert.equal(labelComponent(findNode(panel, 'DiagnosticBody')).string, diagnostic,
             `${kind}: compact diagnostic preserves every original line`);
+          assert.equal(findNode(panel, 'PersistenceRetry') !== undefined, kind === 'persistence',
+            `${kind}: only a recoverable write block offers a persistence retry`);
         }
         if (kind === 'help') {
           assert.equal(collectNodes(panel, node => node.name.startsWith('HelpScrollSection:')).length, 4,
@@ -12504,7 +12757,8 @@ let compactOverlayCases = 0;
           assert.ok(Math.abs(close.size.width / unit - 44) < 0.6 && Math.abs(close.size.height / unit - 44) < 0.6,
             'help title close retains a 44px physical target');
         }
-        for (const name of kind === 'help' ? ['PreviousTopic', 'NextTopic'] : kind === 'error' ? ['SceneAssetRetry'] : []) {
+        for (const name of kind === 'help' ? ['PreviousTopic', 'NextTopic'] : kind === 'error' ? ['SceneAssetRetry']
+          : kind === 'persistence' ? ['PersistenceRetry'] : []) {
           const target = findNode(panel, name);
           const plate = findNode(target, `${name}Plate`);
           assert.ok(target.size.width / unit >= 44 && Math.abs(target.size.height / unit - 44) < 0.6,
@@ -12513,6 +12767,21 @@ let compactOverlayCases = 0;
             `${name}: button separates compact appearance from its touch region`);
           assert.equal(nodesOverlap(target, findNode(panel, scrollName ?? 'SceneAssetDetail')), false,
             `${name}: button never covers the document clip or loading detail`);
+        }
+        if (kind === 'persistence') {
+          const retryBounds = absoluteNodeBounds(findNode(panel, 'PersistenceRetry'));
+          assert.ok(retryBounds.left >= bounds.left - 0.6 && retryBounds.right <= bounds.right + 0.6
+            && retryBounds.top <= bounds.top + 0.6 && retryBounds.bottom >= bounds.bottom - 0.6,
+            'persistence retry stays inside the compact frame');
+          emitTouch(findNode(panel, 'PersistenceRetry'), 9950 + viewportWidth);
+          assert.equal(persistenceRetries, 1, 'persistence retry forwards exactly one callback');
+          view.render(model, { ...chrome, busyActionId: 'runtime.persistence.retry' }, insets);
+          const busyRetry = findNode(canvas.children.at(-1), 'PersistenceRetry');
+          assert.equal(labelComponent(findNode(busyRetry, 'PersistenceRetryLabel')).string, '正在重试…');
+          emitTouch(busyRetry, 9960 + viewportWidth);
+          assert.equal(persistenceRetries, 1, 'a retry in flight disables the retry control');
+          emitTouch(findNode(panel, 'PersistenceRetry'), 9970 + viewportWidth);
+          assert.equal(persistenceRetries, 1, 'a retired retry control from an older render is inert');
         }
         view.destroy();
         compactOverlayCases += 1;

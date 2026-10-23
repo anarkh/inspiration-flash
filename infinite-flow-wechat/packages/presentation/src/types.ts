@@ -146,6 +146,8 @@ export type ViewActionModel = Readonly<{
   riskReason?: string;
   readout?: string;
   combatAction?: CombatAction;
+  /** Guard only, on a telegraphed heavy blow: submit this instead of `event` after a well-timed tap. */
+  parryEvent?: PresentationEvent;
 }>;
 
 export type StatusMetric = Readonly<{
@@ -237,6 +239,8 @@ export type RewardPreviewViewModel = Readonly<{
   }>[];
   /** Actual restored HP after clamping to the current maximum. */
   healing: number;
+  /** Lamp oil the claim actually adds; present only for supply rooms of a lamp-lit run. */
+  lanternOil?: number;
   /** Present only when this claim really creates a nonempty pending relic draft. */
   relicDraftId?: string;
 }>;
@@ -469,6 +473,8 @@ export type HubDetailViewModel = Readonly<{
   equipmentCommission?: EquipmentCommissionDetailViewModel;
   equipmentMemory?: EquipmentMemoryLibraryViewModel;
   shop?: HubShopCatalogViewModel;
+  /** Present while finished tasks wait in any panel; its action claims them all. Kept out of the panel's action list. */
+  taskClaims?: Readonly<{ count: number; action: ViewActionModel }>;
 }>;
 
 export type EquipmentMemoryHuntSignalViewModel = Readonly<{
@@ -589,6 +595,10 @@ export type ChapterPressureViewModel = Readonly<{
   pressurePercent?: number;
   rewardBonusPercent?: number;
   nextTierAt?: number | null;
+  /** Rooms counted toward the tiers; drives the segmented pressure bar. */
+  clearedNodeCount?: number;
+  /** A burnt-out lantern dropped the run straight into breach. */
+  breachForced?: boolean;
 }>;
 
 export type ChapterPursuitViewModel = Readonly<{
@@ -604,6 +614,14 @@ export type ChapterPursuitViewModel = Readonly<{
   contactDamagePercent?: number;
   bossFusionPercent?: number;
   rewardAmount?: number;
+  /** The room that seals the pursuer once it is cleared and the pursuer walks in. */
+  containmentNodeId?: string;
+  containmentTitle?: string;
+  containmentCellId?: string;
+  /** Map cell of a stalking pursuer, shown even inside the fog. */
+  currentCellId?: string;
+  /** Map cell where a dormant pursuer waits to wake, shown even inside the fog. */
+  lairCellId?: string;
   progress?: Readonly<{
     active: boolean;
     currentNodeId: string | null;
@@ -627,6 +645,46 @@ export type ChapterDecisionViewModel = Readonly<{
   pursuit: ChapterPursuitViewModel;
 }>;
 
+export type LanternViewModel = Readonly<{
+  oil: number;
+  startOil: number;
+  supplyOil: number;
+  contactOilLoss: number;
+  /** `low` at three or fewer steps left, `out` once the lamp is empty. */
+  level: 'ok' | 'low' | 'out';
+}>;
+
+export type RouteForecastKind = 'monster' | 'elite' | 'boss' | 'trap' | 'reward' | 'supply' | 'portal' | 'exit';
+
+/** What one doorway reveals about the next room; copied from the core route forecast. */
+export type RouteForecastViewModel = Readonly<{
+  /** Same id as the map cell, so a door can find its own forecast. */
+  cellId: string;
+  nodeId: string;
+  kind: RouteForecastKind;
+  kindLabel: string;
+  cleared: boolean;
+  /** 1 to 3: share of current HP an uncleared fight or trap is likely to cost. */
+  risk?: 1 | 2 | 3;
+  /** Short caption such as 85 点, 灯油 +4 or 首领封印中. */
+  hint?: string;
+  threat?: Readonly<{ level: 'near' | 'far'; label: string }>;
+  containment?: Readonly<{ ready: boolean; label: string }>;
+}>;
+
+/** The current room's own event, laid out like the route prototype's bottom sheet. */
+export type RoomEventViewModel = Readonly<{
+  kind: 'encounter' | 'trap' | 'exit';
+  kicker: string;
+  title: string;
+  description: string;
+  /** Present for encounters; drives the sheet's portrait. */
+  monsterId?: string;
+  rows: readonly Readonly<{ id: string; label: string; value: string; tone: 'neutral' | 'good' | 'bad' | 'gold' }>[];
+  /** Existing node actions shown as one-tap buttons, primary last. Legality stays on the action; the caption already reads right when it is shut. */
+  buttons: readonly Readonly<{ actionId: string; label: string; caption?: string; primary: boolean }>[];
+}>;
+
 export type ExploreDetailViewModel = Readonly<{
   kind: 'explore';
   map: MapViewModel;
@@ -641,10 +699,31 @@ export type ExploreDetailViewModel = Readonly<{
   }>;
   /** Read-only chapter decision projection; present for every healthy run, never gated by pending. */
   chapterDecision?: ChapterDecisionViewModel;
+  /** Present only for runs that burn lamp oil. */
+  lantern?: LanternViewModel;
+  /** One preview per room reachable from the current room. */
+  routeForecasts?: readonly RouteForecastViewModel[];
+  /** Present while the current room has a single event of its own and nothing pending. */
+  roomEvent?: RoomEventViewModel;
   pending?: PendingChoiceViewModel;
   /** Only present for an available, uncleared reward-claim command. */
   rewardPreview?: RewardPreviewViewModel;
   equipmentMemoryHunt?: EquipmentMemoryHuntViewModel;
+  /** The run's tasks at a glance; absent when none of them has anything left to show. */
+  taskTracker?: TaskTrackerViewModel;
+}>;
+
+export type TaskTrackerLineViewModel = Readonly<{
+  id: 'mainline' | 'directive' | 'hidden' | 'claims';
+  /** Two-character tag, such as 主线, 指令, 隐藏 or 待领. */
+  kicker: string;
+  text: string;
+  tone: 'active' | 'done' | 'failed';
+}>;
+
+/** This chapter's mainline and directive, a hidden task once found, and how many finished tasks wait in the hub. */
+export type TaskTrackerViewModel = Readonly<{
+  lines: readonly TaskTrackerLineViewModel[];
 }>;
 
 export type EquipmentMemoryCombatViewModel = Readonly<{
@@ -720,6 +799,8 @@ export type CombatDetailViewModel = Readonly<{
     consequence: string;
     recommendedActions: readonly CombatAction[];
     dangerousActions: readonly CombatAction[];
+    /** A heavy blow: guarding this turn can be timed into a perfect parry. */
+    parryable: boolean;
   }>;
   boss?: Readonly<{
     phase: 'sealed' | 'awakened';
@@ -733,6 +814,8 @@ export type CombatDetailViewModel = Readonly<{
   guarding: boolean;
   /** Retained for older hosts; combat actions no longer depend on this local toggle. */
   advancedExpanded: boolean;
+  /** Present when the chapter's pursuer caught the player: beating it clears no room. */
+  pursuer?: true;
   /** Read-only chapter law/pursuit context for the active run; absent when no run snapshot exists. */
   chapterContext?: CombatChapterContextViewModel;
   equipmentMemory?: EquipmentMemoryCombatViewModel;

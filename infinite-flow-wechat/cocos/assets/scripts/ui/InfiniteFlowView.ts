@@ -26,13 +26,13 @@ import type { ItemId, CombatPresentationFrame } from '@infinite-flow/core';
 import type { CombatEffectKind } from './InfiniteFlowCombatEffects';
 import { renderInfiniteFlowScene } from './InfiniteFlowScene';
 import type { InfiniteFlowSceneOptions } from './InfiniteFlowScene';
-import { renderInfiniteFlowWalkScene } from './InfiniteFlowWalkScene';
+import { ALARM_BANNER_SECONDS, renderInfiniteFlowWalkScene } from './InfiniteFlowWalkScene';
 import type { WalkSceneHandle } from './InfiniteFlowWalkScene';
 import type { HudPopoverKind } from './hud-layout';
 import { InfiniteFlowWalkInput } from './InfiniteFlowWalkInput';
-import { captureInfiniteFlowInfoSheetState, renderInfiniteFlowInfoSheet } from './InfiniteFlowInfoSheet';
+import { captureInfiniteFlowInfoSheetState, getInfiniteFlowMobilePanelActions, renderInfiniteFlowInfoSheet } from './InfiniteFlowInfoSheet';
 import type { MobilePanelKind, MobileSheetState } from './InfiniteFlowInfoSheet';
-import { buildWalkWorld } from './walk-world';
+import { buildWalkWorld, describePursuerWake, describeRouteChange, describeTaskChange } from './walk-world';
 import type { WorldPoint, WorldTarget } from './walk-world';
 import { DARK_UI, paintDarkFrame } from './dark-ui';
 import { COMPACT_SHEET_THEME } from './sheet-theme';
@@ -46,6 +46,7 @@ import type {
   ChapterRouteContractViewModel,
   CombatChapterContextViewModel,
   EquipmentCommissionDetailViewModel,
+  ExploreDetailViewModel,
   EquipmentCommissionSettlementViewModel,
   EquipmentMemoryCombatViewModel,
   EquipmentMemoryHuntViewModel,
@@ -271,6 +272,8 @@ export type InfiniteFlowRuntimeChrome = Readonly<{
   modeDetail: string;
   activityMessage?: string;
   blockingMessage?: string;
+  /** The block is a recoverable write failure of an already-reduced command. */
+  persistenceRetry?: true;
   busyActionId?: string;
   sceneAssets?: 'loading' | 'ready' | 'error';
   /** Hub-only: supplies-panel actions for item-tip carry toggles (projected on demand). */
@@ -322,6 +325,7 @@ function formatInfiniteFlowPlayerActivity(
   if (/规则拒绝|本地输入拒绝|写入阻断/u.test(activity)) {
     return '当前行动不可执行 · 进度未改变';
   }
+  if (/已补写\s/u.test(activity)) return '存档已补写 · 可继续游戏';
   if (/输入无效|invalid input/iu.test(activity)) return '当前输入无效 · 请重新选择';
   if (/本地界面/u.test(activity)) return '界面已切换';
 
@@ -330,6 +334,13 @@ function formatInfiniteFlowPlayerActivity(
     return '运行遇到异常 · 请稍后重试';
   }
   return infiniteFlowPhaseActivity(phase);
+}
+
+/** Player activity lines (from the closed set above) that report a failed or unavailable action. */
+const PLAYER_ACTIVITY_FAILURE_PATTERN = /不可执行|失败|异常|无效|内存紧张|暂不可用/u;
+
+export function isInfiniteFlowPlayerActivityFailure(activity: string | undefined): activity is string {
+  return activity !== undefined && PLAYER_ACTIVITY_FAILURE_PATTERN.test(activity);
 }
 
 /** Player-facing chrome projection. The supplied diagnostic chrome stays untouched. */
@@ -813,6 +824,7 @@ export function layoutInfiniteFlowVisualStage(
 
 export interface InfiniteFlowViewDelegate {
   retrySceneAssets?(): void;
+  retryPersistence?(): void;
   activate(
     physicalId: string,
     actionId: string,
@@ -1771,6 +1783,7 @@ const CHAPTER_PURSUIT_REPELLED_REASON_LABELS: Readonly<Record<string, string>> =
   successful_exit: '成功离开副本',
   retreat: '主动撤退',
   failure: '探索失败',
+  defeated: '追上后被你击败',
 });
 
 function signedPercent(value: number): string {
@@ -1909,9 +1922,6 @@ export function formatInfiniteFlowChapterPursuit(
       : CHAPTER_PURSUIT_STATUS_LABELS[pursuit.status];
   const playerDescription = (pursuit.statusDescription ?? pursuit.flavorDescription ?? '状态描述未提供')
     .replace(/\bunknown\b/giu, '未知');
-  const contactDamage = pursuit.contactDamagePercent === undefined
-    ? '未知'
-    : `${pursuit.contactDamagePercent}%`;
   const bossFusion = pursuit.bossFusionPercent === undefined
     ? '未知'
     : `${pursuit.bossFusionPercent}%`;
@@ -1923,7 +1933,7 @@ export function formatInfiniteFlowChapterPursuit(
         progress === undefined
           ? '进度未提供'
           : `活跃 ${progress.active ? '是' : '否'} · 接触 ${progress.contacts} · 宽限 ${progress.graceMoves} · 清理 ${progress.clearedNodeCount}/${progress.spawnClearCount} · 余 ${progress.clearsRemaining}`,
-        `接触伤害 ${contactDamage} · 首领融合 ${bossFusion} · 奖励 ${reward}`,
+        `被追上即迎战 · 首领融合 ${bossFusion} · 奖励 ${reward}`,
         progress === undefined
           ? '位置未提供'
           : progress.repelledReason !== null
@@ -1972,7 +1982,7 @@ export function formatInfiniteFlowCombatChapterContext(
     && pursuit.status !== 'disabled'
     && pursuit.status !== 'dormant';
   const pursuitLine = pursuitActive
-    ? `追兵 ${pursuit.name ?? '未知'} ${pursuit.statusLabel ?? pursuit.status ?? ''} · 接触${pursuit.contactDamagePercent ?? 0}%${pursuit.status === 'fused' ? ` · 融合${pursuit.bossFusionPercent ?? 0}%` : ''}`
+    ? `追兵 ${pursuit.name ?? '未知'} ${pursuit.statusLabel ?? pursuit.status ?? ''} · 追上即战${pursuit.status === 'fused' ? ` · 融合${pursuit.bossFusionPercent ?? 0}%` : ''}`
     : undefined;
   return Object.freeze({
     lawLine,
@@ -2795,6 +2805,8 @@ type CombatPlayback = {
   actionId: string;
   playerHp: number;
   enemyHp: number;
+  /** The turn's counter is a telegraphed heavy blow. */
+  heavy: boolean;
   resolved: boolean;
 };
 
@@ -2862,6 +2874,12 @@ export class InfiniteFlowView {
   private sceneMapCurrentCoordinate = '';
   private sceneCombatSnapshot: { enemyId: string; playerHp: number; enemyHp: number } | undefined;
   private sceneFeedback: { text: string; damage?: number } | undefined;
+  /** An alarm banner (pursuer woke, pursuer caught you); its age runs on engine ticks so re-renders keep fading it. */
+  private sceneBanner: { title: string; line: string; age: number } | undefined;
+  /** The last explore projection, kept across fights so a clear's tier change is still announced. */
+  private lastExploreDetail: ExploreDetailViewModel | undefined;
+  /** The route prototype's room sheet, drawn by the walk scene while walking is suspended. */
+  private roomEventOpen = false;
   private walkScene: WalkSceneHandle | undefined;
   private walkInput: InfiniteFlowWalkInput | undefined;
   private walkWorldKey = '';
@@ -2975,6 +2993,26 @@ export class InfiniteFlowView {
       this.rewardReceipt = previousDetail.rewardPreview;
       this.sceneFeedback = { text: '已领取物资' };
     }
+    if (mobileDetail?.kind === 'explore') {
+      const routeChange = this.lastExploreDetail === undefined ? undefined : describeRouteChange(this.lastExploreDetail, mobileDetail);
+      const pursuit = mobileDetail.chapterDecision?.pursuit;
+      const woke = this.lastExploreDetail?.map.dungeonId === mobileDetail.map.dungeonId
+        && this.lastExploreDetail.chapterDecision?.pursuit.status === 'dormant' && pursuit?.status === 'stalking';
+      if (woke) {
+        // As in the route prototype, the wake gets its own banner instead of the small route notice.
+        this.sceneBanner = { title: `${pursuit.name ?? '追兵'}醒了`, line: `你走一步它走一步，小地图上的红点就是它${
+          pursuit.containmentTitle === undefined ? '' : `；先清空「${pursuit.containmentTitle}」再把它引过去，可以封印它`}`, age: 0 };
+      }
+      const taskChange = this.lastExploreDetail === undefined ? undefined : describeTaskChange(this.lastExploreDetail, mobileDetail);
+      if (routeChange !== undefined && !(woke && routeChange === describePursuerWake(pursuit?.name))) this.sceneFeedback = { text: routeChange };
+      else if (taskChange !== undefined) this.sceneFeedback = { text: taskChange };
+      this.lastExploreDetail = mobileDetail;
+    } else if (mobileDetail?.kind !== 'combat') {
+      this.lastExploreDetail = undefined;
+    } else if (mobileDetail.pursuer && !(previousDetail?.kind === 'combat' && previousDetail.pursuer)) {
+      // Being caught starts the fight at once, so the catch itself gets the banner.
+      this.sceneBanner = { title: `${mobileDetail.enemy.name}追上了你`, line: '击败它，本局它就不会再出现；也可以脱离', age: 0 };
+    }
     if (this.mobileSheet?.kind === 'interaction') {
       if (roomKey !== this.mobileRoomKey || (this.mobilePendingKey !== '' && pendingKey === '')
         || (!this.mobileNodeCleared && nodeCleared && (pendingKey === ''
@@ -3018,6 +3056,29 @@ export class InfiniteFlowView {
       }
       this.relicDraftKey = relicDraftKey;
       this.relicDraftSelection = undefined;
+    }
+    if (mobileDetail?.kind !== 'explore' || mobileDetail.roomEvent === undefined || roomKey !== this.mobileRoomKey) this.roomEventOpen = false;
+    // As in the approved route prototype, stepping through a door, or into the first room from
+    // the hub, opens the new room's own sheet: the prototype-style room sheet for a single
+    // event, the room's bottom interaction sheet otherwise. Neither picks an action; closing
+    // leaves the room to walk. Portals stay passages and cleared rooms stay quiet.
+    if (mobileDetail?.kind === 'explore' && (previousDetail?.kind === 'explore' || previousDetail?.kind === 'hub')
+      && roomKey !== this.mobileRoomKey
+      && this.mobileSheet === undefined && mobileDetail.currentNode.nodeType !== 'portal'
+      && (!nodeCleared || mobileDetail.pending !== undefined)) {
+      if (mobileDetail.roomEvent !== undefined) this.roomEventOpen = true;
+      else if (model !== undefined && getInfiniteFlowMobilePanelActions(model, 'interaction').length > 0) {
+        this.mobileSheet = { kind: 'interaction', page: 0 };
+      }
+    }
+    // Arriving in 主神空间 with finished tasks offers them at once; once all are claimed the sheet steps aside.
+    const claimable = mobileDetail?.kind === 'hub' ? mobileDetail.taskClaims?.count ?? 0 : 0;
+    if (model?.phase === 'hub' && previousModel?.phase !== 'hub' && claimable > 0 && this.mobileSheet === undefined) {
+      this.mobileSheet = { kind: 'claims', page: 0 };
+    } else if (this.mobileSheet?.kind === 'claims' && claimable === 0) {
+      const claimed = previousDetail?.kind === 'hub' ? previousDetail.taskClaims?.count ?? 0 : 0;
+      this.mobileSheet = undefined;
+      if (claimed > 0) this.sceneFeedback = { text: `已领取 ${claimed} 项任务奖励` };
     }
     this.mobileRoomKey = roomKey;
     this.mobilePendingKey = pendingKey;
@@ -3331,11 +3392,15 @@ export class InfiniteFlowView {
     // before windup. The real command is still dispatched exactly once at hit.
     this.render(this.lastModel, { ...this.lastChrome, busyActionId: action.actionId }, this.lastSafeInsets);
     const playback: CombatPlayback = { actionId: action.actionId, playerHp: detail.player.hp,
-      enemyHp: detail.enemy.hp, resolved: false };
+      enemyHp: detail.enemy.hp, heavy: detail.intent.parryable, resolved: false };
     this.combatPlayback = playback;
-    const started = this.walkScene?.startCombatAction(kind, () => {
-      if (this.combatPlayback === playback && !this.destroyed) this.delegate.activate(physicalId, action.actionId, event);
-    });
+    // A guard against a heavy blow runs the parry ring first; the tap only picks
+    // which presentation event is dispatched, the core decides the outcome.
+    const parryEvent = kind === 'guard' ? action.parryEvent : undefined;
+    const started = this.walkScene?.startCombatAction(kind, (grade) => {
+      if (this.combatPlayback !== playback || this.destroyed) return;
+      this.delegate.activate(physicalId, action.actionId, grade === 'perfect' && parryEvent !== undefined ? parryEvent : event);
+    }, { parry: parryEvent !== undefined });
     if (!started) {
       this.cancelCombatPlayback(true);
       throw new Error('战斗动画未能启动，行动尚未提交。');
@@ -3364,6 +3429,8 @@ export class InfiniteFlowView {
         : Math.max(0, impact.playerHp - counter.playerHp),
       counter: counter !== undefined,
       guarded: counter?.guarded === true,
+      perfectParry: counter?.perfectParry === true,
+      heavy: playback.heavy,
       playerHpAfterImpact: impact.playerHp,
       enemyHpAfterImpact: impact.enemyHp,
       ...(counter === undefined ? {} : { playerHpAfterCounter: counter.playerHp, enemyHpAfterCounter: counter.enemyHp }),
@@ -3391,6 +3458,11 @@ export class InfiniteFlowView {
   }
 
   tick(deltaTime: number): void {
+    // The banner only ages while a walk or duel scene shows it, and a stalled frame (an art load) counts as one short frame.
+    if (this.sceneBanner !== undefined && this.walkScene !== undefined) {
+      this.sceneBanner.age += Math.min(Math.max(0, deltaTime), 0.1);
+      if (this.sceneBanner.age >= ALARM_BANNER_SECONDS) this.sceneBanner = undefined;
+    }
     if (this.combatPlayback !== undefined && !this.destroyed) {
       this.walkScene?.tick(deltaTime, { x: 0, y: 0 });
       return;
@@ -3596,6 +3668,7 @@ export class InfiniteFlowView {
       ...(this.sceneMapOrigin === undefined ? {} : { mapOrigin: this.sceneMapOrigin }),
       setMapOrigin: (origin) => { this.sceneMapOrigin = origin; this.renderAgain(); },
       ...(this.sceneFeedback === undefined ? {} : { feedback: this.sceneFeedback }),
+      ...(this.sceneBanner === undefined ? {} : { banner: { ...this.sceneBanner } }),
     };
     if (detail.kind === 'result') {
       renderInfiniteFlowScene(root, model, options);
@@ -3619,6 +3692,12 @@ export class InfiniteFlowView {
       if (target.kind === 'npc') {
         if (action?.enabled && action.event !== undefined) this.delegate.activate(physicalId, action.actionId, action.event);
         this.openMobilePanel('npc');
+        return;
+      }
+      // The room's own event reopens its prototype sheet, fights included; the sheet's button commits.
+      if (detail.kind === 'explore' && detail.roomEvent !== undefined && target.id === `node:${detail.currentNode.nodeId}`) {
+        this.roomEventOpen = true;
+        this.renderAgain();
         return;
       }
       if (target.disabledReason !== undefined) {
@@ -3669,8 +3748,17 @@ export class InfiniteFlowView {
       },
       ...(frames === undefined ? {} : { walkerFrames: frames }),
       bindInteract: (node, getTarget) => {
-        this.bindPhysical(node, enabled && this.mobileSheet === undefined, (physicalId) => interact(getTarget(), physicalId));
+        this.bindPhysical(node, enabled && this.mobileSheet === undefined && !this.roomEventOpen, (physicalId) => interact(getTarget(), physicalId));
       },
+      ...(this.roomEventOpen && detail.kind === 'explore' && detail.roomEvent !== undefined ? {
+        roomEventSheet: {
+          close: () => {
+            if (!isCurrent()) return;
+            this.roomEventOpen = false;
+            this.renderAgain();
+          },
+        },
+      } : {}),
       bindWorldTap: (node, callback) => {
         if (!enabled || this.mobileSheet !== undefined) return;
         const starts = new Map<number, Vec3>();
@@ -3703,7 +3791,7 @@ export class InfiniteFlowView {
         });
       },
     });
-    if (enabled && this.mobileSheet === undefined && !this.chapterCodexOpen && model.sections[4].active === undefined) {
+    if (enabled && this.mobileSheet === undefined && !this.roomEventOpen && !this.chapterCodexOpen && model.sections[4].active === undefined) {
       this.walkInput = new InfiniteFlowWalkInput(this.walkScene.joystick, this.walkScene.joystickThumb,
         () => this.walkScene?.cancelApproach());
     }
@@ -3838,17 +3926,21 @@ export class InfiniteFlowView {
     const innerWidth = width - 24 * unit;
     const textWidth = innerWidth - 6 * unit;
     const diagnostic = chrome.blockingMessage ?? chrome.modeDetail;
-    const policy = blocked
-      ? '不会降级为内存存档，也不会显示“已签核”。\n请按上方诊断补齐明确宿主边界后重新载入。'
-      : '目标 → 状态 → 动作 → 风险 → 帮助 → 日志';
+    const retry = blocked && chrome.persistenceRetry === true;
+    const policy = retry
+      ? '上一步尚未写入存档，画面保持写入前的状态。\n重试只补写这一步，不会重复结算。'
+      : blocked
+        ? '不会降级为内存存档，也不会显示“已签核”。\n请按上方诊断补齐明确宿主边界后重新载入。'
+        : '目标 → 状态 → 动作 → 风险 → 帮助 → 日志';
+    const buttonBlock = retry ? 53 * unit : 0;
     const measuredLines = (value: string, font: number): number => value.split('\n').reduce(
       (count, line) => count + wrapInfiniteFlowLine(line, Math.floor(textWidth / (font * unit))).length, 0);
     const bodyHeight = (measuredLines(diagnostic, 12) * 21 + 4) * unit;
     const policyHeight = (measuredLines(policy, 11) * 19 + 4) * unit;
     const naturalContentHeight = bodyHeight + 12 * unit + policyHeight;
     const scrollHeight = Math.min(300 * unit, naturalContentHeight,
-      this.compactOverlayMaxHeight(unit) - 81 * unit);
-    const height = 81 * unit + scrollHeight;
+      this.compactOverlayMaxHeight(unit) - 81 * unit - buttonBlock);
+    const height = 81 * unit + scrollHeight + buttonBlock;
     const overlay = this.compactOverlayBackdrop(root, 'RuntimeDiagnosticBlocker');
     const panel = this.compactOverlayPanel(overlay, 'RuntimeDiagnostic',
       this.safeX(), this.safeCenterY(), width, height);
@@ -3878,6 +3970,16 @@ export class InfiniteFlowView {
         fontSize: 11 * unit, lineHeight: 19 * unit, color: COMPACT_SHEET_THEME.palette.accent,
         vertical: Label.VerticalAlign.TOP, wrap: true, shrink: false,
       });
+    if (!retry) return;
+    const retrying = chrome.busyActionId !== undefined;
+    // `root` may be a blocker overlay; retire the callback with the whole view root.
+    const viewRoot = this.root;
+    const buttonWidth = Math.min(148 * unit, innerWidth);
+    this.renderOverlayButton(panel, 'PersistenceRetry', retrying ? '正在重试…' : '重试保存',
+      (innerWidth - buttonWidth) / 2, localY(height, 69 * unit + scrollHeight + 9 * unit, 44 * unit), buttonWidth,
+      !retrying && this.delegate.retryPersistence !== undefined, () => {
+        if (this.root === viewRoot && !this.destroyed) this.delegate.retryPersistence?.();
+      }, true, 'PersistenceRetryLabel');
   }
 
   private renderInformationRail(root: Node): void {

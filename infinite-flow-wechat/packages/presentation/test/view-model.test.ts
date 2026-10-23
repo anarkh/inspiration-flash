@@ -8,6 +8,8 @@ import './entry-services.test.js';
 import './task-list.test.js';
 import './combat-choices.test.js';
 import './map-topology.test.js';
+import './route-forecast.test.js';
+import './action-legality.test.js';
 import { reduceGameCommand } from '@infinite-flow/application';
 import {
   DUNGEON_FEATURE_HELP_IDS,
@@ -1812,7 +1814,7 @@ function verifyChapterDecisionProjection(): void {
   const mineState = enterChapter('starfall_mine');
   const mineDecision = chapterDecision(buildGameViewModel(mineState, {}));
   equal(mineDecision.pursuit.status, 'dormant', 'replay pursuit dormant');
-  equal(mineDecision.pursuit.progress?.clearsRemaining, 6, 'dormant pursuit shows six clears to spawn');
+  equal(mineDecision.pursuit.progress?.clearsRemaining, 3, 'dormant pursuit shows three clears to spawn');
   const pursuitDefinition = getRunPursuitDefinition('starfall_mine');
   assert(pursuitDefinition, 'starfall_mine pursuit definition');
   const stalkingState: GameState = {
@@ -1837,6 +1839,10 @@ function verifyChapterDecisionProjection(): void {
   equal(stalkingDecision.pursuit.progress?.currentNodeId, pursuitDefinition.spawnNodeId, 'stalking pursuit spawn node');
   equal(stalkingDecision.pursuit.name, pursuitDefinition.name, 'pursuit name from definition');
   equal(stalkingDecision.pursuit.contactDamagePercent, pursuitDefinition.contactDamagePercent, 'pursuit contact damage');
+  const lairCellId = stalkingDecision.pursuit.currentCellId;
+  assert(lairCellId !== undefined, 'a stalking pursuit shows its cell');
+  equal(mineDecision.pursuit.lairCellId, lairCellId, 'a dormant pursuit marks the room where it will wake');
+  equal(stalkingDecision.pursuit.lairCellId, undefined, 'a stalking pursuit no longer shows its lair');
 
   // Pending coexistence: chapterDecision stays projected beside an exclusive pending choice.
   const pendingState: GameState = {
@@ -2424,14 +2430,26 @@ function verifyResultSettlement(): void {
 
     state = moveTo(state, 'broken_sigil_reward');
     state = moveTo(state, 'fog_lesser_demon');
+    // The pursuer woke on the third clear and closed in while rooms were claimed; it catches the
+    // player on the way back. Escaping sends it back to its lair, still hunting.
+    equal(state.phase, 'combat', 'the pursuer catches the player on the way back');
+    assert(state.combat?.pursuer === true, 'the catch starts a pursuer fight');
+    state = fightUntilResolved(state, ['escape'], 'pursuer');
+    equal(state.run?.pursuitState?.status, 'stalking', 'an escaped pursuer keeps hunting');
+    equal(state.run?.pursuitState?.graceMoves, 1, 'the escaped pursuer rests one step in its lair');
     state = moveTo(state, 'blood_rune_trap');
     state = moveTo(state, 'cracked_portal');
     state = moveTo(state, 'sealed_cache');
     state = collectReward(state, 'sealed cache collect');
 
-    state = moveTo(state, 'mist_herb_cache');
-    state = collectReward(state, 'mist herb collect');
+    // The pursuer woke on the third clear. With 雾后暗格 cleared, stepping past the exit
+    // draws it into the containment room, so it never reaches the boss.
+    state = moveTo(state, 'tower_exit');
+    state = moveTo(state, 'evac_supply_cache');
+    equal(state.run?.pursuitState?.status, 'contained', 'the pursuer walks into the cleared containment room and is sealed');
+    state = collectReward(state, 'evac supply collect');
 
+    state = moveTo(state, 'tower_exit');
     state = moveTo(state, 'bone_lane_monster');
     state = selectNode(state, 'bone_lane_monster');
     state = fightUntilResolved(state, [
@@ -2500,6 +2518,7 @@ function verifyResultSettlement(): void {
       lootMode: 'full' | 'half' | 'lost';
       pursuitReason: string;
       pressureTier?: string;
+      pursuitRewarded?: boolean;
     }>
   ): ResultDetailViewModel {
     const detail = resultDetail(flow.result);
@@ -2517,7 +2536,7 @@ function verifyResultSettlement(): void {
     assertValidSettlement(detail.pursuitSettlement, 'pursuit');
     equal(detail.pursuitSettlement.name, '血阶监猎者', 'pursuit catalog name');
     equal(detail.pursuitSettlement.reasonLabel, expected.pursuitReason, 'pursuit Chinese reason');
-    equal(detail.pursuitSettlement.rewarded, false, 'chapter-one pursuit is not rewarded');
+    equal(detail.pursuitSettlement.rewarded, expected.pursuitRewarded ?? false, 'only a sealed pursuer is rewarded');
 
     if (expected.pressureTier) {
       assertValidSettlement(detail.pressureSettlement, 'pressure');
@@ -2541,11 +2560,15 @@ function verifyResultSettlement(): void {
   }
 
   const exitFlow = driveNormalExit();
+  // Walking back through lit rooms is free and the evac supply refills four drops, so the lamp
+  // still burns when the exit settles; one pursuer contact cost two drops on the way.
+  equal(exitFlow.result.run?.lanternState?.oil, 6, 'normal exit route keeps the lamp lit');
   const exitDetail = assertFlowSettlementContract(exitFlow, {
     outcome: '稳定通关',
     lootMode: 'full',
     pursuitReason: '成功撤离',
-    pressureTier: '追猎'
+    pressureTier: '追猎',
+    pursuitRewarded: true
   });
   verifyActionContract(buildGameViewModel(exitFlow.result, {}));
   assert(getActions(buildGameViewModel(exitFlow.result, {})).length < 20, 'exit result actions under 20');

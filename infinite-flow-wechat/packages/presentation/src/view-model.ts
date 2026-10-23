@@ -35,14 +35,19 @@ import {
   getCurrentRouteBlockReason,
   getCurrentRouteContract,
   getCurrentRunMethodSnapshots,
+  getCurrentEncounterPreview,
+  getCurrentRunLantern,
   getCurrentRunPursuit,
+  getCurrentTrapPreview,
   getDirectiveEvaluation,
   getDirectiveForDungeon,
+  getHealingPillBaseHealing,
   getCompanionRecruitmentStatus,
   getCompanionUpgradeStatus,
   getCurrentEquipmentMemoryCombatStatus,
   getCurrentEquipmentMemoryHuntStatus,
   getCurrentRunPressure,
+  getRouteForecasts,
   getDerivedStats,
   getEquipmentCommissionStatus,
   getEquipmentMemoryStatus,
@@ -65,6 +70,7 @@ import {
   getTacticalLoadoutStatus,
   getWeaponSkillStatus,
   isCurrentDungeonFeatureAvailable,
+  isParryableCombatIntent,
   isTacticalItemAvailable,
   listRouteContracts,
   type CombatAction,
@@ -85,7 +91,7 @@ import { getEquipmentAttunementOptions } from '@infinite-flow/core/equipment-sys
 import { getExplorationGuide } from '@infinite-flow/core/exploration-guide';
 import { normalizeRouteContractRunState } from '@infinite-flow/core/route-contracts';
 import type { RunOutcome } from '@infinite-flow/core/run-economy';
-import { normalizeRunPressureState } from '@infinite-flow/core/run-pressure';
+import { getRunPressureStatus, normalizeRunPressureState } from '@infinite-flow/core/run-pressure';
 import { getRunProtocolDefinition } from '@infinite-flow/core/run-protocols';
 import {
   RUN_PROTOCOL_IDS,
@@ -108,7 +114,8 @@ import {
   FIELD_SUPPLY_ITEM_IDS,
   TACTICAL_ITEM_IDS,
   TACTICAL_ITEM_CATEGORY_BY_ID,
-  isFieldSupplyItemId
+  isFieldSupplyItemId,
+  isTacticalItemId
 } from '@infinite-flow/core/tactical-loadout';
 import { COCOS_DESIGN_TOKENS } from './tokens.js';
 import {
@@ -124,6 +131,8 @@ import {
   type CharacterLoadoutViewModel,
   type ChapterDirectiveViewModel,
   type ChapterLawCardViewModel,
+  type TaskTrackerLineViewModel,
+  type TaskTrackerViewModel,
   type ChapterPressureViewModel,
   type ChapterPursuitViewModel,
   type ChapterRouteContractViewModel,
@@ -149,6 +158,7 @@ import {
   type HubEntryServiceViewModel,
   type HubOwnedLoadoutViewModel,
   type HubPanel,
+  type LanternViewModel,
   type LogsSection,
   type MapNodeState,
   type MapNodeViewModel,
@@ -167,6 +177,9 @@ import {
   type ResultProtocolSettlementViewModel,
   type ResultRouteContractSettlementViewModel,
   type RewardPreviewViewModel,
+  type RoomEventViewModel,
+  type RouteForecastKind,
+  type RouteForecastViewModel,
   type ResultSettlementCard,
   type ResultSettlementInvalid,
   type RiskItem,
@@ -222,6 +235,7 @@ type ActionInput = Readonly<{
   emphasis?: ViewActionModel['emphasis'];
   recommendation?: ViewActionRecommendation;
   combatAction?: CombatAction;
+  parryEvent?: PresentationEvent;
 }>;
 
 type PhaseProjection = Readonly<{
@@ -278,7 +292,8 @@ function makeAction(input: ActionInput): ViewActionModel {
     ...(!enabled && input.disabledReason ? { disabledReason: input.disabledReason } : {}),
     ...(input.riskReason ? { riskReason: input.riskReason } : {}),
     ...(input.readout ? { readout: input.readout } : {}),
-    ...(input.combatAction ? { combatAction: input.combatAction } : {})
+    ...(input.combatAction ? { combatAction: input.combatAction } : {}),
+    ...(enabled && input.parryEvent ? { parryEvent: input.parryEvent } : {})
   };
 }
 
@@ -1954,6 +1969,12 @@ function directiveObjectiveAction(objective: DirectiveObjective, result: Directi
   }
 }
 
+const DIRECTIVE_FAILED_PREFIX = '本轮未满足：';
+
+function directiveExitObjective(dungeonName: string): string {
+  return `从出口通关${dungeonName}并结算指令 0/1`;
+}
+
 function getTaskDirectiveEvaluation(state: GameState, dungeonId: DungeonId) {
   // A different chapter's run must not hide this task's durable equipment/pet/method progress.
   return getDirectiveEvaluation(state.run?.dungeonId === dungeonId ? state : { ...state, run: undefined }, dungeonId);
@@ -1962,7 +1983,7 @@ function getTaskDirectiveEvaluation(state: GameState, dungeonId: DungeonId) {
 function buildDirectiveTaskObjectives(state: GameState, evaluation: MainGodTaskEvaluation): readonly string[] {
   const dungeonId = evaluation.task.chapterDungeonId;
   const dungeonName = DUNGEONS[dungeonId].name;
-  if (evaluation.completed) return [`首通${dungeonName}并完成指令 1/1`];
+  if (evaluation.completed) return [`通关${dungeonName}并完成指令 1/1`];
   const directive = getDirectiveForDungeon(dungeonId);
   const progress = getTaskDirectiveEvaluation(state, dungeonId);
   const clearedCount = state.run?.dungeonId === dungeonId ? state.run.clearedNodeIds.length : 0;
@@ -1976,11 +1997,9 @@ function buildDirectiveTaskObjectives(state: GameState, evaluation: MainGodTaskE
     }),
     ...progress.objectiveResults.flatMap((objective) => !objective.completed &&
       (objective.kind === 'low_damage' || objective.kind === 'no_item')
-      ? [`本轮未满足：${objective.label}`]
+      ? [`${DIRECTIVE_FAILED_PREFIX}${objective.label}`]
       : []),
-    ...(progress.status === 'completed'
-      ? [`从出口完成${dungeonName}首通结算 0/1`]
-      : [`首通${dungeonName} ${Number(state.completedDungeonIds.includes(dungeonId))}/1`])
+    directiveExitObjective(dungeonName)
   ];
   return objectives;
 }
@@ -2049,14 +2068,14 @@ function buildCurrentTasks(state: GameState): readonly TaskViewModel[] {
         detailObjectives: [
           directive.progressText,
           ...directive.objectiveResults.map((objective) => `${objective.label} · ${objective.progressText}`),
-          `首通${DUNGEONS[task.chapterDungeonId].name} ${Number(state.completedDungeonIds.includes(task.chapterDungeonId))}/1`,
-          '首通时满足全部指令目标，由出口自动结算'
+          directiveExitObjective(DUNGEONS[task.chapterDungeonId].name),
+          '任意一次通关时满足全部指令目标，由出口自动结算；奖励只发一次'
         ]
       } : completedDirective ? {
         detailObjectives: [
           `清理节点 ${completedDirective.requiredClears}/${completedDirective.requiredClears}`,
-          ...completedDirective.optionalObjectives.map((objective) => `${objective.label} · 首通时已满足`),
-          `首通${DUNGEONS[task.chapterDungeonId].name} 1/1`,
+          ...completedDirective.optionalObjectives.map((objective) => `${objective.label} · 通关时已满足`),
+          `通关${DUNGEONS[task.chapterDungeonId].name} 1/1`,
           '指令奖励已结算 1/1'
         ]
       } : {}),
@@ -2065,6 +2084,58 @@ function buildCurrentTasks(state: GameState): readonly TaskViewModel[] {
       rewardText: rewardReadout(evaluation)
     }];
   });
+}
+
+/** The directive's next open step, or why it can no longer pay this run. */
+function buildDirectiveTrackerLine(state: GameState, evaluation: MainGodTaskEvaluation, dungeonName: string): TaskTrackerLineViewModel {
+  const objectives = buildTaskObjectives(state, evaluation);
+  const failed = objectives.find((line) => line.startsWith(DIRECTIVE_FAILED_PREFIX));
+  if (failed) return { id: 'directive', kicker: '指令', text: `${failed.slice(DIRECTIVE_FAILED_PREFIX.length)} 已失败`, tone: 'failed' };
+  // Clears come with any route; the conditions a player can forget lead.
+  const clears = `清理${dungeonName}节点`;
+  const open = objectives
+    .filter((line) => line !== directiveExitObjective(dungeonName) && !/ (\d+)\/\1$/.test(line))
+    .sort((a, b) => Number(a.startsWith(clears)) - Number(b.startsWith(clears)))
+    .map((line) => line.replace(clears, '清理节点'));
+  if (open.length === 0) return { id: 'directive', kicker: '指令', text: '条件已满足 · 去出口结算', tone: 'done' };
+  return { id: 'directive', kicker: '指令', text: open.length > 1 ? `${open[0]} +${open.length - 1}` : open[0]!, tone: 'active' };
+}
+
+function buildTaskTracker(state: GameState, routeContract: ChapterRouteContractViewModel): TaskTrackerViewModel | undefined {
+  const run = state.run;
+  if (!run) return undefined;
+  const dungeonName = DUNGEONS[run.dungeonId].name;
+  const evaluations = evaluateVisibleTasks(state);
+  const mainline = evaluations.find(({ task }) => task.id === `mainline_clear_${run.dungeonId}`);
+  const directive = evaluations.find(({ task }) => task.id === `side_directive_${run.dungeonId}`);
+  const hiddenKicker = run.entryFlowVersion === 2 ? '隐藏' : '契约';
+  const claimable = evaluations.filter(({ status }) => status === 'completed').length;
+  const lines: TaskTrackerLineViewModel[] = [
+    ...(mainline?.status === 'active' ? [{ id: 'mainline' as const, kicker: '主线', text: `通关${dungeonName}`, tone: 'active' as const }] : []),
+    ...(directive?.status === 'active' ? [buildDirectiveTrackerLine(state, directive, dungeonName)] : []),
+    ...(routeContract.status === 'active' && routeContract.nextTarget
+      ? [{ id: 'hidden' as const, kicker: hiddenKicker, text: `前往${routeContract.nextTarget.nodeTitle} ${routeContract.completedTargetCount}/2`, tone: 'active' as const }]
+      : routeContract.status === 'secured'
+        ? [{ id: 'hidden' as const, kicker: hiddenKicker, text: `已完成 · 出口结算 +${routeContract.potentialRewardPoints}`, tone: 'done' as const }]
+        : routeContract.status === 'failed'
+          ? [{ id: 'hidden' as const, kicker: hiddenKicker, text: '顺序错误 · 本轮已失败', tone: 'failed' as const }]
+          : []),
+    ...(claimable > 0 ? [{ id: 'claims' as const, kicker: '待领', text: `${claimable} 项 · 回主神空间领取`, tone: 'done' as const }] : [])
+  ];
+  return lines.length > 0 ? { lines } : undefined;
+}
+
+/** One tap claims every finished task; offered only while at least one waits. */
+function buildTaskClaims(state: GameState): HubDetailViewModel['taskClaims'] {
+  const ready = evaluateVisibleTasks(state).filter(({ status }) => status === 'completed');
+  if (ready.length === 0) return undefined;
+  return {
+    count: ready.length,
+    action: previewCommandAction(state, 'hub.tasks.claim-all', `全部领取（${ready.length} 项）`, 'primary', { type: 'hub/claim-all-tasks' }, {
+      recommendation: 'recommended',
+      readout: `领取全部 ${ready.length} 项已完成主神任务的奖励，奖励立即入账；主线奖励会开启下一章。`
+    })
+  };
 }
 
 function buildTasksPanel(state: GameState, requestedId: string | undefined): HubPanelProjection {
@@ -2143,6 +2214,7 @@ function buildHubProjection(state: GameState, localUiState: PresentationLocalUiS
   const panel = buildHubPanelProjection(state, localUiState, draft, activePanel);
   const actions = [...panel.actions, ...buildHubNavigation(activePanel)];
   const entryBuild = panel.entryBuild ?? buildEntryBuildProjection(state, draft).detail;
+  const taskClaims = buildTaskClaims(state);
   const detail: HubDetailViewModel = {
     kind: 'hub',
     activePanel,
@@ -2167,7 +2239,8 @@ function buildHubProjection(state: GameState, localUiState: PresentationLocalUiS
         draft,
         activePanel
       ))
-    })
+    }),
+    ...(taskClaims ? { taskClaims } : {})
   };
   const metrics: StatusMetric[] = [
     { id: 'hp', label: '生命', value: `${state.player.hp}/${state.player.maxHp}`, symbol: '♥', severity: state.player.hp < state.player.maxHp / 3 ? 'danger' : 'neutral' },
@@ -2574,7 +2647,8 @@ function buildPendingProjection(state: GameState): PendingProjection {
   }
 
   const survey = getCurrentFieldSurveyStatus(state);
-  if (survey.survey && !survey.resolved) {
+  // Ordinary collection clears the reward node without resolving the survey.
+  if (survey.survey && !survey.resolved && !run.clearedNodeIds.includes(survey.survey.nodeId)) {
     const actions = survey.options.map((option) => option.available
       ? commandAction(
           `pending.field-survey:${survey.survey!.id}:${option.definition.id}`,
@@ -2671,6 +2745,22 @@ function buildSoulRechargeActivationActions(state: GameState): ViewActionModel[]
       )];
 }
 
+/** Mirrors core trap/portal tool checks: carried-only tools need the run loadout; consumables respect field seals. */
+function nodeToolUnavailableReason(state: GameState, itemId: ItemId): string | undefined {
+  const name = ITEMS[itemId].name;
+  if (isTacticalItemId(itemId)) {
+    if (isTacticalItemAvailable(state, itemId)) return undefined;
+    if (!isCurrentDungeonFeatureAvailable(state, 'consumable')) return `场域法则已封存${name}。`;
+    if ((state.inventory[itemId] ?? 0) <= 0) return `缺少${name}。`;
+    return `本局未携行${name}，需在入场前装入战术携行。`;
+  }
+  if ((state.inventory[itemId] ?? 0) <= 0) return `缺少${name}。`;
+  if (ITEMS[itemId].kind !== 'material' && !isCurrentDungeonFeatureAvailable(state, 'consumable')) {
+    return `场域法则已封存${name}。`;
+  }
+  return undefined;
+}
+
 function buildCurrentNodeActions(state: GameState): ViewActionModel[] {
   const run = state.run!;
   const dungeon = getCurrentDungeonDefinition(state) ?? DUNGEONS[run.dungeonId];
@@ -2686,18 +2776,25 @@ function buildCurrentNodeActions(state: GameState): ViewActionModel[] {
     actions.push(commandAction(`node.select:${node.id}`, `迎战${node.title}`, 'node', { type: 'run/select-node', nodeId: node.id }, { emphasis: 'primary', recommendation: 'recommended' }));
   } else if (node.type === 'trap') {
     const counterItem = node.trap?.counterItem;
-    const canCounter = counterItem ? (state.inventory[counterItem] ?? 0) > 0 : false;
-    actions.push(canCounter
+    const counterBlock = counterItem ? nodeToolUnavailableReason(state, counterItem) : '该陷阱没有道具破解方式。';
+    actions.push(counterBlock === undefined
       ? commandAction(`node.trap:${node.id}:counter`, `使用${ITEMS[counterItem!].name}破解`, 'node', { type: 'node/handle-trap', choice: 'counter' }, { recommendation: 'recommended' })
-      : disabledAction(`node.trap:${node.id}:counter`, '道具破解', 'node', counterItem ? `缺少${ITEMS[counterItem].name}。` : '该陷阱没有道具破解方式。'));
+      : disabledAction(`node.trap:${node.id}:counter`, '道具破解', 'node', counterBlock));
     actions.push(commandAction(`node.trap:${node.id}:risk`, '强行通过', 'node', { type: 'node/handle-trap', choice: 'risk' }, { emphasis: 'danger', recommendation: 'high-risk', riskReason: `失败可能承受 ${node.trap?.damage ?? 0} 点伤害。` }));
   } else if (node.type === 'portal') {
     const stableItem = node.portal?.stableItem;
-    const canStabilize = stableItem ? (state.inventory[stableItem] ?? 0) > 0 : false;
-    actions.push(canStabilize
+    const targetGate = getCampaignGates(state).find((gate) => gate.dungeonId === node.portal?.targetDungeonId);
+    const mainlineBlock = targetGate?.status === 'locked'
+      ? `主线未解锁：${targetGate.requirementText || '先领取对应章节主线。'}`
+      : undefined;
+    const stableBlock = mainlineBlock
+      ?? (stableItem ? nodeToolUnavailableReason(state, stableItem) : '该传送门没有稳定方式。');
+    actions.push(stableBlock === undefined
       ? commandAction(`node.portal:${node.id}:stabilize`, `使用${ITEMS[stableItem!].name}稳定`, 'node', { type: 'node/use-portal', choice: 'stabilize' }, { recommendation: 'recommended' })
-      : disabledAction(`node.portal:${node.id}:stabilize`, '稳定传送', 'node', stableItem ? `缺少${ITEMS[stableItem].name}。` : '该传送门没有稳定方式。'));
-    actions.push(commandAction(`node.portal:${node.id}:force`, '强闯传送', 'node', { type: 'node/use-portal', choice: 'force' }, { emphasis: 'danger', recommendation: 'high-risk', riskReason: '强闯会承受传送反噬。' }));
+      : disabledAction(`node.portal:${node.id}:stabilize`, '稳定传送', 'node', stableBlock));
+    actions.push(mainlineBlock === undefined
+      ? commandAction(`node.portal:${node.id}:force`, '强闯传送', 'node', { type: 'node/use-portal', choice: 'force' }, { emphasis: 'danger', recommendation: 'high-risk', riskReason: '强闯会承受传送反噬。' })
+      : disabledAction(`node.portal:${node.id}:force`, '强闯传送', 'node', mainlineBlock));
   } else if (node.type === 'reward') {
     actions.push(commandAction(`node.reward:${node.id}`, '领取奖励', 'node', { type: 'node/collect-reward' }, { emphasis: 'primary', recommendation: 'recommended' }));
   } else {
@@ -2927,7 +3024,9 @@ function buildChapterPressure(state: GameState): ChapterPressureViewModel {
     label: status.label,
     pressurePercent: status.pressurePercent,
     rewardBonusPercent: status.rewardBonusPercent,
-    nextTierAt: status.nextTierAt
+    nextTierAt: status.nextTierAt,
+    clearedNodeCount: status.state.clearedNodeCount,
+    breachForced: status.breachForced
   };
 }
 
@@ -2938,6 +3037,10 @@ function buildChapterPursuit(state: GameState): ChapterPursuitViewModel {
     return { legacyDisabled: pursuit.legacyDisabled, present: false };
   }
   const { display, progress } = pursuit;
+  const nodes = (getCurrentDungeonDefinition(state) ?? DUNGEONS[pursuit.definition.dungeonId]).nodes;
+  const containment = nodes.find((node) => node.id === pursuit.definition!.containmentNodeId);
+  const current = progress.currentNodeId === null ? undefined : nodes.find((node) => node.id === progress.currentNodeId);
+  const lair = display.status === 'dormant' ? nodes.find((node) => node.id === pursuit.definition!.spawnNodeId) : undefined;
   return {
     legacyDisabled: pursuit.legacyDisabled,
     present: true,
@@ -2950,6 +3053,11 @@ function buildChapterPursuit(state: GameState): ChapterPursuitViewModel {
     contactDamagePercent: display.contactDamagePercent,
     bossFusionPercent: display.bossFusionPercent,
     rewardAmount: display.rewardAmount,
+    containmentNodeId: pursuit.definition.containmentNodeId,
+    containmentTitle: containment?.title ?? pursuit.definition.containmentNodeId,
+    ...(containment ? { containmentCellId: `map.cell:${containment.position.x}:${containment.position.y}` } : {}),
+    ...(current ? { currentCellId: `map.cell:${current.position.x}:${current.position.y}` } : {}),
+    ...(lair ? { lairCellId: `map.cell:${lair.position.x}:${lair.position.y}` } : {}),
     progress: {
       active: progress.active,
       currentNodeId: progress.currentNodeId,
@@ -2962,6 +3070,165 @@ function buildChapterPursuit(state: GameState): ChapterPursuitViewModel {
       clearsRemaining: progress.clearsRemaining
     }
   };
+}
+
+function buildLantern(state: GameState): LanternViewModel | undefined {
+  const lantern = getCurrentRunLantern(state);
+  if (!lantern) return undefined;
+  return {
+    oil: lantern.oil,
+    startOil: lantern.definition.startOil,
+    supplyOil: lantern.definition.supplyOil,
+    contactOilLoss: lantern.definition.contactOilLoss,
+    level: lantern.oil <= 0 ? 'out' : lantern.oil <= 3 ? 'low' : 'ok'
+  };
+}
+
+const ROUTE_FORECAST_KIND_LABELS: Readonly<Record<RouteForecastKind, string>> = {
+  monster: '怪物',
+  elite: '精英',
+  boss: '首领',
+  trap: '陷阱',
+  reward: '宝箱',
+  supply: '补给',
+  portal: '传送门',
+  exit: '出口'
+};
+
+/** Copies the core route forecasts into door captions; no danger or reward is recomputed here. */
+function buildRouteForecasts(state: GameState): RouteForecastViewModel[] {
+  const dungeon = getCurrentDungeonDefinition(state);
+  if (!state.run || !dungeon) return [];
+  const pursuitName = getCurrentRunPursuit(state).definition?.name ?? '追兵';
+  return getRouteForecasts(state).flatMap((forecast) => {
+    const node = dungeon.nodes.find((candidate) => candidate.id === forecast.nodeId);
+    if (!node) return [];
+    const hint = forecast.kind === 'exit'
+      ? forecast.exitSealed ? '首领封印中' : '可撤离'
+      : forecast.cleared
+        ? '已清空'
+        : forecast.bossFusionPercent !== undefined
+          ? `融合 +${forecast.bossFusionPercent}%`
+          : forecast.counterItemId !== undefined
+            ? `可用${ITEMS[forecast.counterItemId].name}`
+            : forecast.lanternOil !== undefined
+              ? `灯油 +${forecast.lanternOil}`
+              : forecast.rewardPoints !== undefined
+                ? `${forecast.rewardPoints} 点`
+                : undefined;
+    return [{
+      cellId: `map.cell:${node.position.x}:${node.position.y}`,
+      nodeId: node.id,
+      kind: forecast.kind,
+      kindLabel: ROUTE_FORECAST_KIND_LABELS[forecast.kind],
+      cleared: forecast.cleared,
+      ...(forecast.risk === undefined ? {} : { risk: forecast.risk }),
+      ...(hint === undefined ? {} : { hint }),
+      ...(forecast.pursuerDistance === undefined
+        ? {}
+        : {
+            threat: forecast.pursuerDistance === 0
+              ? { level: 'near' as const, label: `${pursuitName}就在门后` }
+              : { level: 'far' as const, label: `脚步声 · 隔 ${forecast.pursuerDistance} 间` }
+          }),
+      ...(forecast.containment === undefined
+        ? {}
+        : {
+            containment: {
+              ready: forecast.containment === 'ready',
+              label: forecast.containment === 'ready' ? '封印点 · 已就绪' : '封印点 · 先清空'
+            }
+          })
+    }];
+  });
+}
+
+type RoomEventRow = RoomEventViewModel['rows'][number];
+
+/**
+ * Rows and buttons for the room's own fight, trap or exit; every number comes from a core preview.
+ * Reward rooms keep the chest claim sheet, which already shows the real contents and relic follow-ups.
+ */
+function buildRoomEvent(
+  state: GameState,
+  actions: readonly ViewActionModel[],
+  lantern: LanternViewModel | undefined
+): RoomEventViewModel | undefined {
+  const run = state.run;
+  const dungeon = getCurrentDungeonDefinition(state);
+  const node = run && dungeon ? dungeon.nodes.find((candidate) => candidate.id === run.currentNodeId) : undefined;
+  if (!run || !node) return undefined;
+  const has = (actionId: string): boolean => actions.some((action) => action.actionId === actionId);
+  const encounter = getCurrentEncounterPreview(state);
+  if (encounter && has(`node.select:${node.id}`)) {
+    const share = encounter.playerHp > 0 ? encounter.expectedDamage / encounter.playerHp : Infinity;
+    const survives = encounter.expectedDamage < encounter.playerHp;
+    const rows: RoomEventRow[] = [
+      { id: 'enemy', label: '敌人', value: `生命 ${encounter.maxHp} · 攻击 ${encounter.attack} · 防御 ${encounter.defense}${encounter.pressurePercent > 0 ? `（压力 +${encounter.pressurePercent}%）` : ''}`, tone: encounter.pressurePercent > 0 ? 'bad' : 'neutral' },
+      ...(encounter.awakened
+        ? [{ id: 'awakened', label: '觉醒', value: `半血后觉醒：攻击 ${encounter.awakened.attack} · 防御 ${encounter.awakened.defense}`, tone: 'bad' as const }]
+        : []),
+      ...(encounter.fusionPercent > 0
+        ? [{ id: 'fusion', label: '融合', value: `${getCurrentRunPursuit(state).definition?.name ?? '追兵'}融入首领，全属性 +${encounter.fusionPercent}%`, tone: 'bad' as const }]
+        : []),
+      { id: 'player', label: '你', value: `生命 ${encounter.playerHp}/${encounter.playerMaxHp} · 每击 ${encounter.playerHit}`, tone: 'neutral' },
+      { id: 'outcome', label: '结果', value: survives ? `预计受伤 ${encounter.expectedDamage}` : `预计受伤 ${encounter.expectedDamage}，撑不住`, tone: survives && share < 0.45 ? 'good' : 'bad' },
+      { id: 'reward', label: '奖励', value: `${encounter.rewardPoints} 轮回点`, tone: 'gold' }
+    ];
+    return {
+      kind: 'encounter',
+      kicker: encounter.rank === 'boss' ? '首领战' : encounter.rank === 'elite' ? '精英战' : '遭遇战',
+      title: node.title === encounter.name ? node.title : `${node.title} · ${encounter.name}`,
+      description: node.description,
+      monsterId: encounter.monsterId,
+      rows,
+      buttons: [{ actionId: `node.select:${node.id}`, label: '战斗', caption: '战后生命回满', primary: true }]
+    };
+  }
+  const trap = getCurrentTrapPreview(state);
+  if (trap && has(`node.trap:${node.id}:risk`)) {
+    const counterName = trap.counterItemId === undefined ? undefined : ITEMS[trap.counterItemId].name;
+    const counterAction = actions.find((action) => action.actionId === `node.trap:${node.id}:counter`);
+    const counterReady = counterAction?.enabled === true;
+    return {
+      kind: 'trap',
+      kicker: '陷阱',
+      title: node.title,
+      description: node.description,
+      rows: [
+        { id: 'damage', label: '伤害', value: trap.seenThrough ? `已看破，强行通过只受伤 ${trap.damage}` : `强行通过受伤 ${trap.damage}`, tone: trap.seenThrough ? 'good' : 'bad' },
+        { id: 'check', label: '检定', value: `察觉 ${trap.trapCheck} / 难度 ${trap.dc}${trap.pressurePercent > 0 ? `（压力 +${trap.pressurePercent}%）` : ''}`, tone: 'neutral' },
+        ...(counterName === undefined ? [] : [{ id: 'counter', label: '克制', value: `${counterName}（持有 ${trap.counterCount}）`, tone: counterReady ? 'good' as const : 'neutral' as const }])
+      ],
+      buttons: [
+        ...(counterAction === undefined || counterName === undefined ? [] : [{
+          actionId: counterAction.actionId,
+          label: `用${counterName}`,
+          caption: counterReady ? '无伤通过' : counterAction.disabledReason ?? '暂不可用',
+          primary: counterReady
+        }]),
+        { actionId: `node.trap:${node.id}:risk`, label: '强行通过', caption: `受伤 ${trap.damage}`, primary: !counterReady }
+      ]
+    };
+  }
+  if (node.type === 'exit' && has(`node.exit:${node.id}`)) {
+    const seal = getBossSealStatus(state, run.dungeonId);
+    const sealed = seal !== undefined && !seal.cleared;
+    return {
+      kind: 'exit',
+      kicker: '出口',
+      title: node.title,
+      description: node.description,
+      rows: [
+        sealed
+          ? { id: 'seal', label: '封印', value: `先击败首领「${seal.definition.bossTitle}」`, tone: 'bad' }
+          : { id: 'leave', label: '撤离', value: '结算本局收获，带走战利品袋', tone: 'good' },
+        ...(lantern ? [{ id: 'oil', label: '灯油', value: `剩余 ${lantern.oil}`, tone: 'neutral' as const }] : [])
+      ],
+      buttons: [{ actionId: `node.exit:${node.id}`, label: '撤离', caption: sealed ? '出口仍被封印' : '结算本局', primary: true }]
+    };
+  }
+  return undefined;
 }
 
 function buildChapterDecision(state: GameState, dungeonId: DungeonId, dungeonName: string): ChapterDecisionViewModel {
@@ -3055,6 +3322,7 @@ function buildRewardNodePreview(
   if (preview.status === 'rejected') return undefined;
   const next = preview.state;
   const pendingDraft = next.run?.relicState?.pendingDraft;
+  const lanternOil = (getCurrentRunLantern(next)?.oil ?? 0) - (getCurrentRunLantern(state)?.oil ?? 0);
   return {
     nodeId,
     actionId: action.actionId,
@@ -3075,6 +3343,7 @@ function buildRewardNodePreview(
       }];
     }),
     healing: Math.max(0, next.player.hp - state.player.hp),
+    ...(lanternOil > 0 ? { lanternOil } : {}),
     ...(pendingDraft && pendingDraft.candidateIds.length > 0
       ? { relicDraftId: pendingDraft.draftId }
       : {})
@@ -3125,6 +3394,10 @@ function buildExploreProjection(state: GameState): PhaseProjection {
   const rewardPreview = currentNode.type === 'reward'
     ? buildRewardNodePreview(state, actions)
     : undefined;
+  const lantern = buildLantern(state);
+  const routeForecasts = buildRouteForecasts(state);
+  const roomEvent = pendingProjection.pending ? undefined : buildRoomEvent(state, actions, lantern);
+  const taskTracker = buildTaskTracker(state, chapterDecision.routeContract);
   const detail: ExploreDetailViewModel = {
     kind: 'explore',
     map,
@@ -3137,9 +3410,13 @@ function buildExploreProjection(state: GameState): PhaseProjection {
       ...(currentNode.monsterId === undefined ? {} : { monsterId: currentNode.monsterId })
     },
     chapterDecision,
+    ...(lantern ? { lantern } : {}),
+    ...(routeForecasts.length > 0 ? { routeForecasts } : {}),
+    ...(roomEvent ? { roomEvent } : {}),
     ...(pendingProjection.pending ? { pending: pendingProjection.pending } : {}),
     ...(rewardPreview ? { rewardPreview } : {}),
-    ...(equipmentMemoryHunt ? { equipmentMemoryHunt } : {})
+    ...(equipmentMemoryHunt ? { equipmentMemoryHunt } : {}),
+    ...(taskTracker ? { taskTracker } : {})
   };
   const lootPoints = loot.rewardPoints ?? 0;
   const metrics: StatusMetric[] = [
@@ -3261,7 +3538,7 @@ function buildCombatProjection(state: GameState, localUiState: PresentationLocal
       kind: 'combat',
       player: { hp: state.player.hp, maxHp: state.player.maxHp, hpPercent: clampPercent(state.player.hp, state.player.maxHp) },
       enemy: { id: 'missing', name: '未知敌人', hp: 0, maxHp: 1, hpPercent: 0, ability: '战斗快照缺失。' },
-      intent: { id: 'missing', name: '未知意图', severity: 'danger', consequence: '宿主应恢复最近一次有效快照。', recommendedActions: [], dangerousActions: [] },
+      intent: { id: 'missing', name: '未知意图', severity: 'danger', consequence: '宿主应恢复最近一次有效快照。', recommendedActions: [], dangerousActions: [], parryable: false },
       turn: 0,
       focus,
       guarding: Boolean(combat?.guarding),
@@ -3287,6 +3564,7 @@ function buildCombatProjection(state: GameState, localUiState: PresentationLocal
   const availability = new Map<CombatAction, Readonly<{ available: boolean; reason?: string }>>();
   const baseActions: CombatAction[] = ['attack', 'art', 'guard', 'weapon_skill', 'use_healing_pill', 'use_thunder_talisman', 'escape'];
   for (const action of baseActions) availability.set(action, getCombatActionAvailability(state, action));
+  const parryable = isParryableCombatIntent(intent);
   const usableRecommendation = intent.recommendedActions.find((action) => availability.get(action)?.available);
   const recommendedAction = usableRecommendation ?? (availability.get('guard')?.available ? 'guard' : undefined);
   const actions: ViewActionModel[] = baseActions.map((action) => {
@@ -3300,10 +3578,12 @@ function buildCombatProjection(state: GameState, localUiState: PresentationLocal
         : action === 'weapon_skill'
           ? `战意 ${focus.current}/${focus.required}`
           : action === 'use_healing_pill'
-            ? `库存 ${state.inventory.healing_pill}；基础回复 36 点生命（受场域影响）。推进 1 回合，敌人会反击。`
+            ? `库存 ${state.inventory.healing_pill}；基础回复 ${getHealingPillBaseHealing(state)} 点生命（最大生命一半，受场域影响）。推进 1 回合，敌人会反击。`
             : action === 'use_thunder_talisman'
               ? `库存 ${state.inventory.thunder_talisman}`
-              : undefined;
+              : action === 'guard' && parryable
+                ? '挡下蓄力重击的大部分伤害；重击来临时把握时机可完美格挡，再减半并额外获得 1 点战意。'
+                : undefined;
     if (!status.available) return disabledAction(`combat.action:${action}`, COMBAT_ACTION_LABELS[action], 'combat', status.reason ?? '当前动作不可用。', { combatAction: action, readout });
     return commandAction(
       `combat.action:${action}`,
@@ -3315,7 +3595,10 @@ function buildCombatProjection(state: GameState, localUiState: PresentationLocal
         emphasis: dangerous ? 'danger' : action === recommendedAction ? 'primary' : 'secondary',
         recommendation: dangerous ? 'high-risk' : action === recommendedAction ? 'recommended' : 'neutral',
         ...(dangerous ? { riskReason: preview?.playerWillFall ? '该动作预估会使玩家濒死并触发强制回收。' : intent.consequence } : {}),
-        ...(readout ? { readout } : {})
+        ...(readout ? { readout } : {}),
+        ...(action === 'guard' && parryable
+          ? { parryEvent: { kind: 'command', command: { type: 'combat/act', action, timing: 'perfect' } } as const }
+          : {})
       }
     );
   });
@@ -3369,7 +3652,8 @@ function buildCombatProjection(state: GameState, localUiState: PresentationLocal
     player: { hp: state.player.hp, maxHp: state.player.maxHp, hpPercent: clampPercent(state.player.hp, state.player.maxHp) },
     enemy: {
       id: profile.monster.id,
-      name: profile.monster.name,
+      // A caught pursuer fights in its lair monster's body, under its own name.
+      name: combat.pursuer ? getCurrentRunPursuit(state).definition?.name ?? profile.monster.name : profile.monster.name,
       hp: combat.monsterHp,
       maxHp,
       hpPercent: clampPercent(combat.monsterHp, maxHp),
@@ -3381,7 +3665,8 @@ function buildCombatProjection(state: GameState, localUiState: PresentationLocal
       severity: intent.severity,
       consequence: intent.consequence,
       recommendedActions: [...intent.recommendedActions],
-      dangerousActions: [...intent.dangerousActions]
+      dangerousActions: [...intent.dangerousActions],
+      parryable
     },
     ...(profile.boss ? {
       boss: {
@@ -3395,6 +3680,7 @@ function buildCombatProjection(state: GameState, localUiState: PresentationLocal
     focus,
     guarding: combat.guarding,
     advancedExpanded: Boolean(localUiState.advancedCombatExpanded),
+    ...(combat.pursuer ? { pursuer: true } : {}),
     ...(chapterContext ? { chapterContext } : {}),
     ...(equipmentMemory ? { equipmentMemory } : {})
   };
@@ -3439,7 +3725,7 @@ function buildCombatProjection(state: GameState, localUiState: PresentationLocal
           label: `追兵：${chapterContext.pursuit.name ?? chapterContext.pursuit.statusLabel ?? '未知'}`,
           reason: chapterContext.pursuit.status === 'fused'
             ? `追兵已与首领融合（首领强化 +${chapterContext.pursuit.bossFusionPercent ?? 0}%）。`
-            : `追兵追踪中；节点接触将造成 ${chapterContext.pursuit.contactDamagePercent ?? 0}% 生命伤害。`
+            : '追兵追踪中；被它追上就要与它战斗。'
         }]
       : [])
   ];
@@ -3881,11 +4167,13 @@ function buildResultPressureSettlement(
   if (pressure === undefined) return undefined;
   try {
     if (!isSettlementRecord(pressure)) return invalidSettlement('pressure', '侵蚀压力结算记录不可用');
-    if (normalizeRunPressureState(pressure.state) === undefined) {
+    const pressureState = normalizeRunPressureState(pressure.state);
+    if (pressureState === undefined) {
       return invalidSettlement('pressure', '侵蚀压力结算记录不可用');
     }
     const tier = pressure.tier;
-    if (tier !== 'stable' && tier !== 'hunted' && tier !== 'breach') {
+    // The recorded tier must be the one its own state implies, forced breach included.
+    if ((tier !== 'stable' && tier !== 'hunted' && tier !== 'breach') || getRunPressureStatus(pressureState).tier !== tier) {
       return invalidSettlement('pressure', '侵蚀压力结算记录不可用');
     }
     if (!isNonNegativeInteger(pressure.rewardPointBonus)) {

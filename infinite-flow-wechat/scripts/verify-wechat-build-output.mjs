@@ -944,6 +944,20 @@ function verifyGameAndProjectJson(
   }
 }
 
+// WeChat rejects a mini-game upload whose main package exceeds 4 MiB. Files in
+// remote bundles and in game.json subpackage roots are counted separately.
+export const WECHAT_MAIN_PACKAGE_LIMIT_BYTES = 4 * 1024 * 1024;
+
+function declaredSubpackageRoots(entries) {
+  const gameEntry = entryAt(entries, "game.json");
+  if (!gameEntry) return [];
+  const subpackages = parseJsonText(gameEntry.text, "game.json").subpackages ?? [];
+  if (!Array.isArray(subpackages)) return [];
+  return subpackages
+    .filter((item) => isRecord(item) && typeof item.root === "string" && item.root.length > 0)
+    .map((item) => item.root.replace(/^\.?\//, "").replace(/\/?$/, "/"));
+}
+
 export function verifyWechatBuildOutput({
   config,
   gate,
@@ -1114,6 +1128,16 @@ export function verifyWechatBuildOutput({
   const bundleTreeSha256 = treeFingerprint(bundleEntries);
   const packageBytes = totalBytes(packageEntries);
   const bundleBytes = totalBytes(bundleEntries);
+  const subpackageRoots = declaredSubpackageRoots(entries);
+  const mainPackageBytes = totalBytes(packageEntries.filter(
+    (entry) => !subpackageRoots.some((root) => entry.path.startsWith(root)),
+  ));
+  const mainPackageWithinLimit = mainPackageBytes <= WECHAT_MAIN_PACKAGE_LIMIT_BYTES;
+  if (configVerification.releaseEligible && !mainPackageWithinLimit) {
+    throw new WechatBuildContractError("wechat-main-package-too-large", [
+      `mainPackage:${mainPackageBytes}-bytes-exceeds-${WECHAT_MAIN_PACKAGE_LIMIT_BYTES}`,
+    ]);
+  }
   if (expectedTreeSha256 && treeSha256 !== expectedTreeSha256) {
     throw new WechatBuildContractError("build-tree-hash-mismatch", [
       "outputTree:expected-sha256-required",
@@ -1146,6 +1170,9 @@ export function verifyWechatBuildOutput({
     bundleFiles: bundleEntries.length,
     packageBytes,
     bundleBytes,
+    mainPackageBytes,
+    mainPackageLimitBytes: WECHAT_MAIN_PACKAGE_LIMIT_BYTES,
+    mainPackageWithinLimit,
     sourceResourceBytes: profile.source.resourceBytes,
     repositorySourceByteEvidenceBoundaryBytes:
       profile.wechat.repositorySourceByteEvidenceBoundaryBytes,

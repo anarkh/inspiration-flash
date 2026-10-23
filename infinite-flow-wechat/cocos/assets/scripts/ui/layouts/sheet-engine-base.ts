@@ -352,7 +352,7 @@ export function drawerFrameGeometry(input: { safeInsets: InfiniteFlowInfoSheetOp
 const DRAWER_TITLES: Readonly<Record<MobilePanelKind, string>> = Object.freeze({
   character: '角色状态', inventory: '行囊与装备', map: '区域地图', objectives: '任务与章规',
   log: '冒险记录', menu: '随身菜单', interaction: '当前交互', entry: '轮回之门',
-  npc: '整备交谈', help: '冒险指南', result: '本轮结算',
+  npc: '整备交谈', help: '冒险指南', result: '本轮结算', claims: '主神任务',
 });
 
 function place(parent: Node, name: string, x: number, y: number, width: number, height: number): Node {

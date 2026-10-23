@@ -52,7 +52,7 @@ import {
   type InfiniteFlowRuntimeChrome,
   type InfiniteFlowSafeInsets,
 } from './ui/InfiniteFlowView';
-import { getInfiniteFlowSceneVisualKeys } from './ui/scene-visuals';
+import { getInfiniteFlowRoomSheetArtKey, getInfiniteFlowSceneVisualKeys, INFINITE_FLOW_TASK_ENVOY_PORTRAIT_KEY } from './ui/scene-visuals';
 import {
   SHEET_PORTRAIT_KEY,
   sheetEquipmentKey,
@@ -101,6 +101,14 @@ type RuntimeMode = Readonly<{
   detail: string;
   nonReleaseEphemeral?: true;
 }>;
+
+/** Chrome to restore once the session's pending candidate becomes durable. */
+type PersistenceBlock = Readonly<{
+  mode: RuntimeMode;
+  blockingMessage: string | undefined;
+}>;
+
+const PERSISTENCE_RETRY_ACTION_ID = 'runtime.persistence.retry';
 
 type RuntimeGlobals = Readonly<{
   wx?: unknown;
@@ -845,6 +853,7 @@ export class InfiniteFlowApp extends Component {
   private safeInsets: InfiniteFlowSafeInsets = INFINITE_FLOW_PREVIEW_SAFE_INSETS;
   private activityMessage = '等待运行时初始化';
   private blockingMessage: string | undefined;
+  private persistenceBlock: PersistenceBlock | undefined;
   private busyActionId: string | undefined;
   private assetGeneration = 0;
   private visualGeneration = 0;
@@ -914,6 +923,9 @@ export class InfiniteFlowApp extends Component {
         this.activate(physicalId, actionId, event);
       },
       retrySceneAssets: () => this.retrySceneAssets(),
+      retryPersistence: () => {
+        void this.retryPersistence();
+      },
     });
     this.render();
     const generation = this.beginBootstrap();
@@ -2137,6 +2149,7 @@ export class InfiniteFlowApp extends Component {
               detail: `边界 ${durabilityBoundary.attestationId}；resume 已跨越持久边界`,
             };
             this.blockingMessage = undefined;
+            this.persistenceBlock = undefined;
           }
           this.activityMessage = failureMessage === undefined
             ? `${diagnostic.operation}：${resultStatus ?? '完成'}`
@@ -2446,6 +2459,12 @@ export class InfiniteFlowApp extends Component {
     this.busyActionId = undefined;
     this.view?.focusPrimaryActions();
     if (result.status === 'persistence-blocked') {
+      if (this.persistenceBlock === undefined) {
+        this.persistenceBlock = {
+          mode: this.runtimeMode,
+          blockingMessage: this.blockingMessage,
+        };
+      }
       this.runtimeMode = {
         kind: 'blocked',
         label: '微信运行 / 持久写入阻断',
@@ -2463,6 +2482,48 @@ export class InfiniteFlowApp extends Component {
       this.activityMessage = `输入无效 ${actionId}`;
     }
     this.refreshViewModel();
+  }
+
+  /**
+   * Re-persists the session's already-reduced pending candidate. It never
+   * submits a new domain command, so rules cannot run twice for one input.
+   */
+  private async retryPersistence(): Promise<void> {
+    const generation = this.bootstrapGeneration;
+    const client = this.client;
+    const block = this.persistenceBlock;
+    if (client === undefined || block === undefined || this.busyActionId !== undefined) return;
+    this.beginAction(PERSISTENCE_RETRY_ACTION_ID);
+    try {
+      const result = await client.retryPendingPersistence();
+      if (!this.isActionAlive(generation, client)) return;
+      this.busyActionId = undefined;
+      if (result.status === 'persistence-blocked') {
+        this.runtimeMode = {
+          kind: 'blocked',
+          label: '微信运行 / 持久写入阻断',
+          detail: `${result.error.code}：${result.error.message}`,
+        };
+        this.blockingMessage = `${result.error.code}：${result.error.message}`;
+        this.activityMessage = '重试保存仍被阻断';
+        this.refreshViewModel();
+        return;
+      }
+      this.persistenceBlock = undefined;
+      this.runtimeMode = block.mode;
+      this.blockingMessage = block.blockingMessage;
+      this.activityMessage = result.status === 'committed'
+        ? `已补写 ${result.commandId} · revision ${result.stateRevision}`
+        : result.status === 'rejected'
+          ? `已补写 ${result.commandId} · 规则拒绝，状态未改变`
+          : '没有待写入的操作';
+      this.view?.focusPrimaryActions();
+      this.refreshViewModel();
+      await this.refillSecureSeeds(generation);
+    } catch (error) {
+      if (!this.isActionAlive(generation, client)) return;
+      this.failAction(PERSISTENCE_RETRY_ACTION_ID, error);
+    }
   }
 
   private failAction(actionId: string, error: unknown): void {
@@ -2524,6 +2585,11 @@ export class InfiniteFlowApp extends Component {
       ...(this.blockingMessage === undefined
         ? {}
         : { blockingMessage: this.blockingMessage }),
+      ...(this.persistenceBlock !== undefined
+        && this.client !== undefined
+        && this.runtimeMode.kind === 'blocked'
+        ? { persistenceRetry: true as const }
+        : {}),
       ...(this.busyActionId === undefined
         ? {}
         : { busyActionId: this.busyActionId }),
@@ -2595,6 +2661,8 @@ export class InfiniteFlowApp extends Component {
       ...loadout.ownedEquipment.map((entry) => sheetEquipmentKey(entry.equipmentId)),
       ...(detail?.kind === 'explore'
         ? detail.pending?.equipmentOptions?.map(entry => sheetEquipmentKey(entry.equipmentId)) ?? [] : []),
+      ...(detail?.kind === 'explore' ? [getInfiniteFlowRoomSheetArtKey(detail)] : []),
+      ...(detail?.kind === 'hub' && this.viewModel?.tasks.some((task) => task.status === 'completed') ? [INFINITE_FLOW_TASK_ENVOY_PORTRAIT_KEY] : []),
       ...(detail?.kind === 'explore' && detail.rewardPreview ? [
         'scene:dungeon_prop_chest',
         ...detail.rewardPreview.items.flatMap(entry => entry.visualAssetKey ? [entry.visualAssetKey] : []),

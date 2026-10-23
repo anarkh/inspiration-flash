@@ -2,6 +2,7 @@ import type {
   BloodlineId,
   CausalLedgerChoice,
   CombatAction,
+  CombatActionOptions,
   CompanionId,
   DungeonId,
   EntropyHeadingChoice,
@@ -38,6 +39,9 @@ export type PersistedRunSeeds = Readonly<{
 }>;
 
 type NoPayloadCommand<Type extends string> = Readonly<{ type: Type }>;
+
+/** Player-timed combat input; the core only honours it on a parryable heavy blow. */
+export type CombatActionTiming = NonNullable<CombatActionOptions['timing']>;
 
 export type GameCommand =
   | NoPayloadCommand<'game/new'>
@@ -96,6 +100,7 @@ export type GameCommand =
     }>
   | NoPayloadCommand<'hub/recall-equipment-commission'>
   | Readonly<{ type: 'hub/claim-task'; taskId: string }>
+  | NoPayloadCommand<'hub/claim-all-tasks'>
   | Readonly<{
       type: 'run/enter';
       dungeonId: DungeonId;
@@ -153,7 +158,7 @@ export type GameCommand =
       route: CombatReplayRoute;
     }>
   | Readonly<{ type: 'law/select-panopticon-route'; route: PanopticonRoute }>
-  | Readonly<{ type: 'combat/act'; action: CombatAction }>
+  | Readonly<{ type: 'combat/act'; action: CombatAction; timing?: CombatActionTiming }>
   | Readonly<{ type: 'combat/capture'; petId: PetId }>
   | Readonly<{ type: 'combat/use-method-technique'; methodId?: MethodId }>
   | NoPayloadCommand<'combat/use-companion-assist'>
@@ -204,6 +209,7 @@ const COMMAND_TYPES: ReadonlySet<string> = new Set<GameCommandType>([
   'hub/start-equipment-commission',
   'hub/recall-equipment-commission',
   'hub/claim-task',
+  'hub/claim-all-tasks',
   'run/enter',
   'run/move',
   'run/select-node',
@@ -244,6 +250,7 @@ const NO_PAYLOAD_COMMAND_TYPES: ReadonlySet<GameCommandType> = new Set([
   'game/new',
   'hub/recover',
   'hub/recall-equipment-commission',
+  'hub/claim-all-tasks',
   'node/collect-reward',
   'node/activate-soul-recharge',
   'node/cancel-soul-recharge',
@@ -395,7 +402,8 @@ function isCommandPayloadValid(command: Record<string, unknown>, type: GameComma
     case 'law/select-panopticon-route':
       return isString(command.route);
     case 'combat/act':
-      return COMBAT_ACTIONS.has(command.action as CombatAction);
+      return COMBAT_ACTIONS.has(command.action as CombatAction)
+        && (command.timing === undefined || command.timing === 'perfect');
     case 'combat/use-method-technique':
       return isOptionalString(command.methodId);
     case 'result/archive-relic':
@@ -470,6 +478,7 @@ const HUB_COMMANDS: ReadonlySet<GameCommandType> = new Set([
   'hub/start-equipment-commission',
   'hub/recall-equipment-commission',
   'hub/claim-task',
+  'hub/claim-all-tasks',
   'run/enter'
 ]);
 

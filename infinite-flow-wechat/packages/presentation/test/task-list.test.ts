@@ -33,11 +33,11 @@ assert(initialTasks.map(({ id }) => id).join(',') === [
 assert(initialTasks[0]!.objectives.join() === '通关妖塔一层 0/1', 'mainline states the actual dungeon-clear objective');
 assert(initialTasks[1]!.objectives.join() === '进入妖塔一层 0/1', 'scouting states the actual entry objective');
 const trial = initialTasks[2]!;
-assert(trial.objectives.join('|') === '清理妖塔一层节点 0/3|捕获雾爪幼兽 0/1|掌握吐纳诀 0/1|首通妖塔一层 0/1',
+assert(trial.objectives.join('|') === '清理妖塔一层节点 0/3|捕获雾爪幼兽 0/1|掌握吐纳诀 0/1|从出口通关妖塔一层并结算指令 0/1',
   'the directive exposes understandable actions instead of an opaque settlement counter');
 assert(trial.detailObjectives?.some((line) => line.includes('承伤不超过 20') && line.includes('承伤 0/20')),
   'the persistent damage limit remains in details');
-assert(trial.detailObjectives?.includes('首通妖塔一层 0/1'), 'details retain first-clear settlement requirements');
+assert(trial.detailObjectives?.includes('从出口通关妖塔一层并结算指令 0/1'), 'details retain the exit settlement requirement');
 assert(initialTasks[3]!.objectives.join() === '觉醒任意血统 0/1', 'bloodline task has an actionable count');
 assert(initialTasks.every(({ description, hint, rewardText }) => description && hint && rewardText), 'details retain the domain explanations and rewards');
 assert(Object.isFrozen(initialTasks) && Object.isFrozen(trial.objectives), 'task projections are deeply immutable');
@@ -64,14 +64,17 @@ const readyToExit: GameState = {
   ...partial,
   run: { ...partial.run!, clearedNodeIds: DUNGEONS.demon_tower_1.nodes.slice(0, 3).map(({ id }) => id), damageTaken: 10 }
 };
-assert(task(readyToExit, 'side_directive_demon_tower_1').objectives.join() === '从出口完成妖塔一层首通结算 0/1',
-  'finished sub-objectives still explain that the first-clear exit is required');
+assert(task(readyToExit, 'side_directive_demon_tower_1').objectives.join() === '从出口通关妖塔一层并结算指令 0/1',
+  'finished sub-objectives still explain that a clear through the exit is required');
+const repeatRun: GameState = { ...readyToExit, completedDungeonIds: ['demon_tower_1'] };
+assert(task(repeatRun, 'side_directive_demon_tower_1').objectives.join() === '从出口通关妖塔一层并结算指令 0/1',
+  'a chapter cleared without its directive can still earn it on a repeat clear');
 
 const settled: GameState = {
   ...initial, completedDungeonIds: ['demon_tower_1'], claimedDirectiveIds: ['directive_demon_tower_1']
 };
 assert(task(settled, 'mainline_clear_demon_tower_1').status === 'completed', 'completed unclaimed mainline remains visible');
-assert(task(settled, 'side_directive_demon_tower_1').detailObjectives?.some((line) => line.includes('承伤不超过 20') && line.includes('首通时已满足')),
+assert(task(settled, 'side_directive_demon_tower_1').detailObjectives?.some((line) => line.includes('承伤不超过 20') && line.includes('通关时已满足')),
   'settled tasks show historical satisfied conditions without inventing current-run counters');
 const claimed = reduceGameCommand(settled, { type: 'hub/claim-task', taskId: 'mainline_clear_demon_tower_1' });
 assert(claimed.status === 'committed', 'real mainline claim commits');
@@ -119,3 +122,35 @@ const routed: GameState = {
 assert(task(routed, 'side_enter_panopticon_city').objectives[0] === '完成盲区中继 1/3', 'chapter-specific relay progress is not confused with generic entry');
 assert(task(routed, 'side_directive_panopticon_city').objectives.join('|') === '选择逃逸路线 1/1|冻结首领快照 0/1',
   'a multi-condition task retains the independent route and boss snapshot progress');
+const routedTracker = buildGameViewModel(routed).sections[1].detail;
+assert(routedTracker.kind === 'explore' && routedTracker.taskTracker?.lines.find(({ id }) => id === 'directive')?.text === '冻结首领快照 0/1',
+  'the tracker shows the special directive\'s remaining step, never a finished one');
+
+// The run's tracker: mainline, the directive step a player can forget, and what waits in the hub.
+const trackerOf = (state: GameState) => {
+  const detail = buildGameViewModel(state).sections[1].detail;
+  assert(detail.kind === 'explore', 'the tracker belongs to exploration');
+  return detail.taskTracker?.lines.map(({ kicker, text, tone }) => `${kicker}|${tone}|${text}`).join(' / ');
+};
+assert(trackerOf(entered) === '主线|active|通关妖塔一层 / 指令|active|捕获雾爪幼兽 0/1 +2 / 待领|done|1 项 · 回主神空间领取',
+  'a fresh run tracks its mainline, its directive and the scouting task waiting in the hub');
+assert(trackerOf({ ...entered, run: { ...entered.run!, damageTaken: 21 } })?.includes('指令|failed|承伤不超过 20 已失败'),
+  'a broken directive limit stays in view as a failure');
+assert(trackerOf(readyToExit)?.includes('指令|done|条件已满足 · 去出口结算'), 'a met directive points to the exit');
+
+// The hub offers one claim for every finished task, and that claim follows newly unlocked chapters.
+const twoChapters: GameState = { ...initial, completedDungeonIds: ['demon_tower_1', 'metro_abyss'] };
+const hubDetail = buildGameViewModel(twoChapters).sections[1].detail;
+// The tower's mainline and scouting are finished; the metro's tasks stay hidden until the tower's mainline is claimed.
+assert(hubDetail.kind === 'hub' && hubDetail.taskClaims?.count === 2 && hubDetail.taskClaims.action.enabled
+  && hubDetail.taskClaims.action.event?.kind === 'command' && hubDetail.taskClaims.action.event.command.type === 'hub/claim-all-tasks',
+  'the hub offers one claim for its finished tasks');
+assert(!buildGameViewModel(twoChapters).sections[2].actions.some(({ actionId }) => actionId === 'hub.tasks.claim-all'),
+  'the claim stays out of the panel action list');
+const claimedAll = reduceGameCommand(twoChapters, { type: 'hub/claim-all-tasks' });
+const chainClaims = ['mainline_clear_demon_tower_1', 'side_enter_demon_tower_1', 'mainline_clear_metro_abyss', 'side_enter_metro_abyss'];
+assert(claimedAll.status === 'committed' && claimedAll.state.claimedTaskIds.length === chainClaims.length
+  && chainClaims.every((id) => claimedAll.state.claimedTaskIds.includes(id)), 'claiming a mainline also claims the next chapter it reveals finished');
+const afterAll = buildGameViewModel(claimedAll.state).sections[1].detail;
+assert(afterAll.kind === 'hub' && afterAll.taskClaims === undefined, 'nothing left to claim, nothing offered');
+assert(reduceGameCommand(claimedAll.state, { type: 'hub/claim-all-tasks' }).status === 'rejected', 'an empty claim is rejected');

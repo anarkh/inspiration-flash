@@ -5,6 +5,7 @@ import {
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  renameSync,
   rmSync,
   statSync,
   writeFileSync,
@@ -953,6 +954,54 @@ try {
     releaseEligible: true,
     nonRelease: false,
   });
+  // WeChat's 4 MiB main-package limit blocks release builds, is only reported
+  // for NON_RELEASE template builds, and excludes declared subpackage roots.
+  const mainPackageLimit = 4 * 1024 * 1024;
+  assert.equal(productionOutput.mainPackageLimitBytes, mainPackageLimit);
+  assert.ok(productionOutput.mainPackageBytes > 0 && productionOutput.mainPackageWithinLimit);
+  assert.ok(firstRemoteOutput.mainPackageWithinLimit);
+  const oversizeBytes = Buffer.alloc(mainPackageLimit);
+  const productionOversizePath = resolve(productionOutputRoot, "src/oversize.fixture.bin");
+  writeFileSync(productionOversizePath, oversizeBytes);
+  expectFailure(() => verifyWechatBuildOutput({
+    config: productionConfig,
+    gate: "production",
+    expectedMode: "remote",
+    profile,
+    outputRoot: productionOutputRoot,
+  }), `mainPackage:${productionOutput.mainPackageBytes + mainPackageLimit}-bytes-exceeds-${mainPackageLimit}`);
+  const productionGamePath = resolve(productionOutputRoot, "game.json");
+  const productionGame = readFileSync(productionGamePath, "utf8");
+  writeJson(productionGamePath, {
+    ...JSON.parse(productionGame),
+    subpackages: [{ name: "engine-fixture", root: "engine-fixture/" }],
+  });
+  mkdirSync(resolve(productionOutputRoot, "engine-fixture"), { recursive: true });
+  renameSync(productionOversizePath, resolve(productionOutputRoot, "engine-fixture/oversize.fixture.bin"));
+  const subpackagedOutput = verifyWechatBuildOutput({
+    config: productionConfig,
+    gate: "production",
+    expectedMode: "remote",
+    profile,
+    outputRoot: productionOutputRoot,
+  });
+  assert.equal(subpackagedOutput.mainPackageBytes, productionOutput.mainPackageBytes
+    + Buffer.byteLength(readFileSync(productionGamePath, "utf8")) - Buffer.byteLength(productionGame));
+  assert.ok(subpackagedOutput.mainPackageWithinLimit);
+  rmSync(resolve(productionOutputRoot, "engine-fixture"), { recursive: true });
+  writeFileSync(productionGamePath, productionGame, "utf8");
+  const templateOversizePath = resolve(remoteOutputRoot, "src/oversize.fixture.bin");
+  writeFileSync(templateOversizePath, oversizeBytes);
+  const oversizeTemplate = verifyWechatBuildOutput({
+    config: remoteRender.rendered,
+    gate: "template",
+    expectedMode: "remote",
+    profile,
+  });
+  assert.equal(oversizeTemplate.mainPackageWithinLimit, false);
+  assert.equal(oversizeTemplate.mainPackageBytes, firstRemoteOutput.mainPackageBytes + mainPackageLimit);
+  rmSync(templateOversizePath);
+
   assert.equal(firstRemoteOutput.tracedAssets, 314);
   assert.equal(firstRemoteOutput.configBundleManifestUuid, profile.configBundle.manifestUuid);
   assert.equal(firstRemoteOutput.treeSha256, repeatedRemoteOutput.treeSha256);

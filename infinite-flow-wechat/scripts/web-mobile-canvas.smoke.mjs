@@ -1193,7 +1193,7 @@ async function walkTo(cdp, destination, label) {
       const distance = destination[axis] - before.walking.position[axis];
       if (Math.abs(distance) <= 6) break;
       const key = axis === 'x' ? distance < 0 ? 'a' : 'd' : distance < 0 ? 'w' : 's';
-      const speed = before.phase === 'hub' ? axis === 'x' ? 260 : 145 : 220;
+      const speed = before.phase === 'hub' ? axis === 'x' ? 260 : 145 : 440;
       const holdMs = Math.max(18, Math.min(280, Math.abs(distance) / speed * 1000 - 8));
       await dispatchKey(cdp, key, 'keyDown');
       let held;
@@ -1840,6 +1840,10 @@ async function runCanvasFlow(cdp, outputDir) {
   }
   assertSameDomainEvidence(entryBaseline, await getRuntimeEvidence(cdp), compactFlow ? 'choosing the opening chapter' : 'browsing every chapter');
   await touchNode(cdp, 'MobileSheetEntryConfirm');
+  // Entering opens the first room's own sheet, as stepping through a door does; 收起 returns to walking.
+  await waitForPredicate(cdp, 'first room sheet on entry', async () => (await queryNodePoint(cdp, 'WalkRoomEventButton:close')).found);
+  await save('10a-entry-room-sheet', await getSceneSnapshot(cdp));
+  await touchNode(cdp, 'WalkRoomEventButton:close');
   await waitForSnapshot(cdp, 'walkable exploration room', (snapshot) => matchesWalking(snapshot, 'explore'));
   const explore = await waitForWalkingArtwork(cdp, 'explore');
   assertWalking(explore, 'explore');
@@ -1960,8 +1964,7 @@ async function runCanvasFlow(cdp, outputDir) {
   await save('14a-available-stone-gate', arrivedGate);
   await touchNode(cdp, 'WalkInteract');
   await waitForSnapshot(cdp, 'blood rune trap room', (snapshot) => snapshot.domain.currentNodeId === 'blood_rune_trap');
-  await walkTo(cdp, { x: 500, y: 490 }, 'approach-trap-event');
-  await touchNode(cdp, 'WalkInteract');
+  // Arriving opens the room's own choices in its bottom sheet.
   const trap = await waitForSnapshot(cdp, 'optional event sheet', (snapshot) => snapshot.sheet.kind === 'interaction');
   assert.equal(trap.domain.pendingKind, 'dungeon-event');
   await save('14d-optional-event', trap);

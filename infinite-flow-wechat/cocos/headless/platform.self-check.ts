@@ -1,4 +1,7 @@
-import type { LifecycleFlushResult } from '@infinite-flow/runtime';
+import {
+  PortableSha256HashPort,
+  type LifecycleFlushResult,
+} from '@infinite-flow/runtime';
 import {
   CocosResourcesLoader,
   ManifestCocosAssetPort,
@@ -352,6 +355,51 @@ async function checkStorageJournal(): Promise<void> {
     [backupKey, formalKey, installationEpochKey].sort().join(','),
     'one namespace lists epoch and session keys without physical journal slots',
   );
+
+  const memoWx = new FakeWxStorage();
+  const countingHash = new CountingHashPort();
+  const memoStorage = new WxJournalStoragePort(memoWx, {
+    namespace: 'test:decode-memo',
+    hashPort: countingHash,
+    durabilityBoundary: testDurabilityBoundary(memoWx),
+  });
+  await memoStorage.write('stable', 'v1');
+  await memoStorage.flush();
+  const hashesBeforeReads = countingHash.calls;
+  for (let index = 0; index < 5; index += 1) {
+    equal(await memoStorage.read('stable'), 'v1', 'memoized read returns the journal value');
+  }
+  equal(
+    countingHash.calls,
+    hashesBeforeReads,
+    'byte-identical physical slots are not re-hashed on every logical read',
+  );
+  const hashesBeforeWrite = countingHash.calls;
+  await memoStorage.write('stable', 'v2');
+  equal(
+    countingHash.calls - hashesBeforeWrite,
+    2,
+    'a write hashes only the new record and its physical readback',
+  );
+  const activeSlot = memoStorage.physicalKeys.b;
+  const activeRaw = memoWx.physicalValue(activeSlot);
+  assert(typeof activeRaw === 'string', 'memo test has an active slot');
+  memoWx.corruptVolatile(activeSlot, activeRaw.replace('"v2"', '"v3"'));
+  equal(
+    await memoStorage.read('stable'),
+    'v1',
+    'a changed slot on the same instance is re-verified and its checksum failure is not masked',
+  );
+}
+
+class CountingHashPort {
+  calls = 0;
+  private readonly inner = new PortableSha256HashPort();
+
+  sha256(bytes: Uint8Array): Promise<Uint8Array> {
+    this.calls += 1;
+    return this.inner.sha256(bytes);
+  }
 }
 
 class FakeCryptoApi implements WxUserCryptoApi {

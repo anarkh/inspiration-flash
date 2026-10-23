@@ -96,6 +96,12 @@ npm run build:wechat:template
 不存在 `assets/resources`，只保留版本化 bundle 脚本；`config` 保持本地。报告固定为
 `NON_RELEASE_TEMPLATE_BUILD_VALID`、`releaseEligible:false`，不能替代真实 AppID/CDN。
 
+产物 verifier 另按微信小游戏主包上限核对 `mainPackageBytes`（除 `remote/` 与 `game.json`
+已声明分包根目录外的全部文件）：production 构建超过 4 MiB 即以
+`wechat-main-package-too-large` 失败；template 构建只在结果中报告
+`mainPackageWithinLimit`，不阻断本地 NON_RELEASE 试玩。上述 2026-08-12 模板主包已超出
+该上限，production 前需启用引擎插件或把代码移入分包后重新构建。
+
 生产 remote 配置只从环境读取 AppID 和 CDN 基址，并将 manifest revision 固定进 HTTPS
 路径。`resources` metadata 已静态绑定 remote-only Creator preset；旧
 `subpackage-smoke` 只保留兼容登记，并由所有配置门禁以项目策略不兼容拒绝。仓库的

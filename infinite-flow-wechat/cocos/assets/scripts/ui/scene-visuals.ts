@@ -1,6 +1,6 @@
-import type { GameViewModel, HubCatalogPanel, HubPanel } from '@infinite-flow/presentation';
+import type { ExploreDetailViewModel, GameViewModel, HubCatalogPanel, HubPanel } from '@infinite-flow/presentation';
 import type { RunRelicId } from '@infinite-flow/core/run-relics';
-import { getDungeonWorldBackgroundKey } from './dungeon-world-theme';
+import { DUNGEON_WORLD_THEMES, getDungeonWorldBackgroundKey } from './dungeon-world-theme';
 
 export const INFINITE_FLOW_DUNGEON_TRANSITION_GATE_VISUAL_KEY = 'scene:dungeon_transition_gate';
 export const INFINITE_FLOW_HUB_DUNGEON_PORTAL_VISUAL_KEY = 'scene:hub_dungeon_portal';
@@ -16,6 +16,9 @@ export const INFINITE_FLOW_DUNGEON_PROP_VISUAL_KEYS = Object.freeze({
   propDebris: 'scene:dungeon_prop_debris',
 });
 
+/** 任务使者's portrait, shared by the tasks NPC sheet and the hub's claim sheet. */
+export const INFINITE_FLOW_TASK_ENVOY_PORTRAIT_KEY = 'npc:main_god_projection';
+
 const HUB_OPPONENTS: Readonly<Partial<Record<HubPanel, string>>> = Object.freeze({
   equipment: 'npc:equipment_quartermaster',
   supplies: 'npc:supply_trader',
@@ -23,7 +26,7 @@ const HUB_OPPONENTS: Readonly<Partial<Record<HubPanel, string>>> = Object.freeze
   methods: 'npc:method_master',
   bloodlines: 'npc:bloodline_priest',
   companions: 'npc:companion_guide',
-  tasks: 'npc:main_god_projection',
+  tasks: INFINITE_FLOW_TASK_ENVOY_PORTRAIT_KEY,
 });
 
 /** Separate full-body world art from the existing shop portraits. */
@@ -46,8 +49,28 @@ export function getInfiniteFlowMonsterWorldVisualKey(monsterId: string): string 
   return `monster:${monsterId}_world`;
 }
 
+/** Portrait of the room's bottom interaction sheet: the same object the room shows. */
+export function getInfiniteFlowRoomSheetArtKey(detail: ExploreDetailViewModel): string {
+  const keys = INFINITE_FLOW_DUNGEON_PROP_VISUAL_KEYS;
+  const pending = detail.pending?.kind;
+  if (pending === 'equipment-offer') return keys.propChest;
+  if (pending === 'relic-draft') return keys.propRelic;
+  if (pending === 'dungeon-event') return keys.propEvent;
+  if (pending === 'field-survey') return keys.propSurvey;
+  if (pending === 'law') return keys.propLaw;
+  if (pending === 'soul-recharge' || detail.currentNode.cleared) return keys.propShrine;
+  const node = detail.currentNode;
+  if (node.nodeType === 'monster' && node.monsterId !== undefined) return getInfiniteFlowMonsterWorldVisualKey(node.monsterId);
+  return node.nodeType === 'trap' ? keys.propTrap : node.nodeType === 'exit' || node.nodeType === 'portal' ? keys.propExit : keys.propChest;
+}
+
 export function getInfiniteFlowRunRelicVisualKey(relicId: RunRelicId): string {
   return `item:run_relic_${relicId}`;
+}
+
+/** The pursuer's doorway silhouette borrows its chapter's elite art. */
+export function getInfiniteFlowPursuerVisualKey(dungeonId: keyof typeof DUNGEON_WORLD_THEMES): string {
+  return getInfiniteFlowMonsterWorldVisualKey(DUNGEON_WORLD_THEMES[dungeonId].eliteMonsterId);
 }
 
 /** Cocos-only visual composition from the existing public presentation model. */
@@ -56,6 +79,7 @@ export function getInfiniteFlowSceneVisualKeys(model: GameViewModel): Readonly<{
   player: string;
   portrait?: string;
   opponent?: string;
+  lurker?: string;
   transitionGate?: string;
   hubPortal?: string;
 } & Partial<Record<HubCatalogPanel | keyof typeof INFINITE_FLOW_DUNGEON_PROP_VISUAL_KEYS | `runRelic_${RunRelicId}`, string>>> {
@@ -68,6 +92,7 @@ export function getInfiniteFlowSceneVisualKeys(model: GameViewModel): Readonly<{
   }
   let background = model.visualAssetKey as string | undefined;
   let opponent: string | undefined;
+  let lurker: string | undefined;
   if (detail?.kind === 'combat') {
     background = detail.chapterContext === undefined
       ? undefined
@@ -78,6 +103,11 @@ export function getInfiniteFlowSceneVisualKeys(model: GameViewModel): Readonly<{
     if (detail.currentNode.nodeType === 'monster' && !detail.currentNode.cleared
       && detail.pending === undefined && detail.currentNode.monsterId !== undefined) {
       opponent = getInfiniteFlowMonsterWorldVisualKey(detail.currentNode.monsterId);
+    }
+    // Held for the whole hunt so a doorway silhouette never waits on a fresh load.
+    const pursuit = detail.chapterDecision?.pursuit;
+    if (pursuit?.present && (pursuit.status === 'dormant' || pursuit.status === 'stalking')) {
+      lurker = getInfiniteFlowPursuerVisualKey(detail.map.dungeonId);
     }
   } else if (detail?.kind === 'hub') {
     opponent = HUB_OPPONENTS[detail.activePanel];
@@ -91,6 +121,7 @@ export function getInfiniteFlowSceneVisualKeys(model: GameViewModel): Readonly<{
     ...(detail?.kind === 'hub' || detail?.kind === 'explore' || detail?.kind === 'combat'
       ? { portrait: 'character:reincarnator' } : {}),
     ...(opponent === undefined ? {} : { opponent }),
+    ...(lurker === undefined ? {} : { lurker }),
     ...(detail?.kind === 'explore' || detail?.kind === 'combat'
       ? { transitionGate: INFINITE_FLOW_DUNGEON_TRANSITION_GATE_VISUAL_KEY } : {}),
     // Resource ownership follows scene entry/exit via App's Object.values() lease.

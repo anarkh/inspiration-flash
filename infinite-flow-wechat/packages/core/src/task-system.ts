@@ -321,7 +321,7 @@ export const SIDE_TASKS: MainGodTask[] = DUNGEON_ORDER.flatMap((dungeonId) => {
       chapterDungeonId: dungeonId,
       title: `${dungeon.name}指令复盘`,
       description: `完成${dungeon.name}的主神指令结算，补足本章支线记录。`,
-      hint: `首通${dungeon.name}时完成主神指令目标。`,
+      hint: `任意一次通关${dungeon.name}时完成主神指令目标即可，奖励只发一次。`,
       reward: { rewardPoints: 40 },
       isVisible: (state) => isChapterUnlocked(state, dungeonId),
       isComplete: (state) => state.claimedDirectiveIds.includes(`directive_${dungeonId}`),

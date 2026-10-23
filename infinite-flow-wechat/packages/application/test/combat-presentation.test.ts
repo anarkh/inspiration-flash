@@ -2,6 +2,7 @@ import {
   createInitialState,
   getCurrentDungeonLaw,
   getDerivedStats,
+  getHealingPillBaseHealing,
   performCombatAction,
   useBloodlineSurge,
   type CombatAction,
@@ -110,7 +111,8 @@ const polluted: GameState = {
 };
 assert(getCurrentDungeonLaw(polluted)?.modifiers.healingPercent === -20, 'pollution fixture modifies healing');
 const reducedHeal = observe(polluted, 'use_healing_pill');
-assert(reducedHeal.frames[0].playerHp - polluted.player.hp === 29, 'medicine snapshot includes actual law-modified healing');
+assert(reducedHeal.frames[0].playerHp - polluted.player.hp === Math.ceil(getHealingPillBaseHealing(polluted) * 0.8),
+  'medicine snapshot includes actual law-modified healing');
 const pollutedVictory = observe({ ...polluted, combat: { ...polluted.combat!, monsterHp: 1 } }, 'attack');
 assert(pollutedVictory.frames[0].playerHp === 10
   && pollutedVictory.after.player.hp === getDerivedStats(pollutedVictory.after).maxHp,

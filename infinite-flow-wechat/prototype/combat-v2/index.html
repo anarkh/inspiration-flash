@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>战斗 v2 · 无限流交互原型</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="preview-tools" aria-label="原型演示设置">
+    <span>战斗 v2 · HTML 原型</span>
+    <select id="scenario" aria-label="演示状态">
+      <option value="normal">常规战斗</option>
+      <option value="heavy">重击预警</option>
+      <option value="focus">战意充足</option>
+      <option value="danger">低生命</option>
+      <option value="talisman">携带雷火符</option>
+      <option value="boss">首领战</option>
+    </select>
+    <label class="assist"><input type="checkbox" id="assist"> 时机辅助</label>
+    <button id="reset" type="button">重置</button>
+  </div>
+
+  <main class="game" id="game" aria-label="妖塔一层战斗原型">
+    <div class="world-layer" id="world-layer">
+      <div class="world" aria-hidden="true"></div>
+      <div class="duel-light" aria-hidden="true"></div>
+
+      <div class="actor enemy" id="enemy">
+        <div class="ground-ring enemy-ring" aria-hidden="true"></div>
+        <div class="shadow" aria-hidden="true"></div>
+        <img class="enemy-art" id="enemy-art" src="../../cocos/assets/resources/monster-world/fog-lesser-demon-world-v1.png" alt="雾中妖鬼">
+        <button class="intent-bubble" id="intent" type="button" aria-describedby="intent-detail">
+          <span class="intent-icon" data-icon="claw" id="intent-icon"></span>
+          <span class="intent-copy">
+            <strong id="intent-name">常规追击</strong>
+            <span id="intent-detail">反击 12 · 防御 6</span>
+          </span>
+        </button>
+      </div>
+
+      <div class="actor hero" id="hero">
+        <div class="ground-ring hero-ring" aria-hidden="true"></div>
+        <div class="shadow" aria-hidden="true"></div>
+        <div class="hero-sprite" id="hero-sprite"><div class="hero-frame" id="hero-frame"></div></div>
+      </div>
+
+      <svg class="fx" id="fx" aria-hidden="true"></svg>
+    </div>
+
+    <header class="topbar">
+      <div class="chapter-line"><strong>妖塔一层</strong><span id="encounter-kind">普通遭遇</span></div>
+      <div class="top-tools">
+        <button class="tool" data-panel="inventory" aria-label="背包"><span data-icon="bag"></span></button>
+        <button class="tool" data-panel="menu" aria-label="菜单"><span data-icon="menu"></span></button>
+      </div>
+    </header>
+
+    <section class="versus" aria-label="对阵状态">
+      <div class="side hero-side">
+        <span class="portrait hero-portrait" aria-hidden="true"></span>
+        <div class="side-body">
+          <div class="side-name"><strong>轮回者</strong><span class="hp-num" id="hero-hp">78/116</span></div>
+          <div class="hp-bar" role="progressbar" aria-label="我方生命" id="hero-hp-track"><span class="hp-lag" id="hero-hp-lag"></span><span class="hp-fill" id="hero-hp-fill"></span></div>
+          <div class="chips" id="hero-chips"></div>
+        </div>
+      </div>
+      <div class="turn-medal" aria-live="polite"><small>回合</small><strong id="turn">1</strong></div>
+      <div class="side enemy-side">
+        <div class="side-body">
+          <div class="side-name"><span class="hp-num" id="enemy-hp">42/42</span><strong id="enemy-name">雾中妖鬼</strong></div>
+          <div class="hp-bar enemy-bar" role="progressbar" aria-label="敌方生命" id="enemy-hp-track"><span class="hp-lag" id="enemy-hp-lag"></span><span class="hp-fill" id="enemy-hp-fill"></span></div>
+          <div class="chips" id="enemy-chips"><span class="rank" id="enemy-rank">普通</span></div>
+        </div>
+        <span class="portrait enemy-portrait" aria-hidden="true"></span>
+      </div>
+    </section>
+
+    <div class="qte-hint" id="qte-hint" aria-live="assertive"></div>
+    <div class="banner" id="banner" aria-hidden="true"></div>
+    <div class="ticker" id="ticker" role="status" aria-live="polite">选择行动，迎战雾中妖鬼。</div>
+
+    <section class="controls" aria-label="战斗操作">
+      <button class="flee" id="flee" type="button"><span data-icon="escape"></span><span>脱离</span></button>
+      <div class="wheel" id="wheel">
+        <button class="skill" data-action="guard" type="button"><span data-icon="guard"></span><span class="skill-name">防御</span><small class="badge" hidden>推荐</small></button>
+        <button class="skill" data-group="spells" type="button"><span data-icon="spell"></span><span class="skill-name">法术</span></button>
+        <button class="skill" data-action="talisman" type="button"><span data-icon="talisman"></span><span class="skill-name">雷火符</span><small class="count" id="talisman-count"></small></button>
+        <button class="skill" data-group="medicines" type="button"><span data-icon="bottle"></span><span class="skill-name">药品</span><small class="count" id="pill-count"></small></button>
+        <button class="attack" id="attack" type="button">
+          <svg class="focus-ring" viewBox="0 0 100 100" aria-hidden="true">
+            <path class="seg" data-seg="0"/><path class="seg" data-seg="1"/><path class="seg" data-seg="2"/>
+          </svg>
+          <span class="attack-core"><span data-icon="attack" id="attack-icon"></span><strong id="attack-label">攻击</strong><small id="attack-mode">普攻 · 战意 0/3</small></span>
+        </button>
+      </div>
+    </section>
+
+    <dialog id="sheet" aria-labelledby="sheet-title">
+      <header class="sheet-header"><h1 id="sheet-title">法术</h1><span class="sheet-hint" id="sheet-hint"></span><button id="close-sheet" class="close" aria-label="关闭">×</button></header>
+      <div class="sheet-content" id="sheet-content"></div>
+      <footer class="sheet-footer" id="sheet-footer"></footer>
+    </dialog>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

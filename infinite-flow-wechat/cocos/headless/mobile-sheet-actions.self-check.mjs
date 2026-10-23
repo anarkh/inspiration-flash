@@ -82,7 +82,7 @@ const bundle = await build({
       export { EQUIPMENT_SOUL_SKILL_CATALOG } from '@infinite-flow/core/equipment-soul-skills';
       export { RUN_RELIC_IDS, RUN_RELIC_DEFINITIONS, RUN_RELIC_FRAME_DEFINITIONS, generateRunRelicDraft } from '@infinite-flow/core/run-relics';
       export { renderInfiniteFlowInfoSheet, captureInfiniteFlowInfoSheetState, getInfiniteFlowMobilePanelActions, getInfiniteFlowCombatChoiceActions, productionFrameGeometry } from './cocos/assets/scripts/ui/InfiniteFlowInfoSheet.ts';
-      export { renderInfiniteFlowWalkScene, fitDungeonHtmlTargets, getDungeonHtmlRoomLayout } from './cocos/assets/scripts/ui/InfiniteFlowWalkScene.ts';
+      export { renderInfiniteFlowWalkScene, fitDungeonHtmlTargets, getDungeonHtmlRoomLayout, getRouteForecastCaption } from './cocos/assets/scripts/ui/InfiniteFlowWalkScene.ts';
       export { buildWalkWorld } from './cocos/assets/scripts/ui/walk-world.ts';
       export { getInfiniteFlowSceneVisualKeys } from './cocos/assets/scripts/ui/scene-visuals.ts';
       export { HERO_WALK_ATLAS } from './cocos/assets/scripts/ui/hero-walk-atlas.ts';
@@ -402,8 +402,11 @@ let checkedStoneGates = 0;
         const body = node.getChildByName('WorldObjectBody');
         const artwork = body.getChildByName('WalkTransitionGateSprite');
         const status = node.getChildByName('WalkTransitionState').getComponent(api.Label).string;
-        assert.equal(status, target.action === undefined ? '封闭' : target.disabledReason !== undefined ? '入口未开放'
-          : target.id === selectedDoor.id ? '已到达入口' : '入口畅通');
+        // A door with a route forecast previews the room behind it; arrival still reads as such.
+        assert.equal(status, target.forecast !== undefined
+          ? target.id === selectedDoor.id && target.disabledReason === undefined ? '已到达入口' : api.getRouteForecastCaption(target.forecast).text
+          : target.action === undefined ? '封闭' : target.disabledReason !== undefined ? '入口未开放'
+            : target.id === selectedDoor.id ? '已到达入口' : '入口畅通');
         assert.ok(node.getChildByName('WalkTargetName').getComponent(api.Label).string.includes(target.label),
           'stone gate retains its original visible destination title');
         const sprite = artwork?.getComponent(api.Sprite);
@@ -693,17 +696,11 @@ function assertCatalogSurfaces(view) {
     }
   }
 }
-function assertDarkSheet(view, kind, insets) {
-  const nodes = nodesIn(view.rootNode);
-  assertCatalogSurfaces(view);
-  const get = (name) => nodes.find((node) => node.name === name);
-  const panel = get(`MobileInfoSheet:${kind}`);
-  const unit = catalogCssUnit();
+function assertWindowSheetFrame(view, get, panel, kind, insets, unit) {
   const viewportWidth = 750 / unit;
   const expected = api.productionFrameGeometry(insets, 1334, kind, viewportWidth);
   const width = expected.width;
-  const actualHeight = panel.getComponent(api.UITransform).contentSize.height;
-  const height = actualHeight;
+  const height = panel.getComponent(api.UITransform).contentSize.height;
   assert.ok(height > 0 && height <= expected.height + 0.6,
     `${kind}: content fits the compact safe-surface height cap`);
   assert.ok(width / unit <= 304 + 1e-6 && width <= 750 - insets.left - insets.right - 40 * unit + 1e-6,
@@ -730,6 +727,52 @@ function assertDarkSheet(view, kind, insets) {
     assert.ok(headerGraphics.strokes.length + headerGraphics.fills.length > 0,
       `${kind}: header uses native vector artwork`);
   } else assert.ok(get('RewardChestImage'), `${kind}: reward header uses its acquired chest figure`);
+  return { width, height };
+}
+// Explore room interactions dock at the bottom like the route prototype's room sheet.
+function assertRoomSheetFrame(view, get, panel, insets, unit) {
+  const viewportWidth = 750 / unit;
+  const { width, height } = panel.getComponent(api.UITransform).contentSize;
+  // The 10px bottom margin and 44px under the safe top stay clear, as around the replaced window.
+  const cap = 1334 - insets.top - insets.bottom - 54 * unit;
+  assert.ok(Math.abs(width - (750 - insets.left - insets.right - 20 * unit)) < 1e-6, 'interaction: room sheet spans the safe width less 10px margins');
+  assert.ok(height > 0 && height <= cap + 0.6, 'interaction: room sheet stays within its height cap');
+  assert.ok(Math.abs(panel.position.x - (insets.left - insets.right) / 2) < 1e-6, 'interaction: room sheet is centered between the safe edges');
+  assert.ok(Math.abs(panel.position.y - height / 2 - (-1334 / 2 + insets.bottom + 10 * unit)) < 1e-6,
+    'interaction: room sheet docks 10px above the safe bottom');
+  const frame = assertNativeFrame(panel, 'interaction');
+  assert.deepEqual(rgb(frame.color), [28, 23, 17], 'interaction: room sheet shares the room event sheet surface');
+  assert.ok(panel.getComponent(api.BlockInputEvents), 'interaction: the sheet blocks world input');
+  const backdrop = get('MobileSheetBackdrop');
+  assert.ok(backdrop.getComponent(api.BlockInputEvents), 'interaction: walking stays suspended while it is open');
+  assert.equal(backdrop.getComponent(api.Graphics).fills[0].color.a, 0, 'interaction: the room stays visible above the sheet');
+  for (const name of ['MobileSheetRoomArt', 'MobileSheetRoomArtFigure', 'MobileSheetKicker', 'MobileSheetTitle', 'MobileSheetBody']) {
+    assert.ok(get(name), `interaction: room sheet renders ${name}`);
+  }
+  assert.ok(!get('MobileSheetTitleBand') && !get('MobileSheetTab:overview') && !get('MobileSheetTab:actions'),
+    'interaction: no centered window band or tabs');
+  const first = get('MobileSheetClose') ?? get('MobileSheetRewardBack');
+  assert.ok(first && view.local.has(first.name), 'interaction: the button row starts with a local 收起 or 返回');
+  if (first.name === 'MobileSheetClose') assert.ok(nodesIn(first).some(node => node.getComponent(api.Label)?.string === '收起'), 'interaction: 收起 wording');
+  const row = get('MobileSheetBody').children.filter(node => /^MobileSheet(?:Close|RewardBack|RewardServices|RewardClaim|RelicClaim|EquipmentClaim|Execute:)/.test(node.name));
+  assert.ok(row.length >= 1 && row[0] === first, 'interaction: 收起 or 返回 leads the button row');
+  for (const button of row) {
+    assert.ok(Math.abs(button.getComponent(api.UITransform).contentSize.height / unit - (viewportWidth <= 350 ? 46 : 52)) < 0.6,
+      `interaction/${button.name}: room sheet buttons keep the prototype height`);
+    assert.ok(Math.abs(button.position.y - button.getComponent(api.UITransform).contentSize.height / 2
+      + get('MobileSheetBody').getComponent(api.UITransform).contentSize.height / 2) < 1e-6, `interaction/${button.name}: buttons sit on the body's bottom edge`);
+  }
+  return { width, height };
+}
+function assertDarkSheet(view, kind, insets) {
+  const nodes = nodesIn(view.rootNode);
+  assertCatalogSurfaces(view);
+  const get = (name) => nodes.find((node) => node.name === name);
+  const panel = get(`MobileInfoSheet:${kind}`);
+  const unit = catalogCssUnit();
+  const viewportWidth = 750 / unit;
+  const { width, height } = kind === 'interaction' ? assertRoomSheetFrame(view, get, panel, insets, unit)
+    : assertWindowSheetFrame(view, get, panel, kind, insets, unit);
   for (const name of new Set([...view.local.keys(), ...view.actions.keys()])) {
     const target = get(name);
     assert.ok(target, `${kind}/${name}: a binding owns an actual rendered node`);
@@ -784,7 +827,7 @@ function assertDarkSheet(view, kind, insets) {
       const surface = node.getChildByName('ButtonVisual') ?? node;
       if (surface.getComponent(api.Graphics)?.fills.length) assertNativeFrame(surface, `${kind}/${node.name}`);
     }
-    if (/^MobileSheet(?:Previous$|Next$|ActionBack$|MetricBack$|MapBack$|RelatedHelp$|Execute:|TipClose$|TipCarry:)/.test(node.name)) {
+    if (kind !== 'interaction' && /^MobileSheet(?:Previous$|Next$|ActionBack$|MetricBack$|MapBack$|RelatedHelp$|Execute:|TipClose$|TipCarry:)/.test(node.name)) {
       assert.ok(Math.abs(node.getComponent(api.UITransform).contentSize.height / unit - 44) < 0.6,
         `${kind}/${node.name}: original action keeps a 44px touch target`);
     }
@@ -1463,17 +1506,20 @@ function renderCarry(state, sheetState = { kind: 'character', page: 0, tab: 'car
   const retreat = model.sections[2].actions.find(action => action.actionId === 'combat.retreat-run');
   const confirmation = render(model, menu.nextState());
   assert.equal(confirmation.actions.get('MobileSheetExecute:combat.retreat-run'), retreat, 'retreat remains an explicit confirmed original command');
-  for (const focus of [0, 3]) {
-    const focusModel = add({ ...state, ownedEquipment: [...new Set([...state.ownedEquipment, 'armor_piercing_sword'])],
-      equipped: { ...state.equipped, weapon: 'armor_piercing_sword' }, combat: { ...state.combat, weaponFocus: focus } });
+  // The starter blade has no signature skill; it must still release the generic charged strike.
+  for (const [weapon, focus] of [['armor_piercing_sword', 0], ['armor_piercing_sword', 3], ['training_blade', 3]]) {
+    const focusModel = add({ ...state, ownedEquipment: [...new Set([...state.ownedEquipment, weapon])],
+      equipped: { ...state.equipped, weapon }, combat: { ...state.combat, weaponFocus: focus } });
     const hud = renderCombatHud(focusModel);
     const actionId = `combat.action:${focus === 3 ? 'weapon_skill' : 'attack'}`;
     const action = focusModel.sections[2].actions.find(candidate => candidate.actionId === actionId);
-    assert.ok(action.enabled, `${actionId}: fixture reaches its usable core state`);
+    assert.ok(action.enabled, `${weapon} ${actionId}: fixture reaches its usable core state`);
     assert.equal(hud.actions.get(`WalkCombatAction:${actionId}`), action, 'unified button switches between actual basic and weapon commands');
     const nodes = nodesIn(hud.rootNode);
+    assert.equal(nodes.find(node => node.name === `WalkCombatAction:${actionId}Label`).getComponent(api.Label).string,
+      focus === 3 ? '战技' : '攻击', 'the large attack button names the action that will be released');
     assert.equal(nodes.find(node => node.name === 'WalkCombatAttackMode').getComponent(api.Label).string,
-      focus === 3 ? '战技' : '普攻', 'attack mode explains the action that will be released');
+      focus === 3 ? '战意已满' : '普攻', 'attack mode explains why the weapon skill is ready');
     assert.equal(nodes.find(node => node.name === 'WalkCombatFocus').getComponent(api.Label).string.replace(/\s/gu, ''),
       `战意${focus}/${focusModel.sections[1].detail.focus.required}`, 'HUD focus readout uses the projected core threshold');
   }
@@ -1489,6 +1535,237 @@ function touch(node) {
   node.emit(api.Node.EventType.TOUCH_START, event);
   node.emit(api.Node.EventType.TOUCH_END, event);
   node.emit(api.Node.EventType.TOUCH_END, event);
+}
+{
+  // Route prototype: stepping through a door opens the room's own sheet; only the sheet's buttons submit commands.
+  const canvas = new api.Node('RouteArrivalCanvas');
+  canvas.addComponent(api.UITransform).setContentSize({ width: 750, height: 1334 });
+  const dispatched = [];
+  const controller = new api.InfiniteFlowView(canvas, { activate(_physicalId, actionId) { dispatched.push(actionId); } });
+  const named = name => nodesIn(canvas).find(node => node.name === name);
+  const show = state => {
+    const model = api.buildGameViewModel(state, {});
+    supplySceneVisualFixtures(controller, model);
+    controller.render(model, chrome, safeInsets);
+  };
+  const entered = api.reduceGameCommand(api.createInitialState(), {
+    type: 'run/enter', dungeonId: 'demon_tower_1', protocolId: 'standard', seeds: { rulesVersion: 1, hiddenTaskSeed: 0x1234_abcd },
+  }).state;
+  const doorway = (from, cleared) => ({ ...entered, run: { ...entered.run, currentNodeId: from, clearedNodeIds: [from, ...cleared] } });
+  const arrive = (from, cleared, nodeId) => {
+    show(doorway(from, cleared));
+    controller.mobileSheet = undefined;
+    controller.roomEventOpen = false;
+    const moved = api.reduceGameCommand(doorway(from, cleared), { type: 'run/move', nodeId });
+    assert.equal(moved.status, 'committed', `${nodeId}: fixture move commits`);
+    show(moved.state);
+    return moved.state;
+  };
+  show(doorway('mist_herb_cache', []));
+  assert.ok(controller.mobileSheet === undefined && !controller.roomEventOpen, 'the first room render opens nothing by itself');
+  const monsterRoom = arrive('mist_herb_cache', [], 'fog_patrol_pair');
+  assert.ok(controller.roomEventOpen && controller.mobileSheet === undefined, 'stepping into a monster room opens its prototype sheet');
+  assert.ok(named('WalkRoomEventButton:node.select:fog_patrol_pair'), 'the sheet offers the room\'s own fight');
+  assert.equal(named('WalkRoomEventRowLabel:outcome')?.getComponent(api.Label).string, '结果', 'the sheet shows the predicted outcome');
+  assert.equal(named('WalkJoystick')?.active, false, 'the open sheet suspends the joystick');
+  touch(named('WalkRoomEventButton:close'));
+  assert.ok(!controller.roomEventOpen && !named('WalkRoomEventSheet'), '收起 closes the sheet');
+  show(monsterRoom);
+  assert.equal(controller.roomEventOpen, false, 'a closed sheet stays closed while the player remains in the room');
+  assert.equal(dispatched.length, 0, 'opening and closing the sheet submit nothing');
+  controller.roomEventOpen = true;
+  show(monsterRoom);
+  touch(named('WalkRoomEventButton:node.select:fog_patrol_pair'));
+  assert.deepEqual(dispatched, ['node.select:fog_patrol_pair'], 'one tap on 战斗 submits the existing encounter action once');
+  dispatched.length = 0;
+  arrive('fog_patrol_pair', [], 'cracked_portal');
+  assert.ok(controller.mobileSheet === undefined && !controller.roomEventOpen, 'portal rooms stay passages');
+  arrive('fog_patrol_pair', ['mist_herb_cache'], 'mist_herb_cache');
+  assert.ok(controller.mobileSheet === undefined && !controller.roomEventOpen, 'cleared rooms stay quiet');
+  arrive('fog_patrol_pair', [], 'mist_herb_cache');
+  assert.ok(controller.mobileSheet?.kind === 'interaction' && !controller.roomEventOpen, 'an unclaimed reward room opens its chest claim sheet');
+  assert.equal(named('MobileSheetKicker')?.getComponent(api.Label).string, '宝箱', 'the chest claim names its room');
+  assert.ok(named('MobileSheetRoomArt') && !named('MobileSheetTitleBand'), 'the chest claim docks as the room bottom sheet');
+  arrive('mist_herb_cache', [], 'north_supply_niche');
+  assert.equal(named('MobileSheetKicker')?.getComponent(api.Label).string, '补给', 'a lamp supply room reads as 补给');
+  assert.equal(named('MobileSheetRewardItem:lantern-oil')?.getChildByName('RewardItemValue')?.getComponent(api.Label).string, '+4',
+    'the supply sheet shows the oil its claim really adds');
+  arrive('cracked_portal', [], 'blood_rune_trap');
+  assert.ok(controller.mobileSheet?.kind === 'interaction' && !controller.roomEventOpen, 'pending choices open the room bottom sheet');
+  assert.ok(named('MobileSheetRoomArt') && !named('MobileSheetTab:overview'), 'pending choices list straight under the room story');
+  assert.equal(dispatched.length, 0, 'arrival never submits a command');
+
+  // Entering from the hub counts as stepping into the dungeon's first room.
+  const initial = api.createInitialState();
+  const unlocked = { ...initial, rewardPoints: 50000, lingyun: 500, completedDungeonIds: [...api.DUNGEON_ORDER] };
+  for (const [dungeonId, roomEvent] of [['demon_tower_1', true], ['metro_abyss', false]]) {
+    controller.mobileSheet = undefined;
+    controller.roomEventOpen = false;
+    show(unlocked);
+    // Every chapter is cleared here, so the hub may offer its claim sheet, but never a room sheet.
+    assert.ok(controller.mobileSheet?.kind !== 'interaction' && !controller.roomEventOpen, `${dungeonId}: the hub opens no room sheet`);
+    const run = api.reduceGameCommand(unlocked, { type: 'run/enter', dungeonId, protocolId: 'standard', seeds: { rulesVersion: 1, hiddenTaskSeed: 0x1234_abcd } });
+    assert.equal(run.status, 'committed', `${dungeonId}: fixture entry commits`);
+    show(run.state);
+    assert.ok(roomEvent ? controller.roomEventOpen && controller.mobileSheet === undefined
+      : controller.mobileSheet?.kind === 'interaction' && !controller.roomEventOpen, `${dungeonId}: entering opens the first room's own sheet`);
+  }
+  assert.equal(dispatched.length, 0, 'entering opens sheets without submitting anything');
+
+  // Tapping an open door walks there quickly and goes through; a shut door stays put and says why.
+  const cleared = doorway('fog_patrol_pair', []);
+  show(cleared);
+  controller.mobileSheet = undefined;
+  controller.roomEventOpen = false;
+  show(cleared);
+  const openDoor = api.buildWalkWorld(api.buildGameViewModel(cleared, {})).targets
+    .find(target => target.id.startsWith('door:') && target.action !== undefined);
+  assert.ok(openDoor, 'a cleared room has an open door');
+  touch(named(`WalkTarget:${openDoor.id}`)?.getChildByName('WalkTargetTouch'));
+  let frames = 0;
+  while (dispatched.length === 0 && frames < 120) { controller.tick(1 / 60); frames += 1; }
+  assert.deepEqual(dispatched, [openDoor.action.actionId], 'arriving at a tapped door submits its own move once');
+  assert.ok(frames <= 90, `a tapped door is reached within 1.5 seconds (${frames} frames)`);
+  dispatched.length = 0;
+  show(entered);
+  controller.roomEventOpen = false;
+  show(entered);
+  const shutDoor = api.buildWalkWorld(api.buildGameViewModel(entered, {})).targets
+    .find(target => target.id.startsWith('door:') && target.disabledReason !== undefined);
+  assert.ok(shutDoor, 'an uncleared fight shuts the room doors');
+  const before = controller.walkScene.getPosition();
+  touch(named(`WalkTarget:${shutDoor.id}`)?.getChildByName('WalkTargetTouch'));
+  for (let frame = 0; frame < 30; frame += 1) controller.tick(1 / 60);
+  assert.deepEqual(controller.walkScene.getPosition(), before, 'a shut door does not walk the hero');
+  assert.equal(named('WalkRouteNotice')?.getComponent(api.Label).string, shutDoor.disabledReason, 'a shut door shows its own reason');
+  assert.equal(dispatched.length, 0, 'a shut door submits nothing');
+
+  // A first lamp run has a dormant pursuer: the pressure panel counts down, and the wake gets a one-time banner.
+  const beforeWake = { ...entered, run: { ...entered.run, currentNodeId: 'broken_sigil_reward',
+    clearedNodeIds: ['fog_lesser_demon', 'blood_rune_trap'], pressureState: { rulesVersion: 1, clearedNodeCount: 2 } } };
+  show(beforeWake);
+  controller.mobileSheet = undefined;
+  controller.roomEventOpen = false;
+  show(beforeWake);
+  assert.ok(named('WalkPressureFoot')?.getComponent(api.Label).string.includes('再清 1 间血阶监猎者苏醒'),
+    'the pressure panel counts down to the pursuer waking');
+  const woke = api.reduceGameCommand(beforeWake, { type: 'node/collect-reward' });
+  assert.equal(woke.status, 'committed', 'the third clear commits');
+  assert.equal(woke.state.run.pursuitState.status, 'stalking', 'the third clear wakes the pursuer');
+  show(woke.state);
+  assert.equal(named('WalkAlarmBannerTitle')?.getComponent(api.Label).string, '血阶监猎者醒了', 'the wake gets its own banner');
+  assert.ok(named('WalkAlarmBannerLine')?.getComponent(api.Label).string.includes('雾后暗格'), 'the banner names where to seal it');
+  assert.equal(named('WalkAlarmBanner')?.getComponent(api.BlockInputEvents) ?? null, null, 'the banner never takes input');
+  controller.mobileSheet = undefined;
+  show(woke.state);
+  assert.equal(named('WalkAlarmBannerTitle')?.getComponent(api.Label).string, '血阶监猎者醒了', 'an immediate re-render keeps the banner');
+  controller.tick(5);
+  show(woke.state);
+  assert.equal(named('WalkAlarmBannerTitle')?.getComponent(api.Label).color.a, 255, 'one stalled frame (an art load) does not use up the banner');
+  for (let frame = 0; frame < 30; frame += 1) controller.tick(0.1);
+  show(woke.state);
+  assert.equal(named('WalkAlarmBanner'), undefined, 'the banner is gone once its time has run out');
+
+  // Walking into the pursuer starts a fight with it at once; the catch gets its own banner and the card names it.
+  const besideHunter = { ...woke.state, run: { ...woke.state.run, currentNodeId: 'fog_lesser_demon',
+    pursuitState: { ...woke.state.run.pursuitState, nodeId: 'blood_rune_trap', graceMoves: 0 } } };
+  show(besideHunter);
+  const caughtRun = api.reduceGameCommand(besideHunter, { type: 'run/move', nodeId: 'blood_rune_trap' });
+  assert.equal(caughtRun.status, 'committed', 'the step into the pursuer commits');
+  assert.ok(caughtRun.state.phase === 'combat' && caughtRun.state.combat.pursuer, 'being caught starts the pursuer fight');
+  show(caughtRun.state);
+  assert.equal(named('WalkAlarmBannerTitle')?.getComponent(api.Label).string, '血阶监猎者追上了你', 'the catch gets its own banner');
+  assert.equal(named('WalkEnemyName')?.getComponent(api.Label).string, '追兵 · 血阶监猎者', 'the enemy card names the pursuer');
+  for (let frame = 0; frame < 30; frame += 1) controller.tick(0.1);
+  show(caughtRun.state);
+  assert.equal(named('WalkAlarmBanner'), undefined, 'the catch banner leaves after its time');
+  controller.destroy();
+}
+{
+  // Task presence: the run's tracker and its notices, then the hub's claim sheet and turn-in mark.
+  const canvas = new api.Node('TaskPresenceCanvas');
+  canvas.addComponent(api.UITransform).setContentSize({ width: 750, height: 1334 });
+  const dispatched = [];
+  const controller = new api.InfiniteFlowView(canvas, { activate(_physicalId, actionId, event) { dispatched.push({ actionId, event }); } });
+  const named = name => nodesIn(canvas).find(node => node.name === name);
+  const trackerText = id => named(`WalkTaskLine:${id}`)?.getChildByName('WalkTaskText')?.getComponent(api.Label).string;
+  const show = state => {
+    const model = api.buildGameViewModel(state, {});
+    supplySceneVisualFixtures(controller, model);
+    controller.render(model, chrome, safeInsets);
+  };
+  const entered = api.reduceGameCommand(api.createInitialState(), {
+    type: 'run/enter', dungeonId: 'demon_tower_1', protocolId: 'standard', seeds: { rulesVersion: 1, hiddenTaskSeed: 0x1234_abcd },
+  }).state;
+  const exploring = (patch = {}, state = {}) => ({ ...entered, ...state, run: { ...entered.run, currentNodeId: 'fog_lesser_demon', clearedNodeIds: ['fog_lesser_demon'], ...patch } });
+  show(exploring());
+  controller.mobileSheet = undefined;
+  controller.roomEventOpen = false;
+  show(exploring());
+  assert.equal(trackerText('mainline'), '通关妖塔一层', 'the tracker names the chapter\'s mainline');
+  assert.equal(trackerText('directive'), '捕获雾爪幼兽 0/1 +2', 'the tracker leads with the directive step a player can forget');
+  assert.equal(trackerText('claims'), '1 项 · 回主神空间领取', 'the tracker counts what waits in the hub');
+  const tracker = named('WalkTaskTracker');
+  const pressure = named('WalkPressurePanel');
+  assert.ok(tracker && pressure && tracker.position.y < pressure.position.y, 'the tracker sits under the pressure panel');
+  const trackerSize = tracker.getComponent(api.UITransform).contentSize;
+  assert.ok(trackerSize.width >= 104 && trackerSize.height >= 104, 'the tracker keeps a full touch target');
+  touch(tracker);
+  assert.equal(controller.mobileSheet?.kind, 'objectives', 'tapping the tracker opens the full objectives');
+  controller.mobileSheet = undefined;
+  show(exploring({}, { ownedPets: ['mist_kitten'] }));
+  assert.equal(named('WalkFeedback')?.getComponent(api.Label).string, '指令达成 · 捕获雾爪幼兽', 'meeting a directive condition is announced');
+  show(exploring({ damageTaken: 25 }, { ownedPets: ['mist_kitten'] }));
+  assert.equal(named('WalkFeedback')?.getComponent(api.Label).string, '指令失败 · 承伤不超过 20', 'breaking a directive limit is announced');
+  assert.equal(trackerText('directive'), '承伤不超过 20 已失败', 'the tracker keeps the failure in view');
+  const replay = { ...entered, completedDungeonIds: ['demon_tower_1'], claimedDirectiveIds: ['directive_demon_tower_1'],
+    claimedTaskIds: ['mainline_clear_demon_tower_1', 'side_enter_demon_tower_1', 'side_directive_demon_tower_1'] };
+  show(replay);
+  assert.equal(named('WalkTaskTracker'), undefined, 'a run with nothing left to do shows no tracker');
+
+  // Arriving in the hub with finished tasks opens the claim sheet; the envoy wears a gold question mark.
+  const hub = { ...api.createInitialState(), completedDungeonIds: ['demon_tower_1'], enteredDungeonIds: ['demon_tower_1'] };
+  show(exploring());
+  show(hub);
+  assert.equal(controller.mobileSheet?.kind, 'claims', 'arriving with finished tasks opens the claim sheet');
+  assert.equal(named('MobileSheetTitle')?.getComponent(api.Label).string, '2 项任务可领取', 'the sheet counts the finished tasks');
+  assert.ok(named('MobileSheetClaimTask:mainline_clear_demon_tower_1') && named('MobileSheetClaimTask:side_enter_demon_tower_1'), 'each finished task has a row');
+  assert.equal(named('MobileSheetClaimTask:mainline_clear_demon_tower_1').getChildByName('ClaimTaskReward').getComponent(api.Label).string,
+    '奖励 80 奖励点', 'each row shows its reward');
+  const envoy = named('WalkTarget:npc:tasks');
+  assert.ok(envoy?.getChildByName('WalkTargetReady'), 'the task envoy wears the turn-in mark');
+  assert.equal(envoy.getChildByName('WalkTargetPurpose').getComponent(api.Label).string, '2 项已完成', 'the envoy says how many tasks are done');
+  touch(named('MobileSheetClose'));
+  show(hub);
+  assert.equal(controller.mobileSheet, undefined, 'closing the sheet keeps it closed while staying in the hub');
+  show(exploring());
+  show(hub);
+  const before = dispatched.length;
+  touch(named('MobileSheetClaimAll'));
+  assert.equal(dispatched.length, before + 1, 'claim all submits one command');
+  assert.equal(dispatched.at(-1).event.command.type, 'hub/claim-all-tasks', 'claim all submits the claim-all command');
+  const claimed = api.reduceGameCommand(hub, dispatched.at(-1).event.command);
+  assert.equal(claimed.status, 'committed', 'the claim-all command commits');
+  show(claimed.state);
+  assert.equal(controller.mobileSheet, undefined, 'the sheet steps aside once everything is claimed');
+  assert.equal(named('WalkFeedback')?.getComponent(api.Label).string, '已领取 2 项任务奖励', 'the claim is confirmed');
+  assert.equal(named('WalkTarget:npc:tasks')?.getChildByName('WalkTargetReady'), null, 'the turn-in mark clears');
+
+  // A burnt-out lamp refilled at a supply room lifts the forced breach; the pressure foot stops saying the lamp is out.
+  const dark = { ...entered, run: { ...entered.run, currentNodeId: 'north_supply_niche', clearedNodeIds: ['fog_lesser_demon', 'blood_rune_trap'],
+    lanternState: { ...entered.run.lanternState, oil: 0 }, pressureState: { rulesVersion: 1, clearedNodeCount: 2, breachForced: true },
+    // The dark already woke the pursuer.
+    pursuitState: { ...entered.run.pursuitState, status: 'stalking', nodeId: 'tower_butcher_patrol' } } };
+  show(dark);
+  controller.mobileSheet = undefined;
+  show(dark);
+  assert.ok(named('WalkPressureFoot')?.getComponent(api.Label).string.startsWith('灯油耗尽'), 'an empty lamp says so');
+  const refilled = api.reduceGameCommand(dark, { type: 'node/collect-reward' });
+  assert.equal(refilled.status, 'committed', 'the supply claim commits');
+  show(refilled.state);
+  assert.ok(!named('WalkPressureFoot')?.getComponent(api.Label).string.includes('灯油耗尽'), 'a relit lamp no longer reports the lamp out');
+  assert.equal(named('WalkFeedback')?.getComponent(api.Label).string, '重新点灯 · 破界解除，压力回到稳定', 'the relight is announced');
+  controller.destroy();
 }
 function viewLifecycle(initialState, { resolve = true, reject = false } = {}) {
   const canvas = new api.Node('CombatLifecycleCanvas');
@@ -1623,6 +1900,41 @@ function viewLifecycle(initialState, { resolve = true, reject = false } = {}) {
     'missing outcome frames cancel animation and restore unlocked controls');
   assert.equal(rejected.state(), state, 'rejected command leaves domain state unchanged');
   rejected.controller.destroy();
+}
+
+// --- Heavy-blow parry: the tap chooses between the two presentation events; the core decides ---
+{
+  const heavy = { ...trainedCombat, inventory: { ...trainedCombat.inventory, armor_patch: 0 },
+    combat: { ...trainedCombat.combat, nodeId: 'butcher_turn', monsterId: 'tower_butcher', monsterHp: 1000, turn: 2, weaponFocus: 0 } };
+  const heavyModel = api.buildGameViewModel(heavy, {});
+  assert.equal(heavyModel.sections[1].detail.intent.parryable, true, 'fixture telegraphs a parryable heavy blow');
+  const guard = heavyModel.sections[2].actions.find(action => action.actionId === 'combat.action:guard');
+  assert.ok(guard?.parryEvent, 'guard carries the perfect-parry event');
+  let parryCases = 0;
+  // Ticks are 0.1s: two finish the shield windup, then the ring needs ~0.51-0.68s to reach its band.
+  for (const [label, tapAfter, perfect] of [['on the ring', 6, true], ['too early', 2, false], ['untouched', undefined, false]]) {
+    const flow = viewLifecycle(heavy);
+    assert.ok(flow.node('WalkEnemyIntentChip'), `${label}: the intent callout marks the parry window`);
+    assert.ok(flow.node('WalkCombatGuardChip'), `${label}: the guard control marks the parry window`);
+    const shownGuard = flow.model().sections[2].actions.find(action => action.actionId === 'combat.action:guard');
+    touch(flow.node('WalkCombatAction:combat.action:guard'));
+    flow.tick(2);
+    const catcher = flow.node('WalkCombatTimingCatcher');
+    assert.equal(catcher.active, true, `${label}: the full-screen catcher opens with the ring`);
+    assert.equal(flow.dispatched.length, 0, `${label}: nothing dispatches while the ring closes`);
+    if (tapAfter === undefined) flow.tick(10);
+    else { flow.tick(tapAfter); touch(catcher); }
+    assert.equal(flow.dispatched.length, 1, `${label}: exactly one guard command`);
+    assert.equal(flow.dispatched[0].event, perfect ? shownGuard.parryEvent : shownGuard.event, `${label}: the matching presentation event object is submitted`);
+    const counter = flow.frames().find(frame => frame.stage === 'counter');
+    assert.equal(counter?.perfectParry === true, perfect, `${label}: the core confirms the parry in its counter frame`);
+    assert.equal(flow.state().combat.weaponFocus, perfect ? 3 : 2, `${label}: focus follows the authoritative result`);
+    flow.tick(12);
+    assert.equal(flow.controller.walkScene?.isCombatAnimating() ?? false, false, `${label}: playback completes`);
+    flow.controller.destroy();
+    parryCases += 1;
+  }
+  assert.equal(parryCases, 3);
 }
 
 // --- Character equipment tooltip stays read-only, even in hub ---
@@ -2037,9 +2349,11 @@ let checkedRelicOfferCards = 0;
         const reward = render(rewardModel, { kind: 'interaction', page: 0 }, safeInsets, { images });
         assertDarkSheet(reward, 'interaction', safeInsets);
         assertSinglePageLootControls(reward, 'MobileSheetRewardClaim');
+        assert.ok(!nodesIn(reward.rootNode).some(node => node.name === 'MobileSheetScrollThumb'),
+          `${frame.width}px: a reward list that fits its room sheet shows no scrollbar`);
         const rewardNodes = nodesIn(reward.rootNode);
         const rewardPanel = rewardNodes.find(node => node.name === 'MobileInfoSheet:interaction');
-        const chest = rewardNodes.find(node => node.name === 'RewardChestImage');
+        const chest = rewardNodes.find(node => node.name === 'MobileSheetRoomArtFigure');
         assert.equal(nodesIn(chest).find(node => node.getComponent(api.Sprite))?.getComponent(api.Sprite).spriteFrame,
           images.get('scene:dungeon_prop_chest').frame, 'reward panel renders the supplied chest image');
         for (const [id, name, value, visualKey] of [
@@ -3076,8 +3390,18 @@ for (const model of models) {
       const fixedControl = node => /^WalkCombat(?:Choice:(?:spells|medicines)|Action:combat\.action:(?:attack|weapon_skill|guard|use_thunder_talisman|escape))$/.test(node.name);
       const controls = hudNodes.filter(fixedControl);
       assert.equal(controls.length, 6, 'combat HUD exposes exactly six fixed controls');
-      assert.equal(new Set(controls.map(node => JSON.stringify(node.getComponent(api.UITransform).contentSize))).size, 1,
-        'all six combat controls have equal compact dimensions');
+      // Combat v2: one large attack control, four equal satellites and a small escape control.
+      const sizeOf = node => node.getComponent(api.UITransform).contentSize.width;
+      const attackSize = sizeOf(controls.find(node => /combat\.action:(?:attack|weapon_skill)$/.test(node.name)));
+      const satellites = controls.filter(node => /^WalkCombat(?:Choice:|Action:combat\.action:(?:guard|use_thunder_talisman)$)/.test(node.name));
+      assert.equal(satellites.length, 4, 'guard, spells, talisman and medicines circle the attack control');
+      assert.equal(new Set(satellites.map(sizeOf)).size, 1, 'the four satellites share one size');
+      assert.ok(attackSize > sizeOf(satellites[0]) * 1.5, 'the attack control is the dominant target');
+      for (const node of controls) {
+        const { width, height } = node.getComponent(api.UITransform).contentSize;
+        assert.equal(width, height, `${node.name}: round control keeps a square touch box`);
+        assert.ok(width >= 44 * 750 / 390 - 1e-6, `${node.name}: touch target stays at least 44 visible pixels`);
+      }
       const weapon = original.find(action => action.combatAction === 'weapon_skill' && action.enabled && action.event);
       const expectedAttack = weapon ?? original.find(action => action.combatAction === 'attack');
       const attackNodes = controls.filter(node => /combat\.action:(?:attack|weapon_skill)$/.test(node.name));

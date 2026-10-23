@@ -17,6 +17,7 @@ import {
   formatInfiniteFlowHubActionShortCopy,
   formatInfiniteFlowHubPlayerCopy,
   formatInfiniteFlowPlayerChrome,
+  isInfiniteFlowPlayerActivityFailure,
   formatInfiniteFlowResultAltar,
   layoutInfiniteFlowMapWindow,
   matchInfiniteFlowMapMoveAction,
@@ -456,7 +457,7 @@ function renderActionDock(context: SceneContext): void {
       : detail.kind === 'combat' ? `选择行动 · ${page + 1}/${count}` : `结算选择 · ${page + 1}/${count}`;
   const feedback = context.options.feedback;
   const activity = formatInfiniteFlowPlayerChrome(context.options.chrome, context.model.phase).activityMessage;
-  const failed = activity !== undefined && /不可执行|失败|异常|无效|内存紧张|暂不可用/.test(activity);
+  const failed = isInfiniteFlowPlayerActivityFailure(activity);
   caption(context, 'SceneActionHeading', failed ? activity : feedback !== undefined && detail.kind !== 'combat'
     ? formatInfiniteFlowHubPlayerCopy(feedback.text) : heading, 375, 774, 680, 28, 22, failed ? RED : MUTED);
   const visible = actions.slice(page * 4, page * 4 + 4);

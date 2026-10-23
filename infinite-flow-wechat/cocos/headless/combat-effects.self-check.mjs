@@ -82,10 +82,45 @@ effect.start('attack', () => {
 });
 advance(40);
 assert.equal(interruptedCompletion, 0, 'cancel from counter callback does not continue into stale completion');
+// Parry timing: the ring runs only when asked, the tap picks the grade, and the
+// command still waits for the real result.
+const catcher = [];
+const parryEffect = api.createInfiniteFlowCombatEffects(new api.Node('ParryMask'), {
+  getAnchors: () => ({ player: { x: -100, y: 0 }, enemy: { x: 120, y: 45 } }),
+  movePlayer: () => {}, moveEnemy: () => {}, setTimingCatcher: active => catcher.push(active),
+});
+const step = seconds => { for (let t = 0; t < seconds - 1e-9; t += 0.02) parryEffect.tick(0.02); };
+for (const [label, tapAt, expected] of [['perfect', 0.57, 'perfect'], ['early', 0.1, 'normal'], ['late', 0.8, 'normal'], ['untouched', undefined, 'normal']]) {
+  const grades = [];
+  assert.equal(parryEffect.tap(), false, `${label}: no tap outside a parry`);
+  assert.equal(parryEffect.start('guard', grade => grades.push(grade), { parry: true }), true);
+  catcher.length = 0;
+  step(0.2);
+  assert.equal(parryEffect.isTiming(), true, `${label}: guard opens the parry window`);
+  assert.deepEqual(catcher, [true], `${label}: catcher opens with the window`);
+  assert.equal(grades.length, 0, `${label}: nothing dispatches before the tap`);
+  if (tapAt !== undefined) { step(tapAt); assert.equal(parryEffect.tap(), true, `${label}: tap accepted`); }
+  else step(1);
+  assert.deepEqual(grades, [expected], `${label}: one dispatch with the ${expected} grade`);
+  assert.equal(parryEffect.isTiming(), false, `${label}: window closed`);
+  assert.deepEqual(catcher, [true, false], `${label}: catcher closes with the window`);
+  assert.equal(parryEffect.tap(), false, `${label}: extra taps are ignored`);
+  assert.equal(parryEffect.resolve({ playerDamage: 2, counter: true, guarded: true, perfectParry: expected === 'perfect', heavy: true }, () => {}), true);
+  step(1.2);
+  assert.equal(parryEffect.isPlaying(), false, `${label}: timeline completes`);
+}
+const plainGrades = [];
+parryEffect.start('guard', grade => plainGrades.push(grade));
+step(0.3);
+assert.deepEqual(plainGrades, ['normal'], 'an ordinary guard never opens the window');
+assert.equal(parryEffect.isTiming(), false);
+parryEffect.cancel();
+parryEffect.dispose();
+
 effect.start('pill', () => { cancelled++; });
 effect.dispose();
 advance(50);
 assert.equal(cancelled, 0, 'dispose cancels callbacks and restores both actors');
 assert.equal(effect.start('attack', () => {}), false, 'disposed effects cannot restart');
 assert.equal(rootNode.children[0].destroyed, true);
-console.log('COCOS_COMBAT_EFFECTS_VALID 10 actions; command wait, exact numbers, counter timing and cancellation');
+console.log('COCOS_COMBAT_EFFECTS_VALID 10 actions; command wait, exact numbers, counter timing, parry window and cancellation');

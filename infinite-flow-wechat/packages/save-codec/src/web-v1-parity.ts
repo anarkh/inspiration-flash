@@ -32,6 +32,7 @@ import {
   normalizeMethodRunSnapshot,
   normalizeMethodRunSnapshots,
   normalizePreparedEquipmentMemoryHunt,
+  normalizeRunLanternState,
   normalizeRunPursuitState,
   promoteRunEquipmentOwnership,
   resolveRunFailure,
@@ -65,6 +66,7 @@ import {
   type PreparedEquipmentMemoryHunt,
   type RouteContractRunState,
   type RouteContractSettlement,
+  type RunLanternState,
   type RunPressureSettlement,
   type RunPursuitState,
   type RunPursuitSettlement,
@@ -838,7 +840,9 @@ function isSavedRunPressureSettlement(value: unknown): value is RunPressureSettl
   }
 
   const count = value.state.clearedNodeCount;
-  const expectedTier: RunPressureTier = count >= 12 ? 'breach' : count >= 6 ? 'hunted' : 'stable';
+  // A burnt-out lantern forces breach regardless of how many rooms were cleared.
+  const expectedTier: RunPressureTier =
+    value.state.breachForced === true || count >= 12 ? 'breach' : count >= 6 ? 'hunted' : 'stable';
   return value.tier === expectedTier;
 }
 
@@ -871,6 +875,14 @@ function normalizeSavedCurrentRunPursuitState(
 
   const pursuitState = normalizeRunPursuitState(value, nodeIds);
   return pursuitState?.dungeonId === currentDungeonId ? pursuitState : undefined;
+}
+
+function normalizeSavedCurrentRunLanternState(
+  value: unknown,
+  currentDungeonId: unknown
+): RunLanternState | undefined {
+  const lanternState = normalizeRunLanternState(value);
+  return lanternState?.dungeonId === currentDungeonId ? lanternState : undefined;
 }
 
 function normalizeSavedRunPursuitSettlement(
@@ -1098,6 +1110,15 @@ function sanitizeSavedRunEntryFlowFields(value: Record<string, unknown>): Record
   return sanitized;
 }
 
+function sanitizeSavedRunLanternFields(value: Record<string, unknown>): Record<string, unknown> {
+  const sanitized = { ...value };
+  const lanternState = normalizeSavedCurrentRunLanternState(value.lanternState, value.dungeonId);
+  // Missing or malformed lamps stay out; that run simply never burns oil.
+  if (lanternState) sanitized.lanternState = lanternState;
+  else delete sanitized.lanternState;
+  return sanitized;
+}
+
 function sanitizeSavedRunPursuitFields(value: Record<string, unknown>): Record<string, unknown> {
   const sanitized = { ...value };
   const currentDungeonId = hasOwnKey(DUNGEONS, value.dungeonId)
@@ -1213,9 +1234,11 @@ function sanitizeSavedPressureFields(value: unknown): unknown {
 
   const sanitized: Record<string, unknown> = { ...value };
   if (isRecord(value.run)) {
-    sanitized.run = sanitizeSavedRunPursuitFields(
-      sanitizeSavedRunRouteContractFields(
-        sanitizeSavedRunPressureFields(sanitizeSavedRunEntryFlowFields(value.run))
+    sanitized.run = sanitizeSavedRunLanternFields(
+      sanitizeSavedRunPursuitFields(
+        sanitizeSavedRunRouteContractFields(
+          sanitizeSavedRunPressureFields(sanitizeSavedRunEntryFlowFields(value.run))
+        )
       )
     );
   }
@@ -1805,6 +1828,8 @@ function isSavedDungeonRun(value: unknown): value is SavedDungeonRun {
       (equipmentMemoryHunt !== undefined && equipmentMemoryHunt.dungeonId === dungeon.id)) &&
     (value.lastEquipmentMemoryHuntSettlement === undefined || equipmentMemorySettlement !== undefined) &&
     (!hasPursuitState || pursuitState !== undefined) &&
+    (value.lanternState === undefined ||
+      normalizeSavedCurrentRunLanternState(value.lanternState, dungeon.id) !== undefined) &&
     (value.lastPursuitSettlement === undefined || pursuitSettlement !== undefined) &&
     (!hasCompanionSnapshot || companionSnapshot !== undefined) &&
     (!hasMethodSnapshots || methodSnapshots !== undefined) &&
@@ -1890,6 +1915,7 @@ function isSavedCombatState(value: unknown, run: unknown): boolean {
       normalizeBloodlineRunSnapshot(run.bloodlineSnapshot) !== undefined &&
       isIntegerInRange(value.bloodlineBarrier, 0, 50)
     )) &&
+    (value.pursuer === undefined || value.pursuer === true) &&
     isStringArray(value.log)
   );
 }

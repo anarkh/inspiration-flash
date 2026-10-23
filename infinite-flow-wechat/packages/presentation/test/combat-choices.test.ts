@@ -160,7 +160,9 @@ function verifyMedicineAndBasicArt(): void {
   const full = enterCombat(false);
   const fullPill = requireAction(full, 'combat.action:use_healing_pill');
   assert(!fullPill.enabled && !fullPill.event && fullPill.disabledReason?.includes('生命已满'), 'full health disables medicine without an executable command');
-  assert(fullPill.readout?.includes('库存 2') && fullPill.readout.includes('基础回复 36') && fullPill.readout.includes('受场域影响'), 'medicine shows stock and qualified base healing');
+  const pillHealing = Math.floor(full.player.maxHp / 2);
+  assert(fullPill.readout?.includes('库存 2') && fullPill.readout.includes(`基础回复 ${pillHealing}`) && fullPill.readout.includes('最大生命一半')
+    && fullPill.readout.includes('受场域影响'), 'medicine shows stock and its half-of-max-HP base healing');
   assert(fullPill.readout?.includes('推进 1 回合') && fullPill.readout.includes('反击'), 'medicine describes its turn cost and counterattack');
   const injured: GameState = { ...full, player: { ...full.player, hp: full.player.maxHp - 50 } };
   const pill = requireAction(injured, 'combat.action:use_healing_pill');
@@ -169,7 +171,9 @@ function verifyMedicineAndBasicArt(): void {
   const recovered = commit(injured, commandFrom(pill));
   assert(recovered.inventory.healing_pill === injured.inventory.healing_pill - 1, 'using medicine consumes one inventory item');
   assert(recovered.combat?.turn === injured.combat!.turn + 1, 'medicine advances exactly one turn');
-  assert(recovered.player.hp > injured.player.hp && recovered.player.hp < injured.player.hp + 36, 'medicine heals before the enemy counterattack');
+  assert(recovered.player.hp > injured.player.hp && recovered.player.hp < injured.player.hp + pillHealing, 'medicine heals before the enemy counterattack');
+  assert(recovered.log.some(line => line.includes(`生命回复 ${pillHealing} 点`)) || recovered.combat?.log.some(line => line.includes(`生命回复 ${pillHealing} 点`)),
+    'medicine restores half of the maximum HP');
   const empty: GameState = { ...injured, inventory: { ...injured.inventory, healing_pill: 0 } };
   const unavailable = requireAction(empty, 'combat.action:use_healing_pill');
   assert(!unavailable.enabled && !unavailable.event && unavailable.disabledReason?.includes('库存不足'), 'no stock remains visible with an unavailable reason');
@@ -184,6 +188,39 @@ function verifyMedicineAndBasicArt(): void {
   assert(turnEvent?.type === 'combat.turn-resolved' && turnEvent.turnAfter - turnEvent.turnBefore === 1, 'basic art advances one combat turn');
 }
 
+function verifyHeavyBlowParry(): void {
+  const base = enterCombat(false);
+  const elite = (turn: number): GameState => ({
+    ...base,
+    combat: { ...base.combat!, nodeId: 'butcher_turn', monsterId: 'tower_butcher', monsterHp: 1000, turn }
+  });
+  const ordinary = buildGameViewModel(base, {});
+  const ordinaryDetail = ordinary.sections[1].detail;
+  assert(ordinaryDetail.kind === 'combat' && !ordinaryDetail.intent.parryable, 'ordinary combat is not parryable');
+  assert(ordinary.sections[2].actions.every(action => action.parryEvent === undefined), 'ordinary combat exposes no parry command');
+
+  const heavy = buildGameViewModel(elite(2), {});
+  const detail = heavy.sections[1].detail;
+  assert(detail.kind === 'combat' && detail.intent.id === 'heavy-blow' && detail.intent.parryable, 'elite heavy blow is parryable');
+  const guard = heavy.sections[2].actions.find(action => action.actionId === 'combat.action:guard');
+  assert(guard?.enabled && guard.recommendation === 'recommended', 'guard is recommended against a heavy blow');
+  assert(guard.event?.kind === 'command' && guard.event.command.type === 'combat/act' && guard.event.command.timing === undefined,
+    'the ordinary guard command stays untimed');
+  assert(guard.parryEvent?.kind === 'command' && guard.parryEvent.command.type === 'combat/act'
+    && guard.parryEvent.command.action === 'guard' && guard.parryEvent.command.timing === 'perfect',
+    'guard carries the perfect-parry command');
+  assert(guard.readout?.includes('完美格挡'), 'guard explains the parry window');
+  assert(heavy.sections[2].actions.filter(action => action.parryEvent !== undefined).length === 1, 'only guard can parry');
+  const parried = commit(elite(2), guard.parryEvent.command);
+  assert(parried.combat?.weaponFocus === 3, 'the parry command reaches the core and fills focus');
+
+  const calm = buildGameViewModel(elite(3), {});
+  const calmDetail = calm.sections[1].detail;
+  assert(calmDetail.kind === 'combat' && !calmDetail.intent.parryable, 'turns between heavy blows are not parryable');
+  assert(calm.sections[2].actions.every(action => action.parryEvent === undefined), 'no parry command between heavy blows');
+}
+
 verifyMethodChoices();
 verifyMedicineAndBasicArt();
 verifyConfiguredAbilitiesAndFocus();
+verifyHeavyBlowParry();
