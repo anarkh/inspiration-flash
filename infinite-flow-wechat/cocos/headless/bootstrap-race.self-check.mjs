@@ -3229,7 +3229,7 @@ for (const [tier, label] of [['stable', '稳定'], ['hunted', '追猎'], ['breac
 }
 assert.match(
   pressureText({ legacyDisabled: false, present: true, tier: 'stable' }),
-  /侵蚀 未知 · 出口加成 未知.*下一段位 未知/s,
+  /侵蚀 未知 · 通关加成 未知.*下一段位 未知/s,
   'missing pressure values stay unknown rather than becoming zero or no-next-tier',
 );
 
@@ -7241,7 +7241,7 @@ const resultPendingActionsFive = Object.freeze([
       { page: 'protocol', pattern: /Boss 已击败/ },
       { page: 'directive', pattern: /状态 进行中 · 3\/3 已满足/ },
       { page: 'routeContract', pattern: /已发放/ },
-      { page: 'pressure', pattern: /奖励加成 \+15%/ },
+      { page: 'pressure', pattern: /奖励加成 \+15 点/ },
       { page: 'pursuit', pattern: /奖励 时砂/ },
     ];
     for (const marker of markers) {

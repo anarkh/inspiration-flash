@@ -5,6 +5,9 @@ export type CombatFocus = 0 | 1 | 2 | 3;
 
 export const COMBAT_FOCUS_MAX: CombatFocus = 3;
 
+/** The basic art spends focus up front, so it competes with saving for the weapon skill. */
+export const COMBAT_ART_FOCUS_COST = 1;
+
 export type CombatFocusIntent = Readonly<
   Pick<CombatIntent, 'id' | 'severity' | 'recommendedActions' | 'dangerousActions'>
 >;
@@ -16,6 +19,7 @@ export type CombatFocusReason =
   | 'regular-action-gain'
   | 'recommended-action-gain'
   | 'dangerous-action-loss'
+  | 'art-spent'
   | 'neutral-action';
 
 export type CombatFocusResolutionInput = Readonly<{
@@ -47,7 +51,14 @@ export function resolveCombatFocus(input: CombatFocusResolutionInput): CombatFoc
   let reason: CombatFocusReason = 'neutral-action';
   let spent = false;
 
-  if (input.action === 'weapon_skill') {
+  if (input.action === 'art') {
+    // The cost is paid before the intent swing, so a recommended art still nets +1.
+    const swing = input.intent.severity === 'warning' || input.intent.severity === 'danger'
+      ? input.intent.recommendedActions.includes('art') ? 2 : input.intent.dangerousActions.includes('art') ? -1 : 0
+      : 0;
+    after = normalizeCombatFocus(before - COMBAT_ART_FOCUS_COST + swing);
+    reason = 'art-spent';
+  } else if (input.action === 'weapon_skill') {
     if (readyBefore) {
       after = 0;
       reason = 'weapon-skill-spent';
@@ -56,7 +67,7 @@ export function resolveCombatFocus(input: CombatFocusResolutionInput): CombatFoc
       reason = 'weapon-skill-not-ready';
     }
   } else if (input.intent.id === 'regular-pursuit') {
-    if (input.action === 'attack' || input.action === 'art' || input.action === 'guard') {
+    if (input.action === 'attack' || input.action === 'guard') {
       after = normalizeCombatFocus(before + 1);
       reason = 'regular-action-gain';
     }

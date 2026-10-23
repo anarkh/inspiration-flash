@@ -5,6 +5,7 @@ import './charged-strike.test.js';
 import './route-lantern.test.js';
 import './directive-catch-up.test.js';
 import './postcombat-recovery.test.js';
+import './whole-run-bonus.test.js';
 import {
   createInitialState,
   getCombatEncounterProfile,

@@ -1811,7 +1811,8 @@ function viewLifecycle(initialState, { resolve = true, reject = false } = {}) {
     ['spells', 'combat.method:mist_breathing', 3],
     ['medicines', 'combat.action:use_healing_pill', 5],
   ]) {
-    const flow = viewLifecycle(state);
+    // The basic art spends focus, so its run starts with one point banked.
+    const flow = viewLifecycle(id === 'combat.action:art' ? { ...state, combat: { ...state.combat, weaponFocus: 1 } } : state);
     if (group) {
       touch(flow.node(`WalkCombatChoice:${group}`));
       assert.equal(flow.dispatched.length, 0, `${id}: opening the picker submits nothing`);

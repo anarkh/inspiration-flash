@@ -11,6 +11,7 @@ import {
   getRouteForecasts,
   getReadyCombatCapturePetId,
   normalizeRunLanternState,
+  POST_COMBAT_RECOVERY_PERCENT,
   type GameState,
   type RunPursuitState
 } from '@infinite-flow/core';
@@ -174,7 +175,9 @@ for (const grace of [0, 1] as const) {
 // Beating a caught pursuer clears no room and ends the hunt for the rest of the run.
 const caught = apply(standAt('fog_lesser_demon', { ...lamp(6), ...stalking('blood_rune_trap') }), { type: 'run/move', nodeId: 'blood_rune_trap' });
 let pursuerFight = caught;
+let lastPursuerTurn = caught;
 for (let turn = 0; pursuerFight.phase === 'combat' && turn < 40; turn += 1) {
+  lastPursuerTurn = pursuerFight;
   pursuerFight = apply(pursuerFight, { type: 'combat/act', action: 'attack' });
 }
 assert(pursuerFight.phase === 'explore' && pursuerFight.combat === undefined, 'the pursuer fight can be won');
@@ -183,7 +186,10 @@ assert(defeated?.status === 'repelled' && defeated.repelledReason === 'defeated'
   'a beaten pursuer is gone for the rest of the run');
 assert(pursuerFight.log.some(line => line.includes('不会再出现')), 'the defeat is logged');
 assert(pursuerFight.run?.clearedNodeIds.join() === caught.run!.clearedNodeIds.join(), 'beating the pursuer clears no room');
-assert(pursuerFight.player.hp === pursuerFight.player.maxHp, 'the pursuer fight ends with the usual full recovery');
+assert(pursuerFight.player.hp === Math.min(
+  pursuerFight.player.maxHp,
+  lastPursuerTurn.player.hp + Math.floor((pursuerFight.player.maxHp * POST_COMBAT_RECOVERY_PERCENT) / 100)
+), 'the pursuer fight ends with the usual partial victory recovery');
 const afterDefeat = apply(standAt('fog_lesser_demon', { ...lamp(6), pursuitState: defeated }), { type: 'run/move', nodeId: 'blood_rune_trap' });
 assert(afterDefeat.phase === 'explore' && afterDefeat.run?.pursuitState?.status === 'repelled' && afterDefeat.run.pursuitState.contacts === defeated.contacts,
   'walking on after the defeat meets no pursuer');

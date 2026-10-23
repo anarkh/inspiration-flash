@@ -1890,7 +1890,7 @@ export function formatInfiniteFlowChapterPressure(
   const lines = pressure.present
     ? [
         `段位 ${playerTierLabel}`,
-        `侵蚀 ${pressurePercent} · 出口加成 ${rewardBonusPercent}`,
+        `侵蚀 ${pressurePercent} · 通关加成 ${rewardBonusPercent}`,
         `下一段位 ${
           pressure.nextTierAt === undefined
             ? '未知'
@@ -2279,7 +2279,7 @@ export function formatInfiniteFlowResultSettlement(
         id: 'pressure',
         title: RESULT_SETTLEMENT_TITLES.pressure,
         lines: [
-          `段位 ${pressure.tierLabel} · 奖励加成 +${pressure.rewardPointBonus}%`,
+          `段位 ${pressure.tierLabel} · 奖励加成 +${pressure.rewardPointBonus} 点`,
         ],
       });
     } else {

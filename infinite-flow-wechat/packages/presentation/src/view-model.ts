@@ -17,6 +17,7 @@ import {
   METHOD_TECHNIQUE_CATALOG,
   METHODS,
   PETS,
+  POST_COMBAT_RECOVERY_PERCENT,
   getAvailableDungeonEvents,
   getBossSealStatus,
   getBloodlineProgress,
@@ -28,6 +29,7 @@ import {
   getCurrentCombatIntent,
   getCurrentCompanionAssistStatus,
   getCurrentDungeonDefinition,
+  hasCombatArtFocus,
   getCurrentDungeonLaw,
   getCurrentFieldSurveyStatus,
   getCurrentLegalAdjacentTargetIds,
@@ -84,6 +86,7 @@ import {
   type ItemId,
   type NodeDepartureBlock
 } from '@infinite-flow/core';
+import { COMBAT_ART_FOCUS_COST } from '@infinite-flow/core/combat-focus';
 import { getEquipmentMemoryForDungeon } from '@infinite-flow/core/equipment-memory-hunts';
 import { getEquipmentRelicConduitFrameMatch } from '@infinite-flow/core/equipment-relic-conduits';
 import { isEquipmentRoll } from '@infinite-flow/core/equipment-rolls';
@@ -3182,7 +3185,7 @@ function buildRoomEvent(
       description: node.description,
       monsterId: encounter.monsterId,
       rows,
-      buttons: [{ actionId: `node.select:${node.id}`, label: '战斗', caption: '战后生命回满', primary: true }]
+      buttons: [{ actionId: `node.select:${node.id}`, label: '战斗', caption: `胜利后回复 ${POST_COMBAT_RECOVERY_PERCENT}% 生命`, primary: true }]
     };
   }
   const trap = getCurrentTrapPreview(state);
@@ -3478,6 +3481,7 @@ const COMBAT_ACTION_LABELS: Readonly<Record<CombatAction, string>> = {
 function getCombatActionAvailability(state: GameState, action: CombatAction): Readonly<{ available: boolean; reason?: string }> {
   if (action === 'attack' && !isCurrentDungeonFeatureAvailable(state, 'attack')) return { available: false, reason: '当前场域封存了普通攻击。' };
   if (action === 'art' && !isCurrentDungeonFeatureAvailable(state, 'method')) return { available: false, reason: '当前场域封存了功法与术法。' };
+  if (action === 'art' && !hasCombatArtFocus(state)) return { available: false, reason: `战意不足：术法需要 ${COMBAT_ART_FOCUS_COST} 点战意，攻击或防御可以积攒。` };
   if (action === 'guard' && !isCurrentDungeonFeatureAvailable(state, 'defense')) return { available: false, reason: '当前场域封存了防御。' };
   if (action === 'weapon_skill') {
     const status = getWeaponSkillStatus(state);
@@ -3565,14 +3569,24 @@ function buildCombatProjection(state: GameState, localUiState: PresentationLocal
   const baseActions: CombatAction[] = ['attack', 'art', 'guard', 'weapon_skill', 'use_healing_pill', 'use_thunder_talisman', 'escape'];
   for (const action of baseActions) availability.set(action, getCombatActionAvailability(state, action));
   const parryable = isParryableCombatIntent(intent);
-  const usableRecommendation = intent.recommendedActions.find((action) => availability.get(action)?.available);
+  const strikePreviews = {
+    attack: getCombatActionDamagePreview(state, 'attack'),
+    art: getCombatActionDamagePreview(state, 'art')
+  };
+  const usableRecommendations = intent.recommendedActions.filter((action) => availability.get(action)?.available);
+  // When both strikes are on the table, recommend the one that actually hits harder.
+  const strongerStrike = usableRecommendations.includes('attack') && usableRecommendations.includes('art')
+    && (strikePreviews.art?.damage ?? 0) > (strikePreviews.attack?.damage ?? 0)
+    ? 'art'
+    : undefined;
+  const usableRecommendation = strongerStrike ?? usableRecommendations[0];
   const recommendedAction = usableRecommendation ?? (availability.get('guard')?.available ? 'guard' : undefined);
   const actions: ViewActionModel[] = baseActions.map((action) => {
     const status = availability.get(action)!;
-    const preview = action === 'attack' || action === 'art' ? getCombatActionDamagePreview(state, action) : undefined;
+    const preview = action === 'attack' || action === 'art' ? strikePreviews[action] : undefined;
     const dangerous = intent.dangerousActions.includes(action) || preview?.playerWillFall === true;
     const readout = action === 'art'
-      ? `${preview ? `术法伤害 ${preview.damage}；敌方余血 ${preview.monsterHpAfter}。` : '造成术法伤害。'}推进 1 回合，敌人存活时反击。${preview?.playerWillFall ? ' 行动后将濒死。' : ''}`
+      ? `${preview ? `术法伤害 ${preview.damage}；敌方余血 ${preview.monsterHpAfter}。` : '造成术法伤害。'}消耗 ${COMBAT_ART_FOCUS_COST} 点战意（当前 ${focus.current}），推进 1 回合，敌人存活时反击。${preview?.playerWillFall ? ' 行动后将濒死。' : ''}`
       : preview
         ? `预计伤害 ${preview.damage}；敌方余血 ${preview.monsterHpAfter}。${preview.playerWillFall ? ' 行动后将濒死。' : ''}`
         : action === 'weapon_skill'

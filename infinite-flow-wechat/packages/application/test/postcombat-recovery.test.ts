@@ -4,6 +4,7 @@ import {
   getDerivedStats,
   moveToNode,
   performCombatAction,
+  POST_COMBAT_RECOVERY_PERCENT,
   resolveRetreat,
   type GameState
 } from '@infinite-flow/core';
@@ -51,10 +52,25 @@ function finishedResult(state: GameState, command: GameCommand): string | undefi
   return finished?.type === 'combat.finished' ? finished.result : undefined;
 }
 
-function assertRecovered(state: GameState, phase: 'explore' | 'result', label: string): void {
+function assertSettled(state: GameState, phase: 'explore' | 'result', label: string): void {
   assert(state.phase === phase && !state.combat, `${label}: encounter must be finished`);
   assert(state.player.maxHp === getDerivedStats(state).maxHp, `${label}: use settled derived maximum HP`);
-  assert(state.player.hp === state.player.maxHp, `${label}: finished encounter must restore full HP`);
+}
+
+/** A run-ending settlement (defeat or retreat) still restores full HP. */
+function assertRecovered(state: GameState, phase: 'explore' | 'result', label: string): void {
+  assertSettled(state, phase, label);
+  assert(state.player.hp === state.player.maxHp, `${label}: run-ending settlement must restore full HP`);
+}
+
+/** A won encounter recovers a fixed share of the settled maximum on top of the HP the fight left. */
+function assertVictoryRecovered(state: GameState, hpAfterFight: number, label: string): void {
+  assertSettled(state, 'explore', label);
+  const recovered = Math.min(
+    state.player.maxHp,
+    hpAfterFight + Math.floor((state.player.maxHp * POST_COMBAT_RECOVERY_PERCENT) / 100)
+  );
+  assert(state.player.hp === recovered, `${label}: won encounter must recover ${POST_COMBAT_RECOVERY_PERCENT}% of maximum HP`);
 }
 
 const started = encounter();
@@ -66,7 +82,7 @@ const injured: GameState = {
 };
 const winning: GameState = { ...injured, combat: { ...started.combat, monsterHp: 1 } };
 const won = transition(winning, { type: 'combat/act', action: 'attack' }, state => performCombatAction(state, 'attack'));
-assertRecovered(won, 'explore', 'victory');
+assertVictoryRecovered(won, 30, 'victory');
 assert(won.run?.damageTaken === 17, 'victory healing must not erase accumulated damage');
 assert(won.run.clearedNodeIds.includes(started.combat.nodeId), 'victory still clears its encounter node');
 assert(won.run.lootBag.rewardPoints > injured.run!.lootBag.rewardPoints, 'victory still grants encounter rewards');
@@ -78,7 +94,8 @@ const speedy: GameState = {
   player: { ...injured.player, base: { ...injured.player.base, agility: 100, luck: 100 } }
 };
 const escaped = transition(speedy, { type: 'combat/act', action: 'escape' }, state => performCombatAction(state, 'escape'));
-assertRecovered(escaped, 'explore', 'successful escape');
+assertSettled(escaped, 'explore', 'successful escape');
+assert(escaped.player.hp === 30 - 8, 'successful escape heals nothing and keeps the scrape');
 assert(escaped.run?.damageTaken === 25, 'escape recovery preserves the eight-point scrape in run damage');
 assert(!escaped.run.clearedNodeIds.includes(started.combat.nodeId), 'escape must not clear the monster');
 assert(JSON.stringify(escaped.run.lootBag) === JSON.stringify(speedy.run!.lootBag),
@@ -156,9 +173,9 @@ const captureReady: GameState = {
 };
 const captured = transition(captureReady, { type: 'combat/capture', petId: 'mist_kitten' },
   state => capturePet(state, 'mist_kitten'));
-assertRecovered(captured, 'explore', 'successful capture');
+assertVictoryRecovered(captured, 11, 'successful capture');
 assert(captured.player.maxHp === captureReady.player.maxHp - 14,
-  'capture healing uses the new active pet maximum, not the old combat maximum');
+  'capture recovery uses the new active pet maximum, not the old combat maximum');
 assert(captured.activePet === 'mist_kitten' && captured.ownedPets.includes('mist_kitten'),
   'capture recovery preserves the newly owned and active pet');
 assert(captured.run?.captures === 1 && captured.run.capturedPetIds.includes('mist_kitten')

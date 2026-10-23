@@ -7,6 +7,7 @@ import {
   getCurrentDungeonLaw,
   getNodeDepartureBlock,
   getReadyCombatCapturePetId,
+  hasCombatArtFocus,
   isCurrentDungeonFeatureAvailable,
   isTacticalItemAvailable,
   type DungeonNode,
@@ -184,7 +185,7 @@ export function getExplorationGuide(state: GameState): ExplorationGuide | undefi
       };
     }
     const attackPreview = getCombatActionDamagePreview(state, 'attack');
-    const artPreview = isCurrentDungeonFeatureAvailable(state, 'method')
+    const artPreview = isCurrentDungeonFeatureAvailable(state, 'method') && hasCombatArtFocus(state)
       ? getCombatActionDamagePreview(state, 'art')
       : undefined;
     const safeTargetActionId =
