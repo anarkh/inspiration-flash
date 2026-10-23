@@ -797,6 +797,11 @@ function assertDarkSheet(view, kind, insets) {
       assert.ok(kind === 'character' || kind === 'inventory', 'carry controls belong to the character sheet or its legacy route');
       assert.ok(action.enabled && action.event?.kind === 'command', 'carry binds only executable original commands');
       assert.equal(action.event.command.type, 'hub/configure-tactical-loadout', 'carry controls configure the actual domain loadout');
+    } else if (name.startsWith('MobileSheetPartyCard:')) {
+      assert.equal(kind, 'character', 'choosing who goes along belongs to the character sheet');
+      assert.ok(action.enabled && action.event?.kind === 'command', 'party cards bind only executable original commands');
+      assert.ok(['hub/activate-pet', 'hub/activate-companion', 'hub/activate-bloodline', 'hub/activate-method'].includes(action.event.command.type),
+        'party cards only send an owned pet, companion, bloodline or method along');
     } else if (name.startsWith('MobileSheetShopAction:')) {
       assert.ok(kind === 'npc' || kind === 'character', 'catalog direct action stays on its owning sheet');
       assert.ok(action.enabled && action.event, 'catalog directly binds only executable original actions');
@@ -992,9 +997,16 @@ let checkedCompactRasterFigures = 0;
       const bagSlots = nodesIn(cases[1].rootNode).filter(node => /^MobileSheet(?:Item|Blank):/.test(node.name));
       assert.equal(bagSlots.length, 100, 'compact supplies retain the complete bag');
       assert.equal(new Set(bagSlots.map(slot => slot.position.x)).size, 5, 'supplies use five columns at both phone widths');
-      const npcSlots = nodesIn(cases[3].rootNode).filter(node => node.name.startsWith('MobileSheetShopTile:'));
-      assert.equal(new Set(npcSlots.map(slot => slot.position.x)).size, Math.min(5, npcSlots.length),
-        'NPC goods use five columns at both phone widths');
+      const npcRows = nodesIn(cases[3].rootNode).filter(node => node.name.startsWith('MobileSheetShopRow:'));
+      assert.ok(npcRows.length > 0, `${frame.width}px: the quartermaster lists the active slot`);
+      for (const row of npcRows) {
+        const size = row.getComponent(api.UITransform).contentSize;
+        assert.ok(size.height / unit >= 44 - 0.6, `${row.name}: merchant rows keep the touch floor`);
+        for (const label of nodesIn(row).filter(node => node.getComponent(api.Label) && node.parent === row)) {
+          const box = boundsRelativeTo(label, row);
+          assert.ok(box.left >= -size.width / 2 - 0.6 && box.right <= size.width / 2 + 0.6, `${frame.width}px/${row.name}/${label.name}: text stays inside its row`);
+        }
+      }
     }
   } finally {
     api.view.frameSize = previousFrame;
@@ -1199,6 +1211,43 @@ let checkedRunRelicCards = 0;
   } finally {
     api.view.frameSize = previousFrame;
   }
+}
+
+// The character sheet's 出战 tab chooses who goes along; merchants only sell and train.
+{
+  let party = rich;
+  for (const command of [
+    { type: 'hub/buy-pet', petId: 'contract_sprite' },
+    { type: 'hub/learn-method', methodId: 'mist_breathing' },
+    { type: 'hub/learn-method', methodId: 'iron_body' },
+  ]) party = commit(party, command);
+  party = { ...party, ownedPets: [...party.ownedPets, 'mist_kitten'], petLevels: { ...party.petLevels, mist_kitten: 1 } };
+  const owned = api.buildHubOwnedLoadoutViewModel(party);
+  const model = add(party, { hubPanel: 'entry' });
+  const tab = id => {
+    const view = render(model, { kind: 'character', page: 0, tab: id }, safeInsets,
+      { ownedLoadout: () => owned, actionPool: owned.rows.flatMap(row => row.actions) });
+    assertDarkSheet(view, 'character', safeInsets);
+    return view;
+  };
+  const pets = tab('pets');
+  const card = (view, name) => nodesIn(view.rootNode).find(node => node.name === `MobileSheetPartyCard:${name}`);
+  assert.ok(card(pets, 'pets/contract_sprite') && card(pets, 'pets/mist_kitten'), 'the pet tab lists every owned pet');
+  assert.ok(!card(pets, 'methods/iron_body'), 'each kind keeps its own tab');
+  assert.ok(nodesIn(pets.rootNode).some(node => node.name === 'MobileSheetTab:companions')
+    && nodesIn(pets.rootNode).some(node => node.name === 'MobileSheetTab:methods'), 'pets, companions, bloodlines and methods are separate tabs');
+  assert.equal(pets.actions.get('MobileSheetPartyCard:pets/contract_sprite'), undefined, 'the pet already going along binds nothing');
+  const pick = pets.actions.get('MobileSheetPartyCard:pets/mist_kitten');
+  assert.ok(pick?.enabled && pick.event.command.type === 'hub/activate-pet', 'another owned pet card sends it along');
+  assert.equal(commit(party, pick.event.command).activePet, 'mist_kitten', 'the party card commits the real activation');
+  const common = tab('methods').actions.get('MobileSheetPartyCard:methods/iron_body');
+  assert.ok(common?.enabled && common.event.command.type === 'hub/activate-method', 'a learned method can be made the common one');
+  assert.ok(nodesIn(tab('companions').rootNode).some(node => node.name === 'MobileSheetPartyEmpty:companions'), 'an empty tab says where to get one');
+  const equipment = render(model, { kind: 'character', page: 0, tab: 'loadout' }, safeInsets, { ownedLoadout: () => owned });
+  assert.ok(!nodesIn(equipment.rootNode).some(node => /:(?:pets|methods|bloodlines|companions)\//.test(node.name)),
+    'the equipment page lists equipment only');
+  const shop = add(party, { hubPanel: 'pets' }).sections[1].detail.shop;
+  assert.ok(!shop.rows.flatMap(row => row.actions).some(action => action.actionId.includes('.activate:')), 'the pet keeper no longer sets who goes along');
 }
 
 // Carry cards execute the real configure command directly; the same card
@@ -2877,7 +2926,22 @@ function assertCatalogGeometry(view) {
   }
 }
 
+const PARTY_CATEGORIES = new Set(['灵宠', '同伴', '血统', '功法']);
+const PARTY_TABS = { pets: 'pets', companions: 'companions', bloodlines: 'bloodlines', methods: 'methods' };
+/** Pets, companions, bloodlines and methods are sent along from their own character tab. */
+function assertPartyReachable(model, owned, configured) {
+  const tab = PARTY_TABS[configured.actionId.match(/^hub\.(\w+)\.activate:/)?.[1]];
+  assert.ok(tab, `${configured.actionId}: activation belongs to a character tab`);
+  const view = render(model, { kind: 'character', page: 0, tab }, safeInsets, { ownedLoadout: () => owned, actionPool: owned.rows.flatMap(row => row.actions) });
+  assertDarkSheet(view, 'character', safeInsets);
+  const row = owned.rows.find(candidate => candidate.actions.includes(configured));
+  assert.ok(row && nodesIn(view.rootNode).some(node => node.name === `MobileSheetPartyCard:${row.id}`), `${configured.actionId}: its own tab shows the card`);
+  if (configured.enabled) assert.equal(view.actions.get(`MobileSheetPartyCard:${row.id}`), configured, `${configured.actionId}: the card binds the exact activation`);
+}
+
 function assertCatalogReachable(model, kind, catalog, extras = {}) {
+  // The equipment page only wears equipment; the other owned rows live on their own tabs.
+  if (kind === 'character') catalog = { ...catalog, rows: catalog.rows.filter(row => !PARTY_CATEGORIES.has(row.category)) };
   const signature = JSON.stringify([kind, catalog]);
   if (catalogueSignatures.has(signature)) return;
   catalogueSignatures.add(signature);
@@ -2886,21 +2950,34 @@ function assertCatalogReachable(model, kind, catalog, extras = {}) {
   assertDarkSheet(view, kind, safeInsets);
   assertCatalogGeometry(view);
   const nodes = nodesIn(view.rootNode);
-  const grid = kind === 'npc' && model.sections[1].detail.activePanel !== 'tasks';
-  const rowPrefix = grid ? 'MobileSheetShopTile:' : 'MobileSheetShopRow:';
-  assert.equal(nodes.filter(node => node.name.startsWith(rowPrefix)).length, catalog.rows.length, 'catalog exposes every entry without pagination');
-  if (grid) {
-    assert.equal(view.actions.size, 0, 'goods grid has no commerce buttons');
-    for (const tile of nodes.filter(node => node.name.startsWith(rowPrefix))) {
-      assert.ok(!nodesIn(tile).some(node => node.getComponent(api.Label)), 'goods tile contains only image/vector artwork, never text');
-      const size = tile.getComponent(api.UITransform).contentSize;
-      assert.equal(size.width, size.height, 'goods tiles are square');
-      assert.ok(size.width / catalogCssUnit() >= 43.99, 'goods icons retain the 44px touch floor in the compact grid');
-      assert.ok(view.local.has(tile.name), 'every icon opens its own detail');
+  const merchant = kind === 'npc' && model.sections[1].detail.activePanel !== 'tasks';
+  const rowPrefix = 'MobileSheetShopRow:';
+  // The quartermaster shows one slot tab at a time; every tab together lists the whole catalogue.
+  const listViews = merchant && catalog.groupStyle === 'tabs'
+    ? catalog.groups.map(group => render(model, { ...state, tab: group.id }, safeInsets, extras)) : [view];
+  const listed = listViews.flatMap(list => nodesIn(list.rootNode).filter(node => node.name.startsWith(rowPrefix)).map(node => node.name.slice(rowPrefix.length)));
+  assert.equal(listed.length, catalog.rows.length, 'catalog exposes every entry without pagination');
+  assert.equal(new Set(listed).size, catalog.rows.length, 'each entry is listed exactly once');
+  if (merchant) {
+    assert.ok(catalog.layout, 'merchant goods use their merchant layout');
+    const byId = new Map(catalog.rows.map(row => [row.id, row]));
+    const inlineNames = new Set(catalog.rows.flatMap(row => row.listing?.primaryActionId ? [`MobileSheetShopAction:${row.listing.primaryActionId}`] : []));
+    for (const list of listViews) {
+      if (list !== view) { assertDarkSheet(list, kind, safeInsets); assertCatalogGeometry(list); }
+      for (const name of list.actions.keys()) assert.ok(inlineNames.has(name), `${name}: a merchant list binds only each entry's inline buy or train action`);
+      for (const entry of nodesIn(list.rootNode).filter(node => node.name.startsWith(rowPrefix))) {
+        const row = byId.get(entry.name.slice(rowPrefix.length));
+        assert.ok(row.listing?.lines.length, `${entry.name}: the list shows the entry's summary`);
+        assert.ok(list.local.has(`MobileSheetShopInfo:${row.id}`), `${entry.name}: every entry opens its own detail`);
+        const inline = row.actions.find(action => action.actionId === row.listing.primaryActionId);
+        if (!inline) continue;
+        const name = `MobileSheetShopAction:${inline.actionId}`;
+        if (inline.enabled && inline.emphasis !== 'danger' && inline.recommendation !== 'high-risk') assert.equal(list.actions.get(name), inline, `${name}: the inline action binds the exact event`);
+        else assert.ok(list.local.has(name), `${name}: a blocked inline action opens its reason`);
+      }
     }
   } else if (kind === 'npc') {
     assert.ok(nodes.some(node => node.name === 'ShopRowDescription'), 'tasks remain readable text rows');
-    assert.ok(!nodes.some(node => node.name.startsWith('MobileSheetShopTile:')), 'tasks are never a grid');
     for (const task of nodes.filter(node => node.name.startsWith('MobileSheetShopRow:'))) {
       const description = nodesIn(task).find(node => node.name === 'ShopRowDescription');
       const progress = nodesIn(task).find(node => node.name === 'ShopRowStatus');
@@ -2951,17 +3028,18 @@ function assertCatalogReachable(model, kind, catalog, extras = {}) {
     }
     checkedCatalogActions += 1;
   }
-  // Read-only description popups do not duplicate the row's operations.
-  const first = catalog.rows[0];
+  // Read-only description popups do not duplicate the row's operations. A worn piece has none, so read one that does.
+  const visible = catalog.rows.filter(row => view.local.has(`MobileSheetShopInfo:${row.id}`));
+  const first = visible.find(row => row.actions.length > 0) ?? visible[0];
   if (first) {
-    view.local.get(`${grid ? 'MobileSheetShopTile:' : 'MobileSheetShopInfo:'}${first.id}`)();
+    view.local.get(`MobileSheetShopInfo:${first.id}`)();
     assert.equal(view.nextState().catalogRowId, first.id, 'row info selects its own record');
     assert.equal(view.nextState().selectedActionId, undefined, 'ordinary details do not select an action');
     const detail = render(model, view.nextState(), safeInsets, extras);
     assertCatalogSurfaces(detail);
     assert.ok(popupNode(detail), 'row information opens a details popup');
     assert.ok(!nodesIn(popupNode(detail)).some(node => node.name === 'MobileSheetReadout'), 'ordinary catalog facts use compact label/value rows instead of large readout cards');
-    assert.ok(nodesIn(popupNode(detail)).some(node => node.name === 'MobileSheetCatalogFooter'), 'details keep commerce actions in a fixed footer');
+    if (first.actions.length > 0) assert.ok(nodesIn(popupNode(detail)).some(node => node.name === 'MobileSheetCatalogFooter'), 'details keep commerce actions in a fixed footer');
     assert.ok(normalizeText(popupText(detail)).includes(normalizeText(api.formatInfiniteFlowHubPlayerCopy(first.description))), 'item description remains readable');
     detail.local.get('MobileSheetCatalogDetailClose')();
     assert.equal(detail.nextState().catalogRowId, undefined, 'closing detail returns to the list');
@@ -3011,7 +3089,14 @@ function assertNpcActionDestination(model, original) {
       assert.ok(configured, `${original.actionId}: usable configuration remains on the owned character page`);
       assert.deepEqual(configured.event, original.event, 'owned configuration preserves the actual command');
     }
-    if (configured) assertCatalogReachable(model, 'character', owned, { ownedLoadout: () => owned, actionPool: actions });
+    if (configured && original.actionId.includes('.activate:')) assertPartyReachable(model, owned, configured);
+    else if (configured) assertCatalogReachable(model, 'character', owned, { ownedLoadout: () => owned, actionPool: actions });
+    return;
+  }
+  if (/^hub\.(?:equipment\.buy|pets\.buy|methods\.learn|bloodlines\.unlock|companions\.recruit):/.test(original.actionId)) {
+    // An owned entry offers no second purchase; only its training and taking it along remain.
+    replacedLegacyControls.add('owned-acquisition');
+    assert.equal(original.enabled, false, `${original.actionId}: only an already-owned entry drops its purchase`);
     return;
   }
   assert.fail(`unclassified removed NPC action ${original.actionId}`);
@@ -3069,23 +3154,22 @@ for (const [panel, count] of Object.entries({ equipment: 65, supplies: 9, pets: 
   const state = { kind: 'npc', page: 0 };
   const view = render(model, state);
   const scroll = nodesIn(view.rootNode).find(node => node.name === 'MobileSheetCatalogScroll').getComponent(api.ScrollView);
-  scroll.scrollToOffset(new api.Vec2(0, 840));
+  scroll.scrollToOffset(new api.Vec2(0, 240));
   const captured = api.captureInfiniteFlowInfoSheetState(view.rootNode, state);
-  assert.equal(captured.catalogScrollOffset, 840, 'host captures actual list offset before refresh');
+  assert.equal(captured.catalogScrollOffset, 240, 'host captures actual list offset before refresh');
   const refreshed = render(model, captured);
-  assert.equal(nodesIn(refreshed.rootNode).find(node => node.name === 'MobileSheetCatalogScroll').getComponent(api.ScrollView).getScrollOffset().y, 840, 'external host refresh reapplies the captured offset');
+  assert.equal(nodesIn(refreshed.rootNode).find(node => node.name === 'MobileSheetCatalogScroll').getComponent(api.ScrollView).getScrollOffset().y, 240, 'external host refresh reapplies the captured offset');
   assert.equal(api.captureInfiniteFlowInfoSheetState(view.rootNode, { kind: 'inventory', page: 0 }).catalogScrollOffset, undefined, 'scroll is not copied to a different sheet');
-  view.local.get(`MobileSheetShopTile:${shop.rows[3].id}`)();
-  assert.equal(view.nextState().catalogScrollOffset, 840, 'details remember the list offset');
+  const target = shop.groups[0].rowIds[3];
+  view.local.get(`MobileSheetShopInfo:${target}`)();
+  assert.equal(view.nextState().catalogScrollOffset, 240, 'details remember the list offset');
   const detail = render(model, view.nextState());
   detail.local.get('MobileSheetCatalogDetailClose')();
   const restored = render(model, detail.nextState());
-  assert.equal(nodesIn(restored.rootNode).find(node => node.name === 'MobileSheetCatalogScroll').getComponent(api.ScrollView).getScrollOffset().y, 840, 'closing detail restores browsing position');
-  assert.equal(detail.nextState().catalogSelectedRowId, shop.rows[3].id, 'closing detail keeps selected tile');
-  const tile = nodesIn(restored.rootNode).find(node => node.name === `MobileSheetShopTile:${shop.rows[3].id}`);
-  const strokes = tile.getComponent(api.Graphics).strokes;
-  assert.ok(strokes.length >= 3, 'selected tile has an extra outline');
-  assert.deepEqual(rgb(strokes[0].color), rgb(strokes[strokes.length - 1].color), 'selection preserves rarity color');
+  assert.equal(nodesIn(restored.rootNode).find(node => node.name === 'MobileSheetCatalogScroll').getComponent(api.ScrollView).getScrollOffset().y, 240, 'closing detail restores browsing position');
+  assert.equal(detail.nextState().catalogSelectedRowId, target, 'closing detail keeps the selected row');
+  const strokesOf = id => nodesIn(restored.rootNode).find(node => node.name === `MobileSheetShopRow:${id}`).getComponent(api.Graphics).strokes;
+  assert.ok(strokesOf(target).length > strokesOf(shop.groups[0].rowIds[2]).length, 'the selected row keeps an extra outline');
   const more = detail.local.get('MobileSheetCatalogMore');
   more();
   assert.ok(detail.nextState().catalogMoreOpen, 'more opens the detail menu');
@@ -3434,7 +3518,7 @@ for (const model of models) {
 }
 
 assertSheetReachable(trapModel, 'interaction', [trapRisk]);
-assert.deepEqual([...replacedLegacyControls].sort(), ['bag-carry', 'catalog-cycle', 'loadout-shortcuts', 'material-cycle', 'owned-configuration'], 'every intentionally relocated NPC control is explicitly accounted for');
+assert.deepEqual([...replacedLegacyControls].sort(), ['bag-carry', 'catalog-cycle', 'loadout-shortcuts', 'material-cycle', 'owned-acquisition', 'owned-configuration'], 'every intentionally relocated NPC control is explicitly accounted for');
 assert.deepEqual([...pendingKinds].sort(), ['dungeon-event', 'equipment-offer', 'field-survey', 'law', 'relic-draft', 'soul-recharge']);
 assert.equal(lawCommands.size, 11, 'all eleven law command families occur in authentic chapter projections');
 for (const required of [
@@ -3456,5 +3540,5 @@ console.log(`Permanent equipment sheets: ${checkedOwnedEquipmentSheets} owned-ba
 console.log(`Chest claims: ${checkedChestViewports} real 320/390px viewport cases, ${checkedRelicOfferCards} complete candidate image/effect cards; ${checkedRewardClaims} original reward CTAs and ${checkedRelicDraftChoices} original relic choices, one-page claims, actual 1–3 candidates and restored-draft receipt boundaries verified.`);
 console.log(`Run relic sheets: ${checkedRunRelicLists} lists, ${checkedRunRelicCards} cards; all nine effects, pending/settled exclusion, local tab navigation and 320/390px scrolling verified.`);
 console.log(`Compact modal layout: ${checkedCompactSheetFamilies} authentic family/viewport/safe-inset cases; all 11 families at 320/390px, 304px width and 464px height caps, 48px header, 44px touch/32px button plates and 300px clipped scroll bounds verified.`);
-console.log(`Compact modal art: ${checkedCompactRasterFigures} non-square character/equipment/supply/NPC figures; contain fitting, full-source sprites, hidden glyph placeholders and five-column bag/goods layouts verified.`);
+console.log(`Compact modal art: ${checkedCompactRasterFigures} non-square character/equipment/supply/NPC figures; contain fitting, full-source sprites, hidden glyph placeholders and five-column bag and merchant list rows verified.`);
 console.log(`Mobile sheet actions: ${models.length} real VMs (${sourceFixtureCount} existing fixtures), ${originalActions} original actions, ${enabledCommands} enabled commands; ${sheetLists} concrete paged lists, ${checkedActionDetails} action details, ${disabledReadouts} full disabled readouts; ${checkedMovement} original door movements, ${combatSignatures.size} combat HUD variants; ${lawCommands.size} law families and ${pendingKinds.size} pending kinds. Dark UI: ${sheetFixtures.length} sheet types, ${darkSheetVisualCases} visual cases, ${darkBodyLabels} body labels, minimum body contrast ${darkMinimumBodyContrast.toFixed(3)}, danger/positive contrast >= 4.5. Catalog entries: ${JSON.stringify(catalogEntries)}. Full NPC/owned lists: ${checkedCatalogs}, direct or targeted catalog actions: ${checkedCatalogActions}. Task lists: ${checkedTaskLists}, task rows: ${checkedTaskRows}, task details: ${checkedTaskDetails}, kinds: ${[...taskKinds].join(',')}. Full maps: ${checkedFullMaps}, map cells: ${checkedMapCells}, stone gates: ${checkedStoneGates}, dungeon prop states: ${checkedDungeonProps}. Entry chapters: ${checkedEntryDungeons}, services: ${checkedEntryServices}, projected entry options: ${checkedEntryOptions}.`);

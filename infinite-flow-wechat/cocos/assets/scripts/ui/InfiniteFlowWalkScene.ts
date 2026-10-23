@@ -9,7 +9,7 @@ import { HUB_WORLD_THEME } from './dungeon-world-theme';
 import type { WorldTint } from './dungeon-world-theme';
 import { getInfiniteFlowMonsterWorldVisualKey, getInfiniteFlowNpcWorldVisualKey, getInfiniteFlowPursuerVisualKey, getInfiniteFlowRunRelicVisualKey, getInfiniteFlowSceneVisualKeys, INFINITE_FLOW_DUNGEON_PROP_VISUAL_KEYS, INFINITE_FLOW_DUNGEON_TRANSITION_GATE_VISUAL_KEY, INFINITE_FLOW_HUB_DUNGEON_PORTAL_VISUAL_KEY } from './scene-visuals';
 import { DARK_UI, ROOM_SHEET, paintDarkFrame, paintDarkIcon, paintRoomSheetButton, paintRoomSheetFrame } from './dark-ui';
-import { getWalkHudLayout } from './hud-layout';
+import { getWalkHudLayout, getWalkHudStrips } from './hud-layout';
 import type { HudPopoverKind } from './hud-layout';
 import { createInfiniteFlowCombatEffects } from './InfiniteFlowCombatEffects';
 import type { CombatEffectKind, CombatEffectResult, CombatEffectStartOptions, CombatTimingGrade } from './InfiniteFlowCombatEffects';
@@ -847,10 +847,13 @@ function sharedHeader(scene: Node, model: GameViewModel, options: ReadyWalkScene
     inkDotTextShadow(label);
     if (metric !== undefined) options.bindLocal(resource, () => options.openHudPopover?.(kind));
   }
-  const owned = model.phase === 'explore' || model.phase === 'combat' ? model.sections[1].loadout?.runRelics ?? [] : [];
+  const inRun = model.phase === 'explore' || model.phase === 'combat';
+  const owned = inRun ? model.sections[1].loadout?.runRelics ?? [] : [];
+  const party = inRun ? (model.sections[1].loadout?.runParty ?? []).filter(member => member.visualAssetKey !== undefined) : [];
+  const strips = getWalkHudStrips(layout, owned.length, party.length);
   if (owned.length > 0) {
-    const width = Math.max(44, owned.length * 24);
-    const strip = makeNode(role, 'WalkRunRelics', x(layout.infoLeft - 3, width), y(49, 44), width * px, 44 * px);
+    const width = strips.relicWidth;
+    const strip = makeNode(role, 'WalkRunRelics', x(strips.relicLeft, width), y(49, 44), width * px, 44 * px);
     const selected = options.activeHudPopover === 'relics';
     owned.forEach((relic, index) => {
       const tile = makeNode(strip, `WalkRunRelicIcon:${relic.relicId}`, (-width / 2 + 12 + index * 24) * px, 0, 18 * px, 18 * px);
@@ -869,6 +872,33 @@ function sharedHeader(scene: Node, model: GameViewModel, options: ReadyWalkScene
       polygon(marker, [[0, -17 * px], [1.5 * px, -18.5 * px], [0, -20 * px], [-1.5 * px, -18.5 * px]], new Color(227, 193, 123, 255));
     }
     options.bindLocal(strip, () => options.openHudPopover?.('relics'));
+  }
+  if (party.length > 0) {
+    // The pet, companion and bloodline on this run, so what was bought shows where it acts; tap for effects.
+    const width = strips.partyWidth;
+    const strip = makeNode(role, 'WalkRunParty', x(strips.partyLeft, width), y(49, 44), width * px, 44 * px);
+    const selected = options.activeHudPopover === 'party';
+    party.forEach((member, index) => {
+      const tile = makeNode(strip, `WalkRunPartyIcon:${member.kind}`, (-width / 2 + 12 + index * 24) * px, 0, 18 * px, 18 * px);
+      const edge = tile.addComponent(Graphics);
+      edge.lineWidth = px;
+      rect(edge, -9 * px, -9 * px, 18 * px, 18 * px, new Color(16, 19, 13, 255),
+        selected ? new Color(242, 209, 151, 255) : new Color(150, 190, 140, 170));
+      const crop = makeNode(tile, `WalkRunPartyCrop:${member.kind}`, 0, 0, 16 * px, 16 * px);
+      crop.addComponent(Mask).type = Mask.Type.GRAPHICS_RECT;
+      const visual = options.visual(member.visualAssetKey!);
+      const scale = Math.max(16 * px / visual.width, 16 * px / visual.height);
+      const sprite = makeNode(crop, `WalkRunPartySprite:${member.kind}`, 0, 0, visual.width * scale, visual.height * scale).addComponent(Sprite);
+      sprite.sizeMode = Sprite.SizeMode.CUSTOM;
+      sprite.trim = false;
+      sprite.spriteFrame = visual.frame;
+      options.trackSprite(sprite);
+    });
+    if (selected) {
+      const marker = strip.addComponent(Graphics);
+      polygon(marker, [[0, -17 * px], [1.5 * px, -18.5 * px], [0, -20 * px], [-1.5 * px, -18.5 * px]], new Color(227, 193, 123, 255));
+    }
+    options.bindLocal(strip, () => options.openHudPopover?.('party'));
   }
   for (const [name, label, icon, column] of [
     ['SceneDetails', '背包', 'bag', 0], ['SceneHelp', '菜单', 'menu', 1],

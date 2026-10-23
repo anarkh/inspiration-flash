@@ -69,6 +69,7 @@ export function verifyHubShops(): void {
       assert(!actionIds.has(candidate.actionId), `duplicate shop action ${candidate.actionId}`);
       actionIds.add(candidate.actionId);
       assert(candidate.readout, `${candidate.actionId} needs a description for a targeted condition popup`);
+      // Merchants only sell and train; choosing who goes along lives on the character sheet.
       assert(!/\.select:|\.navigate:|\.equip:|\.activate:|\.toggle:(?!.*equipment)|\.memory\./.test(candidate.actionId), `shop must omit navigation and loadout actions: ${candidate.actionId}`);
       if (candidate.enabled) {
         assert(candidate.event, 'enabled action must have an event');
@@ -81,6 +82,28 @@ export function verifyHubShops(): void {
     }
   }
   assert(JSON.stringify(initial) === original, 'catalogue projection must not mutate player progress');
+
+  // Each merchant has its own list: layout, grouping and a short listing per entry.
+  const layouts: Partial<Record<HubCatalogPanel, HubShopCatalogViewModel['layout']>> = {
+    supplies: 'rows', equipment: 'rows', methods: 'rows', pets: 'cards', bloodlines: 'cards', companions: 'wide-cards'
+  };
+  for (const [panel, layout] of Object.entries(layouts) as [HubCatalogPanel, HubShopCatalogViewModel['layout']][]) {
+    const shop = catalog(richState(), panel);
+    assert(shop.layout === layout, `${panel} must use the ${layout} layout`);
+    const grouped = shop.groups?.flatMap(group => group.rowIds) ?? shop.rows.map(row => row.id);
+    assert(grouped.length === shop.rows.length && new Set(grouped).size === shop.rows.length, `${panel} groups must list every entry once`);
+    for (const row of shop.rows) {
+      assert(row.listing && row.listing.lines.length > 0, `${panel}/${row.id} needs a list summary`);
+      const inline = row.actions.find(candidate => candidate.actionId === row.listing!.primaryActionId);
+      assert(row.listing.primaryActionId === undefined || inline, `${panel}/${row.id} inline action must be one of its own actions`);
+      assert(!row.listing.price?.includes('、'), `${panel}/${row.id} inline price must stay short`);
+    }
+  }
+  const equipmentShop = catalog(richState(), 'equipment');
+  assert(equipmentShop.groupStyle === 'tabs' && equipmentShop.groups?.length === 7, 'the quartermaster groups goods by equipment slot');
+  const suppliesShop = catalog(richState(), 'supplies');
+  assert(suppliesShop.groupStyle === 'sections' && suppliesShop.groups?.map(group => group.title).join('/') === '补给品/携行道具',
+    'the supplier separates field supplies from carried items');
   const entry = buildGameViewModel(initial, { hubPanel: 'entry' }).sections[1].detail;
   assert(entry.kind === 'hub' && !entry.shop, 'entry must not eagerly build a shop');
 
@@ -107,6 +130,14 @@ export function verifyHubShops(): void {
   state = perform(state, action(catalog(state, 'pets'), 'hub.pets.buy:contract_sprite'), 'hub/buy-pet');
   state = perform(state, action(catalog(state, 'pets'), 'hub.pets.upgrade:contract_sprite'), 'hub/upgrade-pet');
   assert(state.petLevels.contract_sprite === 2, 'pet training must apply');
+  const ownedPets = catalog(state, 'pets');
+  assert(!ownedPets.rows.find(row => row.id === 'contract_sprite')!.actions.some(candidate => candidate.actionId.startsWith('hub.pets.buy:')),
+    'an owned pet offers no second contract');
+  assert(ownedPets.rows.find(row => row.id === 'contract_sprite')!.details.find(fact => fact.label === '特性')?.value.startsWith('战斗协助'),
+    'the pet trait names its real effect instead of repeating the description');
+  state = { ...state, ownedPets: [...state.ownedPets, 'mist_kitten'], petLevels: { ...state.petLevels, mist_kitten: 1 } };
+  assert(ownedPets.rows.find(row => row.id === 'contract_sprite')!.details.find(fact => fact.label === '生效方式')?.value.includes('「角色 → 灵宠」'),
+    'the pet keeper points to where the pet is sent along');
   state = perform(state, action(catalog(state, 'methods'), 'hub.methods.learn:mist_breathing'), 'hub/learn-method');
   state = perform(state, action(catalog(state, 'methods'), 'hub.methods.upgrade:mist_breathing'), 'hub/upgrade-method');
   assert(state.methodRanks.mist_breathing === 2, 'method cultivation must apply');

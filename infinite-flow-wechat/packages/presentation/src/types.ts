@@ -389,6 +389,23 @@ export type HubShopRowViewModel = Readonly<{
   status: string;
   details: readonly Readonly<{ label: string; value: string }>[];
   actions: readonly ViewActionModel[];
+  /** What the merchant list shows for this entry before its detail opens. */
+  listing?: HubShopListingViewModel;
+}>;
+
+export type HubShopListingViewModel = Readonly<{
+  badge?: Readonly<{ label: string; tone: 'on' | 'info' | 'locked' }>;
+  /** Short text after the name, such as stock or how it is obtained. */
+  meta?: string;
+  level?: Readonly<{ current: number; max: number }>;
+  /** At most two short lines: its effect, and where it acts or what it costs next. */
+  lines: readonly string[];
+  /** The cost of the inline action, shortened for the list. */
+  price?: string;
+  /** The one action offered in the list (buy or train); every action stays in the detail. */
+  primaryActionId?: string;
+  /** Not yet obtainable. */
+  dim?: boolean;
 }>;
 
 /** Shared equipment readouts for loot cards and the owned-equipment inventory. */
@@ -431,6 +448,11 @@ export type HubShopCatalogViewModel = Readonly<{
   rows: readonly HubShopRowViewModel[];
   serviceTitle?: string;
   services: readonly ViewActionModel[];
+  /** How this merchant lays out its goods; the task envoy keeps its own task rows. */
+  layout?: 'rows' | 'cards' | 'wide-cards';
+  /** Supplies split into sections and equipment into slot tabs; rows not listed stay out of the list. */
+  groups?: readonly Readonly<{ id: string; title: string; hint?: string; rowIds: readonly string[] }>[];
+  groupStyle?: 'sections' | 'tabs';
 }>;
 
 export type HubOwnedLoadoutViewModel = Readonly<{
@@ -1014,6 +1036,14 @@ export type CharacterLoadoutViewModel = Readonly<{
     name: string;
     description: string;
     frameName: string;
+  }>[];
+  /** The pet, companion and bloodline taking part in this exploration or combat, with where each one acts. */
+  runParty: readonly Readonly<{
+    kind: 'pet' | 'companion' | 'bloodline';
+    id: string;
+    name: string;
+    description: string;
+    visualAssetKey?: string;
   }>[];
   equipment: readonly Readonly<{
     slot: EquipmentSlot;

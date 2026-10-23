@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>主神空间 · 商人专属列表原型</title>
+  <link rel="stylesheet" href="styles.css?v=20261023">
+  <script defer src="game-adapter.js?v=20261023"></script>
+  <script defer src="app.js?v=20261023"></script>
+</head>
+<body>
+  <header class="bar">
+    <strong>无限流 <span>商人专属列表原型 v2</span></strong>
+    <div class="controls">
+      <label>进度 <select id="preset"><option value="prepared">整备中的角色</option><option value="new">初入空间</option></select></label>
+      <label>宽度 <select id="viewport"><option value="390">390 手机</option><option value="320">320 小屏</option></select></label>
+      <button id="reset" type="button">重置</button>
+    </div>
+  </header>
+  <div class="workspace">
+    <nav id="npc-nav" aria-label="主神空间商人"></nav>
+    <main class="stage">
+      <div id="phone" class="phone" data-width="390">
+        <div class="phone-hud"><span>轮回者</span><span id="wallet"></span></div>
+        <section id="window" class="window" aria-labelledby="window-title">
+          <header class="window-bar">
+            <span id="window-title"></span>
+            <span id="window-wallet" class="window-wallet"></span>
+            <button type="button" class="close" aria-label="关闭">×</button>
+          </header>
+          <div id="npc-intro" class="npc-intro"></div>
+          <div id="tabs" class="tabs" hidden></div>
+          <div id="catalog" class="catalog"></div>
+          <footer id="services" class="services" hidden></footer>
+          <div id="detail" class="detail" hidden></div>
+        </section>
+        <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+      </div>
+      <p class="footnote">窗口按游戏实际尺寸绘制：宽 304、高 464（320 小屏时宽 288）。数据来自游戏真实 ViewModel，操作只影响本页演示进度。</p>
+    </main>
+  </div>
+</body>
+</html>
