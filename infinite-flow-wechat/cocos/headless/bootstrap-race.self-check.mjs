@@ -6523,6 +6523,9 @@ for (const [label, actionOverrides, chromeOverrides] of [
 assert.deepEqual([...wrapInfiniteFlowLine('一二三四五', 3)], ['一二三', '四五']);
 assert.deepEqual([...wrapInfiniteFlowLine('abcdef', 2)], ['abc', 'def']);
 assert.deepEqual([...wrapInfiniteFlowLine('一二三', 5)], ['一二三']);
+assert.deepEqual([...wrapInfiniteFlowLine('一二三，四五。', 3)], ['一二三，', '四五。'], 'closing punctuation hangs on the line it closes');
+assert.deepEqual([...wrapInfiniteFlowLine('攻击 +3', 3)], ['攻击 ', '+3'], 'a signed number wraps whole');
+assert.deepEqual([...wrapInfiniteFlowLine('生命上限 +12', 6)], ['生命上限 ', '+12'], 'a number is never split between its digits');
 assert.deepEqual(
   paginateInfiniteFlowText(['a\nb', 'c'], { maxUnitsPerLine: 5, maxLinesPerPage: 1 }).map((page) => [...page]),
   [['a'], ['b'], ['c']],

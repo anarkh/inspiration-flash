@@ -37,7 +37,7 @@ import {
 } from './sheet-layout';
 import { EMPTY_SHEET_IMAGE_LIBRARY, SHEET_PORTRAIT_KEY, sheetEquipmentKey, sheetItemKey } from './sheet-kit';
 import { getSheetFigures } from './sheet-figures';
-import { getWalkHudLayout } from './hud-layout';
+import { getWalkHudLayout, getWalkHudStrips } from './hud-layout';
 import { getInfiniteFlowRoomSheetArtKey, getInfiniteFlowRunRelicVisualKey, INFINITE_FLOW_TASK_ENVOY_PORTRAIT_KEY } from './scene-visuals';
 import { DARK_UI, ROOM_SHEET, paintRoomSheetButton, paintRoomSheetFrame } from './dark-ui';
 import type {
@@ -295,9 +295,13 @@ function pager(context: SheetContext, count: number): number {
 function tabs(context: SheetContext, choices: readonly Readonly<{ id: string; title: string }>[], fallback: string): Readonly<{ context: SheetContext; active: string }> {
   const active = choices.some(({ id }) => id === context.state.tab) ? context.state.tab! : fallback;
   const u = catalogUnit(context);
-  const gap = activeCompact ? 7 * u : GAP;
   const hitHeight = activeCompact ? 44 * u : TOUCH;
-  const width = (context.width - gap * (choices.length - 1)) / choices.length;
+  // Many tabs tighten the gap; when even that leaves a tab under the 44px touch floor, the strip wraps into balanced rows.
+  const gap = activeCompact ? (choices.length > 4 ? 2 : 7) * u : GAP;
+  const maxColumns = Math.max(1, Math.floor((context.width + gap) / (hitHeight + gap)));
+  const rows = Math.ceil(choices.length / Math.min(maxColumns, choices.length));
+  const columns = Math.ceil(choices.length / rows);
+  const width = (context.width - gap * (columns - 1)) / columns;
   // The touch floor stays 104 design px (44 physical px at the 320px viewport),
   // but the plate is transparent: the visible tab is a compact 60px visual
   // pinned to its top edge so the strip reads as a WoW tab row, not buttons.
@@ -305,14 +309,18 @@ function tabs(context: SheetContext, choices: readonly Readonly<{ id: string; ti
   for (let index = 0; index < choices.length; index += 1) {
     const choice = choices[index]!;
     const tabRole: SheetFrameRole = choice.id === active ? 'tabActive' : 'tabIdle';
-    const child = panel(context.body, `MobileSheetTab:${choice.id}`, -context.width / 2 + width / 2 + index * (width + gap), context.bodyHeight / 2 - hitHeight / 2, width, hitHeight, withAlpha(palette().surface, 0), withAlpha(palette().surface, 0), false, tabRole);
+    const row = Math.floor(index / columns);
+    const column = index % columns;
+    const child = panel(context.body, `MobileSheetTab:${choice.id}`, -context.width / 2 + width / 2 + column * (width + gap),
+      context.bodyHeight / 2 - hitHeight / 2 - row * (hitHeight + gap), width, hitHeight, withAlpha(palette().surface, 0), withAlpha(palette().surface, 0), false, tabRole);
     const tabVisual = panel(child, 'TabVisual', 0, 0, width, TAB_VISUAL_H, choice.id === active ? palette().accentDark : palette().quiet, choice.id === active ? palette().accent : palette().edge, false, tabRole);
     if (activeCompact) catalogText(context, tabVisual, 'Label', choice.title, 0, 0, width - 10 * u, 24 * u, 11, choice.id === active ? palette().accent : palette().text, true);
     else text(tabVisual, 'Label', choice.title, 0, 0, width - 16, 40, 26, choice.id === active ? palette().accent : palette().text, true);
     context.options.bindLocal(child, () => context.options.setState({ kind: context.state.kind, page: 0, tab: choice.id }));
   }
-  const bodyHeight = context.bodyHeight - hitHeight - gap;
-  const body = node(context.body, 'MobileSheetTabBody', 0, -(hitHeight + gap) / 2, context.width, bodyHeight);
+  const stripHeight = rows * (hitHeight + gap);
+  const bodyHeight = context.bodyHeight - stripHeight;
+  const body = node(context.body, 'MobileSheetTabBody', 0, -stripHeight / 2, context.width, bodyHeight);
   return { context: { ...context, body, bodyHeight }, active };
 }
 
@@ -801,18 +809,23 @@ function renderCharacter(context: SheetContext): void {
     const body = node(context.body, 'MobileSheetOwnedLoadoutBody', 0, (TOUCH + GAP) / 2, context.width, bodyHeight);
     const owned = context.options.ownedLoadout?.();
     const content = { ...context, body, bodyHeight };
+    // Pets, companions, bloodlines and methods have their own tabs; this page only wears equipment.
+    const partyCategories = new Set<string>(PARTY_SECTIONS.map(section => section.category));
     if (owned) renderHubCatalog(content, {
-      rows: owned.rows, title: '我的装备与养成', npcName: '装备与养成',
-      greeting: '穿戴装备、选择出战伙伴，激活已拥有的能力。', services: [],
+      rows: owned.rows.filter(row => !partyCategories.has(row.category)), title: '我的装备', npcName: '更换装备',
+      greeting: '穿戴已拥有的装备，同部位只穿一件；升级在军需官处。', services: [],
     });
-    else renderTextPages(content, [{ title: '装备与养成', lines: ['当前没有可配置的装备或能力。'] }]);
+    else renderTextPages(content, [{ title: '更换装备', lines: ['当前没有可穿戴的装备。'] }]);
     button(context.body, 'MobileSheetOwnedLoadoutBack', '返回角色', 0, -context.bodyHeight / 2 + TOUCH / 2, context.width, true,
       () => context.options.setState({ kind: 'character', page: 0, tab: 'overview' }), context.options);
     return;
   }
-  const tabbed = tabs(context, [{ id: 'overview', title: '角色' }, { id: 'carry', title: '携行' }], 'overview');
+  const tabbed = tabs(context, [{ id: 'overview', title: '角色' }, { id: 'carry', title: '携行' },
+    ...PARTY_SECTIONS.map(section => ({ id: section.tab, title: section.category }))], 'overview');
   context = tabbed.context;
   if (tabbed.active === 'carry') { renderCarryLoadout(context); return; }
+  const partySection = PARTY_SECTIONS.find(section => section.tab === tabbed.active);
+  if (partySection) { renderPartyLoadout(context, partySection); return; }
   const loadout = context.model.sections[1].loadout;
   const metrics = context.model.sections[1].metrics;
   const selected = metrics.find((metric) => metric.id === context.state.selectedActionId);
@@ -841,7 +854,7 @@ function renderCharacter(context: SheetContext): void {
   const badge = panel(stage, 'DollLevelBadge', 0, -41 * u, 98 * u, 20 * u, palette().accentDark, palette().edgeStrong, false, 'cell');
   catalogText(context, badge, 'Label', '转生者 Lv.1', 0, 0, 94 * u, 18 * u, 10, palette().accent, true);
   if (context.model.phase === 'hub') {
-    button(stage, 'MobileSheetOwnedLoadout', '装备与养成', 0, -75 * u, Math.min(110 * u, context.width - 120 * u), true,
+    button(stage, 'MobileSheetOwnedLoadout', '更换装备', 0, -75 * u, Math.min(110 * u, context.width - 120 * u), true,
       () => context.options.setState({ kind: 'character', page: 0, tab: 'loadout' }), context.options);
   }
   for (const entry of loadout.equipment) {
@@ -1601,6 +1614,91 @@ function renderCarryLoadout(context: SheetContext): void {
   const footerTop = -context.bodyHeight / 2 + footerHeight;
   catalogRule(context.body, 'MobileSheetCarryFooterRule', footerTop, context.width);
   catalogText(context, context.body, 'MobileSheetCarryFooter', hub ? '下次入场生效 · 补给品不占槽' : '返回主神空间后可调整携行',
+    0, footerTop - footerHeight / 2, context.width, footerHeight, 11, palette().textMuted, true);
+}
+
+// One character tab each: how many go along and where they act, which facts a card shows, and where to get one.
+const PARTY_SECTIONS = [
+  { tab: 'pets', category: '灵宠', kind: 'pet', rule: '同时 1 只出战，出战的属性与特性在副本中自动生效',
+    facts: ['特性'], on: '★ 出战中', pick: '点击设为出战', empty: '尚未拥有灵宠', where: '可在灵宠师处签约，或在副本战斗中捕获' },
+  { tab: 'companions', category: '同伴', kind: 'companion', rule: '同时带 1 位，援护在战斗「法术 → 同伴」里使用',
+    facts: ['援助技能'], on: '★ 出战中', pick: '点击设为出战', empty: '尚未招募同伴', where: '首通对应副本后，可在同行引路人处招募' },
+  { tab: 'bloodlines', category: '血统', kind: 'bloodline', rule: '同时激活 1 种，爆发在战斗「法术 → 血统」里使用',
+    facts: ['1 阶属性', '2 阶属性', '3 阶属性', '血统爆发'], on: '★ 已激活', pick: '点击激活', empty: '尚未觉醒血统', where: '可在血脉祭司处觉醒' },
+  { tab: 'methods', category: '功法', kind: undefined, rule: '已学的全部生效；常用的战技排在「法术」首位',
+    facts: ['功法被动', '主动战技'], on: '★ 常用', pick: '点击设为常用', empty: '尚未学习功法', where: '可在修行导师处学习' },
+] as const;
+
+/** One kind of companion on the character sheet: chosen in the hub, read-only on a run. */
+function renderPartyLoadout(context: SheetContext, section: typeof PARTY_SECTIONS[number]): void {
+  const u = catalogUnit(context);
+  const hub = context.model.phase === 'hub';
+  const rows = hub ? (context.options.ownedLoadout?.()?.rows ?? []).filter(row => row.category === section.category) : [];
+  const runParty = section.kind === undefined ? [] : (context.model.sections[1].loadout?.runParty ?? []).filter(member => member.kind === section.kind);
+  const gap = 4 * u;
+  const footerHeight = 28 * u;
+  const textWidth = context.width - 62 * u;
+  const units = (size: number) => Math.max(8, Math.floor(textWidth / (size * u)));
+  const ruleLines = wrapInfiniteFlowLine(section.rule, Math.max(8, Math.floor((context.width - 16 * u) / (10.5 * u))));
+  const ruleHeight = (ruleLines.length * 16 + 12) * u;
+  type PartyCard = Readonly<{ id: string; name: string; level: string; status: string; lines: readonly string[]; active: boolean;
+    visualAssetKey?: string; action?: ViewActionModel; height: number }>;
+  const cards: PartyCard[] = hub
+    ? rows.map(row => {
+      const active = /出战中|已激活|常用/.test(row.status);
+      const action = row.actions.find(candidate => candidate.actionId.includes('.activate:'));
+      const usable = !active && action !== undefined && canExecute(context, action);
+      const level = row.status.split('·').map(part => part.trim())
+        .filter(part => !/^(出战中|已激活|常用|未出战|未激活|已拥有)$/.test(part)).join(' · ');
+      const lines = section.facts.flatMap(label => {
+        const value = row.details.find(item => item.label === label)?.value;
+        return value === undefined ? [] : wrapInfiniteFlowLine(readable(`${label.replace(/^\d 阶属性$/, '属性')}：${value}`), units(11));
+      }).slice(0, 4);
+      return { id: row.id, name: row.name, level, lines, active, visualAssetKey: row.visualAssetKey,
+        status: active ? section.on : usable ? section.pick : readable(action?.disabledReason ?? '暂不可更换'),
+        ...(usable ? { action } : {}), height: Math.max(60, 46 + lines.length * 17) * u };
+    })
+    : runParty.map(member => {
+      const lines = wrapInfiniteFlowLine(member.description, units(11)).slice(0, 4);
+      return { id: `${member.kind}/${member.id}`, name: member.name, level: '', lines, active: true, visualAssetKey: member.visualAssetKey,
+        status: `本局${section.on.replace('★ ', '')}`, height: Math.max(60, 46 + lines.length * 17) * u };
+    });
+  const emptyLines = section.kind === undefined && !hub
+    ? wrapInfiniteFlowLine('副本中按入场时已学的全部功法生效，战技在战斗「法术 → 功法」里使用。', units(11))
+    : [hub ? section.empty : '本局未带', ...(hub ? wrapInfiniteFlowLine(section.where, units(11)) : [])];
+  const emptyHeight = (emptyLines.length * 18 + 12) * u;
+  const contentHeight = ruleHeight + gap + (cards.length > 0 ? cards.reduce((sum, card) => sum + card.height + gap, 0) : emptyHeight);
+  const region = scrollRegion(context, contentHeight, footerHeight);
+  region.holder.name = 'MobileSheetPartyList';
+  catalogScrollByFrame.set(context.panel, region.scrollView);
+  const content = scrollContentNode(region);
+  const rule = panel(content, `MobileSheetPartyRule:${section.tab}`, 0, scrollItemY(region, 0, ruleHeight), context.width, ruleHeight,
+    palette().quiet, palette().accent, false, 'cell');
+  catalogText(context, rule, 'PartyRuleText', ruleLines.join('\n'), 0, 0, context.width - 16 * u, ruleLines.length * 16 * u, 10.5, palette().text);
+  let cursor = ruleHeight + gap;
+  if (cards.length === 0) {
+    catalogText(context, content, `MobileSheetPartyEmpty:${section.tab}`, emptyLines.join('\n'), 0,
+      scrollItemY(region, cursor, emptyHeight), context.width, emptyHeight, 11, palette().textMuted, true);
+  }
+  for (const card of cards) {
+    const node0 = panel(content, `MobileSheetPartyCard:${card.id}`, 0, scrollItemY(region, cursor, card.height), context.width, card.height,
+      card.active ? palette().accentDark : palette().raised, card.active ? palette().accent : palette().edgeStrong, false, 'card');
+    figureNode(context, node0, 'PartyCardIcon', card.visualAssetKey ?? '', -context.width / 2 + 25 * u, card.height / 2 - 27 * u, 36 * u, 40 * u,
+      { glyph: card.name.slice(0, 1), glyphSize: 22 * u, glyphColor: palette().accent }, context.images);
+    const textX = 25 * u;
+    catalogText(context, node0, 'PartyCardName', card.level ? `${card.name}  ${card.level}` : card.name, textX, card.height / 2 - 15 * u,
+      textWidth, 22 * u, 13, palette().text);
+    catalogText(context, node0, 'PartyCardStatus', card.status, textX, card.height / 2 - 33 * u, textWidth, 16 * u, 10,
+      card.active ? palette().positive : palette().accent);
+    const linesHeight = card.lines.length * 17 * u;
+    catalogText(context, node0, 'PartyCardEffect', card.lines.join('\n'), textX,
+      card.height / 2 - 43 * u - linesHeight / 2, textWidth, linesHeight, 11, palette().textMuted);
+    if (card.action) context.options.bindAction(node0, card.action);
+    cursor += card.height + gap;
+  }
+  const footerTop = -context.bodyHeight / 2 + footerHeight;
+  catalogRule(context.body, 'MobileSheetPartyFooterRule', footerTop, context.width);
+  catalogText(context, context.body, 'MobileSheetPartyFooter', hub ? '点卡片更换 · 下次入场生效' : '副本中不能更换 · 返回主神空间后调整',
     0, footerTop - footerHeight / 2, context.width, footerHeight, 11, palette().textMuted, true);
 }
 
@@ -2481,7 +2579,14 @@ function renderHudPopover(root: Node, model: GameViewModel, state: MobileSheetSt
   const layout = getWalkHudLayout(viewportWidth);
   const u = layout.pixel;
   const isRelics = state.tab === 'hud-relics';
-  const owned = isRelics ? model.sections[1].loadout?.runRelics ?? [] : [];
+  const isParty = state.tab === 'hud-party';
+  const isList = isRelics || isParty;
+  const relics = model.sections[1].loadout?.runRelics ?? [];
+  const party = (model.sections[1].loadout?.runParty ?? []).filter(member => member.visualAssetKey !== undefined);
+  const owned = isRelics
+    ? relics.map(relic => ({ id: relic.relicId, name: relic.name, description: relic.description, key: getInfiniteFlowRunRelicVisualKey(relic.relicId) }))
+    : isParty ? party.map(member => ({ id: member.kind, name: member.name, description: member.description, key: member.visualAssetKey! })) : [];
+  const rowName = isParty ? 'HudParty' : 'HudRelic';
   const trackSprite = options.trackHudSprite;
   if (owned.length > 0 && trackSprite === undefined) {
     throw new Error('HUD relic popover requires trackHudSprite for scene-owned icon sprites.');
@@ -2498,7 +2603,7 @@ function renderHudPopover(root: Node, model: GameViewModel, state: MobileSheetSt
   // Resolve all required art before creating the backdrop, so a load failure
   // cannot leave a partially rendered popup with a silently missing icon.
   const rows = owned.map((relic, index) => {
-    const key = getInfiniteFlowRunRelicVisualKey(relic.relicId);
+    const key = relic.key;
     const visual = options.hudVisual?.(key);
     if (visual === undefined) throw new Error(`HUD relic icon is not loaded: ${key}`);
     const copyWidth = innerWidth - 44;
@@ -2512,27 +2617,29 @@ function renderHudPopover(root: Node, model: GameViewModel, state: MobileSheetSt
     return { relic, visual, copyWidth, nameLines, effectLines, nameHeight, effectHeight, insetTop, height };
   });
   const metricId = state.tab === 'hud-reward-points' ? 'reward-points' : 'lingyun';
-  const metric = isRelics ? undefined : model.sections[1].metrics.find(entry => entry.id === metricId);
-  if (!isRelics && metric === undefined) throw new Error(`HUD resource metric is unavailable: ${metricId}`);
+  const metric = isList ? undefined : model.sections[1].metrics.find(entry => entry.id === metricId);
+  if (!isList && metric === undefined) throw new Error(`HUD resource metric is unavailable: ${metricId}`);
   const resourceLines = metric === undefined ? [] : wrap(`${metric.label}：${metric.value}`, 13, innerWidth - 4);
-  const contentHeight = isRelics ? Math.max(20, rows.reduce((total, row) => total + row.height, 0))
+  const contentHeight = isList ? Math.max(20, rows.reduce((total, row) => total + row.height, 0))
     : Math.max(20, resourceLines.length * 20);
   const headerHeight = 32;
   const bodyHeight = Math.min(contentHeight, 300, maxHeight - headerHeight - 28);
   const height = headerHeight + bodyHeight + 28;
+  const strips = getWalkHudStrips(layout, relics.length, party.length);
   const anchorX = isRelics
-    ? layout.infoLeft - 3 + Math.max(44, owned.length * 24) / 2
+    ? strips.relicLeft + strips.relicWidth / 2
+    : isParty ? strips.partyLeft + strips.partyWidth / 2
     : state.tab === 'hud-reward-points'
       ? layout.rewardLeft + layout.rewardWidth / 2 : layout.jadeLeft + layout.jadeWidth / 2;
   const leftInset = options.safeInsets.left / u + 20;
   const popupLeft = Math.max(leftInset, Math.min(anchorX - 24,
     viewportWidth - options.safeInsets.right / u - 20 - width));
-  const popupTop = Math.max(44, Math.min(isRelics ? 98 : 50, safeHeight - 44 - height));
+  const popupTop = Math.max(44, Math.min(isList ? 98 : 50, safeHeight - 44 - height));
   const surfaceTop = surfaceHeight / 2 - options.safeInsets.top;
   const backdrop = buildBackdrop(root, surfaceHeight, true);
   backdrop.name = 'HudPopoverBackdrop';
   options.bindLocal(backdrop, options.close);
-  const card = panel(backdrop, isRelics ? 'HudRelicPopover' : 'HudResourcePopover',
+  const card = panel(backdrop, isRelics ? 'HudRelicPopover' : isParty ? 'HudPartyPopover' : 'HudResourcePopover',
     -375 + (popupLeft + width / 2) * u, surfaceTop - (popupTop + height / 2) * u,
     width * u, height * u, colors.surface, colors.edgeStrong, true, 'sheet');
   card.addComponent(BlockInputEvents);
@@ -2555,7 +2662,7 @@ function renderHudPopover(root: Node, model: GameViewModel, state: MobileSheetSt
     component.enableWrapText = false;
     component.overflow = Label.Overflow.CLAMP;
   };
-  label(card, 'HudPopoverTitle', [isRelics ? '本局遗物' : metric!.label], -12,
+  label(card, 'HudPopoverTitle', [isRelics ? '本局遗物' : isParty ? '出战阵容' : metric!.label], -12,
     height / 2 - 26, innerWidth - 24, 20, 12, 20, colors.accent);
   const region = overlayScroll(card, 'HudPopoverScroll',
     (height / 2 - 16 - headerHeight - bodyHeight / 2) * u,
@@ -2564,16 +2671,16 @@ function renderHudPopover(root: Node, model: GameViewModel, state: MobileSheetSt
   let cursor = 0;
   for (const [index, row] of rows.entries()) {
     const rowWidth = innerWidth - 4;
-    const holder = node(region.content, `HudRelicRow:${row.relic.relicId}`, -2 * u,
+    const holder = node(region.content, `${rowName}Row:${row.relic.id}`, -2 * u,
       (totalHeight / 2 - cursor - row.height / 2) * u, rowWidth * u, row.height * u);
     if (index > 0) {
-      const divider = node(holder, 'HudRelicDivider', 0, row.height * u / 2, rowWidth * u, u).addComponent(Graphics);
+      const divider = node(holder, `${rowName}Divider`, 0, row.height * u / 2, rowWidth * u, u).addComponent(Graphics);
       divider.strokeColor = withAlpha(colors.edge, 110);
       divider.lineWidth = u;
       divider.moveTo(-rowWidth * u / 2, 0); divider.lineTo(rowWidth * u / 2, 0); divider.stroke();
     }
     const contentTop = row.height / 2 - row.insetTop;
-    const image = node(holder, `HudRelicIcon:${row.relic.relicId}`, (-rowWidth / 2 + 15) * u,
+    const image = node(holder, `${rowName}Icon:${row.relic.id}`, (-rowWidth / 2 + 15) * u,
       (contentTop - 15) * u, 30 * u, 30 * u).addComponent(Sprite);
     const imageScale = Math.min(30 * u / row.visual.width, 30 * u / row.visual.height);
     image.node.getComponent(UITransform)!.setContentSize(new Size(row.visual.width * imageScale, row.visual.height * imageScale));
@@ -2582,13 +2689,13 @@ function renderHudPopover(root: Node, model: GameViewModel, state: MobileSheetSt
     image.spriteFrame = row.visual.frame;
     trackSprite!(image);
     const textX = -rowWidth / 2 + 40 + row.copyWidth / 2;
-    label(holder, 'HudRelicName', row.nameLines, textX, contentTop - row.nameHeight / 2,
+    label(holder, `${rowName}Name`, row.nameLines, textX, contentTop - row.nameHeight / 2,
       row.copyWidth, row.nameHeight, 13, 20, colors.text);
-    label(holder, 'HudRelicEffect', row.effectLines, textX, contentTop - row.nameHeight - 3 - row.effectHeight / 2,
+    label(holder, `${rowName}Effect`, row.effectLines, textX, contentTop - row.nameHeight - 3 - row.effectHeight / 2,
       row.copyWidth, row.effectHeight, 11, 18, colors.textMuted);
     cursor += row.height;
   }
-  if (!isRelics) label(region.content, 'HudResourceValue', resourceLines, -2,
+  if (!isList) label(region.content, 'HudResourceValue', resourceLines, -2,
     totalHeight / 2 - resourceLines.length * 10, innerWidth - 4,
     resourceLines.length * 20, 13, 20, colors.text);
   if (isRelics && rows.length === 0) label(region.content, 'HudRelicEmpty', ['本局尚未获得遗物。'], -2,
@@ -2933,7 +3040,8 @@ function renderSheetTip(context: SheetContext, backdrop: Node): void {
   context.options.bindLocal(backdrop, () => context.options.setState({ ...context.state, tip: undefined }));
 }
 
-type HubCatalogSurface = Pick<HubShopCatalogViewModel, 'rows' | 'npcName' | 'title' | 'greeting' | 'portraitAssetKey' | 'services' | 'serviceTitle'>;
+type HubCatalogSurface = Pick<HubShopCatalogViewModel, 'rows' | 'npcName' | 'title' | 'greeting' | 'portraitAssetKey' | 'services' | 'serviceTitle'>
+  & Partial<Pick<HubShopCatalogViewModel, 'layout' | 'groups' | 'groupStyle'>>;
 
 /** Match the HTML prototype's CSS pixels even when the game canvas is letterboxed. */
 function catalogUnit(context: SheetContext): number {
@@ -3238,12 +3346,13 @@ function renderEntryServices(context: SheetContext): void {
 }
 
 function catalogActionButton(context: SheetContext, parent: Node, action: ViewActionModel, row: HubShopRowViewModel | undefined,
-  x: number, y: number, width: number, update: (patch: Partial<MobileSheetState>) => void, confirmed = false): void {
+  x: number, y: number, width: number, update: (patch: Partial<MobileSheetState>) => void, confirmed = false,
+  price = catalogPrice(action)): void {
   const enabled = canExecute(context, action);
   const danger = action.emphasis === 'danger' || action.recommendation === 'high-risk';
   const label = `${confirmed ? '确认' : ''}${catalogActionLabel(action, row)}`;
   const control = catalogButton(context, parent, `MobileSheetShopAction:${action.actionId}`, label, x, y, width,
-    enabled, catalogPrice(action), action.emphasis === 'primary' || action.recommendation === 'recommended', danger);
+    enabled, price, action.emphasis === 'primary' || action.recommendation === 'recommended', danger);
   if (enabled && (!danger || confirmed)) context.options.bindAction(control, action);
   else context.options.bindLocal(control, () => update({
     catalogRowId: row?.id, catalogServiceOpen: row === undefined, selectedActionId: action.actionId, catalogMoreOpen: false, catalogDetailScrollOffset: undefined,
@@ -3392,11 +3501,224 @@ function catalogControlPositions(controls: readonly CatalogControl[], available:
   return { positions, height: controls.length ? (line + 1) * 50 * u - 6 * u : 0 };
 }
 
-/** NPC storefront: icon-only goods, with a separate readable task list. */
-function renderNpcGridCatalog(context: SheetContext, catalog: HubCatalogSurface): void {
+/** The services entry along the bottom of a merchant sheet (rest, equipment commission). */
+function renderCatalogServicesFooter(context: SheetContext, catalog: HubCatalogSurface, footerHeight: number,
+  update: (patch: Partial<MobileSheetState>) => void): void {
+  if (!footerHeight) return;
+  const u = catalogUnit(context);
+  catalogRule(context.body, 'CatalogFooterRule', -context.bodyHeight / 2 + footerHeight, context.width);
+  const label = `${catalog.serviceTitle ?? '其他服务'} ↗`;
+  const width = Math.min(context.width, catalogButtonWidth(context, label));
+  const control = catalogButton(context, context.body, 'MobileSheetShopServices', label,
+    context.width / 2 - width / 2, -context.bodyHeight / 2 + 25 * u, width, true);
+  context.options.bindLocal(control, () => update({ catalogRowId: undefined, catalogServiceOpen: true,
+    selectedActionId: undefined, catalogMoreOpen: false, catalogDetailScrollOffset: undefined }));
+}
+
+const LISTING_BADGE_COLORS = {
+  on: () => ({ fill: palette().positive, edge: palette().positive, text: new Color(16, 20, 12, 255) }),
+  info: () => ({ fill: withAlpha(palette().surface, 0), edge: palette().accent, text: palette().accent }),
+  locked: () => ({ fill: withAlpha(palette().surface, 0), edge: palette().edge, text: palette().textMuted }),
+} as const;
+
+/** The entry whose detail was last opened keeps an inner outline in its own quality color, so closing it stays oriented. */
+function outlineSelectedEntry(context: SheetContext, entry: Node, row: HubShopRowViewModel, width: number, height: number): void {
+  if ((context.state.catalogRowId ?? context.state.catalogSelectedRowId) !== row.id) return;
+  const u = catalogUnit(context);
+  const graphics = entry.getComponent(Graphics)!;
+  graphics.strokeColor = catalogRarityEdge(row); graphics.lineWidth = 1.5 * u;
+  graphics.roundRect(-width / 2 + 3 * u, -height / 2 + 3 * u, width - 6 * u, height - 6 * u, 2 * u); graphics.stroke();
+}
+
+/** A compact status chip after an entry's name; returns its width. */
+function listingBadge(context: SheetContext, parent: Node, name: string, badge: NonNullable<HubShopRowViewModel['listing']>['badge'],
+  left: number, y: number): number {
+  if (!badge) return 0;
+  const u = catalogUnit(context);
+  const width = (catalogTextWidth(badge.label, 9.5) + 8) * u;
+  const colors = LISTING_BADGE_COLORS[badge.tone]();
+  const chip = panel(parent, name, left + width / 2, y, width, 15 * u, colors.fill, colors.edge, false, 'cell');
+  catalogText(context, chip, 'Label', badge.label, 0, 0, width, 15 * u, 9.5, colors.text, true);
+  return width;
+}
+
+function listingPips(level: NonNullable<HubShopRowViewModel['listing']>['level']): string {
+  return level ? `${'◆'.repeat(Math.min(level.current, level.max))}${'◇'.repeat(Math.max(0, level.max - level.current))}` : '';
+}
+
+/**
+ * Merchant goods in the merchant's own layout (approved prototype npc-shops-v2): rows with the inline buy or train
+ * action, two-column character cards, or wide companion cards. Tapping an entry still opens the full detail.
+ */
+function renderMerchantList(context: SheetContext, catalog: HubCatalogSurface): void {
+  const u = catalogUnit(context);
+  const update = (patch: Partial<MobileSheetState>): void => context.options.setState({ ...context.state, ...patch });
+  const open = (row: HubShopRowViewModel): void => update({ catalogRowId: row.id, catalogSelectedRowId: row.id,
+    selectedActionId: undefined, catalogServiceOpen: undefined, catalogMoreOpen: false, catalogDetailScrollOffset: undefined,
+    catalogScrollOffset: Math.max(0, catalogScrollByFrame.get(context.panel)?.getScrollOffset().y ?? 0) });
+  const introHeight = 46 * u;
+  const footerHeight = catalog.services.length ? 50 * u : 0;
+  const introWidth = context.width - 44 * u;
+  figureNode(context, context.body, 'MobileSheetNpcPortrait', catalog.portraitAssetKey ?? '',
+    -context.width / 2 + 15 * u, context.bodyHeight / 2 - 19 * u, 30 * u, 36 * u,
+    { glyph: catalog.npcName.slice(0, 1), glyphSize: 18 * u, glyphColor: palette().accent }, context.images);
+  catalogText(context, context.body, 'MobileSheetNpcName', catalog.npcName, 22 * u,
+    context.bodyHeight / 2 - 9 * u, introWidth, 18 * u, 12, palette().accent);
+  const greeting = wrapInfiniteFlowLine(catalog.greeting, Math.floor(introWidth / (10.5 * u))).slice(0, 2);
+  catalogText(context, context.body, 'MobileSheetNpcGreeting', greeting.join('\n'), 22 * u,
+    context.bodyHeight / 2 - 18 * u - greeting.length * 7 * u, introWidth, greeting.length * 14 * u, 10.5, palette().textMuted);
+  catalogRule(context.body, 'MobileSheetNpcIntroRule', context.bodyHeight / 2 - introHeight + 2 * u, context.width);
+  const bodyHeight = Math.max(44 * u, context.bodyHeight - introHeight - footerHeight);
+  const body = node(context.body, 'MobileSheetCatalogBody', 0, (footerHeight - introHeight) / 2, context.width, bodyHeight);
+  let list: SheetContext = { ...context, body, bodyHeight };
+  const byId = new Map(catalog.rows.map(row => [row.id, row]));
+  // Slot tabs show one group at a time; sections stack every group with a heading.
+  let sections: readonly Readonly<{ id: string; title?: string; hint?: string; rows: readonly HubShopRowViewModel[] }>[];
+  if (catalog.groupStyle === 'tabs' && catalog.groups?.length) {
+    const tabbed = tabs(list, catalog.groups.map(group => ({ id: group.id, title: group.title })), catalog.groups[0]!.id);
+    list = tabbed.context;
+    const group = catalog.groups.find(candidate => candidate.id === tabbed.active)!;
+    sections = [{ id: group.id, rows: group.rowIds.flatMap(id => byId.get(id) ?? []) }];
+  } else if (catalog.groups?.length) {
+    sections = catalog.groups.map(group => ({ id: group.id, title: group.title, ...(group.hint ? { hint: group.hint } : {}),
+      rows: group.rowIds.flatMap(id => byId.get(id) ?? []) }));
+  } else {
+    sections = [{ id: 'all', rows: catalog.rows }];
+  }
+  const layout = catalog.layout ?? 'rows';
+  const gap = 4 * u;
+  const headingHeight = 22 * u;
+  const inlineAction = (row: HubShopRowViewModel): ViewActionModel | undefined =>
+    row.actions.find(action => action.actionId === row.listing?.primaryActionId);
+  // Rows: icon, name + badge + meta, two short lines, the inline action on the right.
+  const rowHeight = (row: HubShopRowViewModel): number => Math.max(54, 26 + Math.min(2, row.listing?.lines.length ?? 0) * 15) * u;
+  const cardWidth = (list.width - 6 * u) / 2;
+  const cardHeight = 196 * u;
+  // A wide card only grows to hold its inline action when it has one.
+  const wideHeight = (row: HubShopRowViewModel): number => (inlineAction(row) ? 112 : 88) * u;
+  const sectionHeight = (section: typeof sections[number]): number => (section.title ? headingHeight : 0) + (layout === 'cards'
+    ? Math.ceil(section.rows.length / 2) * (cardHeight + gap)
+    : section.rows.reduce((sum, row) => sum + (layout === 'wide-cards' ? wideHeight(row) : rowHeight(row)) + gap, 0));
+  const contentHeight = Math.max(20 * u, sections.reduce((sum, section) => sum + sectionHeight(section), 0));
+  const region = scrollRegion(list, contentHeight);
+  region.holder.name = 'MobileSheetCatalogScroll';
+  catalogScrollByFrame.set(context.panel, region.scrollView);
+  region.scrollView.scrollToOffset(new Vec2(0, Math.min(Math.max(0, context.state.catalogScrollOffset ?? 0),
+    Math.max(0, region.contentHeight - region.height))), 0);
+  const content = scrollContentNode(region);
+  const lineUnits = (width: number, size: number) => Math.max(6, Math.floor(width / (size * u)));
+  const firstLine = (value: string, width: number, size: number): string => {
+    const lines = wrapInfiniteFlowLine(readable(value), lineUnits(width, size));
+    return lines.length > 1 ? `${lines[0]!.replace(/[，。、；：,.;:]$/, '')}…` : lines[0] ?? '';
+  };
+  const actionWidth = (row: HubShopRowViewModel): number => {
+    const action = inlineAction(row);
+    return action ? Math.min(96 * u, catalogButtonWidth(context, catalogActionLabel(action, row), row.listing?.price)) : 0;
+  };
+  let cursor = 0;
+  for (const section of sections) {
+    if (section.title) {
+      const top = region.contentHeight / 2 - cursor;
+      catalogText(context, content, `MobileSheetShopSection:${section.id}`, section.title, -list.width / 2 + 40 * u, top - 11 * u,
+        80 * u, headingHeight, 11, palette().accent);
+      if (section.hint) catalogText(context, content, `MobileSheetShopSectionHint:${section.id}`, section.hint, list.width / 2 - 75 * u,
+        top - 11 * u, 150 * u, headingHeight, 9.5, palette().textMuted, true);
+      cursor += headingHeight;
+    }
+    if (layout === 'cards') {
+      section.rows.forEach((row, index) => {
+        const x = -list.width / 2 + cardWidth / 2 + (index % 2) * (cardWidth + 6 * u);
+        const top = cursor + Math.floor(index / 2) * (cardHeight + gap);
+        renderMerchantCard(context, content, row, x, scrollItemY(region, top, cardHeight), cardWidth, cardHeight, inlineAction(row), open, update, firstLine);
+      });
+      cursor += Math.ceil(section.rows.length / 2) * (cardHeight + gap);
+      continue;
+    }
+    for (const row of section.rows) {
+      const height = layout === 'wide-cards' ? wideHeight(row) : rowHeight(row);
+      const item = panel(content, `MobileSheetShopRow:${row.id}`, 0, scrollItemY(region, cursor, height), list.width, height,
+        layout === 'wide-cards' ? palette().raised : withAlpha(palette().surface, 0),
+        layout === 'wide-cards' ? (row.listing?.badge?.tone === 'on' ? palette().positive : palette().edgeStrong) : withAlpha(palette().surface, 0),
+        false, 'card');
+      if (layout !== 'wide-cards') catalogRule(item, 'ShopRowRule', -height / 2, list.width - 4 * u);
+      outlineSelectedEntry(context, item, row, list.width, height);
+      const action = inlineAction(row);
+      const buttonWidth = actionWidth(row);
+      const portrait = layout === 'wide-cards' ? 54 * u : 36 * u;
+      const iconX = -list.width / 2 + 4 * u + portrait / 2;
+      const figure = figureNode(context, item, `ShopIcon:${row.id}`, row.visualAssetKey ?? '', iconX,
+        layout === 'wide-cards' ? 0 : height / 2 - 6 * u - portrait / 2, portrait, layout === 'wide-cards' ? 68 * u : portrait,
+        { glyph: row.name.slice(0, 1), glyphSize: 18 * u, glyphColor: palette().accent }, context.images);
+      const sprite = figure.getChildByName(`ShopIcon:${row.id}:Sprite`)?.getComponent(Sprite);
+      if (sprite && row.listing?.dim) { sprite.grayscale = true; sprite.color = new Color(150, 150, 150, 255); }
+      const textLeft = -list.width / 2 + 10 * u + portrait;
+      const textWidth = list.width / 2 - textLeft - (buttonWidth > 0 ? buttonWidth + 6 * u : 4 * u);
+      // Everything left of the inline action opens the detail; the action keeps its own touch target.
+      const reserved = buttonWidth > 0 ? buttonWidth + 6 * u : 0;
+      const info = node(item, `MobileSheetShopInfo:${row.id}`, -reserved / 2, 0, list.width - reserved, height);
+      const nameTop = height / 2 - (layout === 'wide-cards' ? 16 : 13) * u;
+      const nameWidth = Math.min(textWidth, (catalogTextWidth(row.name, 12.5) + 4) * u);
+      catalogText(context, item, 'ShopRowName', row.name, textLeft + nameWidth / 2, nameTop, nameWidth, 18 * u, 12.5,
+        row.listing?.dim ? palette().textMuted : row.rarity ? qualityNameColor(row.rarity, palette().text) : palette().text);
+      const badgeWidth = listingBadge(context, item, 'ShopRowBadge', row.listing?.badge, textLeft + nameWidth + 4 * u, nameTop);
+      const meta = [row.listing?.meta, listingPips(row.listing?.level)].filter(Boolean).join(' ');
+      const metaLeft = textLeft + nameWidth + badgeWidth + 8 * u;
+      if (meta && metaLeft < textLeft + textWidth - 20 * u) {
+        catalogText(context, item, 'ShopRowMeta', meta, (metaLeft + textLeft + textWidth) / 2, nameTop,
+          textLeft + textWidth - metaLeft, 16 * u, 10, palette().textMuted);
+      }
+      (row.listing?.lines ?? []).slice(0, layout === 'wide-cards' ? 3 : 2).forEach((line, index) => {
+        catalogText(context, item, `ShopRowLine:${index}`, firstLine(line, textWidth, 10.5), textLeft + textWidth / 2,
+          nameTop - (18 + index * 15) * u, textWidth, 15 * u, 10.5, index === 0 ? palette().text : palette().textMuted);
+      });
+      context.options.bindLocal(info, () => open(row));
+      if (action) catalogActionButton(context, item, action, row, list.width / 2 - buttonWidth / 2 - 2 * u,
+        layout === 'wide-cards' ? -height / 2 + 26 * u : 0, buttonWidth, update, false, row.listing?.price);
+      cursor += height + gap;
+    }
+  }
+  renderCatalogServicesFooter(context, catalog, footerHeight, update);
+  renderCatalogPopup(context, catalog);
+}
+
+/** A two-column character card: portrait, status chip, name, meta, two lines and the inline buy or train action. */
+function renderMerchantCard(context: SheetContext, parent: Node, row: HubShopRowViewModel, x: number, y: number, width: number, height: number,
+  action: ViewActionModel | undefined, open: (row: HubShopRowViewModel) => void, update: (patch: Partial<MobileSheetState>) => void,
+  firstLine: (value: string, width: number, size: number) => string): void {
+  const u = catalogUnit(context);
+  const active = row.listing?.badge?.tone === 'on';
+  const card = panel(parent, `MobileSheetShopRow:${row.id}`, x, y, width, height, palette().raised,
+    active ? palette().positive : row.rarity ? qualityEdgeColor(row.rarity, palette().edgeStrong) : palette().edgeStrong, false, 'card');
+  outlineSelectedEntry(context, card, row, width, height);
+  const innerWidth = width - 12 * u;
+  const figure = figureNode(context, card, `ShopIcon:${row.id}`, row.visualAssetKey ?? '', 0, height / 2 - 40 * u, innerWidth, 66 * u,
+    { glyph: row.name.slice(0, 1), glyphSize: 26 * u, glyphColor: palette().accent }, context.images);
+  const sprite = figure.getChildByName(`ShopIcon:${row.id}:Sprite`)?.getComponent(Sprite);
+  if (sprite && row.listing?.dim) { sprite.grayscale = true; sprite.color = new Color(150, 150, 150, 255); }
+  if (row.listing?.badge) {
+    const badgeWidth = (catalogTextWidth(row.listing.badge.label, 9.5) + 8) * u;
+    listingBadge(context, card, 'ShopCardBadge', row.listing.badge, width / 2 - 6 * u - badgeWidth, height / 2 - 14 * u);
+  }
+  catalogText(context, card, 'ShopRowName', row.name, 0, height / 2 - 84 * u, innerWidth, 18 * u, 12.5,
+    row.listing?.dim ? palette().textMuted : row.rarity ? qualityNameColor(row.rarity, palette().text) : palette().text);
+  const meta = [row.listing?.meta, listingPips(row.listing?.level)].filter(Boolean).join('  ');
+  if (meta) catalogText(context, card, 'ShopRowMeta', meta, 0, height / 2 - 100 * u, innerWidth, 14 * u, 10, palette().textMuted);
+  (row.listing?.lines ?? []).slice(0, 2).forEach((line, index) => {
+    const lines = wrapInfiniteFlowLine(readable(line), Math.max(6, Math.floor(innerWidth / (10.5 * u)))).slice(0, index === 0 ? 2 : 1);
+    catalogText(context, card, `ShopRowLine:${index}`, index === 0 ? lines.join('\n') : firstLine(line, innerWidth, 10.5), 0,
+      height / 2 - (118 + index * 30) * u - (index === 0 ? (lines.length - 1) * 7 * u : 0), innerWidth, (index === 0 ? lines.length : 1) * 15 * u, 10.5,
+      index === 0 ? palette().text : active ? palette().positive : palette().textMuted);
+  });
+  const info = node(card, `MobileSheetShopInfo:${row.id}`, 0, action ? 25 * u : 0, width, action ? height - 50 * u : height);
+  context.options.bindLocal(info, () => open(row));
+  if (action) catalogActionButton(context, card, action, row, 0, -height / 2 + 25 * u, innerWidth, update, false, row.listing?.price);
+}
+
+/** NPC storefront: each merchant's own goods list, with a separate readable task list. */
+function renderNpcCatalog(context: SheetContext, catalog: HubCatalogSurface): void {
   const u = catalogUnit(context);
   const detail = context.model.sections[1].detail;
-  const tasks = detail.kind === 'hub' && detail.activePanel === 'tasks';
+  if (detail.kind !== 'hub' || detail.activePanel !== 'tasks') { renderMerchantList(context, catalog); return; }
   const introHeight = 76 * u;
   const footerHeight = catalog.services.length ? 50 * u : 0;
   const introWidth = context.width - 56 * u;
@@ -3410,17 +3732,12 @@ function renderNpcGridCatalog(context: SheetContext, catalog: HubCatalogSurface)
     context.bodyHeight / 2 - 40 * u, introWidth, 32 * u, 11, palette().textMuted);
   catalogText(context, context.body, 'MobileSheetCatalogCount', `共 ${catalog.rows.length} 项`,
     -context.width / 2 + 40 * u, context.bodyHeight / 2 - 65 * u, 80 * u, 16 * u, 10, palette().textMuted);
-  catalogText(context, context.body, 'MobileSheetCatalogHint', tasks ? '点击任务查看详情' : '点击图标查看详情',
+  catalogText(context, context.body, 'MobileSheetCatalogHint', '点击任务查看详情',
     context.width / 2 - 60 * u, context.bodyHeight / 2 - 65 * u, 120 * u, 16 * u, 10, palette().textMuted);
   const bodyHeight = Math.max(44 * u, context.bodyHeight - introHeight - footerHeight);
   const body = node(context.body, 'MobileSheetCatalogBody', 0, (footerHeight - introHeight) / 2, context.width, bodyHeight);
   const list = { ...context, body, bodyHeight };
-  const narrow = 750 / u <= 350;
-  const gap = (narrow ? 4 : 5) * u;
-  const gridWidth = context.width;
-  const columns = 5;
-  const tileSize = (gridWidth - gap * (columns - 1)) / columns;
-  const taskRows = tasks ? catalog.rows.map(row => {
+  const taskRows = catalog.rows.map(row => {
     const controls = catalogControlPositions(row.actions.map(action => ({ action,
       label: catalogActionLabel(action, row), width: catalogButtonWidth(context, catalogActionLabel(action, row), catalogPrice(action)) })), 84 * u, u, true);
     const copyWidth = context.width - (controls.positions.length ? 94 : 8) * u;
@@ -3429,9 +3746,8 @@ function renderNpcGridCatalog(context: SheetContext, catalog: HubCatalogSurface)
     const progressLines = wrapInfiniteFlowLine(`${row.status}  ${progress}`, Math.max(8, Math.floor(copyWidth / (11 * u))));
     const height = Math.max(controls.height + 16 * u, (60 + description.length * 17 + progressLines.length * 16) * u);
     return { row, controls, copyWidth, description, progressLines, height };
-  }) : [];
-  const contentHeight = tasks ? taskRows.reduce((sum, item) => sum + item.height, 0)
-    : Math.ceil(catalog.rows.length / columns) * (tileSize + gap) + 4 * u;
+  });
+  const contentHeight = taskRows.reduce((sum, item) => sum + item.height, 0);
   const region = scrollRegion(list, contentHeight);
   region.holder.name = 'MobileSheetCatalogScroll';
   catalogScrollByFrame.set(context.panel, region.scrollView);
@@ -3442,45 +3758,24 @@ function renderNpcGridCatalog(context: SheetContext, catalog: HubCatalogSurface)
   const open = (row: HubShopRowViewModel): void => update({ catalogRowId: row.id, catalogSelectedRowId: row.id,
     selectedActionId: undefined, catalogServiceOpen: undefined, catalogMoreOpen: false, catalogDetailScrollOffset: undefined });
   const content = scrollContentNode(region);
-  if (tasks) {
-    let cursor = 0;
-    for (const { row, controls, copyWidth, description, progressLines, height } of taskRows) {
-      const item = node(content, `MobileSheetShopRow:${row.id}`, 0, scrollItemY(region, cursor, height), context.width, height);
-      catalogRule(item, 'ShopRowRule', height / 2, context.width - 4 * u);
-      const info = node(item, `MobileSheetShopInfo:${row.id}`, -context.width / 2 + copyWidth / 2, 0, copyWidth, height);
-      catalogText(context, info, 'ShopRowName', row.name, 0, height / 2 - 18 * u, copyWidth, 22 * u, 13);
-      catalogText(context, info, 'ShopRowCategory', row.category, 0, height / 2 - 37 * u, copyWidth, 16 * u, 10, palette().textMuted);
-      catalogText(context, info, 'ShopRowDescription', description.join('\n'), 0,
-        height / 2 - (49 + description.length * 8.5) * u, copyWidth, description.length * 17 * u, 11, palette().textMuted);
-      catalogText(context, info, 'ShopRowStatus', progressLines.join('\n'), 0,
-        -height / 2 + (8 + progressLines.length * 8) * u, copyWidth, progressLines.length * 16 * u, 11,
-        row.status === '可领取' ? palette().positive : palette().textMuted);
-      context.options.bindLocal(info, () => open(row));
-      for (const control of controls.positions) catalogActionButton(context, item, control.action!, row,
-        context.width / 2 - 84 * u + control.x + control.width / 2,
-        controls.height / 2 - control.line * 50 * u - 22 * u, control.width, update);
-      cursor += height;
-    }
-  } else catalog.rows.forEach((row, index) => {
-    const tile = catalogPanel(context, content, `MobileSheetShopTile:${row.id}`,
-      -context.width / 2 + 2 * u + (index % columns) * (tileSize + gap) + tileSize / 2,
-      scrollItemY(region, 2 * u + Math.floor(index / columns) * (tileSize + gap), tileSize),
-      tileSize, tileSize, palette().quiet, catalogRarityEdge(row));
-    const border = tile.getComponent(Graphics)!;
-    border.strokeColor = catalogRarityEdge(row); border.lineWidth = 2 * u;
-    border.roundRect(-tileSize / 2 + u, -tileSize / 2 + u, tileSize - 2 * u, tileSize - 2 * u, 3 * u); border.stroke();
-    const selected = (context.state.catalogRowId ?? context.state.catalogSelectedRowId) === row.id;
-    if (selected) {
-      border.roundRect(-tileSize / 2 + 4 * u, -tileSize / 2 + 4 * u, tileSize - 8 * u, tileSize - 8 * u, 2 * u); border.stroke();
-      border.fillColor = palette().text;
-      const x = tileSize / 2 - 7 * u, y = -tileSize / 2 + 7 * u;
-      border.moveTo(x, y + 3 * u); border.lineTo(x + 3 * u, y); border.lineTo(x, y - 3 * u); border.lineTo(x - 3 * u, y); border.close(); border.fill();
-    }
-    const imageSize = Math.min((narrow ? 32 : 36) * u, tileSize - 6 * u);
-    figureNode(context, tile, `ShopIcon:${row.id}`, row.visualAssetKey ?? '', 0, 0, imageSize, imageSize,
-      { iconKind: 'inventory', glyphColor: palette().accent }, context.images);
-    context.options.bindLocal(tile, () => open(row));
-  });
+  let cursor = 0;
+  for (const { row, controls, copyWidth, description, progressLines, height } of taskRows) {
+    const item = node(content, `MobileSheetShopRow:${row.id}`, 0, scrollItemY(region, cursor, height), context.width, height);
+    catalogRule(item, 'ShopRowRule', height / 2, context.width - 4 * u);
+    const info = node(item, `MobileSheetShopInfo:${row.id}`, -context.width / 2 + copyWidth / 2, 0, copyWidth, height);
+    catalogText(context, info, 'ShopRowName', row.name, 0, height / 2 - 18 * u, copyWidth, 22 * u, 13);
+    catalogText(context, info, 'ShopRowCategory', row.category, 0, height / 2 - 37 * u, copyWidth, 16 * u, 10, palette().textMuted);
+    catalogText(context, info, 'ShopRowDescription', description.join('\n'), 0,
+      height / 2 - (49 + description.length * 8.5) * u, copyWidth, description.length * 17 * u, 11, palette().textMuted);
+    catalogText(context, info, 'ShopRowStatus', progressLines.join('\n'), 0,
+      -height / 2 + (8 + progressLines.length * 8) * u, copyWidth, progressLines.length * 16 * u, 11,
+      row.status === '可领取' ? palette().positive : palette().textMuted);
+    context.options.bindLocal(info, () => open(row));
+    for (const control of controls.positions) catalogActionButton(context, item, control.action!, row,
+      context.width / 2 - 84 * u + control.x + control.width / 2,
+      controls.height / 2 - control.line * 50 * u - 22 * u, control.width, update);
+    cursor += height;
+  }
   if (footerHeight) {
     catalogRule(context.body, 'CatalogFooterRule', -context.bodyHeight / 2 + footerHeight, context.width);
     const label = `${catalog.serviceTitle ?? '其他服务'} ↗`;
@@ -3501,7 +3796,7 @@ function renderHubCatalog(context: SheetContext, catalog: HubCatalogSurface): vo
     title.fontSize = Math.round(14 * u);
     title.lineHeight = Math.ceil(21 * u);
   }
-  if (context.state.kind === 'npc') { renderNpcGridCatalog(context, catalog); return; }
+  if (context.state.kind === 'npc') { renderNpcCatalog(context, catalog); return; }
   const introHeight = 76 * u;
   const footerHeight = catalog.services.length > 0 ? 50 * u : 0;
   const portraitX = -context.width / 2 + 20 * u;
@@ -3837,7 +4132,7 @@ export function renderInfiniteFlowInfoSheet(root: Node, model: GameViewModel, st
 
 function renderInfiniteFlowInfoSheetBody(root: Node, model: GameViewModel, state: MobileSheetState, options: InfiniteFlowInfoSheetOptions): void {
   const surfaceHeight = Math.max(1334, options.surfaceHeight);
-  if (state.kind === 'inventory' && (state.tab === 'hud-relics'
+  if (state.kind === 'inventory' && (state.tab === 'hud-relics' || state.tab === 'hud-party'
     || state.tab === 'hud-reward-points' || state.tab === 'hud-lingyun')) {
     renderHudPopover(root, model, state, options, surfaceHeight);
     return;

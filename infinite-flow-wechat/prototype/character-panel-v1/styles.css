@@ -1,0 +1,52 @@
+/* Character-sheet specifics on top of the shop-v2 chrome. */
+.workspace.single { grid-template-columns: auto; }
+.window.character { top: 150px; height: 520px; }
+.phone[data-width="320"] .window.character { top: 40px; height: 500px; }
+.sheet-tabs { gap: 3px; padding: 7px 6px 0; }
+.sheet-tabs .tab { height: 26px; min-width: 44px; padding: 0; font-size: 12px; }
+.tab-rule { margin: 6px 2px 6px; padding: 5px 7px; border-left: 2px solid var(--gold); background: #1d1912; color: #d8c9a6; font-size: 10.5px; line-height: 1.45; }
+.empty strong { color: var(--text); font-weight: 600; }
+.sheet-foot { flex-shrink: 0; padding: 6px 10px; border-top: 1px solid #3a3021; color: var(--muted); font-size: 10.5px; text-align: center; }
+
+/* 角色: WoW paper doll, slots down both sides of the portrait, one stat box below. */
+.doll { display: grid; grid-template-columns: 52px 1fr 52px; gap: 6px; padding: 8px 4px 6px; border: 1px solid #4a3c27; background: #15120d; border-radius: 2px; }
+.doll-col { display: grid; gap: 5px; align-content: start; }
+.slot { position: relative; height: 52px; border: 1px solid #5b4a2e; border-radius: 2px; background: radial-gradient(#33291d, #14110c 85%); display: grid; justify-items: center; align-content: center; text-align: center; }
+.slot img { width: 34px; height: 34px; }
+.slot small { color: var(--muted); font-size: 9px; line-height: 1; }
+.slot b { position: absolute; top: 2px; right: 3px; font-size: 8.5px; color: var(--gold-light); font-weight: 500; }
+.doll-center { display: grid; justify-items: center; align-content: center; gap: 6px; }
+.doll-center img { width: 112px; height: 120px; object-fit: cover; object-position: top; border: 1px solid #5b4a2e; border-radius: 2px; }
+.badge-lv { padding: 1px 10px; border: 1px solid #8a6d40; background: #3a2e1b; color: var(--gold-light); font-size: 11px; border-radius: 2px; }
+.stats { margin-top: 6px; border: 1px solid #4a3c27; background: #17140f; padding: 6px 8px; }
+.stats h3 { margin: 0 0 4px; color: var(--gold); font-size: 12px; font-weight: 600; border-bottom: 1px solid #3a3021; padding-bottom: 3px; }
+.stats dl { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 14px; margin: 0; }
+.stats dl div { display: flex; justify-content: space-between; font-size: 11.5px; }
+.stats dt { color: var(--muted); }
+.stats dd { margin: 0; }
+.stats .power dd { color: #ef9b7d; }
+
+/* 携行 */
+.carry-slots { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+.carry-slot { height: 54px; border: 1px solid #5b4a2e; border-radius: 2px; background: #15120d; display: grid; justify-items: center; align-content: center; font-size: 9px; color: var(--muted); }
+.carry-slot.filled { border-color: var(--gold); background: #2c2417; color: var(--text); }
+.carry-slot img { width: 26px; height: 26px; }
+.hint { color: var(--muted); font-size: 10.5px; text-align: center; padding: 6px 0; border-bottom: 1px solid #3a3021; margin-bottom: 4px; }
+
+/* Cards shared by 携行 and 出战. */
+.sheet-card { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 8px; width: 100%; padding: 7px 8px; margin-bottom: 4px; border: 1px solid #5b4a2e; border-radius: 2px; background: #221c14; text-align: left; }
+.sheet-card:hover:not(.locked) { border-color: #a5844c; }
+.sheet-card.on { border-color: var(--gold); background: #3a2e1b; }
+.sheet-card.locked { cursor: default; opacity: .75; }
+.sheet-card img { width: 40px; height: 44px; object-fit: contain; }
+.sheet-card .name { font-size: 12.5px; }
+.sheet-card .state { font-size: 10.5px; color: var(--gold); }
+.sheet-card.on .state { color: var(--green); }
+.sheet-card .line { font-size: 10.5px; color: var(--muted); line-height: 1.4; }
+.group-head { display: flex; justify-content: space-between; align-items: baseline; margin: 8px 2px 4px; }
+.group-head strong { color: var(--gold); font-size: 13px; font-weight: 600; }
+.group-head span { color: var(--muted); font-size: 10px; }
+.empty { color: var(--muted); font-size: 11px; text-align: center; padding: 6px 0 8px; }
+.equip-list .sheet-card .act { justify-self: end; }
+.back { width: 100%; height: 28px; margin-top: 6px; border: 1px solid #8a6d40; background: #2b2316; color: var(--gold-light); border-radius: 2px; }
+.proposal { margin: 0 0 6px; padding: 5px 7px; border: 1px dashed #8a6d40; color: #e2cd9b; font-size: 10.5px; border-radius: 2px; }

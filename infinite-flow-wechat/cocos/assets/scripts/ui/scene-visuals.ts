@@ -64,6 +64,8 @@ export function getInfiniteFlowRoomSheetArtKey(detail: ExploreDetailViewModel): 
   return node.nodeType === 'trap' ? keys.propTrap : node.nodeType === 'exit' || node.nodeType === 'portal' ? keys.propExit : keys.propChest;
 }
 
+type RunPartyKind = 'pet' | 'companion' | 'bloodline';
+
 export function getInfiniteFlowRunRelicVisualKey(relicId: RunRelicId): string {
   return `item:run_relic_${relicId}`;
 }
@@ -82,12 +84,15 @@ export function getInfiniteFlowSceneVisualKeys(model: GameViewModel): Readonly<{
   lurker?: string;
   transitionGate?: string;
   hubPortal?: string;
-} & Partial<Record<HubCatalogPanel | keyof typeof INFINITE_FLOW_DUNGEON_PROP_VISUAL_KEYS | `runRelic_${RunRelicId}`, string>>> {
+} & Partial<Record<HubCatalogPanel | keyof typeof INFINITE_FLOW_DUNGEON_PROP_VISUAL_KEYS | `runRelic_${RunRelicId}` | `runParty_${RunPartyKind}`, string>>> {
   const detail = model.sections[1]?.detail;
-  const runRelicVisuals: Partial<Record<`runRelic_${RunRelicId}`, string>> = {};
+  const runRelicVisuals: Partial<Record<`runRelic_${RunRelicId}` | `runParty_${RunPartyKind}`, string>> = {};
   if (detail?.kind === 'explore' || detail?.kind === 'combat') {
     for (const relic of model.sections[1].loadout?.runRelics ?? []) {
       runRelicVisuals[`runRelic_${relic.relicId}`] = getInfiniteFlowRunRelicVisualKey(relic.relicId);
+    }
+    for (const member of model.sections[1].loadout?.runParty ?? []) {
+      if (member.visualAssetKey !== undefined) runRelicVisuals[`runParty_${member.kind}`] = member.visualAssetKey;
     }
   }
   let background = model.visualAssetKey as string | undefined;

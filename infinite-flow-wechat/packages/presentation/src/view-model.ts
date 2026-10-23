@@ -126,7 +126,10 @@ import {
   buildEquipmentItemViewModel,
   buildHubOwnedLoadoutCatalog,
   buildHubShopCatalog,
-  buildOwnedEquipmentCatalog
+  buildOwnedEquipmentCatalog,
+  effectReadout,
+  PET_PASSIVE_LABELS,
+  statsReadout
 } from './hub-shop.js';
 import {
   HUB_PANELS,
@@ -3508,6 +3511,35 @@ function getCombatActionAvailability(state: GameState, action: CombatAction): Re
   return { available: true };
 }
 
+/** Who comes along on this run, read from the run's own snapshots (the pet is the hub's active one). */
+function buildRunParty(state: GameState): CharacterLoadoutViewModel['runParty'] {
+  const party: CharacterLoadoutViewModel['runParty'][number][] = [];
+  if (state.activePet !== undefined && isCurrentDungeonFeatureAvailable(state, 'pet')) {
+    const pet = PETS[state.activePet];
+    const level = state.petLevels[pet.id] ?? 1;
+    const asset = getGameAsset('pet', pet.id)?.key;
+    party.push({ kind: 'pet', id: pet.id, name: pet.name,
+      description: `出战灵宠 ${level} 级：${statsReadout(pet.bonus)}；${pet.passiveTags.map(tag => PET_PASSIVE_LABELS[tag]).join('；')}，自动生效。`,
+      ...(asset === undefined ? {} : { visualAssetKey: asset }) });
+  }
+  const companion = getCurrentCompanionAssistStatus(state);
+  if (companion.snapshot && companion.definition) {
+    const asset = getGameAsset('character', `companion_${companion.definition.id}`)?.key;
+    party.push({ kind: 'companion', id: companion.definition.id, name: companion.definition.name,
+      description: `出战同伴 ${companion.snapshot.rank} 阶：战斗「法术 → 同伴·${companion.definition.assistName}」${effectReadout(companion.effect)}，每场一次。`,
+      ...(asset === undefined ? {} : { visualAssetKey: asset }) });
+  }
+  const bloodline = getCurrentBloodlineSurgeStatus(state);
+  if (bloodline.snapshot) {
+    const definition = BLOODLINE_CATALOG.find(entry => entry.id === bloodline.snapshot?.bloodlineId);
+    const asset = getGameAsset('item', `bloodline_${bloodline.snapshot.bloodlineId}`)?.key;
+    if (definition) party.push({ kind: 'bloodline', id: definition.id, name: definition.name,
+      description: `激活血统 ${bloodline.snapshot.rank} 阶：${statsReadout(definition.statBonuses[bloodline.snapshot.rank])}；战斗「法术 → 血统·${definition.name}爆发」${bloodline.effect ? effectReadout(bloodline.effect) : ''}，每场一次。`,
+      ...(asset === undefined ? {} : { visualAssetKey: asset }) });
+  }
+  return party;
+}
+
 function buildEquipmentMemoryCombatProjection(
   state: GameState
 ): EquipmentMemoryCombatViewModel | undefined {
@@ -3647,22 +3679,29 @@ function buildCombatProjection(state: GameState, localUiState: PresentationLocal
       ...(effect.breathGain > 0 ? [`获得至多 ${effect.breathGain} 层蓄息`] : []),
       ...(effect.healPercent > 0 ? [`回复 ${effect.healPercent}% 最大生命`] : [])
     ] : [];
-    const readout = `${METHODS[snapshot.methodId].name}${effectParts.length > 0 ? ` · ${effectParts.join('、')}` : ''}。每场一次，不耗回合，不触发反击。`;
+    const readout = `功法「${METHODS[snapshot.methodId].name}」的战技${effectParts.length > 0 ? `：${effectParts.join('、')}` : ''}。每场一次，不耗回合，不触发反击。`;
+    // Each advanced entry names where it comes from, so a bought method, companion or bloodline is easy to find.
+    const label = `功法·${status.definition?.name ?? METHODS[snapshot.methodId].name}`;
     actions.push(status.available
-      ? commandAction(`combat.method:${snapshot.methodId}`, status.definition?.name ?? METHODS[snapshot.methodId].name, 'advanced', { type: 'combat/use-method-technique', methodId: snapshot.methodId }, { readout })
-      : disabledAction(`combat.method:${snapshot.methodId}`, status.definition?.name ?? METHODS[snapshot.methodId].name, 'advanced', status.unavailableReason ?? '功法技当前不可用。', { readout }));
+      ? commandAction(`combat.method:${snapshot.methodId}`, label, 'advanced', { type: 'combat/use-method-technique', methodId: snapshot.methodId }, { readout })
+      : disabledAction(`combat.method:${snapshot.methodId}`, label, 'advanced', status.unavailableReason ?? '功法技当前不可用。', { readout }));
   }
   const companion = getCurrentCompanionAssistStatus(state);
   if (companion.snapshot) {
+    const label = `同伴·${companion.definition?.assistName ?? '援护'}`;
+    const readout = `出战同伴${companion.definition?.name ?? ''}出手：${effectReadout(companion.effect)}。每场一次，不耗回合，不触发反击。`;
     actions.push(companion.available
-      ? commandAction('combat.companion-assist', companion.definition?.assistName ?? '同伴援护', 'advanced', { type: 'combat/use-companion-assist' })
-      : disabledAction('combat.companion-assist', companion.definition?.assistName ?? '同伴援护', 'advanced', companion.unavailableReason ?? '同伴援护当前不可用。'));
+      ? commandAction('combat.companion-assist', label, 'advanced', { type: 'combat/use-companion-assist' }, { readout })
+      : disabledAction('combat.companion-assist', label, 'advanced', companion.unavailableReason ?? '同伴援护当前不可用。', { readout }));
   }
   const bloodline = getCurrentBloodlineSurgeStatus(state);
   if (bloodline.snapshot) {
+    const bloodlineName = BLOODLINE_CATALOG.find(entry => entry.id === bloodline.snapshot?.bloodlineId)?.name ?? '血统';
+    const label = `血统·${bloodlineName}爆发`;
+    const readout = `激活的血统「${bloodlineName}」${bloodline.snapshot.rank} 阶爆发${bloodline.effect ? `：${effectReadout(bloodline.effect)}` : ''}。每场一次，不耗回合，不触发反击。`;
     actions.push(bloodline.available
-      ? commandAction('combat.bloodline-surge', '血统爆发', 'advanced', { type: 'combat/use-bloodline-surge' })
-      : disabledAction('combat.bloodline-surge', '血统爆发', 'advanced', bloodline.unavailableReason ?? '血统爆发当前不可用。'));
+      ? commandAction('combat.bloodline-surge', label, 'advanced', { type: 'combat/use-bloodline-surge' }, { readout })
+      : disabledAction('combat.bloodline-surge', label, 'advanced', bloodline.unavailableReason ?? '血统爆发当前不可用。', { readout }));
   }
   actions.push(...buildSoulSkillActions(state, 'advanced'));
   actions.push(commandAction('combat.retreat-run', '放弃本轮并回收', 'advanced', { type: 'run/retreat' }, { emphasis: 'danger', riskReason: '该动作结束整轮副本，并按撤退规则结算战利品。' }));
@@ -4420,6 +4459,7 @@ function buildCharacterLoadout(state: GameState): CharacterLoadoutViewModel {
     artPower: stats.artPower,
     defense: stats.defense,
     speed: stats.speed,
+    runParty: state.phase === 'explore' || state.phase === 'combat' ? buildRunParty(state) : [],
     runRelics: state.phase === 'explore' || state.phase === 'combat'
       ? (state.run?.relicState?.acquiredIds ?? []).map((relicId) => {
           const relic = RUN_RELIC_DEFINITIONS[relicId];

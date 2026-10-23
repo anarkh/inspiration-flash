@@ -72,6 +72,7 @@ import type {
   ResultRouteContractSettlementViewModel,
   StatusMetric,
   ViewActionModel,
+  HubShopCatalogViewModel,
 } from '@infinite-flow/presentation';
 
 const DESIGN_WIDTH = 750;
@@ -2359,16 +2360,55 @@ function textUnitWidth(codePoint: number): number {
  * dropping glyphs. Pure and deterministic: the same line always wraps at the
  * same boundaries.
  */
+/** A pet, companion, bloodline or method that just joined or went active says where it now acts. */
+export function describeHubPreparationChange(
+  previous: HubShopCatalogViewModel | undefined,
+  next: HubShopCatalogViewModel | undefined,
+): string | undefined {
+  if (previous === undefined || next === undefined || previous.panel !== next.panel) return undefined;
+  for (const row of next.rows) {
+    const before = previous.rows.find((candidate) => candidate.id === row.id)?.status;
+    if (before === undefined || before === row.status) continue;
+    const activeNow = /出战中|已激活/.test(row.status) && !/出战中|已激活/.test(before);
+    switch (next.panel) {
+      case 'pets':
+        if (activeNow) return `${row.name}已出战 · 属性与特性在副本中自动生效`;
+        if (before === '未拥有') return `${row.name}已加入 · 在「角色 → 灵宠」设为出战`;
+        break;
+      case 'companions':
+        if (activeNow) return `${row.name}已出战 · 副本战斗「法术 → 同伴」里援护`;
+        if (/可招募|未解锁/.test(before)) return `${row.name}已加入 · 在「角色 → 同伴」设为出战`;
+        break;
+      case 'bloodlines':
+        if (activeNow) return `${row.name}已激活 · 爆发在副本战斗「法术 → 血统」`;
+        if (before === '未觉醒') return `${row.name}已觉醒 · 在「角色 → 血统」激活`;
+        break;
+      case 'methods':
+        if (before === '未学习') return `${row.name}已学会 · 战技在副本战斗「法术 → 功法」`;
+        break;
+      default:
+        break;
+    }
+  }
+  return undefined;
+}
+
+/** Closing punctuation never opens a line; it hangs at the end of the previous one instead. */
+const LINE_START_FORBIDDEN = new Set(Array.from('，。、；：！？）」』》〉】…,.;:!?)'));
+
 export function wrapInfiniteFlowLine(line: string, maxUnits: number): readonly string[] {
   const wrapped: string[] = [];
   let current = '';
   let currentUnits = 0;
   for (const char of line) {
     const units = textUnitWidth(char.codePointAt(0) ?? 0);
-    if (current.length > 0 && currentUnits + units > maxUnits) {
-      wrapped.push(current);
-      current = char;
-      currentUnits = units;
+    if (current.length > 0 && currentUnits + units > maxUnits && !LINE_START_FORBIDDEN.has(char)) {
+      // A number or Latin word moves to the next line whole ("+12", "R3"), never split mid-run.
+      const run = /[0-9A-Za-z+\-−.%×]/.test(char) ? current.match(/[0-9A-Za-z+\-−.%×]+$/)?.[0] ?? '' : '';
+      const carry = run.length < current.length ? run : '';
+      wrapped.push(carry ? current.slice(0, -carry.length) : current);
+      current = carry + char;
+      currentUnits = Array.from(current).reduce((sum, glyph) => sum + textUnitWidth(glyph.codePointAt(0) ?? 0), 0);
     } else {
       current += char;
       currentUnits += units;
@@ -2899,6 +2939,7 @@ export class InfiniteFlowView {
     if (this.mobileSheet?.kind !== 'inventory') return undefined;
     switch (this.mobileSheet.tab) {
       case 'hud-relics': return 'relics';
+      case 'hud-party': return 'party';
       case 'hud-reward-points': return 'reward-points';
       case 'hud-lingyun': return 'lingyun';
       default: return undefined;
@@ -3084,6 +3125,9 @@ export class InfiniteFlowView {
       this.mobileSheet = undefined;
       if (claimed > 0) this.sceneFeedback = { text: `已领取 ${claimed} 项任务奖励` };
     }
+    const preparation = previousDetail?.kind === 'hub' && mobileDetail?.kind === 'hub'
+      ? describeHubPreparationChange(previousDetail.shop, mobileDetail.shop) : undefined;
+    if (preparation !== undefined) this.sceneFeedback = { text: preparation };
     this.mobileRoomKey = roomKey;
     this.mobilePendingKey = pendingKey;
     this.mobileNodeCleared = nodeCleared;

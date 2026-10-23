@@ -1,4 +1,4 @@
-export type HudPopoverKind = 'relics' | 'reward-points' | 'lingyun';
+export type HudPopoverKind = 'relics' | 'party' | 'reward-points' | 'lingyun';
 
 /** Approved HUD measurements in visible CSS pixels, shared by the strip and its popovers. */
 export function getWalkHudLayout(viewportWidth: number) {
@@ -18,4 +18,13 @@ export function getWalkHudLayout(viewportWidth: number) {
     healthWidth: Math.min(96, infoWidth - (narrow ? 101 : 107)) * 1.2,
     portraitLeft: narrow ? 9 : 10, portraitWidth: narrow ? 42 : 44,
   };
+}
+
+/** The relic strip and, after it, the run party strip under the health bar; their popovers anchor to the same spans. */
+export function getWalkHudStrips(layout: ReturnType<typeof getWalkHudLayout>, relicCount: number, partyCount: number) {
+  const relicLeft = layout.infoLeft - 3;
+  const relicWidth = relicCount > 0 ? Math.max(44, relicCount * 24) : 0;
+  const partyLeft = relicLeft + (relicWidth > 0 ? relicWidth + 4 : 0);
+  const partyWidth = partyCount > 0 ? Math.max(44, partyCount * 24) : 0;
+  return { relicLeft, relicWidth, partyLeft, partyWidth };
 }
