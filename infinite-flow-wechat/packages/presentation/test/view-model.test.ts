@@ -22,6 +22,7 @@ import {
   getRunLootSecurityStatus,
   getRunPursuitDefinition,
   listRouteContracts,
+  POST_COMBAT_RECOVERY_PERCENT,
   type CombatAction,
   type DungeonId,
   type GameState,
@@ -214,6 +215,9 @@ function verifyHubAndHelp(): void {
     assert(!memoryHelpCopy.includes(developerTerm), `equipment-memory help keeps developer term ${developerTerm} out of player copy`);
   }
   assert(!memoryHelpCopy.includes('副本页只显示当前记忆任务'), 'modern help does not restore the obsolete hunt-first summary');
+  // The combat help quotes the live recovery share rather than a stale copy of it.
+  const combatHelp = buildGameViewModel(hub, { activeHelpId: 'combatFlow' }).sections[4].active;
+  assert(combatHelp?.readout.includes(`胜利或捕获后回复 ${POST_COMBAT_RECOVERY_PERCENT}% 最大生命`), 'combat help quotes the post-combat recovery share');
   // Every help card a player can open stays free of build, save-format and desktop-only wording.
   for (const helpId of [...DUNGEON_FEATURE_HELP_IDS, 'equipmentCommission'] as const) {
     const card = buildGameViewModel(hub, { activeHelpId: helpId }).sections[4].active;

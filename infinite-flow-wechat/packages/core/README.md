@@ -26,7 +26,7 @@ needs a generated seed must provide `DungeonEntryOptions.seedSource`; explicit
 `hiddenTaskSeed` and `infernoMapSeed` values continue to take precedence. The source
 web project is unchanged.
 
-A won encounter (victory, capture, or a beaten pursuer) restores 30% of the
+A won encounter (victory, capture, or a beaten pursuer) restores 20% of the
 final derived maximum HP, capped at that maximum, so wounds carry into later rooms.
 A successful escape heals nothing. Defeat and retreat during combat end the run and
 still restore the player's HP to the final derived maximum. Damage history, rewards,

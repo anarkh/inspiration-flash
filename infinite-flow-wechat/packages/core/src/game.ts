@@ -2036,7 +2036,7 @@ function normalizeEquipmentHealth(state: GameState): GameState {
 }
 
 /** A won encounter (victory, capture or a beaten pursuer) restores this share of the settled maximum HP. */
-export const POST_COMBAT_RECOVERY_PERCENT = 30;
+export const POST_COMBAT_RECOVERY_PERCENT = 20;
 
 /** Victory recovery uses the settled maximum, independently of healing modifiers; wounds carry into the next room. */
 function recoverHealthAfterVictory(state: GameState): { state: GameState; recovered: number } {
