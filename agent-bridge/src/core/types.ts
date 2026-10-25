@@ -146,6 +146,7 @@ export interface BridgeRunRecord {
   sessionId: string | null;
   turnId: string | null;
   directMessagePreview?: string;
+  outputMode?: BridgeOutputMode;
   status: BridgeRunStatus;
   startedAt: string;
   updatedAt: string;

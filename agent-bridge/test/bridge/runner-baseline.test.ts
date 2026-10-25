@@ -114,6 +114,7 @@ assert.doesNotMatch(prompts[1], /Unstaged diff:\\n\\(omitted\\)/);
     await runNode(driver, {
       AGENT_BRIDGE_CONFIG_DIR: configDir,
       AGENT_BRIDGE_STATE_DIR: stateDir,
+      AGENT_BRIDGE_TERMINAL_BACKEND: "capture",
       AGENT_BRIDGE_GATE_TIMEOUT_MS: "30000",
       PROJECT_DIR: projectDir,
       PROMPTS_PATH: promptsPath
