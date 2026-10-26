@@ -52,7 +52,11 @@ import {
   getCurrentRunPressure,
   getRouteForecasts,
   getDerivedStats,
+  getMaterialReforgeInputs,
   LINGYUN_EXCHANGE_PRICE_STEP,
+  MATERIAL_REFORGE_COST,
+  MATERIAL_REFORGE_TARGETS,
+  type MaterialReforgeTarget,
   getEquipmentCommissionStatus,
   getEquipmentMemoryStatus,
   getEquipmentSoulSkillActionStatuses,
@@ -673,6 +677,7 @@ type HubPanelProjection = Readonly<{
   entryBuild?: EntryBuildViewModel;
   equipmentCommission?: EquipmentCommissionDetailViewModel;
   equipmentMemory?: EquipmentMemoryLibraryViewModel;
+  materialReforge?: readonly ViewActionModel[];
 }>;
 
 type CatalogEntry = Readonly<{ id: string; name: string }>;
@@ -1239,6 +1244,29 @@ function normalizeEquipmentCommissionDraft(
   };
 }
 
+/**
+ * Two services, one per result, each melting the chapter material the player holds the most of
+ * (the later chapter on a tie), so a stocked save sees two buttons instead of one pair per material.
+ */
+function buildMaterialReforgeActions(state: GameState): ViewActionModel[] {
+  const ready = getMaterialReforgeInputs().filter((itemId) => state.inventory[itemId] >= MATERIAL_REFORGE_COST);
+  const uses: Readonly<Record<MaterialReforgeTarget, string>> = { cracked_core: '用于装备强化', cycle_imprint: '用于装备铭刻' };
+  if (ready.length === 0) {
+    return [disabledAction('hub.equipment.reforge', '材料熔铸', 'preparation',
+      `需要 ${MATERIAL_REFORGE_COST} 个同种章节材料（裂核除外）。`,
+      { readout: `${MATERIAL_REFORGE_COST} 个同种章节材料换 1 个裂核或轮回刻印，可以一直熔铸。` })];
+  }
+  const materialId = ready.reduce((best, itemId) => state.inventory[itemId] >= state.inventory[best] ? itemId : best);
+  return MATERIAL_REFORGE_TARGETS.map((targetId) => previewCommandAction(
+    state,
+    `hub.equipment.reforge:${materialId}:${targetId}`,
+    `熔铸${ITEMS[targetId].name}：${ITEMS[materialId].name}×${MATERIAL_REFORGE_COST}`,
+    'preparation',
+    { type: 'hub/reforge-material', materialId, targetId },
+    { readout: `用 ${MATERIAL_REFORGE_COST} 个${ITEMS[materialId].name}换 1 个${ITEMS[targetId].name}，${uses[targetId]}。总是熔掉持有最多的章节材料，当前持有 ${state.inventory[materialId]} 个。` }
+  ));
+}
+
 function buildEquipmentCommissionProjection(
   state: GameState,
   focusedEquipmentId: EquipmentId,
@@ -1700,7 +1728,9 @@ function buildEquipmentPanel(
     objectiveTitle: '先获得并穿戴装备，再逐步强化',
     objectiveSummary: `${equipment.description} 兑换后需手动装备；升级提高属性，满级后可铭刻或淬炼。${attunementId ? `当前铭刻：${getEquipmentAttunementOptions(equipmentId).find(({ id }) => id === attunementId)?.name ?? '存档分支异常'}。` : ''}`,
     equipmentCommission: commission.detail,
-    equipmentMemory: memory.detail
+    equipmentMemory: memory.detail,
+    // Panel-wide services stay out of the per-item actions; only the quartermaster's service list shows them.
+    materialReforge: buildMaterialReforgeActions(state)
   };
 }
 

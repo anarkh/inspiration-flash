@@ -100,6 +100,18 @@ export function verifyHubShops(): void {
     }
   }
   const equipmentShop = catalog(richState(), 'equipment');
+  // The quartermaster melts spare chapter materials as a service; equipment rows never carry it.
+  const reforges = equipmentShop.services.filter(service => service.actionId.startsWith('hub.equipment.reforge:'));
+  assert(reforges.length === 2 && reforges.every(service => service.enabled && service.event?.kind === 'command'
+    && service.event.command.type === 'hub/reforge-material'), 'one executable reforge per result, not one pair per material');
+  const plenty = richState();
+  plenty.inventory.entropy_crystal = 80;
+  assert(catalog(plenty, 'equipment').services.filter(service => service.actionId.startsWith('hub.equipment.reforge:'))
+    .every(service => service.actionId.startsWith('hub.equipment.reforge:entropy_crystal:')), 'the reforge melts the material held the most of');
+  assert(!reforges.some(service => service.actionId.startsWith('hub.equipment.reforge:cracked_core:')), 'cracked cores are never melted');
+  assert(!equipmentShop.rows.some(row => row.actions.some(action => action.actionId.includes('reforge'))), 'equipment rows carry no reforge');
+  const bare = catalog(createInitialState(), 'equipment').services.filter(service => service.actionId.startsWith('hub.equipment.reforge'));
+  assert(bare.length === 1 && !bare[0]!.enabled && bare[0]!.disabledReason?.includes('5'), 'without a batch the service explains what it needs');
   assert(equipmentShop.groupStyle === 'tabs' && equipmentShop.groups?.length === 7, 'the quartermaster groups goods by equipment slot');
   const suppliesShop = catalog(richState(), 'supplies');
   assert(suppliesShop.groupStyle === 'sections' && suppliesShop.groups?.map(group => group.title).join('/') === '补给品/携行道具',

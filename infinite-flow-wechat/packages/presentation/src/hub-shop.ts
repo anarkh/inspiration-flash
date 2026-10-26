@@ -19,6 +19,7 @@ type PanelProjection = Readonly<{
   actions: readonly ViewActionModel[];
   equipmentCommission?: EquipmentCommissionDetailViewModel;
   equipmentMemory?: EquipmentMemoryLibraryViewModel;
+  materialReforge?: readonly ViewActionModel[];
 }>;
 
 function asset(kind: GameAssetKind, id: string): string | undefined {
@@ -520,10 +521,11 @@ export function buildHubShopCatalog(
       };
     }));
     services.push(...view.actions.filter(action => /^hub\.equipment\.commission\.(start|recall)$/.test(action.actionId)).map(action => shopAction(action, panel)));
+    services.push(...(view.materialReforge ?? []).map(action => shopAction(action, panel)));
   }
   return {
     panel, ...NPCS[panel], rows, services,
-    ...(panel === 'equipment' ? { serviceTitle: '装备封存委托' } : panel === 'supplies' ? { serviceTitle: '休整与兑换' } : {}),
+    ...(panel === 'equipment' ? { serviceTitle: '委托与熔铸' } : panel === 'supplies' ? { serviceTitle: '休整与兑换' } : {}),
     ...(SHOP_LAYOUT[panel] === undefined ? {} : { layout: SHOP_LAYOUT[panel] }),
     ...shopGroups(panel, rows)
   };

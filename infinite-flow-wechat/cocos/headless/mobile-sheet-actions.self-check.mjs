@@ -3441,6 +3441,10 @@ for (const model of models) {
     else if (kind === 'entry') assertEntryReachable(model);
     else assertSheetReachable(model, kind, selected);
   }
+  // Merchant services (checked reachable above) carry commands that stay out of the panel's own list.
+  for (const service of detail.kind === 'hub' ? detail.shop?.services ?? [] : []) {
+    if (service.event?.kind === 'command') commands.add(service.event.command.type);
+  }
   const world = api.buildWalkWorld(model);
   for (const action of original) {
     originalActions += 1;
@@ -3528,7 +3532,7 @@ assert.equal(lawCommands.size, 11, 'all eleven law command families occur in aut
 for (const required of [
   'hub/buy-item', 'hub/configure-tactical-loadout', 'hub/recover', 'hub/exchange-lingyun', 'hub/configure-relic',
   'hub/buy-equipment', 'hub/equip-equipment', 'hub/upgrade-equipment', 'hub/attune-equipment', 'hub/temper-equipment',
-  'hub/start-equipment-commission', 'hub/recall-equipment-commission', 'hub/activate-equipment-memory',
+  'hub/start-equipment-commission', 'hub/recall-equipment-commission', 'hub/reforge-material', 'hub/activate-equipment-memory',
   'hub/buy-pet', 'hub/upgrade-pet', 'hub/activate-pet', 'hub/learn-method', 'hub/upgrade-method', 'hub/activate-method',
   'hub/unlock-bloodline', 'hub/upgrade-bloodline', 'hub/activate-bloodline',
   'hub/recruit-companion', 'hub/upgrade-companion', 'hub/activate-companion', 'hub/claim-task',

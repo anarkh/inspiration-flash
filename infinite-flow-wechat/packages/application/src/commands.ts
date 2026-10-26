@@ -69,6 +69,7 @@ export type GameCommand =
       memoryId: EquipmentMemoryId;
     }>
   | Readonly<{ type: 'hub/buy-item'; itemId: ItemId }>
+  | Readonly<{ type: 'hub/reforge-material'; materialId: ItemId; targetId: ItemId }>
   | Readonly<{
       type: 'hub/buy-equipment';
       equipmentId: EquipmentId;
@@ -191,6 +192,7 @@ const COMMAND_TYPES: ReadonlySet<string> = new Set<GameCommandType>([
   'hub/prepare-equipment-memory-hunt',
   'hub/activate-equipment-memory',
   'hub/buy-item',
+  'hub/reforge-material',
   'hub/buy-equipment',
   'hub/equip-equipment',
   'hub/upgrade-equipment',
@@ -328,6 +330,8 @@ function isCommandPayloadValid(command: Record<string, unknown>, type: GameComma
       return hasStringFields(command, 'equipmentId', 'memoryId');
     case 'hub/buy-item':
       return isString(command.itemId);
+    case 'hub/reforge-material':
+      return hasStringFields(command, 'materialId', 'targetId');
     case 'hub/buy-equipment':
       return isString(command.equipmentId) && isOptionalString(command.sourceDungeonId);
     case 'hub/equip-equipment':
@@ -462,6 +466,7 @@ const HUB_COMMANDS: ReadonlySet<GameCommandType> = new Set([
   'hub/prepare-equipment-memory-hunt',
   'hub/activate-equipment-memory',
   'hub/buy-item',
+  'hub/reforge-material',
   'hub/buy-equipment',
   'hub/equip-equipment',
   'hub/upgrade-equipment',
