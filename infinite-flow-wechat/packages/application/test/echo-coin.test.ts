@@ -43,3 +43,9 @@ assert(withCoin.gain - withoutCoin.gain === getEchoCoinReward(1000 + withoutCoin
 const emptyBag = crossingGain(0, 1);
 assert(emptyBag.gain - crossingGain(0, 0).gain === ECHO_COIN_MIN_REWARD && emptyBag.coinsLeft === 0,
   'an empty bag still returns the minimum');
+
+// Portal logs name the pursuer's state in words, never by its internal id.
+const forced = apply(atPortal(0, 0), { type: 'node/use-portal', choice: 'auto' });
+const pursuitLine = forced.log.find(line => line.includes('破界追兵'));
+assert(pursuitLine?.includes('尚未激活') && !/dormant|stalking|repelled/.test(forced.log.join('\n')),
+  `portal log describes the pursuer state for players: ${pursuitLine}`);

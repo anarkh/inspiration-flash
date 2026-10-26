@@ -2043,6 +2043,15 @@ function normalizeEquipmentHealth(state: GameState): GameState {
   };
 }
 
+const PURSUIT_STATUS_LABELS: Readonly<Record<RunPursuitState['status'], string>> = {
+  disabled: '未启用',
+  dormant: '尚未激活',
+  stalking: '追猎中',
+  contained: '已收容',
+  fused: '已与首领融合',
+  repelled: '已驱离'
+};
+
 /** A won encounter (victory, capture or a beaten pursuer) restores this share of the settled maximum HP. */
 export const POST_COMBAT_RECOVERY_PERCENT = 20;
 
@@ -2723,7 +2732,7 @@ export function resolveCausalLedger(state: GameState, choice: CausalLedgerChoice
   }
 
   const lawState = getNormalizedDungeonLawState(state);
-  if (!lawState) return appendLog(state, '因果账本状态缺失，本次选择未生效。');
+  if (!lawState) return appendLog(state, '这局的因果账本记录损坏，本次选择未生效。返回主神空间后重新进入副本即可恢复。');
   const preliminary = getCausalLedgerStatus(lawState);
 
   const repayDamage = getCausalLedgerPercentAmount(state.player.maxHp, preliminary.repayDamagePercent);
@@ -2773,7 +2782,7 @@ export function resolveEntropyHeading(state: GameState, choice: EntropyHeadingCh
   }
 
   const lawState = getNormalizedDungeonLawState(state);
-  if (!lawState) return appendLog(state, '方舟航向状态缺失，本次选择未生效。');
+  if (!lawState) return appendLog(state, '这局的方舟航向记录损坏，本次选择未生效。返回主神空间后重新进入副本即可恢复。');
   const status = getEntropyHeadingStatus(lawState);
   const resolution = resolveEntropyHeadingChoice(lawState, choice);
   if (!resolution.resolved) {
@@ -2823,7 +2832,7 @@ export function resolveMirrorCityPhase(state: GameState, phase: MirrorCityPhase)
   }
 
   const lawState = getNormalizedDungeonLawState(state);
-  if (!lawState) return appendLog(state, '镜城相位状态缺失，本次选择未生效。');
+  if (!lawState) return appendLog(state, '这局的镜城相位记录损坏，本次选择未生效。返回主神空间后重新进入副本即可恢复。');
   const choiceStatus = getCurrentMirrorCityPhaseStatus(state)?.choices[phase];
   if (!choiceStatus?.available) {
     return appendLog(state, choiceStatus?.unavailableReason ?? '这个镜城相位不存在。');
@@ -2874,7 +2883,7 @@ export function resolveRedactionClause(state: GameState, choice: RedactionChoice
   }
 
   const lawState = getNormalizedDungeonLawState(state);
-  if (!lawState) return appendLog(state, '终稿条款状态缺失，本次裁定未生效。');
+  if (!lawState) return appendLog(state, '这局的终稿条款记录损坏，本次裁定未生效。返回主神空间后重新进入副本即可恢复。');
   const choiceStatus = getCurrentRedactionClauseStatus(state)?.choices[choice];
   if (!choiceStatus?.available) {
     return appendLog(state, choiceStatus?.unavailableReason ?? '这个终稿裁定不存在。');
@@ -2916,7 +2925,7 @@ export function resolveAuctionLot(state: GameState, choice: AuctionLotChoice): G
   }
 
   const lawState = getNormalizedDungeonLawState(state);
-  if (!lawState) return appendLog(state, '遗产拍卖状态缺失，本次裁定未生效。');
+  if (!lawState) return appendLog(state, '这局的遗产拍卖记录损坏，本次裁定未生效。返回主神空间后重新进入副本即可恢复。');
   const availableScrip = getCurrentRunLegacyScrip(state);
   const resolution = resolveAuctionLotChoice(lawState, choice, availableScrip);
   if (!resolution.resolved) {
@@ -4944,8 +4953,8 @@ export function getEquipmentSoulSkillActionStatus(
 
   if (!soulSkillState) {
     unavailableReason = state.run
-      ? '这局副本没有器魂快照，按旧存档规则禁用器魂技。'
-      : '进入副本并冻结装备快照后，才能使用器魂技。';
+      ? '这局副本来自旧版存档，器魂技不可用。返回主神空间后重新进入副本即可使用。'
+      : '进入副本后才能使用器魂技。';
   } else if (!baseStatus.canConsume) {
     unavailableReason = baseStatus.availability === 'spent'
       ? `${definition.name}本局已经使用。`
@@ -5054,7 +5063,7 @@ export function getEquipmentSoulSkillRechargeStatus(state: GameState): Equipment
       used: false,
       spentSkillIds: [],
       unavailableReason: state.run
-        ? '这局副本没有器魂快照，按旧存档规则禁用共鸣台。'
+        ? '这局副本来自旧版存档，共鸣台不可用。返回主神空间后重新进入副本即可使用。'
         : '当前没有进行中的副本。'
     };
   }
@@ -6283,7 +6292,7 @@ export function enterDungeon(
   if (!equipmentMemorySnapshot) {
     return appendLog(
       state,
-      '无法进入副本：装备记忆快照创建失败。本次未入场且未扣除资源。'
+      '无法进入副本：装备记录生成失败。本次没有入场，也没有扣除资源，请重试。'
     );
   }
 
@@ -6984,7 +6993,7 @@ export function moveToNode(state: GameState, nodeId: string): GameState {
   if (state.phase === 'combat') return appendLog(state, '战斗中无法走格移动。');
 
   const dungeon = getCurrentDungeonDefinition(state);
-  if (!dungeon) return appendLog(state, '当前副本地图快照不可用。');
+  if (!dungeon) return appendLog(state, '这局的副本地图读取失败。返回主神空间后重新进入副本即可恢复。');
   const currentNode = getNodeById(dungeon, state.run.currentNodeId);
   const targetNode = getNodeById(dungeon, nodeId);
 
@@ -7392,7 +7401,7 @@ function transitionRunPursuitThroughPortal(
       ? `破界追兵「${definition.name}」保持收容，待成功撤离带回${ITEMS[definition.materialId].name} x1。`
       : originState.status === 'repelled' && originState !== pursuitState
         ? `稳定传送门驱离了破界追兵「${definition.name}」，材料奖励为 0。`
-        : `稳定传送门未改变破界追兵「${definition.name}」的 ${originState.status} 状态，材料奖励为 0。`;
+        : `稳定传送门未改变破界追兵「${definition.name}」（${PURSUIT_STATUS_LABELS[originState.status]}），材料奖励为 0。`;
     return {
       sourceRun: {
         ...run,
@@ -7415,7 +7424,7 @@ function transitionRunPursuitThroughPortal(
     ? `破界追兵「${definition.name}」被强制传送带往${DUNGEONS[targetDungeonId].name}，保留 ${pursuitState.contacts} 次接触并获得 1 次移动宽限。`
     : pursuitState.status === 'contained'
       ? `破界追兵「${definition.name}」保持收容，待成功撤离带回${ITEMS[definition.materialId].name} x1。`
-      : `强制传送未合成新的破界追兵，原 ${pursuitState.status} 状态材料奖励为 0。`;
+      : `强制传送没有带来新的破界追兵（原追兵${PURSUIT_STATUS_LABELS[pursuitState.status]}），材料奖励为 0。`;
   return {
     sourceRun: {
       ...run,
@@ -7951,7 +7960,7 @@ export function getCurrentFieldSurveyStatus(state: GameState): CurrentFieldSurve
   const resolved = validSurveyState?.resolvedSurveys.some((entry) => entry.surveyId === survey.id) ?? false;
   const nodeCleared = state.run.clearedNodeIds.includes(node.id);
   const commonUnavailableReason = legacyDisabled
-    ? '本局缺少合法的 v1 铭刻勘探快照，勘探已禁用。'
+    ? '这局的铭刻勘探记录缺失，勘探不可用。返回主神空间后重新进入副本即可恢复。'
     : resolved
       ? '本次铭刻勘探已经结算。'
       : nodeCleared
@@ -7970,7 +7979,7 @@ export function getCurrentFieldSurveyStatus(state: GameState): CurrentFieldSurve
     const costAvailability = getFieldSurveyCostAvailability(state, definition);
     const unavailableReason = commonUnavailableReason ??
       (!ruleStatus?.frozen
-        ? '入场快照未冻结该选项对应的铭刻分支。'
+        ? '本局入场时没有带上这条铭刻分支，该选项不可用。'
         : !costAvailability.available
           ? costAvailability.unavailableReason
           : undefined);
@@ -8043,7 +8052,7 @@ export function resolveFieldSurvey(state: GameState, optionId: string): GameStat
 
   const surveyState = state.run.fieldSurveyState;
   if (!isFieldSurveyRunState(surveyState)) {
-    return appendLog(state, '本局铭刻勘探快照无效，节点未结算。');
+    return appendLog(state, '这局的铭刻勘探记录损坏，本节点未结算。返回主神空间后重新进入副本即可恢复。');
   }
   const resolvedNodeReward = getResolvedNodeReward(state, node);
   if (!resolvedNodeReward) return appendLog(state, '当前位置没有可收取的奖励。');
@@ -8683,14 +8692,7 @@ function getPursuitSettlementLog(settlement: RunPursuitSettlement | undefined): 
   if (settlement.state.status === 'disabled') {
     return `破界追兵结算：本轮追兵未启用，${materialName}材料奖励为 0。`;
   }
-  const statusLabels: Record<RunPursuitState['status'], string> = {
-    disabled: '未启用',
-    dormant: '尚未激活',
-    stalking: '追猎中',
-    contained: '已收容',
-    fused: '已与首领融合',
-    repelled: '已驱离'
-  };
+  const statusLabels = PURSUIT_STATUS_LABELS;
   const reasonLabels: Record<RunPursuitSettlement['reason'], string> = {
     successful_exit: '成功撤离',
     retreat: '主动撤退',
@@ -9300,7 +9302,7 @@ export function getCurrentMethodTechniqueStatus(
       legacyDisabled: true,
       available: false,
       reason: 'legacy_disabled',
-      unavailableReason: '这个旧副本没有有效的功法快照，功法技保持禁用。返回主神空间后重新进入即可刷新。'
+      unavailableReason: '这局副本来自旧版存档，功法技不可用。返回主神空间后重新进入副本即可使用。'
     };
   }
 
@@ -9337,7 +9339,7 @@ export function getCurrentMethodTechniqueStatus(
       ...base,
       available: false,
       reason: 'legacy_disabled',
-      unavailableReason: '本轮功法快照无法解析，功法技保持禁用。'
+      unavailableReason: '这局的功法记录损坏，功法技不可用。返回主神空间后重新进入副本即可恢复。'
     };
   }
   if (state.phase !== 'combat' || !state.combat) {
@@ -9502,7 +9504,7 @@ export function getCurrentCompanionAssistStatus(state: GameState): CurrentCompan
       available: false,
       effect: NO_COMPANION_ASSIST_EFFECT,
       reason: 'legacy_disabled',
-      unavailableReason: '本轮副本没有冻结队友快照，援护保持禁用。'
+      unavailableReason: '本局入场时没有记录出战同伴，援护不可用。在主神空间设好出战同伴后重新进入即可使用。'
     };
   }
 
@@ -9609,7 +9611,7 @@ export function getCurrentBloodlineSurgeStatus(state: GameState): CurrentBloodli
       legacyDisabled: true,
       available: false,
       reason: 'legacy_disabled',
-      unavailableReason: '本轮副本没有合法的血统快照，血统爆发保持禁用。'
+      unavailableReason: '本局入场时没有记录激活的血统，血统爆发不可用。在主神空间激活血统后重新进入即可使用。'
     };
   }
 
@@ -9620,7 +9622,7 @@ export function getCurrentBloodlineSurgeStatus(state: GameState): CurrentBloodli
       ...base,
       available: false,
       reason: 'legacy_disabled',
-      unavailableReason: '本轮血统快照无法解析，血统爆发保持禁用。'
+      unavailableReason: '这局的血统记录损坏，血统爆发不可用。返回主神空间后重新进入副本即可恢复。'
     };
   }
   if (state.phase !== 'combat' || !state.combat) {

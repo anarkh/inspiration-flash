@@ -175,7 +175,7 @@ export function validateTacticalLoadout(
 
   if (normalization.invalidItemIds.length > 0) {
     reasons.push(
-      `以下 ID 不是战术道具（材料或未知道具）：${normalization.invalidItemIds.join('、')}。`
+      `这些道具不能装入携行：${normalization.invalidItemIds.join('、')}。`
     );
   }
   if (overflowItemIds.length > 0) {

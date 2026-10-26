@@ -1,7 +1,7 @@
 import { DUNGEONS, DUNGEON_ORDER } from './level-content';
 import type { DungeonId, EquipmentId, ItemId, MethodId, PetId, RewardBundle } from './game';
-import { getBroadcastRelayStatus, getCombatReplayStatus, getEscortCheckpointStatus, getFalseTestimonyStatus, normalizeDungeonLawState } from './dungeon-laws';
-import type { GenesisGene } from './dungeon-laws';
+import { COMBAT_REPLAY_ROUTE_LABELS, getBroadcastRelayStatus, getCombatReplayStatus, getEscortCheckpointStatus, getFalseTestimonyStatus, normalizeDungeonLawState, PANOPTICON_ROUTE_LABELS } from './dungeon-laws';
+import type { GenesisGene, PanopticonRoute } from './dungeon-laws';
 
 export type DirectiveStatus = 'locked' | 'active' | 'completed' | 'failed';
 
@@ -536,12 +536,12 @@ function evaluateObjective(objective: DirectiveObjective, summary: DirectiveRunS
     const status = getCombatReplayDirectiveStatus(summary.lawState);
     const bossCompleted = status.bossSnapshot !== null && summary.clearedNodeIds.includes('final_cut_director');
     completed = status.completedTakeCount === 3 && status.route !== null && bossCompleted;
-    progressText = `镜次 ${status.completedTakeCount}/3；路线 ${status.route ?? '缺失'}；首领${bossCompleted ? '已完成' : '未完成'}`;
+    progressText = `镜次 ${status.completedTakeCount}/3；路线 ${status.route ? COMBAT_REPLAY_ROUTE_LABELS[status.route] : '未选择'}；首领${bossCompleted ? '已完成' : '未完成'}`;
   } else if (objective.kind === 'panopticon_complete') {
     const status = getPanopticonDirectiveStatus(summary.lawState);
     const bossCompleted = status.bossSnapshotPresent && summary.clearedNodeIds.includes('all_sight_warden');
     completed = status.completedRelayCount === 3 && status.route !== null && bossCompleted;
-    progressText = `中继 ${status.completedRelayCount}/3；路线 ${status.route ?? '缺失'}；首领${bossCompleted ? '已完成' : '未完成'}`;
+    progressText = `中继 ${status.completedRelayCount}/3；路线 ${status.route ? PANOPTICON_ROUTE_LABELS[status.route] : '未选择'}；首领${bossCompleted ? '已完成' : '未完成'}`;
   }
 
   return {
@@ -816,7 +816,7 @@ function getCombatReplayDirectiveStatus(value: unknown) {
 
 function getPanopticonDirectiveStatus(value: unknown): {
   completedRelayCount: number;
-  route: string | null;
+  route: PanopticonRoute | null;
   bossSnapshotPresent: boolean;
 } {
   const normalized = normalizeDungeonLawState(value, 'panopticon_city');

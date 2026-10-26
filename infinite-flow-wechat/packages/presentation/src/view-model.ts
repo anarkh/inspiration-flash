@@ -3362,14 +3362,14 @@ function buildExploreProjection(state: GameState): PhaseProjection {
     const detail: ExploreDetailViewModel = {
       kind: 'explore',
       map: { dungeonId: FIRST_DUNGEON_ID, dungeonName: '无进行中副本', width: 0, height: 0, currentNodeId: '', nodes: [], knownEdges: [] },
-      currentNode: { nodeId: '', title: '状态缺失', nodeType: 'exit', description: '副本状态缺失。', cleared: false }
+      currentNode: { nodeId: '', title: '存档异常', nodeType: 'exit', description: '这一局的副本记录不完整。', cleared: false }
     };
     return {
       title: '探索状态异常',
-      objective: { kind: 'objective', title: '等待恢复', summary: '当前 explore phase 缺少 run 快照。' },
+      objective: { kind: 'objective', title: '无法继续', summary: '存档里缺少这一局的副本记录，无法继续探索。' },
       status: { kind: 'status', metrics: [], detail },
       actions: [],
-      risks: [{ id: 'missing-run', severity: 'danger', label: '状态缺失', reason: '宿主应恢复最近一次有效快照。' }],
+      risks: [{ id: 'missing-run', severity: 'danger', label: '存档异常', reason: '请重新打开游戏。' }],
       logs: state.log.slice(0, 12)
     };
   }
@@ -3582,8 +3582,8 @@ function buildCombatProjection(state: GameState, localUiState: PresentationLocal
     const detail: CombatDetailViewModel = {
       kind: 'combat',
       player: { hp: state.player.hp, maxHp: state.player.maxHp, hpPercent: clampPercent(state.player.hp, state.player.maxHp) },
-      enemy: { id: 'missing', name: '未知敌人', hp: 0, maxHp: 1, hpPercent: 0, ability: '战斗快照缺失。' },
-      intent: { id: 'missing', name: '未知意图', severity: 'danger', consequence: '宿主应恢复最近一次有效快照。', recommendedActions: [], dangerousActions: [], parryable: false },
+      enemy: { id: 'missing', name: '未知敌人', hp: 0, maxHp: 1, hpPercent: 0, ability: '这场战斗的记录不完整。' },
+      intent: { id: 'missing', name: '未知意图', severity: 'danger', consequence: '请重新打开游戏。', recommendedActions: [], dangerousActions: [], parryable: false },
       turn: 0,
       focus,
       guarding: Boolean(combat?.guarding),
@@ -3591,10 +3591,10 @@ function buildCombatProjection(state: GameState, localUiState: PresentationLocal
     };
     return {
       title: '战斗状态异常',
-      objective: { kind: 'objective', title: '等待恢复', summary: '当前 combat phase 缺少 combat 快照。' },
+      objective: { kind: 'objective', title: '无法继续', summary: '存档里缺少这场战斗的记录，无法继续战斗。' },
       status: { kind: 'status', metrics: [], detail },
       actions: [],
-      risks: [{ id: 'missing-combat', severity: 'danger', label: '状态缺失', reason: '不要提交战斗动作；先恢复有效状态。' }],
+      risks: [{ id: 'missing-combat', severity: 'danger', label: '存档异常', reason: '请重新打开游戏。' }],
       logs: state.log.slice(0, 12)
     };
   }

@@ -296,6 +296,9 @@ function assertSceneTarget(actual, original, fitted, message) {
   if (fitted === original) assert.equal(actual, original, `${message}: unprojected world keeps the original target`);
   else assert.notEqual(actual, original, `${message}: dungeon layout uses a view-local target`);
 }
+// Developer tokens that must never reach a rendered label, from any real or fixture VM.
+const DEVELOPER_COPY = /\b(?:seed|run\/enter|fail-closed|legacy|dormant|stalking|phase|snapshot|undefined|null|NaN)\b|宿主|事件 ID|旧存档规则|\b(?:forge|mist|rift|chronal) 专精/iu;
+const developerCopyLeaks = new Map();
 function render(model, state, insets = safeInsets, extras = {}) {
   const rootNode = new api.Node('MobileActionTest');
   const local = new Map();
@@ -325,6 +328,7 @@ function render(model, state, insets = safeInsets, extras = {}) {
   const visit = (node) => {
     const label = node.getComponent(api.Label);
     if (label !== null) labels.push({ name: node.name, text: label.string });
+    if (label !== null && DEVELOPER_COPY.test(label.string)) developerCopyLeaks.set(label.string, node.name);
     for (const child of node.children) visit(child);
   };
   visit(rootNode);
@@ -3542,3 +3546,4 @@ console.log(`Run relic sheets: ${checkedRunRelicLists} lists, ${checkedRunRelicC
 console.log(`Compact modal layout: ${checkedCompactSheetFamilies} authentic family/viewport/safe-inset cases; all 11 families at 320/390px, 304px width and 464px height caps, 48px header, 44px touch/32px button plates and 300px clipped scroll bounds verified.`);
 console.log(`Compact modal art: ${checkedCompactRasterFigures} non-square character/equipment/supply/NPC figures; contain fitting, full-source sprites, hidden glyph placeholders and five-column bag and merchant list rows verified.`);
 console.log(`Mobile sheet actions: ${models.length} real VMs (${sourceFixtureCount} existing fixtures), ${originalActions} original actions, ${enabledCommands} enabled commands; ${sheetLists} concrete paged lists, ${checkedActionDetails} action details, ${disabledReadouts} full disabled readouts; ${checkedMovement} original door movements, ${combatSignatures.size} combat HUD variants; ${lawCommands.size} law families and ${pendingKinds.size} pending kinds. Dark UI: ${sheetFixtures.length} sheet types, ${darkSheetVisualCases} visual cases, ${darkBodyLabels} body labels, minimum body contrast ${darkMinimumBodyContrast.toFixed(3)}, danger/positive contrast >= 4.5. Catalog entries: ${JSON.stringify(catalogEntries)}. Full NPC/owned lists: ${checkedCatalogs}, direct or targeted catalog actions: ${checkedCatalogActions}. Task lists: ${checkedTaskLists}, task rows: ${checkedTaskRows}, task details: ${checkedTaskDetails}, kinds: ${[...taskKinds].join(',')}. Full maps: ${checkedFullMaps}, map cells: ${checkedMapCells}, stone gates: ${checkedStoneGates}, dungeon prop states: ${checkedDungeonProps}. Entry chapters: ${checkedEntryDungeons}, services: ${checkedEntryServices}, projected entry options: ${checkedEntryOptions}.`);
+assert.deepEqual([...developerCopyLeaks].map(([text, name]) => `${name}: ${text}`), [], 'no rendered label shows developer terms');

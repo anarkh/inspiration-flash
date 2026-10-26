@@ -157,6 +157,11 @@ export type FalseTestimonySuspect =
 
 export type CombatReplayAction = 'attack' | 'art' | 'guard';
 export type CombatReplayRoute = 'sequence' | 'burst' | 'afterbeat';
+export const COMBAT_REPLAY_ROUTE_LABELS: Readonly<Record<CombatReplayRoute, string>> = {
+  sequence: '顺序剪辑',
+  burst: '爆发剪辑',
+  afterbeat: '余拍剪辑'
+};
 export type CombatReplayTakeNodeId =
   (typeof DUNGEON_LAW_LANDMARKS.combat_replay_stage.takeNodeIds)[number];
 export type CombatReplayTake = {
@@ -186,6 +191,11 @@ export type CombatReplayBossSnapshot = {
 };
 
 export type PanopticonRoute = 'shadow' | 'decoy' | 'refraction';
+export const PANOPTICON_ROUTE_LABELS: Readonly<Record<PanopticonRoute, string>> = {
+  shadow: '影路',
+  decoy: '诱饵',
+  refraction: '折光'
+};
 export type PanopticonScanPhase = 0 | 1 | 2;
 export type PanopticonRelayNodeId =
   (typeof DUNGEON_LAW_LANDMARKS.panopticon_city.relayNodeIds)[number];
@@ -5758,11 +5768,7 @@ export function getDungeonLawDisplay(
         art: '战技',
         guard: '防御'
       };
-      const routeLabels: Readonly<Record<CombatReplayRoute, string>> = {
-        sequence: '顺序剪辑',
-        burst: '爆发剪辑',
-        afterbeat: '余拍剪辑'
-      };
+      const routeLabels = COMBAT_REPLAY_ROUTE_LABELS;
       const takeText = replay.takes.map((take, index) => take
         ? `${index + 1}:${actionLabels[take.action]} ${take.observedValue}->${take.replayValue}`
         : `${index + 1}:未录制`
@@ -5787,11 +5793,7 @@ export function getDungeonLawDisplay(
     }
     case 'panopticon_city': {
       const panopticon = getPanopticonStatus(current);
-      const routeLabels: Readonly<Record<PanopticonRoute, string>> = {
-        shadow: '影路',
-        decoy: '诱饵',
-        refraction: '折光'
-      };
+      const routeLabels = PANOPTICON_ROUTE_LABELS;
       const snapshot = panopticon.bossSnapshot;
       return {
         dungeonId: current.dungeonId,
