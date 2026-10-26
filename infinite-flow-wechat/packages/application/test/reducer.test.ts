@@ -7,6 +7,7 @@ import './directive-catch-up.test.js';
 import './postcombat-recovery.test.js';
 import './whole-run-bonus.test.js';
 import './echo-coin.test.js';
+import './economy-sinks.test.js';
 import {
   createInitialState,
   getCombatEncounterProfile,

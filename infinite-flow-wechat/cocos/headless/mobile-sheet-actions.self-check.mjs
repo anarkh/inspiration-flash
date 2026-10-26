@@ -3526,7 +3526,7 @@ assert.deepEqual([...replacedLegacyControls].sort(), ['bag-carry', 'catalog-cycl
 assert.deepEqual([...pendingKinds].sort(), ['dungeon-event', 'equipment-offer', 'field-survey', 'law', 'relic-draft', 'soul-recharge']);
 assert.equal(lawCommands.size, 11, 'all eleven law command families occur in authentic chapter projections');
 for (const required of [
-  'hub/buy-item', 'hub/configure-tactical-loadout', 'hub/recover', 'hub/configure-relic',
+  'hub/buy-item', 'hub/configure-tactical-loadout', 'hub/recover', 'hub/exchange-lingyun', 'hub/configure-relic',
   'hub/buy-equipment', 'hub/equip-equipment', 'hub/upgrade-equipment', 'hub/attune-equipment', 'hub/temper-equipment',
   'hub/start-equipment-commission', 'hub/recall-equipment-commission', 'hub/activate-equipment-memory',
   'hub/buy-pet', 'hub/upgrade-pet', 'hub/activate-pet', 'hub/learn-method', 'hub/upgrade-method', 'hub/activate-method',

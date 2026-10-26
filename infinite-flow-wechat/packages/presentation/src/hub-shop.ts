@@ -496,7 +496,7 @@ export function buildHubShopCatalog(
   });
   const services: ViewActionModel[] = [];
   if (panel === 'supplies') {
-    services.push(...projectRow().actions.filter(action => action.actionId === 'hub.recover').map(action => shopAction(action, panel)));
+    services.push(...projectRow().actions.filter(action => /^hub\.(?:recover|exchange-lingyun)$/.test(action.actionId)).map(action => shopAction(action, panel)));
   } else if (panel === 'equipment') {
     const view = projectRow();
     const commission = view.equipmentCommission;
@@ -523,7 +523,7 @@ export function buildHubShopCatalog(
   }
   return {
     panel, ...NPCS[panel], rows, services,
-    ...(panel === 'equipment' ? { serviceTitle: '装备封存委托' } : panel === 'supplies' ? { serviceTitle: '休整服务' } : {}),
+    ...(panel === 'equipment' ? { serviceTitle: '装备封存委托' } : panel === 'supplies' ? { serviceTitle: '休整与兑换' } : {}),
     ...(SHOP_LAYOUT[panel] === undefined ? {} : { layout: SHOP_LAYOUT[panel] }),
     ...shopGroups(panel, rows)
   };

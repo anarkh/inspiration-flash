@@ -52,6 +52,7 @@ import {
   getCurrentRunPressure,
   getRouteForecasts,
   getDerivedStats,
+  LINGYUN_EXCHANGE_PRICE_STEP,
   getEquipmentCommissionStatus,
   getEquipmentMemoryStatus,
   getEquipmentSoulSkillActionStatuses,
@@ -1129,6 +1130,9 @@ function buildSuppliesPanel(state: GameState, requestedId: string | undefined): 
     ),
     previewCommandAction(state, 'hub.recover', '恢复生命', 'preparation', { type: 'hub/recover' }, {
       readout: `免费将生命补满，立即生效。当前生命 ${state.player.hp}/${getDerivedStats(state).maxHp}。`
+    }),
+    previewCommandAction(state, 'hub.exchange-lingyun', '兑换灵蕴', 'preparation', { type: 'hub/exchange-lingyun' }, {
+      readout: `用奖励点换 1 灵蕴；每换一次，下次多 ${LINGYUN_EXCHANGE_PRICE_STEP} 点。当前灵蕴 ${state.lingyun}。`
     })
   ];
   return {
