@@ -447,7 +447,7 @@ function renderTextPages(context: SheetContext, logical: readonly SheetPage[]): 
 
 const HUB_COMMANDS: Readonly<Record<HubPanel, readonly string[]>> = Object.freeze({
   entry: ['hub/configure-relic'],
-  supplies: ['hub/buy-item', 'hub/configure-tactical-loadout', 'hub/recover'],
+  supplies: ['hub/buy-item', 'hub/configure-tactical-loadout', 'hub/recover', 'hub/exchange-lingyun'],
   equipment: ['hub/buy-equipment', 'hub/equip-equipment', 'hub/upgrade-equipment', 'hub/attune-equipment', 'hub/temper-equipment', 'hub/activate-equipment-memory', 'hub/start-equipment-commission', 'hub/recall-equipment-commission'],
   pets: ['hub/buy-pet', 'hub/upgrade-pet', 'hub/activate-pet'],
   methods: ['hub/learn-method', 'hub/upgrade-method', 'hub/activate-method'],

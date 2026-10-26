@@ -137,7 +137,8 @@ import {
   DUNGEON_ELITE_MONSTERS,
   DUNGEON_MATERIAL_REWARDS,
   getDungeonLootOffer,
-  getEquipmentRecipe
+  getEquipmentRecipe,
+  getEquipmentRecipeDungeonIds
 } from './dungeon-loot';
 import {
   getBossCombatStats,
@@ -1153,6 +1154,8 @@ export type GameState = {
   enteredDungeonIds?: DungeonId[];
   claimedDirectiveIds: string[];
   claimedTaskIds: string[];
+  /** How many times reward points were exchanged for lingyun; absent in older saves and means 0. */
+  lingyunExchangeCount?: number;
   ownedPets: PetId[];
   petLevels: Partial<Record<PetId, number>>;
   activePet?: PetId;
@@ -1641,6 +1644,57 @@ export const EQUIPMENT_ATTUNEMENT_COST = {
   lingyun: 1,
   items: { cycle_imprint: 1 }
 } as const;
+
+/** Upgrade, attunement and temper point prices grow this share per chapter of the gear's first source. */
+export const EQUIPMENT_CHAPTER_PRICE_STEP_PERCENT = 15;
+
+/** The first chapter whose loot offers this equipment; starter gear counts as chapter 1. */
+export function getEquipmentSourceChapter(equipmentId: EquipmentId): number {
+  const chapters = getEquipmentRecipeDungeonIds(equipmentId).map((dungeonId) => DUNGEON_ORDER.indexOf(dungeonId) + 1);
+  return chapters.length > 0 ? Math.min(...chapters) : 1;
+}
+
+/** Scales only the reward points, rounded up to 10; lingyun and materials stay as they are. */
+function scaleEquipmentCost<T extends { rewardPoints?: number }>(equipmentId: EquipmentId, cost: T): T {
+  const percent = 100 + EQUIPMENT_CHAPTER_PRICE_STEP_PERCENT * (getEquipmentSourceChapter(equipmentId) - 1);
+  return { ...cost, rewardPoints: Math.ceil(((cost.rewardPoints ?? 0) * percent) / 1000) * 10 };
+}
+
+export function getEquipmentUpgradeCost(equipmentId: EquipmentId, nextLevel: number): Cost | undefined {
+  const cost = UPGRADE_COSTS[nextLevel];
+  return cost && scaleEquipmentCost(equipmentId, cost);
+}
+
+export function getEquipmentAttunementCost(equipmentId: EquipmentId): Cost {
+  return scaleEquipmentCost(equipmentId, EQUIPMENT_ATTUNEMENT_COST);
+}
+
+/** Reward points buy lingyun one at a time; every exchange raises the next price, without a cap. */
+export const LINGYUN_EXCHANGE_BASE_PRICE = 1500;
+export const LINGYUN_EXCHANGE_PRICE_STEP = 100;
+
+function getLingyunExchangeCount(state: GameState): number {
+  const count = state.lingyunExchangeCount;
+  return typeof count === 'number' && Number.isFinite(count) ? Math.max(0, Math.floor(count)) : 0;
+}
+
+export function getLingyunExchangePrice(state: GameState): number {
+  return LINGYUN_EXCHANGE_BASE_PRICE + LINGYUN_EXCHANGE_PRICE_STEP * getLingyunExchangeCount(state);
+}
+
+export function exchangeLingyun(state: GameState): GameState {
+  if (state.phase !== 'hub') return appendLog(state, '只有在主神空间才能兑换灵蕴。');
+  const price = getLingyunExchangePrice(state);
+  if (!canPay(state, { rewardPoints: price })) return appendLog(state, `奖励点不足，兑换 1 灵蕴需要 ${price} 点。`);
+  return appendLog(
+    {
+      ...payCost(state, { rewardPoints: price }),
+      lingyun: state.lingyun + 1,
+      lingyunExchangeCount: getLingyunExchangeCount(state) + 1
+    },
+    `用 ${price} 奖励点兑换了 1 灵蕴，下次兑换需要 ${price + LINGYUN_EXCHANGE_PRICE_STEP} 点。`
+  );
+}
 
 function createInventory(): Record<ItemId, number> {
   return Object.fromEntries(ITEM_IDS.map((itemId) => [itemId, 0])) as Record<ItemId, number>;
@@ -5321,7 +5375,8 @@ export function getEquipmentTemperStatus(
   state: GameState,
   equipmentId: EquipmentId
 ): EquipmentTemperProgress {
-  return getEquipmentTemperProgress(equipmentId, state.equipmentTemperRanks ?? {});
+  const progress = getEquipmentTemperProgress(equipmentId, state.equipmentTemperRanks ?? {});
+  return progress.nextCost ? { ...progress, nextCost: scaleEquipmentCost(equipmentId, progress.nextCost) } : progress;
 }
 
 export function getEquipmentCommissionStatus(state: GameState): EquipmentCommissionStatus {
@@ -5937,7 +5992,7 @@ export function upgradeEquipment(state: GameState, equipmentId: EquipmentId): Ga
   const equipment = EQUIPMENT[equipmentId];
   const currentLevel = state.equipmentLevels[equipmentId] ?? 1;
   const nextLevel = currentLevel + 1;
-  const cost = UPGRADE_COSTS[nextLevel];
+  const cost = getEquipmentUpgradeCost(equipmentId, nextLevel);
 
   if (nextLevel > equipment.maxLevel || !cost) return appendLog(state, `${equipment.name}暂时无法继续升级。`);
   if (!canPay(state, cost)) return appendLog(state, `资源不足，无法把${equipment.name}升到 +${nextLevel - 1}。`);
@@ -5974,13 +6029,14 @@ export function attuneEquipment(
   if (state.equipmentAttunements?.[equipmentId] === attunementId) {
     return appendLog(state, `${equipment.name}已经生效${option.name}，无需重复支付。`);
   }
-  if (!canPay(state, EQUIPMENT_ATTUNEMENT_COST)) {
+  const attunementCost = getEquipmentAttunementCost(equipmentId);
+  if (!canPay(state, attunementCost)) {
     return appendLog(state, `资源不足，无法为${equipment.name}铭刻${option.name}。`);
   }
 
   return appendLog(
     normalizeHealth({
-      ...payCost(state, EQUIPMENT_ATTUNEMENT_COST),
+      ...payCost(state, attunementCost),
       equipmentAttunements: {
         ...(state.equipmentAttunements ?? {}),
         [equipmentId]: attunementId

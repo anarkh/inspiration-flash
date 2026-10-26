@@ -32,6 +32,7 @@ import {
   prepareEquipmentMemoryHunt,
   recallEquipmentCommission,
   recoverAtHub,
+  exchangeLingyun,
   recruitCompanion,
   resolveAuctionLot,
   resolveCausalLedger,
@@ -336,6 +337,8 @@ function applyDomainCommand(
       return createInitialState();
     case 'hub/recover':
       return recoverAtHub(state);
+    case 'hub/exchange-lingyun':
+      return exchangeLingyun(state);
     case 'hub/configure-tactical-loadout':
       return configureTacticalLoadout(state, command.itemIds);
     case 'hub/configure-relic':

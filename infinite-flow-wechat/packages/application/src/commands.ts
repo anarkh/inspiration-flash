@@ -46,6 +46,7 @@ export type CombatActionTiming = NonNullable<CombatActionOptions['timing']>;
 export type GameCommand =
   | NoPayloadCommand<'game/new'>
   | NoPayloadCommand<'hub/recover'>
+  | NoPayloadCommand<'hub/exchange-lingyun'>
   | Readonly<{ type: 'hub/configure-tactical-loadout'; itemIds: readonly string[] }>
   | Readonly<{
       type: 'hub/configure-relic';
@@ -183,6 +184,7 @@ export type GameCommandValidation =
 const COMMAND_TYPES: ReadonlySet<string> = new Set<GameCommandType>([
   'game/new',
   'hub/recover',
+  'hub/exchange-lingyun',
   'hub/configure-tactical-loadout',
   'hub/configure-relic',
   'hub/prepare-equipment-hunt',
@@ -249,6 +251,7 @@ const COMMAND_TYPES: ReadonlySet<string> = new Set<GameCommandType>([
 const NO_PAYLOAD_COMMAND_TYPES: ReadonlySet<GameCommandType> = new Set([
   'game/new',
   'hub/recover',
+  'hub/exchange-lingyun',
   'hub/recall-equipment-commission',
   'hub/claim-all-tasks',
   'node/collect-reward',
@@ -452,6 +455,7 @@ export function validateGameCommand(input: unknown): GameCommandValidation {
 
 const HUB_COMMANDS: ReadonlySet<GameCommandType> = new Set([
   'hub/recover',
+  'hub/exchange-lingyun',
   'hub/configure-tactical-loadout',
   'hub/configure-relic',
   'hub/prepare-equipment-hunt',
