@@ -33,6 +33,7 @@ import {
   recallEquipmentCommission,
   recoverAtHub,
   exchangeLingyun,
+  reforgeMaterial,
   recruitCompanion,
   resolveAuctionLot,
   resolveCausalLedger,
@@ -339,6 +340,8 @@ function applyDomainCommand(
       return recoverAtHub(state);
     case 'hub/exchange-lingyun':
       return exchangeLingyun(state);
+    case 'hub/reforge-material':
+      return reforgeMaterial(state, command.materialId, command.targetId);
     case 'hub/configure-tactical-loadout':
       return configureTacticalLoadout(state, command.itemIds);
     case 'hub/configure-relic':

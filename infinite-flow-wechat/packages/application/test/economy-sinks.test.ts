@@ -56,3 +56,19 @@ assert(poor.status === 'rejected' && poor.reason.message.includes(String(LINGYUN
 const malformed = apply({ ...rich(), lingyunExchangeCount: 'x' as unknown as number }, { type: 'hub/exchange-lingyun' });
 assert(malformed.lingyunExchangeCount === 1 && rich().rewardPoints - malformed.rewardPoints === LINGYUN_EXCHANGE_BASE_PRICE,
   'a missing or malformed exchange count reads as 0');
+
+// Material reforge: 5 of one chapter material become 1 cracked core or 1 cycle imprint; cores never melt.
+const stocked: GameState = { ...rich(), inventory: { ...rich().inventory, entropy_crystal: 9, cracked_core: 0, cycle_imprint: 0 } };
+const core = apply(stocked, { type: 'hub/reforge-material', materialId: 'entropy_crystal', targetId: 'cracked_core' });
+assert(core.inventory.entropy_crystal === 4 && core.inventory.cracked_core === 1, 'five crystals melt into one cracked core');
+const imprint = apply(stocked, { type: 'hub/reforge-material', materialId: 'entropy_crystal', targetId: 'cycle_imprint' });
+assert(imprint.inventory.cycle_imprint === 1, 'the same batch can become a cycle imprint instead');
+for (const [command, why] of [
+  [{ type: 'hub/reforge-material', materialId: 'entropy_crystal', targetId: 'cracked_core' }, 'four left is not a batch'],
+  [{ type: 'hub/reforge-material', materialId: 'cracked_core', targetId: 'cycle_imprint' }, 'a cracked core is a result, not an input'],
+  [{ type: 'hub/reforge-material', materialId: 'healing_pill', targetId: 'cracked_core' }, 'supplies are not chapter materials'],
+  [{ type: 'hub/reforge-material', materialId: 'entropy_crystal', targetId: 'healing_pill' }, 'only the two gear materials can be made']
+] as const) {
+  const from = why === 'four left is not a batch' ? core : stocked;
+  assert(reduceGameCommand(from, command).status === 'rejected', why);
+}

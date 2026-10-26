@@ -1669,6 +1669,32 @@ export function getEquipmentAttunementCost(equipmentId: EquipmentId): Cost {
   return scaleEquipmentCost(equipmentId, EQUIPMENT_ATTUNEMENT_COST);
 }
 
+/** Spare chapter materials melt into the gear materials that stay scarce: cracked cores and cycle imprints. */
+export const MATERIAL_REFORGE_COST = 5;
+export const MATERIAL_REFORGE_TARGETS = ['cracked_core', 'cycle_imprint'] as const satisfies readonly ItemId[];
+export type MaterialReforgeTarget = (typeof MATERIAL_REFORGE_TARGETS)[number];
+
+/** Every chapter's own material melts, except the cracked core, which is a reforge result itself. */
+export function getMaterialReforgeInputs(): ItemId[] {
+  const targets: readonly ItemId[] = MATERIAL_REFORGE_TARGETS;
+  return Array.from(new Set(Object.values(DUNGEON_MATERIAL_REWARDS).map(({ itemId }) => itemId as ItemId)))
+    .filter((itemId) => !targets.includes(itemId));
+}
+
+export function reforgeMaterial(state: GameState, materialId: ItemId, targetId: ItemId): GameState {
+  if (state.phase !== 'hub') return appendLog(state, '只有在主神空间才能熔铸材料。');
+  if (!getMaterialReforgeInputs().includes(materialId)) return appendLog(state, `${ITEMS[materialId]?.name ?? '这种道具'}不能用来熔铸。`);
+  const targets: readonly ItemId[] = MATERIAL_REFORGE_TARGETS;
+  if (!targets.includes(targetId)) return appendLog(state, '只能熔铸成裂核或轮回刻印。');
+  const cost: Cost = { items: { [materialId]: MATERIAL_REFORGE_COST } };
+  if (!canPay(state, cost)) return appendLog(state, `需要 ${MATERIAL_REFORGE_COST} 个${ITEMS[materialId].name}才能熔铸。`);
+  const paid = payCost(state, cost);
+  return appendLog(
+    { ...paid, inventory: { ...paid.inventory, [targetId]: paid.inventory[targetId] + 1 } },
+    `熔铸 ${MATERIAL_REFORGE_COST} 个${ITEMS[materialId].name}，得到 1 个${ITEMS[targetId].name}。`
+  );
+}
+
 /** Reward points buy lingyun one at a time; every exchange raises the next price, without a cap. */
 export const LINGYUN_EXCHANGE_BASE_PRICE = 1500;
 export const LINGYUN_EXCHANGE_PRICE_STEP = 100;
