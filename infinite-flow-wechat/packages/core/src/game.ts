@@ -1369,6 +1369,14 @@ export const ITEM_IDS: ItemId[] = [
   'observation_shard'
 ];
 
+/** Each echo coin broken at a portal adds this share of the bag's unsettled points, never less than the minimum. */
+export const ECHO_COIN_BAG_PERCENT = 10;
+export const ECHO_COIN_MIN_REWARD = 20;
+
+export function getEchoCoinReward(bagRewardPoints: number): number {
+  return Math.max(ECHO_COIN_MIN_REWARD, Math.ceil((Math.max(0, bagRewardPoints) * ECHO_COIN_BAG_PERCENT) / 100));
+}
+
 export const ITEMS: Record<ItemId, ItemDefinition> = {
   healing_pill: {
     id: 'healing_pill',
@@ -1402,7 +1410,7 @@ export const ITEMS: Record<ItemId, ItemDefinition> = {
     id: 'echo_coin',
     name: '回响铜币',
     kind: 'portal',
-    description: '传送后让主神额外结算少量奖励点。',
+    description: `传送时碎裂一枚，战利品袋里的奖励点 +${ECHO_COIN_BAG_PERCENT}%（至少 ${ECHO_COIN_MIN_REWARD} 点）。`,
     cost: { rewardPoints: 160 }
   },
   capture_net: {
@@ -7546,9 +7554,10 @@ function resolvePortal(
   nextState = markNodeCleared(nextState, node.id);
   if (explorationRewardLine) statusLines.push(explorationRewardLine);
   if (echoAvailability.available) {
+    const echoReward = getEchoCoinReward(nextState.run?.lootBag.rewardPoints ?? 0);
     nextState = recordUsedItem(consumeItem(nextState, 'echo_coin'), 'echo_coin');
-    nextState = applyRunReward(nextState, { rewardPoints: 20 });
-    statusLines.push('回响钱币应声碎裂，20 点未结算奖励进入战利品袋。');
+    nextState = applyRunReward(nextState, { rewardPoints: echoReward });
+    statusLines.push(`回响铜币应声碎裂，${echoReward} 点未结算奖励进入战利品袋。`);
   } else if (nextState.inventory.echo_coin > 0 && echoAvailability.reason !== 'missing') {
     statusLines.push(getTacticalItemUnavailableLog(nextState, 'echo_coin') ?? '');
   }
