@@ -1791,6 +1791,53 @@ function signedPercent(value: number): string {
   return value > 0 ? `+${value}` : `${value}`;
 }
 
+const LAW_STATUS_GENE_LABELS: Readonly<Record<string, string>> = Object.freeze({
+  force: '武力', art: '术法', guard: '守御', renewal: '复生',
+});
+
+/**
+ * Chapter 14-19 law statuses are frozen domain text written as key:value dumps with
+ * internal tokens (Boss快照, run止血丹, node ids). Rewrites them for players without
+ * changing the VM value.
+ */
+export function formatInfiniteFlowLawStatus(status: string): string {
+  const carried: string[] = [];
+  let carriedAt = -1;
+  const parts: string[] = [];
+  for (const raw of status.split('，')) {
+    const part = raw.trim();
+    // Entry gear flags collapse into one list of what was brought along.
+    const gear = part.match(/^(卡宾枪|目镜|护甲|信标|裁刃|印玺):(有|无|已用)$/u);
+    if (gear) {
+      if (carriedAt < 0) carriedAt = parts.length;
+      if (gear[2] !== '无') carried.push(gear[2] === '已用' ? `${gear[1]}（已用）` : gear[1]!);
+      continue;
+    }
+    if (/^待拼接 /u.test(part)) { parts.push('有待完成的拼接'); continue; }
+    if (/^待处理:/u.test(part)) { if (part !== '待处理:无') parts.push('有待裁决的证词'); continue; }
+    const boss = part.match(/^Boss快照[:\s]\s*(.+)$/u);
+    if (boss) {
+      const value = boss[1]!;
+      const watch = value.match(/^(影路|诱饵|折光)\/(\d+)\/(\d+)$/u);
+      parts.push(value === '未冻结' ? '首领战未开始'
+        : watch ? `首领战锁定：${watch[1]}，曝光 ${watch[2]}，折光 ${watch[3]}`
+          : `首领战锁定：${value.split('/').map(token => LAW_STATUS_GENE_LABELS[token] ?? token).join('/')}`);
+      continue;
+    }
+    const take = part.match(/^(\d):(.+)$/u);
+    if (take) { parts.push(`第 ${take[1]} 段：${take[2]!.replace('->', '→')}`); continue; }
+    const deal = part.match(/^(救治|强推) HP([+-]?\d+)\/(耗药|奖励)(\d+)$/u);
+    if (deal) { parts.push(`${deal[1]}：生命${deal[2]}，${deal[3]} ${deal[4]}`); continue; }
+    parts.push(part
+      .replace(/^幸存者HP /u, '幸存者生命 ')
+      .replace(/^run止血丹 /u, '本局止血丹 ')
+      .replace(/冻结可信/u, '可信')
+      .replace(':', ' '));
+  }
+  if (carriedAt >= 0) parts.splice(carriedAt, 0, carried.length > 0 ? `已带 ${carried.join('、')}` : '未带专属装备');
+  return parts.join('，');
+}
+
 export function formatInfiniteFlowChapterLaw(
   law: ChapterLawCardViewModel,
 ): InfiniteFlowChapterSectionReadout {
@@ -1804,7 +1851,7 @@ export function formatInfiniteFlowChapterLaw(
   }
   const modifiers = law.modifiers;
   const lines = [
-    `${law.title} · ${law.status}`,
+    `${law.title} · ${formatInfiniteFlowLawStatus(law.status)}`,
     `严重度 ${CHAPTER_LAW_SEVERITY_LABELS[law.severity]} · 目标 ${law.targetReached ? '已达成' : '未达成'}${
       law.meter === undefined ? '' : ` · 计量 ${law.meter.value}/${law.meter.max}`
     }`,
@@ -1975,7 +2022,7 @@ export function formatInfiniteFlowCombatChapterContext(
     ? ` 我${signedPercent(m.outgoingForcePercent)}%/${signedPercent(m.outgoingArtPercent)}%`
     : '';
   const lawLine = law.present
-    ? `场域 ${law.title} ${law.status}${meterText}${enemyText}${outgoingText}`
+    ? `场域 ${law.title} ${formatInfiniteFlowLawStatus(law.status)}${meterText}${enemyText}${outgoingText}`
     : `场域 ${law.title} ${law.status}`;
   const pursuit = context.pursuit;
   const pursuitActive = pursuit.present

@@ -297,7 +297,7 @@ function assertSceneTarget(actual, original, fitted, message) {
   else assert.notEqual(actual, original, `${message}: dungeon layout uses a view-local target`);
 }
 // Developer tokens that must never reach a rendered label, from any real or fixture VM.
-const DEVELOPER_COPY = /\b(?:seed|run\/enter|fail-closed|legacy|dormant|stalking|phase|snapshot|undefined|null|NaN)\b|宿主|事件 ID|旧存档规则|\b(?:forge|mist|rift|chronal) 专精/iu;
+const DEVELOPER_COPY = /\b(?:seed|run\/enter|fail-closed|legacy|dormant|stalking|phase|snapshot|undefined|null|NaN)\b|宿主|事件 ID|旧存档规则|Boss快照|run止血丹|待拼接 [a-z_]+|->|\b(?:forge|mist|rift|chronal) 专精/iu;
 const developerCopyLeaks = new Map();
 function render(model, state, insets = safeInsets, extras = {}) {
   const rootNode = new api.Node('MobileActionTest');
