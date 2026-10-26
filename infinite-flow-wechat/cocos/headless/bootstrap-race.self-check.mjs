@@ -881,6 +881,7 @@ const {
   formatInfiniteFlowEquipmentHubDetail,
   formatInfiniteFlowEquipmentMemoryCombat,
   formatInfiniteFlowEquipmentMemoryHunt,
+  formatInfiniteFlowLawStatus,
   formatInfiniteFlowEquipmentMemoryLibrary,
   formatInfiniteFlowEquipmentMemoryResult,
   formatInfiniteFlowExploreEquipmentMemory,
@@ -3145,6 +3146,19 @@ assert.match(metroLawText, /全属性-10%/);
 assert.match(metroLawText, /攻击-10%/, 'the law art pressure is shown on the enemy stat it really changes');
 assert.match(metroLawText, /治疗-20%/);
 assert.match(metroLawText, /守御-10%/);
+
+// Chapter 14-19 statuses are frozen key:value dumps; the view words them for players (samples from the law fixtures).
+assert.equal(formatInfiniteFlowLawStatus('原型血清 0，拼接 3/3，多样性 3，待拼接 genesis_splice_west，Boss快照 force/art/guard'),
+  '原型血清 0，拼接 3/3，多样性 3，有待完成的拼接，首领战锁定：武力/术法/守御');
+assert.equal(formatInfiniteFlowLawStatus('幸存者HP 100/100，北:救治，中:强推，南:救治，救治 2，强推 1，run止血丹 3，救治 HP+0/耗药0，强推 HP-12/奖励40，卡宾枪:有，目镜:无，护甲:有，信标:无，秦彻：首次险情护卫，护卫:已用，研判:未用，分诊:未用，Boss快照 未冻结'),
+  '幸存者生命 100/100，北 救治，中 强推，南 救治，救治 2，强推 1，本局止血丹 3，救治：生命+0，耗药 0，强推：生命-12，奖励 40，已带 卡宾枪、护甲，秦彻：首次险情护卫，护卫 已用，研判 未用，分诊 未用，首领战未开始');
+assert.equal(formatInfiniteFlowLawStatus('声纹:未揭示，时序:未揭示，残留:污染，排除:现场医师，裁刃:无，目镜:无，护甲:无，印玺:无，裁决:未裁决，待处理:无，预计奖励:0，翻案:不可，Boss快照:未冻结'),
+  '声纹 未揭示，时序 未揭示，残留 污染，排除 现场医师，未带专属装备，裁决 未裁决，预计奖励 0，翻案 不可，首领战未开始');
+assert.equal(formatInfiniteFlowLawStatus('1:攻击 215->248，2:未录制，3:未录制，路线:未选择，Boss快照:已冻结'),
+  '第 1 段：攻击 215→248，第 2 段：未录制，第 3 段：未录制，路线 未选择，首领战锁定：已冻结');
+assert.equal(formatInfiniteFlowLawStatus('相位:1，移动:7，曝光:4，中继:3/3，路线:影路，折光:2/3，诱饵奖励:0/3，Boss快照:影路/4/2'),
+  '相位 1，移动 7，曝光 4，中继 3/3，路线 影路，折光 2/3，诱饵奖励 0/3，首领战锁定：影路，曝光 4，折光 2');
+assert.equal(formatInfiniteFlowLawStatus('涨潮'), '涨潮', 'plain statuses pass through unchanged');
 
 const mineLawText = formatInfiniteFlowChapterDecision(chapterDecisionFixture('starfall_mine')).sections[0].lines.join('\n');
 assert.match(mineLawText, /重力极向/);
