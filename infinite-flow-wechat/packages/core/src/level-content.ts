@@ -283,8 +283,8 @@ export const MONSTERS: Record<MonsterId, MonsterDefinition> = {
     speed: 17,
     rewardPoints: 860,
     drop: { chronal_glass: 3, method_page: 1 },
-    ability: '在过去复演与未来预判之间切换，连续使用同类动作会被它提前反制。',
-    counter: '均衡轮换行动并完成双锚校准，能限制它改写零点。'
+    ability: '零时倒数：时钟每回合走一格，归零时落下零时斩；缺少的校准锚会让时钟更早归零。',
+    counter: '零时斩那一回合防御，看准时机可完美格挡；一回合打出足够伤害能把时钟回拨，先完成双锚校准能多争取回合。'
   },
   verdict_usher: {
     id: 'verdict_usher',
@@ -367,8 +367,8 @@ export const MONSTERS: Record<MonsterId, MonsterDefinition> = {
     speed: 22,
     rewardPoints: 1240,
     drop: { entropy_crystal: 3, method_page: 1 },
-    ability: '把方舟崩解层叠入终末舵轮，半血后以热寂航向放大每一次失序。',
-    counter: '先完成压载锚与航迹刻印，再以降熵手段限制它的崩解层。'
+    ability: '满舵与逆舵交替：满舵时它的反击和你的伤害都会放大，逆舵时你的伤害大幅削弱；方舟熵值越高，满舵越多。',
+    counter: '在满舵回合输出或防御，逆舵回合用来吃药和防守；先压低熵值可以减少满舵回合。'
   },
   parallax_hunter: {
     id: 'parallax_hunter',
@@ -451,8 +451,8 @@ export const MONSTERS: Record<MonsterId, MonsterDefinition> = {
     speed: 28,
     rewardPoints: 1510,
     drop: { redaction_ink: 3, method_page: 1 },
-    ability: '把条款裁定与终稿权限叠入删界笔，每一次未经认证的改动都会强化最终删除。',
-    counter: '先结算沿途条款并保留足够生命，再以认证版本持续压住终稿权限。'
+    ability: '每三回合删去你最常用的动作，被删的动作接下来两回合不造成伤害。',
+    counter: '攻击、术法、符咒轮换使用，别让一种动作用得太多；删改生效时改用其他动作。'
   },
   reserve_bailiff: {
     id: 'reserve_bailiff',
@@ -493,8 +493,8 @@ export const MONSTERS: Record<MonsterId, MonsterDefinition> = {
     speed: 31,
     rewardPoints: 1720,
     drop: { legacy_scrip: 3, method_page: 1 },
-    ability: '冻结四类拍品的竞标结果，并在觉醒后放大未妥善清算的遗产条款。',
-    counter: '入场装备快照与沿途竞标共同决定终场修正，先清算拍品再挑战执槌人。'
+    ability: '每三回合起拍一次，竖起最大生命 15% 的护盾；下次起拍前没被打破的护盾会转为它的生命。',
+    counter: '在下次起拍前集中火力打破护盾，拍品流拍时它这一回合无法反击；先清算沿途拍品可以减轻终场修正。'
   },
   gene_stalker: {
     id: 'gene_stalker',
@@ -535,8 +535,8 @@ export const MONSTERS: Record<MonsterId, MonsterDefinition> = {
     speed: 34,
     rewardPoints: 1980,
     drop: { genesis_serum: 3, method_page: 1 },
-    ability: '读取本局冻结的基因拼接与血统原型，在觉醒后把原型库法则转化为终场攻防修正。',
-    counter: '先完成三座拼接台并保留血清余量，再依照当前法则修正选择稳定的输出与恢复窗口。'
+    ability: '每回合突变一次弱点，按武力、术法、符咒轮换：命中弱点伤害大增，其他伤害被削弱。',
+    counter: '看预告换伤害类型，符咒回合带上雷火符；先完成三座拼接台可以减轻终场修正。'
   },
   frequency_leech: {
     id: 'frequency_leech',
@@ -577,8 +577,8 @@ export const MONSTERS: Record<MonsterId, MonsterDefinition> = {
     speed: 32,
     rewardPoints: 1910,
     drop: { silence_core: 2 },
-    ability: '奇数回合封锁武力频带、偶数回合封锁术法频带，命中被封锁频带时会生成静默护盾并反击。',
-    counter: '奇数回合施展术法、偶数回合使用武力，按广播灯号反向轮换即可绕开频带封锁。'
+    ability: '护幕会调谐到你上一次命中的伤害频率，同频再次命中只造成 55% 伤害；格挡会重置护幕。',
+    counter: '武力、术法、符咒轮换出手，或格挡一次清掉护幕。'
   },
   last_broadcaster: {
     id: 'last_broadcaster',
@@ -591,8 +591,8 @@ export const MONSTERS: Record<MonsterId, MonsterDefinition> = {
     speed: 36,
     rewardPoints: 2280,
     drop: { silence_core: 3, method_page: 1 },
-    ability: '把三座中继台与空白频道叠成终场广播，觉醒后会放大尚未切断的频段，并将重复行动写入永久播音。',
-    counter: '先重启北段、中央与南段中继台，再轮换武力、术法和守势，利用停播窗口集中终结主频道。'
+    ability: '每三回合完成一次三拍终播，第三拍追加 16 点噪声伤害；格挡时只剩 4 点余波。',
+    counter: '先重启北段、中央与南段中继台；数好拍子，在第三拍格挡。'
   },
   mimic_survivor: {
     id: 'mimic_survivor',
@@ -633,8 +633,8 @@ export const MONSTERS: Record<MonsterId, MonsterDefinition> = {
     speed: 34,
     rewardPoints: 2000,
     drop: { rescue_badge: 2 },
-    ability: '奇数回合封锁推进路线、偶数回合标记治疗目标；命中当前封锁行为会使它获得护送权限盾并立即反击。',
-    counter: '奇数回合优先治疗或防御、偶数回合集中推进输出，按检查灯号反向行动即可绕过权限盾并保住幸存者。'
+    ability: '执行协议会适应你上一次命中的伤害类型，同类再次命中只造成 55% 伤害；格挡会清除适应。',
+    counter: '轮换伤害类型或格挡清除适应护幕，同时留意幸存者的生命。'
   },
   evacuation_horror: {
     id: 'evacuation_horror',
@@ -689,8 +689,8 @@ export const MONSTERS: Record<MonsterId, MonsterDefinition> = {
     speed: 35,
     rewardPoints: 2200,
     drop: { truth_fragment: 2 },
-    ability: '奇数回合删录武力证据、偶数回合删录术法证据；命中被删类型会替它生成一层无记录护盾并追加批注伤害。',
-    counter: '奇数回合使用术法、偶数回合使用武力，并在护盾出现时先防御观察；按删录灯号反向行动即可保住完整证据链。'
+    ability: '把你上一次的攻击手段登记为封签目标，重复同一手段只造成 55% 伤害；切换手段或格挡可以解除，溯证目镜能让封签失效。',
+    counter: '武力、术法、符咒轮换使用，或先格挡一次；带上溯证目镜可以无视封签。'
   },
   perjury_hound: {
     id: 'perjury_hound',
@@ -745,8 +745,8 @@ export const MONSTERS: Record<MonsterId, MonsterDefinition> = {
     speed: 37,
     rewardPoints: 2400,
     drop: { combat_reel: 2 },
-    ability: '奇数回合删改武力镜头、偶数回合删改术法镜头；命中被删类型会生成连续性护盾并反击。',
-    counter: '奇数回合使用术法、偶数回合使用武力，按场记灯号反向轮换即可保住动作连续性。'
+    ability: '会标记你的守势接缝，每次格挡都让它的反击追加伤害，叠得越多越痛。',
+    counter: '少用格挡，靠输出或道具处理它；不得不防守时尽快结束战斗。'
   },
   retake_double: {
     id: 'retake_double',
@@ -843,8 +843,8 @@ export const MONSTERS: Record<MonsterId, MonsterDefinition> = {
     speed: 44,
     rewardPoints: 3300,
     drop: { observation_shard: 3, method_page: 1 },
-    ability: '冻结首领战开始时的路线、曝光与折光快照，把每一次被看见的移动转写为监察火力。',
-    counter: '先完成三座盲区中继并锁定路线，利用入场冻结装备修正快照，再轮换攻防终结万目核心。'
+    ability: '每次进攻都会被记入曝光，曝光满三格时下回合落下终审光束；地图上的曝光会带一部分进首领战。',
+    counter: '曝光快满时转入防御把它压下来，光束那一回合看准时机格挡；先完成盲区中继并锁定路线。'
   }
 };
 

@@ -1,3 +1,10 @@
+import {
+  ALL_SIGHT_BEAM_EXPOSURE, ALL_SIGHT_BEAM_RETALIATION, AUCTION_BID_INTERVAL, AUCTION_SHIELD_PERCENT, getMutationWeakness,
+  MUTATION_OTHER_DAMAGE, MUTATION_WEAK_DAMAGE, type CombatDamageKind,
+  getHelmHeading, getRedactionTarget, HELM_FULL_DAMAGE_TAKEN, HELM_FULL_RETALIATION, HELM_REVERSE_DAMAGE_TAKEN, HELM_REVERSE_RETALIATION,
+  REDACTION_INTERVAL, REDACTION_TURNS, ZERO_HOUR_CLOCK, ZERO_HOUR_PUSHBACK_PERCENT, ZERO_HOUR_STRIKE_HP_PERCENT,
+  type RedactionKind
+} from './combat-effects';
 import type { CombatAction, CombatState, GameState } from './game';
 
 export type CombatIntentId =
@@ -11,6 +18,17 @@ export type CombatIntentId =
   | 'pulse-wave'
   | 'dream-item-lock'
   | 'echo-copy-pressure'
+  | 'zero-hour-countdown'
+  | 'zero-hour-strike'
+  | 'helm-full'
+  | 'helm-reverse'
+  | 'redaction-warning'
+  | 'redaction-active'
+  | 'auction-bid'
+  | 'auction-shield'
+  | 'mutation-weakness'
+  | 'all-sight-exposure'
+  | 'all-sight-beam'
   | 'heavy-blow';
 
 export type CombatIntentSeverity = 'normal' | 'warning' | 'danger';
@@ -59,9 +77,35 @@ function isHeavyBlowTurn(input: CombatIntentInput): boolean {
   return input.encounterRank !== undefined && input.turn > 0 && input.turn % HEAVY_BLOW_TURN_INTERVAL === 2;
 }
 
-/** Only a telegraphed heavy blow can be perfectly parried. */
+/** Only a telegraphed heavy blow, including 零时斩, can be perfectly parried. */
 export function isParryableCombatIntent(intent: Pick<CombatIntent, 'id'> | undefined): boolean {
-  return intent?.id === 'heavy-blow';
+  return intent?.id === 'heavy-blow' || intent?.id === 'zero-hour-strike' || intent?.id === 'all-sight-beam';
+}
+
+const DAMAGE_KIND_LABELS: Readonly<Record<CombatDamageKind, string>> = { physical: '武力', art: '术法', talisman: '符咒' };
+
+/** The player actions that deal a damage kind; a weapon skill counts as the kind it deals. */
+function actionsDealing(input: CombatIntentInput, kind: CombatDamageKind): CombatAction[] {
+  if (kind === 'talisman') return ['use_thunder_talisman'];
+  const action = kind === 'physical' ? 'attack' : 'art';
+  return getWeaponSkillEffectAction(input) === action ? [action, 'weapon_skill'] : [action];
+}
+
+const REDACTION_LABELS: Readonly<Record<RedactionKind, string>> = { attack: '攻击', art: '术法', talisman: '符咒' };
+
+/** A boss mechanic never hides a heavy blow: the heavy blow keeps its parry and carries the mechanic's note. */
+function withHeavyBlow(note: string, extraDanger: readonly CombatAction[] = []): CombatIntent {
+  return {
+    ...HEAVY_BLOW,
+    consequence: `${HEAVY_BLOW.consequence}${note}`,
+    dangerousActions: Array.from(new Set([...HEAVY_BLOW.dangerousActions, ...extraDanger]))
+  };
+}
+
+/** The player actions a deleted kind covers; a weapon skill counts as the damage kind it deals. */
+function redactedActions(input: CombatIntentInput, kind: RedactionKind): CombatAction[] {
+  if (kind === 'talisman') return ['use_thunder_talisman'];
+  return getWeaponSkillEffectAction(input) === kind ? [kind, 'weapon_skill'] : [kind];
 }
 
 function hasMethod(input: CombatIntentInput, methodId: GameState['learnedMethods'][number]): boolean {
@@ -246,6 +290,146 @@ export function getCombatIntent(input: CombatIntentInput): CombatIntent {
       consequence: getEchoConsequence(input),
       recommendedActions: ['guard'],
       dangerousActions: ['attack', 'art', 'weapon_skill', 'use_healing_pill', 'use_thunder_talisman']
+    };
+  }
+
+  if (input.monsterId === 'zero_hour_regent') {
+    const clock = input.effects?.regentClock ?? ZERO_HOUR_CLOCK;
+    if (clock <= 1) {
+      return {
+        id: 'zero-hour-strike',
+        name: '零时斩',
+        severity: 'danger',
+        consequence: `时钟归零：本回合按重击结算，不防御还会再受到最大生命 ${ZERO_HOUR_STRIKE_HP_PERCENT}% 的伤害；把握时机防御可完美格挡。`,
+        recommendedActions: ['guard'],
+        dangerousActions: ['attack', 'art', 'weapon_skill', 'use_healing_pill', 'use_thunder_talisman']
+      };
+    }
+    return {
+      id: 'zero-hour-countdown',
+      name: `零时倒数 ${clock}`,
+      severity: clock === 2 ? 'warning' : 'normal',
+      consequence: `再过 ${clock - 1} 回合落下零时斩；一回合打出它最大生命 ${ZERO_HOUR_PUSHBACK_PERCENT}% 以上的伤害，时钟回拨 1。`,
+      recommendedActions: ['attack', 'art', 'weapon_skill'],
+      dangerousActions: []
+    };
+  }
+
+  if (input.monsterId === 'last_helmsman') {
+    const full = getHelmHeading(input.turn, input.effects?.helmEntropy ?? 2) === 'full';
+    if (isHeavyBlowTurn(input)) return withHeavyBlow(full ? '这一击还是满舵，反击再提高 40%。' : '这一击是逆舵，双方伤害都降低 40%。');
+    return full
+      ? {
+          id: 'helm-full',
+          name: '满舵',
+          severity: 'warning',
+          consequence: `本回合满舵：它的反击提高 ${Math.round((HELM_FULL_RETALIATION - 1) * 100)}%，你造成的伤害提高 ${Math.round((HELM_FULL_DAMAGE_TAKEN - 1) * 100)}%。`,
+          recommendedActions: ['attack', 'art', 'weapon_skill', 'guard'],
+          dangerousActions: ['use_healing_pill']
+        }
+      : {
+          id: 'helm-reverse',
+          name: '逆舵',
+          severity: 'normal',
+          consequence: `本回合逆舵：你造成的伤害降低 ${Math.round((1 - HELM_REVERSE_DAMAGE_TAKEN) * 100)}%，它的反击也降低 ${Math.round((1 - HELM_REVERSE_RETALIATION) * 100)}%，适合吃药或调整。`,
+          recommendedActions: ['use_healing_pill', 'attack', 'art'],
+          dangerousActions: []
+        };
+  }
+
+  if (input.monsterId === 'last_redactor') {
+    const deleted = input.effects?.redactedTurns ? input.effects.redactedKind : undefined;
+    if (deleted && isHeavyBlowTurn(input)) {
+      return withHeavyBlow(`『${REDACTION_LABELS[deleted]}』仍被删去，造成 0 伤害。`, redactedActions(input, deleted));
+    }
+    if (deleted) {
+      return {
+        id: 'redaction-active',
+        name: `已删改『${REDACTION_LABELS[deleted]}』`,
+        severity: 'danger',
+        consequence: `『${REDACTION_LABELS[deleted]}』被删去，还有 ${input.effects?.redactedTurns} 回合造成 0 伤害；换用其他动作。`,
+        recommendedActions: (['attack', 'art', 'guard'] as CombatAction[]).filter((action) => action !== deleted),
+        dangerousActions: redactedActions(input, deleted)
+      };
+    }
+    const target = input.turn % REDACTION_INTERVAL === 0 ? getRedactionTarget(input.effects) : undefined;
+    if (target) {
+      return {
+        id: 'redaction-warning',
+        name: '终稿删改',
+        severity: 'warning',
+        consequence: `本回合结束时删去你最常用的动作（目前是『${REDACTION_LABELS[target]}』），之后 ${REDACTION_TURNS} 回合它造成 0 伤害。`,
+        recommendedActions: ['attack', 'art', 'guard'],
+        dangerousActions: []
+      };
+    }
+  }
+
+  if (input.monsterId === 'estate_auctioneer') {
+    const shield = input.effects?.bidShield ?? 0;
+    const bidding = input.turn % AUCTION_BID_INTERVAL === 1;
+    const shieldNote = shield > 0
+      ? `起拍护盾还剩 ${shield}，${bidding ? '本回合' : '下次起拍前'}打破它，拍卖官这一回合无法反击；打不破就转为它的生命。`
+      : '';
+    if (isHeavyBlowTurn(input)) return withHeavyBlow(shieldNote);
+    if (shield > 0) {
+      return {
+        id: 'auction-shield',
+        name: `起拍护盾 ${shield}`,
+        severity: bidding ? 'danger' : 'warning',
+        consequence: shieldNote,
+        recommendedActions: ['attack', 'art', 'weapon_skill', 'use_thunder_talisman'],
+        dangerousActions: []
+      };
+    }
+    if (bidding) {
+      return {
+        id: 'auction-bid',
+        name: '起拍',
+        severity: 'warning',
+        consequence: `本回合结束时竖起最大生命 ${AUCTION_SHIELD_PERCENT}% 的起拍护盾；之后 ${AUCTION_BID_INTERVAL} 回合内打破它可让它停手一回合。`,
+        recommendedActions: ['attack', 'art', 'guard'],
+        dangerousActions: []
+      };
+    }
+  }
+
+  if (input.monsterId === 'primal_curator') {
+    const weakness = getMutationWeakness(input.turn);
+    const label = DAMAGE_KIND_LABELS[weakness];
+    const note = `本回合弱点是${label}：${label}伤害 ×${MUTATION_WEAK_DAMAGE}，其他 ×${MUTATION_OTHER_DAMAGE}。`;
+    if (isHeavyBlowTurn(input)) return withHeavyBlow(note);
+    return {
+      id: 'mutation-weakness',
+      name: `突变：弱${label}`,
+      severity: 'normal',
+      consequence: note,
+      recommendedActions: actionsDealing(input, weakness),
+      dangerousActions: []
+    };
+  }
+
+  if (input.monsterId === 'all_sight_warden') {
+    const exposure = input.effects?.exposure ?? 0;
+    if (exposure >= ALL_SIGHT_BEAM_EXPOSURE) {
+      return {
+        id: 'all-sight-beam',
+        name: '终审光束',
+        severity: 'danger',
+        consequence: `曝光已满：本回合按重击结算并再提高 ${Math.round((ALL_SIGHT_BEAM_RETALIATION - 1) * 100)}%；防御可挡下大部分，把握时机可完美格挡。之后曝光清零。`,
+        recommendedActions: ['guard'],
+        dangerousActions: ['attack', 'art', 'weapon_skill', 'use_healing_pill', 'use_thunder_talisman']
+      };
+    }
+    const note = `曝光 ${exposure}/${ALL_SIGHT_BEAM_EXPOSURE}：每次进攻 +1，防御 −1，满了下回合落下终审光束。`;
+    if (isHeavyBlowTurn(input)) return withHeavyBlow(note);
+    return {
+      id: 'all-sight-exposure',
+      name: `曝光 ${exposure}/${ALL_SIGHT_BEAM_EXPOSURE}`,
+      severity: exposure === ALL_SIGHT_BEAM_EXPOSURE - 1 ? 'warning' : 'normal',
+      consequence: note,
+      recommendedActions: exposure === ALL_SIGHT_BEAM_EXPOSURE - 1 ? ['guard', 'attack', 'art'] : ['attack', 'art', 'weapon_skill'],
+      dangerousActions: []
     };
   }
 

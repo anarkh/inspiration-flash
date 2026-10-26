@@ -12,6 +12,10 @@
       "types": "./dist/boss-system.d.ts",
       "default": "./dist/boss-system.js"
     },
+    "./combat-effects": {
+      "types": "./dist/combat-effects.d.ts",
+      "default": "./dist/combat-effects.js"
+    },
     "./combat-focus": {
       "types": "./dist/combat-focus.d.ts",
       "default": "./dist/combat-focus.js"
