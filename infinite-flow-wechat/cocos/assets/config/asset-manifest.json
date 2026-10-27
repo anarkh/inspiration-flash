@@ -1,31 +1,31 @@
 {
   "schemaVersion": 2,
-  "manifestRevision": "sha256:3d2a276a8cf63784d4d67f490a5e33f66304af2267cd13eae938abe026f370df",
+  "manifestRevision": "sha256:d72d289e104c5df869e30f45af09deee601ed52fb1bf9868229e7a266bf7bfbb",
   "sourceManifest": {
     "path": "infinite-flow/src/game-assets.ts",
     "version": 1,
     "commit": "2645f0232542684d27de1abc321bb26913320420"
   },
   "resourceRoot": "cocos/assets/resources",
-  "assetCount": 314,
+  "assetCount": 323,
   "derivedAssetCount": 5,
   "kindCounts": {
-    "character": 5,
+    "character": 8,
     "npc": 15,
     "monster": 118,
     "equipment": 65,
-    "pet": 6,
+    "pet": 12,
     "item": 50,
     "dungeon": 19,
     "scene": 36
   },
   "formatCounts": {
     "source": {
-      "png": 313,
+      "png": 322,
       "svg": 1
     },
     "target": {
-      "png": 314
+      "png": 323
     }
   },
   "assets": [
@@ -9296,6 +9296,267 @@
         "targetDimensions": {
           "width": 1254,
           "height": 1254
+        }
+      }
+    },
+    {
+      "key": "character:companion_qin_che_world",
+      "kind": "character",
+      "entityId": "companion_qin_che_world",
+      "resourcePath": "character/qin-che-world-v1",
+      "resourceFile": "character/qin-che-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/party-world/qin-che-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "秦彻持塔盾的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "006f6006f12f1fc9d1c086eef8b91aee93b222cdd6b24b29b3d35a025c3e5c2d",
+      "targetSha256": "006f6006f12f1fc9d1c086eef8b91aee93b222cdd6b24b29b3d35a025c3e5c2d",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "version": "macOS 26.5.1 (25F80)",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "character:companion_zhou_yingxue_world",
+      "kind": "character",
+      "entityId": "companion_zhou_yingxue_world",
+      "resourcePath": "character/zhou-yingxue-world-v1",
+      "resourceFile": "character/zhou-yingxue-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/party-world/zhou-yingxue-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "周映雪手持笔记的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "88a7c0d1a2eed61a866cb33860908e8bff2f8f8ef29e3bdba8a62ca83cf20431",
+      "targetSha256": "88a7c0d1a2eed61a866cb33860908e8bff2f8f8ef29e3bdba8a62ca83cf20431",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "version": "macOS 26.5.1 (25F80)",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "character:companion_lu_guanlan_world",
+      "kind": "character",
+      "entityId": "companion_lu_guanlan_world",
+      "resourcePath": "character/lu-guanlan-world-v1",
+      "resourceFile": "character/lu-guanlan-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/party-world/lu-guanlan-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "陆观澜背着药囊的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "31b3729bfbe104afb9c47b66a41e89da0152487fefc69d42ed01f147e017781b",
+      "targetSha256": "31b3729bfbe104afb9c47b66a41e89da0152487fefc69d42ed01f147e017781b",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "version": "macOS 26.5.1 (25F80)",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "pet:contract_sprite_world",
+      "kind": "pet",
+      "entityId": "contract_sprite_world",
+      "resourcePath": "pet/contract-sprite-world-v1",
+      "resourceFile": "pet/contract-sprite-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/party-world/contract-sprite-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "折叠符光构成的契约小灵的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "03ed6ff4e8a3b0e3f40d42e3b01978e213ac728a57b13653491e3c5570b31d82",
+      "targetSha256": "03ed6ff4e8a3b0e3f40d42e3b01978e213ac728a57b13653491e3c5570b31d82",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "version": "macOS 26.5.1 (25F80)",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "pet:ash_hound_world",
+      "kind": "pet",
+      "entityId": "ash_hound_world",
+      "resourcePath": "pet/ash-hound-world-v1",
+      "resourceFile": "pet/ash-hound-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/party-world/ash-hound-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "裂纹余烬覆身的烬火犬的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "81e539dcec6dffb598de1fbebf4daf05704090159668cce8a2252bb1e9df01c0",
+      "targetSha256": "81e539dcec6dffb598de1fbebf4daf05704090159668cce8a2252bb1e9df01c0",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "version": "macOS 26.5.1 (25F80)",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "pet:starling_drone_world",
+      "kind": "pet",
+      "entityId": "starling_drone_world",
+      "resourcePath": "pet/starling-drone-world-v1",
+      "resourceFile": "pet/starling-drone-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/party-world/starling-drone-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "星纹铜壳的星棱机的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "2676741b75cce86c65259bd86ac3f113f5b10367c7c369bf74a09dee982a3947",
+      "targetSha256": "2676741b75cce86c65259bd86ac3f113f5b10367c7c369bf74a09dee982a3947",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "version": "macOS 26.5.1 (25F80)",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "pet:mist_kitten_world",
+      "kind": "pet",
+      "entityId": "mist_kitten_world",
+      "resourcePath": "pet/mist-kitten-world-v1",
+      "resourceFile": "pet/mist-kitten-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/party-world/mist-kitten-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "雾气缭绕的雾爪幼兽的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "f17879f60589b4209035c545e80ffbc8f2a87f3e01b0c63df9a5727f4a6e36a2",
+      "targetSha256": "f17879f60589b4209035c545e80ffbc8f2a87f3e01b0c63df9a5727f4a6e36a2",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "version": "macOS 26.5.1 (25F80)",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "pet:mirror_moth_world",
+      "kind": "pet",
+      "entityId": "mirror_moth_world",
+      "resourcePath": "pet/mirror-moth-world-v1",
+      "resourceFile": "pet/mirror-moth-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/party-world/mirror-moth-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "碎镜羽翼的镜翼蛾的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "11addc57b1860a8badad3540ec6428b1de3d03923650e109ba466c074454cf41",
+      "targetSha256": "11addc57b1860a8badad3540ec6428b1de3d03923650e109ba466c074454cf41",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "version": "macOS 26.5.1 (25F80)",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
+        }
+      }
+    },
+    {
+      "key": "pet:void_whelp_world",
+      "kind": "pet",
+      "entityId": "void_whelp_world",
+      "resourcePath": "pet/void-whelp-world-v1",
+      "resourceFile": "pet/void-whelp-world-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/party-world/void-whelp-world-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "脊背青光的虚空幼龙的全身形象",
+      "role": "portrait",
+      "width": 1024,
+      "height": 1536,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "c849a624a54fbc6c28cc4be2e27d3144b224230bb33b23e34f556df62e86c439",
+      "targetSha256": "c849a624a54fbc6c28cc4be2e27d3144b224230bb33b23e34f556df62e86c439",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "version": "macOS 26.5.1 (25F80)",
+        "targetDimensions": {
+          "width": 1024,
+          "height": 1536
         }
       }
     }

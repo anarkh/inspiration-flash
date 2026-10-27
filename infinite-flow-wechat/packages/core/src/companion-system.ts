@@ -5,10 +5,18 @@ export const COMPANION_RULES_VERSION = 1 as const;
 export type CompanionId = 'qin_che' | 'zhou_yingxue' | 'lu_guanlan';
 export type CompanionRank = 1 | 2 | 3;
 
-export type CompanionAssistEffect = Readonly<{
-  guarding: boolean;
+/** How a companion fights beside the player every turn, plus its specialty. */
+export type CompanionBattleEffect = Readonly<{
+  /** The player stat the companion's own strike scales with, and the share of it. */
+  strikeStat: 'attack' | 'artPower' | 'best';
+  strikePercent: number;
+  /** 秦彻: counterattack damage he blocks while you guard. */
+  guardBlock: number;
+  /** 周映雪: 战意 she hands you every few turns. */
   focusGain: number;
-  healPercent: number;
+  focusEvery: number;
+  /** 陆观澜: once per fight, heals this share of max HP when you drop below half. */
+  emergencyHealPercent: number;
 }>;
 
 export type CompanionDefinition = Readonly<{
@@ -19,7 +27,7 @@ export type CompanionDefinition = Readonly<{
   recruitCost: Readonly<Cost>;
   trainingMaterial: ItemId;
   assistName: string;
-  assistEffects: Readonly<Record<CompanionRank, CompanionAssistEffect>>;
+  battleEffects: Readonly<Record<CompanionRank, CompanionBattleEffect>>;
 }>;
 
 export type CompanionProgress = Readonly<{
@@ -45,17 +53,11 @@ export type CompanionUpgradeStatus = Readonly<{
   cost?: Readonly<Cost>;
 }>;
 
-export type CompanionAssistStatus = Readonly<{
+export type CompanionBattleStatus = Readonly<{
   active: boolean;
   snapshot?: CompanionRunSnapshot;
-  effect: CompanionAssistEffect;
+  effect?: CompanionBattleEffect;
 }>;
-
-const NO_ASSIST_EFFECT: CompanionAssistEffect = Object.freeze({
-  guarding: false,
-  focusGain: 0,
-  healPercent: 0
-});
 
 function freezeCost(
   rewardPoints: number,
@@ -70,12 +72,12 @@ function freezeCost(
   });
 }
 
-function freezeEffect(
-  guarding: boolean,
-  focusGain: number,
-  healPercent: number
-): CompanionAssistEffect {
-  return Object.freeze({ guarding, focusGain, healPercent });
+function freezeBattle(
+  strikeStat: CompanionBattleEffect['strikeStat'],
+  strikePercent: number,
+  specialty: Partial<Pick<CompanionBattleEffect, 'guardBlock' | 'focusGain' | 'focusEvery' | 'emergencyHealPercent'>>
+): CompanionBattleEffect {
+  return Object.freeze({ strikeStat, strikePercent, guardBlock: 0, focusGain: 0, focusEvery: 0, emergencyHealPercent: 0, ...specialty });
 }
 
 export const COMPANION_CATALOG = Object.freeze([
@@ -87,10 +89,10 @@ export const COMPANION_CATALOG = Object.freeze([
     recruitCost: freezeCost(480, 1, 'demon_bone', 2),
     trainingMaterial: 'demon_bone',
     assistName: '抢位援护',
-    assistEffects: Object.freeze({
-      1: freezeEffect(true, 0, 0),
-      2: freezeEffect(true, 1, 0),
-      3: freezeEffect(true, 1, 8)
+    battleEffects: Object.freeze({
+      1: freezeBattle('attack', 15, { guardBlock: 4 }),
+      2: freezeBattle('attack', 20, { guardBlock: 6 }),
+      3: freezeBattle('attack', 25, { guardBlock: 9 })
     })
   }),
   Object.freeze({
@@ -101,10 +103,10 @@ export const COMPANION_CATALOG = Object.freeze([
     recruitCost: freezeCost(920, 2, 'method_page', 2),
     trainingMaterial: 'method_page',
     assistName: '弱点演算',
-    assistEffects: Object.freeze({
-      1: freezeEffect(false, 1, 0),
-      2: freezeEffect(false, 2, 0),
-      3: freezeEffect(false, 3, 0)
+    battleEffects: Object.freeze({
+      1: freezeBattle('artPower', 15, { focusGain: 1, focusEvery: 3 }),
+      2: freezeBattle('artPower', 20, { focusGain: 1, focusEvery: 3 }),
+      3: freezeBattle('artPower', 25, { focusGain: 1, focusEvery: 3 })
     })
   }),
   Object.freeze({
@@ -115,10 +117,10 @@ export const COMPANION_CATALOG = Object.freeze([
     recruitCost: freezeCost(720, 2, 'medicine_ash', 2),
     trainingMaterial: 'medicine_ash',
     assistName: '紧急处置',
-    assistEffects: Object.freeze({
-      1: freezeEffect(false, 0, 12),
-      2: freezeEffect(false, 0, 18),
-      3: freezeEffect(false, 0, 25)
+    battleEffects: Object.freeze({
+      1: freezeBattle('best', 10, { emergencyHealPercent: 12 }),
+      2: freezeBattle('best', 13, { emergencyHealPercent: 18 }),
+      3: freezeBattle('best', 16, { emergencyHealPercent: 25 })
     })
   })
 ] as const) satisfies readonly CompanionDefinition[];
@@ -282,22 +284,13 @@ export function normalizeCompanionRunSnapshot(value: unknown): CompanionRunSnaps
   });
 }
 
-export function getCompanionAssistEffect(snapshot: unknown): CompanionAssistEffect {
+export function getCompanionBattleEffect(snapshot: unknown): CompanionBattleEffect | undefined {
   const normalized = normalizeCompanionRunSnapshot(snapshot);
-  if (normalized === undefined) return NO_ASSIST_EFFECT;
-
-  return getCompanionDefinition(normalized.companionId)!.assistEffects[normalized.rank];
+  return normalized === undefined ? undefined : getCompanionDefinition(normalized.companionId)!.battleEffects[normalized.rank];
 }
 
-export function getCompanionAssistStatus(snapshot: unknown): CompanionAssistStatus {
+export function getCompanionBattleStatus(snapshot: unknown): CompanionBattleStatus {
   const normalized = normalizeCompanionRunSnapshot(snapshot);
-  if (normalized === undefined) {
-    return Object.freeze({ active: false, effect: NO_ASSIST_EFFECT });
-  }
-
-  return Object.freeze({
-    active: true,
-    snapshot: normalized,
-    effect: getCompanionAssistEffect(normalized)
-  });
+  if (normalized === undefined) return Object.freeze({ active: false });
+  return Object.freeze({ active: true, snapshot: normalized, effect: getCompanionBattleEffect(normalized) });
 }

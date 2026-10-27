@@ -27,11 +27,17 @@ export type BloodlineUpgradeCost = Readonly<Cost & {
 
 export type BloodlineStatBonus = Readonly<Partial<Pick<DerivedStats, BloodlineStatKey>>>;
 
-export type BloodlineSurgeEffect = Readonly<{
+/** A bloodline's passive on every hit the player lands: extra damage, a growing shield or lifesteal. */
+export type BloodlineHitEffect = Readonly<{
+  /** Added to every physical hit. */
   forceDamage: number;
+  /** Added to every art hit. */
   artDamage: number;
+  /** Shield gained per hit, up to barrierCap. */
   barrier: number;
-  healPercent: number;
+  barrierCap: number;
+  /** Share of the damage dealt healed back. */
+  lifestealPercent: number;
 }>;
 
 export type BloodlineDefinition = Readonly<{
@@ -40,7 +46,7 @@ export type BloodlineDefinition = Readonly<{
   title: string;
   aspect: BloodlineAspect;
   statBonuses: Readonly<Record<BloodlineRank, BloodlineStatBonus>>;
-  surgeEffects: Readonly<Record<BloodlineRank, BloodlineSurgeEffect>>;
+  hitEffects: Readonly<Record<BloodlineRank, BloodlineHitEffect>>;
 }>;
 
 export type BloodlineProgress = Readonly<{
@@ -77,13 +83,14 @@ function freezeStatBonus(bonus: BloodlineStatBonus): BloodlineStatBonus {
   return Object.freeze({ ...bonus });
 }
 
-function freezeSurgeEffect(
+function freezeHitEffect(
   forceDamage: number,
   artDamage: number,
   barrier: number,
-  healPercent: number
-): BloodlineSurgeEffect {
-  return Object.freeze({ forceDamage, artDamage, barrier, healPercent });
+  barrierCap: number,
+  lifestealPercent: number
+): BloodlineHitEffect {
+  return Object.freeze({ forceDamage, artDamage, barrier, barrierCap, lifestealPercent });
 }
 
 const TITAN_MARROW_DEFINITION: BloodlineDefinition = Object.freeze({
@@ -96,10 +103,10 @@ const TITAN_MARROW_DEFINITION: BloodlineDefinition = Object.freeze({
     freezeStatBonus({ attack: 12, maxHp: 24 }),
     freezeStatBonus({ attack: 20, maxHp: 40 })
   ),
-  surgeEffects: freezeRankValues(
-    freezeSurgeEffect(18, 0, 0, 0),
-    freezeSurgeEffect(30, 0, 0, 0),
-    freezeSurgeEffect(44, 0, 0, 0)
+  hitEffects: freezeRankValues(
+    freezeHitEffect(5, 0, 0, 0, 0),
+    freezeHitEffect(8, 0, 0, 0, 0),
+    freezeHitEffect(11, 0, 0, 0, 0)
   )
 });
 
@@ -113,10 +120,10 @@ const VOID_SYMBIOTE_DEFINITION: BloodlineDefinition = Object.freeze({
     freezeStatBonus({ spirit: 2, artPower: 16 }),
     freezeStatBonus({ spirit: 3, artPower: 26 })
   ),
-  surgeEffects: freezeRankValues(
-    freezeSurgeEffect(0, 20, 0, 0),
-    freezeSurgeEffect(0, 34, 0, 0),
-    freezeSurgeEffect(0, 50, 0, 0)
+  hitEffects: freezeRankValues(
+    freezeHitEffect(0, 6, 0, 0, 0),
+    freezeHitEffect(0, 10, 0, 0, 0),
+    freezeHitEffect(0, 14, 0, 0, 0)
   )
 });
 
@@ -130,10 +137,10 @@ const BASTION_CHITIN_DEFINITION: BloodlineDefinition = Object.freeze({
     freezeStatBonus({ defense: 8, maxHp: 36 }),
     freezeStatBonus({ defense: 13, maxHp: 56 })
   ),
-  surgeEffects: freezeRankValues(
-    freezeSurgeEffect(0, 0, 20, 0),
-    freezeSurgeEffect(0, 0, 34, 0),
-    freezeSurgeEffect(0, 0, 50, 0)
+  hitEffects: freezeRankValues(
+    freezeHitEffect(0, 0, 4, 20, 0),
+    freezeHitEffect(0, 0, 6, 34, 0),
+    freezeHitEffect(0, 0, 9, 50, 0)
   )
 });
 
@@ -147,10 +154,10 @@ const PHOENIX_EMBER_DEFINITION: BloodlineDefinition = Object.freeze({
     freezeStatBonus({ maxHp: 24, speed: 4 }),
     freezeStatBonus({ maxHp: 36, speed: 6 })
   ),
-  surgeEffects: freezeRankValues(
-    freezeSurgeEffect(0, 0, 0, 12),
-    freezeSurgeEffect(0, 0, 0, 18),
-    freezeSurgeEffect(0, 0, 0, 25)
+  hitEffects: freezeRankValues(
+    freezeHitEffect(0, 0, 0, 0, 8),
+    freezeHitEffect(0, 0, 0, 0, 12),
+    freezeHitEffect(0, 0, 0, 0, 16)
   )
 });
 
@@ -351,8 +358,8 @@ export function getBloodlineStatBonus(snapshot: unknown): BloodlineStatBonus | u
   return getBloodlineDefinition(normalized.bloodlineId)!.statBonuses[normalized.rank];
 }
 
-export function getBloodlineSurgeEffect(snapshot: unknown): BloodlineSurgeEffect | undefined {
+export function getBloodlineHitEffect(snapshot: unknown): BloodlineHitEffect | undefined {
   const normalized = normalizeBloodlineRunSnapshot(snapshot);
   if (normalized === undefined) return undefined;
-  return getBloodlineDefinition(normalized.bloodlineId)!.surgeEffects[normalized.rank];
+  return getBloodlineDefinition(normalized.bloodlineId)!.hitEffects[normalized.rank];
 }

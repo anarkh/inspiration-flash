@@ -12,7 +12,7 @@ import { DARK_UI, ROOM_SHEET, paintDarkFrame, paintDarkIcon, paintRoomSheetButto
 import { getWalkHudLayout, getWalkHudStrips } from './hud-layout';
 import type { HudPopoverKind } from './hud-layout';
 import { createInfiniteFlowCombatEffects } from './InfiniteFlowCombatEffects';
-import type { CombatEffectKind, CombatEffectResult, CombatEffectStartOptions, CombatTimingGrade } from './InfiniteFlowCombatEffects';
+import type { CombatAllyKind, CombatEffectKind, CombatEffectResult, CombatEffectStartOptions, CombatTimingGrade } from './InfiniteFlowCombatEffects';
 
 export type { CombatEffectKind, CombatEffectResult, CombatEffectStartOptions, CombatTimingGrade } from './InfiniteFlowCombatEffects';
 
@@ -195,6 +195,23 @@ function readyWalkSceneOptions(options: WalkSceneOptions, model: GameViewModel):
 }
 
 const WORLD_ZOOM = 1.1;
+/** Where a full-body ally stands and how tall it shows, in hero heights from the hero's feet. */
+const ALLY_FIGURE = {
+  companion: { x: -0.24, y: 0.3, height: 0.84 },
+  pet: { x: 0.34, y: 0.42, height: 0.42 },
+} as const;
+/**
+ * Measured soles (lowest alpha > 32) as a share of the canvas height, where they miss the drawn 93%. Flying pets keep
+ * 93% on purpose: their lowest point is near 80%, so they hover above their shadow.
+ */
+const ALLY_FIGURE_FEET: Readonly<Record<string, number>> = {
+  'character:companion_qin_che_world': 0.966,
+  'character:companion_zhou_yingxue_world': 0.967,
+  'character:companion_lu_guanlan_world': 0.962,
+  'pet:ash_hound_world': 0.951,
+  'pet:mist_kitten_world': 0.944,
+  'pet:void_whelp_world': 0.923,
+};
 const HUB_PORTAL_BODY_SCALE = { x: 1.25, y: 1.42 } as const;
 const WHITE = new Color(244, 235, 211, 255);
 const GOLD = new Color(236, 195, 117, 255);
@@ -1665,6 +1682,61 @@ export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, sc
   if (courtyard) text(player, 'WalkPlayerName', '轮回者', 0, 180, 150, 24, 12, new Color(190, 241, 217, 255));
   const playerDepth: DepthItem = { node: player, y: shownPosition.y };
   depth.push(playerDepth);
+  // Allies fight beside the hero in a duel. With a full-body figure they stand on the floor: the companion a step behind
+  // to the left, the pet behind to the right, above the combat buttons. Without one, a gold-rimmed portrait (like the HUD lineup) floats at
+  // the hero's shoulder, since a boxed portrait reads badly as a standing cut-out.
+  const allies = new Map<CombatAllyKind, Readonly<{ mark: WorldPoint; body: Node; baseY: number }>>();
+  if (duel !== undefined && roomFit !== undefined) {
+    for (const member of model.sections[1].loadout?.runParty ?? []) {
+      if (member.kind !== 'companion' && member.kind !== 'pet') continue;
+      const companion = member.kind === 'companion';
+      if (member.figureAssetKey !== undefined) {
+        // Figures share the 1024x1536 world-figure canvas, drawn for soles at 93% of its height and head at 7%.
+        const visual = options.visual(member.figureAssetKey);
+        const shown = duel.heroHeight * (companion ? ALLY_FIGURE.companion.height : ALLY_FIGURE.pet.height);
+        const height = shown / 0.86;
+        const width = height * visual.width / Math.max(1, visual.height);
+        const place = companion ? ALLY_FIGURE.companion : ALLY_FIGURE.pet;
+        const mark = roomFit.unproject({ x: duel.hero.x + place.x * duel.heroHeight, y: duel.hero.y + place.y * duel.heroHeight });
+        const ally = makeNode(actors, `WalkAlly:${member.kind}`, mark.x, -mark.y, width, height);
+        if (actorScale !== undefined) ally.setScale(new Vec3(actorScale.x, actorScale.y, 1));
+        shadow(ally, width * 0.18, width * 0.05);
+        const baseY = height * ((ALLY_FIGURE_FEET[member.figureAssetKey] ?? 0.93) - 0.5);
+        const body = makeNode(ally, `WalkAllyBody:${member.kind}`, 0, baseY, width, height);
+        const sprite = body.addComponent(Sprite);
+        sprite.sizeMode = Sprite.SizeMode.CUSTOM;
+        sprite.trim = false;
+        sprite.spriteFrame = visual.frame;
+        options.trackSprite(sprite);
+        depth.push({ node: ally, y: mark.y });
+        allies.set(member.kind, { mark, body, baseY });
+        continue;
+      }
+      if (member.visualAssetKey === undefined) continue;
+      const size = duel.heroHeight * (companion ? 0.36 : 0.3);
+      const offset = companion ? { x: -duel.heroHeight * 0.28, y: duel.heroHeight * 0.66 } : { x: duel.heroHeight * 0.34, y: duel.heroHeight * 0.52 };
+      const mark = roomFit.unproject({ x: duel.hero.x + offset.x, y: duel.hero.y + offset.y });
+      const ally = makeNode(actors, `WalkAlly:${member.kind}`, mark.x, -mark.y, size, size);
+      if (actorScale !== undefined) ally.setScale(new Vec3(actorScale.x, actorScale.y, 1));
+      const body = makeNode(ally, `WalkAllyBody:${member.kind}`, 0, size / 2, size, size);
+      const rim = body.addComponent(Graphics);
+      rim.lineWidth = Math.max(2, size * 0.05);
+      rect(rim, -size / 2, -size / 2, size, size, new Color(16, 19, 13, 235), new Color(214, 178, 112, 255));
+      const crop = makeNode(body, `WalkAllyCrop:${member.kind}`, 0, 0, size * 0.88, size * 0.88);
+      crop.addComponent(Mask).type = Mask.Type.GRAPHICS_RECT;
+      const visual = options.visual(member.visualAssetKey);
+      const scale = Math.max(size * 0.88 / Math.max(1, visual.width), size * 0.88 / Math.max(1, visual.height));
+      // A portrait's face sits in its upper part; a pet icon is centred.
+      const lift = companion ? -(visual.height * scale - size * 0.88) * 0.32 : 0;
+      const sprite = makeNode(crop, `WalkAllySprite:${member.kind}`, 0, lift, visual.width * scale, visual.height * scale).addComponent(Sprite);
+      sprite.sizeMode = Sprite.SizeMode.CUSTOM;
+      sprite.trim = false;
+      sprite.spriteFrame = visual.frame;
+      options.trackSprite(sprite);
+      depth.push({ node: ally, y: mark.y });
+      allies.set(member.kind, { mark, body, baseY: size / 2 });
+    }
+  }
   const sortDepth = (): void => {
     depth.sort((a, b) => a.y - b.y);
     depth.forEach((entry, index) => entry.node.setSiblingIndex(index));
@@ -1916,6 +1988,16 @@ export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, sc
         player: { x: cameraOffset.x + (position.x - cameraPoint.x) * worldZoom, y: cameraOffset.y + (cameraPoint.y - position.y + playerBodyY) * worldZoom - effectCenterY },
         enemy: { x: cameraOffset.x + ((monster?.x ?? position.x) - cameraPoint.x) * worldZoom, y: cameraOffset.y + (cameraPoint.y - (monster?.y ?? position.y) + enemyAnchorY) * worldZoom - effectCenterY },
       };
+    },
+    getAllyAnchor: kind => {
+      const ally = allies.get(kind);
+      if (ally === undefined || roomFit === undefined) return undefined;
+      const foot = roomFit.project(ally.mark);
+      return { x: foot.x - viewportCenter.x, y: foot.y - viewportCenter.y + ally.baseY - effectCenterY };
+    },
+    moveAlly: (kind, offset) => {
+      const ally = allies.get(kind);
+      ally?.body.setPosition(new Vec3(offset.x, ally.baseY + offset.y, 0));
     },
     // Dungeon actor roots cancel both camera axes, so body positions are already screen units.
     movePlayer: offset => body.setPosition(new Vec3(offset.x / (roomFit === undefined ? worldZoom : 1), playerBodyY + offset.y / (roomFit === undefined ? worldZoom : 1), 0)),

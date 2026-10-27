@@ -94,12 +94,6 @@ export function resolveCombatUtilityAction(input: CombatUtilityActionInput): Com
   let portalStabilityBonus = 0;
   const statusLines: string[] = [];
 
-  if ((input.action === 'attack' || input.action === 'art') && hasPetPassive(input.context, 'combat_assist')) {
-    damageBonus = input.action === 'attack' ? 4 : 3;
-    const label = input.action === 'attack' ? '攻击' : '术法';
-    statusLines.push(`助战灵宠牵制敌人，${label}伤害提高 ${damageBonus} 点。`);
-  }
-
   if (input.action === 'guard') {
     const patch = getConsumableCombatEffect({ itemId: 'armor_patch', context: input.context });
     guardBonus += patch.guardBonus;

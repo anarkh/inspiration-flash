@@ -1,0 +1,110 @@
+{
+  "revision": 1,
+  "tool": "built-in imagegen",
+  "direction": "Grounded dark infinite-flow survival RPG: the player's companions and pets standing beside the hero on the duel stage.",
+  "sharedPrompts": {
+    "companion": "Create a production-ready single full-body idle ally sprite for an original Chinese infinite-flow survival RPG. Use the attached canonical portrait ONLY as identity, clothing and material reference; turn it into a complete full-body game-world figure. Hand-painted grounded dark-fantasy illustration with restrained retro-science-fiction, matching a detailed 2D RPG player. Adult human proportions around 6 heads tall, NOT chibi. Slight elevated 25-degree camera, near-orthographic, body turned three-quarters toward the viewer's right (where the enemy stands) with the face clearly visible, entire head to soles visible, ready combat-idle stance. Center the character on a 1024x1536 portrait canvas, feet baseline at 93 percent height, top of head at about 7 percent, roughly 12 percent side padding, held props within canvas. Transparent alpha background throughout, no floor, no backdrop, no card, no frame, no caption, no text, no watermark. Crisp readable silhouette at small mobile size, weathered charcoal materials, muted old-gold highlights, sparse oxidized-cyan rim light; soft top-left illumination, enough separation for placement on dark stone. Preserve face, apparent age, hair and signature clothing from the reference. Avoid photographic backgrounds, photoreal cutout lighting, cute cartoon proportions, modern generic fantasy gacha glamor, giant visual effects, decorative ground shadow, cut-off boots.",
+    "pet": "Create a production-ready single full-body idle companion-creature sprite for an original Chinese infinite-flow survival RPG. Use the attached canonical card ONLY as identity, anatomy and material reference; recompose it as a complete isolated full-body world figure. Grounded hand-painted dark fantasy with restrained retro science-fiction, matching detailed 2D RPG characters. Slight elevated 25-degree near-orthographic camera, body turned three-quarters toward the viewer's right (where the enemy stands), head and eyes clearly visible, alert loyal idle pose, not threatening the viewer. Center on a 1024x1536 portrait canvas with at least 10 percent side padding; keep every limb, wing, tail, antenna and wisp inside the frame. A creature standing on the ground has its top at about 7 percent and its feet at 93 percent height; a hovering creature has its top at about 7 percent and its lowest point at about 80 percent, leaving the space below empty. TRUE transparent alpha background, no floor, no mist backdrop, no vignette, no panel, no frame, no text or watermark, no rider or human. Silhouette must read clearly when shown only about 60 pixels tall on a phone: strong outline, simple big shapes, the creature's signature glow kept small. Weathered charcoal and old-bronze materials, soft top-left illumination. No chibi plush mascot, no generic substitution of another animal, no large bloom, no decorative ground shadow."
+  },
+  "assets": [
+    {
+      "key": "character:companion_qin_che_world",
+      "kind": "character",
+      "entityId": "companion_qin_che_world",
+      "group": "companion",
+      "slug": "qin-che",
+      "reference": "cocos/assets/resources/character/qin-che-v1.png",
+      "sourceFile": "qin-che-world-v1.png",
+      "resourceFile": "character/qin-che-world-v1.png",
+      "subject": "秦彻, bulwark vanguard (壁垒先锋): East Asian man in his mid-thirties, short tousled black hair, stern weathered face with a trimmed mustache and stubble, dark oxblood scarf at the neck, heavy battered black plate armor with riveted steel trim, an oversized right shoulder plate and a round bronze medallion on the chest, armored legs and boots. He carries a tall riveted dark-steel tower shield on his left arm, braced forward as if ready to step in front of an ally, and a short heavy blade lowered in his right hand. Grim protective veteran, not a ceremonial knight."
+    },
+    {
+      "key": "character:companion_zhou_yingxue_world",
+      "kind": "character",
+      "entityId": "companion_zhou_yingxue_world",
+      "group": "companion",
+      "slug": "zhou-yingxue",
+      "reference": "cocos/assets/resources/character/zhou-yingxue-v1.png",
+      "sourceFile": "zhou-yingxue-world-v1.png",
+      "resourceFile": "character/zhou-yingxue-world-v1.png",
+      "subject": "周映雪, psychological analyst (精神分析师): East Asian woman in her late twenties, black chin-length bob with side-swept bangs, thin round gold-rimmed glasses, calm cool appraising expression, deep plum high-collared buttoned shirt, long charcoal leather field coat with brass buttons and a narrow shoulder harness strap, dark trousers and low boots. She holds a slim open leather notebook in one hand and lifts two fingers of the other, a few small faint violet-cyan analysis glyphs hovering at her fingertips. Composed investigator, practical clothing, no glamour pose."
+    },
+    {
+      "key": "character:companion_lu_guanlan_world",
+      "kind": "character",
+      "entityId": "companion_lu_guanlan_world",
+      "group": "companion",
+      "slug": "lu-guanlan",
+      "reference": "cocos/assets/resources/character/lu-guanlan-v1.png",
+      "sourceFile": "lu-guanlan-world-v1.png",
+      "resourceFile": "character/lu-guanlan-world-v1.png",
+      "subject": "陆观澜, field medic (战地医师): East Asian man around fifty, swept-back salt-and-pepper hair, mustache and goatee, weathered kind but tired face, dusty off-white field jacket worn open over a charcoal tactical vest and dark scarf, olive canvas backpack straps over both shoulders, a small green glass vial clipped to the vest, cargo trousers and worn boots. He carries an open battered medic satchel at his hip marked with a faded jade-green herb sigil (no red cross), one hand holding a small brass vial case. Experienced survivor doctor, practical and grounded."
+    },
+    {
+      "key": "pet:contract_sprite_world",
+      "kind": "pet",
+      "entityId": "contract_sprite_world",
+      "group": "pet",
+      "slug": "contract-sprite",
+      "reference": "cocos/assets/resources/pet/contract-sprite-v1.png",
+      "sourceFile": "contract-sprite-world-v1.png",
+      "resourceFile": "pet/contract-sprite-world-v1.png",
+      "subject": "契约小灵, hovering contract spirit: a small floating spirit whose body is layered folded old-gold contract and talisman sheets with faint engraved script, a pointed folded-paper hat with two hanging tassels, a pale grey porcelain-like face with glowing gold eyes, a small brass coin charm on a chain at its chest, and a lower body that tapers into a few pale cyan spirit wisps. Hovering, lowest wisp at about 80 percent height."
+    },
+    {
+      "key": "pet:ash_hound_world",
+      "kind": "pet",
+      "entityId": "ash_hound_world",
+      "group": "pet",
+      "slug": "ash-hound",
+      "reference": "cocos/assets/resources/pet/ash-hound-v1.png",
+      "sourceFile": "ash-hound-world-v1.png",
+      "resourceFile": "pet/ash-hound-world-v1.png",
+      "subject": "烬火犬, ember hound: a lean long-legged charcoal-black hound with tall pointed ears, its hide of cracked obsidian-like scales split by thin glowing ember-orange fissures, amber eyes, a brass chain collar with a round medallion, a few small drifting ember sparks. Standing alert on all four legs in three-quarter view, all four paws on the 93 percent baseline, tail fully inside the frame."
+    },
+    {
+      "key": "pet:starling_drone_world",
+      "kind": "pet",
+      "entityId": "starling_drone_world",
+      "group": "pet",
+      "slug": "starling-drone",
+      "reference": "cocos/assets/resources/pet/starling-drone-v1.png",
+      "sourceFile": "starling-drone-world-v1.png",
+      "resourceFile": "pet/starling-drone-world-v1.png",
+      "subject": "星棱机, star-facet drone: a small mechanical insect drone shaped like a bee, a segmented dark-bronze riveted shell engraved with small star marks, one large glowing cyan lens eye with a smaller secondary lens, two thin brass antennae, two pairs of translucent veined wings, six slim jointed brass legs tucked under the body. Hovering, lowest leg tip at about 80 percent height."
+    },
+    {
+      "key": "pet:mist_kitten_world",
+      "kind": "pet",
+      "entityId": "mist_kitten_world",
+      "group": "pet",
+      "slug": "mist-kitten",
+      "reference": "cocos/assets/resources/pet/mist-kitten-v1.png",
+      "sourceFile": "mist-kitten-world-v1.png",
+      "resourceFile": "pet/mist-kitten-world-v1.png",
+      "subject": "雾爪幼兽, mist-claw cub: a small grey kitten-like cub with soft fur fraying into pale mist at the paws and along a long smoky tail, bright turquoise eyes, a faint gold rune mark on the forehead, a thin gold collar with a small round bell and tassel. Walking forward cautiously on all four paws in three-quarter view, paws on the 93 percent baseline, the mist kept close to the body so the silhouette stays clear."
+    },
+    {
+      "key": "pet:mirror_moth_world",
+      "kind": "pet",
+      "entityId": "mirror_moth_world",
+      "group": "pet",
+      "slug": "mirror-moth",
+      "reference": "cocos/assets/resources/pet/mirror-moth-v1.png",
+      "sourceFile": "mirror-moth-world-v1.png",
+      "resourceFile": "pet/mirror-moth-world-v1.png",
+      "subject": "镜翼蛾, mirror-wing moth: a moth with four large wings made of cracked mirror-glass mosaic in pale steel blue with a few ember-red flecks, thin dark leading-edge veins, a slim dark-brass mechanical body with a small round lens head and two fine antennae. Hovering with wings half-raised in three-quarter view, lowest wingtip at about 80 percent height."
+    },
+    {
+      "key": "pet:void_whelp_world",
+      "kind": "pet",
+      "entityId": "void_whelp_world",
+      "group": "pet",
+      "slug": "void-whelp",
+      "reference": "cocos/assets/resources/pet/void-whelp-v1.png",
+      "sourceFile": "void-whelp-world-v1.png",
+      "resourceFile": "pet/void-whelp-world-v1.png",
+      "subject": "虚空幼龙, void whelp: a small wingless young dragon with black obsidian scales, a ridge of sharp dorsal spikes with a thin glowing cyan seam along the spine, glowing cyan eyes, curved dark-brass claws, a long tail that curls back inside the frame with a little dark smoke at its tip. Standing low on four legs in three-quarter view with its head raised, claws on the 93 percent baseline."
+    }
+  ]
+}

@@ -512,7 +512,7 @@ export function getInfiniteFlowMobilePanelActions(model: GameViewModel, kind: Mo
   ) || (action.placement === 'advanced' && (
     action.event === undefined
       || (action.event.kind === 'local' && action.event.action.type === 'combat/set-advanced-expanded')
-      || (action.event.kind === 'command' && ['run/retreat', 'node/use-soul-skill', 'combat/use-method-technique', 'combat/use-companion-assist', 'combat/use-bloodline-surge'].includes(action.event.command.type))
+      || (action.event.kind === 'command' && ['run/retreat', 'node/use-soul-skill', 'combat/use-method-technique'].includes(action.event.command.type))
   )));
   if (kind === 'inventory' && detail.kind === 'combat') return actions.filter((action) => action.placement === 'combat' && (action.event?.kind === 'command' && action.event.command.type === 'combat/act'
     ? ['use_healing_pill', 'use_thunder_talisman'].includes(action.event.command.action)
@@ -538,7 +538,6 @@ export function getInfiniteFlowCombatChoiceActions(model: GameViewModel, group: 
   if (model.phase !== 'combat' || model.sections[1].detail.kind !== 'combat') return [];
   return model.sections[2].actions.filter((action) => group === 'spells'
     ? action.combatAction === 'art' || action.actionId.startsWith('combat.method:')
-      || action.actionId === 'combat.companion-assist' || action.actionId === 'combat.bloodline-surge'
       || action.actionId.startsWith('soul-skill:')
     : action.combatAction === 'use_healing_pill');
 }
@@ -1643,12 +1642,12 @@ function renderCarryLoadout(context: SheetContext): void {
 
 // One character tab each: how many go along and where they act, which facts a card shows, and where to get one.
 const PARTY_SECTIONS = [
-  { tab: 'pets', category: '灵宠', kind: 'pet', rule: '同时 1 只出战，出战的属性与特性在副本中自动生效',
-    facts: ['特性'], on: '★ 出战中', pick: '点击设为出战', empty: '尚未拥有灵宠', where: '可在灵宠师处签约，或在副本战斗中捕获' },
-  { tab: 'companions', category: '同伴', kind: 'companion', rule: '同时带 1 位，援护在战斗「法术 → 同伴」里使用',
-    facts: ['援助技能'], on: '★ 出战中', pick: '点击设为出战', empty: '尚未招募同伴', where: '首通对应副本后，可在同行引路人处招募' },
-  { tab: 'bloodlines', category: '血统', kind: 'bloodline', rule: '同时激活 1 种，爆发在战斗「法术 → 血统」里使用',
-    facts: ['1 阶属性', '2 阶属性', '3 阶属性', '血统爆发'], on: '★ 已激活', pick: '点击激活', empty: '尚未觉醒血统', where: '可在血脉祭司处觉醒' },
+  { tab: 'pets', category: '灵宠', kind: 'pet', rule: '同时 1 只出战，在你身旁辅助（不直接攻击），属性与特性自动生效',
+    facts: ['战斗辅助', '特性'], on: '★ 出战中', pick: '点击设为出战', empty: '尚未拥有灵宠', where: '可在灵宠师处签约，或在副本战斗中捕获' },
+  { tab: 'companions', category: '同伴', kind: 'companion', rule: '同时带 1 位，每回合在你身旁自动出手',
+    facts: ['并肩作战'], on: '★ 出战中', pick: '点击设为出战', empty: '尚未招募同伴', where: '首通对应副本后，可在同行引路人处招募' },
+  { tab: 'bloodlines', category: '血统', kind: 'bloodline', rule: '同时激活 1 种，属性常驻，命中时自动触发血统效果',
+    facts: ['1 阶属性', '2 阶属性', '3 阶属性', '命中效果'], on: '★ 已激活', pick: '点击激活', empty: '尚未觉醒血统', where: '可在血脉祭司处觉醒' },
   { tab: 'methods', category: '功法', kind: undefined, rule: '已学的全部生效；常用的战技排在「法术」首位',
     facts: ['功法被动', '主动战技'], on: '★ 常用', pick: '点击设为常用', empty: '尚未学习功法', where: '可在修行导师处学习' },
 ] as const;

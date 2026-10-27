@@ -2,8 +2,6 @@ import { reduceGameCommand, type GameCommand } from '@infinite-flow/application'
 import {
   createInitialState,
   getCombatActionDamagePreview,
-  getCurrentBloodlineSurgeStatus,
-  getCurrentCompanionAssistStatus,
   getEquipmentSoulSkillActionStatus,
   getWeaponSkillStatus,
   type GameState
@@ -136,19 +134,23 @@ function verifyConfiguredAbilitiesAndFocus(): void {
   assert(detail.guarding === configured.combat!.guarding, 'guard indicator follows combat state');
   assert(requireAction(configured, 'combat.action:attack').enabled, 'basic attack remains a separate available command');
   assert(requireAction(configured, 'combat.action:weapon_skill').enabled === weapon.available, 'weapon skill availability still follows the core');
-  assert(requireAction(configured, 'combat.companion-assist').enabled === getCurrentCompanionAssistStatus(configured).available, 'configured companion is visible with core availability');
-  assert(requireAction(configured, 'combat.bloodline-surge').enabled === getCurrentBloodlineSurgeStatus(configured).available, 'configured bloodline is visible with core availability');
+  // Companions and bloodlines act on their own now; they never appear as a combat choice.
+  assert(!model.sections[2].actions.some(action => action.actionId === 'combat.companion-assist' || action.actionId === 'combat.bloodline-surge'),
+    'a configured companion and bloodline add no active skill');
+  const party = model.sections[1].loadout?.runParty ?? [];
+  assert(party.some(member => member.kind === 'companion' && member.description.includes('每回合出手'))
+    && party.some(member => member.kind === 'bloodline' && member.description.includes('物理命中 +5')), 'the lineup explains what they do on their own');
+  const companion = party.find(member => member.kind === 'companion');
+  assert(companion?.figureAssetKey === `character:companion_${companion?.id}_world` && companion.visualAssetKey === `character:companion_${companion.id}`,
+    'the companion brings its full-body figure for the duel stage and keeps its portrait for the lineup');
+  assert(party.every(member => member.kind !== 'bloodline' || member.figureAssetKey === undefined), 'a bloodline has no figure to stand on the stage');
   assert(requireAction(configured, 'soul-skill:spirit_grounding:use').enabled === getEquipmentSoulSkillActionStatus(configured, 'spirit_grounding').available, 'configured soul skill is visible with core availability');
   assert(!model.sections[2].actions.some(action => action.actionId.startsWith('soul-skill:gauntlet_breakbeat')), 'other unconfigured soul skills remain hidden');
 
-  const assisted = commit(configured, commandFrom(requireAction(configured, 'combat.companion-assist')));
-  const surged = commit(assisted, commandFrom(requireAction(assisted, 'combat.bloodline-surge')));
-  const cleansed = commit(surged, commandFrom(requireAction(surged, 'soul-skill:spirit_grounding:use')));
-  for (const id of ['combat.companion-assist', 'combat.bloodline-surge', 'soul-skill:spirit_grounding']) {
-    const action = requireAction(cleansed, id);
-    assert(!action.enabled && !action.event && action.disabledReason, `${id} stays visible after use without an executable command`);
-  }
-  assert(cleansed.combat?.turn === configured.combat!.turn, 'revealed support actions preserve their original no-turn semantics');
+  const cleansed = commit(configured, commandFrom(requireAction(configured, 'soul-skill:spirit_grounding:use')));
+  const used = requireAction(cleansed, 'soul-skill:spirit_grounding');
+  assert(!used.enabled && !used.event && used.disabledReason, 'a used soul skill stays visible without an executable command');
+  assert(cleansed.combat?.turn === configured.combat!.turn, 'the soul skill keeps its no-turn semantics');
 
   const lowFocus: GameState = { ...configured, combat: { ...configured.combat!, weaponFocus: 1, guarding: false } };
   const lowDetail = buildGameViewModel(lowFocus, {}).sections[1].detail;

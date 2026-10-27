@@ -147,6 +147,8 @@ export function verifyHubShops(): void {
     'an owned pet offers no second contract');
   assert(ownedPets.rows.find(row => row.id === 'contract_sprite')!.details.find(fact => fact.label === '特性')?.value.startsWith('战斗协助'),
     'the pet trait names its real effect instead of repeating the description');
+  assert(ownedPets.rows.find(row => row.id === 'contract_sprite')!.details.find(fact => fact.label === '战斗辅助')?.value === '2 级 助攻：你的直接命中伤害 +9%',
+    'the pet card shows its support at the current level');
   state = { ...state, ownedPets: [...state.ownedPets, 'mist_kitten'], petLevels: { ...state.petLevels, mist_kitten: 1 } };
   assert(ownedPets.rows.find(row => row.id === 'contract_sprite')!.details.find(fact => fact.label === '生效方式')?.value.includes('「角色 → 灵宠」'),
     'the pet keeper points to where the pet is sent along');

@@ -13,7 +13,7 @@ const HERO_WALK_LAYOUT = JSON.parse(await readFile(new URL('../../art-source/her
 
 const TEST_CONTROL_KEY = '__INFINITE_FLOW_BOOTSTRAP_RACE_CONTROL__';
 const MANIFEST_UUID = '3d0842ec-43f7-4b5f-961f-39edb535ccd7';
-const MANIFEST_REVISION = 'sha256:3d2a276a8cf63784d4d67f490a5e33f66304af2267cd13eae938abe026f370df';
+const MANIFEST_REVISION = 'sha256:d72d289e104c5df869e30f45af09deee601ed52fb1bf9868229e7a266bf7bfbb';
 const RUN_RELIC_FIXTURES = Object.keys(RUN_RELIC_DEFINITIONS).map(id => ({
   key: `item:run_relic_${id}`, kind: 'item', entityId: `run_relic_${id}`, resourcePath: `run-relic/${id}-v1`,
 }));
@@ -64,7 +64,7 @@ function validManifest() {
       resourcePath: `dungeon-world/${dungeonId}-v1`,
     })),
   ];
-  for (let index = assets.length; index < 314; index += 1) {
+  for (let index = assets.length; index < 323; index += 1) {
     assets.push({
       key: `item:fixture_${index}`,
       kind: 'item',
@@ -75,7 +75,7 @@ function validManifest() {
   return {
     schemaVersion: 2,
     manifestRevision: MANIFEST_REVISION,
-    assetCount: 314,
+    assetCount: 323,
     assets,
   };
 }
@@ -11577,6 +11577,34 @@ for (const viewportWidth of [320, 390]) {
   view.render(battle, chrome, EXPLORE_INSETS_390);
   assertDarkWalkingUi(root(), battle, EXPLORE_INSETS_390);
   assert.ok(findNode(root(), 'WalkCombatAction:combat.action:attack'));
+  // The companion and pet fight beside the hero, inside the screen and clear of every control: framed portraits by default,
+  // standing full-body figures once their art is registered.
+  for (const [insets, label, figures] of [[EXPLORE_INSETS_390, '390 insets', false], [EXPLORE_INSETS_320, '320 insets', false],
+    [EXPLORE_INSETS_390, '390 insets/figures', true], [EXPLORE_INSETS_320, '320 insets/figures', true]]) {
+    const partyBattle = structuredClone(battle);
+    partyBattle.sections[1].loadout = { ...(partyBattle.sections[1].loadout ?? {}), runParty: [
+      { kind: 'pet', id: 'contract_sprite', name: '契约小灵', description: '', visualAssetKey: 'pet:contract_sprite',
+        ...(figures ? { figureAssetKey: 'pet:contract_sprite_world' } : {}) },
+      { kind: 'companion', id: 'qin_che', name: '秦彻', description: '', visualAssetKey: 'character:companion_qin_che',
+        ...(figures ? { figureAssetKey: 'character:companion_qin_che_world' } : {}) },
+      { kind: 'bloodline', id: 'titan_marrow', name: '巨灵骨髓', description: '', visualAssetKey: 'item:bloodline_titan_marrow' },
+    ] };
+    view.render(partyBattle, chrome, insets);
+    assert.equal(findNode(root(), 'WalkAllyCrop:companion') === undefined, figures, `${label}: a figure stands unframed, a portrait sits in its frame`);
+    const allies = collectNodes(root(), ({ name }) => name.startsWith('WalkAlly:'));
+    assert.deepEqual(allies.map(node => node.name).sort(), ['WalkAlly:companion', 'WalkAlly:pet'], `${label}: the companion and pet stand on the stage, the bloodline does not`);
+    const controls = collectNodes(root(), ({ name }) => /^WalkCombat(?:Action|Choice):[^:]/.test(name) && !name.endsWith('Label') && !name.endsWith('Icon'))
+      .map(node => absoluteNodeBounds(node));
+    for (const ally of allies) {
+      const box = absoluteNodeBounds(findNode(ally, `WalkAllyBody:${ally.name.slice('WalkAlly:'.length)}`));
+      assert.ok(box.left >= -375 - 1e-6 && box.right <= 375 + 1e-6, `${label}/${ally.name}: inside the screen`);
+      for (const control of controls) {
+        const apart = box.right <= control.left || control.right <= box.left || box.top <= control.bottom || control.top <= box.bottom;
+        assert.ok(apart, `${label}/${ally.name}: clear of the combat controls`);
+      }
+    }
+  }
+  view.render(battle, chrome, EXPLORE_INSETS_390);
   const beforeCombatDispatch = calls.length;
   emitTouch(findNode(root(), 'WalkCombatAction:combat.action:attack'), 905);
   assert.equal(calls.length, beforeCombatDispatch, 'combat selection does not dispatch before its windup');

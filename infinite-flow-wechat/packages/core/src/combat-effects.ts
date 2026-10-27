@@ -1,6 +1,4 @@
 import type { DerivedStats, EquipmentId, EquipmentSlot, MethodId, MonsterId, PetId } from './game';
-import { resolveCombatUtilityAction } from './combat-mechanics';
-import { getPetPassiveTags, PETS } from './pet-system';
 
 export type CombatDamageKind = 'physical' | 'art' | 'talisman';
 
@@ -278,23 +276,6 @@ export function applyMonsterCombatEffects(input: CombatEffectInput): CombatEffec
       nextState.retakeRecordedAction = input.player.action;
       statusLines.push('重拍替身记住了本场第一个直接动作。');
     }
-  }
-
-  if ((input.player.action === 'attack' || input.player.action === 'art') && input.player.activePet) {
-    const activePet = PETS[input.player.activePet];
-    const utility = resolveCombatUtilityAction({
-      action: input.player.action,
-      context: {
-        stats: input.player.stats,
-        learnedMethods: input.player.learnedMethods,
-        activePetId: input.player.activePet,
-        activePetPassiveTags: activePet ? getPetPassiveTags(activePet) : []
-      },
-      baseDamageToMonster: damageToMonster
-    });
-
-    damageToMonster = utility.adjustedDamageToMonster;
-    statusLines.push(...utility.statusLines);
   }
 
   const breathMethod = getBreathMethod(input);

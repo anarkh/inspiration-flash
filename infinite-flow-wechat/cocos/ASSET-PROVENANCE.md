@@ -72,8 +72,28 @@ other resources. `character:reincarnator` remains the original portrait key.
 
 Source generation and frame measurements are recorded in
 [`art-source/hero-redesign/`](../art-source/hero-redesign/README.md). The current
-manifest contains 314 resources, totaling 325,058,583 bytes; its revision is
-`sha256:3d2a276a8cf63784d4d67f490a5e33f66304af2267cd13eae938abe026f370df`.
+manifest contains 323 resources, totaling 343,776,649 bytes; its revision is
+`sha256:d72d289e104c5df869e30f45af09deee601ed52fb1bf9868229e7a266bf7bfbb`.
+
+## Cocos party figures
+
+The three companions and six pets each have one full-body figure for the duel stage,
+standing beside the hero. Their 256 × 256 companion busts and 320 × 480 pet cards remain
+the lineup portraits and are unchanged.
+
+- Authoritative sources: `infinite-flow-wechat/art-source/party-world/<slug>-world-v1.png`;
+  prompts in `prompts.json`, generation and validation records in `generation-record.json`
+  and `validation.json` in the same directory.
+- Stable keys: `character:companion_<id>_world` and `pet:<id>_world`; Cocos targets:
+  `assets/resources/character/<slug>-world-v1.png` and `assets/resources/pet/<slug>-world-v1.png`.
+- Generation: built-in `imagegen` with transparent background, 2026-10-27. All nine are
+  1024 × 1536, 8-bit RGBA, and were byte-copied with `cp` (macOS 26.5.1 (25F80)) with no
+  pixel post-processing; the 18,718,066 added bytes match the pinned source and target SHA-256.
+- Image metadata uses the existing Creator 3.8.8 texture redirect contract with unique UUIDs
+  and `hasAlpha: true`, inside the existing resources bundle.
+- The run party offers a figure only when the core asset registry has its key; the duel stage
+  then requests it through the scene loading gate. Measured sole heights where they miss the
+  drawn 93% baseline are in `ui/InfiniteFlowWalkScene.ts` (`ALLY_FIGURE_FEET`).
 
 ## Cocos acquired run relic icons
 

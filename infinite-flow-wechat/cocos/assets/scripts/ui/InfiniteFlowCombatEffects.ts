@@ -17,7 +17,10 @@ export type CombatEffectResult = Readonly<{
   playerHpAfterCounter?: number;
   enemyHpAfterCounter?: number;
   onCounterImpact?: () => void;
+  /** Allies act in order after the player's hit and before the counter: a strike carries damage, support carries a note. */
+  allies?: readonly Readonly<{ kind: CombatAllyKind; damage: number; note?: string }>[];
 }>;
+export type CombatAllyKind = 'companion' | 'pet';
 export type CombatEffectStartOptions = Readonly<{
   /** Guard against a telegraphed heavy blow: run the parry timing ring before impact. */
   parry?: boolean;
@@ -25,6 +28,9 @@ export type CombatEffectStartOptions = Readonly<{
 type Point = Readonly<{ x: number; y: number }>;
 type EffectOptions = Readonly<{
   getAnchors: () => Readonly<{ player: Point; enemy: Point }>;
+  /** Where an ally stands, when it is on the stage. */
+  getAllyAnchor?: (kind: CombatAllyKind) => Point | undefined;
+  moveAlly?: (kind: CombatAllyKind, offset: Point) => void;
   movePlayer: (offset: Point) => void;
   moveEnemy: (offset: Point) => void;
   /** Screen shake; the HUD stays still. */
@@ -63,6 +69,10 @@ const PARRY_WINDOW = 0.9;
 const PARRY_RING = Object.freeze({ start: 128, end: 10, target: 50, band: 11 });
 const COUNTER_START = 0.38;
 const COUNTER_IMPACT = COUNTER_START + 0.21;
+/** Each ally gets its own beat before the counter, which waits for them. */
+const ALLY_START = 0.34;
+const ALLY_STEP = 0.26;
+const allyDelay = (result: CombatEffectResult | undefined): number => (result?.allies?.length ?? 0) * ALLY_STEP;
 const GOLD = new Color(231, 189, 114, 255);
 const CYAN = new Color(146, 221, 209, 255);
 const ICE = new Color(200, 244, 255, 255);
@@ -108,6 +118,7 @@ export function createInfiniteFlowCombatEffects(parent: Node, options: EffectOpt
   const damage = textLabel('WalkDamage', 30 * pixel);
   const healing = textLabel('WalkHealing', 28 * pixel);
   const counterDamage = textLabel('WalkCounterDamage', 26 * pixel);
+  const allyDamage = [textLabel('WalkAllyDamage:0', 24 * pixel), textLabel('WalkAllyDamage:1', 24 * pixel)];
   const banner = textLabel('WalkCombatBanner', 30 * pixel);
   const prompt = textLabel('WalkCombatPrompt', 15 * pixel);
   prompt.enableShadow = true;
@@ -171,14 +182,19 @@ export function createInfiniteFlowCombatEffects(parent: Node, options: EffectOpt
     }
   }
   function floating(label: Label, value: number | undefined, point: Point, elapsed: number, color: Color, positive = false, size = 30): void {
-    if (value === undefined || value <= 0 || elapsed < 0) { label.string = ''; return; }
-    label.string = `${positive ? '+' : '−'}${value}`;
+    if (value === undefined || value <= 0) { label.string = ''; return; }
+    floatingText(label, `${positive ? '+' : '−'}${value}`, point, elapsed, color, size);
+  }
+  /** `life` is when the text has faded out; support notes go sooner so they are gone before the counter's number. */
+  function floatingText(label: Label, text: string, point: Point, elapsed: number, color: Color, size: number, life = 0.9): void {
+    if (elapsed < 0) { label.string = ''; return; }
+    label.string = text;
     // Pop in large, settle, then float up and fade.
     const pop = elapsed < 0.1 ? 1.35 - elapsed * 3.5 : 1;
     label.fontSize = size * pixel * pop;
     label.lineHeight = Math.round(label.fontSize * 1.15);
     label.node.setPosition(new Vec3(point.x, point.y + 70 * unit + Math.min(elapsed, 0.75) * 50, 0));
-    label.color = alpha(color, 1 - Math.max(0, elapsed - 0.35) / 0.55);
+    label.color = alpha(color, 1 - Math.max(0, elapsed - life * 0.39) / (life * 0.61));
   }
   function showBanner(text: string, point: Point, elapsed: number, color: Color): void {
     if (elapsed < 0 || elapsed > 0.9) { banner.string = ''; return; }
@@ -203,6 +219,9 @@ export function createInfiniteFlowCombatEffects(parent: Node, options: EffectOpt
     damage.string = '';
     healing.string = '';
     counterDamage.string = '';
+    for (const label of allyDamage) label.string = '';
+    options.moveAlly?.('companion', ZERO);
+    options.moveAlly?.('pet', ZERO);
     banner.string = '';
     prompt.string = '';
   }
@@ -230,7 +249,7 @@ export function createInfiniteFlowCombatEffects(parent: Node, options: EffectOpt
     // The resolve phase holds the hit briefly before anything else moves.
     const hold = strong ? 0.1 : 0.07;
     const result = active.result;
-    const end = result?.counter ? 0.92 : 0.55;
+    const end = (result?.counter ? 0.92 : 0.55) + allyDelay(result);
     if (melee) {
       const dash = dashOffset(length);
       let offset: number;
@@ -305,15 +324,44 @@ export function createInfiniteFlowCombatEffects(parent: Node, options: EffectOpt
     }
     floating(damage, resolved.enemyDamage, enemy, active.elapsed, GOLD, false, strong ? 38 : 30);
     floating(healing, resolved.playerHealing, player, active.elapsed, GREEN, true, 28);
-    if (resolved.counter && active.elapsed >= COUNTER_START) {
-      const counterProgress = clamp((active.elapsed - COUNTER_START) / 0.48);
+    (resolved.allies ?? []).slice(0, allyDamage.length).forEach((ally, index) => {
+      const stand = options.getAllyAnchor?.(ally.kind);
+      const beat = active.elapsed - ALLY_START - index * ALLY_STEP;
+      if (stand === undefined || beat < 0) return;
+      if (ally.note !== undefined) {
+        // Support stays put: a small hop and a glow at the pet, with its note rising above it.
+        const hop = beat < ALLY_STEP ? Math.sin(clamp(beat / ALLY_STEP) * Math.PI) * 12 * pixel : 0;
+        options.moveAlly?.(ally.kind, { x: 0, y: hop });
+        if (beat < ALLY_STEP * 1.4) ring(stand, 18 * pixel + clamp(beat / ALLY_STEP) * 26 * pixel, GREEN, 1 - clamp(beat / (ALLY_STEP * 1.4)), false, 3);
+        // The note rises from just above the pet's head, clear of the buttons beside it.
+        floatingText(allyDamage[index]!, ally.note, stand, beat, GREEN, 16, 0.5);
+        return;
+      }
+      const travel = { x: enemy.x - stand.x, y: enemy.y - stand.y };
+      const distance = Math.max(1, Math.hypot(travel.x, travel.y));
+      const lunge = beat < ALLY_STEP ? Math.sin(clamp(beat / ALLY_STEP) * Math.PI) * Math.min(distance * 0.35, 90 * pixel) : 0;
+      options.moveAlly?.(ally.kind, { x: travel.x / distance * lunge, y: travel.y / distance * lunge });
+      const color = GOLD;
+      if (beat >= ALLY_STEP * 0.4 && beat < ALLY_STEP * 1.4) {
+        const burst = clamp((beat - ALLY_STEP * 0.4) / ALLY_STEP);
+        ring(enemy, 12 + burst * 40, color, 1 - burst, false, 3);
+        particles(enemy, burst, color, false, 0.8);
+      }
+      // Each ally's number rises beside the player's, so they never stack on top of it.
+      floating(allyDamage[index]!, ally.damage, { x: enemy.x + (index === 0 ? -46 : 46) * pixel, y: enemy.y - 24 * pixel },
+        beat - ALLY_STEP * 0.4, color, false, 24);
+    });
+    const counterStart = COUNTER_START + allyDelay(resolved);
+    const counterImpact = COUNTER_IMPACT + allyDelay(resolved);
+    if (resolved.counter && active.elapsed >= counterStart) {
+      const counterProgress = clamp((active.elapsed - counterStart) / 0.48);
       // A heavy blow lunges further; melee attackers are already close.
       const reach = melee ? 19 : Math.max(19, length * (resolved.heavy ? 0.55 : 0.4));
       const push = Math.sin(counterProgress * Math.PI) * reach;
       options.moveEnemy({ x: -direction.x * push, y: -direction.y * push });
       if (resolved.guarded) shield(player, 1 - counterProgress * 0.7, resolved.perfectParry ? ICE : GOLD, resolved.perfectParry ? 7 : 5);
-      if (active.elapsed >= COUNTER_IMPACT - 0.03) {
-        const hit = clamp((active.elapsed - COUNTER_IMPACT + 0.03) / 0.28);
+      if (active.elapsed >= counterImpact - 0.03) {
+        const hit = clamp((active.elapsed - counterImpact + 0.03) / 0.28);
         const claws = resolved.heavy ? 1.35 : 1;
         if (!resolved.perfectParry) {
           for (let claw = 0; claw < 3; claw += 1) {
@@ -331,11 +379,11 @@ export function createInfiniteFlowCombatEffects(parent: Node, options: EffectOpt
           if (hit < 0.4) options.tintPlayer?.(HURT_TINT);
         }
         const impactShake = resolved.perfectParry ? 3 : resolved.heavy ? 12 : resolved.guarded ? 4 : 6;
-        options.shakeWorld?.(shake(active.elapsed - COUNTER_IMPACT, 0.24, impactShake * pixel * 0.6));
+        options.shakeWorld?.(shake(active.elapsed - counterImpact, 0.24, impactShake * pixel * 0.6));
       }
-      floating(counterDamage, resolved.playerDamage, player, active.elapsed - COUNTER_IMPACT, RED, false, resolved.heavy ? 32 : 26);
-      if (resolved.perfectParry) showBanner('完美格挡', player, active.elapsed - COUNTER_IMPACT, ICE);
-      else if (resolved.heavy && !resolved.guarded) showBanner('重击', player, active.elapsed - COUNTER_IMPACT, BLOOD);
+      floating(counterDamage, resolved.playerDamage, player, active.elapsed - counterImpact, RED, false, resolved.heavy ? 32 : 26);
+      if (resolved.perfectParry) showBanner('完美格挡', player, active.elapsed - counterImpact, ICE);
+      else if (resolved.heavy && !resolved.guarded) showBanner('重击', player, active.elapsed - counterImpact, BLOOD);
     } else if (!resolved.counter) floating(counterDamage, resolved.playerDamage, player, active.elapsed, RED);
   }
 
@@ -400,12 +448,12 @@ export function createInfiniteFlowCombatEffects(parent: Node, options: EffectOpt
       }
       draw(active);
       if (active.phase !== 'resolve') return;
-      if (active.result?.counter && !active.counterDelivered && active.elapsed >= COUNTER_IMPACT) {
+      if (active.result?.counter && !active.counterDelivered && active.elapsed >= COUNTER_IMPACT + allyDelay(active.result)) {
         active.counterDelivered = true;
         active.result.onCounterImpact?.();
         if (run !== active || disposed) return;
       }
-      if (active.elapsed >= (active.result?.counter ? 0.92 : 0.55)) {
+      if (active.elapsed >= (active.result?.counter ? 0.92 : 0.55) + allyDelay(active.result)) {
         run = undefined;
         restore();
         active.onComplete?.();

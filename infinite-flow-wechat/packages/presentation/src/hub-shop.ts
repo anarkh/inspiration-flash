@@ -1,7 +1,7 @@
 import {
   BLOODLINE_CATALOG, COMPANION_CATALOG, DUNGEONS, EQUIPMENT, EQUIPMENT_SLOTS, ITEMS,
-  METHODS, METHOD_TECHNIQUE_CATALOG, PETS, getGameAsset, getEquipmentTemperStatus,
-  type Cost, type GameState, type ItemId, type EquipmentId, type GameAssetKind
+  METHODS, METHOD_TECHNIQUE_CATALOG, PETS, getGameAsset, getEquipmentTemperStatus, getPetSupport,
+  type Cost, type GameState, type ItemId, type EquipmentId, type GameAssetKind, type PetSupport
 } from '@infinite-flow/core';
 import { MAIN_GOD_TASKS, evaluateTask } from '@infinite-flow/core/task-system';
 import { TACTICAL_ITEM_IDS, TACTICAL_ITEM_CATEGORY_BY_ID, isFieldSupplyItemId } from '@infinite-flow/core/tactical-loadout';
@@ -64,9 +64,9 @@ const CATEGORY_LABELS = { combat: '战斗道具', ward: '防护道具', portal: 
 const TASK_LABELS = { locked: '未解锁', active: '进行中', completed: '可领取', claimed: '已领取' };
 // The effects the pet passive tags trigger in core combat-mechanics.
 export const PET_PASSIVE_LABELS: Record<string, string> = {
-  combat_assist: '战斗协助：攻击伤害 +4、术法伤害 +3',
-  trap_scout: '陷阱预警：陷阱检定 +3',
-  portal_anchor: '传送锚定：传送修正 +2'
+  combat_assist: '战斗协助：牵制敌人，你的命中伤害提高',
+  trap_scout: '陷阱预警：陷阱检定 +3，战斗中定期预警反击',
+  portal_anchor: '传送锚定：传送修正 +2，战斗中每回合张开灵障'
 };
 const EFFECT_LABELS: Record<string, string> = {
   guarding: '获得防御', clearsRustPoison: '清除锈毒', clearsMirrorSlow: '清除镜面迟缓',
@@ -142,6 +142,34 @@ export function buildOwnedEquipmentCatalog(
       equipAction
     };
   });
+}
+
+/** A bloodline's passive on every landed hit. */
+export function bloodlineHitReadout(effect: Readonly<{ forceDamage: number; artDamage: number; barrier: number; barrierCap: number; lifestealPercent: number }>): string {
+  return [
+    effect.forceDamage ? `物理命中 +${effect.forceDamage}` : '',
+    effect.artDamage ? `术法命中 +${effect.artDamage}` : '',
+    effect.barrier ? `每次命中护盾 +${effect.barrier}（上限 ${effect.barrierCap}）` : '',
+    effect.lifestealPercent ? `命中回复伤害的 ${effect.lifestealPercent}%` : ''
+  ].filter(Boolean).join(' · ');
+}
+
+/** How the active pet backs the player up in every fight (pets support; they do not strike). */
+export function petSupportReadout(support: PetSupport): string {
+  if (support.kind === 'assist') return `助攻：你的直接命中伤害 +${support.damagePercent}%`;
+  if (support.kind === 'warn') return `预警：每 ${support.every} 回合一次，那次反击伤害 −${support.counterCutPercent}%`;
+  return `灵障：每回合护盾 +${support.shield}（上限 ${support.cap}）`;
+}
+
+/** How a companion fights beside the player each turn, and its specialty. */
+export function companionBattleReadout(assistName: string, effect: Readonly<{
+  strikeStat: 'attack' | 'artPower' | 'best'; strikePercent: number; guardBlock: number; focusGain: number; focusEvery: number; emergencyHealPercent: number;
+}>): string {
+  const stat = effect.strikeStat === 'attack' ? '攻击' : effect.strikeStat === 'artPower' ? '术法' : '攻击或术法中较高者';
+  const specialty = effect.guardBlock ? `你防御时替你挡下 ${effect.guardBlock} 点伤害`
+    : effect.focusEvery ? `每 ${effect.focusEvery} 回合给你 ${effect.focusGain} 点战意`
+      : `你生命首次低于一半时回复 ${effect.emergencyHealPercent}% 生命，每场一次`;
+  return `每回合出手（${stat}的 ${effect.strikePercent}%）；${assistName}：${specialty}`;
 }
 
 export function effectReadout(effect: Record<string, number | boolean>): string {
@@ -261,6 +289,7 @@ function buildHubRows(
           description: pet.description, status: state.activePet === pet.id ? `出战中 · ${level} 级` : owned ? `已拥有 · ${level} 级` : '未拥有',
           details: [
             { label: '特性', value: pet.passiveTags.map(tag => PET_PASSIVE_LABELS[tag]).join('；') },
+            { label: '战斗辅助', value: `${level} 级 ${petSupportReadout(getPetSupport(pet, level))}` },
             { label: '基础属性', value: statsReadout(pet.bonus) },
             { label: '每级成长', value: statsReadout(pet.perLevel) },
             { label: '培养材料', value: `${ITEMS[pet.trainingMaterial].name} · 持有 ${state.inventory[pet.trainingMaterial]}` },
@@ -292,13 +321,13 @@ function buildHubRows(
         const rank = state.bloodlineRanks[bloodline.id];
         return rowFromView(panel, bloodline.id, {
           name: bloodline.name, category: bloodline.title, visualAssetKey: asset('item', `bloodline_${bloodline.id}`),
-          description: `${bloodline.title}，激活后获得属性与血统爆发。`,
+          description: `${bloodline.title}，激活后获得属性，命中时自动触发血统效果。`,
           status: rank ? `${rank} 阶${state.activeBloodline === bloodline.id ? ' · 已激活' : ' · 未激活'}` : '未觉醒',
           details: [
             { label: `${rank ?? 1} 阶属性`, value: statsReadout(bloodline.statBonuses[rank ?? 1]) },
-            { label: '血统爆发', value: effectReadout(bloodline.surgeEffects[rank ?? 1]) },
+            { label: '命中效果', value: bloodlineHitReadout(bloodline.hitEffects[rank ?? 1]) },
             { label: '三阶属性', value: statsReadout(bloodline.statBonuses[3]) },
-            { label: '生效方式', value: '在「角色 → 血统」激活后，属性在副本中常驻，血统爆发在副本战斗「法术」里使用，每场一次；同时只激活一种，下次入场生效。' }
+            { label: '生效方式', value: '在「角色 → 血统」激活后，属性和命中效果在副本中常驻，攻击时自动触发；同时只激活一种，下次入场生效。' }
           ]
         }, rank !== undefined);
       });
@@ -309,14 +338,14 @@ function buildHubRows(
         const unlocked = state.completedDungeonIds.includes(companion.unlockDungeonId);
         return rowFromView(panel, companion.id, {
           name: companion.name, category: companion.title, visualAssetKey: asset('character', `companion_${companion.id}`),
-          description: `提供「${companion.assistName}」战斗援助。`,
+          description: `每回合与你并肩出手，并提供「${companion.assistName}」。`,
           status: rank ? `${rank} 阶${state.activeCompanion === companion.id ? ' · 出战中' : ' · 未出战'}` : unlocked ? '可招募' : '未解锁',
           details: [
-            { label: '援助技能', value: `${companion.assistName}：${effectReadout(companion.assistEffects[rank ?? 1])}` },
+            { label: '并肩作战', value: companionBattleReadout(companion.assistName, companion.battleEffects[rank ?? 1]) },
             { label: '招募条件', value: `首次通关${DUNGEONS[companion.unlockDungeonId].name}` },
             { label: '招募消耗', value: costReadout(companion.recruitCost) },
             { label: '训练材料', value: `${ITEMS[companion.trainingMaterial].name} · 持有 ${state.inventory[companion.trainingMaterial]}` },
-            { label: '生效方式', value: `在「角色 → 同伴」设为出战后，「${companion.assistName}」在副本战斗「法术」里使用，每场一次；同时只带一位，下次入场生效。` }
+            { label: '生效方式', value: '在「角色 → 同伴」设为出战后，每场战斗都会自动和你一起出手；同时只带一位，下次入场生效。' }
           ]
         }, rank !== undefined);
       });
@@ -426,7 +455,7 @@ function shopListing(state: GameState, panel: HubCatalogPanel, row: HubShopRowVi
         badge: state.activePet === pet.id ? { label: '★出战', tone: 'on' } : owned ? { label: '已拥有', tone: 'info' } : { label: '未拥有', tone: 'locked' },
         meta: pet.source === 'shop' ? '主神签约' : '副本捕获',
         ...(owned ? { level: { current: level, max: pet.maxLevel } } : {}),
-        lines: [statsReadout(bonus), use],
+        lines: [statsReadout(bonus), owned && state.activePet !== pet.id ? use : petSupportReadout(getPetSupport(pet, level))],
         ...inline(owned ? find('upgrade') : pet.source === 'shop' ? find('buy') : undefined), ...(owned ? {} : { dim: true })
       };
     }
@@ -438,7 +467,7 @@ function shopListing(state: GameState, panel: HubCatalogPanel, row: HubShopRowVi
         badge: active ? { label: '★已激活', tone: 'on' } : rank ? { label: '已觉醒', tone: 'info' } : { label: '未觉醒', tone: 'locked' },
         meta: bloodline.title, ...(rank ? { level: { current: rank, max: 3 } } : {}),
         lines: [statsReadout(bloodline.statBonuses[rank ?? 1]),
-          rank && !active ? '在「角色 → 血统」激活' : `爆发：${effectReadout(bloodline.surgeEffects[rank ?? 1])}`],
+          rank && !active ? '在「角色 → 血统」激活' : `命中：${bloodlineHitReadout(bloodline.hitEffects[rank ?? 1])}`],
         ...inline(rank ? find('upgrade') : find('unlock')), ...(rank ? {} : { dim: true })
       };
     }
@@ -452,8 +481,8 @@ function shopListing(state: GameState, panel: HubCatalogPanel, row: HubShopRowVi
           : { label: unlocked ? '未拥有' : '未解锁', tone: 'locked' },
         meta: rank ? `${companion.title} · ${rank} 阶` : companion.title,
         ...(rank ? { level: { current: rank, max: 3 } } : {}),
-        lines: [`援护：${companion.assistName}：${effectReadout(companion.assistEffects[rank ?? 1])}`,
-          !unlocked ? `条件：首次通关${DUNGEONS[companion.unlockDungeonId].name}` : active ? '战斗「法术 → 同伴」里使用，每场一次'
+        lines: [companionBattleReadout(companion.assistName, companion.battleEffects[rank ?? 1]),
+          !unlocked ? `条件：首次通关${DUNGEONS[companion.unlockDungeonId].name}` : active ? '每场战斗自动并肩出手'
             : rank ? '在「角色 → 同伴」设为出战' : `招募：${costReadout(companion.recruitCost)}`],
         ...inline(rank ? find('upgrade') : unlocked ? find('recruit') : undefined), ...(rank ? {} : { dim: true })
       };

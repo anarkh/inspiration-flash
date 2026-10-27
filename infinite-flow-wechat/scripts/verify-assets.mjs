@@ -17,7 +17,7 @@ const manifestPath = resolve(
 const assetRoot = resolve(projectRoot, "cocos/assets");
 const resourceRoot = resolve(projectRoot, "cocos/assets/resources");
 const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
-const EXPECTED_ASSET_COUNT = 314;
+const EXPECTED_ASSET_COUNT = 323;
 const HERO_WALK_KEY = "character:reincarnator_walk";
 const HERO_WALK_SHA256 = "897deadd34e18c9e3c8e7d52461a8fddac5272503696e263cee2e7baec6bb918";
 const DUNGEON_TRANSITION_GATE_KEY = "scene:dungeon_transition_gate";
@@ -44,6 +44,19 @@ const NPC_WORLD_SLUGS = [
 const NPC_WORLD_ASSET_KEYS = new Set(NPC_WORLD_SLUGS.map((slug) => (
   `npc:${slug.replaceAll("-", "_")}_world`
 )));
+// Full-body duel-stage figures for the companions and pets; their portraits stay separate assets.
+const PARTY_WORLD_SPECS = [
+  { key: "character:companion_qin_che_world", folder: "character", slug: "qin-che", sha256: "006f6006f12f1fc9d1c086eef8b91aee93b222cdd6b24b29b3d35a025c3e5c2d" },
+  { key: "character:companion_zhou_yingxue_world", folder: "character", slug: "zhou-yingxue", sha256: "88a7c0d1a2eed61a866cb33860908e8bff2f8f8ef29e3bdba8a62ca83cf20431" },
+  { key: "character:companion_lu_guanlan_world", folder: "character", slug: "lu-guanlan", sha256: "31b3729bfbe104afb9c47b66a41e89da0152487fefc69d42ed01f147e017781b" },
+  { key: "pet:contract_sprite_world", folder: "pet", slug: "contract-sprite", sha256: "03ed6ff4e8a3b0e3f40d42e3b01978e213ac728a57b13653491e3c5570b31d82" },
+  { key: "pet:ash_hound_world", folder: "pet", slug: "ash-hound", sha256: "81e539dcec6dffb598de1fbebf4daf05704090159668cce8a2252bb1e9df01c0" },
+  { key: "pet:starling_drone_world", folder: "pet", slug: "starling-drone", sha256: "2676741b75cce86c65259bd86ac3f113f5b10367c7c369bf74a09dee982a3947" },
+  { key: "pet:mist_kitten_world", folder: "pet", slug: "mist-kitten", sha256: "f17879f60589b4209035c545e80ffbc8f2a87f3e01b0c63df9a5727f4a6e36a2" },
+  { key: "pet:mirror_moth_world", folder: "pet", slug: "mirror-moth", sha256: "11addc57b1860a8badad3540ec6428b1de3d03923650e109ba466c074454cf41" },
+  { key: "pet:void_whelp_world", folder: "pet", slug: "void-whelp", sha256: "c849a624a54fbc6c28cc4be2e27d3144b224230bb33b23e34f556df62e86c439" },
+];
+const PARTY_WORLD_ASSET_KEYS = new Set(PARTY_WORLD_SPECS.map((spec) => spec.key));
 const NPC_GRID_ASSET_KEYS = new Set([
   "item:method_mist_breathing",
   "item:method_iron_body",
@@ -414,7 +427,7 @@ const monsterWorldAssets = assets.filter((asset) => (
 const monsterWorldKeys = new Set(monsterWorldAssets.map((asset) => asset.key));
 const originalAssets = assets.filter((asset) => !asset.key.startsWith("scene:dungeon_world_")
   && !NPC_GRID_ASSET_KEYS.has(asset.key) && !NPC_WORLD_ASSET_KEYS.has(asset.key)
-  && !monsterWorldKeys.has(asset.key) && !COURTYARD_ASSET_KEYS.has(asset.key)
+  && !monsterWorldKeys.has(asset.key) && !PARTY_WORLD_ASSET_KEYS.has(asset.key) && !COURTYARD_ASSET_KEYS.has(asset.key)
   && asset.key !== DUNGEON_TRANSITION_GATE_KEY && asset.key !== HUB_DUNGEON_PORTAL_KEY
   && !asset.key.startsWith("scene:dungeon_prop_") && !RUN_RELIC_ICON_KEYS.has(asset.key));
 const frozenOriginalAssets = originalAssets.filter((asset) => (
@@ -655,6 +668,38 @@ for (const asset of monsterWorldAssets) {
   }
 }
 
+const partyWorldAssets = assets.filter((asset) => PARTY_WORLD_ASSET_KEYS.has(asset.key));
+if (!sameStringSet(partyWorldAssets.map((asset) => asset.key), PARTY_WORLD_ASSET_KEYS)) {
+  failures.push("party world figures must cover exactly the three companions and six pets");
+}
+for (const asset of partyWorldAssets) {
+  const spec = PARTY_WORLD_SPECS.find((candidate) => candidate.key === asset.key);
+  const portraitKey = asset.key.slice(0, -"_world".length);
+  if (!assets.some((candidate) => candidate.key === portraitKey)
+    || asset.kind !== spec.folder || asset.entityId !== asset.key.slice(`${spec.folder}:`.length)
+    || asset.role !== "portrait" || asset.fit !== "contain"
+    || asset.source !== "project-original-generated" || asset.sourceRevision !== 1
+    || Object.prototype.hasOwnProperty.call(asset, "webSourcePath")
+    || asset.sourceFile !== `infinite-flow-wechat/art-source/party-world/${spec.slug}-world-v1.png`
+    || asset.resourceFile !== `${spec.folder}/${spec.slug}-world-v1.png`
+    || asset.resourcePath !== `${spec.folder}/${spec.slug}-world-v1`
+    || asset.sourceFormat !== "png" || asset.targetFormat !== "png"
+    || asset.cocosImageImport !== "supported"
+    || asset.sourceSha256 !== spec.sha256 || asset.targetSha256 !== spec.sha256
+    || asset.transformation?.operation !== "byte-copy") {
+    failures.push(`party world provenance or approved image identity mismatch: ${asset.key}`);
+  }
+  const dimensions = asset.transformation?.targetDimensions;
+  if (asset.width !== 1024 || asset.height !== 1536
+    || dimensions?.width !== asset.width || dimensions?.height !== asset.height) {
+    failures.push(`party world figures must retain their original 1024x1536 PNG dimensions: ${asset.key}`);
+  }
+  const meta = readCreatorMeta(resolve(resourceRoot, `${asset.resourceFile}.meta`), asset.key);
+  if (meta?.userData?.hasAlpha !== true) {
+    failures.push(`party world image metadata must preserve alpha: ${asset.key}`);
+  }
+}
+
 const runRelicIcons = assets.filter((asset) => asset.key.startsWith("item:run_relic_"));
 if (!sameStringSet(runRelicIcons.map((asset) => asset.key), RUN_RELIC_ICON_KEYS)) {
   failures.push("run relic HUD must include exactly the nine approved icon identities");
@@ -733,7 +778,7 @@ for (const asset of assets) {
     ) {
       failures.push(`target dimensions mismatch: ${asset.key}`);
     }
-    if (monsterWorldKeys.has(asset.key) || COURTYARD_PROP_KEYS.has(asset.key)
+    if (monsterWorldKeys.has(asset.key) || PARTY_WORLD_ASSET_KEYS.has(asset.key) || COURTYARD_PROP_KEYS.has(asset.key)
       || STYLE_REFRESH_ALPHA_KEYS.has(asset.key) || asset.key === HERO_WALK_KEY
       || asset.key === DUNGEON_TRANSITION_GATE_KEY || asset.key === HUB_DUNGEON_PORTAL_KEY) {
       const alpha = pngRgbaAlpha(targetBytes);
@@ -763,7 +808,7 @@ for (const asset of assets) {
     ) {
       failures.push(`byte-copy is not byte-identical: ${asset.key}`);
     }
-    if (monsterWorldKeys.has(asset.key) || COURTYARD_ASSET_KEYS.has(asset.key)
+    if (monsterWorldKeys.has(asset.key) || PARTY_WORLD_ASSET_KEYS.has(asset.key) || COURTYARD_ASSET_KEYS.has(asset.key)
       || STYLE_REFRESH_ASSET_KEYS.has(asset.key) || RUN_RELIC_ICON_KEYS.has(asset.key) || asset.key === HERO_WALK_KEY
       || asset.key === DUNGEON_TRANSITION_GATE_KEY || asset.key === HUB_DUNGEON_PORTAL_KEY) {
       const dimensions = pngDimensions(sourceBytes);
@@ -855,6 +900,7 @@ if (failures.length > 0) {
     kinds: kindCounts,
     formats: formatCounts,
     monsterWorldSprites: monsterWorldAssets.length,
+    partyWorldFigures: partyWorldAssets.length,
     courtyardAssets: courtyardAssets.length,
     dungeonTransitionGates: dungeonTransitionGates.length,
     hubDungeonPortals: hubDungeonPortals.length,
