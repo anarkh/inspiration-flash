@@ -390,6 +390,19 @@ const hubCatalogAssets = [
   defineAsset('npc', 'companion_guide', '/assets/npc/companion-guide-v1.png', '同行引路人', 'portrait', 256, 256, 'contain', 'project-original-generated')
 ];
 
+// Full-body figures for the duel stage; the run party offers them as figureAssetKey.
+const partyWorldAssets = [
+  defineAsset('character', 'companion_qin_che_world', '/assets/character/qin-che-world-v1.png', '秦彻持塔盾的全身形象', 'portrait', 1024, 1536, 'contain', 'project-original-generated'),
+  defineAsset('character', 'companion_zhou_yingxue_world', '/assets/character/zhou-yingxue-world-v1.png', '周映雪手持笔记的全身形象', 'portrait', 1024, 1536, 'contain', 'project-original-generated'),
+  defineAsset('character', 'companion_lu_guanlan_world', '/assets/character/lu-guanlan-world-v1.png', '陆观澜背着药囊的全身形象', 'portrait', 1024, 1536, 'contain', 'project-original-generated'),
+  defineAsset('pet', 'contract_sprite_world', '/assets/pet/contract-sprite-world-v1.png', '折叠符光构成的契约小灵的全身形象', 'portrait', 1024, 1536, 'contain', 'project-original-generated'),
+  defineAsset('pet', 'ash_hound_world', '/assets/pet/ash-hound-world-v1.png', '裂纹余烬覆身的烬火犬的全身形象', 'portrait', 1024, 1536, 'contain', 'project-original-generated'),
+  defineAsset('pet', 'starling_drone_world', '/assets/pet/starling-drone-world-v1.png', '星纹铜壳的星棱机的全身形象', 'portrait', 1024, 1536, 'contain', 'project-original-generated'),
+  defineAsset('pet', 'mist_kitten_world', '/assets/pet/mist-kitten-world-v1.png', '雾气缭绕的雾爪幼兽的全身形象', 'portrait', 1024, 1536, 'contain', 'project-original-generated'),
+  defineAsset('pet', 'mirror_moth_world', '/assets/pet/mirror-moth-world-v1.png', '碎镜羽翼的镜翼蛾的全身形象', 'portrait', 1024, 1536, 'contain', 'project-original-generated'),
+  defineAsset('pet', 'void_whelp_world', '/assets/pet/void-whelp-world-v1.png', '脊背青光的虚空幼龙的全身形象', 'portrait', 1024, 1536, 'contain', 'project-original-generated')
+];
+
 const assets = [
   ...characterAssets,
   ...npcAssets,
@@ -401,7 +414,8 @@ const assets = [
   ...generatedDungeonAssets,
   ...lateDungeonAssets,
   ...sceneAssets,
-  ...hubCatalogAssets
+  ...hubCatalogAssets,
+  ...partyWorldAssets
 ];
 
 export const GAME_ASSET_MANIFEST: Readonly<Record<string, GameAssetDefinition>> = Object.freeze(

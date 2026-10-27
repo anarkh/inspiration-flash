@@ -30,7 +30,7 @@ case-ID 映射、已转存到外部 WORM/签名存储的 candidate 或所需的�
 2. **主包体积**：2026-08-12 模板构建主包为 6,798,993 bytes，超过微信 4 MiB 主包上限；
    production 产物门禁现会拒绝超限主包。需启用引擎插件（`separateEngine`）或把游戏代码
    移入分包，并在真实 Creator 构建中复核。
-3. **资源交付策略**：`assets/resources` 当前为 314 项 PNG、约 325 MB（2026-08-12 模板构建时为 187 项、约 22 MB），上 CDN 前需先评估降采样或纹理压缩。remote preset、两个官方 fragment 的
+3. **资源交付策略**：`assets/resources` 当前为 323 项 PNG、约 344 MB（2026-08-12 模板构建时为 187 项、约 22 MB），上 CDN 前需先评估降采样或纹理压缩。remote preset、两个官方 fragment 的
    合成、template/production renderer 和真实模板输出门禁已通过；仍需确定 CDN/HTTPS
    域名与微信白名单，上传并核对远端树 hash，再验证 revision 缓存、弱网、失败 fallback
    和低内存释放。

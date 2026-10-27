@@ -154,7 +154,7 @@ import {
   getEscapeOutcome,
   resolveCombatUtilityAction
 } from './combat-mechanics';
-import { getPetPassiveTags, getPetStatBonus, getPetUpgradeCost, PETS } from './pet-system';
+import { getPetPassiveTags, getPetStatBonus, getPetSupport, getPetUpgradeCost, PETS, type PetSupport } from './pet-system';
 import { getChargedStrikeDefinition, getWeaponSkillDefinition, resolveWeaponSkill } from './weapon-skills';
 import type { WeaponSkillDefinition, WeaponSkillResolution } from './weapon-skills';
 import {
@@ -390,15 +390,14 @@ import type { RunLanternDefinition, RunLanternState } from './run-lantern';
 import {
   COMPANION_RULES_VERSION,
   createCompanionRunSnapshot,
-  getCompanionAssistEffect,
+  getCompanionBattleEffect,
+  getCompanionBattleStatus,
   getCompanionDefinition,
   getCompanionRecruitmentStatus,
   getCompanionUpgradeStatus,
   normalizeCompanionRunSnapshot
 } from './companion-system';
 import type {
-  CompanionAssistEffect,
-  CompanionDefinition,
   CompanionId,
   CompanionProgress,
   CompanionRank,
@@ -427,7 +426,7 @@ import {
   createBloodlineRunSnapshot,
   getBloodlineDefinition,
   getBloodlineStatBonus,
-  getBloodlineSurgeEffect,
+  getBloodlineHitEffect,
   getBloodlineUpgradeStatus,
   isBloodlineId,
   normalizeBloodlineProgress,
@@ -438,10 +437,10 @@ import type {
   BloodlineProgress,
   BloodlineRank,
   BloodlineRunSnapshot,
-  BloodlineSurgeEffect
 } from './bloodline-system';
 
-export { PETS } from './pet-system';
+export { getPetSupport, PETS } from './pet-system';
+export type { PetSupport } from './pet-system';
 export { ROUTE_CONTRACT_CATALOG, getRouteContractById, listRouteContracts };
 export * from './equipment-memory-hunts';
 export * from './run-pursuit';
@@ -9569,243 +9568,143 @@ export function useMethodTechnique(state: GameState, methodId?: MethodId): GameS
   );
 }
 
-export type CompanionAssistUnavailableReason =
-  | 'not_in_combat'
-  | 'legacy_disabled'
-  | 'already_used'
-  | 'no_benefit';
+export type PartyStrike = Readonly<{ kind: 'companion'; name: string; damage: number }>;
 
-export type CurrentCompanionAssistStatus = {
-  readonly legacyDisabled: boolean;
-  readonly available: boolean;
-  readonly snapshot?: CompanionRunSnapshot;
-  readonly definition?: CompanionDefinition;
-  readonly effect: CompanionAssistEffect;
-  readonly reason?: CompanionAssistUnavailableReason;
-  readonly unavailableReason?: string;
-};
+/** The active pet's support this run, when pets are not sealed by the chapter. */
+function getActivePetSupport(state: GameState): Readonly<{ name: string; support: PetSupport }> | undefined {
+  const petId = getAvailableActivePet(state);
+  return petId === undefined ? undefined : { name: PETS[petId].name, support: getPetSupport(PETS[petId], state.petLevels[petId] ?? 1) };
+}
 
-const NO_COMPANION_ASSIST_EFFECT: CompanionAssistEffect = {
-  guarding: false,
-  focusGain: 0,
-  healPercent: 0
-};
+/** 助攻: a combat pet sharpens every landed hit. */
+function getPetAssistBonus(state: GameState, damage: number): number {
+  const pet = getActivePetSupport(state);
+  return pet?.support.kind === 'assist' && damage > 0 ? Math.ceil((damage * pet.support.damagePercent) / 100) : 0;
+}
 
-export function getCurrentCompanionAssistStatus(state: GameState): CurrentCompanionAssistStatus {
-  if (!state.run) {
-    return {
-      legacyDisabled: false,
-      available: false,
-      effect: NO_COMPANION_ASSIST_EFFECT,
-      reason: 'not_in_combat',
-      unavailableReason: '当前不在副本战斗中。'
-    };
+/** 预警: the trap scout warns of every third counterattack. */
+function getPetCounterCutPercent(state: GameState, combat: CombatState): number {
+  const pet = getActivePetSupport(state);
+  return pet?.support.kind === 'warn' && combat.turn % pet.support.every === 0 ? pet.support.counterCutPercent : 0;
+}
+
+/** The bloodline passive on a landed hit: extra damage by kind, then a growing shield or lifesteal. */
+function getBloodlineHitBonus(state: GameState, damageKind: CombatDamageKind): number {
+  const effect = getBloodlineHitEffect(state.run?.bloodlineSnapshot);
+  if (!effect) return 0;
+  return damageKind === 'physical' ? effect.forceDamage : damageKind === 'art' ? effect.artDamage : 0;
+}
+
+function applyBloodlineHitAftermath(state: GameState, dealt: number): GameState {
+  const effect = getBloodlineHitEffect(state.run?.bloodlineSnapshot);
+  if (!effect || dealt <= 0 || !state.combat) return state;
+  const lines: string[] = [];
+  let combat = state.combat;
+  let player = state.player;
+  if (effect.barrier > 0) {
+    const barrier = Math.min(effect.barrierCap, Math.max(0, Math.floor(combat.bloodlineBarrier ?? 0)) + effect.barrier);
+    combat = { ...combat, bloodlineBarrier: barrier };
+    lines.push(`血统护盾增至 ${barrier} 点。`);
   }
-
-  const snapshot = normalizeCompanionRunSnapshot(state.run.companionSnapshot);
-  if (!snapshot) {
-    return {
-      legacyDisabled: true,
-      available: false,
-      effect: NO_COMPANION_ASSIST_EFFECT,
-      reason: 'legacy_disabled',
-      unavailableReason: '本局入场时没有记录出战同伴，援护不可用。在主神空间设好出战同伴后重新进入即可使用。'
-    };
+  if (effect.lifestealPercent > 0) {
+    const healed = Math.min(getDerivedStats(state).maxHp - player.hp, Math.floor((dealt * effect.lifestealPercent) / 100));
+    if (healed > 0) {
+      player = { ...player, hp: player.hp + healed };
+      lines.push(`血统汲取，回复 ${healed} 点生命。`);
+    }
   }
+  return { ...state, player, combat: { ...combat, log: [...lines, ...combat.log].slice(0, 8) } };
+}
 
-  const definition = getCompanionDefinition(snapshot.companionId);
-  const effect = getCompanionAssistEffect(snapshot);
-  const base = {
-    legacyDisabled: false,
-    snapshot,
-    definition,
-    effect
-  };
-
-  if (state.phase !== 'combat' || !state.combat) {
-    return {
-      ...base,
-      available: false,
-      reason: 'not_in_combat' as const,
-      unavailableReason: '队友援护只能在战斗中使用。'
-    };
+/** The companion strikes after the player's action, before the counterattack; pets support instead. */
+export function getPartyStrikes(state: GameState, monster: MonsterDefinition): PartyStrike[] {
+  const strikes: PartyStrike[] = [];
+  const stats = getDerivedStats(state);
+  // Allies scale with the player, minus a share of the target's defense, and always land at least 1.
+  const strikeDamage = (base: number, percent: number) => Math.max(1, Math.ceil((base * percent) / 100) - Math.floor(monster.defense * 0.3));
+  const companion = getCompanionBattleStatus(state.run?.companionSnapshot);
+  if (companion.active && companion.snapshot && companion.effect) {
+    const base = companion.effect.strikeStat === 'best' ? Math.max(stats.attack, stats.artPower) : stats[companion.effect.strikeStat];
+    strikes.push({ kind: 'companion', name: getCompanionDefinition(companion.snapshot.companionId)!.name, damage: strikeDamage(base, companion.effect.strikePercent) });
   }
-  if (state.combat.companionAssistUsed) {
-    return {
-      ...base,
-      available: false,
-      reason: 'already_used' as const,
-      unavailableReason: '本场战斗的队友援护已经使用。'
-    };
-  }
+  return strikes;
+}
 
-  const currentFocus = normalizeCombatFocus(state.combat.weaponFocus);
-  const hasBenefit =
-    effect.guarding ||
-    (effect.focusGain > 0 && currentFocus < COMBAT_FOCUS_MAX) ||
-    (effect.healPercent > 0 && state.player.hp < state.player.maxHp);
-  if (!hasBenefit) {
-    return {
-      ...base,
-      available: false,
-      reason: 'no_benefit' as const,
-      unavailableReason: '当前生命与战意状态无法从这次援护中获得收益。'
-    };
+function resolvePartyStrikes(state: GameState, monster: MonsterDefinition, observer?: CombatPresentationObserver, landedHit = false): GameState {
+  const combat = state.combat;
+  if (!combat || combat.monsterHp <= 0) return state;
+  let monsterHp = combat.monsterHp;
+  let bloodlineBarrier = combat.bloodlineBarrier;
+  const lines: string[] = [];
+  for (const strike of getPartyStrikes(state, monster)) {
+    if (monsterHp <= 0) break;
+    const dealt = Math.min(monsterHp, strike.damage);
+    monsterHp -= dealt;
+    lines.push(`${strike.name}并肩出手，造成 ${dealt} 点伤害。`);
+    observer?.(Object.freeze({ stage: 'ally', playerHp: state.player.hp, enemyHp: monsterHp, guarded: combat.guarding, allyKind: strike.kind, allyDamage: dealt }));
   }
+  // The pet supports every turn; 助战灵宠 stays in its line because frozen acceptance cases look for it.
+  const pet = monsterHp > 0 ? getActivePetSupport(state) : undefined;
+  let petNote: string | undefined;
+  if (pet?.support.kind === 'assist' && landedHit) {
+    petNote = `助攻 +${pet.support.damagePercent}%`;
+    lines.push(`助战灵宠${pet.name}牵制敌人，这一击伤害 +${pet.support.damagePercent}%。`);
+  } else if (pet?.support.kind === 'warn' && combat.turn % pet.support.every === 0) {
+    petNote = '预警';
+    lines.push(`助战灵宠${pet.name}发出预警，这次反击伤害 −${pet.support.counterCutPercent}%。`);
+  } else if (pet?.support.kind === 'ward') {
+    const current = Math.max(0, Math.floor(combat.bloodlineBarrier ?? 0));
+    // The pet only tops the shield up to its own cap, so a higher bloodline shield is never lowered.
+    const next = current >= pet.support.cap ? current : Math.min(pet.support.cap, current + pet.support.shield);
+    if (next > current) {
+      bloodlineBarrier = next;
+      petNote = `灵障 +${next - current}`;
+      lines.push(`助战灵宠${pet.name}张开灵障，护盾增至 ${next} 点。`);
+    }
+  }
+  if (petNote) observer?.(Object.freeze({ stage: 'ally', playerHp: state.player.hp, enemyHp: monsterHp, guarded: combat.guarding, allyKind: 'pet', allyDamage: 0, allyNote: petNote }));
+  let weaponFocus = combat.weaponFocus;
+  const effect = getCompanionBattleEffect(state.run?.companionSnapshot);
+  if (effect && effect.focusEvery > 0 && combat.turn % effect.focusEvery === 0) {
+    weaponFocus = normalizeCombatFocus((combat.weaponFocus ?? 0) + effect.focusGain);
+    lines.push(`弱点演算：战意 +${effect.focusGain}。`);
+  }
+  if (lines.length === 0) return state;
+  return { ...state, combat: { ...combat, monsterHp, weaponFocus, bloodlineBarrier, log: [...lines, ...combat.log].slice(0, 8) } };
+}
 
+/** 秦彻 blocks part of the counterattack while the player guards. */
+function getCompanionGuardBlock(state: GameState, combat: CombatState): number {
+  return combat.guarding ? getCompanionBattleEffect(state.run?.companionSnapshot)?.guardBlock ?? 0 : 0;
+}
+
+/** 陆观澜: once per fight, the first time the player drops below half health. */
+function applyCompanionEmergencyHeal(state: GameState): GameState {
+  const combat = state.combat;
+  const effect = getCompanionBattleEffect(state.run?.companionSnapshot);
+  if (!combat || !effect || effect.emergencyHealPercent <= 0 || combat.companionAssistUsed || state.player.hp <= 0) return state;
+  const maxHp = getDerivedStats(state).maxHp;
+  if (state.player.hp * 2 >= maxHp) return state;
+  const healed = Math.min(maxHp - state.player.hp, Math.ceil((maxHp * effect.emergencyHealPercent) / 100));
   return {
-    ...base,
-    available: true
+    ...state,
+    player: { ...state.player, hp: state.player.hp + healed },
+    combat: { ...combat, companionAssistUsed: true, log: [`紧急处置：陆观澜为你回复 ${healed} 点生命。`, ...combat.log].slice(0, 8) }
   };
 }
 
+/** Kept for the frozen acceptance cases: companions no longer have an active assist. */
+export function getCurrentCompanionAssistStatus(state: GameState): Readonly<{ available: false; reason: 'passive'; unavailableReason: string; active: boolean }> {
+  return { available: false, reason: 'passive', unavailableReason: '同伴现在每回合自动并肩作战。', active: getCompanionBattleStatus(state.run?.companionSnapshot).active };
+}
+
+/** The old active skills are now passive; their commands explain that instead of acting. */
 export function useCompanionAssist(state: GameState): GameState {
-  const status = getCurrentCompanionAssistStatus(state);
-  if (!status.available || !status.snapshot || !status.definition || !state.combat) return state;
-
-  const focusBefore = normalizeCombatFocus(state.combat.weaponFocus);
-  const focusAfter = normalizeCombatFocus(focusBefore + status.effect.focusGain);
-  const requestedHealing = Math.ceil((state.player.maxHp * status.effect.healPercent) / 100);
-  const hpAfter = clampHp(state.player.hp + requestedHealing, state.player.maxHp);
-  const actualHealing = hpAfter - state.player.hp;
-  const effectParts = [
-    ...(status.effect.guarding ? ['进入守势'] : []),
-    ...(focusAfter > focusBefore ? [`战意 +${focusAfter - focusBefore}`] : []),
-    ...(actualHealing > 0 ? [`生命回复 ${actualHealing} 点`] : [])
-  ];
-  const line = `${status.definition.name}发动「${status.definition.assistName}」：${effectParts.join('，')}。`;
-
-  return appendLog(
-    {
-      ...state,
-      player: {
-        ...state.player,
-        hp: hpAfter
-      },
-      combat: {
-        ...state.combat,
-        guarding: state.combat.guarding || status.effect.guarding,
-        weaponFocus: focusAfter,
-        companionAssistUsed: true,
-        log: [line, ...state.combat.log].slice(0, 8)
-      }
-    },
-    line
-  );
+  return appendLog(state, '同伴现在每回合自动并肩作战，不需要手动援护。');
 }
 
-export type BloodlineSurgeUnavailableReason =
-  | 'legacy_disabled'
-  | 'not_in_combat'
-  | 'already_used'
-  | 'no_benefit';
-
-export type CurrentBloodlineSurgeStatus = {
-  readonly legacyDisabled: boolean;
-  readonly available: boolean;
-  readonly snapshot?: BloodlineRunSnapshot;
-  readonly effect?: BloodlineSurgeEffect;
-  readonly reason?: BloodlineSurgeUnavailableReason;
-  readonly unavailableReason?: string;
-};
-
-export function getCurrentBloodlineSurgeStatus(state: GameState): CurrentBloodlineSurgeStatus {
-  const snapshot = normalizeBloodlineRunSnapshot(state.run?.bloodlineSnapshot);
-  if (!snapshot) {
-    return {
-      legacyDisabled: true,
-      available: false,
-      reason: 'legacy_disabled',
-      unavailableReason: '本局入场时没有记录激活的血统，血统爆发不可用。在主神空间激活血统后重新进入即可使用。'
-    };
-  }
-
-  const effect = getBloodlineSurgeEffect(snapshot);
-  const base = { legacyDisabled: false, snapshot, effect };
-  if (!effect) {
-    return {
-      ...base,
-      available: false,
-      reason: 'legacy_disabled',
-      unavailableReason: '这局的血统记录损坏，血统爆发不可用。返回主神空间后重新进入副本即可恢复。'
-    };
-  }
-  if (state.phase !== 'combat' || !state.combat) {
-    return {
-      ...base,
-      available: false,
-      reason: 'not_in_combat',
-      unavailableReason: '血统爆发只能在战斗中使用。'
-    };
-  }
-  if (state.combat.bloodlineSurgeUsed) {
-    return {
-      ...base,
-      available: false,
-      reason: 'already_used',
-      unavailableReason: '本场战斗的血统爆发已经使用。'
-    };
-  }
-  if (effect.healPercent > 0 && state.player.hp >= state.player.maxHp) {
-    return {
-      ...base,
-      available: false,
-      reason: 'no_benefit',
-      unavailableReason: '当前生命已满，复生血统爆发不会产生收益。'
-    };
-  }
-
-  return { ...base, available: true };
-}
-
-export function useBloodlineSurge(
-  state: GameState,
-  observer?: CombatPresentationObserver
-): GameState {
-  const status = getCurrentBloodlineSurgeStatus(state);
-  if (!status.available || !status.snapshot || !status.effect || !state.combat) return state;
-  const definition = getBloodlineDefinition(status.snapshot.bloodlineId);
-  if (!definition) return state;
-
-  const effect = status.effect;
-  const directDamage = effect.forceDamage || effect.artDamage;
-  const hpAfter = effect.healPercent > 0
-    ? clampHp(
-        state.player.hp + Math.ceil((state.player.maxHp * effect.healPercent) / 100),
-        state.player.maxHp
-      )
-    : state.player.hp;
-  const actualHealing = hpAfter - state.player.hp;
-  const monsterHp = Math.max(0, state.combat.monsterHp - directDamage);
-  const effectText = effect.forceDamage > 0
-    ? `造成 ${effect.forceDamage} 点武力直伤`
-    : effect.artDamage > 0
-      ? `造成 ${effect.artDamage} 点术法直伤`
-      : effect.barrier > 0
-        ? `生成 ${effect.barrier} 点血统屏障`
-        : `回复 ${actualHealing} 点生命`;
-  const line = `${definition.name}发动血统爆发：${effectText}。`;
-  const nextState = appendLog(
-    {
-      ...state,
-      player: actualHealing > 0 ? { ...state.player, hp: hpAfter } : state.player,
-      combat: {
-        ...state.combat,
-        monsterHp,
-        bloodlineSurgeUsed: true,
-        ...(effect.barrier > 0 ? { bloodlineBarrier: effect.barrier } : {}),
-        log: [line, ...state.combat.log].slice(0, 8)
-      }
-    },
-    line
-  );
-
-  observeCombatPresentation(observer, 'impact', nextState, nextState.combat!);
-  if (monsterHp <= 0) {
-    const monster = getCombatEncounterProfile(nextState)?.monster ?? MONSTERS[state.combat.monsterId];
-    return finishCombatVictory(nextState, monster);
-  }
-  return nextState;
+export function useBloodlineSurge(state: GameState, _observer?: CombatPresentationObserver): GameState {
+  return appendLog(state, '血统已改为被动：命中时自动生效，不需要手动爆发。');
 }
 
 function getGuardReduction(
@@ -9864,9 +9763,13 @@ function monsterAttack(
   const ironBodyGuard = combat.guarding && getAvailableLearnedMethods(state).includes('iron_body');
   const ironBodyDamage = ironBodyGuard ? Math.floor(guardedDamage * 0.7) : guardedDamage;
   const perfectParry = blow.heavy && blow.perfectParry && combat.guarding;
-  const incomingDamage = perfectParry ? Math.ceil(ironBodyDamage / 2) : ironBodyDamage;
-  // A cancelled counterattack deals nothing, not the usual minimum of 1.
-  let damage = (retaliationMultiplier === 0 ? 0 : Math.max(1, incomingDamage)) + effectDamageToPlayer;
+  const parriedDamage = perfectParry ? Math.ceil(ironBodyDamage / 2) : ironBodyDamage;
+  // 秦彻 blocks part of what is left while the player guards.
+  const allyBlock = Math.min(parriedDamage, getCompanionGuardBlock(state, combat));
+  const counterCut = Math.floor(((parriedDamage - allyBlock) * getPetCounterCutPercent(state, combat)) / 100);
+  const incomingDamage = parriedDamage - allyBlock - counterCut;
+  // A cancelled or fully blocked counterattack deals nothing, not the usual minimum of 1.
+  let damage = (retaliationMultiplier === 0 || ((allyBlock > 0 || counterCut > 0) && incomingDamage === 0) ? 0 : Math.max(1, incomingDamage)) + effectDamageToPlayer;
   const counterDamage = ironBodyGuard ? Math.max(2, Math.floor(stats.defense * 0.25)) : 0;
   let nextState = state;
   let statusLines: string[] = [];
@@ -9893,6 +9796,8 @@ function monsterAttack(
     statusLines = [getTacticalItemUnavailableLog(state, 'armor_patch') ?? ''];
   }
 
+  if (allyBlock > 0) statusLines.push(`抢位援护：秦彻替你挡下 ${allyBlock} 点伤害。`);
+
   const replay = normalizeCombatReplayCombatState(combat.combatReplayState);
   let nextCombatReplay = replay;
   if (replay?.enabled && replay.buffer > 0 && replay.remainingBufferHits > 0) {
@@ -9914,7 +9819,7 @@ function monsterAttack(
   damage -= absorbedDamage;
   const remainingBarrier = activeBarrier - absorbedDamage;
   if (absorbedDamage > 0) {
-    statusLines.push(`血统屏障吸收 ${absorbedDamage} 点最终入伤，剩余 ${remainingBarrier} 点。`);
+    statusLines.push(`护盾吸收 ${absorbedDamage} 点最终入伤，剩余 ${remainingBarrier} 点。`);
   }
 
   return {
@@ -10016,7 +9921,11 @@ function applyPerfectParryFocus(state: GameState): GameState {
 
 /** Transient display snapshots. These values are not part of GameState or saves. */
 export type CombatPresentationFrame = Readonly<{
-  stage: 'impact' | 'counter';
+  stage: 'impact' | 'ally' | 'counter';
+  /** Ally frames only: who acted, for how much damage, and a short note for support (flat fields, so frames carry no objects). */
+  allyKind?: 'companion' | 'pet';
+  allyDamage?: number;
+  allyNote?: string;
   playerHp: number;
   enemyHp: number;
   guarded?: boolean;
@@ -10112,6 +10021,8 @@ export function performCombatAction(
     nextState = resolveCombatReplayAfterDirectAction(nextState, action);
     nextCombat = nextState.combat ?? nextCombat;
     observeCombatPresentation(observer, 'impact', nextState, nextCombat);
+    nextState = resolvePartyStrikes({ ...nextState, combat: nextCombat }, monster, observer);
+    nextCombat = nextState.combat ?? nextCombat;
     if ((nextCombat.monsterHp ?? 1) <= 0) return finishCombatVictory(nextState, monster);
     const replayBeforeCounter = normalizeCombatReplayCombatState(nextCombat.combatReplayState);
     if (replayBeforeCounter?.boss && replayBeforeCounter.route !== 'afterbeat') {
@@ -10139,6 +10050,7 @@ export function performCombatAction(
     if (afterMonster.player.hp <= 0) {
       return resolveRunFailure(afterMonster, `${monster.name}把你逼到濒死，主神强制回收。`);
     }
+    afterMonster = applyCompanionEmergencyHeal(afterMonster);
 
     if ((afterMonster.combat?.monsterHp ?? 1) <= 0) {
       return finishCombatVictory(afterMonster, monster);
@@ -10183,7 +10095,10 @@ export function performCombatAction(
     };
 
     observeCombatPresentation(observer, 'impact', nextState, nextCombat);
-    const afterMonster = monsterAttack(
+    nextState = resolvePartyStrikes({ ...nextState, combat: nextCombat }, monster, observer);
+    nextCombat = nextState.combat ?? nextCombat;
+    if (nextCombat.monsterHp <= 0) return finishCombatVictory(nextState, monster);
+    let afterMonster = monsterAttack(
       { ...nextState, combat: nextCombat },
       monster,
       nextCombat,
@@ -10196,6 +10111,7 @@ export function performCombatAction(
     if (afterMonster.player.hp <= 0) {
       return resolveRunFailure(afterMonster, `${monster.name}把你逼到濒死，主神强制回收。`);
     }
+    afterMonster = applyCompanionEmergencyHeal(afterMonster);
 
     return appendLog(
       applyContinuingCombatFocus(afterMonster, action, actionIntent),
@@ -10281,7 +10197,10 @@ export function performCombatAction(
     };
 
     observeCombatPresentation(observer, 'impact', nextState, nextCombat);
-    const afterMonster = monsterAttack(
+    nextState = resolvePartyStrikes({ ...nextState, combat: nextCombat }, monster, observer);
+    nextCombat = nextState.combat ?? nextCombat;
+    if (nextCombat.monsterHp <= 0) return finishCombatVictory(nextState, monster);
+    let afterMonster = monsterAttack(
       { ...nextState, combat: nextCombat },
       monster,
       nextCombat,
@@ -10294,6 +10213,7 @@ export function performCombatAction(
     if (afterMonster.player.hp <= 0) {
       return resolveRunFailure(afterMonster, `${monster.name}截断退路，主神强制回收。`);
     }
+    afterMonster = applyCompanionEmergencyHeal(afterMonster);
 
     return appendLog(
       applyContinuingCombatFocus(afterMonster, action, actionIntent),
@@ -10355,6 +10275,9 @@ export function performCombatAction(
   if (directAction && directMultiplier < 1) {
     finalDamageToMonster = Math.floor(finalDamageToMonster * directMultiplier);
   }
+  // Bloodline passive: a landed physical or art hit carries the bloodline's extra damage.
+  if (finalDamageToMonster > 0) finalDamageToMonster += getBloodlineHitBonus(nextState, damageKind);
+  finalDamageToMonster += getPetAssistBonus(nextState, finalDamageToMonster);
   const observedDirectDamage = Math.min(nextCombat.monsterHp, finalDamageToMonster);
   const damagedHp = Math.max(0, nextCombat.monsterHp - finalDamageToMonster);
   const monsterHp = damagedHp > 0 && effects.monsterHealing > 0
@@ -10384,10 +10307,11 @@ export function performCombatAction(
     ].slice(0, 8)
   };
 
-  nextState = {
+  nextState = applyBloodlineHitAftermath({
     ...nextState,
     combat: nextCombat
-  };
+  }, observedDirectDamage);
+  nextCombat = nextState.combat ?? nextCombat;
 
   if (directAction) {
     nextState = recordCombatReplayDirectAction(nextState, directAction, observedDirectDamage);
@@ -10396,6 +10320,8 @@ export function performCombatAction(
   }
 
   observeCombatPresentation(observer, 'impact', nextState, nextCombat);
+  nextState = resolvePartyStrikes(nextState, monster, observer, observedDirectDamage > 0);
+  nextCombat = nextState.combat ?? nextCombat;
   if ((nextState.combat?.monsterHp ?? monsterHp) <= 0) {
     return finishCombatVictory(appendLog(nextState, actionLine), monster);
   }
@@ -10415,6 +10341,7 @@ export function performCombatAction(
       `${monster.name}把你逼到濒死，主神强制回收。`
     );
   }
+  afterMonster = applyCompanionEmergencyHeal(afterMonster);
 
   if ((afterMonster.combat?.monsterHp ?? 1) <= 0) {
     return finishCombatVictory(appendLog(afterMonster, actionLine), monster);

@@ -1048,6 +1048,8 @@ export type CharacterLoadoutViewModel = Readonly<{
     name: string;
     description: string;
     visualAssetKey?: string;
+    /** Full-body figure for the duel stage, once one is registered; the framed portrait stands in until then. */
+    figureAssetKey?: string;
   }>[];
   equipment: readonly Readonly<{
     slot: EquipmentSlot;

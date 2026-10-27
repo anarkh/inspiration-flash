@@ -1541,9 +1541,9 @@ function renderCarry(state, sheetState = { kind: 'character', page: 0, tab: 'car
     combat: { ...state.combat, effects: { rustPoisonStacks: 1 } } };
   const soulModel = add(soulState);
   const spells = api.getInfiniteFlowCombatChoiceActions(soulModel, 'spells');
-  for (const id of ['combat.companion-assist', 'combat.bloodline-surge', 'soul-skill:spirit_grounding:use']) {
-    assert.ok(spells.some(action => action.actionId === id), `${id}: configured support appears in the spell picker`);
-  }
+  assert.ok(spells.some(action => action.actionId === 'soul-skill:spirit_grounding:use'), 'configured soul skill appears in the spell picker');
+  assert.ok(!spells.some(action => action.actionId === 'combat.companion-assist' || action.actionId === 'combat.bloodline-surge'),
+    'companions and bloodlines act on their own, so the spell picker never offers them');
   assert.ok(!spells.some(action => action.actionId.startsWith('soul-skill:gauntlet_breakbeat')), 'unconfigured soul ability is not shown');
   const soulAction = spells.find(action => action.actionId === 'soul-skill:spirit_grounding:use');
   const soulPicker = render(soulModel, { kind: 'menu', tab: 'spells', page: 0 });
@@ -3563,7 +3563,7 @@ for (const required of [
   'hub/buy-pet', 'hub/upgrade-pet', 'hub/activate-pet', 'hub/learn-method', 'hub/upgrade-method', 'hub/activate-method',
   'hub/unlock-bloodline', 'hub/upgrade-bloodline', 'hub/activate-bloodline',
   'hub/recruit-companion', 'hub/upgrade-companion', 'hub/activate-companion', 'hub/claim-task',
-  'combat/act', 'combat/use-method-technique', 'combat/use-companion-assist', 'combat/use-bloodline-surge',
+  'combat/act', 'combat/use-method-technique',
   'node/activate-soul-recharge', 'node/resolve-soul-recharge', 'node/cancel-soul-recharge', 'node/use-soul-skill',
   'result/archive-relic', 'result/return-hub', 'run/retreat',
 ]) assert.ok(commands.has(required), `coverage includes enabled ${required}`);

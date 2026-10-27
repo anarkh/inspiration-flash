@@ -145,6 +145,29 @@ export function getPetPassiveTags(pet: CultivablePetDefinition): readonly PetPas
   return pet.passiveTags;
 }
 
+/**
+ * Pets support rather than strike: combat pets sharpen the player's hits, the trap scout warns of every third counter,
+ * the portal anchors raise a small shield each turn. Companions are the ones who deal damage beside the player.
+ */
+export type PetSupport =
+  | Readonly<{ kind: 'assist'; damagePercent: number }>
+  | Readonly<{ kind: 'warn'; every: number; counterCutPercent: number }>
+  | Readonly<{ kind: 'ward'; shield: number; cap: number }>;
+
+const PET_SUPPORT_TABLE = {
+  assist: [6, 9, 12],
+  warn: [30, 40, 50],
+  ward: [[3, 15], [4, 20], [5, 25]]
+} as const;
+
+export function getPetSupport(pet: CultivablePetDefinition, level: number): PetSupport {
+  const index = Math.max(1, Math.min(3, Math.floor(level))) - 1;
+  if (pet.passiveTags.includes('combat_assist')) return { kind: 'assist', damagePercent: PET_SUPPORT_TABLE.assist[index]! };
+  if (pet.passiveTags.includes('trap_scout')) return { kind: 'warn', every: 3, counterCutPercent: PET_SUPPORT_TABLE.warn[index]! };
+  const [shield, cap] = PET_SUPPORT_TABLE.ward[index]!;
+  return { kind: 'ward', shield, cap };
+}
+
 export function getPetIdsByPassiveTag(
   tag: PetPassiveTag,
   pets: Record<PetId, CultivablePetDefinition> = PETS

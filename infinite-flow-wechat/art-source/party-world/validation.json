@@ -1,0 +1,226 @@
+{
+  "scope": "Generated-art preview only; not integrated into game runtime.",
+  "tool": "built-in imagegen",
+  "count": 9,
+  "formatChecksPassed": true,
+  "rawFilesUnmodified": true,
+  "layoutNote": "Visible bounds use alpha > 32 and are measurements, not a claim of exact layout acceptance. Some side padding and head/foot positions differ from README targets; review in game before integration.",
+  "assets": [
+    {
+      "slug": "qin-che",
+      "file": "qin-che-world-v1.png",
+      "width": 1024,
+      "height": 1536,
+      "mode": "RGBA",
+      "trueTransparency": true,
+      "transparentPixelPercent": 54.29,
+      "visibleBoundsAlphaAbove32": [
+        123,
+        56,
+        943,
+        1484
+      ],
+      "visibleBoundsPercent": [
+        12.01,
+        3.65,
+        92.09,
+        96.61
+      ],
+      "sha256": "006f6006f12f1fc9d1c086eef8b91aee93b222cdd6b24b29b3d35a025c3e5c2d",
+      "sourceAndSavedBytesEqual": true,
+      "referenceSha256": "c57169ab1dc784d535f470ad5becf178aca62561130058d7984b115ef545ef5a"
+    },
+    {
+      "slug": "zhou-yingxue",
+      "file": "zhou-yingxue-world-v1.png",
+      "width": 1024,
+      "height": 1536,
+      "mode": "RGBA",
+      "trueTransparency": true,
+      "transparentPixelPercent": 67.86,
+      "visibleBoundsAlphaAbove32": [
+        179,
+        66,
+        924,
+        1485
+      ],
+      "visibleBoundsPercent": [
+        17.48,
+        4.3,
+        90.23,
+        96.68
+      ],
+      "sha256": "88a7c0d1a2eed61a866cb33860908e8bff2f8f8ef29e3bdba8a62ca83cf20431",
+      "sourceAndSavedBytesEqual": true,
+      "referenceSha256": "2c13ae0277585f9f9f28fcdc420b86b325f8878e03fc54e9eb162ef3db2703a1"
+    },
+    {
+      "slug": "lu-guanlan",
+      "file": "lu-guanlan-world-v1.png",
+      "width": 1024,
+      "height": 1536,
+      "mode": "RGBA",
+      "trueTransparency": true,
+      "transparentPixelPercent": 67.29,
+      "visibleBoundsAlphaAbove32": [
+        215,
+        55,
+        855,
+        1478
+      ],
+      "visibleBoundsPercent": [
+        21.0,
+        3.58,
+        83.5,
+        96.22
+      ],
+      "sha256": "31b3729bfbe104afb9c47b66a41e89da0152487fefc69d42ed01f147e017781b",
+      "sourceAndSavedBytesEqual": true,
+      "referenceSha256": "00e1801752ff3b317d570a9d5d591ca67596e6e1332a440cbe017df9661ed70a"
+    },
+    {
+      "slug": "contract-sprite",
+      "file": "contract-sprite-world-v1.png",
+      "width": 1024,
+      "height": 1536,
+      "mode": "RGBA",
+      "trueTransparency": true,
+      "transparentPixelPercent": 77.53,
+      "visibleBoundsAlphaAbove32": [
+        170,
+        67,
+        880,
+        1179
+      ],
+      "visibleBoundsPercent": [
+        16.6,
+        4.36,
+        85.94,
+        76.76
+      ],
+      "sha256": "03ed6ff4e8a3b0e3f40d42e3b01978e213ac728a57b13653491e3c5570b31d82",
+      "sourceAndSavedBytesEqual": true,
+      "referenceSha256": "22180d18f9bdd5aa9913f9564e644f4d061f187a49cfe6dd33404fe6e48163ba"
+    },
+    {
+      "slug": "ash-hound",
+      "file": "ash-hound-world-v1.png",
+      "width": 1024,
+      "height": 1536,
+      "mode": "RGBA",
+      "trueTransparency": true,
+      "transparentPixelPercent": 63.08,
+      "visibleBoundsAlphaAbove32": [
+        50,
+        81,
+        965,
+        1461
+      ],
+      "visibleBoundsPercent": [
+        4.88,
+        5.27,
+        94.24,
+        95.12
+      ],
+      "sha256": "81e539dcec6dffb598de1fbebf4daf05704090159668cce8a2252bb1e9df01c0",
+      "sourceAndSavedBytesEqual": true,
+      "referenceSha256": "a8b8f5f24c30d6e6ae1d7c25f6de50712e7ef26707faa3126e80787e1b4aeb0b"
+    },
+    {
+      "slug": "starling-drone",
+      "file": "starling-drone-world-v1.png",
+      "width": 1024,
+      "height": 1536,
+      "mode": "RGBA",
+      "trueTransparency": true,
+      "transparentPixelPercent": 70.28,
+      "visibleBoundsAlphaAbove32": [
+        81,
+        131,
+        974,
+        1224
+      ],
+      "visibleBoundsPercent": [
+        7.91,
+        8.53,
+        95.12,
+        79.69
+      ],
+      "sha256": "2676741b75cce86c65259bd86ac3f113f5b10367c7c369bf74a09dee982a3947",
+      "sourceAndSavedBytesEqual": true,
+      "referenceSha256": "6a86cbd99782a95928919b03d82c9bc69202689a6106985cc57e15a6749881f4"
+    },
+    {
+      "slug": "mist-kitten",
+      "file": "mist-kitten-world-v1.png",
+      "width": 1024,
+      "height": 1536,
+      "mode": "RGBA",
+      "trueTransparency": true,
+      "transparentPixelPercent": 53.95,
+      "visibleBoundsAlphaAbove32": [
+        97,
+        95,
+        952,
+        1450
+      ],
+      "visibleBoundsPercent": [
+        9.47,
+        6.18,
+        92.97,
+        94.4
+      ],
+      "sha256": "f17879f60589b4209035c545e80ffbc8f2a87f3e01b0c63df9a5727f4a6e36a2",
+      "sourceAndSavedBytesEqual": true,
+      "referenceSha256": "472e3f87edbebc2254d0d1e47da8016d3e234f3045a356f645aaea9915bb69e3"
+    },
+    {
+      "slug": "mirror-moth",
+      "file": "mirror-moth-world-v1.png",
+      "width": 1024,
+      "height": 1536,
+      "mode": "RGBA",
+      "trueTransparency": true,
+      "transparentPixelPercent": 71.91,
+      "visibleBoundsAlphaAbove32": [
+        139,
+        54,
+        910,
+        1205
+      ],
+      "visibleBoundsPercent": [
+        13.57,
+        3.52,
+        88.87,
+        78.45
+      ],
+      "sha256": "11addc57b1860a8badad3540ec6428b1de3d03923650e109ba466c074454cf41",
+      "sourceAndSavedBytesEqual": true,
+      "referenceSha256": "9f65aea6f3e9681209b29b95b94dd7c15f0e68c2bde25278cb96557743420576"
+    },
+    {
+      "slug": "void-whelp",
+      "file": "void-whelp-world-v1.png",
+      "width": 1024,
+      "height": 1536,
+      "mode": "RGBA",
+      "trueTransparency": true,
+      "transparentPixelPercent": 61.57,
+      "visibleBoundsAlphaAbove32": [
+        57,
+        122,
+        989,
+        1417
+      ],
+      "visibleBoundsPercent": [
+        5.57,
+        7.94,
+        96.58,
+        92.25
+      ],
+      "sha256": "c849a624a54fbc6c28cc4be2e27d3144b224230bb33b23e34f556df62e86c439",
+      "sourceAndSavedBytesEqual": true,
+      "referenceSha256": "133d15a6aee880b3e1b72be77fcd2e98499332db1e77c18dce1fe78998b87d91"
+    }
+  ]
+}

@@ -1,0 +1,149 @@
+{
+  "tool": "built-in imagegen",
+  "transparent_background": true,
+  "postprocessing": "None: raw PNG files copied byte-for-byte, without conversion, cropping, background removal or rescaling.",
+  "sourceReadme": "/Users/bytedance/git/inspiration-flash/infinite-flow-wechat/art-source/party-world/README.md",
+  "assets": [
+    {
+      "slug": "qin-che",
+      "sourceFile": "qin-che-world-v1.png",
+      "selectedGeneratedFile": "/Users/bytedance/.codex/generated_images/01a17c75-5305-7323-bb0e-274e493e5175/exec-e4c8745e-3bc3-4701-935f-657a874d1da0.png",
+      "attempts": [
+        {
+          "prompt": "Create a production-ready single full-body idle ally sprite for an original Chinese infinite-flow survival RPG. Use the attached canonical portrait ONLY as identity, clothing and material reference; turn it into a complete full-body game-world figure. Hand-painted grounded dark-fantasy illustration with restrained retro-science-fiction, matching a detailed 2D RPG player. Adult human proportions around 6 heads tall, NOT chibi. Slight elevated 25-degree camera, near-orthographic, body turned three-quarters toward the viewer's right (where the enemy stands) with the face clearly visible, entire head to soles visible, ready combat-idle stance. Center the character on a 1024x1536 portrait canvas, feet baseline at 93 percent height, top of head at about 7 percent, roughly 12 percent side padding, held props within canvas. Transparent alpha background throughout, no floor, no backdrop, no card, no frame, no caption, no text, no watermark. Crisp readable silhouette at small mobile size, weathered charcoal materials, muted old-gold highlights, sparse oxidized-cyan rim light; soft top-left illumination, enough separation for placement on dark stone. Preserve face, apparent age, hair and signature clothing from the reference. Avoid photographic backgrounds, photoreal cutout lighting, cute cartoon proportions, modern generic fantasy gacha glamor, giant visual effects, decorative ground shadow, cut-off boots.\n\nSubject: 秦彻, bulwark vanguard (壁垒先锋): East Asian man in his mid-thirties, short tousled black hair, stern weathered face with a trimmed mustache and stubble, dark oxblood scarf at the neck, heavy battered black plate armor with riveted steel trim, an oversized right shoulder plate and a round bronze medallion on the chest, armored legs and boots. He carries a tall riveted dark-steel tower shield on his left arm, braced forward as if ready to step in front of an ally, and a short heavy blade lowered in his right hand. Grim protective veteran, not a ceremonial knight.",
+          "reference": "cocos/assets/resources/character/qin-che-v1.png",
+          "generatedFile": "/Users/bytedance/.codex/generated_images/01a17c75-5305-7323-bb0e-274e493e5175/exec-578c993d-8171-49eb-91b9-ffe558556a28.png",
+          "selected": false
+        },
+        {
+          "prompt": "Edit this full-body Qin Che sprite only to correct framing. Preserve this exact adult East Asian veteran identity, face, hair, armor materials, red scarf, left-arm tower shield and right-hand heavy blade, right-facing three-quarter view, painterly style and complete limbs. Output exactly 1024 x 1536 PNG with TRUE transparent alpha background. Place the head top near y=108 and the lowest sole near y=1428. NARROW THE STANCE and hold the shield and blade closer to his body so EVERY visible part fits BETWEEN x=123 and x=901; leave both side margins completely empty and transparent, with no part within 12 percent of the left or right edge. Slightly more slender composition, not compressed or distorted. Keep head to soles visible, preserve proper human anatomy, same near-orthographic camera. Remove all backdrop color, vignettes, ground shadow and any leftover haze. No floor, no text, no frame. Do not add accessories or change identity.",
+          "reference": "/Users/bytedance/.codex/generated_images/01a17c75-5305-7323-bb0e-274e493e5175/exec-578c993d-8171-49eb-91b9-ffe558556a28.png",
+          "generatedFile": "/Users/bytedance/.codex/generated_images/01a17c75-5305-7323-bb0e-274e493e5175/exec-e4c8745e-3bc3-4701-935f-657a874d1da0.png",
+          "selected": true
+        }
+      ]
+    },
+    {
+      "slug": "zhou-yingxue",
+      "sourceFile": "zhou-yingxue-world-v1.png",
+      "selectedGeneratedFile": "/Users/bytedance/.codex/generated_images/01a17c75-5305-7323-bb0e-274e493e5175/exec-6d76b85a-b29d-48aa-942f-9e6864c1f2dc.png",
+      "attempts": [
+        {
+          "prompt": "Create a production-ready single full-body idle ally sprite for an original Chinese infinite-flow survival RPG. Use the attached canonical portrait ONLY as identity, clothing and material reference; turn it into a complete full-body game-world figure. Hand-painted grounded dark-fantasy illustration with restrained retro-science-fiction, matching a detailed 2D RPG player. Adult human proportions around 6 heads tall, NOT chibi. Slight elevated 25-degree camera, near-orthographic, body turned three-quarters toward the viewer's right (where the enemy stands) with the face clearly visible, entire head to soles visible, ready combat-idle stance. Center the character on a 1024x1536 portrait canvas, feet baseline at 93 percent height, top of head at about 7 percent, roughly 12 percent side padding, held props within canvas. Transparent alpha background throughout, no floor, no backdrop, no card, no frame, no caption, no text, no watermark. Crisp readable silhouette at small mobile size, weathered charcoal materials, muted old-gold highlights, sparse oxidized-cyan rim light; soft top-left illumination, enough separation for placement on dark stone. Preserve face, apparent age, hair and signature clothing from the reference. Avoid photographic backgrounds, photoreal cutout lighting, cute cartoon proportions, modern generic fantasy gacha glamor, giant visual effects, decorative ground shadow, cut-off boots.\n\nSubject: 周映雪, psychological analyst (精神分析师): East Asian woman in her late twenties, black chin-length bob with side-swept bangs, thin round gold-rimmed glasses, calm cool appraising expression, deep plum high-collared buttoned shirt, long charcoal leather field coat with brass buttons and a narrow shoulder harness strap, dark trousers and low boots. She holds a slim open leather notebook in one hand and lifts two fingers of the other, a few small faint violet-cyan analysis glyphs hovering at her fingertips. Composed investigator, practical clothing, no glamour pose.",
+          "reference": "cocos/assets/resources/character/zhou-yingxue-v1.png",
+          "generatedFile": "/Users/bytedance/.codex/generated_images/01a17c75-5305-7323-bb0e-274e493e5175/exec-6d76b85a-b29d-48aa-942f-9e6864c1f2dc.png",
+          "selected": true
+        }
+      ]
+    },
+    {
+      "slug": "lu-guanlan",
+      "sourceFile": "lu-guanlan-world-v1.png",
+      "selectedGeneratedFile": "/Users/bytedance/.codex/generated_images/01a17c75-5305-7323-bb0e-274e493e5175/exec-3cb2f52e-6223-4986-abe2-07790b9bb7da.png",
+      "attempts": [
+        {
+          "prompt": "Create a production-ready single full-body idle ally sprite for an original Chinese infinite-flow survival RPG. Use the attached canonical portrait ONLY as identity, clothing and material reference; turn it into a complete full-body game-world figure. Hand-painted grounded dark-fantasy illustration with restrained retro-science-fiction, matching a detailed 2D RPG player. Adult human proportions around 6 heads tall, NOT chibi. Slight elevated 25-degree camera, near-orthographic, body turned three-quarters toward the viewer's right (where the enemy stands) with the face clearly visible, entire head to soles visible, ready combat-idle stance. Center the character on a 1024x1536 portrait canvas, feet baseline at 93 percent height, top of head at about 7 percent, roughly 12 percent side padding, held props within canvas. Transparent alpha background throughout, no floor, no backdrop, no card, no frame, no caption, no text, no watermark. Crisp readable silhouette at small mobile size, weathered charcoal materials, muted old-gold highlights, sparse oxidized-cyan rim light; soft top-left illumination, enough separation for placement on dark stone. Preserve face, apparent age, hair and signature clothing from the reference. Avoid photographic backgrounds, photoreal cutout lighting, cute cartoon proportions, modern generic fantasy gacha glamor, giant visual effects, decorative ground shadow, cut-off boots.\n\nSubject: 陆观澜, field medic (战地医师): East Asian man around fifty, swept-back salt-and-pepper hair, mustache and goatee, weathered kind but tired face, dusty off-white field jacket worn open over a charcoal tactical vest and dark scarf, olive canvas backpack straps over both shoulders, a small green glass vial clipped to the vest, cargo trousers and worn boots. He carries an open battered medic satchel at his hip marked with a faded jade-green herb sigil (no red cross), one hand holding a small brass vial case. Experienced survivor doctor, practical and grounded.",
+          "reference": "cocos/assets/resources/character/lu-guanlan-v1.png",
+          "generatedFile": "/Users/bytedance/.codex/generated_images/01a17c75-5305-7323-bb0e-274e493e5175/exec-3cb2f52e-6223-4986-abe2-07790b9bb7da.png",
+          "selected": true
+        }
+      ]
+    },
+    {
+      "slug": "contract-sprite",
+      "sourceFile": "contract-sprite-world-v1.png",
+      "selectedGeneratedFile": "/Users/bytedance/.codex/generated_images/01a17c75-5305-7323-bb0e-274e493e5175/exec-60cab7f9-ad33-441b-bcb5-8a8e814c2721.png",
+      "attempts": [
+        {
+          "prompt": "Create a production-ready single full-body idle companion-creature sprite for an original Chinese infinite-flow survival RPG. Use the attached canonical card ONLY as identity, anatomy and material reference; recompose it as a complete isolated full-body world figure. Grounded hand-painted dark fantasy with restrained retro science-fiction, matching detailed 2D RPG characters. Slight elevated 25-degree near-orthographic camera, body turned three-quarters toward the viewer's right (where the enemy stands), head and eyes clearly visible, alert loyal idle pose, not threatening the viewer. Center on a 1024x1536 portrait canvas with at least 10 percent side padding; keep every limb, wing, tail, antenna and wisp inside the frame. A creature standing on the ground has its top at about 7 percent and its feet at 93 percent height; a hovering creature has its top at about 7 percent and its lowest point at about 80 percent, leaving the space below empty. TRUE transparent alpha background, no floor, no mist backdrop, no vignette, no panel, no frame, no text or watermark, no rider or human. Silhouette must read clearly when shown only about 60 pixels tall on a phone: strong outline, simple big shapes, the creature's signature glow kept small. Weathered charcoal and old-bronze materials, soft top-left illumination. No chibi plush mascot, no generic substitution of another animal, no large bloom, no decorative ground shadow.\n\nSubject: 契约小灵, hovering contract spirit: a small floating spirit whose body is layered folded old-gold contract and talisman sheets with faint engraved script, a pointed folded-paper hat with two hanging tassels, a pale grey porcelain-like face with glowing gold eyes, a small brass coin charm on a chain at its chest, and a lower body that tapers into a few pale cyan spirit wisps. Hovering, lowest wisp at about 80 percent height.",
+          "reference": "cocos/assets/resources/pet/contract-sprite-v1.png",
+          "generatedFile": "/Users/bytedance/.codex/generated_images/01a17c75-5305-7323-bb0e-274e493e5175/exec-03865582-dea8-4f92-8713-3ddac7cfb687.png",
+          "selected": false
+        },
+        {
+          "prompt": "Edit only the layout of this contract spirit sprite. Keep the exact same spirit, gold talisman paper layers, pointed hat and tassels, face, small coin necklace, tiny cyan wisps, right-facing three-quarter view, materials and painting style. 1024 x 1536 RGBA PNG with true transparent background. Make the spirit visibly smaller and higher in the portrait canvas: its entire silhouette including all wisps must fit in the rectangle x=120 to 904, y=108 to 1229. Top of hat at y=108 and lowest wisp at y=1229. IMPORTANT: leave the BOTTOM 20 PERCENT of the canvas completely empty and transparent; do not fill the frame. Make wisps compact, no large glow. Nothing must touch the edges. Remove any ambient vignette/backdrop pixels and ground shadow, with true transparency throughout. No floor, caption, frame, text.",
+          "reference": "/Users/bytedance/.codex/generated_images/01a17c75-5305-7323-bb0e-274e493e5175/exec-03865582-dea8-4f92-8713-3ddac7cfb687.png",
+          "generatedFile": "/Users/bytedance/.codex/generated_images/01a17c75-5305-7323-bb0e-274e493e5175/exec-60cab7f9-ad33-441b-bcb5-8a8e814c2721.png",
+          "selected": true
+        }
+      ]
+    },
+    {
+      "slug": "ash-hound",
+      "sourceFile": "ash-hound-world-v1.png",
+      "selectedGeneratedFile": "/Users/bytedance/.codex/generated_images/01a17c75-5305-7323-bb0e-274e493e5175/exec-6d6a5e38-1719-45f9-9089-be2f74bf7e6f.png",
+      "attempts": [
+        {
+          "prompt": "Create a production-ready single full-body idle companion-creature sprite for an original Chinese infinite-flow survival RPG. Use the attached canonical card ONLY as identity, anatomy and material reference; recompose it as a complete isolated full-body world figure. Grounded hand-painted dark fantasy with restrained retro science-fiction, matching detailed 2D RPG characters. Slight elevated 25-degree near-orthographic camera, body turned three-quarters toward the viewer's right (where the enemy stands), head and eyes clearly visible, alert loyal idle pose, not threatening the viewer. Center on a 1024x1536 portrait canvas with at least 10 percent side padding; keep every limb, wing, tail, antenna and wisp inside the frame. A creature standing on the ground has its top at about 7 percent and its feet at 93 percent height; a hovering creature has its top at about 7 percent and its lowest point at about 80 percent, leaving the space below empty. TRUE transparent alpha background, no floor, no mist backdrop, no vignette, no panel, no frame, no text or watermark, no rider or human. Silhouette must read clearly when shown only about 60 pixels tall on a phone: strong outline, simple big shapes, the creature's signature glow kept small. Weathered charcoal and old-bronze materials, soft top-left illumination. No chibi plush mascot, no generic substitution of another animal, no large bloom, no decorative ground shadow.\n\nSubject: 烬火犬, ember hound: a lean long-legged charcoal-black hound with tall pointed ears, its hide of cracked obsidian-like scales split by thin glowing ember-orange fissures, amber eyes, a brass chain collar with a round medallion, a few small drifting ember sparks. Standing alert on all four legs in three-quarter view, all four paws on the 93 percent baseline, tail fully inside the frame.",
+          "reference": "cocos/assets/resources/pet/ash-hound-v1.png",
+          "generatedFile": "/Users/bytedance/.codex/generated_images/01a17c75-5305-7323-bb0e-274e493e5175/exec-6d6a5e38-1719-45f9-9089-be2f74bf7e6f.png",
+          "selected": true
+        }
+      ]
+    },
+    {
+      "slug": "starling-drone",
+      "sourceFile": "starling-drone-world-v1.png",
+      "selectedGeneratedFile": "/Users/bytedance/.codex/generated_images/01a17c75-5305-7323-bb0e-274e493e5175/exec-ad9433d1-b8dd-46ea-84b8-b8b77070c859.png",
+      "attempts": [
+        {
+          "prompt": "Create a production-ready single full-body idle companion-creature sprite for an original Chinese infinite-flow survival RPG. Use the attached canonical card ONLY as identity, anatomy and material reference; recompose it as a complete isolated full-body world figure. Grounded hand-painted dark fantasy with restrained retro science-fiction, matching detailed 2D RPG characters. Slight elevated 25-degree near-orthographic camera, body turned three-quarters toward the viewer's right (where the enemy stands), head and eyes clearly visible, alert loyal idle pose, not threatening the viewer. Center on a 1024x1536 portrait canvas with at least 10 percent side padding; keep every limb, wing, tail, antenna and wisp inside the frame. A creature standing on the ground has its top at about 7 percent and its feet at 93 percent height; a hovering creature has its top at about 7 percent and its lowest point at about 80 percent, leaving the space below empty. TRUE transparent alpha background, no floor, no mist backdrop, no vignette, no panel, no frame, no text or watermark, no rider or human. Silhouette must read clearly when shown only about 60 pixels tall on a phone: strong outline, simple big shapes, the creature's signature glow kept small. Weathered charcoal and old-bronze materials, soft top-left illumination. No chibi plush mascot, no generic substitution of another animal, no large bloom, no decorative ground shadow.\n\nSubject: 星棱机, star-facet drone: a small mechanical insect drone shaped like a bee, a segmented dark-bronze riveted shell engraved with small star marks, one large glowing cyan lens eye with a smaller secondary lens, two thin brass antennae, two pairs of translucent veined wings, six slim jointed brass legs tucked under the body. Hovering, lowest leg tip at about 80 percent height.",
+          "reference": "cocos/assets/resources/pet/starling-drone-v1.png",
+          "generatedFile": "/Users/bytedance/.codex/generated_images/01a17c75-5305-7323-bb0e-274e493e5175/exec-3081ba5c-c318-4aa3-9c1a-83a0495722e2.png",
+          "selected": false
+        },
+        {
+          "prompt": "Edit this isolated mechanical bee sprite to correct orientation and framing ONLY. Preserve its exact segmented dark-bronze riveted body, big cyan lens eye, smaller second lens, two brass antennae, TWO PAIRS of translucent veined wings and SIX slim jointed legs. Reorient it so its lens FACE IS ON THE RIGHT of the image and its abdomen is on the LEFT, looking toward the upper-right at an enemy, in three-quarter view with the lens still visible. Hovering pose. Output exactly 1024 x 1536 portrait PNG with TRUE transparent alpha background. Recompose smaller: every part entirely inside x=115 to x=909, uppermost wingtip near y=108, lowest leg tip near y=1229 (80 percent canvas height). The bottom 20 percent must be completely EMPTY TRANSPARENT space. Preserve near-orthographic slight elevated view, painted grounded dark fantasy and restrained retro sci-fi finish. No backdrop color, no mist, no glow beyond small cyan lens light, no floor, no shadow, no frame, no text or watermark.",
+          "reference": "/Users/bytedance/.codex/generated_images/01a17c75-5305-7323-bb0e-274e493e5175/exec-3081ba5c-c318-4aa3-9c1a-83a0495722e2.png",
+          "generatedFile": "/Users/bytedance/.codex/generated_images/01a17c75-5305-7323-bb0e-274e493e5175/exec-ad9433d1-b8dd-46ea-84b8-b8b77070c859.png",
+          "selected": true
+        }
+      ]
+    },
+    {
+      "slug": "mist-kitten",
+      "sourceFile": "mist-kitten-world-v1.png",
+      "selectedGeneratedFile": "/Users/bytedance/.codex/generated_images/01a17c75-5305-7323-bb0e-274e493e5175/exec-3eba219e-85a6-4d1a-a305-1e411514a24b.png",
+      "attempts": [
+        {
+          "prompt": "Create a production-ready single full-body idle companion-creature sprite for an original Chinese infinite-flow survival RPG. Use the attached canonical card ONLY as identity, anatomy and material reference; recompose it as a complete isolated full-body world figure. Grounded hand-painted dark fantasy with restrained retro science-fiction, matching detailed 2D RPG characters. Slight elevated 25-degree near-orthographic camera, body turned three-quarters toward the viewer's right (where the enemy stands), head and eyes clearly visible, alert loyal idle pose, not threatening the viewer. Center on a 1024x1536 portrait canvas with at least 10 percent side padding; keep every limb, wing, tail, antenna and wisp inside the frame. A creature standing on the ground has its top at about 7 percent and its feet at 93 percent height; a hovering creature has its top at about 7 percent and its lowest point at about 80 percent, leaving the space below empty. TRUE transparent alpha background, no floor, no mist backdrop, no vignette, no panel, no frame, no text or watermark, no rider or human. Silhouette must read clearly when shown only about 60 pixels tall on a phone: strong outline, simple big shapes, the creature's signature glow kept small. Weathered charcoal and old-bronze materials, soft top-left illumination. No chibi plush mascot, no generic substitution of another animal, no large bloom, no decorative ground shadow.\n\nSubject: 雾爪幼兽, mist-claw cub: a small grey kitten-like cub with soft fur fraying into pale mist at the paws and along a long smoky tail, bright turquoise eyes, a faint gold rune mark on the forehead, a thin gold collar with a small round bell and tassel. Walking forward cautiously on all four paws in three-quarter view, paws on the 93 percent baseline, the mist kept close to the body so the silhouette stays clear.",
+          "reference": "cocos/assets/resources/pet/mist-kitten-v1.png",
+          "generatedFile": "/Users/bytedance/.codex/generated_images/01a17c75-5305-7323-bb0e-274e493e5175/exec-3eba219e-85a6-4d1a-a305-1e411514a24b.png",
+          "selected": true
+        }
+      ]
+    },
+    {
+      "slug": "mirror-moth",
+      "sourceFile": "mirror-moth-world-v1.png",
+      "selectedGeneratedFile": "/Users/bytedance/.codex/generated_images/01a17c75-5305-7323-bb0e-274e493e5175/exec-462f5c45-21bc-4652-949c-30e4bcaca1ae.png",
+      "attempts": [
+        {
+          "prompt": "Create a production-ready single full-body idle companion-creature sprite for an original Chinese infinite-flow survival RPG. Use the attached canonical card ONLY as identity, anatomy and material reference; recompose it as a complete isolated full-body world figure. Grounded hand-painted dark fantasy with restrained retro science-fiction, matching detailed 2D RPG characters. Slight elevated 25-degree near-orthographic camera, body turned three-quarters toward the viewer's right (where the enemy stands), head and eyes clearly visible, alert loyal idle pose, not threatening the viewer. Center on a 1024x1536 portrait canvas with at least 10 percent side padding; keep every limb, wing, tail, antenna and wisp inside the frame. A creature standing on the ground has its top at about 7 percent and its feet at 93 percent height; a hovering creature has its top at about 7 percent and its lowest point at about 80 percent, leaving the space below empty. TRUE transparent alpha background, no floor, no mist backdrop, no vignette, no panel, no frame, no text or watermark, no rider or human. Silhouette must read clearly when shown only about 60 pixels tall on a phone: strong outline, simple big shapes, the creature's signature glow kept small. Weathered charcoal and old-bronze materials, soft top-left illumination. No chibi plush mascot, no generic substitution of another animal, no large bloom, no decorative ground shadow.\n\nSubject: 镜翼蛾, mirror-wing moth: a moth with four large wings made of cracked mirror-glass mosaic in pale steel blue with a few ember-red flecks, thin dark leading-edge veins, a slim dark-brass mechanical body with a small round lens head and two fine antennae. Hovering with wings half-raised in three-quarter view, lowest wingtip at about 80 percent height.",
+          "reference": "cocos/assets/resources/pet/mirror-moth-v1.png",
+          "generatedFile": "/Users/bytedance/.codex/generated_images/01a17c75-5305-7323-bb0e-274e493e5175/exec-93bd2142-c584-449c-b425-e5cf03c650cf.png",
+          "selected": false
+        },
+        {
+          "prompt": "Edit this mirror moth sprite to correct anatomy and framing. Preserve its same cracked pale steel-blue mirror mosaic glass material, scattered ember-red flecks, slim dark-brass mechanical body, lens eyes, two antennae, head angled toward the upper right, near-orthographic hand-painted dark fantasy style. It has exactly FOUR wings, two upper long wings and two lower wings each tapering to a tail, NOT six separate wings. On a 1024x1536 RGBA portrait PNG with TRUE transparency, make the whole insect smaller and higher: fit all wing tips, legs and antennae within x=120 to 904 and y=108 to 1229. Top wing at y=108, lowest tip at y=1229 (80 percent). Leave the BOTTOM 20 PERCENT completely empty transparent; leave at least 11 percent empty space left and right. Preserve hovering three-quarter view and visible head facing RIGHT. No backdrop, no ground, no shadow, no vignette, no text or border.",
+          "reference": "/Users/bytedance/.codex/generated_images/01a17c75-5305-7323-bb0e-274e493e5175/exec-93bd2142-c584-449c-b425-e5cf03c650cf.png",
+          "generatedFile": "/Users/bytedance/.codex/generated_images/01a17c75-5305-7323-bb0e-274e493e5175/exec-462f5c45-21bc-4652-949c-30e4bcaca1ae.png",
+          "selected": true
+        }
+      ]
+    },
+    {
+      "slug": "void-whelp",
+      "sourceFile": "void-whelp-world-v1.png",
+      "selectedGeneratedFile": "/Users/bytedance/.codex/generated_images/01a17c75-5305-7323-bb0e-274e493e5175/exec-558510cb-c824-4bf2-9166-b90f8757f9ef.png",
+      "attempts": [
+        {
+          "prompt": "Create a production-ready single full-body idle companion-creature sprite for an original Chinese infinite-flow survival RPG. Use the attached canonical card ONLY as identity, anatomy and material reference; recompose it as a complete isolated full-body world figure. Grounded hand-painted dark fantasy with restrained retro science-fiction, matching detailed 2D RPG characters. Slight elevated 25-degree near-orthographic camera, body turned three-quarters toward the viewer's right (where the enemy stands), head and eyes clearly visible, alert loyal idle pose, not threatening the viewer. Center on a 1024x1536 portrait canvas with at least 10 percent side padding; keep every limb, wing, tail, antenna and wisp inside the frame. A creature standing on the ground has its top at about 7 percent and its feet at 93 percent height; a hovering creature has its top at about 7 percent and its lowest point at about 80 percent, leaving the space below empty. TRUE transparent alpha background, no floor, no mist backdrop, no vignette, no panel, no frame, no text or watermark, no rider or human. Silhouette must read clearly when shown only about 60 pixels tall on a phone: strong outline, simple big shapes, the creature's signature glow kept small. Weathered charcoal and old-bronze materials, soft top-left illumination. No chibi plush mascot, no generic substitution of another animal, no large bloom, no decorative ground shadow.\n\nSubject: 虚空幼龙, void whelp: a small wingless young dragon with black obsidian scales, a ridge of sharp dorsal spikes with a thin glowing cyan seam along the spine, glowing cyan eyes, curved dark-brass claws, a long tail that curls back inside the frame with a little dark smoke at its tip. Standing low on four legs in three-quarter view with its head raised, claws on the 93 percent baseline.",
+          "reference": "cocos/assets/resources/pet/void-whelp-v1.png",
+          "generatedFile": "/Users/bytedance/.codex/generated_images/01a17c75-5305-7323-bb0e-274e493e5175/exec-558510cb-c824-4bf2-9166-b90f8757f9ef.png",
+          "selected": true
+        }
+      ]
+    }
+  ]
+}

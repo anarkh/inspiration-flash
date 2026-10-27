@@ -6,7 +6,6 @@ import {
   getHealingPillBaseHealing,
   performCombatAction,
   POST_COMBAT_RECOVERY_PERCENT,
-  useBloodlineSurge,
   type CombatAction,
   type CombatPresentationFrame,
   type CombatReplayCombatState,
@@ -201,30 +200,30 @@ assert(supportEvent?.type === 'combat.presentation-resolved' && supportEvent.fra
   'free technique has a single authoritative impact and no counter');
 assert(support.state.combat?.turn === ironState.combat?.turn, 'telemetry does not advance a support turn');
 
-// An unavailable bloodline remains unchanged with an observer as well.
-const bloodlineFrames: CombatPresentationFrame[] = [];
-const bloodline = useBloodlineSurge(durable, frame => bloodlineFrames.push(frame));
-assert(JSON.stringify(bloodline) === JSON.stringify(useBloodlineSurge(durable)) && bloodlineFrames.length === 0,
-  'unavailable bloodline produces neither state changes nor invented impacts');
-
-const bloodlineStrike: GameState = {
+// Bloodlines are passive now: the old surge command explains itself and changes nothing.
+assert(reduceGameCommand(durable, { type: 'combat/use-bloodline-surge' }).status === 'rejected', 'the surge command no longer acts');
+const titan: GameState = {
   ...durable,
-  combat: { ...durable.combat!, monsterHp: 1 },
-  run: {
-    ...durable.run!,
-    bloodlineSnapshot: { rulesVersion: 1, bloodlineId: 'titan_marrow', aspect: 'force', rank: 1 }
-  }
+  run: { ...durable.run!, bloodlineSnapshot: { rulesVersion: 1, bloodlineId: 'titan_marrow', aspect: 'force', rank: 1 } }
 };
-const bloodlineHitFrames: CombatPresentationFrame[] = [];
-const bloodlineAfter = useBloodlineSurge(bloodlineStrike, frame => bloodlineHitFrames.push(frame));
-assert(JSON.stringify(bloodlineAfter) === JSON.stringify(useBloodlineSurge(bloodlineStrike)),
-  'bloodline observation preserves the exact settled domain state');
-assert(bloodlineHitFrames.length === 1 && bloodlineHitFrames[0].enemyHp === 0,
-  'lethal bloodline reports its actual impact before victory removes combat');
-assert(bloodlineHitFrames[0].playerHp === bloodlineStrike.player.hp, 'bloodline has no invented counter');
-const bloodlineCommit = reduceGameCommand(bloodlineStrike, { type: 'combat/use-bloodline-surge' });
-assert(bloodlineCommit.status === 'committed', 'bloodline strike commits');
-const bloodlineEvent = bloodlineCommit.events.find(event => event.type === 'combat.presentation-resolved');
-assert(bloodlineEvent?.type === 'combat.presentation-resolved'
-  && JSON.stringify(bloodlineEvent.frames) === JSON.stringify(bloodlineHitFrames),
-  'reducer retains the pre-settlement bloodline impact');
+const plainHit = observe(durable, 'attack');
+const titanHit = observe(titan, 'attack');
+// Rank 1 adds +6 attack (6 more physical damage) and its passive +5 on the hit.
+assert(plainHit.frames[0].enemyHp - titanHit.frames[0].enemyHp === 11, 'a titan marrow hit carries its stat bonus plus 5 passive damage in the impact frame');
+
+// Allies act after the player's impact and before the counterattack, each in its own frame:
+// the companion strikes, the pet supports with a note and no damage.
+const withParty: GameState = {
+  ...durable,
+  activePet: 'contract_sprite',
+  ownedPets: ['contract_sprite'],
+  petLevels: { contract_sprite: 1 },
+  run: { ...durable.run!, companionSnapshot: { rulesVersion: 1, companionId: 'qin_che', rank: 1 } }
+};
+const partyTurn = observe(withParty, 'attack');
+assert(partyTurn.frames.map(frame => frame.stage).join(',') === 'impact,ally,ally,counter', 'companion and pet each get a frame between impact and counter');
+assert(partyTurn.frames[1].allyKind === 'companion' && (partyTurn.frames[1].allyDamage ?? 0) >= 1, 'the companion strikes first, for at least 1');
+assert(partyTurn.frames[2].allyKind === 'pet' && partyTurn.frames[2].allyDamage === 0 && partyTurn.frames[2].allyNote === '助攻 +6%',
+  'the pet deals no damage of its own and notes its assist');
+assert(partyTurn.frames[2].enemyHp === partyTurn.frames[0].enemyHp - partyTurn.frames[1].allyDamage!,
+  'ally frames carry the enemy health after each strike');

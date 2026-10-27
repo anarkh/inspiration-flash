@@ -25,9 +25,11 @@ import {
   getCampaignGates,
   getCombatActionDamagePreview,
   getCombatEncounterProfile,
-  getCurrentBloodlineSurgeStatus,
+  getBloodlineHitEffect,
+  getCompanionBattleStatus,
+  getPetSupport,
+  normalizeBloodlineRunSnapshot,
   getCurrentCombatIntent,
-  getCurrentCompanionAssistStatus,
   getCurrentDungeonDefinition,
   hasCombatArtFocus,
   isLanternIntroductionStage,
@@ -131,9 +133,11 @@ import {
   buildEquipmentItemViewModel,
   buildHubOwnedLoadoutCatalog,
   buildHubShopCatalog,
+  bloodlineHitReadout,
   buildOwnedEquipmentCatalog,
-  effectReadout,
+  companionBattleReadout,
   PET_PASSIVE_LABELS,
+  petSupportReadout,
   statsReadout
 } from './hub-shop.js';
 import {
@@ -1836,12 +1840,12 @@ function buildBloodlinesPanel(state: GameState, requestedId: string | undefined)
   const progress = getBloodlineProgress(state);
   const upgrade = getBloodlineUpgradeStatus(bloodline.id, progress);
   const rank = progress.ranks[bloodline.id];
-  const unlockReadout = `解锁 1 阶血统，激活后获得属性加成与战斗中的血统爆发。${progress.active === undefined ? '当前没有激活血统，觉醒后自动激活。' : '觉醒后需手动激活。'}`;
-  const activateReadout = '换用这条血统，属性加成立即更新；下次入场带入它的阶位与爆发能力，每次只生效一种。';
+  const unlockReadout = `解锁 1 阶血统，激活后获得属性加成，命中时自动触发血统效果。${progress.active === undefined ? '当前没有激活血统，觉醒后自动激活。' : '觉醒后需手动激活。'}`;
+  const activateReadout = '换用这条血统，属性加成立即更新；下次入场带入它的阶位与命中效果，每次只生效一种。';
   const actions = [
     ...buildCatalogCycleActions('bloodlines', entries, index),
     rank !== undefined
-      ? disabledAction(`hub.bloodlines.unlock:${bloodline.id}`, `觉醒${bloodline.name}`, 'primary', `${bloodline.name}已经觉醒至 R${rank}。`, { readout: '解锁血统后可晋升、激活；激活的血统提供属性加成与战斗中的爆发能力。' })
+      ? disabledAction(`hub.bloodlines.unlock:${bloodline.id}`, `觉醒${bloodline.name}`, 'primary', `${bloodline.name}已经觉醒至 R${rank}。`, { readout: '解锁血统后可晋升、激活；激活的血统提供属性加成与命中效果。' })
       : previewCommandAction(
           state,
           `hub.bloodlines.unlock:${bloodline.id}`,
@@ -1857,7 +1861,7 @@ function buildBloodlinesPanel(state: GameState, requestedId: string | undefined)
       'primary',
       { type: 'hub/upgrade-bloodline', bloodlineId: bloodline.id },
       {
-        readout: `永久提高血统阶位，增强属性与爆发能力；激活后随下次入场带入。当前${rank === undefined ? '未觉醒' : `${rank}/3 阶`}。`,
+        readout: `永久提高血统阶位，增强属性与命中效果；激活后随下次入场带入。当前${rank === undefined ? '未觉醒' : `${rank}/3 阶`}。`,
         fallbackDisabledReason: upgrade?.state === 'max_rank'
           ? `${bloodline.name}已经达到 R3。`
           : rank === undefined
@@ -1879,7 +1883,7 @@ function buildBloodlinesPanel(state: GameState, requestedId: string | undefined)
   return {
     actions,
     summary: `${bloodline.name} · ${bloodline.title} · ${rank === undefined ? '未觉醒' : `${rank} 阶`} · ${state.activeBloodline === bloodline.id ? '已激活' : '未激活'}`,
-    objectiveTitle: '激活一种血统，获得属性与爆发能力',
+    objectiveTitle: '激活一种血统，获得属性与命中效果',
     objectiveSummary: `始祖倾向：${BLOODLINE_ASPECT_LABELS[bloodline.aspect]}。觉醒解锁，晋升强化，激活后生效；每次副本沿用入场时的血统与阶位。`
   };
 }
@@ -1898,7 +1902,7 @@ function buildCompanionsPanel(state: GameState, requestedId: string | undefined)
   const upgrade = getCompanionUpgradeStatus(companion.id, progress);
   const rank = progress.ranks[companion.id];
   const recruitReadout = `邀请同伴加入，出战后可在副本战斗中使用「${companion.assistName}」。${state.ownedCompanions.length === 0 ? '首位同伴自动设为出战。' : '招募后需手动设为出战。'}`;
-  const activateReadout = `下次入场由这位同伴出战，战斗中可使用「${companion.assistName}」援助；每次只能带一位。`;
+  const activateReadout = `下次入场由这位同伴出战，每回合自动和你一起出手；每次只能带一位。`;
   const actions = [
     ...buildCatalogCycleActions('companions', entries, index),
     recruitment === 'owned'
@@ -1929,7 +1933,7 @@ function buildCompanionsPanel(state: GameState, requestedId: string | undefined)
       'primary',
       { type: 'hub/upgrade-companion', companionId: companion.id },
       {
-        readout: `永久提高同伴阶位，增强「${companion.assistName}」的援助效果；下次出战时生效。当前${rank === undefined ? '未招募' : `${rank}/3 阶`}。`,
+        readout: `永久提高同伴阶位，增强出手伤害与「${companion.assistName}」；下次出战时生效。当前${rank === undefined ? '未招募' : `${rank}/3 阶`}。`,
         fallbackDisabledReason: upgrade?.state === 'max_rank'
           ? `${companion.name}已经达到 R3。`
           : rank === undefined
@@ -1951,7 +1955,7 @@ function buildCompanionsPanel(state: GameState, requestedId: string | undefined)
   return {
     actions,
     summary: `${companion.name} · ${companion.title} · ${rank === undefined ? '未招募' : `${rank} 阶`} · ${state.activeCompanion === companion.id ? '出战中' : '未出战'}`,
-    objectiveTitle: '招募同伴，选一位提供战斗援助',
+    objectiveTitle: '招募同伴，选一位并肩作战',
     objectiveSummary: `出战后可使用「${companion.assistName}」；每次副本沿用入场时的同伴与阶位。训练需要${ITEMS[companion.trainingMaterial].name}。`
   };
 }
@@ -3569,23 +3573,27 @@ function buildRunParty(state: GameState): CharacterLoadoutViewModel['runParty'] 
     const pet = PETS[state.activePet];
     const level = state.petLevels[pet.id] ?? 1;
     const asset = getGameAsset('pet', pet.id)?.key;
+    const figure = getGameAsset('pet', `${pet.id}_world`)?.key;
     party.push({ kind: 'pet', id: pet.id, name: pet.name,
-      description: `出战灵宠 ${level} 级：${statsReadout(pet.bonus)}；${pet.passiveTags.map(tag => PET_PASSIVE_LABELS[tag]).join('；')}，自动生效。`,
-      ...(asset === undefined ? {} : { visualAssetKey: asset }) });
+      description: `出战灵宠 ${level} 级：${statsReadout(pet.bonus)}；${petSupportReadout(getPetSupport(pet, level))}；${pet.passiveTags.map(tag => PET_PASSIVE_LABELS[tag]).join('；')}，自动生效。`,
+      ...(asset === undefined ? {} : { visualAssetKey: asset }), ...(figure === undefined ? {} : { figureAssetKey: figure }) });
   }
-  const companion = getCurrentCompanionAssistStatus(state);
-  if (companion.snapshot && companion.definition) {
-    const asset = getGameAsset('character', `companion_${companion.definition.id}`)?.key;
-    party.push({ kind: 'companion', id: companion.definition.id, name: companion.definition.name,
-      description: `出战同伴 ${companion.snapshot.rank} 阶：战斗「法术 → 同伴·${companion.definition.assistName}」${effectReadout(companion.effect)}，每场一次。`,
-      ...(asset === undefined ? {} : { visualAssetKey: asset }) });
+  const companion = getCompanionBattleStatus(state.run?.companionSnapshot);
+  const companionDefinition = companion.snapshot ? COMPANION_CATALOG.find(entry => entry.id === companion.snapshot?.companionId) : undefined;
+  if (companion.snapshot && companionDefinition && companion.effect) {
+    const asset = getGameAsset('character', `companion_${companionDefinition.id}`)?.key;
+    const figure = getGameAsset('character', `companion_${companionDefinition.id}_world`)?.key;
+    party.push({ kind: 'companion', id: companionDefinition.id, name: companionDefinition.name,
+      description: `出战同伴 ${companion.snapshot.rank} 阶：${companionBattleReadout(companionDefinition.assistName, companion.effect)}。`,
+      ...(asset === undefined ? {} : { visualAssetKey: asset }), ...(figure === undefined ? {} : { figureAssetKey: figure }) });
   }
-  const bloodline = getCurrentBloodlineSurgeStatus(state);
-  if (bloodline.snapshot) {
-    const definition = BLOODLINE_CATALOG.find(entry => entry.id === bloodline.snapshot?.bloodlineId);
-    const asset = getGameAsset('item', `bloodline_${bloodline.snapshot.bloodlineId}`)?.key;
+  const bloodlineSnapshot = normalizeBloodlineRunSnapshot(state.run?.bloodlineSnapshot);
+  const bloodlineEffect = getBloodlineHitEffect(bloodlineSnapshot);
+  if (bloodlineSnapshot && bloodlineEffect) {
+    const definition = BLOODLINE_CATALOG.find(entry => entry.id === bloodlineSnapshot.bloodlineId);
+    const asset = getGameAsset('item', `bloodline_${bloodlineSnapshot.bloodlineId}`)?.key;
     if (definition) party.push({ kind: 'bloodline', id: definition.id, name: definition.name,
-      description: `激活血统 ${bloodline.snapshot.rank} 阶：${statsReadout(definition.statBonuses[bloodline.snapshot.rank])}；战斗「法术 → 血统·${definition.name}爆发」${bloodline.effect ? effectReadout(bloodline.effect) : ''}，每场一次。`,
+      description: `激活血统 ${bloodlineSnapshot.rank} 阶：${statsReadout(definition.statBonuses[bloodlineSnapshot.rank])}；${bloodlineHitReadout(bloodlineEffect)}，命中时自动生效。`,
       ...(asset === undefined ? {} : { visualAssetKey: asset }) });
   }
   return party;
@@ -3736,23 +3744,6 @@ function buildCombatProjection(state: GameState, localUiState: PresentationLocal
     actions.push(status.available
       ? commandAction(`combat.method:${snapshot.methodId}`, label, 'advanced', { type: 'combat/use-method-technique', methodId: snapshot.methodId }, { readout })
       : disabledAction(`combat.method:${snapshot.methodId}`, label, 'advanced', status.unavailableReason ?? '功法技当前不可用。', { readout }));
-  }
-  const companion = getCurrentCompanionAssistStatus(state);
-  if (companion.snapshot) {
-    const label = `同伴·${companion.definition?.assistName ?? '援护'}`;
-    const readout = `出战同伴${companion.definition?.name ?? ''}出手：${effectReadout(companion.effect)}。每场一次，不耗回合，不触发反击。`;
-    actions.push(companion.available
-      ? commandAction('combat.companion-assist', label, 'advanced', { type: 'combat/use-companion-assist' }, { readout })
-      : disabledAction('combat.companion-assist', label, 'advanced', companion.unavailableReason ?? '同伴援护当前不可用。', { readout }));
-  }
-  const bloodline = getCurrentBloodlineSurgeStatus(state);
-  if (bloodline.snapshot) {
-    const bloodlineName = BLOODLINE_CATALOG.find(entry => entry.id === bloodline.snapshot?.bloodlineId)?.name ?? '血统';
-    const label = `血统·${bloodlineName}爆发`;
-    const readout = `激活的血统「${bloodlineName}」${bloodline.snapshot.rank} 阶爆发${bloodline.effect ? `：${effectReadout(bloodline.effect)}` : ''}。每场一次，不耗回合，不触发反击。`;
-    actions.push(bloodline.available
-      ? commandAction('combat.bloodline-surge', label, 'advanced', { type: 'combat/use-bloodline-surge' }, { readout })
-      : disabledAction('combat.bloodline-surge', label, 'advanced', bloodline.unavailableReason ?? '血统爆发当前不可用。', { readout }));
   }
   actions.push(...buildSoulSkillActions(state, 'advanced'));
   actions.push(commandAction('combat.retreat-run', '放弃本轮并回收', 'advanced', { type: 'run/retreat' }, { emphasis: 'danger', riskReason: '该动作结束整轮副本，并按撤退规则结算战利品。' }));

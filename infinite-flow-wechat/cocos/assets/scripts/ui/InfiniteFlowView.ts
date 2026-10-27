@@ -2426,11 +2426,11 @@ export function describeHubPreparationChange(
         if (before === '未拥有') return `${row.name}已加入 · 在「角色 → 灵宠」设为出战`;
         break;
       case 'companions':
-        if (activeNow) return `${row.name}已出战 · 副本战斗「法术 → 同伴」里援护`;
+        if (activeNow) return `${row.name}已出战 · 每场战斗自动并肩出手`;
         if (/可招募|未解锁/.test(before)) return `${row.name}已加入 · 在「角色 → 同伴」设为出战`;
         break;
       case 'bloodlines':
-        if (activeNow) return `${row.name}已激活 · 爆发在副本战斗「法术 → 血统」`;
+        if (activeNow) return `${row.name}已激活 · 命中时自动触发`;
         if (before === '未觉醒') return `${row.name}已觉醒 · 在「角色 → 血统」激活`;
         break;
       case 'methods':
@@ -2917,8 +2917,7 @@ function combatEffectKind(event: PresentationEvent): CombatEffectKind | undefine
     return kinds[command.action];
   }
   if (command.type === 'combat/use-method-technique') return command.methodId === 'iron_body' ? 'iron' : 'mist';
-  if (command.type === 'combat/use-companion-assist' || command.type === 'combat/use-bloodline-surge'
-    || command.type === 'node/use-soul-skill') return 'other';
+  if (command.type === 'node/use-soul-skill') return 'other';
   return undefined;
 }
 
@@ -3520,6 +3519,10 @@ export class InfiniteFlowView {
     }
     const impact = frames.find(frame => frame.stage === 'impact');
     const counter = frames.find(frame => frame.stage === 'counter');
+    // Allies act between the player's hit and the counter, in the order the core settled them: the companion strikes, the pet supports.
+    const allies = frames.flatMap(frame => frame.stage !== 'ally' || frame.allyKind === undefined ? []
+      : frame.allyNote !== undefined ? [{ kind: frame.allyKind, damage: 0, note: frame.allyNote }]
+        : (frame.allyDamage ?? 0) > 0 ? [{ kind: frame.allyKind, damage: frame.allyDamage! }] : []);
     if (impact === undefined) {
       this.cancelCombatPlayback(true);
       return;
@@ -3536,6 +3539,7 @@ export class InfiniteFlowView {
       heavy: playback.heavy,
       playerHpAfterImpact: impact.playerHp,
       enemyHpAfterImpact: impact.enemyHp,
+      ...(allies.length > 0 ? { allies } : {}),
       ...(counter === undefined ? {} : { playerHpAfterCounter: counter.playerHp, enemyHpAfterCounter: counter.enemyHp }),
     }, () => {
       if (this.combatPlayback !== playback || this.destroyed) return;
