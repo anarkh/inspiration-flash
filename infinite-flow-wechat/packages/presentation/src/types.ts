@@ -82,6 +82,8 @@ export type PresentationLocalUiState = Readonly<{
   hubSelections?: HubCatalogSelections;
   activeHelpId?: PresentationHelpId;
   advancedCombatExpanded?: boolean;
+  /** Hidden tester switch (tap the menu's version 7 times); never saved. */
+  testMode?: boolean;
 }>;
 
 export type PresentationLocalAction =
@@ -497,6 +499,8 @@ export type HubDetailViewModel = Readonly<{
   shop?: HubShopCatalogViewModel;
   /** Present while finished tasks wait in any panel; its action claims them all. Kept out of the panel's action list. */
   taskClaims?: Readonly<{ count: number; action: ViewActionModel }>;
+  /** Test mode only: replaces the save with one at the selected chapter's level. */
+  testJump?: ViewActionModel;
 }>;
 
 export type EquipmentMemoryHuntSignalViewModel = Readonly<{

@@ -70,6 +70,8 @@ export type GameCommand =
     }>
   | Readonly<{ type: 'hub/buy-item'; itemId: ItemId }>
   | Readonly<{ type: 'hub/reforge-material'; materialId: ItemId; targetId: ItemId }>
+  /** Hidden tester entry: replaces the save with one at the given chapter's level. */
+  | Readonly<{ type: 'test/jump-to-chapter'; chapter: number }>
   | Readonly<{
       type: 'hub/buy-equipment';
       equipmentId: EquipmentId;
@@ -193,6 +195,7 @@ const COMMAND_TYPES: ReadonlySet<string> = new Set<GameCommandType>([
   'hub/activate-equipment-memory',
   'hub/buy-item',
   'hub/reforge-material',
+  'test/jump-to-chapter',
   'hub/buy-equipment',
   'hub/equip-equipment',
   'hub/upgrade-equipment',
@@ -332,6 +335,8 @@ function isCommandPayloadValid(command: Record<string, unknown>, type: GameComma
       return isString(command.itemId);
     case 'hub/reforge-material':
       return hasStringFields(command, 'materialId', 'targetId');
+    case 'test/jump-to-chapter':
+      return Number.isInteger(command.chapter) && Number(command.chapter) >= 1 && Number(command.chapter) <= 19;
     case 'hub/buy-equipment':
       return isString(command.equipmentId) && isOptionalString(command.sourceDungeonId);
     case 'hub/equip-equipment':
@@ -467,6 +472,7 @@ const HUB_COMMANDS: ReadonlySet<GameCommandType> = new Set([
   'hub/activate-equipment-memory',
   'hub/buy-item',
   'hub/reforge-material',
+  'test/jump-to-chapter',
   'hub/buy-equipment',
   'hub/equip-equipment',
   'hub/upgrade-equipment',
