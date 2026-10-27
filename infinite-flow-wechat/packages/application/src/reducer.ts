@@ -34,6 +34,7 @@ import {
   recoverAtHub,
   exchangeLingyun,
   reforgeMaterial,
+  createChapterTrialState,
   recruitCompanion,
   resolveAuctionLot,
   resolveCausalLedger,
@@ -342,6 +343,8 @@ function applyDomainCommand(
       return exchangeLingyun(state);
     case 'hub/reforge-material':
       return reforgeMaterial(state, command.materialId, command.targetId);
+    case 'test/jump-to-chapter':
+      return state.phase === 'hub' ? createChapterTrialState(command.chapter) : state;
     case 'hub/configure-tactical-loadout':
       return configureTacticalLoadout(state, command.itemIds);
     case 'hub/configure-relic':

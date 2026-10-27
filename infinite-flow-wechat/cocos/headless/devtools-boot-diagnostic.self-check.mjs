@@ -47,6 +47,7 @@ const virtualModules = new Map([
     export function getRouteContractById() { return undefined; }
   `],
   ['@infinite-flow/presentation', `
+    export const INFINITE_FLOW_GAME_VERSION = '0.0.0-test';
     export function buildHubOwnedLoadoutViewModel(state) {
       return (state.phase ?? 'hub') === 'hub' ? state.ownedLoadout ?? { rows: [] } : undefined;
     }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createInitialState, DUNGEON_ORDER, enterDungeon, selectNode, type GameState } from '@infinite-flow/core';
+import { createChapterTrialState, createInitialState, DUNGEON_ORDER, enterDungeon, selectNode, type GameState } from '@infinite-flow/core';
 import { getBossDefinition } from '@infinite-flow/core/boss-system';
 import { decodeWebV1 } from '../src/index.js';
 
@@ -53,3 +53,12 @@ describe('saves made in the middle of a late boss mechanic', () => {
     expect(decode({ ...fight, combat: { ...fight.combat!, effects: { regentClock: 9 } } }).status).toBe('rejected');
   });
 });
+
+describe('the hidden chapter jump', () => {
+  it('writes a save that loads for every chapter', () => {
+    for (let chapter = 1; chapter <= DUNGEON_ORDER.length; chapter += 1) {
+      expect(decode(createChapterTrialState(chapter)).status).toBe('decoded');
+    }
+  });
+});
+

@@ -811,6 +811,8 @@ function localStateWith(
     ...(advancedCombatExpanded === undefined
       ? {}
       : { advancedCombatExpanded }),
+    // The hidden tester switch survives every other local change.
+    ...(previous.testMode ? { testMode: true } : {}),
   };
 }
 
@@ -2547,6 +2549,13 @@ export class InfiniteFlowApp extends Component {
     }
   }
 
+  /** Hidden tester switch; it lives only in local UI state, so a restart turns it off. */
+  private toggleTestMode(): void {
+    const { testMode, ...rest } = this.localUiState;
+    this.localUiState = testMode ? rest : { ...rest, testMode: true };
+    this.refreshViewModel();
+  }
+
   private refreshViewModel(): void {
     this.ownedLoadoutViewModel = undefined;
     const client = this.client;
@@ -2582,6 +2591,8 @@ export class InfiniteFlowApp extends Component {
       sceneAssets: this.sceneAssetsStatus(),
       supplyActions: (itemId) => this.projectSupplyActions(itemId),
       ownedLoadout: () => this.projectOwnedLoadout(),
+      testMode: this.localUiState.testMode === true,
+      toggleTestMode: () => this.toggleTestMode(),
       ...(this.blockingMessage === undefined
         ? {}
         : { blockingMessage: this.blockingMessage }),

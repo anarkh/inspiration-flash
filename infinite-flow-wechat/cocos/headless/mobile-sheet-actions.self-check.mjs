@@ -321,6 +321,7 @@ function render(model, state, insets = safeInsets, extras = {}) {
     ...(extras.supplyActions === undefined ? {} : { supplyActions: extras.supplyActions }),
     ...(extras.ownedLoadout === undefined ? {} : { ownedLoadout: extras.ownedLoadout }),
     ...(extras.images === undefined ? {} : { images: extras.images }),
+    ...(extras.toggleTestMode === undefined ? {} : { toggleTestMode: extras.toggleTestMode, testMode: extras.testMode === true }),
     ...(extras.rewardReceipt === undefined ? {} : { rewardReceipt: extras.rewardReceipt }),
     close() { closes += 1; }, setState(next) { nextState = next; }, openHelp() {},
   });
@@ -3152,6 +3153,32 @@ for (const [panel, count] of Object.entries({ equipment: 65, supplies: 9, pets: 
     api.view.frameSize = previousFrame;
   }
 }
+// --- Hidden tester entry: seven taps on the menu version, then a two-step chapter jump at the gate ---
+{
+  const hubModel = add(rich, { hubPanel: 'entry' });
+  let toggles = 0;
+  const menu = render(hubModel, { kind: 'menu', page: 0 }, safeInsets, { toggleTestMode: () => { toggles += 1; } });
+  assert.ok(menu.labels.some(({ text }) => text.startsWith('版本 ')), 'the menu shows the game version');
+  for (let tap = 1; tap <= 7; tap += 1) {
+    menu.local.get('MobileSheetVersion')();
+    assert.equal(toggles, tap === 7 ? 1 : 0, `tap ${tap}: only the seventh tap flips test mode`);
+    assert.equal(menu.nextState(), undefined, 'counting taps never re-renders the menu, so it does not scroll back up');
+  }
+  const lit = render(hubModel, { kind: 'menu', page: 0 }, safeInsets, { toggleTestMode: () => {}, testMode: true });
+  assert.ok(lit.labels.some(({ text }) => text.includes('测试模式')), 'the version marks test mode while it is on');
+  assert.ok(!nodesIn(render(hubModel, { kind: 'entry', page: 0 }).rootNode).some(node => node.name === 'MobileSheetEntryTestJump'),
+    'players never see the chapter jump');
+  const testModel = add(rich, { hubPanel: 'entry', testMode: true });
+  const jump = testModel.sections[1].detail.testJump;
+  const gate = render(testModel, { kind: 'entry', page: 0 }, safeInsets, { actionPool: [jump] });
+  assertDarkSheet(gate, 'entry', safeInsets);
+  assert.equal(gate.actions.get('MobileSheetEntryTestJump'), undefined, 'the first tap only arms the overwrite');
+  gate.local.get('MobileSheetEntryTestJump')();
+  const armed = render(testModel, gate.nextState(), safeInsets, { actionPool: [jump] });
+  assert.ok(armed.labels.some(({ text }) => text.includes('覆盖当前存档')), 'the armed jump warns about overwriting the save');
+  assert.equal(armed.actions.get('MobileSheetEntryTestJump'), jump, 'the second tap binds the exact jump command');
+}
+
 {
   const model = add(rich, { hubPanel: 'equipment' });
   const shop = model.sections[1].detail.shop;

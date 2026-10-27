@@ -6,6 +6,7 @@ import { build } from 'esbuild';
 import { createInitialState, DUNGEON_ORDER, DUNGEONS, getDerivedStats, MONSTERS } from '@infinite-flow/core';
 import { RUN_RELIC_DEFINITIONS, RUN_RELIC_IDS_BY_FRAME } from '@infinite-flow/core/run-relics';
 import { reduceGameCommand } from '@infinite-flow/application';
+import { INFINITE_FLOW_GAME_VERSION } from '@infinite-flow/presentation';
 import { buildGameViewModel as buildActualGameViewModel } from '@infinite-flow/presentation';
 
 const HERO_WALK_LAYOUT = JSON.parse(await readFile(new URL('../../art-source/hero-redesign/proof/production-frame-layout.json', import.meta.url), 'utf8'));
@@ -438,6 +439,7 @@ const virtualModules = new Map([
     }
   `],
   ['@infinite-flow/presentation', `
+    export const INFINITE_FLOW_GAME_VERSION = '0.0.0-test';
     export function buildHubOwnedLoadoutViewModel(state) {
       return (state.phase ?? 'hub') === 'hub' ? state.ownedLoadout ?? { rows: [] } : undefined;
     }
@@ -3146,6 +3148,12 @@ assert.match(metroLawText, /全属性-10%/);
 assert.match(metroLawText, /攻击-10%/, 'the law art pressure is shown on the enemy stat it really changes');
 assert.match(metroLawText, /治疗-20%/);
 assert.match(metroLawText, /守御-10%/);
+
+// The menu shows the game version; it must follow every package.json bump.
+{
+  const pkg = JSON.parse(await readFile(resolve(dirname(fileURLToPath(import.meta.url)), '../../package.json'), 'utf8'));
+  assert.equal(INFINITE_FLOW_GAME_VERSION, pkg.version, 'INFINITE_FLOW_GAME_VERSION (packages/presentation/src/build-info.ts) must match package.json');
+}
 
 // Chapter 14-19 statuses are frozen key:value dumps; the view words them for players (samples from the law fixtures).
 assert.equal(formatInfiniteFlowLawStatus('原型血清 0，拼接 3/3，多样性 3，待拼接 genesis_splice_west，Boss快照 force/art/guard'),

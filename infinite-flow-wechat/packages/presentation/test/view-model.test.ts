@@ -1,5 +1,6 @@
 import type { GameCommand } from '@infinite-flow/application';
 import { verifyHubShops } from './hub-shop.test.js';
+import { verifyTestJump } from './test-jump.test.js';
 import './owned-loadout.test.js';
 import './equipment-inventory.test.js';
 import './run-relics.test.js';
@@ -2807,6 +2808,7 @@ function verifyResultSettlement(): void {
 
 verifyHubAndHelp();
 verifyHubShops();
+verifyTestJump();
 verifyEquipmentChapterRecipeSemantics();
 verifyEquipmentCommission();
 verifyEquipmentMemoryProjection();
