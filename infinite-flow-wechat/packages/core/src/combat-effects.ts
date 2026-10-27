@@ -39,7 +39,24 @@ export type CombatEffectState = {
   cueStalkerLastAction?: Extract<CombatEffectAction, 'attack' | 'art'>;
   continuityEditCount?: number;
   retakeRecordedAction?: Extract<CombatEffectAction, 'attack' | 'art' | 'guard'>;
+  /** 零时摄政: turns left before 零时斩, counting the current turn. */
+  regentClock?: number;
+  /** 末代舵手: the ark's entropy when the fight opened; it picks the heading pattern. */
+  helmEntropy?: number;
+  /** 终稿删改者: how often each kind of direct action was used this fight. */
+  redactAttackCount?: number;
+  redactArtCount?: number;
+  redactTalismanCount?: number;
+  /** 终稿删改者: the deleted action kind and how many of its turns remain. */
+  redactedKind?: RedactionKind;
+  redactedTurns?: number;
+  /** 遗产拍卖官: what is left of the current bid shield. */
+  bidShield?: number;
+  /** 全视监察者: exposure toward 终审光束. */
+  exposure?: number;
 };
+
+export type RedactionKind = 'attack' | 'art' | 'talisman';
 
 export type CombatEffectInput = {
   monsterId: MonsterId;
@@ -57,7 +74,55 @@ export type CombatEffectResult = {
   damageToPlayer: number;
   statusLines: string[];
   nextState: CombatEffectState;
+  /** Scales the monster's counterattack before guarding; 1 when absent, 0 cancels it. */
+  retaliationMultiplier?: number;
+  /** Health the monster regains at the end of the turn, if it is still standing. */
+  monsterHealing?: number;
 };
+
+/** 零时摄政 strikes when its clock runs out; a big enough turn of damage winds it back. */
+export const ZERO_HOUR_CLOCK = 4;
+export const ZERO_HOUR_PUSHBACK_PERCENT = 25;
+export const ZERO_HOUR_STRIKE_HP_PERCENT = 35;
+/** 末代舵手 heading: full helm trades harder blows both ways; reverse helm dampens both. */
+export const HELM_FULL_RETALIATION = 1.4;
+export const HELM_FULL_DAMAGE_TAKEN = 1.3;
+export const HELM_REVERSE_DAMAGE_TAKEN = 0.6;
+export const HELM_REVERSE_RETALIATION = 0.6;
+/** 终稿删改者 deletes the most-used action every few turns, for a couple of turns. */
+export const REDACTION_INTERVAL = 3;
+export const REDACTION_TURNS = 2;
+/** 遗产拍卖官 raises a bid shield every few turns; an unbroken one is sold back to it as health. */
+export const AUCTION_BID_INTERVAL = 3;
+export const AUCTION_SHIELD_PERCENT = 8;
+/** 原初馆长 names one damage kind a turn as its weakness. */
+export const MUTATION_WEAK_DAMAGE = 1.5;
+export const MUTATION_OTHER_DAMAGE = 0.75;
+/** 全视监察者 fires 终审光束 once exposure fills up. */
+export const ALL_SIGHT_BEAM_EXPOSURE = 3;
+export const ALL_SIGHT_BEAM_RETALIATION = 1.6;
+
+export function getMutationWeakness(turn: number): CombatDamageKind {
+  return (['physical', 'art', 'talisman'] as const)[(Math.max(1, Math.floor(turn)) - 1) % 3]!;
+}
+
+/** High entropy keeps the helm at full two turns in three; low entropy only one. */
+export function getHelmHeading(turn: number, entropy: number): 'full' | 'reverse' {
+  const pattern = entropy >= 3 ? ['full', 'reverse', 'full'] as const : ['full', 'reverse', 'reverse'] as const;
+  return pattern[(Math.max(1, Math.floor(turn)) - 1) % 3]!;
+}
+
+export function getRedactionTarget(state: CombatEffectState | undefined): RedactionKind | undefined {
+  const counts: [RedactionKind, number][] = [
+    ['attack', state?.redactAttackCount ?? 0], ['art', state?.redactArtCount ?? 0], ['talisman', state?.redactTalismanCount ?? 0]
+  ];
+  const [kind, count] = counts.reduce((best, entry) => (entry[1] > best[1] ? entry : best));
+  return count > 0 ? kind : undefined;
+}
+
+function redactionKindOf(action: CombatEffectAction | undefined): RedactionKind | undefined {
+  return action === 'attack' || action === 'art' ? action : action === 'use_thunder_talisman' ? 'talisman' : undefined;
+}
 
 type EchoCopiedStat = NonNullable<CombatEffectState['echoCopiedStat']>;
 
@@ -133,6 +198,17 @@ export function createInitialCombatEffectState(state: CombatEffectState = {}): C
   } else {
     delete normalized.reserveBidDamage;
   }
+  const caps = { regentClock: ZERO_HOUR_CLOCK, helmEntropy: 4, redactedTurns: REDACTION_TURNS, exposure: ALL_SIGHT_BEAM_EXPOSURE } as const;
+  for (const key of ['regentClock', 'helmEntropy', 'redactAttackCount', 'redactArtCount', 'redactTalismanCount', 'redactedTurns', 'bidShield', 'exposure'] as const) {
+    if (state[key] === undefined) continue;
+    const value = clampStack(state[key], key in caps ? caps[key as keyof typeof caps] : Number.MAX_SAFE_INTEGER);
+    if (value > 0 || key === 'helmEntropy') normalized[key] = value;
+    else delete normalized[key];
+  }
+  if (!['attack', 'art', 'talisman'].includes(state.redactedKind ?? '') || !normalized.redactedTurns) {
+    delete normalized.redactedKind;
+    delete normalized.redactedTurns;
+  }
   return normalized;
 }
 
@@ -173,6 +249,8 @@ export function applyMonsterCombatEffects(input: CombatEffectInput): CombatEffec
   const statusLines: string[] = [];
   let damageToMonster = Math.max(0, Math.floor(input.incomingDamage));
   let damageToPlayer = 0;
+  let retaliationMultiplier = 1;
+  let monsterHealing = 0;
 
   if (input.monsterId === 'cue_stalker' && (input.player.action === 'attack' || input.player.action === 'art')) {
     if (nextState.cueStalkerLastAction === input.player.action && damageToMonster > 0) {
@@ -814,10 +892,117 @@ export function applyMonsterCombatEffects(input: CombatEffectInput): CombatEffec
     }
   }
 
+  if (input.monsterId === 'zero_hour_regent') {
+    const clock = input.state?.regentClock ?? ZERO_HOUR_CLOCK;
+    if (clock <= 1) {
+      // 零时斩 resolves as the telegraphed heavy blow; standing unguarded adds the rest.
+      if (input.player.action !== 'guard') {
+        damageToPlayer += Math.ceil((input.player.stats.maxHp * ZERO_HOUR_STRIKE_HP_PERCENT) / 100);
+        statusLines.push('零时归零，零时斩贯穿未设防的你。');
+      } else {
+        statusLines.push('零时归零，你架住了零时斩。');
+      }
+      nextState.regentClock = ZERO_HOUR_CLOCK;
+    } else {
+      const windBack = damageToMonster >= Math.ceil((input.monsterMaxHp * ZERO_HOUR_PUSHBACK_PERCENT) / 100);
+      nextState.regentClock = Math.min(ZERO_HOUR_CLOCK, clock - 1 + (windBack ? 1 : 0));
+      if (windBack) statusLines.push(`重击拨慢了零时，时钟回到 ${nextState.regentClock}。`);
+    }
+  }
+
+  if (input.monsterId === 'last_helmsman') {
+    if (getHelmHeading(input.turn, input.state?.helmEntropy ?? 2) === 'full') {
+      damageToMonster = scaleDamage(damageToMonster, HELM_FULL_DAMAGE_TAKEN);
+      retaliationMultiplier = HELM_FULL_RETALIATION;
+      statusLines.push('末代舵手满舵冲撞，攻守都被放大。');
+    } else {
+      damageToMonster = scaleDamage(damageToMonster, HELM_REVERSE_DAMAGE_TAKEN);
+      retaliationMultiplier = HELM_REVERSE_RETALIATION;
+      statusLines.push('末代舵手逆舵卸力，双方伤害都被削弱。');
+    }
+  }
+
+  if (input.monsterId === 'last_redactor') {
+    const kind = redactionKindOf(input.player.action);
+    const labels: Record<RedactionKind, string> = { attack: '攻击', art: '术法', talisman: '符咒' };
+    if (kind && nextState.redactedTurns && nextState.redactedKind === kind) {
+      damageToMonster = 0;
+      statusLines.push(`『${labels[kind]}』已被删去，本回合没有造成伤害。`);
+    }
+    if (kind === 'attack') nextState.redactAttackCount = (nextState.redactAttackCount ?? 0) + 1;
+    if (kind === 'art') nextState.redactArtCount = (nextState.redactArtCount ?? 0) + 1;
+    if (kind === 'talisman') nextState.redactTalismanCount = (nextState.redactTalismanCount ?? 0) + 1;
+    if (nextState.redactedTurns) {
+      nextState.redactedTurns -= 1;
+      if (nextState.redactedTurns <= 0) { delete nextState.redactedTurns; delete nextState.redactedKind; }
+    }
+    const target = input.turn % REDACTION_INTERVAL === 0 ? getRedactionTarget(nextState) : undefined;
+    if (target) {
+      nextState.redactedKind = target;
+      nextState.redactedTurns = REDACTION_TURNS;
+      statusLines.push(`终稿删改者删去你最常用的『${labels[target]}』，接下来 ${REDACTION_TURNS} 回合无效。`);
+    }
+  }
+
+  if (input.monsterId === 'estate_auctioneer') {
+    const shield = nextState.bidShield ?? 0;
+    if (shield > 0 && damageToMonster > 0) {
+      const absorbed = Math.min(shield, damageToMonster);
+      damageToMonster -= absorbed;
+      if (absorbed >= shield) {
+        delete nextState.bidShield;
+        retaliationMultiplier = 0;
+        statusLines.push('起拍护盾被打破，拍品流拍，遗产拍卖官这一回合无法反击。');
+      } else {
+        nextState.bidShield = shield - absorbed;
+        statusLines.push(`起拍护盾吸收 ${absorbed} 点伤害，还剩 ${nextState.bidShield}。`);
+      }
+    }
+    if (input.turn % AUCTION_BID_INTERVAL === 1) {
+      const unsold = nextState.bidShield ?? 0;
+      if (unsold > 0) {
+        monsterHealing = unsold;
+        statusLines.push(`护盾没被打破，拍品成交，遗产拍卖官回复 ${unsold} 点生命。`);
+      }
+      nextState.bidShield = Math.ceil((input.monsterMaxHp * AUCTION_SHIELD_PERCENT) / 100);
+      statusLines.push(`遗产拍卖官起拍，竖起 ${nextState.bidShield} 点护盾。`);
+    }
+  }
+
+  if (input.monsterId === 'primal_curator' && damageToMonster > 0) {
+    const weakness = getMutationWeakness(input.turn);
+    if (input.damageKind === weakness) {
+      damageToMonster = scaleDamage(damageToMonster, MUTATION_WEAK_DAMAGE);
+      statusLines.push('命中原初馆长的突变弱点，伤害大增。');
+    } else {
+      damageToMonster = scaleDamage(damageToMonster, MUTATION_OTHER_DAMAGE);
+      statusLines.push('原初馆长的突变外壳吃下了这一击。');
+    }
+  }
+
+  if (input.monsterId === 'all_sight_warden') {
+    const exposure = nextState.exposure ?? 0;
+    if (exposure >= ALL_SIGHT_BEAM_EXPOSURE) {
+      retaliationMultiplier = ALL_SIGHT_BEAM_RETALIATION;
+      delete nextState.exposure;
+      statusLines.push('终审光束落下，曝光清零。');
+    } else {
+      const action = input.player.action;
+      const next = action === 'attack' || action === 'art' || action === 'use_thunder_talisman'
+        ? exposure + 1
+        : action === 'guard' ? Math.max(0, exposure - 1) : exposure;
+      if (next > 0) nextState.exposure = next;
+      else delete nextState.exposure;
+      if (next >= ALL_SIGHT_BEAM_EXPOSURE) statusLines.push('曝光已满，全视监察者下回合落下终审光束。');
+    }
+  }
+
   return {
     damageToMonster,
     damageToPlayer,
     statusLines,
-    nextState
+    nextState,
+    ...(retaliationMultiplier === 1 ? {} : { retaliationMultiplier }),
+    ...(monsterHealing > 0 ? { monsterHealing } : {})
   };
 }

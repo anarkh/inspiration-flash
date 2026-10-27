@@ -280,6 +280,9 @@ export type InfiniteFlowRuntimeChrome = Readonly<{
   /** Hub-only: supplies-panel actions for item-tip carry toggles (projected on demand). */
   supplyActions?: (itemId: ItemId) => readonly ViewActionModel[];
   ownedLoadout?: () => HubOwnedLoadoutViewModel | undefined;
+  /** Hidden tester switch, flipped by tapping the menu's version 7 times. */
+  testMode?: boolean;
+  toggleTestMode?: () => void;
 }>;
 
 export type InfiniteFlowPlayerChrome = Readonly<{
@@ -3256,6 +3259,10 @@ export class InfiniteFlowView {
               this.mobileSheet = { ...captureInfiniteFlowInfoSheetState(root, this.mobileSheet),
                 selectedActionId: undefined, catalogMoreOpen: false };
             }
+            if (node.name === 'MobileSheetEntryTestJump' && this.mobileSheet) {
+              // The jump overwrites the save once; it must be armed again before another overwrite.
+              this.mobileSheet = { ...this.mobileSheet, testJumpArmedChapter: undefined };
+            }
             if (node.name.startsWith('MobileSheetEntryDungeon:') && this.mobileSheet) {
               const state = captureInfiniteFlowInfoSheetState(root, this.mobileSheet);
               this.mobileSheet = { ...state, entryServiceId: undefined, entrySettingsScrollOffset: 0 };
@@ -3276,6 +3283,7 @@ export class InfiniteFlowView {
         },
         ...(chrome.supplyActions === undefined ? {} : { supplyActions: chrome.supplyActions }),
         ...(chrome.ownedLoadout === undefined ? {} : { ownedLoadout: chrome.ownedLoadout }),
+        ...(chrome.toggleTestMode === undefined ? {} : { toggleTestMode: chrome.toggleTestMode, testMode: chrome.testMode === true }),
         ...(this.rewardReceipt === undefined ? {} : { rewardReceipt: this.rewardReceipt }),
       });
     }

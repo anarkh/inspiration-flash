@@ -1,5 +1,6 @@
 import { BlockInputEvents, Color, Graphics, Label, Mask, Node, ScrollView, Size, Sprite, SpriteFrame, UITransform, Vec2, Vec3, view } from 'cc';
 import { EQUIPMENT, ITEMS, getGameAsset, type ItemId } from '@infinite-flow/core';
+import { INFINITE_FLOW_GAME_VERSION } from '@infinite-flow/presentation';
 import type { ExploreDetailViewModel, GameViewModel, HelpEntryViewModel, HubPanel, HubOwnedLoadoutViewModel, HubShopCatalogViewModel, HubShopRowViewModel, MapNodeViewModel, RewardPreviewViewModel, StatusMetric, ViewActionModel } from '@infinite-flow/presentation';
 import {
   buildInfiniteFlowChapterCodexPages,
@@ -75,6 +76,8 @@ export type MobileSheetState = Readonly<{
   catalogScrollOffset?: number;
   /** Optional settings overlay; chapter selection always remains on this sheet. */
   entrySettingsOpen?: boolean;
+  /** The chapter whose test jump was armed by a first tap; a second tap jumps. */
+  testJumpArmedChapter?: number;
   entryServiceId?: string;
   entryDungeonScrollOffset?: number;
   entrySettingsScrollOffset?: number;
@@ -115,6 +118,9 @@ export type InfiniteFlowInfoSheetOptions = Readonly<{
   /** Acquired HUD icons are loaded and leased by the active scene. */
   hudVisual?: (key: string) => Readonly<{ frame: SpriteFrame; width: number; height: number }> | undefined;
   trackHudSprite?: (sprite: Sprite) => void;
+  /** Production-only hidden tester switch. */
+  testMode?: boolean;
+  toggleTestMode?: () => void;
 }>;
 
 // The existing 750px design space uses 104px controls to retain a 44px target
@@ -1461,7 +1467,7 @@ function renderMenu(context: SheetContext): void {
   ];
   const rowHeight = 44 * u;
   const headingHeight = 22 * u;
-  const contentHeight = headingHeight + 6 * u + tiles.length * rowHeight + (tiles.length - 1) * 6 * u;
+  const contentHeight = headingHeight + 6 * u + (tiles.length + 1) * rowHeight + tiles.length * 6 * u;
   const region = scrollRegion(ctx, contentHeight);
   const content = scrollContentNode(region);
   catalogText(context, content, 'MobileSheetMenuHeading', '随身菜单', 0, scrollItemY(region, 0, headingHeight), ctx.width, headingHeight, 11, palette().accent, true);
@@ -1483,7 +1489,25 @@ function renderMenu(context: SheetContext): void {
       ctx.options.bindLocal(cell, () => ctx.options.setState({ kind, page: 0, tip: undefined }));
     }
   });
+  // The version doubles as the hidden tester switch: seven taps in a row flip test mode.
+  const versionTop = headingHeight + 6 * u + tiles.length * (rowHeight + 6 * u);
+  const version = node(content, 'MobileSheetVersion', 0, scrollItemY(region, versionTop, rowHeight), ctx.width, rowHeight);
+  catalogText(ctx, version, 'VersionLabel', `版本 ${INFINITE_FLOW_GAME_VERSION}${ctx.options.testMode ? ' · 测试模式' : ''}`,
+    0, 0, ctx.width, 20 * u, 10, ctx.options.testMode ? palette().accent : palette().textMuted, true);
+  const toggleTestMode = ctx.options.toggleTestMode;
+  if (toggleTestMode) ctx.options.bindLocal(version, () => {
+    // Counted outside sheet state: a re-render would scroll the menu back up between taps.
+    const now = Date.now();
+    versionTapRun = now - versionTapRun.at > VERSION_TAP_WINDOW_MS ? { count: 1, at: now } : { count: versionTapRun.count + 1, at: now };
+    if (versionTapRun.count < VERSION_TAPS_TO_TOGGLE) return;
+    versionTapRun = { count: 0, at: 0 };
+    toggleTestMode();
+  });
 }
+
+const VERSION_TAPS_TO_TOGGLE = 7;
+const VERSION_TAP_WINDOW_MS = 1500;
+let versionTapRun = { count: 0, at: 0 };
 
 /**
  * Action choices reached from a destination tile scroll above one fixed footer.
@@ -3311,7 +3335,9 @@ function renderEntryServices(context: SheetContext): void {
   const noticeLines = (notice || '已选择 · 可直接进入').split('\n')
     .flatMap(line => wrapInfiniteFlowLine(readable(line), Math.max(8, Math.floor(copyWidth / (10 * u)))));
   const actionHeight = Math.max(44, 22 + noticeLines.length * 15) * u;
-  const footerHeight = 44 * u + actionHeight;
+  const testJump = detail.kind === 'hub' ? detail.testJump : undefined;
+  const testHeight = testJump ? 44 * u : 0;
+  const footerHeight = 44 * u + testHeight + actionHeight;
   const dungeons = renderEntryDungeons(context, footerHeight);
   const footer = node(context.body, 'MobileSheetEntryFooter', 0,
     -context.bodyHeight / 2 + footerHeight / 2, context.width, footerHeight);
@@ -3340,6 +3366,20 @@ function renderEntryServices(context: SheetContext): void {
     const control = catalogButton(context, footer, 'MobileSheetEntryConfirm', label, context.width / 2 - buttonWidth / 2,
       actionY, buttonWidth, enabled, undefined, true);
     if (enabled) context.options.bindAction(control, action);
+  }
+  if (testJump && testJump.event?.kind === 'command' && testJump.event.command.type === 'test/jump-to-chapter') {
+    // Test mode only: the jump overwrites the save, so a first tap arms it and a second tap jumps.
+    const chapter = testJump.event.command.chapter;
+    const armed = context.state.testJumpArmedChapter === chapter;
+    const rowY = footerHeight / 2 - 44 * u - 22 * u;
+    const jumpWidth = Math.min(110 * u, context.width / 2);
+    catalogText(context, footer, 'EntryTestJumpNotice', armed ? `将覆盖当前存档，再点一次跳到第 ${chapter} 章` : `测试 · ${testJump.label}`,
+      -context.width / 2 + (context.width - jumpWidth - 14 * u) / 2, rowY, context.width - jumpWidth - 14 * u, 20 * u, 10,
+      armed ? palette().danger : palette().accent);
+    const control = catalogButton(context, footer, 'MobileSheetEntryTestJump', armed ? '确认覆盖' : '跳到此章',
+      context.width / 2 - jumpWidth / 2, rowY, jumpWidth, canExecute(context, testJump), undefined, false, true);
+    if (armed && canExecute(context, testJump)) context.options.bindAction(control, testJump);
+    else context.options.bindLocal(control, () => context.options.setState({ ...context.state, testJumpArmedChapter: chapter }));
   }
   if (context.state.entrySettingsOpen) settings = renderEntrySettings(context, services, footerHeight, dungeons);
   entryScrollByFrame.set(context.panel, { state: context.state, dungeons, settings });

@@ -438,38 +438,65 @@ function isIntegerInRange(value: unknown, minimum: number, maximum: number): val
   return Number.isInteger(value) && Number(value) >= minimum && Number(value) <= maximum;
 }
 
+/** Every fight-state field the core can write; the type makes a missing one a compile error. */
+const COMBAT_EFFECT_KEYS: Readonly<Record<keyof NonNullable<CombatState['effects']>, true>> = {
+  rustPoisonStacks: true,
+  armorCracked: true,
+  lastShiftTurn: true,
+  revivedOnce: true,
+  echoCopiedStat: true,
+  echoCopiedValue: true,
+  lastPlayerAction: true,
+  breathStacks: true,
+  mirrorSlowStacks: true,
+  railHeavyDodgeUsed: true,
+  reserveBidDamage: true,
+  provenanceShield: true,
+  frequencyLockAction: true,
+  broadcastWardKind: true,
+  deadAirEcho: true,
+  mimicHesitation: true,
+  shelterWardKind: true,
+  evacuationPanicStacks: true,
+  witnessContradiction: true,
+  censorSealKind: true,
+  perjuryPressureStacks: true,
+  cueStalkerLastAction: true,
+  continuityEditCount: true,
+  retakeRecordedAction: true,
+  regentClock: true,
+  helmEntropy: true,
+  redactAttackCount: true,
+  redactArtCount: true,
+  redactTalismanCount: true,
+  redactedKind: true,
+  redactedTurns: true,
+  bidShield: true,
+  exposure: true
+};
+
 function isSavedCombatEffects(value: unknown): value is NonNullable<CombatState['effects']> {
   if (!isRecord(value)) return false;
 
-  const knownKeys = new Set<string>([
-    'rustPoisonStacks',
-    'armorCracked',
-    'lastShiftTurn',
-    'revivedOnce',
-    'echoCopiedStat',
-    'echoCopiedValue',
-    'lastPlayerAction',
-    'breathStacks',
-    'mirrorSlowStacks',
-    'railHeavyDodgeUsed',
-    'reserveBidDamage',
-    'provenanceShield',
-    'frequencyLockAction',
-    'broadcastWardKind',
-    'deadAirEcho',
-    'mimicHesitation',
-    'shelterWardKind',
-    'evacuationPanicStacks',
-    'witnessContradiction',
-    'censorSealKind',
-    'perjuryPressureStacks'
-  ]);
+  const knownKeys = new Set<string>(Object.keys(COMBAT_EFFECT_KEYS));
   const optionalBoolean = (candidate: unknown) => candidate === undefined || typeof candidate === 'boolean';
   const optionalInteger = (candidate: unknown, maximum = Number.MAX_SAFE_INTEGER) =>
     candidate === undefined || isIntegerInRange(candidate, 0, maximum);
 
   return (
     Object.keys(value).every((key) => knownKeys.has(key)) &&
+    (value.cueStalkerLastAction === undefined || value.cueStalkerLastAction === 'attack' || value.cueStalkerLastAction === 'art') &&
+    optionalInteger(value.continuityEditCount, 2) &&
+    (value.retakeRecordedAction === undefined || ['attack', 'art', 'guard'].includes(String(value.retakeRecordedAction))) &&
+    optionalInteger(value.regentClock, 4) &&
+    optionalInteger(value.bidShield) &&
+    optionalInteger(value.exposure, 3) &&
+    optionalInteger(value.helmEntropy, 4) &&
+    optionalInteger(value.redactAttackCount) &&
+    optionalInteger(value.redactArtCount) &&
+    optionalInteger(value.redactTalismanCount) &&
+    (value.redactedKind === undefined || ['attack', 'art', 'talisman'].includes(String(value.redactedKind))) &&
+    optionalInteger(value.redactedTurns, 2) &&
     optionalInteger(value.rustPoisonStacks, 3) &&
     optionalBoolean(value.armorCracked) &&
     optionalInteger(value.lastShiftTurn) &&

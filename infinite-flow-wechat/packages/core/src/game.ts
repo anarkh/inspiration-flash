@@ -4,7 +4,7 @@ import {
 } from './progression';
 import type { PlayerPowerBreakdown, ProgressionReadiness } from './progression';
 
-import { applyMonsterCombatEffects } from './combat-effects';
+import { ALL_SIGHT_BEAM_EXPOSURE, applyMonsterCombatEffects, ZERO_HOUR_CLOCK } from './combat-effects';
 import type { CombatDamageKind, CombatEffectAction, CombatEffectState } from './combat-effects';
 import { COMBAT_ART_FOCUS_COST, COMBAT_FOCUS_MAX, normalizeCombatFocus, resolveCombatFocus } from './combat-focus';
 import type { CombatFocus } from './combat-focus';
@@ -4486,6 +4486,23 @@ export function getCurrentRunProtocol(state: GameState): CurrentRunProtocol | un
   };
 }
 
+/** Boss mechanics that read the chapter law start from what the law shows when the fight opens. */
+function getOpeningCombatEffects(state: GameState, monsterId: MonsterId): CombatEffectState {
+  const law = getNormalizedDungeonLawState(state)?.law;
+  if (monsterId === 'zero_hour_regent') {
+    // Each uncalibrated anchor brings 零时斩 one turn closer.
+    const missing = law?.kind === 'temporal_observatory' ? Number(!law.pastCalibrated) + Number(!law.futureCalibrated) : 0;
+    return { regentClock: ZERO_HOUR_CLOCK - missing };
+  }
+  if (monsterId === 'last_helmsman') return { helmEntropy: law?.kind === 'entropy_ark' ? law.entropy : 2 };
+  if (monsterId === 'all_sight_warden' && law?.kind === 'panopticon_city') {
+    // Half the exposure built on the map carries into the fight, at most one step short of 终审光束.
+    const seen = Math.min(ALL_SIGHT_BEAM_EXPOSURE - 1, Math.floor((law.bossSnapshot?.exposureCount ?? law.exposureCount) / 2));
+    return seen > 0 ? { exposure: seen } : {};
+  }
+  return {};
+}
+
 function isProtocolAnchorCompletedBeforeBoss(state: GameState): boolean {
   if (state.run?.entryFlowVersion === 2) return true;
   const protocol = getCurrentRunProtocol(state);
@@ -7249,7 +7266,7 @@ export function selectNode(state: GameState, nodeId: string): GameState {
           weaponFocus: initialFocus,
           bossPhase: bossDefinition ? 'sealed' : undefined,
           protocolAnchorCompletedBeforeBoss,
-          effects: {},
+          effects: getOpeningCombatEffects(encounterState, node.monsterId),
           ...(equipmentMemoryState === undefined ? {} : { equipmentMemoryState }),
           ...(combatReplayState === undefined ? {} : { combatReplayState }),
           log: [...(relicFocusLine ? [relicFocusLine] : []), openingLine]
@@ -9144,6 +9161,8 @@ function resolveMonsterEffects(
 ): {
   damageToMonster: number;
   damageToPlayer: number;
+  retaliationMultiplier: number;
+  monsterHealing: number;
   nextCombat: CombatState;
   statusLines: string[];
 } {
@@ -9183,8 +9202,12 @@ function resolveMonsterEffects(
   return {
     damageToMonster: result.damageToMonster,
     damageToPlayer: result.damageToPlayer,
+    retaliationMultiplier: result.retaliationMultiplier ?? 1,
+    monsterHealing: result.monsterHealing ?? 0,
+    // Paths without a direct hit keep this health; the attack path re-applies healing after its damage.
     nextCombat: {
       ...combat,
+      ...(result.monsterHealing ? { monsterHp: Math.min(monster.maxHp, combat.monsterHp + result.monsterHealing) } : {}),
       effects: result.nextState
     },
     statusLines: result.statusLines
@@ -9828,10 +9851,11 @@ function monsterAttack(
   combat: CombatState,
   effectDamageToPlayer = 0,
   directGuardMultiplier = 1,
-  blow: CounterBlow = { heavy: false, perfectParry: false }
+  blow: CounterBlow = { heavy: false, perfectParry: false },
+  retaliationMultiplier = 1
 ): GameState {
   const stats = getDerivedStats(state);
-  const baseDamage = calculatePhysicalDamage(monster.attack, stats.defense);
+  const baseDamage = Math.ceil(calculatePhysicalDamage(monster.attack, stats.defense) * retaliationMultiplier);
   const strikeDamage = blow.heavy ? Math.ceil(baseDamage * HEAVY_BLOW_DAMAGE_RATE) : baseDamage;
   const guardReduction = blow.heavy
     ? getGuardReduction(state, combat, strikeDamage, HEAVY_BLOW_GUARD_KEPT_RATE, directGuardMultiplier)
@@ -9841,7 +9865,8 @@ function monsterAttack(
   const ironBodyDamage = ironBodyGuard ? Math.floor(guardedDamage * 0.7) : guardedDamage;
   const perfectParry = blow.heavy && blow.perfectParry && combat.guarding;
   const incomingDamage = perfectParry ? Math.ceil(ironBodyDamage / 2) : ironBodyDamage;
-  let damage = Math.max(1, incomingDamage) + effectDamageToPlayer;
+  // A cancelled counterattack deals nothing, not the usual minimum of 1.
+  let damage = (retaliationMultiplier === 0 ? 0 : Math.max(1, incomingDamage)) + effectDamageToPlayer;
   const counterDamage = ironBodyGuard ? Math.max(2, Math.floor(stats.defense * 0.25)) : 0;
   let nextState = state;
   let statusLines: string[] = [];
@@ -10099,7 +10124,8 @@ export function performCombatAction(
       nextCombat,
       effects.damageToPlayer,
       directMultiplier,
-      counterBlow
+      counterBlow,
+      effects.retaliationMultiplier
     );
     afterMonster = releasePendingAfterbeat(afterMonster);
     observeCombatPresentation(
@@ -10163,7 +10189,8 @@ export function performCombatAction(
       nextCombat,
       effects.damageToPlayer,
       1,
-      counterBlow
+      counterBlow,
+      effects.retaliationMultiplier
     );
     observeCombatPresentation(observer, 'counter', afterMonster, afterMonster.combat!, nextCombat.guarding);
     if (afterMonster.player.hp <= 0) {
@@ -10260,7 +10287,8 @@ export function performCombatAction(
       nextCombat,
       effects.damageToPlayer,
       1,
-      counterBlow
+      counterBlow,
+      effects.retaliationMultiplier
     );
     observeCombatPresentation(observer, 'counter', afterMonster, afterMonster.combat!, nextCombat.guarding);
     if (afterMonster.player.hp <= 0) {
@@ -10328,7 +10356,10 @@ export function performCombatAction(
     finalDamageToMonster = Math.floor(finalDamageToMonster * directMultiplier);
   }
   const observedDirectDamage = Math.min(nextCombat.monsterHp, finalDamageToMonster);
-  const monsterHp = Math.max(0, nextCombat.monsterHp - finalDamageToMonster);
+  const damagedHp = Math.max(0, nextCombat.monsterHp - finalDamageToMonster);
+  const monsterHp = damagedHp > 0 && effects.monsterHealing > 0
+    ? Math.min(monster.maxHp, damagedHp + effects.monsterHealing)
+    : damagedHp;
   const actionLine =
     action === 'use_thunder_talisman'
       ? `雷火符炸开，造成 ${observedDirectDamage} 点伤害。`
@@ -10375,7 +10406,7 @@ export function performCombatAction(
   }
   nextCombat = nextState.combat ?? nextCombat;
   const retaliationMonster = getCombatEncounterProfile(nextState)?.monster ?? monster;
-  let afterMonster = monsterAttack(nextState, retaliationMonster, nextCombat, effects.damageToPlayer, 1, counterBlow);
+  let afterMonster = monsterAttack(nextState, retaliationMonster, nextCombat, effects.damageToPlayer, 1, counterBlow, effects.retaliationMultiplier);
   afterMonster = releasePendingAfterbeat(afterMonster);
   observeCombatPresentation(observer, 'counter', afterMonster, afterMonster.combat!, nextCombat.guarding);
   if (afterMonster.player.hp <= 0) {

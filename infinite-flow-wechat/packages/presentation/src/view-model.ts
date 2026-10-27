@@ -2246,6 +2246,22 @@ function buildHubPanelProjection(
   throw new Error(`Unsupported hub panel: ${String(exhaustive)}`);
 }
 
+/** The hidden tester jump to the chapter selected at the gate; it overwrites the save, so it is a dangerous action. */
+function buildTestJumpAction(dungeonId: DungeonId): ViewActionModel {
+  const chapter = DUNGEON_ORDER.indexOf(dungeonId) + 1;
+  return commandAction(
+    'hub.entry.test-jump',
+    `跳到第 ${chapter} 章`,
+    'preparation',
+    { type: 'test/jump-to-chapter', chapter },
+    {
+      emphasis: 'danger',
+      readout: `测试用：直接通关第 ${chapter} 章之前的章节，并按第 ${chapter} 章水平配好装备、功法、血统、同伴与资源。`,
+      riskReason: '会覆盖当前存档，无法撤销。'
+    }
+  );
+}
+
 function buildHubProjection(state: GameState, localUiState: PresentationLocalUiState): PhaseProjection {
   const draft = localUiState.entryDraft ?? defaultEntryDraft();
   const dungeon = DUNGEONS[draft.dungeonId] ?? DUNGEONS[FIRST_DUNGEON_ID];
@@ -2281,7 +2297,8 @@ function buildHubProjection(state: GameState, localUiState: PresentationLocalUiS
         activePanel
       ))
     }),
-    ...(taskClaims ? { taskClaims } : {})
+    ...(taskClaims ? { taskClaims } : {}),
+    ...(localUiState.testMode ? { testJump: buildTestJumpAction(draft.dungeonId) } : {})
   };
   const metrics: StatusMetric[] = [
     { id: 'hp', label: '生命', value: `${state.player.hp}/${state.player.maxHp}`, symbol: '♥', severity: state.player.hp < state.player.maxHp / 3 ? 'danger' : 'neutral' },
