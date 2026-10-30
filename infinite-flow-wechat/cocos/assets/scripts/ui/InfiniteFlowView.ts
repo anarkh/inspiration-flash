@@ -832,6 +832,8 @@ export function layoutInfiniteFlowVisualStage(
 export interface InfiniteFlowViewDelegate {
   retrySceneAssets?(): void;
   retryPersistence?(): void;
+  /** A committed combat action finished or was dropped, so the screen it held on stage no longer needs its art. */
+  combatPlaybackSettled?(): void;
   activate(
     physicalId: string,
     actionId: string,
@@ -3460,7 +3462,7 @@ export class InfiniteFlowView {
   }
 
   clearSceneVisualAsset(key?: string): void {
-    if (key === undefined) this.cancelCombatPlayback();
+    if (key === undefined) this.cancelCombatPlayback(false, false);
     const failures: unknown[] = [];
     const keys = key === undefined ? Array.from(this.sceneVisuals.keys()) : [key];
     for (const target of keys) {
@@ -3540,6 +3542,14 @@ export class InfiniteFlowView {
     }
   }
 
+  /**
+   * The screen a committed combat action is still animating. The next screen waits for the timeline to end (an encounter
+   * can end on this hit), so the art this one draws must stay loaded until `combatPlaybackSettled`.
+   */
+  combatStageModel(): GameViewModel | undefined {
+    return this.combatPlayback === undefined ? undefined : this.lastModel;
+  }
+
   /** Receives committed presentation frames; never estimates domain damage. */
   resolveCombatPresentation(actionId: string, frames: readonly CombatPresentationFrame[] | undefined): void {
     const playback = this.combatPlayback;
@@ -3580,6 +3590,7 @@ export class InfiniteFlowView {
       const next = this.deferredCombatRender;
       this.deferredCombatRender = undefined;
       if (next !== undefined) this.render(next.model, next.chrome, next.safeInsets);
+      this.delegate.combatPlaybackSettled?.();
     });
     if (!result) this.cancelCombatPlayback(true);
   }
@@ -3603,7 +3614,9 @@ export class InfiniteFlowView {
     this.activateSceneAction(`cocos-auto:${this.physicalSequence}`, choice, choice.event);
   }
 
-  private cancelCombatPlayback(restore = false): void {
+  /** `settle` tells the App the held screen's art is free; a full scene clear comes from the App itself. */
+  private cancelCombatPlayback(restore = false, settle = true): void {
+    const playing = this.combatPlayback !== undefined;
     const next = this.deferredCombatRender;
     this.walkScene?.cancelCombatAction();
     this.combatPlayback = undefined;
@@ -3612,6 +3625,7 @@ export class InfiniteFlowView {
       this.render(next?.model ?? this.lastModel,
         { ...(next?.chrome ?? this.lastChrome), busyActionId: undefined }, next?.safeInsets ?? this.lastSafeInsets);
     }
+    if (settle && playing && !this.destroyed) this.delegate.combatPlaybackSettled?.();
   }
 
   tick(deltaTime: number): void {

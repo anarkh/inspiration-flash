@@ -629,6 +629,7 @@ const virtualModules = new Map([
       destroy() { this.clearVisualAsset(); this.clearSceneVisualAsset(); this.destroyCalls += 1; }
       focusPrimaryActions() {}
       resolveCombatPresentation() {}
+      combatStageModel() { return this.stageModel; }
     }
   `],
   ['cc/env', `
@@ -10402,6 +10403,47 @@ for (const boundary of ['hub', 'destroy']) {
   }
 }
 
+// A hit that ends the encounter: the view keeps animating the fight it started on, so the
+// enemy, the ink controls and the rest of that screen's art stay leased until the view
+// reports the playback settled; then the new screen's lease releases them.
+delete globalThis.wx;
+{
+  const session = assetSession({ autoImages: false, autoSceneImages: false });
+  const client = fakeClient('combat-stage-hold');
+  client.state = {
+    phase: 'combat',
+    visualAssetKey: 'monster:fog_lesser_demon',
+    detail: { kind: 'combat', enemy: { id: 'fog_lesser_demon' }, chapterContext: { dungeonId: 'demon_tower_1' } },
+  };
+  controller.assetSessions.push(session);
+  controller.clientFactories.push(() => Promise.resolve(client));
+  const app = new InfiniteFlowApp();
+  app.start();
+  const view = controller.views.at(-1);
+  await settleUntil(() => session.imageRequests.length === 2 && session.sceneImageRequests.length === 6, 'combat scene art did not start');
+  for (const request of [...session.imageRequests, ...session.sceneImageRequests]) request.complete(undefined, request.image);
+  await settleUntil(() => view.sceneVisuals.has('scene:battle_controls_ink'), 'combat scene art did not load');
+  const fightKeys = [...view.sceneVisuals.keys()];
+  const fightImages = session.sceneImageRequests.filter(({ path }) => path.startsWith('monster-world/') || path === 'scene/battle-controls-ink-v1');
+  assert.equal(fightImages.length, 2);
+  view.stageModel = view.lastRender.model;
+  client.state = {
+    phase: 'hub', visualAssetKey: 'scene:main_god_space',
+    detail: { kind: 'hub', activePanel: 'entry' },
+  };
+  app.refreshViewModel();
+  await drainMicrotasks();
+  for (const key of fightKeys) assert.ok(view.sceneVisuals.has(key), `the fight still on stage keeps ${key} while its hit plays`);
+  assert.ok(fightImages.every(({ image }) => image.refCount === 1), 'the enemy and ink controls stay leased during the playback');
+  view.stageModel = undefined;
+  view.callbacks.combatPlaybackSettled();
+  await drainMicrotasks();
+  assert.ok(!view.sceneVisuals.has('scene:battle_controls_ink'), 'the settled fight releases the ink controls from the view');
+  assert.ok(!fightKeys.some(key => key.startsWith('monster:') && view.sceneVisuals.has(key)), 'the settled fight releases the enemy art from the view');
+  assert.ok(fightImages.every(({ image }) => image.refCount === 0), 'the settled fight releases its leases');
+  app.onDestroy();
+}
+
 // Manual recovery replaces the visual generation, cancels automatic backoff and
 // rejects the previous attempt's late images while preserving the live run.
 delete globalThis.wx;
@@ -11285,7 +11327,9 @@ for (const viewportWidth of [320, 390]) {
   const canvasSize = { width: 750, height: 1334 };
   const canvas = { name: 'walking-canvas', children: [], getComponent() { return { contentSize: canvasSize }; }, addChild(child) { this.children.push(child); child.parent = this; } };
   const calls = [];
-  const view = new SceneFixtureView(canvas, { activate(physicalId, actionId, event) { calls.push({ physicalId, actionId, event }); } });
+  let settledPlaybacks = 0;
+  const view = new SceneFixtureView(canvas, { activate(physicalId, actionId, event) { calls.push({ physicalId, actionId, event }); },
+    combatPlaybackSettled() { settledPlaybacks += 1; } });
   const chrome = { modeKind: 'preview', modeLabel: 'preview', modeDetail: '', activityMessage: '' };
   const atlasKey = 'character:reincarnator_walk';
   view.setSceneVisualAsset({ width: 1254, height: 1254 }, { key: atlasKey, revision: 'fixture' });
@@ -11652,12 +11696,16 @@ for (const viewportWidth of [320, 390]) {
   resolvedBattle.sections[1].detail.enemy.hpPercent = 21;
   resolvedBattle.sections[1].detail.turn = 4;
   view.render(resolvedBattle, chrome, EXPLORE_INSETS_390);
+  assert.equal(view.combatStageModel(), battle, 'the fight that started the action stays on stage while the next screen waits');
   advance(27);
   assertSharedHeaderHealth(root(), 42, 60); // Queued result cannot reveal counter damage early.
   advance(10);
   assertSharedHeaderHealth(root(), 35, 60); // Counter impact displays its authoritative player HP without restoring the old HUD.
+  assert.equal(settledPlaybacks, 0, 'the playback has not settled while the counter plays');
   advance(33);
   assert.equal(view.walkScene.isCombatAnimating(), false, 'actual result playback completes before walking resumes');
+  assert.equal(settledPlaybacks, 1, 'the finished playback reports it settled exactly once');
+  assert.equal(view.combatStageModel(), undefined, 'no screen is held once the playback settles');
   const battlePos = pos();
   key(68, true); advance(12); key(68, false);
   assert.deepEqual(pos(), battlePos, 'combat v2 holds the avatar on its duel mark; walking resumes after the encounter');

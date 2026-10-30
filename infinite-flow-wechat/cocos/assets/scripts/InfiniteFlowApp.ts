@@ -928,6 +928,7 @@ export class InfiniteFlowApp extends Component {
       retryPersistence: () => {
         void this.retryPersistence();
       },
+      combatPlaybackSettled: () => this.requestSceneVisuals(),
     });
     this.render();
     const generation = this.beginBootstrap();
@@ -2569,16 +2570,26 @@ export class InfiniteFlowApp extends Component {
       this.localUiState,
     ) as GameViewModel;
     this.primeSheetFigures();
-    const sceneVisualKeys = getInfiniteFlowSceneVisualKeys(this.viewModel);
-    this.requestVisualAsset(
-      this.viewModel.visualAssetKey,
-      Object.values(sceneVisualKeys),
-    );
+    this.requestSceneVisuals();
     if (this.restartAssetsOnNextRefresh) {
       this.restartAssetsOnNextRefresh = false;
       this.startVisualAssetBootstrap();
     }
     this.render();
+  }
+
+  /**
+   * Leases the current screen's scene art. A committed combat action keeps drawing the screen it started on until its
+   * timeline ends, even when the hit ended the encounter, so that screen's art (the enemy, the party figures, the ink
+   * controls) stays leased until the view reports the playback settled.
+   */
+  private requestSceneVisuals(): void {
+    const viewModel = this.viewModel;
+    if (this.destroyed || viewModel === undefined) return;
+    const stage = this.view?.combatStageModel();
+    const keys = new Set(Object.values(getInfiniteFlowSceneVisualKeys(viewModel)));
+    if (stage !== undefined) for (const key of Object.values(getInfiniteFlowSceneVisualKeys(stage))) keys.add(key);
+    this.requestVisualAsset(viewModel.visualAssetKey, Array.from(keys));
   }
 
   private render(): void {
