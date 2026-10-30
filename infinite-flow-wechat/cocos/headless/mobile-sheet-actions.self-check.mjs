@@ -45,7 +45,8 @@ export class Graphics {
   clear() { this.fills=[]; this.strokes=[]; this.shape=undefined; this.roundRectCalls=0; this.circleCalls=0; }
 }
 export class BlockInputEvents {} export class EventTouch {} export class ImageAsset {}
-export class Mask { static Type={GRAPHICS_RECT:0}; }
+export class Mask { static Type={GRAPHICS_RECT:0,GRAPHICS_ELLIPSE:1}; }
+export class Material { initialize(info) { this.info = info; } } export const builtinResMgr = { get() { return { effectAsset: {} }; } }; export const gfx = { BlendFactor: { ONE: 1, SRC_ALPHA: 2, ONE_MINUS_SRC_ALPHA: 4 } };
 export class ScrollView {
   static EventType={SCROLLING:'scrolling'};
   set content(node) { this._content = node; }
@@ -86,6 +87,7 @@ const bundle = await build({
       export { buildWalkWorld } from './cocos/assets/scripts/ui/walk-world.ts';
       export { getInfiniteFlowSceneVisualKeys } from './cocos/assets/scripts/ui/scene-visuals.ts';
       export { HERO_WALK_ATLAS } from './cocos/assets/scripts/ui/hero-walk-atlas.ts';
+      export { BATTLE_CONTROLS_ATLAS, BATTLE_CONTROLS_KEY, BATTLE_CONTROL_FRAMES } from './cocos/assets/scripts/ui/battle-controls-atlas.ts';
       export { InfiniteFlowView, formatInfiniteFlowHubActionLockedReason, formatInfiniteFlowHubPlayerCopy } from './cocos/assets/scripts/ui/InfiniteFlowView.ts';
       export { DARK_UI } from './cocos/assets/scripts/ui/dark-ui.ts';
       export { COMPACT_SHEET_THEME } from './cocos/assets/scripts/ui/sheet-theme.ts';
@@ -266,6 +268,7 @@ function supplySceneVisualFixtures(controller, model) {
     if (key === undefined || controller.sceneVisuals.has(key)) continue;
     const prop = key.startsWith('scene:dungeon_prop_') ? propLayout[`${key.slice('scene:dungeon_prop_'.length)}-proposed.png`] : undefined;
     const dimensions = key === 'character:reincarnator_walk' ? api.HERO_WALK_ATLAS
+      : key === api.BATTLE_CONTROLS_KEY ? api.BATTLE_CONTROLS_ATLAS
       : prop ?? { width: 1024, height: 1536 };
     controller.setSceneVisualAsset({ width: dimensions.width, height: dimensions.height }, { key, revision: 'complete-mobile-sheet-fixture' });
   }
@@ -558,7 +561,7 @@ let checkedDungeonProps = 0;
     }
   }
 
-  // The fixed HTML room keeps its perimeter collisions without interior debris.
+  // The fixed HTML room keeps its perimeter collisions without interior debris; a battle leaves the room for its own stage.
   for (const phase of ['explore', 'combat']) {
     const model = models.find(model => model.phase === phase);
     assert.ok(model, `${phase}: real room fixture exists`);
@@ -578,6 +581,14 @@ let checkedDungeonProps = 0;
       trackSprite(sprite) { tracked.push(sprite); }, bindHelp() {}, bindInteract() {},
       openDetails() {}, openCodex() {}, setPage() {}, bindLocal() {}, openCombatChoices() {}, bindAction() {},
     });
+    if (phase === 'combat') {
+      assert.ok(nodesIn(rootNode).some(node => node.name === 'BattleStage'), 'combat: the battle draws its own stage');
+      assert.ok(!nodesIn(rootNode).some(node => node.name.startsWith('WalkObstacleFootprint:')), 'combat: the room walls stay out of the battle');
+      assert.equal(JSON.stringify(api.buildWalkWorld(model)), snapshot, 'combat: the battle leaves the original collisions unchanged');
+      rendered.dispose();
+      art.dispose();
+      continue;
+    }
     for (const [index, obstacle] of world.obstacles.entries()) {
       const footprint = nodesIn(rootNode).find(node => node.name === `WalkObstacleFootprint:${index}`);
       assert.deepEqual({ x: footprint.position.x, y: footprint.position.y },
@@ -1514,7 +1525,7 @@ function renderCarry(state, sheetState = { kind: 'character', page: 0, tab: 'car
     const listState = { kind: 'menu', tab: group, page: 0 };
     const list = render(model, listState);
     assertCompactCombatPicker(list, model, group);
-    assert.ok(list.labels.some(label => label.name === 'MobileSheetTitle' && label.text === (group === 'spells' ? '选择法术' : '战斗药品')),
+    assert.ok(list.labels.some(label => label.name === 'MobileSheetTitle' && label.text === (group === 'spells' ? '选择法术' : '战斗道具')),
       `${group}: picker title identifies its purpose`);
     list.local.get('MobileSheetClose')();
     assert.equal(list.closes(), 1, `${group}: cancellation returns to combat locally`);
@@ -1570,12 +1581,13 @@ function renderCarry(state, sheetState = { kind: 'character', page: 0, tab: 'car
     assert.ok(action.enabled, `${weapon} ${actionId}: fixture reaches its usable core state`);
     assert.equal(hud.actions.get(`WalkCombatAction:${actionId}`), action, 'unified button switches between actual basic and weapon commands');
     const nodes = nodesIn(hud.rootNode);
-    assert.equal(nodes.find(node => node.name === `WalkCombatAction:${actionId}Label`).getComponent(api.Label).string,
-      focus === 3 ? '战技' : '攻击', 'the large attack button names the action that will be released');
-    assert.equal(nodes.find(node => node.name === 'WalkCombatAttackMode').getComponent(api.Label).string,
-      focus === 3 ? '战意已满' : '普攻', 'attack mode explains why the weapon skill is ready');
-    assert.equal(nodes.find(node => node.name === 'WalkCombatFocus').getComponent(api.Label).string.replace(/\s/gu, ''),
-      `战意${focus}/${focusModel.sections[1].detail.focus.required}`, 'HUD focus readout uses the projected core threshold');
+    const attackNode = nodes.find(node => node.name === `WalkCombatAction:${actionId}`);
+    // The ink attack carries no name: three drawn dots show the projected gauge, and a full gauge adds the halo.
+    const dots = nodesIn(attackNode).filter(node => node.name.startsWith('WalkCombatFocusDot:'));
+    assert.equal(focusModel.sections[1].detail.focus.required, 3, 'the strip draws exactly the core focus threshold');
+    assert.deepEqual(dots.map(node => node.name.split(':').at(-1)), [0, 1, 2].map(index => index < focus ? 'lit' : 'dark'),
+      'the attack\'s focus dots match the projected focus');
+    assert.equal(nodesIn(attackNode).some(node => node.name === 'ControlHalo'), focus === 3, 'only a full gauge calls out the attack');
   }
 }
 
@@ -1906,6 +1918,38 @@ function viewLifecycle(initialState, { resolve = true, reject = false } = {}) {
     assert.equal(flow.canvas.children.length, 0, `${id}: destroy removes the rendered tree`);
   }
 
+  // Auto battle takes each turn through the same animated path as a tap and stops once switched off.
+  const longFight = { ...state, combat: { ...state.combat, monsterHp: 5000 } };
+  const auto = viewLifecycle(longFight);
+  // The ink switch has no words: its halo shows (and its arrow turns) while auto battle runs.
+  const autoOn = () => nodesIn(auto.node('WalkCombatAuto')).find(node => node.name === 'ControlHalo').active;
+  assert.equal(autoOn(), false, 'auto battle starts switched off');
+  auto.tick(20);
+  assert.equal(auto.dispatched.length, 0, 'nothing acts on its own while auto is off');
+  touch(auto.node('WalkCombatAuto'));
+  assert.equal(autoOn(), true, 'the switch shows that auto battle is on');
+  auto.tick(5);
+  assert.equal(auto.dispatched.length, 0, 'auto battle pauses before acting so the turn can be read');
+  auto.tick(8);
+  assert.equal(auto.dispatched.length, 1, 'auto battle takes one turn after its pause');
+  const first = auto.dispatched[0];
+  assert.match(first.physicalId, /^cocos-auto:/u, 'the auto turn is its own physical input');
+  const firstModel = api.buildGameViewModel(longFight, {});
+  const ready = action => action.enabled && action.event !== undefined;
+  const expected = firstModel.sections[2].actions.find(action => action.combatAction === 'weapon_skill' && ready(action))
+    ?? firstModel.sections[2].actions.find(action => ready(action) && action.recommendation === 'recommended' && ['attack', 'art', 'guard'].includes(action.combatAction))
+    ?? firstModel.sections[2].actions.find(action => action.combatAction === 'attack' && ready(action));
+  assert.equal(first.actionId, expected.actionId, 'auto battle uses the recommended command');
+  assert.deepEqual(first.event, expected.event, 'auto battle submits the projected command unchanged');
+  auto.tick(60);
+  assert.ok(auto.dispatched.length >= 2, 'auto battle carries on to the next turn');
+  touch(auto.node('WalkCombatAuto'));
+  assert.equal(autoOn(), false, 'switching off shows at once, even mid-turn');
+  const settled = auto.dispatched.length;
+  auto.tick(80);
+  assert.ok(auto.dispatched.length <= settled + 1, 'once off, auto battle starts no new turn');
+  auto.controller.destroy();
+
   const winning = { ...state, combat: { ...state.combat, monsterHp: 1 } };
   const terminal = viewLifecycle(winning, { resolve: false });
   touch(terminal.node('WalkCombatAction:combat.action:attack'));
@@ -1975,7 +2019,8 @@ function viewLifecycle(initialState, { resolve = true, reject = false } = {}) {
   for (const [label, tapAfter, perfect] of [['on the ring', 6, true], ['too early', 2, false], ['untouched', undefined, false]]) {
     const flow = viewLifecycle(heavy);
     assert.ok(flow.node('WalkEnemyIntentChip'), `${label}: the intent callout marks the parry window`);
-    assert.ok(flow.node('WalkCombatGuardChip'), `${label}: the guard control marks the parry window`);
+    assert.ok(nodesIn(flow.node('WalkCombatAction:combat.action:guard')).some(node => node.name === 'ControlHalo'),
+      `${label}: the guard control's halo marks the parry window`);
     const shownGuard = flow.model().sections[2].actions.find(action => action.actionId === 'combat.action:guard');
     touch(flow.node('WalkCombatAction:combat.action:guard'));
     flow.tick(2);
@@ -1989,7 +2034,8 @@ function viewLifecycle(initialState, { resolve = true, reject = false } = {}) {
     const counter = flow.frames().find(frame => frame.stage === 'counter');
     assert.equal(counter?.perfectParry === true, perfect, `${label}: the core confirms the parry in its counter frame`);
     assert.equal(flow.state().combat.weaponFocus, perfect ? 3 : 2, `${label}: focus follows the authoritative result`);
-    flow.tick(12);
+    // Allies run in and back before the counter, so the turn takes up to about 1.6s.
+    flow.tick(17);
     assert.equal(flow.controller.walkScene?.isCombatAnimating() ?? false, false, `${label}: playback completes`);
     flow.controller.destroy();
     parryCases += 1;
@@ -3512,20 +3558,27 @@ for (const model of models) {
     const hudNodes = nodesIn(hud.rootNode);
     assert.ok(!hudNodes.some(node => node.name.startsWith('WalkCombatPage')), 'combat HUD does not paginate');
     if (original.length > 0) {
-      const fixedControl = node => /^WalkCombat(?:Choice:(?:spells|medicines)|Action:combat\.action:(?:attack|weapon_skill|guard|use_thunder_talisman|escape))$/.test(node.name);
+      const fixedControl = node => /^WalkCombat(?:Choice:(?:spells|medicines)|Action:combat\.action:(?:attack|weapon_skill|guard|escape))$/.test(node.name);
       const controls = hudNodes.filter(fixedControl);
-      assert.equal(controls.length, 6, 'combat HUD exposes exactly six fixed controls');
-      // Combat v2: one large attack control, four equal satellites and a small escape control.
-      const sizeOf = node => node.getComponent(api.UITransform).contentSize.width;
-      const attackSize = sizeOf(controls.find(node => /combat\.action:(?:attack|weapon_skill)$/.test(node.name)));
-      const satellites = controls.filter(node => /^WalkCombat(?:Choice:|Action:combat\.action:(?:guard|use_thunder_talisman)$)/.test(node.name));
-      assert.equal(satellites.length, 4, 'guard, spells, talisman and medicines circle the attack control');
-      assert.equal(new Set(satellites.map(sizeOf)).size, 1, 'the four satellites share one size');
-      assert.ok(attackSize > sizeOf(satellites[0]) * 1.5, 'the attack control is the dominant target');
+      assert.equal(controls.length, 5, 'combat HUD exposes exactly five fixed commands');
+      // The ink row, left to right: escape (stacked over auto), spells, items, guard, then the large attack; the talisman sits in the items picker.
+      const order = ['combat\\.action:escape', 'Choice:spells', 'Choice:medicines', 'combat\\.action:guard', 'combat\\.action:(?:attack|weapon_skill)'];
+      const row = order.map(pattern => controls.find(node => new RegExp(pattern).test(node.name)));
+      assert.ok(row.every(Boolean), 'every command has its own control');
+      assert.ok(!hudNodes.some(node => node.name === 'WalkCombatAction:combat.action:use_thunder_talisman'), 'the talisman moved into the items picker');
+      const boxOf = node => ({ ...node.getComponent(api.UITransform).contentSize, x: node.position.x, y: node.position.y });
+      const boxes = row.map(boxOf);
+      for (let index = 1; index < boxes.length; index += 1) {
+        // Each control sits right of the one before, and their touch areas never overlap.
+        assert.ok(boxes[index - 1].x + boxes[index - 1].width / 2 <= boxes[index].x - boxes[index].width / 2 + 1e-6,
+          `${row[index].name}: sits right of ${row[index - 1].name} without overlapping it`);
+      }
+      const visualHeight = node => node.getChildByName('ButtonVisual').getComponent(api.UITransform).contentSize.height;
+      assert.ok(row.slice(0, -1).every(node => visualHeight(row.at(-1)) > visualHeight(node)), 'the attack is the largest control');
       for (const node of controls) {
         const { width, height } = node.getComponent(api.UITransform).contentSize;
-        assert.equal(width, height, `${node.name}: round control keeps a square touch box`);
-        assert.ok(width >= 44 * 750 / 390 - 1e-6, `${node.name}: touch target stays at least 44 visible pixels`);
+        assert.ok(width >= 104 - 1e-6 && height >= 104 - 1e-6, `${node.name}: touch box stays at least 104 design units`);
+        assert.ok(visualHeight(node) <= height + 1e-6, `${node.name}: the ink art stays inside its touch box`);
       }
       const weapon = original.find(action => action.combatAction === 'weapon_skill' && action.enabled && action.event);
       const expectedAttack = weapon ?? original.find(action => action.combatAction === 'attack');
@@ -3533,6 +3586,10 @@ for (const model of models) {
       assert.equal(attackNodes.length, 1, 'basic attack and weapon skill share one control');
       assert.equal(attackNodes[0].name, `WalkCombatAction:${expectedAttack.actionId}`, 'attack control uses the available weapon skill or actual basic attack');
       assert.equal(hud.actions.get(attackNodes[0].name), expectedAttack, 'unified attack binds its exact original action');
+      const enemyNode = hudNodes.find(node => node.name.startsWith('WalkTarget:'));
+      assert.ok(enemyNode, 'the enemy stands on the battle stage');
+      assert.equal(hud.actions.get(enemyNode.name), expectedAttack.enabled && expectedAttack.event ? expectedAttack : undefined,
+        'tapping the enemy attacks it with the same original action, and only when the attack is available');
       const stalePage = renderCombatHud(model, 99);
       assert.deepEqual(nodesIn(stalePage.rootNode).filter(fixedControl).map(node => node.name),
         controls.map(node => node.name), 'legacy page state cannot hide or change fixed controls');

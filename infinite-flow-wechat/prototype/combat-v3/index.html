@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>战斗 v3 · 对阵布局原型</title>
+  <!-- The static server sends no cache headers: bump ?v= whenever style.css or app.js changes, or browsers keep the old files. -->
+  <link rel="stylesheet" href="style.css?v=20261029f">
+</head>
+<body>
+  <div class="preview-tools" aria-label="原型演示设置">
+    <select id="layout" aria-label="布局">
+      <option value="diagonal">斜向对阵</option>
+      <option value="vertical">上下对阵</option>
+    </select>
+    <select id="scenario" aria-label="演示状态">
+      <option value="elite">单个精英</option>
+      <option value="three">三个敌人</option>
+      <option value="five">五个敌人</option>
+      <option value="heavy">重击预警</option>
+      <option value="solo">无队友</option>
+    </select>
+    <select id="skin" aria-label="按钮样式">
+      <option value="gold">金边圆键</option>
+      <option value="plates">铁券四键</option>
+      <option value="wide">主键加宽</option>
+      <option value="sheet">底部弹窗</option>
+      <option value="tabs">分段签条</option>
+    </select>
+    <button id="reset" type="button">重置</button>
+  </div>
+
+  <main class="game diagonal" id="game" data-skin="gold" aria-label="对阵布局战斗原型">
+    <div class="backdrop" id="backdrop" aria-hidden="true"></div>
+
+    <header class="hud">
+      <button class="avatar" type="button" aria-label="角色"><span class="avatar-art"></span><span>角色</span></button>
+      <div class="hud-body">
+        <div class="hud-name"><strong>轮回者</strong><span class="hud-hp" id="hud-hp">224/224</span></div>
+        <div class="bar hero-bar" aria-hidden="true"><span class="fill" id="hud-fill"></span></div>
+      </div>
+      <div class="hud-tools">
+        <!-- 顶栏沿用游戏里的共享顶栏，不在这次改动范围。 -->
+        <button class="tool" type="button" aria-label="背包"><span data-icon="bag"></span><small>背包</small></button>
+        <button class="tool" type="button" aria-label="菜单"><span data-icon="menu"></span><small>菜单</small></button>
+      </div>
+    </header>
+
+    <!-- 战场：敌我两侧对峙；敌方按阵位排开，可容纳多个敌人。位置由 app.js 按布局与战场尺寸摆放。 -->
+    <section class="field" id="field" aria-label="战场">
+      <div id="enemies"></div>
+      <button class="intent" id="intent" type="button">
+        <span class="intent-icon" id="intent-icon"></span>
+        <span class="intent-copy"><strong id="intent-name">常规追击</strong><span id="intent-detail">行动后常规反击</span></span>
+      </button>
+
+      <div class="unit ally companion" id="companion">
+        <div class="ring" aria-hidden="true"></div>
+        <img class="art" src="../../cocos/assets/resources/character/qin-che-world-v1.png" alt="秦彻">
+        <span class="tag">秦彻</span>
+      </div>
+      <div class="unit hero" id="hero">
+        <div class="ring" aria-hidden="true"></div>
+        <div class="hero-sprite" id="hero-sprite"><div class="hero-frame" id="hero-frame"></div></div>
+        <div class="bar unit-bar" aria-hidden="true"><span class="fill" id="hero-fill"></span></div>
+      </div>
+      <div class="unit ally pet" id="pet">
+        <div class="ring" aria-hidden="true"></div>
+        <img class="art" src="../../cocos/assets/resources/pet/ash-hound-world-v1.png" alt="烬火犬">
+        <span class="tag">烬火犬</span>
+      </div>
+    </section>
+
+    <!-- 指令台：四个键（法术、道具、防御、攻击），由 app.js 生成；样式见 style.css 的按钮样式。 -->
+    <nav class="dock" id="dock" aria-label="战斗指令">
+      <div class="dock-panel" id="dock-panel" aria-hidden="true"></div>
+      <p class="ticker" aria-live="polite"><span class="round">第 <strong id="turn">1</strong> 回合</span><span id="ticker">敌人出现。</span></p>
+      <!-- 逃跑和自动不常用，收到战报行末尾两个小开关。 -->
+      <div class="utility"><button class="mini" id="escape-mini" type="button">逃跑</button><button class="mini auto-mini" id="auto-mini" type="button" aria-pressed="false"><span class="dot"></span>自动</button></div>
+      <div class="dock-body" id="dock-body"></div>
+    </nav>
+
+    <canvas class="vfx" id="vfx" aria-hidden="true"></canvas>
+    <svg class="fx" id="fx" aria-hidden="true"></svg>
+    <div class="screen-flash" id="screen-flash" aria-hidden="true"></div>
+    <div class="numbers" id="numbers" aria-hidden="true"></div>
+    <div class="banner" id="banner" aria-hidden="true"></div>
+
+    <div class="sheet" id="sheet" hidden>
+      <div class="sheet-head"><strong id="sheet-title">选择法术</strong><button type="button" id="sheet-close" aria-label="关闭">×</button></div>
+      <div class="sheet-list" id="sheet-list"></div>
+    </div>
+  </main>
+
+  <script src="app.js?v=20261029f"></script>
+</body>
+</html>

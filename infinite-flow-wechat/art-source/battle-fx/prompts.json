@@ -1,0 +1,179 @@
+{
+  "revision": 1,
+  "tool": "built-in imagegen",
+  "direction": "Turn-based battle presentation in the spirit of classic Chinese MMO turn-based battles (Fantasy Westward Journey style readability), kept in this game's grounded dark-fantasy look: weathered charcoal, old gold, oxidized cyan.",
+  "sharedPrompts": {
+    "effect": "Create a production-ready single isolated combat visual-effect sprite for an original Chinese infinite-flow survival RPG with classic turn-based battles. Hand-painted 2D game VFX, crisp readable shapes that still read clearly when shown about 120 pixels wide on a phone, luminous core with soft outer glow, a few sharp highlights, no characters, no weapons held by anyone, no creatures, no scenery. Center the effect on the canvas with at least 8 percent padding on every side; nothing touches the canvas edge. TRUE transparent alpha background throughout, no black or dark backdrop, no vignette, no floor, no frame, no card, no text, no numbers, no watermark. The glow must fade to full transparency, not to a dark halo. Palette restrained to the game's dark-fantasy look: warm old gold, bone white, oxidized cyan, deep ember red or jade green as the effect asks; no rainbow, no neon pink, no lens-flare stars.",
+    "pose": "Create a production-ready single full-body battle pose sprite for an original Chinese infinite-flow survival RPG with classic turn-based battles. Use the attached canonical image ONLY as identity, clothing and material reference and keep the same face, apparent age, hair, outfit and proportions; draw a new action pose. Hand-painted grounded dark-fantasy illustration with restrained retro-science-fiction, adult human proportions around 6 heads tall, NOT chibi. Slight elevated 25-degree camera, near-orthographic, body turned three-quarters toward the viewer's right (where the enemy stands), face clearly visible, entire head to soles visible. Center the character on a 1024x1536 portrait canvas, the supporting foot's sole at 93 percent height, top of head at about 7 percent, at least 10 percent side padding, every limb, weapon and effect inside the canvas. Transparent alpha background throughout, no floor, no backdrop, no frame, no caption, no text, no watermark, no decorative ground shadow. Crisp readable silhouette at small mobile size, weathered charcoal materials, muted old-gold highlights, sparse oxidized-cyan rim light, soft top-left illumination. Any effect glow stays small and close to the hands or weapon."
+  },
+  "assets": [
+    {
+      "id": "slash",
+      "group": "effect",
+      "priority": 1,
+      "sourceFile": "fx-slash-v1.png",
+      "canvas": "1024x1024",
+      "use": "主角普通攻击、秦彻出手的刀光",
+      "subject": "A single sweeping crescent slash trail of white-gold light, a sharp arc running from the upper right to the lower left, thin at both tips and thickest in the middle, with fine parallel motion streaks along the arc and a few tiny gold sparks flying off the outer edge."
+    },
+    {
+      "id": "crescent",
+      "group": "effect",
+      "priority": 1,
+      "sourceFile": "fx-crescent-v1.png",
+      "canvas": "1024x1024",
+      "use": "武器战技（战意满后的大招）",
+      "subject": "A powerful double crescent slash: two overlapping wide arcs of molten old-gold light with a white-hot inner edge, running from the upper right to the lower left, trailing ember sparks and a faint ring of cracked golden runes around the strike point. Clearly stronger and wider than a normal slash, still a single compact effect."
+    },
+    {
+      "id": "arcane-burst",
+      "group": "effect",
+      "priority": 1,
+      "sourceFile": "fx-arcane-burst-v1.png",
+      "canvas": "1024x1024",
+      "use": "法术命中、周映雪出手",
+      "subject": "A spherical arcane burst of oxidized-cyan light: a bright pale-cyan core, a thin ring of rotating talisman-script glyphs around it, and short sharp rays bursting outward, with a few small floating rune fragments. Looks like a spell detonating on a target."
+    },
+    {
+      "id": "thunder",
+      "group": "effect",
+      "priority": 1,
+      "sourceFile": "fx-thunder-v1.png",
+      "canvas": "1024x1536",
+      "use": "雷火符：从天而降的雷火",
+      "subject": "A vertical bolt of lightning wrapped in fire striking straight down from the top of the canvas to an impact flash near the bottom: a jagged white-gold lightning core, ember-orange flame licking around it, and a small burst of sparks and a burning paper-talisman fragment at the impact point near 85 percent height. The bolt starts at about 5 percent height."
+    },
+    {
+      "id": "hit-spark",
+      "group": "effect",
+      "priority": 1,
+      "sourceFile": "fx-hit-spark-v1.png",
+      "canvas": "1024x1024",
+      "use": "所有命中的受击火花",
+      "subject": "A small sharp impact starburst: a white-hot center, six to eight uneven pointed gold shards radiating out, and a handful of tiny flying sparks. Compact and punchy, like the moment a blow lands."
+    },
+    {
+      "id": "claw",
+      "group": "effect",
+      "priority": 1,
+      "sourceFile": "fx-claw-v1.png",
+      "canvas": "1024x1024",
+      "use": "敌人普通反击",
+      "subject": "Three parallel savage claw slashes torn diagonally from the upper left to the lower right, deep ember-red with a dark crimson edge and a bright red-orange inner line, with small dark red droplet-like sparks (no gore, no blood pools)."
+    },
+    {
+      "id": "shockwave",
+      "group": "effect",
+      "priority": 1,
+      "sourceFile": "fx-shockwave-v1.png",
+      "canvas": "1024x1024",
+      "use": "敌人蓄力重击",
+      "subject": "A heavy crushing impact: a jagged red-black shockwave ring bursting outward from a bright ember-red center, cracked shards of stone-like debris flying out, and a dark red flash. Reads as a dangerous heavy blow."
+    },
+    {
+      "id": "heal",
+      "group": "effect",
+      "priority": 1,
+      "sourceFile": "fx-heal-v1.png",
+      "canvas": "1024x1024",
+      "use": "止血丹、陆观澜急救、吸血回复",
+      "subject": "A gentle rising healing light: a soft jade-green column of light rising from a small glowing ring at the bottom, with drifting jade leaves and small floating golden herb-sigil motes rising upward. Calm and restorative."
+    },
+    {
+      "id": "guard-sigil",
+      "group": "effect",
+      "priority": 1,
+      "sourceFile": "fx-guard-sigil-v1.png",
+      "canvas": "1024x1024",
+      "use": "防御、完美格挡",
+      "subject": "A front-facing round protective sigil shield of old-gold light: a circular barrier disc with an engraved hexagonal talisman pattern and a bright rim, slightly translucent in the middle, a few small gold sparks on the rim. Seen straight on like a shield raised toward the viewer."
+    },
+    {
+      "id": "ward-dome",
+      "group": "effect",
+      "priority": 2,
+      "sourceFile": "fx-ward-dome-v1.png",
+      "canvas": "1024x1024",
+      "use": "灵障与血统护盾",
+      "subject": "A translucent protective dome bubble of pale oxidized-cyan light, a hemisphere seen from a slight elevated angle, with a brighter rim, faint hexagonal facets and a soft glow at the base ellipse. Mostly transparent inside so a character can be seen through it."
+    },
+    {
+      "id": "aura-ring",
+      "group": "effect",
+      "priority": 2,
+      "sourceFile": "fx-aura-ring-v1.png",
+      "canvas": "1024x1024",
+      "use": "灵宠辅助、功法战技的脚下光环",
+      "subject": "A flat glowing ring of jade-green and gold light lying on the ground, seen from a 25-degree elevated angle so it is a wide ellipse, with small rune marks around the ring and a few motes rising from it. The ellipse fills the width of the canvas within the padding and is centered vertically."
+    },
+    {
+      "id": "smoke",
+      "group": "effect",
+      "priority": 2,
+      "sourceFile": "fx-smoke-v1.png",
+      "canvas": "1024x1024",
+      "use": "敌人被击败消散、逃跑",
+      "subject": "A puff of dark charcoal-grey smoke with soft wisps and a few faint ember specks inside, billowing outward and upward, edges dissolving into transparency."
+    },
+    {
+      "id": "hero-attack",
+      "group": "pose",
+      "priority": 2,
+      "sourceFile": "hero-attack-v1.png",
+      "reference": "art-source/hero-redesign/reincarnator-fullbody-v1.png",
+      "canvas": "1024x1536",
+      "use": "主角普通攻击、战技的出手姿势",
+      "subject": "The reincarnator (young East Asian man with a high topknot, teal scarf, charcoal layered field robe, one bronze shoulder guard, leather belt with pouches, leather bracers and tall boots) caught mid-lunge in a forward slashing strike: front knee bent, weight forward, his short blade swung across his body in a wide arc toward the viewer's right, scarf and robe tails flaring behind him."
+    },
+    {
+      "id": "hero-cast",
+      "group": "pose",
+      "priority": 2,
+      "sourceFile": "hero-cast-v1.png",
+      "reference": "art-source/hero-redesign/reincarnator-fullbody-v1.png",
+      "canvas": "1024x1536",
+      "use": "主角施法、使用符箓",
+      "subject": "The reincarnator (same outfit: high topknot, teal scarf, charcoal layered robe, bronze shoulder guard, belt pouches, bracers, tall boots) in a casting stance: feet planted, one arm thrust toward the viewer's right holding a glowing paper talisman between two fingers, the other hand forming a sign at his chest, a small ring of pale cyan glyphs around the talisman, robe stirred by the spell."
+    },
+    {
+      "id": "hero-idle",
+      "group": "pose",
+      "priority": 2,
+      "sourceFile": "hero-idle-v1.png",
+      "reference": "art-source/hero-redesign/reincarnator-fullbody-v1.png",
+      "canvas": "1024x1536",
+      "use": "主角在战斗中的待机站姿（比行走图更清晰）",
+      "subject": "The reincarnator (same outfit: high topknot, teal scarf, charcoal layered robe, bronze shoulder guard, belt pouches, bracers, tall boots) in a ready combat stance facing the viewer's right: knees slightly bent, short blade held low in the right hand, left hand open and ready, alert expression."
+    },
+    {
+      "id": "qin-che-attack",
+      "group": "pose",
+      "priority": 2,
+      "sourceFile": "qin-che-attack-v1.png",
+      "reference": "art-source/party-world/qin-che-world-v1.png",
+      "canvas": "1024x1536",
+      "use": "秦彻出手",
+      "subject": "秦彻 (same heavy battered black plate armor, oxblood scarf, oversized right shoulder plate, tall riveted tower shield) driving forward in a shield bash toward the viewer's right: shield thrust ahead, body leaning in behind it, short heavy blade raised in the other hand ready to follow up."
+    },
+    {
+      "id": "zhou-yingxue-cast",
+      "group": "pose",
+      "priority": 2,
+      "sourceFile": "zhou-yingxue-cast-v1.png",
+      "reference": "art-source/party-world/zhou-yingxue-world-v1.png",
+      "canvas": "1024x1536",
+      "use": "周映雪出手",
+      "subject": "周映雪 (same black chin-length bob, round gold-rimmed glasses, plum high-collared shirt, long charcoal leather coat) casting toward the viewer's right: open notebook held in one hand, the other arm extended with two fingers pointing, a thin line of violet-cyan analysis glyphs streaming from her fingertips toward the right, coat flaring slightly."
+    },
+    {
+      "id": "lu-guanlan-throw",
+      "group": "pose",
+      "priority": 2,
+      "sourceFile": "lu-guanlan-throw-v1.png",
+      "reference": "art-source/party-world/lu-guanlan-world-v1.png",
+      "canvas": "1024x1536",
+      "use": "陆观澜出手",
+      "subject": "陆观澜 (same swept-back salt-and-pepper hair, goatee, dusty off-white field jacket over a charcoal vest, olive backpack straps, medic satchel) mid-throw toward the viewer's right: his arm swinging forward releasing a small glass vial that trails a faint green glow, the other hand steadying the satchel, stance braced."
+    }
+  ]
+}

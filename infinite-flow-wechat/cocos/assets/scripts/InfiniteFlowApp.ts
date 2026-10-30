@@ -71,8 +71,8 @@ const CONFIG_BUNDLE_NAME = 'config';
 const RESOURCES_BUNDLE_NAME = 'resources';
 const ASSET_MANIFEST_PATH = 'asset-manifest';
 const ASSET_MANIFEST_UUID = '3d0842ec-43f7-4b5f-961f-39edb535ccd7';
-const EXPECTED_MANIFEST_REVISION = 'sha256:d72d289e104c5df869e30f45af09deee601ed52fb1bf9868229e7a266bf7bfbb';
-const EXPECTED_MANIFEST_ASSET_COUNT = 323;
+const EXPECTED_MANIFEST_REVISION = 'sha256:66666c18678a4db1ca2b93db19265f911dfb44e4370b777d6d21348eebed747f';
+const EXPECTED_MANIFEST_ASSET_COUNT = 324;
 const GAME_ASSET_KINDS = new Set([
   'character',
   'npc',
@@ -928,6 +928,7 @@ export class InfiniteFlowApp extends Component {
       retryPersistence: () => {
         void this.retryPersistence();
       },
+      combatPlaybackSettled: () => this.requestSceneVisuals(),
     });
     this.render();
     const generation = this.beginBootstrap();
@@ -2569,16 +2570,26 @@ export class InfiniteFlowApp extends Component {
       this.localUiState,
     ) as GameViewModel;
     this.primeSheetFigures();
-    const sceneVisualKeys = getInfiniteFlowSceneVisualKeys(this.viewModel);
-    this.requestVisualAsset(
-      this.viewModel.visualAssetKey,
-      Object.values(sceneVisualKeys),
-    );
+    this.requestSceneVisuals();
     if (this.restartAssetsOnNextRefresh) {
       this.restartAssetsOnNextRefresh = false;
       this.startVisualAssetBootstrap();
     }
     this.render();
+  }
+
+  /**
+   * Leases the current screen's scene art. A committed combat action keeps drawing the screen it started on until its
+   * timeline ends, even when the hit ended the encounter, so that screen's art (the enemy, the party figures, the ink
+   * controls) stays leased until the view reports the playback settled.
+   */
+  private requestSceneVisuals(): void {
+    const viewModel = this.viewModel;
+    if (this.destroyed || viewModel === undefined) return;
+    const stage = this.view?.combatStageModel();
+    const keys = new Set(Object.values(getInfiniteFlowSceneVisualKeys(viewModel)));
+    if (stage !== undefined) for (const key of Object.values(getInfiniteFlowSceneVisualKeys(stage))) keys.add(key);
+    this.requestVisualAsset(viewModel.visualAssetKey, Array.from(keys));
   }
 
   private render(): void {

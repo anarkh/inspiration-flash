@@ -16,11 +16,15 @@ export class UITransform { setContentSize(size) { this.contentSize=size; } }
 export class Size { constructor(width,height) { Object.assign(this,{width,height}); } }
 export class Vec3 { constructor(x,y,z=0) { Object.assign(this,{x,y,z}); } }
 export class Color { constructor(r,g,b,a=255) { Object.assign(this,{r,g,b,a}); } }
-export class Graphics { clear() {} moveTo() {} lineTo() {} stroke() {} }
+export class Graphics { constructor() { this.fills=0; this.strokes=0; } clear() { this.fills=0; this.strokes=0; } moveTo() {} lineTo() {} close() {} stroke() { this.strokes++; } circle() {} fill() { this.fills++; } }
+export class Material { initialize(info) { this.info=info; } }
+export const builtinResMgr = { get(name) { return { effectAsset: { name } }; } };
+export const gfx = { BlendFactor: { ONE: 1, SRC_ALPHA: 2, ONE_MINUS_SRC_ALPHA: 4 } };
+export { Graphics as TestGraphics };
 export class Label { static HorizontalAlign={CENTER:1}; static VerticalAlign={CENTER:1}; }
 `;
 const bundle = await build({
-  stdin: { contents: `export { createInfiniteFlowCombatEffects } from './cocos/assets/scripts/ui/InfiniteFlowCombatEffects.ts'; export { Node, Label } from 'cc';`, resolveDir: root, loader: 'ts' },
+  stdin: { contents: `export { createInfiniteFlowCombatEffects } from './cocos/assets/scripts/ui/InfiniteFlowCombatEffects.ts'; export { Node, Label, Graphics } from 'cc';`, resolveDir: root, loader: 'ts' },
   absWorkingDir: root, bundle: true, write: false, format: 'esm', platform: 'node', target: 'node20',
   plugins: [{ name: 'combat-effects-cc', setup(builder) {
     builder.onResolve({ filter: /^cc$/ }, () => ({ path: 'cc', namespace: 'combat-effects-cc' }));
@@ -34,7 +38,7 @@ const effect = api.createInfiniteFlowCombatEffects(rootNode, {
   getAnchors: () => ({ player: { x: -100, y: 0 }, enemy: { x: 120, y: 45 } }),
   movePlayer: offset => { playerOffset=offset; }, moveEnemy: offset => { enemyOffset=offset; },
 });
-const labels = () => rootNode.children[0].children.map(node => node.getComponent(api.Label));
+const labels = () => rootNode.children[0].children.map(node => node.getComponent(api.Label)).filter(Boolean);
 const advance = count => { for (let i=0;i<count;i++) effect.tick(0.05); };
 for (const kind of ['attack','weapon','art','pill','guard','mist','iron','talisman','escape','other']) {
   let impacts=0, counters=0, completions=0;
@@ -63,6 +67,65 @@ for (const kind of ['attack','weapon','art','pill','guard','mist','iron','talism
   assert.equal(effect.isPlaying(), false);
   assert.deepEqual(playerOffset, { x: 0, y: 0 });
   assert.deepEqual(enemyOffset, { x: 0, y: 0 });
+}
+// Turn-based melee: the hero runs up and strikes, runs back before anything else acts, then the enemy runs over to counter.
+{
+  const offsets = [], poses = [], enemyMoves = [], punches = [], tilts = [], ghosts = { player: [], enemy: [] };
+  const meleeMask = new api.Node('MeleeMask');
+  const melee = api.createInfiniteFlowCombatEffects(meleeMask, {
+    getAnchors: () => ({ player: { x: -100, y: 0 }, enemy: { x: 120, y: 45 } }),
+    movePlayer: offset => offsets.push(offset), moveEnemy: offset => enemyMoves.push(offset),
+    posePlayer: (pose, stride) => poses.push([pose, stride]), dashGap: 40,
+    heights: { player: 150, enemy: 200 },
+    punchWorld: (scale, focus) => punches.push({ scale, focus }), tiltEnemy: degrees => tilts.push(degrees),
+    setAfterimages: (who, list) => { if (who in ghosts) ghosts[who].push(list); },
+  });
+  const graphics = meleeMask.children[0].getComponent(api.Graphics);
+  // Light adds to the stage like the prototype's `lighter` canvas; only the red bruise keeps normal blending.
+  const glowBlend = graphics.customMaterial?.info;
+  assert.equal(glowBlend?.effectAsset.name, 'ui-graphics-material', 'effects reuse the engine graphics effect');
+  assert.equal(glowBlend?.defines.USE_LOCAL, true, 'effects keep graphics local-space vertices');
+  assert.equal(glowBlend?.states.blendState.targets[0].blendDst, 1, 'effects blend additively');
+  assert.equal(glowBlend?.states.blendState.targets[0].blendSrc, 1, 'premultiplied graphics colour is added as is');
+  const shade = meleeMask.children[0].children.find(node => node.name === 'WalkCombatShade').getComponent(api.Graphics);
+  assert.equal(shade.customMaterial, undefined, 'the bruise layer keeps normal blending');
+  let bruises = 0;
+  const shadeStroke = shade.stroke.bind(shade);
+  shade.stroke = () => { bruises++; shadeStroke(); };
+  const tick = seconds => { for (let t = 0; t < seconds - 1e-9; t += 0.02) melee.tick(0.02); };
+  const reach = offset => Math.hypot(offset.x, offset.y);
+  melee.start('attack', () => {});
+  tick(0.3);
+  assert.ok(reach(offsets.at(-1)) > 150, 'the hero has run up to the enemy at impact');
+  assert.ok(poses.some(([pose]) => pose === 'advance'), 'the hero strides on the way in');
+  const strides = new Set(poses.filter(([pose]) => pose === 'advance').map(([, stride]) => stride % 4));
+  assert.ok(strides.size > 1, 'the stride keeps changing while running');
+  assert.ok(ghosts.player.some(list => list.length === 3 && list.every(({ opacity }) => opacity > 0 && opacity < 1)),
+    'afterimages trail the hero on the way in');
+  melee.resolve({ enemyDamage: 10, counter: true, playerDamage: 3 }, () => {});
+  tick(0.06);
+  assert.ok(graphics.fills > 0, 'the hit-stop holds a lit first frame of the hit');
+  tick(0.14);
+  assert.ok(graphics.fills > 20, 'sparks, the bloom and the crescent are drawn while the hit plays');
+  assert.ok(punches.some(({ scale, focus }) => scale > 1.01 && focus.x === 120 && focus.y === 45), 'the camera leans in toward the struck enemy');
+  assert.ok(tilts.some(degrees => Math.abs(degrees) > 3), 'the enemy rocks back on its feet');
+  assert.ok(poses.some(([pose]) => pose === 'retreat'), 'the hero turns and runs back after the hit');
+  tick(0.16);
+  assert.ok(reach(offsets.at(-1)) < 1e-6, 'the hero is back on its spot before the enemy counters');
+  assert.equal(bruises, 0, 'nothing darkens the screen before the counter lands');
+  enemyMoves.length = 0;
+  tick(0.22);
+  assert.ok(enemyMoves.some(offset => offset.x < -100), 'the enemy runs over to the hero to counter');
+  assert.ok(ghosts.enemy.some(list => list.length > 0), 'afterimages trail the enemy as it charges');
+  tick(0.5);
+  assert.ok(bruises > 0, 'an unguarded counter bruises the screen edges on the normal-blend layer');
+  assert.equal(melee.isPlaying(), false, 'the turn completes');
+  assert.ok(reach(enemyMoves.at(-1)) < 1e-6 && reach(offsets.at(-1)) < 1e-6, 'both sides end on their marks');
+  assert.deepEqual(poses.at(-1), ['idle', 0], 'the hero ends standing');
+  assert.deepEqual(punches.at(-1), { scale: 1, focus: { x: 0, y: 0 } }, 'the camera settles back');
+  assert.equal(tilts.at(-1), 0, 'the enemy stands straight again');
+  assert.deepEqual([ghosts.player.at(-1), ghosts.enemy.at(-1)], [[], []], 'no afterimage lingers');
+  melee.dispose();
 }
 let cancelled=0;
 effect.start('art', () => { cancelled++; });
@@ -123,4 +186,4 @@ advance(50);
 assert.equal(cancelled, 0, 'dispose cancels callbacks and restores both actors');
 assert.equal(effect.start('attack', () => {}), false, 'disposed effects cannot restart');
 assert.equal(rootNode.children[0].destroyed, true);
-console.log('COCOS_COMBAT_EFFECTS_VALID 10 actions; command wait, exact numbers, counter timing, parry window and cancellation');
+console.log('COCOS_COMBAT_EFFECTS_VALID 10 actions; command wait, exact numbers, counter timing, run-up melee, parry window and cancellation');

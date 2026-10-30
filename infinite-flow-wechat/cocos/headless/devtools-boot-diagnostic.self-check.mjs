@@ -110,6 +110,7 @@ const virtualModules = new Map([
       setSceneVisualAssetFallback() {}
       clearSceneVisualAsset() {}
       focusPrimaryActions() {}
+      combatStageModel() { return undefined; }
       destroy() { this.destroyCalls += 1; }
     }
   `],

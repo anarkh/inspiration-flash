@@ -79,7 +79,8 @@ export class Graphics {
   clear() { this.fills=[]; this.strokes=[]; this.shape=undefined; this.roundRectCalls=0; this.circleCalls=0; }
 }
 export class BlockInputEvents {} export class EventTouch {} export class ImageAsset {}
-export class Mask { static Type={GRAPHICS_RECT:0}; }
+export class Mask { static Type={GRAPHICS_RECT:0,GRAPHICS_ELLIPSE:1}; }
+export class Material { initialize(info) { this.info = info; } } export const builtinResMgr = { get() { return { effectAsset: {} }; } }; export const gfx = { BlendFactor: { ONE: 1, SRC_ALPHA: 2, ONE_MINUS_SRC_ALPHA: 4 } };
 export class ScrollView {
   static EventType={SCROLLING:'scrolling'};
   set content(node) { this._content = node; }

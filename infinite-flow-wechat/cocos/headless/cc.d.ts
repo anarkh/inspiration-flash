@@ -30,7 +30,7 @@ declare module 'cc' {
     height: number;
   }
   export class Mask {
-    static Type: { GRAPHICS_RECT: number };
+    static Type: { GRAPHICS_RECT: number; GRAPHICS_ELLIPSE: number };
     type: number;
   }
 
@@ -61,6 +61,8 @@ declare module 'cc' {
 
   export class Node {
     active: boolean;
+    /** Rotation around Z in degrees, counter-clockwise. */
+    angle: number;
     static readonly EventType: Readonly<{
       TOUCH_START: string;
       TOUCH_END: string;
@@ -97,6 +99,17 @@ declare module 'cc' {
 
   export class BlockInputEvents extends Component {}
 
+  export class Material extends Asset {
+    readonly effectAsset: unknown;
+    initialize(info: Readonly<{ effectAsset?: unknown; defines?: Readonly<Record<string, boolean>>; states?: unknown }>): void;
+  }
+
+  export const builtinResMgr: { get<T extends Asset>(uuid: string): T };
+
+  export namespace gfx {
+    enum BlendFactor { ZERO, ONE, SRC_ALPHA, DST_ALPHA, ONE_MINUS_SRC_ALPHA }
+  }
+
   export class Sprite extends Component {
     static readonly SizeMode: Readonly<{ CUSTOM: number }>;
     spriteFrame: SpriteFrame | null;
@@ -104,6 +117,7 @@ declare module 'cc' {
     trim: boolean;
     color: Readonly<Color>;
     grayscale: boolean;
+    customMaterial: Material | null;
   }
 
   export class Size {
@@ -159,6 +173,7 @@ declare module 'cc' {
     lineWidth: number;
     lineCap: number;
     lineJoin: number;
+    customMaterial: Material | null;
     rect(x: number, y: number, width: number, height: number): void;
     roundRect(
       x: number,
@@ -199,6 +214,9 @@ declare module 'cc' {
     fontFamily: string;
     enableShadow: boolean;
     shadowColor: Color;
+    enableOutline: boolean;
+    outlineColor: Color;
+    outlineWidth: number;
     shadowOffset: Vec2;
     shadowBlur: number;
     fontSize: number;

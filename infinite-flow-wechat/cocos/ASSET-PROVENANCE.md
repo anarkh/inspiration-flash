@@ -72,8 +72,30 @@ other resources. `character:reincarnator` remains the original portrait key.
 
 Source generation and frame measurements are recorded in
 [`art-source/hero-redesign/`](../art-source/hero-redesign/README.md). The current
-manifest contains 323 resources, totaling 343,776,649 bytes; its revision is
-`sha256:d72d289e104c5df869e30f45af09deee601ed52fb1bf9868229e7a266bf7bfbb`.
+manifest contains 324 resources, totaling 344,175,419 bytes; its revision is
+`sha256:66666c18678a4db1ca2b93db19265f911dfb44e4370b777d6d21348eebed747f`.
+
+## Cocos battle controls
+
+The battle's bottom command row uses the 黑白水墨 control strip: escape and auto stacked at the
+left, spells, items, guard, and the large attack with three focus dots. The earlier 黑红 strip blended into the dark
+battle floor and was replaced on 2026-10-30.
+
+- Authoritative source: `infinite-flow-wechat/art-source/battle-ui/style-exploration-v6/ink-muted-palettes/black-white-overlay.png`
+  (2172 × 724, 8-bit RGBA, SHA-256 `74914479f4bd2979f1cd5f02064e26abffa7e5bc254e0d8b4772706da0ffe553`). It is the white
+  ink-wash strip `style-exploration-v6/01-ink-wash-transparent.png` (SHA-256
+  `5a3cdd86fd8d5da697261ddb0126114ea01aeadcc8816ea1c7100363ec3dbbbe`, the same strip the 黑红 version was recoloured from)
+  turned to neutral greys with Rec. 601 luma and unchanged alpha, recorded in `black-white-overlay.derivation.json`.
+  The selection history is in `art-source/battle-ui/README.md`.
+- Stable key: `scene:battle_controls_ink`; Cocos target: `assets/resources/scene/battle-controls-ink-v1.png`.
+- Transformation: `resize-png` with `sips` (sips-316) to exactly half size, 1086 × 362, SHA-256
+  `98a6783f409940999139a4f3a3745cda3710c18049d82d855d10b0d48aec19b3` (398,770 bytes). Phones draw each control at
+  about a third of its source size and the runtime texture has no mipmaps, so the full-size strip lost its thin ink
+  outlines; the half-size target keeps them. No other pixel processing.
+- Image metadata uses the existing Creator 3.8.8 texture redirect contract with a unique UUID and `hasAlpha: true`.
+  The view cuts the strip into eight frames (six controls, a lit and a dark focus dot) with the rects in
+  `assets/scripts/ui/battle-controls-atlas.ts`, measured on the source and scaled by one half; combat requests the
+  strip through the scene loading gate.
 
 ## Cocos party figures
 

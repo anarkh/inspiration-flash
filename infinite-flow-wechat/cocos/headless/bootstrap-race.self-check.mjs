@@ -13,7 +13,7 @@ const HERO_WALK_LAYOUT = JSON.parse(await readFile(new URL('../../art-source/her
 
 const TEST_CONTROL_KEY = '__INFINITE_FLOW_BOOTSTRAP_RACE_CONTROL__';
 const MANIFEST_UUID = '3d0842ec-43f7-4b5f-961f-39edb535ccd7';
-const MANIFEST_REVISION = 'sha256:d72d289e104c5df869e30f45af09deee601ed52fb1bf9868229e7a266bf7bfbb';
+const MANIFEST_REVISION = 'sha256:66666c18678a4db1ca2b93db19265f911dfb44e4370b777d6d21348eebed747f';
 const RUN_RELIC_FIXTURES = Object.keys(RUN_RELIC_DEFINITIONS).map(id => ({
   key: `item:run_relic_${id}`, kind: 'item', entityId: `run_relic_${id}`, resourcePath: `run-relic/${id}-v1`,
 }));
@@ -54,6 +54,7 @@ function validManifest() {
     ...COURTYARD_WORLD_FIXTURES,
     ...DUNGEON_PROP_FIXTURES,
     { key: 'scene:dungeon_transition_gate', kind: 'scene', entityId: 'dungeon_transition_gate', resourcePath: 'dungeon-world/ruined-stone-gate-v1' },
+    { key: 'scene:battle_controls_ink', kind: 'scene', entityId: 'battle_controls_ink', resourcePath: 'scene/battle-controls-ink-v1' },
     ...NPC_WORLD_FIXTURES,
     ...MONSTER_WORLD_FIXTURES,
     ...RUN_RELIC_FIXTURES,
@@ -64,7 +65,7 @@ function validManifest() {
       resourcePath: `dungeon-world/${dungeonId}-v1`,
     })),
   ];
-  for (let index = assets.length; index < 323; index += 1) {
+  for (let index = assets.length; index < 324; index += 1) {
     assets.push({
       key: `item:fixture_${index}`,
       kind: 'item',
@@ -75,7 +76,7 @@ function validManifest() {
   return {
     schemaVersion: 2,
     manifestRevision: MANIFEST_REVISION,
-    assetCount: 323,
+    assetCount: 324,
     assets,
   };
 }
@@ -264,7 +265,7 @@ function createController() {
         getInfoWithPath() { return null; },
         load(path, type, complete) {
           assert.equal(type, engine.ImageAsset);
-          const supplemental = path.startsWith('character/') || path.startsWith('npc/') || path.startsWith('monster-world/') || path.startsWith('hub-courtyard/') || path.startsWith('run-relic/') || path === 'dungeon-world/ruined-stone-gate-v1' || DUNGEON_PROP_FIXTURES.some(asset => asset.resourcePath === path);
+          const supplemental = path.startsWith('character/') || path.startsWith('npc/') || path.startsWith('monster-world/') || path.startsWith('hub-courtyard/') || path.startsWith('run-relic/') || path === 'dungeon-world/ruined-stone-gate-v1' || path === 'scene/battle-controls-ink-v1' || DUNGEON_PROP_FIXTURES.some(asset => asset.resourcePath === path);
           const image = new engine.ImageAsset(path);
           image.onReference = (operation, handle, refCount, destroyed) => {
             (supplemental ? session.sceneImageReferenceCalls : session.imageReferenceCalls).push({
@@ -335,8 +336,11 @@ const virtualModules = new Map([
     export const _decorator = { ccclass: () => (target) => target };
     export class BlockInputEvents {}
     export class Mask {
-      static Type = { GRAPHICS_RECT: 0 };
+      static Type = { GRAPHICS_RECT: 0, GRAPHICS_ELLIPSE: 1 };
     }
+    export class Material { initialize(info) { this.info = info; } }
+    export const builtinResMgr = { get() { return { effectAsset: {} }; } };
+    export const gfx = { BlendFactor: { ONE: 1, SRC_ALPHA: 2, ONE_MINUS_SRC_ALPHA: 4 } };
     export class ScrollView {
       static EventType = { SCROLLING: 'scrolling' };
       getScrollOffset() { return this.offset ?? new Vec2(0, 0); }
@@ -625,6 +629,7 @@ const virtualModules = new Map([
       destroy() { this.clearVisualAsset(); this.clearSceneVisualAsset(); this.destroyCalls += 1; }
       focusPrimaryActions() {}
       resolveCombatPresentation() {}
+      combatStageModel() { return this.stageModel; }
     }
   `],
   ['cc/env', `
@@ -698,7 +703,10 @@ const viewVirtualCc = `
   export class EventKeyboard {}
   export class Rect { constructor(x, y, width, height) { Object.assign(this, {x, y, width, height}); } }
   export class Vec2 { constructor(x, y) { this.x = x; this.y = y; } }
-  export class Mask { static Type = { GRAPHICS_RECT: 0 }; }
+  export class Mask { static Type = { GRAPHICS_RECT: 0, GRAPHICS_ELLIPSE: 1 }; }
+  export class Material { initialize(info) { this.info = info; } }
+  export const builtinResMgr = { get() { return { effectAsset: {} }; } };
+  export const gfx = { BlendFactor: { ONE: 1, SRC_ALPHA: 2, ONE_MINUS_SRC_ALPHA: 4 } };
   export class ScrollView {
     static EventType = { SCROLLING: 'scrolling' };
     set content(node) { this._content = node; }
@@ -832,7 +840,8 @@ const viewBundle = await build({
       export * from './InfiniteFlowView';
       export { getInfiniteFlowSceneVisualKeys } from './scene-visuals';
       export { buildWalkWorld } from './walk-world';
-      export { getDungeonHtmlRoomLayout, fitDungeonHtmlTargets, getCombatDuelLayout } from './InfiniteFlowWalkScene';
+      export { getDungeonHtmlRoomLayout, fitDungeonHtmlTargets } from './InfiniteFlowWalkScene';
+      export { getBattleStageLayout } from './battle-scene';
       export { DARK_UI, paintDarkFrame } from './dark-ui';
       export { Graphics as TestGraphics, SpriteFrame as TestSpriteFrame } from 'cc';
     `,
@@ -865,7 +874,7 @@ const {
   buildWalkWorld,
   getDungeonHtmlRoomLayout,
   fitDungeonHtmlTargets,
-  getCombatDuelLayout,
+  getBattleStageLayout,
   DARK_UI,
   paintDarkFrame,
   TestGraphics,
@@ -991,6 +1000,13 @@ function assertBorderlessHudSurface(node, label) {
 function assertWorldViewport(root, model) {
   const scene = findNode(root, 'WalkScene');
   const viewport = findNode(root, 'WalkViewport');
+  if (model.phase === 'combat') {
+    // A battle leaves the walking world: its stage and effects span the screen over the room art.
+    assert.equal(viewport, undefined, 'combat: no walking viewport behind the battle stage');
+    assert.ok(findNode(root, 'BattleStage'), 'combat: the battle stage is drawn');
+    assert.ok(hasComponentNamed(findNode(root, 'WalkCombatEffectsViewport'), 'Mask'), 'combat: effects keep their clipping boundary');
+    return;
+  }
   if (model.phase === 'hub') {
     assert.deepEqual({ ...viewport.size }, { width: 750, height: scene.size.height }, 'courtyard world viewport covers the complete game surface');
     assert.ok(Math.abs(viewport.position.x + scene.position.x) < 1e-6 && viewport.position.y === 0 && viewport.position.z === 0,
@@ -1030,16 +1046,14 @@ function sceneDungeonLayout(root, model, insets) {
     surfaceHeight: scene.size.height, viewportWidth, safeInsets: insets });
   return { spec, layout, transientSpec: fitDungeonHtmlTargets(spec, layout) };
 }
-/** Combat v2 stands both fighters on fixed duel marks inside the same room projection. */
+/** Battle v3 stands both sides on the battle stage's own marks, in scene coordinates. */
 function sceneDuelLayout(root, model, insets) {
-  const { spec, layout } = sceneDungeonLayout(root, model, insets);
   const scene = findNode(root, 'WalkScene');
   const frame = globalThis.__walkingTestFrameSize ?? { width: 0, height: 0 };
   const viewportWidth = frame.width > 0 && frame.height > 0
     ? Math.min(frame.width, frame.height * 750 / scene.size.height) : 320;
-  const duel = getCombatDuelLayout({ worldWidth: spec.width, worldHeight: spec.height,
-    surfaceHeight: scene.size.height, viewportWidth, safeInsets: insets });
-  return { spec, layout, duel, enemyFoot: layout.unproject(duel.enemy), heroFoot: layout.unproject(duel.hero) };
+  const battle = getBattleStageLayout({ surfaceHeight: scene.size.height, viewportWidth, safeInsets: insets });
+  return { battle, scene };
 }
 function walkTowardRenderedTarget(view, root, id, radius) {
   const actor = findNode(root, `WalkTarget:${id}`);
@@ -1292,8 +1306,8 @@ function assertDarkWalkingUi(root, model, insets, viewportWidth = 320) {
   const px = 750 / viewportWidth;
   const interact = findNode(root, 'WalkInteract');
   if (model.phase === 'combat') {
-    // Combat v2 suspends walking: the duel stage hides the joystick and proximity control.
-    assert.equal(interact.active, false, 'combat: proximity interaction is hidden');
+    // A battle suspends walking: its stage has no proximity control and keeps the joystick hidden.
+    assert.equal(interact, undefined, 'combat: no proximity interaction on the battle stage');
     assert.equal(findNode(root, 'WalkJoystick').active, false, 'combat: joystick is hidden');
   } else {
     const interactWidth = (viewportWidth <= 350 ? 64 : 68) * px;
@@ -1327,23 +1341,22 @@ function assertDarkWalkingUi(root, model, insets, viewportWidth = 320) {
     const actions = collectNodes(root, ({ name }) => actionNames.has(name));
     assert.ok(actions.length > 0);
     actions.forEach((node) => {
-      // Round duel controls: an opaque circular face sized to the square touch box.
-      const graphics = node.getComponent(TestGraphics);
-      const face = graphics?.fills.find(({ color, shape }) => shape?.kind === 'circle' && color.a >= 220);
-      assert.ok(face, `${node.name}: opaque round face`);
-      assert.ok(Math.abs(face.shape.radius * 2 - node.size.width) < 1e-6 && node.size.width === node.size.height,
-        `${node.name}: the face fills its square touch box`);
-      assert.ok(node.size.width / px >= 44, `${node.name}: the action retains its physical touch minimum`);
+      // Ink controls: art cut from the approved strip, centred in a transparent touch box of at least 104 design units.
+      assert.equal(node.getComponent(TestGraphics) ?? undefined, undefined, `${node.name}: the touch box itself stays transparent`);
+      const visual = findNode(node, 'ButtonVisual');
+      const art = visual && [...visual.components.values()].find((component) => 'spriteFrame' in component);
+      assert.ok(art?.spriteFrame, `${node.name}: the control shows its ink art`);
+      assert.equal(visual.getComponent(TestGraphics) ?? null, null, `${node.name}: no plate is drawn behind the ink`);
+      assert.ok(node.size.width >= 104 - 1e-6 && node.size.height >= 104 - 1e-6, `${node.name}: the action retains its 104 touch minimum`);
+      assert.ok(visual.size.height <= node.size.height + 1e-6 && visual.size.width <= node.size.width + 1e-6, `${node.name}: the art stays inside its touch box`);
       const action = model.sections[2].actions.find(action => node.name === `WalkCombatAction:${action.actionId}`);
       assert.ok(action, `${node.name}: the visible control belongs to an original combat action`);
       const bounds = absoluteNodeBounds(node);
-      assert.ok(bounds.bottom >= bottom - 1e-6 && bounds.top <= bottom + 240 * px,
-        `${node.name}: duel controls stay in the bottom control band`);
-      assert.ok(darkContrast(labelComponent(findNode(node, `${node.name}Label`)).color, face.color) >= 4.5,
-        `${node.name}: label stays readable on its face`);
+      assert.ok(bounds.bottom >= bottom - 1e-6 && bounds.right <= 375 - insets.right + 1e-6 && bounds.left >= -375 + insets.left - 1e-6,
+        `${node.name}: commands stay in the bottom row inside the safe area`);
     });
     // Engine hit-testing uses each node's square box: no two controls may share a touch point.
-    const touchBoxes = collectNodes(root, ({ name }) => /^WalkCombat(?:Action|Choice):[^:]/.test(name) && !name.endsWith('Label') && !name.endsWith('Icon'))
+    const touchBoxes = collectNodes(root, ({ name }) => /^WalkCombat(?:Action|Choice):[^:]/.test(name) || name === 'WalkCombatAuto')
       .map(node => ({ name: node.name, bounds: absoluteNodeBounds(node) }));
     assert.ok(touchBoxes.length >= 3, 'combat: the attack and both picker controls are present');
     touchBoxes.forEach((a, index) => touchBoxes.slice(index + 1).forEach((b) => {
@@ -1351,8 +1364,15 @@ function assertDarkWalkingUi(root, model, insets, viewportWidth = 320) {
         || a.bounds.top <= b.bounds.bottom + 1e-6 || b.bounds.top <= a.bounds.bottom + 1e-6;
       assert.ok(separated, `combat: ${a.name} and ${b.name} touch boxes do not overlap`);
     }));
-    const focus = absoluteNodeBounds(findNode(root, 'WalkCombatFocus'));
-    assert.ok(focus.bottom >= bottom - 1e-6, `combat: the focus readout stays inside the safe bottom (${focus.bottom} >= ${bottom})`);
+    // The attack's three drawn focus dots always show the real gauge.
+    const detail = model.sections[1].detail;
+    const dots = collectNodes(root, ({ name }) => name.startsWith('WalkCombatFocusDot:'));
+    if (detail.kind === 'combat' && dots.length > 0) {
+      assert.equal(dots.length, 3, 'combat: the attack carries its three focus dots');
+      assert.equal(dots.filter(({ name }) => name.endsWith(':lit')).length, Math.min(3, detail.focus.current), 'combat: lit dots match the focus');
+      dots.forEach((dot) => assert.ok(hasComponentNamed(dot, 'Mask') && [...dot.components.values()].some(component => component.type === 1),
+        `${dot.name}: each dot is clipped to its round socket`));
+    }
   }
 }
 
@@ -1411,6 +1431,7 @@ function supplySceneVisualFixtures(view, model, excludedKeys = []) {
     if (excludedKeys.includes(key) || view.sceneVisuals.get(key)?.frame) continue;
     const source = key === 'character:reincarnator_walk' ? { width: 1254, height: 1254 }
       : key === 'scene:hub_courtyard_walk' ? { width: 2172, height: 724 }
+      : key === 'scene:battle_controls_ink' ? { width: 1086, height: 362 }
       : key === HUB_PORTAL_FIXTURE.key ? { width: 1018, height: 1545 }
       : courtyardSources[key] ?? (key.startsWith('scene:dungeon_world_') || key.startsWith('item:run_relic_') ? { width: 1254, height: 1254 }
         : { width: 1024, height: 1536 });
@@ -9870,8 +9891,8 @@ delete globalThis.wx;
   app.start();
   const view = controller.views.at(-1);
   await settleUntil(
-    () => session.imageRequests.length === 2 && session.sceneImageRequests.length === 5,
-    'scene did not request independent enemy/HUD portraits, world monster, background, player and four-gate art',
+    () => session.imageRequests.length === 2 && session.sceneImageRequests.length === 6,
+    'scene did not request independent enemy/HUD portraits, world monster, background, player, four-gate art and the ink controls',
   );
   assert.equal(view.lastRender.chrome.sceneAssets, 'loading', 'scene remains gated until all its independent leases settle');
   const allRequests = () => [...session.imageRequests, ...session.sceneImageRequests];
@@ -9882,6 +9903,7 @@ delete globalThis.wx;
     return request;
   };
   const debris = finish('dungeon-world/debris-v1');
+  const battleControls = finish('scene/battle-controls-ink-v1');
   const transitionGate = finish('dungeon-world/ruined-stone-gate-v1');
   const background = finish('dungeon-world/demon_tower_1-v1');
   await drainMicrotasks();
@@ -9898,7 +9920,7 @@ delete globalThis.wx;
   assert.equal(view.lastRender.chrome.sceneAssets, 'loading', 'ready background, player and portraits cannot bypass a pending world monster');
   const monster = finish('monster-world/fog-lesser-demon-world-v1');
   await drainMicrotasks();
-  assert.equal(view.sceneVisuals.size, 6);
+  assert.equal(view.sceneVisuals.size, 7);
   assert.ok([...view.sceneVisuals.values()].every(({ image }) => image));
   assert.equal(view.lastRender.chrome.sceneAssets, 'ready', 'last scene image opens the readiness gate');
   assert.equal(monster.image.refCount, 1, 'world sprite owns one native lease');
@@ -9917,9 +9939,10 @@ delete globalThis.wx;
     detail: { kind: 'explore', map: { dungeonId: 'demon_tower_1' }, currentNode: { nodeId: 'upper_fog_patrol', nodeType: 'monster', monsterId: 'fog_lesser_demon' } },
   };
   app.refreshViewModel();
-  await settleUntil(() => allRequests().length === 16, 'exploration requests its distinct primary illustration and stone gate');
+  await settleUntil(() => allRequests().length === 17, 'exploration requests its distinct primary illustration and stone gate');
   assert.equal(view.lastRender.chrome.sceneAssets, 'loading', 'entering another phase waits for its additional scene props');
   assert.equal(view.sceneVisuals.size, 14, 'exploration preserves projected monster identity and adds the shared transition gate');
+  assert.equal(battleControls.image.refCount, 0, 'leaving combat releases the ink control strip');
   for (const prop of DUNGEON_PROP_FIXTURES.filter(({ key }) => key !== 'scene:dungeon_prop_debris')) finish(prop.resourcePath);
   await drainMicrotasks();
   assert.equal(view.lastRender.chrome.sceneAssets, 'ready', 'optional legacy illustration cannot block a complete walking scene');
@@ -9959,7 +9982,7 @@ delete globalThis.wx;
     detail: { kind: 'hub', activePanel: 'equipment' },
   };
   app.refreshViewModel();
-  await settleUntil(() => allRequests().length === 31, 'hub portrait, background, portal, four props and seven NPC composition did not load');
+  await settleUntil(() => allRequests().length === 32, 'hub portrait, background, portal, four props and seven NPC composition did not load');
   const hubIllustration = finish('scene/main-god-space');
   finish('npc/equipment-quartermaster-v1');
   for (const npc of NPC_WORLD_FIXTURES) finish(npc.resourcePath);
@@ -10290,7 +10313,7 @@ for (const boundary of ['hub', 'destroy']) {
   assert.equal(view.lastRender.chrome.sceneAssets, 'ready', 'existing automatic retries reopen the gate after all scene failures recover');
   assert.equal(session.imageRequests.filter(({ path }) => path === 'dungeon-world/demon_tower_1-v1').length, 1);
   assert.equal(session.imageRequests.filter(({ path }) => path.startsWith('dungeon/')).length, 0, 'combat never loads a legacy chapter portrait as its backdrop');
-  assert.equal(session.sceneImageRequests.length, 7, 'player and monster world retry independently while HUD portrait and gate art stay loaded');
+  assert.equal(session.sceneImageRequests.length, 8, 'player and monster world retry independently while HUD portrait, gate art and the ink controls stay loaded');
   assert.equal(session.imageRequests.filter(({ path }) => path === 'monster/fog-lesser-demon-v1').length, 2);
   app.onDestroy();
 }
@@ -10323,7 +10346,7 @@ for (const boundary of ['hub', 'destroy']) {
   assert.equal(view.visualImage, portrait);
   assert.equal(view.sceneVisuals.get('monster:fog_lesser_demon_world'), monster);
   assert.equal(view.sceneVisuals.get('character:reincarnator_walk'), player);
-  assert.equal(session.sceneImageRequests.length, 5, 'background recovery does not reload HUD portrait, player, monster world or gate art');
+  assert.equal(session.sceneImageRequests.length, 6, 'background recovery does not reload HUD portrait, player, monster world, gate art or the ink controls');
   assert.equal(session.imageRequests.filter(({ path }) => path === 'monster/fog-lesser-demon-v1').length, 1);
   assert.equal(session.imageRequests.filter(({ path }) => path === 'dungeon-world/demon_tower_1-v1').length, 2);
   assert.equal(retryScheduler.tasks.length, 0);
@@ -10347,14 +10370,14 @@ for (const boundary of ['hub', 'destroy']) {
   const app = new InfiniteFlowApp();
   app.start();
   const view = controller.views.at(-1);
-  await settleUntil(() => session.imageRequests.length === 2 && session.sceneImageRequests.length === 5, 'stale scene fixture did not load');
+  await settleUntil(() => session.imageRequests.length === 2 && session.sceneImageRequests.length === 6, 'stale scene fixture did not load');
   client.state = {
     phase: 'hub', visualAssetKey: 'scene:main_god_space',
     detail: { kind: 'hub', activePanel: 'entry' },
   };
   app.refreshViewModel();
   await settleUntil(() => session.imageRequests.length === 3, 'new hub image did not start');
-  const oldRequests = [...session.imageRequests.slice(0, 2), ...session.sceneImageRequests.filter(({ path }) => path.startsWith('monster-world/') || path === 'dungeon-world/debris-v1' || path === 'dungeon-world/ruined-stone-gate-v1')];
+  const oldRequests = [...session.imageRequests.slice(0, 2), ...session.sceneImageRequests.filter(({ path }) => path.startsWith('monster-world/') || path === 'dungeon-world/debris-v1' || path === 'dungeon-world/ruined-stone-gate-v1' || path === 'scene/battle-controls-ink-v1')];
   for (const request of oldRequests) request.complete(undefined, request.image);
   const player = session.sceneImageRequests.find(({ path }) => path.startsWith('character/'));
   player.complete(undefined, player.image);
@@ -10380,6 +10403,47 @@ for (const boundary of ['hub', 'destroy']) {
   }
 }
 
+// A hit that ends the encounter: the view keeps animating the fight it started on, so the
+// enemy, the ink controls and the rest of that screen's art stay leased until the view
+// reports the playback settled; then the new screen's lease releases them.
+delete globalThis.wx;
+{
+  const session = assetSession({ autoImages: false, autoSceneImages: false });
+  const client = fakeClient('combat-stage-hold');
+  client.state = {
+    phase: 'combat',
+    visualAssetKey: 'monster:fog_lesser_demon',
+    detail: { kind: 'combat', enemy: { id: 'fog_lesser_demon' }, chapterContext: { dungeonId: 'demon_tower_1' } },
+  };
+  controller.assetSessions.push(session);
+  controller.clientFactories.push(() => Promise.resolve(client));
+  const app = new InfiniteFlowApp();
+  app.start();
+  const view = controller.views.at(-1);
+  await settleUntil(() => session.imageRequests.length === 2 && session.sceneImageRequests.length === 6, 'combat scene art did not start');
+  for (const request of [...session.imageRequests, ...session.sceneImageRequests]) request.complete(undefined, request.image);
+  await settleUntil(() => view.sceneVisuals.has('scene:battle_controls_ink'), 'combat scene art did not load');
+  const fightKeys = [...view.sceneVisuals.keys()];
+  const fightImages = session.sceneImageRequests.filter(({ path }) => path.startsWith('monster-world/') || path === 'scene/battle-controls-ink-v1');
+  assert.equal(fightImages.length, 2);
+  view.stageModel = view.lastRender.model;
+  client.state = {
+    phase: 'hub', visualAssetKey: 'scene:main_god_space',
+    detail: { kind: 'hub', activePanel: 'entry' },
+  };
+  app.refreshViewModel();
+  await drainMicrotasks();
+  for (const key of fightKeys) assert.ok(view.sceneVisuals.has(key), `the fight still on stage keeps ${key} while its hit plays`);
+  assert.ok(fightImages.every(({ image }) => image.refCount === 1), 'the enemy and ink controls stay leased during the playback');
+  view.stageModel = undefined;
+  view.callbacks.combatPlaybackSettled();
+  await drainMicrotasks();
+  assert.ok(!view.sceneVisuals.has('scene:battle_controls_ink'), 'the settled fight releases the ink controls from the view');
+  assert.ok(!fightKeys.some(key => key.startsWith('monster:') && view.sceneVisuals.has(key)), 'the settled fight releases the enemy art from the view');
+  assert.ok(fightImages.every(({ image }) => image.refCount === 0), 'the settled fight releases its leases');
+  app.onDestroy();
+}
+
 // Manual recovery replaces the visual generation, cancels automatic backoff and
 // rejects the previous attempt's late images while preserving the live run.
 delete globalThis.wx;
@@ -10398,7 +10462,7 @@ delete globalThis.wx;
   const app = new InfiniteFlowApp();
   app.start();
   const view = controller.views.at(-1);
-  await settleUntil(() => session.imageRequests.length === 2 && session.sceneImageRequests.length === 5, 'manual retry scene requests did not start');
+  await settleUntil(() => session.imageRequests.length === 2 && session.sceneImageRequests.length === 6, 'manual retry scene requests did not start');
   const oldRequests = [...session.imageRequests, ...session.sceneImageRequests];
   const failed = oldRequests.find(({ path }) => path === 'monster-world/fog-lesser-demon-world-v1');
   failed.complete(new Error('network offline'), undefined);
@@ -10417,7 +10481,7 @@ delete globalThis.wx;
   assert.equal(controller.sceneAssetEvents.slice(oldEvents).filter(event => event.startsWith('display:')).length, 0,
     'late images from the failed generation cannot reopen the scene');
   cancelledRetry.callback();
-  await settleUntil(() => recoveredSession.imageRequests.length === 2 && recoveredSession.sceneImageRequests.length === 5, 'manual retry did not start a fresh full visual generation');
+  await settleUntil(() => recoveredSession.imageRequests.length === 2 && recoveredSession.sceneImageRequests.length === 6, 'manual retry did not start a fresh full visual generation');
   assert.equal(view.lastRender.chrome.sceneAssets, 'loading');
   const recoveredRequests = [...recoveredSession.imageRequests, ...recoveredSession.sceneImageRequests];
   const last = recoveredRequests.find(({ path }) => path === 'character/reincarnator-v2');
@@ -10458,7 +10522,7 @@ for (const boundary of ['destroy', 'memory-warning']) {
   const app = new InfiniteFlowApp();
   app.start();
   const view = controller.views.at(-1);
-  await settleUntil(() => session.imageRequests.length === 2 && session.sceneImageRequests.length === 5, 'pending scene fixture did not load');
+  await settleUntil(() => session.imageRequests.length === 2 && session.sceneImageRequests.length === 6, 'pending scene fixture did not load');
   const runState = client.state;
   const stateSnapshot = JSON.stringify(runState);
   if (boundary === 'destroy') app.onDestroy();
@@ -10890,16 +10954,17 @@ for (const viewportWidth of [320, 390]) {
     const body = findNode(actor, 'WorldObjectBody');
     const art = findNode(body, `WalkMonsterSprite:${key}`);
     const sprite = spriteOf(art);
-    const { duel, enemyFoot } = sceneDuelLayout(root(), model, EXPLORE_INSETS_320);
-    assert.ok(Math.abs(actor.position.x - enemyFoot.x) < 1e-6 && Math.abs(actor.position.y + enemyFoot.y) < 1e-6,
-      `${id} stands on the duel mark for the same world identity`);
-    const duelHeight = duel.enemyHeight * 320 / 750;
+    const { battle } = sceneDuelLayout(root(), model, EXPLORE_INSETS_320);
+    assert.ok(Math.abs(actor.position.x - battle.enemy.x) < 1e-6 && Math.abs(actor.position.y - battle.enemy.y) < 1e-6,
+      `${id} stands on the battle stage's enemy mark for the same world identity`);
     assert.deepEqual({ ...body.position }, { x: 0, y: 0, z: 0 }, `${id} keeps the recoil container at its foot origin`);
-    assert.equal(art.size.width / art.size.height, 1024 / 1536, `${id} contains the full source without aspect distortion`);
+    assert.ok(Math.abs(art.size.width / art.size.height - 1024 / 1536) < 1e-9, `${id} contains the full source without aspect distortion`);
     const visibleBounds = projectedNodeBounds(art);
-    assert.ok(Math.abs((visibleBounds.top - visibleBounds.bottom) * 320 / 750 - duelHeight) < 0.001,
-      `${id} retains the duel monster image height after affine projection`);
-    assert.equal(art.position.y, art.size.height / 2, `${id} anchors the original file bottom at its rendered target foot`);
+    // The figure canvas runs 7% past the head and the soles, so its drawn body is the stage's enemy height.
+    const rankScale = target.rank === 'boss' ? 1.14 : target.rank === 'elite' ? 1.06 : 1;
+    assert.ok(Math.abs((visibleBounds.top - visibleBounds.bottom) * 0.86 - battle.enemy.height * rankScale) < 0.001,
+      `${id} shows the battle stage's enemy height for its rank`);
+    assert.ok(Math.abs(art.position.y - art.size.height * 0.43) < 1e-6, `${id} stands the drawn 93% sole line on its foot`);
     assert.equal(body.getComponent(TestGraphics), null, `${id} replaces the fallback drawing`);
     assert.equal(sprite.sizeMode, 0, `${id} uses the explicit custom sprite dimensions`);
     assert.equal(sprite.spriteFrame, view.sceneVisuals.get(key).frame, `${id} uses its own frame`);
@@ -10925,20 +10990,21 @@ for (const viewportWidth of [320, 390]) {
     const card = findNode(root(), 'WalkEnemyCard');
     const health = findNode(card, 'WalkEnemyHealth');
     const healthLabel = findNode(card, 'WalkEnemyHealthLabel');
-    const rank = findNode(actor, 'WalkEnemyRank');
-    const { duel } = sceneDuelLayout(root(), model, EXPLORE_INSETS_320);
+    const rank = findNode(card, 'WalkEnemyRank');
+    const { battle } = sceneDuelLayout(root(), model, EXPLORE_INSETS_320);
     assert.equal(buildWalkWorld(model).targets[0].rank, fixture.rank);
     assert.equal(body.scale?.x ?? 1, 1, `${fixture.rank} keeps recoil in the original foot coordinate system`);
     assert.equal(body.scale?.y ?? 1, 1);
     const bounds = projectedNodeBounds(art);
-    assert.ok(Math.abs((bounds.top - bounds.bottom) * 320 / 750 - duel.enemyHeight * 320 / 750) < 0.001,
-      `${fixture.rank} keeps the duel image size while retaining its rank mark`);
+    const rankScale = fixture.rank === 'boss' ? 1.14 : fixture.rank === 'elite' ? 1.06 : 1;
+    assert.ok(Math.abs((bounds.top - bounds.bottom) * 0.86 - battle.enemy.height * rankScale) < 0.001,
+      `${fixture.rank} stands taller by rank on the battle stage`);
     assert.equal(findNode(actor, 'WalkEnemyHealth'), undefined, `${fixture.rank} HP moved from the body to the enemy card`);
     const expectedName = `${fixture.rank === 'boss' ? '首领 · ' : fixture.rank === 'elite' ? '精英 · ' : ''}${MONSTERS[fixture.id].name}`;
     assert.equal(labelComponent(findNode(card, 'WalkEnemyName')).string, expectedName, `${fixture.rank} card names the rank and enemy`);
     const healthLabelPosition = { ...healthLabel.position };
     const healthLabelSize = { ...healthLabel.size };
-    assert.ok(healthLabel.position.y - healthLabel.size.height / 2 >= health.position.y + health.size.height / 2,
+    assert.ok(healthLabel.position.y - healthLabel.size.height / 2 >= health.position.y + health.size.height / 2 - 1e-6,
       `${fixture.rank} HP digits remain fully above the health bar`);
     assert.equal(Boolean(rank), fixture.rank !== 'normal', 'elite and boss rank marks remain distinct from ordinary enemies');
     assert.equal(health.parent, card, 'health lives on the enemy card, outside the recoiling body');
@@ -10986,11 +11052,11 @@ for (const viewportWidth of [320, 390]) {
   view.render(normal, chrome, EXPLORE_INSETS_320);
   const wideArt = findNode(root(), `WalkMonsterSprite:${firstKey}`);
   const wideBounds = projectedNodeBounds(wideArt);
-  const wideDuel = sceneDuelLayout(root(), normal, EXPLORE_INSETS_320).duel;
-  assert.ok(Math.abs((wideBounds.top - wideBounds.bottom) - wideDuel.enemyHeight) < 0.001,
-    'a wide source retains the duel image height with its complete original aspect ratio');
-  assert.equal(wideArt.size.width / wideArt.size.height, 1536 / 1024, 'a wide source keeps its aspect ratio');
-  assert.equal(wideArt.position.y, wideArt.size.height / 2);
+  const wideBattle = sceneDuelLayout(root(), normal, EXPLORE_INSETS_320).battle;
+  assert.ok(Math.abs((wideBounds.top - wideBounds.bottom) * 0.86 - wideBattle.enemy.height) < 0.001,
+    'a wide source retains the battle image height with its complete original aspect ratio');
+  assert.ok(Math.abs(wideArt.size.width / wideArt.size.height - 1536 / 1024) < 1e-9, 'a wide source keeps its aspect ratio');
+  assert.ok(Math.abs(wideArt.position.y - wideArt.size.height * 0.43) < 1e-6);
 
   view.render(modelFor(boss.id, { boss: boss.boss }), chrome, EXPLORE_INSETS_320);
   const actor = findNode(root(), `WalkTarget:monster:${boss.id}`);
@@ -11085,6 +11151,7 @@ for (const viewportWidth of [320, 390]) {
     const geometry = Object.fromEntries(['WalkHud', 'SceneCharacter', 'WalkAvatarCrop', 'SceneCharacterLabel', 'WalkRoleName',
       'WalkPlayerStatus', 'WalkPlayerHealth', 'WalkCurrencyReadout', 'WalkRewardPoints', 'WalkLingyun', 'SceneDetails', 'SceneDetailsLabel', 'SceneHelp', 'SceneHelpLabel'].map((name) => {
       const node = findNode(root(), name);
+      assert.ok(node, `${viewportWidth}px/${model.phase}: header keeps ${name}`);
       return [name, { position: { ...node.position }, size: { ...node.size }, fontSize: labelComponent(node)?.fontSize }];
     }));
     if (model.phase === 'hub') courtyardGeometry = geometry;
@@ -11260,7 +11327,9 @@ for (const viewportWidth of [320, 390]) {
   const canvasSize = { width: 750, height: 1334 };
   const canvas = { name: 'walking-canvas', children: [], getComponent() { return { contentSize: canvasSize }; }, addChild(child) { this.children.push(child); child.parent = this; } };
   const calls = [];
-  const view = new SceneFixtureView(canvas, { activate(physicalId, actionId, event) { calls.push({ physicalId, actionId, event }); } });
+  let settledPlaybacks = 0;
+  const view = new SceneFixtureView(canvas, { activate(physicalId, actionId, event) { calls.push({ physicalId, actionId, event }); },
+    combatPlaybackSettled() { settledPlaybacks += 1; } });
   const chrome = { modeKind: 'preview', modeLabel: 'preview', modeDetail: '', activityMessage: '' };
   const atlasKey = 'character:reincarnator_walk';
   view.setSceneVisualAsset({ width: 1254, height: 1254 }, { key: atlasKey, revision: 'fixture' });
@@ -11627,12 +11696,16 @@ for (const viewportWidth of [320, 390]) {
   resolvedBattle.sections[1].detail.enemy.hpPercent = 21;
   resolvedBattle.sections[1].detail.turn = 4;
   view.render(resolvedBattle, chrome, EXPLORE_INSETS_390);
+  assert.equal(view.combatStageModel(), battle, 'the fight that started the action stays on stage while the next screen waits');
   advance(27);
   assertSharedHeaderHealth(root(), 42, 60); // Queued result cannot reveal counter damage early.
   advance(10);
   assertSharedHeaderHealth(root(), 35, 60); // Counter impact displays its authoritative player HP without restoring the old HUD.
+  assert.equal(settledPlaybacks, 0, 'the playback has not settled while the counter plays');
   advance(33);
   assert.equal(view.walkScene.isCombatAnimating(), false, 'actual result playback completes before walking resumes');
+  assert.equal(settledPlaybacks, 1, 'the finished playback reports it settled exactly once');
+  assert.equal(view.combatStageModel(), undefined, 'no screen is held once the playback settles');
   const battlePos = pos();
   key(68, true); advance(12); key(68, false);
   assert.deepEqual(pos(), battlePos, 'combat v2 holds the avatar on its duel mark; walking resumes after the encounter');
@@ -12194,7 +12267,9 @@ globalThis.__walkingTestFrameSize = beforeRewardFrameSize;
     assert.ok(backdrop, `${key}: dedicated environment sprite exists`);
     assert.ok(hasComponentNamed(window, 'Mask'), `${key}: excess cover artwork must be clipped`);
     assert.equal(window.parent, findNode(root, 'WalkScene'), `${key}: artwork covers the screen independently of the fixed world camera`);
-    assert.notEqual(findNode(root, 'WalkPlayer').parent.parent, window.parent,
+    // Actors live under the walking camera or the battle stage, never beside the cover art, so moving or shaking them leaves it still.
+    const actorParent = findNode(root, 'WalkPlayer').parent;
+    assert.ok(actorParent !== window.parent && actorParent.parent !== window && actorParent !== window,
       `${key}: the actor projection cannot resize or move the environment`);
     const scene = findNode(root, 'WalkScene');
     const { width: backgroundWidth, height: backgroundHeight } = window.size;
@@ -12282,7 +12357,8 @@ globalThis.__walkingTestFrameSize = beforeRewardFrameSize;
     assert.deepEqual(buildWalkWorld(combat).obstacles, expectedCombatObstacles);
     supplySceneVisualFixtures(view, combat);
     view.render(combat, chrome, EXPLORE_INSETS_390);
-    assertNoBoundaryFills(root(), buildWalkWorld(combat));
+    assert.equal(collectNodes(root(), ({ name }) => name.startsWith('WalkObstacleFootprint:')).length, 0,
+      `${dungeonId}: the battle stage leaves the room walls out`);
     assert.deepEqual(view.walkScene.getPosition(), { x: 440, y: 700 });
     const combatSprite = assertBackground(root(), key, source, visual.frame, 1280, 1000);
     assertDarkWalkingUi(root(), combat, EXPLORE_INSETS_390);
@@ -12436,45 +12512,50 @@ let dungeonMultiNeighborCases = 0;
           const { spec, layout, transientSpec } = sceneDungeonLayout(root(), model, insets);
           assertCloneContract(spec, transientSpec, label);
           if (model.phase === 'combat') {
-            // Combat v2 duel: both fighters stand on fixed marks inside the room projection,
-            // doors leave the stage, walking is suspended and the HUD replaces world plates.
-            const { duel, enemyFoot, heroFoot } = sceneDuelLayout(root(), model, insets);
-            assert.equal(camera.scale.x, layout.scale.x, `${label}: the duel keeps the room projection`);
-            assert.equal(camera.scale.y, layout.scale.y);
+            // Battle v3: a stage of its own over the room art. The enemy stands upper left, the party lower right facing it,
+            // the commands run down the right edge; walking is suspended and the walking camera is gone.
+            const { battle } = sceneDuelLayout(root(), model, insets);
+            assert.equal(camera, undefined, `${label}: the battle leaves the walking camera`);
             const sceneBottom = -surfaceHeight / 2 + insets.bottom;
-            const lower = projectedNodePoint(scene, { x: layout.roomRect.x, y: sceneBottom });
-            const upper = projectedNodePoint(scene, { x: layout.roomRect.x + layout.roomRect.width, y: layout.roomRect.y + layout.roomRect.height });
-            const stage = { left: lower.x, bottom: lower.y, right: upper.x, top: upper.y };
+            const sceneTop = surfaceHeight / 2 - insets.top;
+            const screen = { left: -375 + insets.left, right: 375 - insets.right, bottom: sceneBottom, top: sceneTop };
+            const stageNode = findNode(root(), 'BattleStage');
             const monster = transientSpec.targets.find(target => target.kind === 'monster');
-            const monsterActor = findNode(root(), `WalkTarget:${monster.id}`);
-            close(monsterActor.position.x, enemyFoot.x, `${label}: enemy stands on its duel mark`);
-            close(monsterActor.position.y, -enemyFoot.y, `${label}: enemy stands on its duel mark`);
-            const enemyScreen = projectedNodePoint(monsterActor);
-            const enemyMark = projectedNodePoint(scene, duel.enemy);
-            close(enemyScreen.x, enemyMark.x, `${label}: enemy foot x`);
-            close(enemyScreen.y, enemyMark.y, `${label}: enemy foot y`);
-            const playerNode = findNode(root(), 'WalkPlayer');
-            const heroScreen = projectedNodePoint(playerNode);
-            const heroMark = projectedNodePoint(scene, duel.hero);
-            close(heroScreen.x, heroMark.x, `${label}: hero foot x`);
-            close(heroScreen.y, heroMark.y, `${label}: hero foot y`);
-            close(playerNode.position.x, heroFoot.x, `${label}: hero uses the same projection`);
-            assert.equal(collectNodes(root(), node => node.name === 'WalkTransitionGateSprite').length, 0, `${label}: closed doors leave the duel stage`);
+            const monsterActor = findNode(stageNode, `WalkTarget:${monster.id}`);
+            close(monsterActor.position.x, battle.enemy.x, `${label}: enemy stands on its stage mark`);
+            close(monsterActor.position.y, battle.enemy.y, `${label}: enemy stands on its stage mark`);
+            const playerNode = findNode(stageNode, 'WalkPlayer');
+            close(playerNode.position.x, battle.hero.x, `${label}: hero stands on its stage mark`);
+            close(playerNode.position.y, battle.hero.y, `${label}: hero stands on its stage mark`);
+            assert.ok(battle.enemy.x < battle.hero.x && battle.enemy.y > battle.hero.y, `${label}: the enemy faces the party from the upper left`);
+            assert.equal(collectNodes(root(), node => node.name === 'WalkTransitionGateSprite').length, 0, `${label}: doors leave the battle stage`);
             const enemyArt = collectNodes(root(), node => node.name.startsWith('WalkMonsterSprite:'))[0];
             const enemyBounds = projectedNodeBounds(enemyArt);
-            close(enemyBounds.top - enemyBounds.bottom, duel.enemyHeight, `${label}: duel enemy height`);
-            inside(enemyBounds, stage, `${label}/${enemyArt.name}`);
+            const rankScale = monster.rank === 'boss' ? 1.14 : monster.rank === 'elite' ? 1.06 : 1;
+            close((enemyBounds.top - enemyBounds.bottom) * 0.86, battle.enemy.height * rankScale, `${label}: battle enemy height`);
+            inside(enemyBounds, screen, `${label}/${enemyArt.name}`);
             const playerBody = findNode(root(), 'WalkPlayerBody');
             const heroBounds = projectedNodeBounds(playerBody);
-            close((heroBounds.top - heroBounds.bottom) * 308 / 336, duel.heroHeight, `${label}: duel hero visible height`);
-            // The square atlas canvas is wider than the hero; its foot column and height stay on stage.
-            inside({ left: heroScreen.x, right: heroScreen.x, bottom: heroBounds.bottom, top: heroBounds.top }, stage, `${label}/WalkPlayerBody`);
-            const ticker = findNode(root(), 'WalkCombatTicker') ?? findNode(root(), 'WalkEnemyCard');
-            assert.ok(enemyBounds.top <= absoluteNodeBounds(ticker).bottom + 0.001, `${label}: the enemy stays below the HUD`);
-            for (const name of ['WalkEnemyCard', 'WalkEnemyIntent']) {
+            close((heroBounds.top - heroBounds.bottom) * 308 / 336, battle.hero.height, `${label}: battle hero visible height`);
+            inside(heroBounds, screen, `${label}/WalkPlayerBody`);
+            const ticker = findNode(root(), 'WalkCombatTicker') ?? findNode(root(), 'WalkCombatTurn');
+            const plate = findNode(root(), 'WalkEnemyCard');
+            assert.ok(absoluteNodeBounds(plate).top <= absoluteNodeBounds(ticker).bottom + 0.001, `${label}: the enemy's name plate stays below the round row`);
+            // The party and the enemy keep clear of the command column and the auto switch.
+            const commands = collectNodes(root(), node => /^WalkCombat(?:Action|Choice):[^:]/.test(node.name) && !/(?:Label|Icon)$/.test(node.name) || node.name === 'WalkCombatAuto')
+              .map(node => ({ name: node.name, bounds: absoluteNodeBounds(node) }));
+            const apart = (a, b) => a.right <= b.left + 1e-6 || b.right <= a.left + 1e-6 || a.top <= b.bottom + 1e-6 || b.top <= a.bottom + 1e-6;
+            for (const name of ['WalkEnemyCard', 'WalkEnemyIntent', 'WalkPlayerPlate']) {
               const bounds = absoluteNodeBounds(findNode(root(), name));
-              inside(bounds, { left: -375 + insets.left, right: 375 - insets.right, bottom: sceneBottom, top: surfaceHeight / 2 - insets.top }, `${label}/${name}`);
+              inside(bounds, screen, `${label}/${name}`);
+              for (const command of commands) assert.ok(apart(bounds, command.bounds), `${label}: ${name} clears ${command.name}`);
               dungeonCombatHudClearanceCases += 1;
+            }
+            for (const command of commands) {
+              inside(command.bounds, screen, `${label}/${command.name}`);
+              const heroColumn = { left: playerNode.position.x + findNode(root(), 'WalkScene').position.x - battle.hero.height * 0.25,
+                right: playerNode.position.x + findNode(root(), 'WalkScene').position.x + battle.hero.height * 0.25, bottom: heroBounds.bottom, top: heroBounds.top };
+              assert.ok(apart(heroColumn, command.bounds), `${label}: the hero clears ${command.name}`);
             }
             view.walkScene.updateCombatReadout({ enemyHp: 17 });
             assert.equal(labelComponent(findNode(root(), 'WalkEnemyHealthLabel')).string,
@@ -12482,44 +12563,56 @@ let dungeonMultiNeighborCases = 0;
             const mask = findNode(root(), 'WalkCombatEffectsViewport');
             assert.ok(hasComponentNamed(mask, 'Mask'), `${label}: effects retain native clipping`);
             const maskBounds = projectedNodeBounds(mask);
-            for (const edge of ['left', 'right', 'bottom', 'top']) close(maskBounds[edge], stage[edge], `${label}: effect clip shares the duel stage ${edge}`);
+            for (const edge of ['left', 'right', 'bottom', 'top']) close(maskBounds[edge], { left: -375, right: 375, bottom: -surfaceHeight / 2, top: surfaceHeight / 2 }[edge], `${label}: effect clip spans the screen ${edge}`);
             const positionBefore = view.walkScene.getPosition();
             view.walkScene.tick(0.5, { x: 1, y: -1 });
-            assert.deepEqual(view.walkScene.getPosition(), positionBefore, `${label}: walking is suspended during the duel`);
-            assert.deepEqual(projectedNodePoint(playerNode), heroScreen, `${label}: the hero holds its duel mark`);
+            assert.deepEqual(view.walkScene.getPosition(), positionBefore, `${label}: walking is suspended during the battle`);
+            const heroScreen = projectedNodePoint(playerNode);
             const playerCenter = projectedNodePoint(playerBody);
             const playerBodyPosition = { ...playerBody.position };
             assert.equal(view.walkScene.startCombatAction('guard', () => {}), true);
+            // The guard throws up the prototype's hexagonal ward, fading in around the hero's body.
+            view.walkScene.tick(0.1, { x: 0, y: 0 });
             const effect = findNode(root(), 'WalkCombatEffects');
-            const shield = effect.getComponent(TestGraphics).segments[0];
-            assert.ok(shield, `${label}: native guard effect is drawn`);
-            const unit = duel.heroHeight / 200;
-            const guardAnchor = projectedNodePoint(effect, { x: shield.from.x, y: shield.from.y - 57 * unit });
-            close(guardAnchor.x, playerCenter.x, `${label}: guard begins at the projected player body`);
-            close(guardAnchor.y, playerCenter.y, `${label}: guard follows the projected body offset`, 3 * pixel);
+            const ward = effect.getComponent(TestGraphics).fills.find(({ shape }) => shape?.kind === 'path' && shape.closed && shape.points.length === 6);
+            assert.ok(ward, `${label}: native guard ward is drawn`);
+            const wardCentre = ward.shape.points.reduce((sum, point) => ({ x: sum.x + point.x / 6, y: sum.y + point.y / 6 }), { x: 0, y: 0 });
+            const guardAnchor = projectedNodePoint(effect, wardCentre);
+            const unit = battle.hero.height / 200;
+            close(guardAnchor.x, playerCenter.x, `${label}: guard begins at the hero's body`);
+            close(guardAnchor.y, playerCenter.y, `${label}: guard follows the hero's body offset`, 3 * pixel);
             view.walkScene.cancelCombatAction();
             let impacts = 0;
             assert.equal(view.walkScene.startCombatAction('attack', () => { impacts += 1; }), true);
             for (let frame = 0; frame < 3; frame += 1) view.walkScene.tick(0.1, { x: 0, y: 0 });
             assert.equal(impacts, 1, `${label}: original effect impact is delivered once`);
+            // The dash leaves gold afterimages of the hero that add their light to the floor.
+            const ghosts = collectNodes(root(), node => node.name.startsWith('Afterimage:player:'));
+            assert.ok(ghosts.length >= 2, `${label}: the dash leaves afterimages of the hero`);
+            for (const ghost of ghosts) {
+              const blend = [...ghost.components.values()].find(component => component?.customMaterial)?.customMaterial.info.states.blendState.targets[0];
+              assert.equal(blend?.blendDst, 1, `${label}: afterimages blend additively`);
+              assert.equal(blend?.blendSrc, 2, `${label}: straight sprite colour is weighted by its alpha`);
+            }
             assert.equal(view.walkScene.resolveCombatAction({ enemyDamage: 13 }, () => {}), true);
             const damage = findNode(root(), 'WalkDamage');
             assert.equal(labelComponent(damage).string, '−13');
             const enemyAnchor = projectedNodePoint(damage, { x: 0, y: -70 * unit });
             const enemyCenter = projectedNodePoint(enemyArt);
-            close(enemyAnchor.x, enemyCenter.x, `${label}: damage begins at the projected enemy body`);
-            close(enemyAnchor.y, enemyCenter.y, `${label}: damage follows the projected image body offset`, 3 * pixel);
+            close(enemyAnchor.x, enemyCenter.x, `${label}: damage begins at the enemy's body`);
+            close(enemyAnchor.y, enemyCenter.y, `${label}: damage follows the enemy image's body offset`, 3 * pixel);
             view.walkScene.cancelCombatAction();
             assert.deepEqual({ ...playerBody.position }, playerBodyPosition, `${label}: cancelled dash restores the player's body offset`);
             assert.deepEqual({ ...enemyArt.parent.position }, { x: 0, y: 0, z: 0 }, `${label}: cancelled recoil restores the enemy's foot origin`);
+            assert.deepEqual(projectedNodePoint(playerNode), heroScreen, `${label}: the hero holds its stage mark`);
             assert.deepEqual(view.walkScene.getPosition(), positionBefore, `${label}: effects never change saved walking coordinates`);
             dungeonRoomEffectAnchorCases += 1;
             assert.equal(calls.length, 0, `${label}: rendering and isolated effects cannot manufacture a domain command`);
             const attackAction = model.sections[2].actions.find(action => action.combatAction === 'attack');
             emitTouch(findNode(root(), `WalkCombatAction:${attackAction.actionId}`), 16000 + dungeonHtmlInteractionCases);
             for (let frame = 0; frame < 3; frame += 1) view.tick(0.1);
-            assert.equal(calls.length, 1, `${label}: the attack control dispatches exactly one original action`);
-            assert.equal(calls[0].event, attackAction.event, `${label}: the control retains the authoritative event object`);
+            assert.equal(calls.length, 1, `${label}: the attack command dispatches exactly one original action`);
+            assert.equal(calls[0].event, attackAction.event, `${label}: the command retains the authoritative event object`);
             view.walkScene.cancelCombatAction();
             dungeonHtmlInteractionCases += 1;
             assert.equal(JSON.stringify(model), snapshot, `${label}: presentation keeps the authoritative model unchanged`);
@@ -12631,7 +12724,7 @@ let dungeonMultiNeighborCases = 0;
   } finally { globalThis.__walkingTestFrameSize = priorFrameSize; }
   assert.equal(dungeonRoomFitCases, 8);
   assert.equal(dungeonRoomEffectAnchorCases, 4);
-  assert.equal(dungeonCombatHudClearanceCases, 8);
+  assert.equal(dungeonCombatHudClearanceCases, 12);
   assert.equal(dungeonHtmlGoldenCases, 10);
   assert.equal(dungeonHtmlInteractionCases, 8);
   assert.equal(dungeonMultiNeighborCases, 2);
