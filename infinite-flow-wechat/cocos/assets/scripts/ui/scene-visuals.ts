@@ -1,6 +1,7 @@
 import type { ExploreDetailViewModel, GameViewModel, HubCatalogPanel, HubPanel } from '@infinite-flow/presentation';
 import type { RunRelicId } from '@infinite-flow/core/run-relics';
 import { DUNGEON_WORLD_THEMES, getDungeonWorldBackgroundKey } from './dungeon-world-theme';
+import { BATTLE_CONTROLS_KEY } from './battle-controls-atlas';
 
 export const INFINITE_FLOW_DUNGEON_TRANSITION_GATE_VISUAL_KEY = 'scene:dungeon_transition_gate';
 export const INFINITE_FLOW_HUB_DUNGEON_PORTAL_VISUAL_KEY = 'scene:hub_dungeon_portal';
@@ -83,6 +84,8 @@ export function getInfiniteFlowSceneVisualKeys(model: GameViewModel): Readonly<{
   opponent?: string;
   lurker?: string;
   transitionGate?: string;
+  /** The battle's ink control strip, cut into its controls by the view. */
+  battleControls?: string;
   hubPortal?: string;
 } & Partial<Record<HubCatalogPanel | keyof typeof INFINITE_FLOW_DUNGEON_PROP_VISUAL_KEYS | `runRelic_${RunRelicId}` | `runParty_${RunPartyKind}` | `runPartyFigure_${RunPartyKind}`, string>>> {
   const detail = model.sections[1]?.detail;
@@ -133,7 +136,7 @@ export function getInfiniteFlowSceneVisualKeys(model: GameViewModel): Readonly<{
       ? { transitionGate: INFINITE_FLOW_DUNGEON_TRANSITION_GATE_VISUAL_KEY } : {}),
     // Resource ownership follows scene entry/exit via App's Object.values() lease.
     ...(detail?.kind === 'explore' ? INFINITE_FLOW_DUNGEON_PROP_VISUAL_KEYS : {}),
-    ...(detail?.kind === 'combat' ? { propDebris: INFINITE_FLOW_DUNGEON_PROP_VISUAL_KEYS.propDebris } : {}),
+    ...(detail?.kind === 'combat' ? { propDebris: INFINITE_FLOW_DUNGEON_PROP_VISUAL_KEYS.propDebris, battleControls: BATTLE_CONTROLS_KEY } : {}),
     // App loads and releases Object.values() of this object. Request every world
     // actor on entry, before any NPC panel has been selected.
     ...(detail?.kind === 'hub' ? HUB_NPC_WORLD_VISUAL_KEYS : {}),

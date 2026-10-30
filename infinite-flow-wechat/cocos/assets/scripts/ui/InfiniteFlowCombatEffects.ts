@@ -32,6 +32,8 @@ type EffectOptions = Readonly<{
   getAllyAnchor?: (kind: CombatAllyKind) => Point | undefined;
   moveAlly?: (kind: CombatAllyKind, offset: Point) => void;
   movePlayer: (offset: Point) => void;
+  /** Running toward the enemy, running back, or standing; `step` counts strides so the legs keep moving. */
+  posePlayer?: (pose: 'idle' | 'advance' | 'retreat', step: number) => void;
   moveEnemy: (offset: Point) => void;
   /** Screen shake; the HUD stays still. */
   shakeWorld?: (offset: Point) => void;
@@ -69,9 +71,12 @@ const PARRY_WINDOW = 0.9;
 const PARRY_RING = Object.freeze({ start: 128, end: 10, target: 50, band: 11 });
 const COUNTER_START = 0.38;
 const COUNTER_IMPACT = COUNTER_START + 0.21;
-/** Each ally gets its own beat before the counter, which waits for them. */
-const ALLY_START = 0.34;
-const ALLY_STEP = 0.26;
+/** Each ally gets its own beat before the counter, which waits for them: run in, strike, run back. */
+const ALLY_START = 0.3;
+const ALLY_STEP = 0.32;
+/** After landing a melee hit the hero holds, then runs back to their spot before anything else acts. */
+const RETURN_START = 0.1;
+const RETURN_END = 0.3;
 const allyDelay = (result: CombatEffectResult | undefined): number => (result?.allies?.length ?? 0) * ALLY_STEP;
 const GOLD = new Color(231, 189, 114, 255);
 const CYAN = new Color(146, 221, 209, 255);
@@ -81,9 +86,13 @@ const RED = new Color(220, 149, 132, 255);
 const BLOOD = new Color(255, 96, 74, 255);
 const WHITE = new Color(255, 242, 212, 255);
 const HIT_TINT = new Color(255, 178, 160, 255);
+const OUTLINE = new Color(24, 10, 6, 255);
+const SMOKE = new Color(70, 64, 60, 255);
 const HURT_TINT = new Color(255, 128, 112, 255);
 const ZERO = { x: 0, y: 0 };
 const clamp = (value: number): number => Math.max(0, Math.min(1, value));
+/** Eases a 0..1 run so feet start and stop gently. */
+const ease = (value: number): number => { const t = clamp(value); return t * t * (3 - 2 * t); };
 const alpha = (color: Color, opacity: number): Color => new Color(color.r, color.g, color.b, Math.round(255 * clamp(opacity)));
 const mix = (from: Point, to: Point, progress: number): Point => ({ x: from.x + (to.x - from.x) * progress, y: from.y + (to.y - from.y) * progress });
 /** Deterministic decaying shake; production code never uses implicit randomness. */
@@ -112,13 +121,18 @@ export function createInfiniteFlowCombatEffects(parent: Node, options: EffectOpt
     label.lineHeight = Math.round(size * 1.15);
     label.horizontalAlign = Label.HorizontalAlign.CENTER;
     label.verticalAlign = Label.VerticalAlign.CENTER;
+    // Battle numbers read like classic turn-based fights: heavy, outlined, popping out of the hit.
+    label.isBold = true;
+    label.enableOutline = true;
+    label.outlineColor = OUTLINE;
+    label.outlineWidth = Math.max(2, Math.round(3 * pixel));
     label.string = '';
     return label;
   }
-  const damage = textLabel('WalkDamage', 30 * pixel);
-  const healing = textLabel('WalkHealing', 28 * pixel);
-  const counterDamage = textLabel('WalkCounterDamage', 26 * pixel);
-  const allyDamage = [textLabel('WalkAllyDamage:0', 24 * pixel), textLabel('WalkAllyDamage:1', 24 * pixel)];
+  const damage = textLabel('WalkDamage', 38 * pixel);
+  const healing = textLabel('WalkHealing', 32 * pixel);
+  const counterDamage = textLabel('WalkCounterDamage', 34 * pixel);
+  const allyDamage = [textLabel('WalkAllyDamage:0', 30 * pixel), textLabel('WalkAllyDamage:1', 30 * pixel)];
   const banner = textLabel('WalkCombatBanner', 30 * pixel);
   const prompt = textLabel('WalkCombatPrompt', 15 * pixel);
   prompt.enableShadow = true;
@@ -166,6 +180,27 @@ export function createInfiniteFlowCombatEffects(parent: Node, options: EffectOpt
     line(arc(0), GOLD, (strong ? 13 : 9) * pixel * 0.55, 1 - progress);
     line(arc(4 * scale), WHITE, 3 * pixel * 0.55, 1 - progress);
   }
+  /** Streaks trailing a running fighter, pointing back the way it came. */
+  function speedLines(point: Point, direction: Point, opacity: number, color: Color): void {
+    if (opacity <= 0) return;
+    const side = { x: -direction.y, y: direction.x };
+    for (let streak = -2; streak <= 2; streak += 1) {
+      const from = { x: point.x + side.x * streak * 14 * unit - direction.x * 18 * unit, y: point.y + side.y * streak * 14 * unit - direction.y * 18 * unit };
+      const length = (54 - Math.abs(streak) * 12) * unit;
+      line([from, { x: from.x - direction.x * length, y: from.y - direction.y * length }], color, 2.5, opacity * (1 - Math.abs(streak) * 0.2));
+    }
+  }
+  /** A sharp starburst where a blow lands. */
+  function spark(point: Point, progress: number, color: Color, size = 1): void {
+    if (progress >= 1) return;
+    for (let ray = 0; ray < 8; ray += 1) {
+      const angle = ray * Math.PI / 4 + 0.2;
+      const inner = (8 + progress * 30) * size * pixel * 0.6;
+      const outer = inner + (26 - progress * 18) * size * pixel * 0.6;
+      line([{ x: point.x + Math.cos(angle) * inner, y: point.y + Math.sin(angle) * inner },
+        { x: point.x + Math.cos(angle) * outer, y: point.y + Math.sin(angle) * outer }], ray % 2 === 0 ? WHITE : color, ray % 2 === 0 ? 5 : 3, 1 - progress);
+    }
+  }
   function shield(point: Point, opacity: number, color = GOLD, width = 5): void {
     const at = (x: number, y: number): Point => ({ x: point.x + x * unit, y: point.y + y * unit });
     line([at(0, 57), at(42, 37), at(37, -13), at(0, -48), at(-37, -13), at(-42, 37), at(0, 57)], color, width, opacity);
@@ -189,11 +224,12 @@ export function createInfiniteFlowCombatEffects(parent: Node, options: EffectOpt
   function floatingText(label: Label, text: string, point: Point, elapsed: number, color: Color, size: number, life = 0.9): void {
     if (elapsed < 0) { label.string = ''; return; }
     label.string = text;
-    // Pop in large, settle, then float up and fade.
-    const pop = elapsed < 0.1 ? 1.35 - elapsed * 3.5 : 1;
+    // Burst out oversized, overshoot small, settle, then drift up and fade.
+    const pop = elapsed < 0.08 ? 1.75 - elapsed / 0.08 * 0.85 : elapsed < 0.16 ? 0.9 + (elapsed - 0.08) / 0.08 * 0.1 : 1;
     label.fontSize = size * pixel * pop;
     label.lineHeight = Math.round(label.fontSize * 1.15);
-    label.node.setPosition(new Vec3(point.x, point.y + 70 * unit + Math.min(elapsed, 0.75) * 50, 0));
+    const rise = elapsed < 0.16 ? Math.sin(elapsed / 0.16 * Math.PI) * 10 * pixel : Math.min(elapsed - 0.16, 0.6) * 40;
+    label.node.setPosition(new Vec3(point.x, point.y + 70 * unit + rise, 0));
     label.color = alpha(color, 1 - Math.max(0, elapsed - life * 0.39) / (life * 0.61));
   }
   function showBanner(text: string, point: Point, elapsed: number, color: Color): void {
@@ -210,6 +246,7 @@ export function createInfiniteFlowCombatEffects(parent: Node, options: EffectOpt
   }
   function restore(): void {
     options.movePlayer(ZERO);
+    options.posePlayer?.('idle', 0);
     options.moveEnemy(ZERO);
     options.shakeWorld?.(ZERO);
     options.tintPlayer?.(undefined);
@@ -231,6 +268,7 @@ export function createInfiniteFlowCombatEffects(parent: Node, options: EffectOpt
   function draw(active: EffectRun): void {
     graphic.clear();
     options.movePlayer(ZERO);
+    options.posePlayer?.('idle', 0);
     options.moveEnemy(ZERO);
     options.shakeWorld?.(ZERO);
     options.tintPlayer?.(undefined);
@@ -251,11 +289,22 @@ export function createInfiniteFlowCombatEffects(parent: Node, options: EffectOpt
     const result = active.result;
     const end = (result?.counter ? 0.92 : 0.55) + allyDelay(result);
     if (melee) {
+      // Classic turn-based melee: crouch, run up to the enemy, strike, then run straight back to the spot.
       const dash = dashOffset(length);
       let offset: number;
-      if (preparation) offset = p < 0.3 ? -8 * p / 0.3 : dash * (p - 0.3) / 0.7;
-      else offset = active.elapsed < end - 0.2 ? dash : dash * clamp((end - active.elapsed) / 0.2);
+      if (preparation) offset = p < 0.3 ? -8 * p / 0.3 : dash * ease((p - 0.3) / 0.7);
+      else offset = dash * (1 - ease((active.elapsed - RETURN_START) / (RETURN_END - RETURN_START)));
       options.movePlayer({ x: direction.x * offset, y: direction.y * offset });
+      const runner = { x: player.x + direction.x * offset, y: player.y + direction.y * offset };
+      const stride = Math.floor(active.elapsed * 14);
+      if (preparation && p > 0.3 && p < 1) {
+        speedLines(runner, direction, 0.55, GOLD);
+        options.posePlayer?.('advance', stride);
+      }
+      if (!preparation && active.elapsed > RETURN_START && active.elapsed < RETURN_END) {
+        speedLines(runner, { x: -direction.x, y: -direction.y }, 0.35, GOLD);
+        options.posePlayer?.('retreat', stride);
+      }
       if (strong) ring(ground, 31 + Math.min(1, p) * 24, GOLD, preparation ? opacity : 1 - p, true);
       if (!preparation) {
         const swing = clamp(Math.max(0, active.elapsed - hold) / 0.3);
@@ -317,10 +366,19 @@ export function createInfiniteFlowCombatEffects(parent: Node, options: EffectOpt
       const burst = clamp(Math.max(0, hitTime) / 0.34);
       ring(enemy, 16 + burst * 60, color, 1 - burst, false, strong ? 5 : 3);
       particles(enemy, burst, color, false, strong ? 1.4 : 1);
-      if (active.elapsed < hold + 0.08) options.tintEnemy?.(HIT_TINT);
-      const recoil = hitTime > 0 ? Math.sin(clamp(hitTime / 0.3) * Math.PI) * (strong ? 16 : 10) : 0;
+      spark(enemy, clamp(Math.max(0, hitTime) / 0.22), color, strong ? 1.5 : 1.1);
+      if (active.elapsed < hold + 0.1) options.tintEnemy?.(HIT_TINT);
+      // Knocked back along the blow, then it steps back in.
+      const recoil = hitTime > 0 ? Math.sin(clamp(hitTime / 0.32) * Math.PI) * (strong ? 24 : 15) * pixel * 0.6 : 0;
       options.moveEnemy({ x: direction.x * recoil, y: direction.y * recoil });
-      options.shakeWorld?.(shake(hitTime, 0.2, (strong ? 9 : 5) * pixel * 0.6));
+      options.shakeWorld?.(shake(hitTime, 0.22, (strong ? 11 : 6) * pixel * 0.6));
+    }
+    // The last hit drops the enemy: it darkens and fades into smoke.
+    if (resolved.enemyHpAfterImpact === 0 && active.elapsed > 0.18) {
+      const fade = clamp((active.elapsed - 0.18) / 0.32);
+      options.tintEnemy?.(new Color(255 - fade * 150, 255 - fade * 170, 255 - fade * 170, Math.round(255 * (1 - fade))));
+      particles({ x: enemy.x, y: enemy.y - 30 * unit }, fade, SMOKE, true, 1.4);
+      ring({ x: enemy.x, y: enemy.y - 60 * unit }, 30 * unit + fade * 50 * unit, SMOKE, 1 - fade, true, 6);
     }
     floating(damage, resolved.enemyDamage, enemy, active.elapsed, GOLD, false, strong ? 38 : 30);
     floating(healing, resolved.playerHealing, player, active.elapsed, GREEN, true, 28);
@@ -339,26 +397,39 @@ export function createInfiniteFlowCombatEffects(parent: Node, options: EffectOpt
       }
       const travel = { x: enemy.x - stand.x, y: enemy.y - stand.y };
       const distance = Math.max(1, Math.hypot(travel.x, travel.y));
-      const lunge = beat < ALLY_STEP ? Math.sin(clamp(beat / ALLY_STEP) * Math.PI) * Math.min(distance * 0.35, 90 * pixel) : 0;
-      options.moveAlly?.(ally.kind, { x: travel.x / distance * lunge, y: travel.y / distance * lunge });
+      // The companion runs up to the enemy, strikes on arrival, then runs back.
+      const reach = Math.max(0, distance - (options.dashGap ?? 0) * 1.1);
+      const strike = ALLY_STEP * 0.4;
+      const advance = beat < strike ? ease(beat / strike) : 1 - ease((beat - strike - 0.04) / (ALLY_STEP - strike - 0.04));
+      options.moveAlly?.(ally.kind, { x: travel.x / distance * reach * advance, y: travel.y / distance * reach * advance });
+      const direction = { x: travel.x / distance, y: travel.y / distance };
+      const runner = { x: stand.x + direction.x * reach * advance, y: stand.y + direction.y * reach * advance };
+      if (beat < strike) speedLines(runner, direction, 0.45, GOLD);
       const color = GOLD;
-      if (beat >= ALLY_STEP * 0.4 && beat < ALLY_STEP * 1.4) {
-        const burst = clamp((beat - ALLY_STEP * 0.4) / ALLY_STEP);
+      if (beat >= strike && beat < strike + ALLY_STEP) {
+        const burst = clamp((beat - strike) / ALLY_STEP);
         ring(enemy, 12 + burst * 40, color, 1 - burst, false, 3);
         particles(enemy, burst, color, false, 0.8);
+        spark(enemy, clamp((beat - strike) / 0.2), color);
+        if (beat < strike + 0.08) options.tintEnemy?.(HIT_TINT);
+        const knock = Math.sin(clamp((beat - strike) / 0.24) * Math.PI) * 10 * pixel * 0.6;
+        options.moveEnemy({ x: direction.x * knock, y: direction.y * knock });
       }
       // Each ally's number rises beside the player's, so they never stack on top of it.
       floating(allyDamage[index]!, ally.damage, { x: enemy.x + (index === 0 ? -46 : 46) * pixel, y: enemy.y - 24 * pixel },
-        beat - ALLY_STEP * 0.4, color, false, 24);
+        beat - strike, color, false, 30);
     });
     const counterStart = COUNTER_START + allyDelay(resolved);
     const counterImpact = COUNTER_IMPACT + allyDelay(resolved);
     if (resolved.counter && active.elapsed >= counterStart) {
       const counterProgress = clamp((active.elapsed - counterStart) / 0.48);
-      // A heavy blow lunges further; melee attackers are already close.
-      const reach = melee ? 19 : Math.max(19, length * (resolved.heavy ? 0.55 : 0.4));
-      const push = Math.sin(counterProgress * Math.PI) * reach;
+      // The enemy runs over to the hero, strikes on arrival, then walks back to its mark; a heavy blow closes in harder.
+      const approach = Math.max(19, length - (options.dashGap ?? 0) * (resolved.heavy ? 0.85 : 1.1));
+      const arrive = counterImpact - counterStart;
+      const since = active.elapsed - counterStart;
+      const push = since < arrive ? approach * ease(since / arrive) : approach * (1 - ease((since - arrive - 0.06) / Math.max(0.01, end - counterStart - arrive - 0.06)));
       options.moveEnemy({ x: -direction.x * push, y: -direction.y * push });
+      if (since < arrive) speedLines({ x: enemy.x - direction.x * push, y: enemy.y - direction.y * push }, { x: -direction.x, y: -direction.y }, 0.5, resolved.heavy ? BLOOD : RED);
       if (resolved.guarded) shield(player, 1 - counterProgress * 0.7, resolved.perfectParry ? ICE : GOLD, resolved.perfectParry ? 7 : 5);
       if (active.elapsed >= counterImpact - 0.03) {
         const hit = clamp((active.elapsed - counterImpact + 0.03) / 0.28);
@@ -384,6 +455,7 @@ export function createInfiniteFlowCombatEffects(parent: Node, options: EffectOpt
       floating(counterDamage, resolved.playerDamage, player, active.elapsed - counterImpact, RED, false, resolved.heavy ? 32 : 26);
       if (resolved.perfectParry) showBanner('完美格挡', player, active.elapsed - counterImpact, ICE);
       else if (resolved.heavy && !resolved.guarded) showBanner('重击', player, active.elapsed - counterImpact, BLOOD);
+      else if (resolved.guarded) showBanner('格挡', player, active.elapsed - counterImpact, GOLD);
     } else if (!resolved.counter) floating(counterDamage, resolved.playerDamage, player, active.elapsed, RED);
   }
 

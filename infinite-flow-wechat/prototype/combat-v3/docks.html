@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>战斗 v3 · 按钮样式对比</title>
+  <style>
+    body { margin: 0; padding: 16px; background: #0a0907; color: #e7d9bd; font: 14px/1.5 -apple-system, "PingFang SC", sans-serif; }
+    header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 14px; }
+    h1 { margin: 0 auto 0 0; font-size: 18px; color: #f2d49a; }
+    select { min-height: 36px; padding: 0 10px; color: inherit; background: #1a140d; border: 1px solid #6b5634; border-radius: 3px; font: inherit; }
+    .board { display: flex; flex-wrap: wrap; gap: 18px; }
+    figure { margin: 0; width: var(--w); }
+    figcaption { margin-bottom: 6px; font-weight: 600; color: #f2d49a; }
+    figcaption small { display: block; font-weight: 400; color: #b3a891; }
+    .frame { width: var(--w); height: var(--h); overflow: hidden; border: 1px solid #3a2e1c; border-radius: 6px; }
+    iframe { width: var(--fw); height: var(--fh); border: 0; transform-origin: 0 0; transform: translateY(var(--dy)) scale(var(--s)); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>底部指令对比（法术 · 道具 · 防御 · 攻击）</h1>
+    <label>屏幕 <select id="size"><option value="390x844">390×844</option><option value="320x568">320×568</option></select></label>
+    <label>局面 <select id="scenario"><option value="heavy">重击预警（防御发光）</option><option value="elite">常规</option></select></label>
+    <label>战意 <select id="focus"><option value="2">2 / 3</option><option value="0">0</option><option value="3">满（战技）</option></select></label>
+    <label>显示 <select id="view"><option value="dock">只看底部</option><option value="full">整屏</option></select></label>
+  </header>
+  <div class="board" id="board"></div>
+  <script>
+    const SKINS = [
+      ['gold', '金边圆键', '保留：物品图配金边圆键，攻击名字压在下沿的漆牌上，外圈金弧是战意。'],
+      ['plates', '铁券四键', '游戏现有的切角铁框按钮横排四个：线描图标、名字、小字说明；攻击和房间弹窗的「战斗」一样是亮金底。'],
+      ['wide', '主键加宽', '同样的铁框，法术、道具、防御三个小方键只放图标和名字，攻击加宽成主键，带说明和战意。'],
+      ['sheet', '底部弹窗', '整个底部做成和房间弹窗相同的面板，战报是面板标题行；上面三个键，下面一条通栏亮金「攻击」。'],
+      ['tabs', '分段签条', '一整条铁框分成四段，像行囊的分页签；攻击段点亮，推荐的那段（如可格挡时的防御）单独加亮。'],
+    ];
+    // Same version as index.html's ?v=, so the frames never reuse a cached page.
+    const VERSION = '20261029f';
+    const $ = selector => document.querySelector(selector);
+    function render() {
+      const [w, h] = $('#size').value.split('x').map(Number);
+      const dockOnly = $('#view').value === 'dock';
+      const scale = dockOnly ? 1 : w <= 340 ? .78 : .62;
+      const frameH = dockOnly ? (w <= 340 ? 200 : 230) : h * scale;
+      const board = $('#board');
+      board.innerHTML = '';
+      for (const [id, name, note] of SKINS) {
+        const figure = document.createElement('figure');
+        const vars = { '--w': `${w * scale}px`, '--h': `${frameH}px`, '--fw': `${w}px`, '--fh': `${h}px`, '--s': scale, '--dy': `${frameH - h * scale}px` };
+        for (const [key, value] of Object.entries(vars)) figure.style.setProperty(key, value);
+        const query = `v=${VERSION}&shot&skin=${id}&scenario=${$('#scenario').value}&focus=${$('#focus').value}`;
+        figure.innerHTML = `<figcaption>${name}<small>${note}</small></figcaption><div class="frame"><iframe title="${name}" src="index.html?${query}"></iframe></div>`;
+        board.append(figure);
+      }
+    }
+    for (const id of ['size', 'scenario', 'focus', 'view']) $(`#${id}`).addEventListener('change', render);
+    render();
+  </script>
+</body>
+</html>

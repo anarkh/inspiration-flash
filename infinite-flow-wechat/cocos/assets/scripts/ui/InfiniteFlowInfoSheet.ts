@@ -539,7 +539,7 @@ export function getInfiniteFlowCombatChoiceActions(model: GameViewModel, group: 
   return model.sections[2].actions.filter((action) => group === 'spells'
     ? action.combatAction === 'art' || action.actionId.startsWith('combat.method:')
       || action.actionId.startsWith('soul-skill:')
-    : action.combatAction === 'use_healing_pill');
+    : action.combatAction === 'use_healing_pill' || action.combatAction === 'use_thunder_talisman');
 }
 
 function combatChoiceGroup(state: MobileSheetState): CombatChoiceGroup | undefined {
@@ -548,7 +548,7 @@ function combatChoiceGroup(state: MobileSheetState): CombatChoiceGroup | undefin
 
 function combatChoiceTitle(state: MobileSheetState): string | undefined {
   const group = combatChoiceGroup(state);
-  return group === 'spells' ? '选择法术' : group === 'medicines' ? '战斗药品' : undefined;
+  return group === 'spells' ? '选择法术' : group === 'medicines' ? '战斗道具' : undefined;
 }
 
 function actionLabel(model: GameViewModel, action: ViewActionModel): string {
@@ -607,12 +607,12 @@ function renderActionDetail(context: SheetContext, action: ViewActionModel): voi
   const width = Math.min(148 * u, (context.width - gap) / 2);
   const y = -context.bodyHeight / 2 + 22 * u;
   const group = combatChoiceGroup(context.state);
-  const backLabel = context.state.tab === 'confirm-combat' ? '继续战斗' : group === 'spells' ? '返回法术' : group === 'medicines' ? '返回药品' : '返回选项';
+  const backLabel = context.state.tab === 'confirm-combat' ? '继续战斗' : group === 'spells' ? '返回法术' : group === 'medicines' ? '返回道具' : '返回选项';
   const back = catalogButton(context, context.body, 'MobileSheetActionBack', backLabel, -(width + gap) / 2, y, width, true);
   context.options.bindLocal(back, () => context.state.tab === 'confirm-combat' ? context.options.close()
     : context.options.setState({ ...context.state, selectedActionId: undefined, page: 0 }));
   const enabled = canExecute(context, action);
-  const confirmLabel = group === 'spells' ? '释放法术' : group === 'medicines' ? '使用药品'
+  const confirmLabel = group === 'spells' ? '释放法术' : group === 'medicines' ? '使用道具'
     : action.event?.kind === 'local' && action.event.action.type === 'entry/request-enter' ? '确认入场' : '确认执行';
   const execute = catalogButton(context, context.body, `MobileSheetExecute:${action.actionId}`, enabled ? confirmLabel : '当前不可用',
     (width + gap) / 2, y, width, enabled, undefined, true, Boolean(action.riskReason || action.emphasis === 'danger'));

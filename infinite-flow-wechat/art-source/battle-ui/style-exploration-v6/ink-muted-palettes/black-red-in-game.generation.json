@@ -1,0 +1,84 @@
+{
+  "asset": "black-red-in-game",
+  "executionMode": "built-in image_gen",
+  "useCase": "compositing",
+  "prompt": "Use case: compositing.\nAsset type: full-screen portrait game UI palette preview, opaque 1024x1536.\nInput image 1 is the full-screen edit target and composition master. Input image 2 is the exact new transparent control overlay to use for its bottom controls.\nReplace ONLY the bright white and cyan ink-wash control cluster at the bottom of image 1 with the subdued black-red ink controls shown in image 2. Match image 2's soot-charcoal outer circles, muted dark iron-rust glyph and attack accents, matte broken dry-brush texture, two slightly lighter dusty reddish-grey active dots and one dark inactive dot. Preserve exactly the existing bottom control positions, sizes and arrangement: the small running and circular-arrow controls stacked on the left, the shuriken/orb, pouch, shield circles, and the large sword attack circle on the right. Keep each glyph recognizable in the dark scene using a few restrained mid warm-grey and grey-red marks; no bright edging.\nCritical transparency in the visual composite: retain visible original dungeon floor through all empty spaces inside the ink brush circles and between controls. The controls have no filled backing discs, rectangular panels, paper, or colored wash behind them.\nPreserve image 1's entire gameplay scene and original exposure/color above and around the UI exactly: dungeon ground, walls and door, boss and all heroes, pet, health bars, portrait and top header icons. Do not dim the whole frame, recolor the whole scene red, change the characters or retouch the battlefield to fake lower contrast. Maintain the original framing and 1024x1536 aspect.\nResult should show charcoal control marks sitting naturally on the grey-green floor, visibly softer and less saturated than the old white/cyan version, while the six controls and status dots remain identifiable. Restrict faded dark red to a few glyph/attack accents. No stark white, bright bone-white outlines, cyan/turquoise, neon, emission, glossy red gems, bright scarlet or lava look. No new text, labels, elements, border, watermark or checkerboard.",
+  "parameters": {
+    "referenced_image_paths": [
+      "/Users/bytedance/git/inspiration-flash/infinite-flow-wechat/art-source/battle-ui/style-exploration-v6/01-ink-wash-transparent-in-game.png",
+      "/Users/bytedance/git/inspiration-flash/infinite-flow-wechat/art-source/battle-ui/style-exploration-v6/ink-muted-palettes/black-red-overlay.png"
+    ],
+    "transparent_background": false
+  },
+  "finalAttempt": 1,
+  "attempts": [
+    {
+      "attempt": 1,
+      "prompt": "Use case: compositing.\nAsset type: full-screen portrait game UI palette preview, opaque 1024x1536.\nInput image 1 is the full-screen edit target and composition master. Input image 2 is the exact new transparent control overlay to use for its bottom controls.\nReplace ONLY the bright white and cyan ink-wash control cluster at the bottom of image 1 with the subdued black-red ink controls shown in image 2. Match image 2's soot-charcoal outer circles, muted dark iron-rust glyph and attack accents, matte broken dry-brush texture, two slightly lighter dusty reddish-grey active dots and one dark inactive dot. Preserve exactly the existing bottom control positions, sizes and arrangement: the small running and circular-arrow controls stacked on the left, the shuriken/orb, pouch, shield circles, and the large sword attack circle on the right. Keep each glyph recognizable in the dark scene using a few restrained mid warm-grey and grey-red marks; no bright edging.\nCritical transparency in the visual composite: retain visible original dungeon floor through all empty spaces inside the ink brush circles and between controls. The controls have no filled backing discs, rectangular panels, paper, or colored wash behind them.\nPreserve image 1's entire gameplay scene and original exposure/color above and around the UI exactly: dungeon ground, walls and door, boss and all heroes, pet, health bars, portrait and top header icons. Do not dim the whole frame, recolor the whole scene red, change the characters or retouch the battlefield to fake lower contrast. Maintain the original framing and 1024x1536 aspect.\nResult should show charcoal control marks sitting naturally on the grey-green floor, visibly softer and less saturated than the old white/cyan version, while the six controls and status dots remain identifiable. Restrict faded dark red to a few glyph/attack accents. No stark white, bright bone-white outlines, cyan/turquoise, neon, emission, glossy red gems, bright scarlet or lava look. No new text, labels, elements, border, watermark or checkerboard.",
+      "parameters": {
+        "referenced_image_paths": [
+          "/Users/bytedance/git/inspiration-flash/infinite-flow-wechat/art-source/battle-ui/style-exploration-v6/01-ink-wash-transparent-in-game.png",
+          "/Users/bytedance/git/inspiration-flash/infinite-flow-wechat/art-source/battle-ui/style-exploration-v6/ink-muted-palettes/black-red-overlay.png"
+        ],
+        "transparent_background": false
+      },
+      "sourcePath": "/Users/bytedance/.codex/generated_images/01a186f9-26cf-7730-827d-4097e523070f/exec-aaac5a78-d65c-4b29-be97-c05546cf415f.png",
+      "outcome": "Selected. The six subdued charcoal and faded rust controls remain distinguishable and floor is visible through the open brushwork."
+    }
+  ],
+  "sourcePath": "/Users/bytedance/.codex/generated_images/01a186f9-26cf-7730-827d-4097e523070f/exec-aaac5a78-d65c-4b29-be97-c05546cf415f.png",
+  "targetPath": "/Users/bytedance/git/inspiration-flash/infinite-flow-wechat/art-source/battle-ui/style-exploration-v6/ink-muted-palettes/black-red-in-game.png",
+  "provenance": {
+    "sourceFullScreen": "/Users/bytedance/git/inspiration-flash/infinite-flow-wechat/art-source/battle-ui/style-exploration-v6/01-ink-wash-transparent-in-game.png",
+    "sourceFullScreenSha256": "db5588fe2532aeda09c2f0a88f89df7f16de92c24606a96dbae89993bb31c593",
+    "overlay": "/Users/bytedance/git/inspiration-flash/infinite-flow-wechat/art-source/battle-ui/style-exploration-v6/ink-muted-palettes/black-red-overlay.png",
+    "overlaySha256": "a0d96c38ec2e77591b60744b15d0eb5f9bff761868f2520866c4a6adea14ee3e"
+  },
+  "processing": "Exact byte copy of the chosen built-in output. No programmatic color, cutout, composition, resize or pixel modification.",
+  "deviations": [
+    "This is a generative visual composite; it is not a deterministic pixel-for-pixel runtime render. It preserves the source composition and scene appearance."
+  ],
+  "visualCheck": {
+    "palette": "Charcoal dominates with quiet dusty rust accents; no bright cyan, white UI edge or saturated red.",
+    "readability": "Six controls, sword glyph and two active plus one inactive dots are distinguishable against dungeon floor.",
+    "floorVisibility": "Dungeon tiles show through open interiors and all inter-control gaps.",
+    "scenePreservation": "Dungeon, characters, pet, top portrait, bars and header retained with visually consistent source exposure."
+  },
+  "actualImage": {
+    "width": 1024,
+    "height": 1536,
+    "mode": "RGB",
+    "alpha": {
+      "present": false,
+      "extrema": null,
+      "fullyOpaque": true
+    }
+  },
+  "sha256": {
+    "generatedOriginal": "32904a43a382fc90d92845d06d27b00ea28fd20a41b3809cf4c75c4a2f4810a0",
+    "savedTarget": "32904a43a382fc90d92845d06d27b00ea28fd20a41b3809cf4c75c4a2f4810a0"
+  },
+  "byteIdentical": true,
+  "referenceActualSha256": {
+    "/Users/bytedance/git/inspiration-flash/infinite-flow-wechat/art-source/battle-ui/style-exploration-v6/01-ink-wash-transparent-in-game.png": "db5588fe2532aeda09c2f0a88f89df7f16de92c24606a96dbae89993bb31c593",
+    "/Users/bytedance/git/inspiration-flash/infinite-flow-wechat/art-source/battle-ui/style-exploration-v6/ink-muted-palettes/black-red-overlay.png": "a0d96c38ec2e77591b60744b15d0eb5f9bff761868f2520866c4a6adea14ee3e"
+  },
+  "readOnlySceneComparison": {
+    "area": "Upper 1024x1190, excluding bottom UI",
+    "sourceMeanRgb": [
+      42.90797416622899,
+      37.79576549369748,
+      30.78785287552521
+    ],
+    "outputMeanRgb": [
+      43.58439305409664,
+      38.406633239233194,
+      31.23093487394958
+    ],
+    "meanRgbDelta": [
+      0.6764188878676478,
+      0.6108677455357139,
+      0.44308199842436835
+    ]
+  }
+}

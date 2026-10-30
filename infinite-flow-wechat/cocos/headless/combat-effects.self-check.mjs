@@ -64,6 +64,36 @@ for (const kind of ['attack','weapon','art','pill','guard','mist','iron','talism
   assert.deepEqual(playerOffset, { x: 0, y: 0 });
   assert.deepEqual(enemyOffset, { x: 0, y: 0 });
 }
+// Turn-based melee: the hero runs up and strikes, runs back before anything else acts, then the enemy runs over to counter.
+{
+  const offsets = [], poses = [], enemyMoves = [];
+  const melee = api.createInfiniteFlowCombatEffects(new api.Node('MeleeMask'), {
+    getAnchors: () => ({ player: { x: -100, y: 0 }, enemy: { x: 120, y: 45 } }),
+    movePlayer: offset => offsets.push(offset), moveEnemy: offset => enemyMoves.push(offset),
+    posePlayer: (pose, stride) => poses.push([pose, stride]), dashGap: 40,
+  });
+  const tick = seconds => { for (let t = 0; t < seconds - 1e-9; t += 0.02) melee.tick(0.02); };
+  const reach = offset => Math.hypot(offset.x, offset.y);
+  melee.start('attack', () => {});
+  tick(0.3);
+  assert.ok(reach(offsets.at(-1)) > 150, 'the hero has run up to the enemy at impact');
+  assert.ok(poses.some(([pose]) => pose === 'advance'), 'the hero strides on the way in');
+  const strides = new Set(poses.filter(([pose]) => pose === 'advance').map(([, stride]) => stride % 4));
+  assert.ok(strides.size > 1, 'the stride keeps changing while running');
+  melee.resolve({ enemyDamage: 10, counter: true, playerDamage: 3 }, () => {});
+  tick(0.2);
+  assert.ok(poses.some(([pose]) => pose === 'retreat'), 'the hero turns and runs back after the hit');
+  tick(0.16);
+  assert.ok(reach(offsets.at(-1)) < 1e-6, 'the hero is back on its spot before the enemy counters');
+  enemyMoves.length = 0;
+  tick(0.22);
+  assert.ok(enemyMoves.some(offset => offset.x < -100), 'the enemy runs over to the hero to counter');
+  tick(0.5);
+  assert.equal(melee.isPlaying(), false, 'the turn completes');
+  assert.ok(reach(enemyMoves.at(-1)) < 1e-6 && reach(offsets.at(-1)) < 1e-6, 'both sides end on their marks');
+  assert.deepEqual(poses.at(-1), ['idle', 0], 'the hero ends standing');
+  melee.dispose();
+}
 let cancelled=0;
 effect.start('art', () => { cancelled++; });
 effect.cancel();
@@ -123,4 +153,4 @@ advance(50);
 assert.equal(cancelled, 0, 'dispose cancels callbacks and restores both actors');
 assert.equal(effect.start('attack', () => {}), false, 'disposed effects cannot restart');
 assert.equal(rootNode.children[0].destroyed, true);
-console.log('COCOS_COMBAT_EFFECTS_VALID 10 actions; command wait, exact numbers, counter timing, parry window and cancellation');
+console.log('COCOS_COMBAT_EFFECTS_VALID 10 actions; command wait, exact numbers, counter timing, run-up melee, parry window and cancellation');

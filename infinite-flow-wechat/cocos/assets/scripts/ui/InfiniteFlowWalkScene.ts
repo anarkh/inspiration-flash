@@ -11,8 +11,8 @@ import { getInfiniteFlowMonsterWorldVisualKey, getInfiniteFlowNpcWorldVisualKey,
 import { DARK_UI, ROOM_SHEET, paintDarkFrame, paintDarkIcon, paintRoomSheetButton, paintRoomSheetFrame } from './dark-ui';
 import { getWalkHudLayout, getWalkHudStrips } from './hud-layout';
 import type { HudPopoverKind } from './hud-layout';
-import { createInfiniteFlowCombatEffects } from './InfiniteFlowCombatEffects';
-import type { CombatAllyKind, CombatEffectKind, CombatEffectResult, CombatEffectStartOptions, CombatTimingGrade } from './InfiniteFlowCombatEffects';
+import type { CombatEffectKind, CombatEffectResult, CombatEffectStartOptions, CombatTimingGrade } from './InfiniteFlowCombatEffects';
+import { renderInfiniteFlowBattleScene } from './battle-scene';
 
 export type { CombatEffectKind, CombatEffectResult, CombatEffectStartOptions, CombatTimingGrade } from './InfiniteFlowCombatEffects';
 
@@ -24,7 +24,8 @@ export type WalkSceneOptions = Readonly<{
   surfaceHeight: number;
   /** Visible game width in screen pixels; keeps the approved HUD touch dimensions. */
   viewportWidth?: number;
-  visual: (key: string) => Readonly<{ frame: SpriteFrame; width: number; height: number }> | undefined;
+  /** `frames` holds an atlas's cut frames (the walker, the battle's ink controls). */
+  visual: (key: string) => Readonly<{ frame: SpriteFrame; width: number; height: number; frames?: readonly SpriteFrame[] }> | undefined;
   walkerFrames?: readonly SpriteFrame[];
   trackSprite: (sprite: Sprite) => void;
   bindAction: (node: Node, action: ViewActionModel) => void;
@@ -39,6 +40,10 @@ export type WalkSceneOptions = Readonly<{
   openHudPopover?: (kind: HudPopoverKind) => void;
   activeHudPopover?: HudPopoverKind;
   openCombatChoices: (group: 'spells' | 'medicines') => void;
+  /** Battles only: the round that just began, announced once with a banner. */
+  roundBanner?: number;
+  /** Battles only: auto repeats the recommended command each turn until switched off. */
+  autoBattle?: Readonly<{ active: boolean; bind: (node: Node, onToggled: (active: boolean) => void) => void }>;
   page: number;
   setPage: (page: number) => void;
   chrome: InfiniteFlowRuntimeChrome;
@@ -195,23 +200,6 @@ function readyWalkSceneOptions(options: WalkSceneOptions, model: GameViewModel):
 }
 
 const WORLD_ZOOM = 1.1;
-/** Where a full-body ally stands and how tall it shows, in hero heights from the hero's feet. */
-const ALLY_FIGURE = {
-  companion: { x: -0.24, y: 0.3, height: 0.84 },
-  pet: { x: 0.34, y: 0.42, height: 0.42 },
-} as const;
-/**
- * Measured soles (lowest alpha > 32) as a share of the canvas height, where they miss the drawn 93%. Flying pets keep
- * 93% on purpose: their lowest point is near 80%, so they hover above their shadow.
- */
-const ALLY_FIGURE_FEET: Readonly<Record<string, number>> = {
-  'character:companion_qin_che_world': 0.966,
-  'character:companion_zhou_yingxue_world': 0.967,
-  'character:companion_lu_guanlan_world': 0.962,
-  'pet:ash_hound_world': 0.951,
-  'pet:mist_kitten_world': 0.944,
-  'pet:void_whelp_world': 0.923,
-};
 const HUB_PORTAL_BODY_SCALE = { x: 1.25, y: 1.42 } as const;
 const WHITE = new Color(244, 235, 211, 255);
 const GOLD = new Color(236, 195, 117, 255);
@@ -589,14 +577,12 @@ function targetActor(parent: Node, target: WorldTarget, model: GameViewModel, op
     if (target.kind === 'portal') text(base, 'WalkTargetPurpose', '进入副本', 0, 232, 192, 22, 11, new Color(180, 216, 210, 255));
     return { node: base, y: target.y };
   }
-  // The duel's enemy card names the opponent; its feet stay clear of plates.
-  if (model.phase === 'combat' && target.kind === 'monster' && pixel !== undefined) return { node: base, y: target.y };
   const compact = options.dungeonView?.compactLabels ?? false;
   const nameWidth = pixel === undefined ? target.kind === 'monster' ? 260 : 192 : (target.kind === 'monster' ? compact ? 100 : 110 : compact ? 78 : 84) * pixel;
   const nameHeight = pixel === undefined ? 35 : (compact ? 23 : 25) * pixel;
   const nameY = pixel === undefined ? -26 : -(compact ? 8.5 : 9.5) * pixel;
   const nameX = 0;
-  if (target.kind === 'npc' || model.phase === 'explore' || model.phase === 'combat') {
+  if (target.kind === 'npc' || model.phase === 'explore') {
     const nameBacking = makeNode(base, 'WalkTargetNameBacking', nameX, nameY, nameWidth, nameHeight).addComponent(Graphics);
     nameBacking.lineWidth = 1;
     const cut = pixel === undefined ? 5 : 2 * pixel;
@@ -659,22 +645,6 @@ function drawTargetObject(body: Node, base: Node, target: WorldTarget, model: Ga
         rank.node.setScale(new Vec3(0.22 * pixel, 0.22 * pixel, 1));
         rank.node.setPosition(new Vec3(width * 0.46, height * 0.82, 0));
       }
-    }
-    const detail = model.sections[1].detail;
-    // Room combat reads HP from the enemy card; only the legacy world keeps the overhead bar.
-    if (detail.kind === 'combat' && pixel === undefined) {
-      const healthY = pixel === undefined ? target.rank === 'boss' ? 231 : target.rank === 'elite' ? 205 : 183 : Math.min(height * 0.74, options.dungeonView!.monsterHudTop);
-      const healthWidth = pixel === undefined ? 142 : 64 * pixel;
-      const healthHeight = pixel === undefined ? 12 : 4 * pixel;
-      const healthInset = pixel === undefined ? 3 : pixel;
-      const health = makeNode(base, 'WalkEnemyHealth', 0, healthY, healthWidth, healthHeight).addComponent(Graphics);
-      rect(health, -healthWidth / 2, -healthHeight / 2, healthWidth, healthHeight, INK, EDGE);
-      rect(health, -healthWidth / 2 + healthInset, -healthHeight / 2 + healthInset, (healthWidth - healthInset * 2) * detail.enemy.hpPercent / 100, healthHeight - healthInset * 2, RED);
-      // A tall boss reaches the round banner; keep its readout beside the bar.
-      const bossReadout = pixel === undefined && target.rank === 'boss';
-      text(base, 'WalkEnemyHealthLabel', `${detail.enemy.hp} / ${detail.enemy.maxHp}`,
-        bossReadout ? -145 : 0, pixel === undefined ? bossReadout ? healthY - 15 : healthY + 20 : healthY + 9 * pixel,
-        pixel === undefined ? bossReadout ? 140 : 174 : 90 * pixel, pixel === undefined ? 25 : 14 * pixel, pixel === undefined ? 18 : 10 * pixel, WHITE);
     }
     return;
   }
@@ -1298,301 +1268,58 @@ function roomEventSheet(scene: Node, model: GameViewModel, event: RoomEventViewM
 }
 
 /** Approved combat v2 prototype geometry, in scene coordinates. */
-export type CombatDuelLayout = Readonly<{
-  pixel: number;
-  compact: boolean;
-  hero: WorldPoint;
-  heroHeight: number;
-  enemy: WorldPoint;
-  enemyHeight: number;
-  card: WorldRect;
-  ticker: WorldRect;
-  intent: WorldRect;
-  attack: Readonly<{ x: number; y: number; diameter: number }>;
-  /** Guard, spells, talisman and medicines on an arc around the attack button; square touch boxes never overlap. */
-  skills: readonly Readonly<{ x: number; y: number; diameter: number }>[];
-  escape: Readonly<{ x: number; y: number; diameter: number }>;
-}>;
-
-/** Combat stands the hero and the enemy diagonally across the room; movement is suspended. */
-export function getCombatDuelLayout(input: DungeonHtmlRoomInput): CombatDuelLayout {
-  const px = 750 / input.viewportWidth;
-  const compact = input.viewportWidth <= 350;
-  const safeWidth = 750 - input.safeInsets.left - input.safeInsets.right;
-  const left = -safeWidth / 2;
-  const right = safeWidth / 2;
-  const top = input.surfaceHeight / 2 - input.safeInsets.top;
-  const bottom = -input.surfaceHeight / 2 + input.safeInsets.bottom;
-  const attackSize = (compact ? 76 : 92) * px;
-  const skillSize = (compact ? 48 : 56) * px;
-  const radius = (compact ? 98 : 120) * px;
-  const escapeSize = (compact ? 46 : 54) * px;
-  // 30px below the button holds the focus readout inside the safe area.
-  const attack = { x: right - 14 * px - attackSize / 2, y: bottom + 30 * px + attackSize / 2, diameter: attackSize };
-  // Uneven spacing keeps each satellite's square touch box clear of its neighbours (>= 3.9px at 320px).
-  const skills = [188, 157, 113, 82].map(degrees => ({
-    x: attack.x + Math.cos(degrees * Math.PI / 180) * radius,
-    y: attack.y + Math.sin(degrees * Math.PI / 180) * radius,
-    diameter: skillSize,
-  }));
-  const cardHeight = (compact ? 42 : 46) * px;
-  const cardTop = top - 98 * px;
-  const card = { x: left + 10 * px, y: cardTop - cardHeight, width: safeWidth - 20 * px, height: cardHeight };
-  const tickerHeight = 22 * px;
-  const tickerWidth = Math.min(safeWidth - 24 * px, 340 * px);
-  const ticker = { x: -tickerWidth / 2, y: card.y - 6 * px - tickerHeight, width: tickerWidth, height: tickerHeight };
-  const stageTop = ticker.y - 8 * px;
-  const stageBottom = bottom + 16 * px;
-  const band = (stageTop - stageBottom) / px;
-  const enemyHeight = Math.max(130, Math.min(260, band * 0.44)) * px;
-  const heroHeight = Math.max(100, Math.min(200, band * 0.36)) * px;
-  const enemy = { x: left + safeWidth * 0.7, y: stageTop - 6 * px - enemyHeight };
-  const hero = { x: left + safeWidth * 0.27, y: stageBottom + band * 0.12 * px };
-  const intentWidth = (compact ? 128 : 150) * px;
-  const intentHeight = (compact ? 40 : 44) * px;
-  const intentRight = enemy.x - enemyHeight * 0.17;
-  const intent = { x: Math.max(left + 8 * px, intentRight - intentWidth), y: enemy.y + enemyHeight * 0.66 - intentHeight / 2, width: intentWidth, height: intentHeight };
-  return {
-    pixel: px, compact, hero, heroHeight, enemy, enemyHeight, card, ticker, intent, attack, skills,
-    escape: { x: left + 12 * px + escapeSize / 2, y: bottom + 16 * px + escapeSize / 2, diameter: escapeSize },
-  };
-}
-
-const DUEL = Object.freeze({
-  face: new Color(42, 33, 21, 236),
-  faceReady: new Color(98, 66, 25, 244),
-  faceMuted: new Color(27, 25, 21, 224),
-  rim: new Color(198, 163, 107, 255),
-  rimReady: new Color(255, 224, 160, 255),
-  rimMuted: new Color(86, 79, 63, 255),
-  glow: new Color(242, 196, 117, 90),
-  focusOff: new Color(59, 49, 34, 255),
-  focusOn: new Color(242, 196, 117, 255),
-  enemyFace: new Color(29, 15, 12, 236),
-  enemyRim: new Color(122, 62, 46, 255),
-  danger: new Color(229, 128, 111, 255),
-  dangerFace: new Color(62, 22, 14, 238),
-  chip: new Color(242, 196, 117, 255),
-  chipText: new Color(42, 21, 5, 255),
-  hp: new Color(205, 74, 56, 255),
-  hpTrack: new Color(12, 10, 8, 255),
-});
-
-const INTENT_ACTION_LABELS: Readonly<Partial<Record<NonNullable<ViewActionModel['combatAction']>, string>>> = {
-  guard: '防御', attack: '攻击', art: '法术', weapon_skill: '战技', use_thunder_talisman: '雷火符', use_healing_pill: '止血丹',
-};
-
-function duelCircle(node: Node, diameter: number, face: Color, rim: Color, rimWidth: number, glow?: Color): void {
-  const g = node.addComponent(Graphics);
-  if (glow !== undefined) {
-    g.circle(0, 0, diameter / 2 + rimWidth * 2.5);
-    g.fillColor = glow;
-    g.fill();
-  }
-  g.circle(0, 0, diameter / 2);
-  g.fillColor = face;
-  g.fill();
-  g.lineWidth = rimWidth;
-  g.strokeColor = rim;
-  g.stroke();
-  g.circle(0, 0, diameter / 2 - rimWidth * 2.2);
-  g.lineWidth = Math.max(1, rimWidth * 0.5);
-  g.strokeColor = new Color(0, 0, 0, 90);
-  g.stroke();
-}
-
-function duelIcon(parent: Node, name: string, icon: Parameters<typeof paintDarkIcon>[1], size: number, x: number, y: number, color: Color): void {
-  const mark = makeNode(parent, name, x, y, 50, 50).addComponent(Graphics);
-  paintDarkIcon(mark, icon, color);
-  mark.node.setScale(new Vec3(size / 50, size / 50, 1));
-}
-
-function duelChip(parent: Node, name: string, value: string, x: number, y: number, px: number): void {
-  const width = (value.length * 9 + 8) * px;
-  const chip = makeNode(parent, name, x, y, width, 14 * px);
-  rect(chip.addComponent(Graphics), -width / 2, -7 * px, width, 14 * px, DUEL.chip);
-  text(chip, `${name}Label`, value, 0, 0, width, 14 * px, 9 * px, DUEL.chipText);
-}
-
-/** Round touch control; the real action binding and disabled reasons stay with the View. */
-function duelButton(scene: Node, name: string, label: string, icon: Parameters<typeof paintDarkIcon>[1],
-  slot: Readonly<{ x: number; y: number; diameter: number }>, state: 'ready' | 'muted' | 'recommended', px: number): Node {
-  const base = makeNode(scene, name, slot.x, slot.y, slot.diameter, slot.diameter);
-  const muted = state === 'muted';
-  duelCircle(base, slot.diameter, muted ? DUEL.faceMuted : DUEL.face, state === 'recommended' ? DUEL.rimReady : muted ? DUEL.rimMuted : DUEL.rim,
-    (state === 'recommended' ? 2.5 : 1.5) * px, state === 'recommended' ? DUEL.glow : undefined);
-  duelIcon(base, `${name}Icon`, icon, slot.diameter * 0.36, 0, slot.diameter * 0.12, muted ? DARK_UI.muted : DUEL.focusOn);
-  const title = text(base, `${name}Label`, label, 0, -slot.diameter * 0.24, slot.diameter * 0.9, 14 * px, (slot.diameter < 50 * px ? 9 : 10) * px,
-    muted ? DARK_UI.muted : WALK_HUD.text);
-  title.enableWrapText = false;
-  return base;
-}
-
-function combatDuelControls(scene: Node, model: GameViewModel, options: WalkSceneOptions, duel: CombatDuelLayout): void {
-  if (model.phase !== 'combat') return;
-  const px = duel.pixel;
-  const actions = model.sections[2].actions;
-  const detail = model.sections[1].detail;
-  const weapon = actions.find(action => action.combatAction === 'weapon_skill' && action.enabled && action.event !== undefined);
-  const attack = weapon ?? actions.find(action => action.combatAction === 'attack');
-  const busy = options.chrome.busyActionId !== undefined || options.chrome.modeKind === 'blocked';
-  const stateOf = (action: ViewActionModel | undefined): 'ready' | 'muted' | 'recommended' =>
-    action === undefined || !action.enabled || action.event === undefined || busy ? 'muted'
-      : action.recommendation === 'recommended' ? 'recommended' : 'ready';
-  const guard = actions.find(action => action.combatAction === 'guard');
-  const talisman = actions.find(action => action.combatAction === 'use_thunder_talisman');
-  const escape = actions.find(action => action.combatAction === 'escape');
-  const slots = [
-    { kind: 'action', action: guard, label: '防御', icon: 'guard' as const, slot: duel.skills[0]! },
-    { kind: 'choice', group: 'spells' as const, label: '法术', icon: 'arcane' as const, slot: duel.skills[1]! },
-    { kind: 'action', action: talisman, label: '雷火符', icon: 'arcane' as const, slot: duel.skills[2]! },
-    { kind: 'choice', group: 'medicines' as const, label: '药品', icon: 'bag' as const, slot: duel.skills[3]! },
-  ];
-  for (const entry of slots) {
-    if (entry.kind === 'choice') {
-      const name = `WalkCombatChoice:${entry.group}`;
-      const choice = duelButton(scene, name, entry.label, entry.icon, entry.slot, busy ? 'muted' : 'ready', px);
-      if (!busy) options.bindLocal(choice, () => options.openCombatChoices(entry.group!));
-      continue;
-    }
-    const action = entry.action;
-    if (action === undefined) continue;
-    const state = stateOf(action);
-    const node = duelButton(scene, `WalkCombatAction:${action.actionId}`, entry.label, entry.icon, entry.slot, state, px);
-    if (action.combatAction === 'guard' && (state === 'recommended' || action.parryEvent !== undefined) && !busy) {
-      duelChip(node, 'WalkCombatGuardChip', action.parryEvent !== undefined ? '可格挡' : '推荐', -entry.slot.diameter * 0.18, entry.slot.diameter / 2 + 2 * px, px);
-    }
-    options.bindAction(node, action);
-  }
-  if (escape !== undefined) {
-    const node = duelButton(scene, `WalkCombatAction:${escape.actionId}`, '脱离', 'left', duel.escape, stateOf(escape) === 'muted' ? 'muted' : 'ready', px);
-    options.bindAction(node, escape);
-  }
-  if (attack === undefined) return;
-  const ready = attack.enabled && attack.event !== undefined && !busy;
-  const name = `WalkCombatAction:${attack.actionId}`;
-  const slot = duel.attack;
-  const base = makeNode(scene, name, slot.x, slot.y, slot.diameter, slot.diameter);
-  const focus = detail.kind === 'combat' ? detail.focus : { current: 0, required: 3 };
-  // Three focus segments circle the button; a full gauge turns it into the weapon skill.
-  const ring = makeNode(base, 'WalkCombatFocusRing', 0, 0, slot.diameter + 18 * px, slot.diameter + 18 * px).addComponent(Graphics);
-  ring.lineWidth = 6 * px;
-  ring.lineCap = Graphics.LineCap.ROUND;
-  const segmentRadius = slot.diameter / 2 + 9 * px;
-  const segments = Math.max(1, focus.required);
-  for (let index = 0; index < segments; index += 1) {
-    const from = Math.PI / 2 - index * Math.PI * 2 / segments - 0.14;
-    const to = Math.PI / 2 - (index + 1) * Math.PI * 2 / segments + 0.14;
-    ring.strokeColor = index < focus.current ? DUEL.focusOn : DUEL.focusOff;
-    for (let step = 0; step <= 12; step += 1) {
-      const angle = from + (to - from) * step / 12;
-      const x = Math.cos(angle) * segmentRadius;
-      const y = Math.sin(angle) * segmentRadius;
-      if (step === 0) ring.moveTo(x, y); else ring.lineTo(x, y);
-    }
-    ring.stroke();
-  }
-  duelCircle(base, slot.diameter, weapon !== undefined && ready ? DUEL.faceReady : ready ? DUEL.face : DUEL.faceMuted,
-    weapon !== undefined && ready ? DUEL.rimReady : ready ? DUEL.rim : DUEL.rimMuted, 2.5 * px, weapon !== undefined && ready ? DUEL.glow : undefined);
-  duelIcon(base, `${name}Icon`, 'sword', slot.diameter * 0.34, 0, slot.diameter * 0.16, ready ? DUEL.focusOn : DARK_UI.muted);
-  const title = text(base, `${name}Label`, weapon === undefined ? '攻击' : '战技', 0, -slot.diameter * 0.12, slot.diameter * 0.8, 18 * px,
-    (duel.compact ? 13 : 15) * px, ready ? WALK_HUD.text : DARK_UI.muted);
-  title.enableWrapText = false;
-  title.isBold = true;
-  text(base, 'WalkCombatAttackMode', weapon === undefined ? '普攻' : '战意已满', 0, -slot.diameter * 0.29, slot.diameter * 0.8, 12 * px,
-    (duel.compact ? 8 : 9) * px, ready ? DUEL.focusOn : DARK_UI.muted);
-  text(base, 'WalkCombatFocus', `战意 ${focus.current} / ${focus.required}`, 0, -slot.diameter / 2 - 22 * px, slot.diameter + 20 * px, 12 * px,
-    (duel.compact ? 8 : 9) * px, weapon === undefined ? DARK_UI.muted : DUEL.focusOn);
-  options.bindAction(base, attack);
-}
-
-/** Enemy card, last log line and the intent callout that replace the exploration risk strip. */
-function combatDuelHud(scene: Node, model: GameViewModel, options: ReadyWalkSceneOptions, duel: CombatDuelLayout): void {
-  const detail = model.sections[1].detail;
-  if (detail.kind !== 'combat') return;
-  const px = duel.pixel;
-  const monster = options.spec.targets.find(target => target.kind === 'monster');
-  const rank = detail.pursuer ? '追兵 · ' : monster?.rank === 'boss' ? '首领 · ' : monster?.rank === 'elite' ? '精英 · ' : '';
-  const card = makeNode(scene, 'WalkEnemyCard', duel.card.x + duel.card.width / 2, duel.card.y + duel.card.height / 2, duel.card.width, duel.card.height);
-  paintDarkFrame(card.addComponent(Graphics), duel.card.width, duel.card.height, { fill: DUEL.enemyFace, edge: DUEL.enemyRim, accent: DUEL.danger, cut: 8 * px });
-  const cardLeft = -duel.card.width / 2;
-  const medalSize = duel.card.height - 10 * px;
-  const medal = makeNode(card, 'WalkCombatTurn', cardLeft + 6 * px + medalSize / 2, 0, medalSize, medalSize);
-  const diamond = medal.addComponent(Graphics);
-  diamond.lineWidth = 1.5 * px;
-  polygon(diamond, [[0, medalSize / 2], [medalSize / 2, 0], [0, -medalSize / 2], [-medalSize / 2, 0]], new Color(43, 34, 20, 255), DUEL.rim);
-  text(medal, 'WalkCombatTurnCaption', '回合', 0, medalSize * 0.2, medalSize, 10 * px, 7 * px, DARK_UI.muted);
-  text(medal, 'WalkCombatTurnValue', `${detail.turn}`, 0, -medalSize * 0.12, medalSize, 16 * px, 14 * px, DUEL.focusOn).isBold = true;
-  const bodyLeft = cardLeft + 12 * px + medalSize;
-  const bodyWidth = duel.card.width / 2 - 8 * px - bodyLeft;
-  const name = text(card, 'WalkEnemyName', `${rank}${detail.enemy.name}`, bodyLeft + bodyWidth * 0.33, 8 * px, bodyWidth * 0.66, 16 * px,
-    (duel.compact ? 11 : 12) * px, DARK_UI.bone, false);
-  name.isBold = true;
-  text(card, 'WalkEnemyHealthLabel', `${detail.enemy.hp} / ${detail.enemy.maxHp}`, bodyLeft + bodyWidth * 0.83, 8 * px, bodyWidth * 0.34, 16 * px,
-    (duel.compact ? 10 : 11) * px, new Color(239, 214, 196, 255));
-  const healthHeight = 9 * px;
-  const health = makeNode(card, 'WalkEnemyHealth', bodyLeft + bodyWidth / 2, -9 * px, bodyWidth, healthHeight).addComponent(Graphics);
-  paintEnemyHealth(health, detail.enemy.hpPercent / 100, bodyWidth, healthHeight);
-
-  const latest = model.sections[5].lines[0];
-  if (latest !== undefined) {
-    const ticker = makeNode(scene, 'WalkCombatTicker', duel.ticker.x + duel.ticker.width / 2, duel.ticker.y + duel.ticker.height / 2, duel.ticker.width, duel.ticker.height);
-    const backing = ticker.addComponent(Graphics);
-    backing.lineWidth = px;
-    rect(backing, -duel.ticker.width / 2, -duel.ticker.height / 2, duel.ticker.width, duel.ticker.height, new Color(14, 12, 9, 200), new Color(75, 61, 39, 255));
-    const line = text(ticker, 'WalkCombatTickerText', latest, 0, 0, duel.ticker.width - 16 * px, duel.ticker.height, (duel.compact ? 10 : 11) * px, new Color(231, 217, 189, 255));
-    line.enableWrapText = false;
-  }
-
-  // The callout steps aside while a turn plays out, like the prototype.
-  if (options.chrome.busyActionId !== undefined) return;
-  const parry = detail.intent.parryable;
-  const danger = detail.intent.severity === 'danger' || parry;
-  const intent = makeNode(scene, 'WalkEnemyIntent', duel.intent.x + duel.intent.width / 2, duel.intent.y + duel.intent.height / 2, duel.intent.width, duel.intent.height);
-  const bubble = intent.addComponent(Graphics);
-  bubble.lineWidth = 1.5 * px;
-  const halfWidth = duel.intent.width / 2;
-  const halfHeight = duel.intent.height / 2;
-  polygon(bubble, [[-halfWidth, -halfHeight], [halfWidth, -halfHeight], [halfWidth, -6 * px], [halfWidth + 8 * px, 0], [halfWidth, 6 * px], [halfWidth, halfHeight], [-halfWidth, halfHeight]],
-    danger ? DUEL.dangerFace : new Color(32, 26, 18, 240), danger ? DUEL.danger : new Color(139, 112, 70, 255));
-  duelIcon(intent, 'WalkEnemyIntentIcon', parry ? 'guard' : 'sword', 22 * px, -halfWidth + 17 * px, 0, danger ? new Color(255, 180, 163, 255) : DUEL.focusOn);
-  const recommended = detail.intent.recommendedActions.map(action => INTENT_ACTION_LABELS[action]).filter((label): label is string => label !== undefined);
-  const summary = parry ? '重击 · 防御大减伤' : detail.intent.id === 'regular-pursuit' ? '行动后常规反击'
-    : recommended.length > 0 ? `建议：${recommended.slice(0, 2).join('、')}` : '留意敌方机制';
-  const textLeft = -halfWidth + 32 * px;
-  const textWidth = duel.intent.width - 38 * px - (parry ? 34 * px : 0);
-  const title = text(intent, 'WalkEnemyIntentName', detail.intent.name, textLeft + textWidth / 2, 7 * px, textWidth, 16 * px,
-    (duel.compact ? 11 : 12) * px, danger ? new Color(255, 190, 175, 255) : DUEL.focusOn, false);
-  title.isBold = true;
-  text(intent, 'WalkEnemyIntentSummary', summary, textLeft + (duel.intent.width - 38 * px) / 2, -8 * px, duel.intent.width - 38 * px, 13 * px,
-    (duel.compact ? 9 : 10) * px, danger ? new Color(243, 201, 188, 255) : DARK_UI.muted, false);
-  if (parry) duelChip(intent, 'WalkEnemyIntentChip', '可格挡', halfWidth - 20 * px, 7 * px, px);
-}
-
-function paintEnemyHealth(g: Graphics, ratio: number, width: number, height: number): void {
-  g.clear();
-  rect(g, -width / 2, -height / 2, width, height, DUEL.hpTrack, new Color(63, 51, 34, 255));
-  rect(g, -width / 2 + 1, -height / 2 + 1, (width - 2) * Math.max(0, Math.min(1, ratio)), height - 2, DUEL.hp);
+/** The battle stage keeps the room art behind it, the shared header and its notices; the rest is its own. */
+function renderBattle(root: Node, model: GameViewModel, options: ReadyWalkSceneOptions): WalkSceneHandle {
+  const px = 750 / (options.viewportWidth ?? 320);
+  return renderInfiniteFlowBattleScene(root, model, options, {
+    drawBackdrop: scene => fullscreenDungeonFloor(scene, model, options),
+    drawHeader: (scene, top) => {
+      header(scene, model, options, top);
+      const codex = headerButton(scene, 'SceneCodex', '目标', 'target', 1, 1, options, top);
+      options.bindLocal(codex, () => options.openPanel === undefined ? options.openCodex() : options.openPanel('objectives'));
+    },
+    drawNotices: (scene, top) => {
+      const activity = formatInfiniteFlowPlayerChrome(options.chrome, model.phase).activityMessage;
+      const failed = isInfiniteFlowPlayerActivityFailure(activity);
+      const feedbackText = failed ? activity : options.feedback?.text;
+      // Under the round medal and the ticker, clear of the enemy's name plate.
+      const toast = feedbackText === undefined ? undefined
+        : inkDotTextShadow(text(scene, 'WalkFeedback', feedbackText, 0, top - 152 * px, 600, 24 * px, 10 * px, failed ? DARK_UI.red : DARK_UI.gold));
+      const safeHeight = options.surfaceHeight - options.safeInsets.top - options.safeInsets.bottom;
+      const banner = options.banner === undefined ? undefined : alarmBanner(scene, options.banner, top - safeHeight * 0.36, px);
+      const bannerStart = options.banner?.age ?? 0;
+      banner?.fade(bannerStart);
+      return age => {
+        if (toast !== undefined && !failed) toast.color = new Color(DARK_UI.gold.r, DARK_UI.gold.g, DARK_UI.gold.b, Math.round(255 * Math.max(0, Math.min(1, 4 - age))));
+        if (banner !== undefined && banner.node.active) banner.fade(bannerStart + age);
+      };
+    },
+    repaintPlayerHealth: (scene, hp, maxHp) => {
+      const hud = scene.getChildByName('WalkHud');
+      const status = hud?.getChildByName('WalkPlayerStatus')?.getComponent(Label);
+      if (status !== undefined && status !== null) status.string = `${hp}/${maxHp}`;
+      const health = hud?.getChildByName('WalkPlayerHealth')?.getComponent(Graphics);
+      if (health !== undefined && health !== null) {
+        const size = health.node.getComponent(UITransform)!.contentSize;
+        paintPlayerHealth(health, hp, maxHp, size.width, size.height);
+      }
+    },
+  });
 }
 
 /** Creates one persistent world. tick moves actors/camera and never recreates the root. */
 export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, sceneOptions: WalkSceneOptions): WalkSceneHandle {
   const readyOptions = readyWalkSceneOptions(sceneOptions, model);
-  const roomFit = model.phase === 'explore' || model.phase === 'combat' ? getDungeonHtmlRoomLayout({
-    worldWidth: readyOptions.spec.width, worldHeight: readyOptions.spec.height,
-    surfaceHeight: readyOptions.surfaceHeight, viewportWidth: readyOptions.viewportWidth ?? 320, safeInsets: readyOptions.safeInsets,
-  }) : undefined;
-  const duel = roomFit !== undefined && model.phase === 'combat' ? getCombatDuelLayout({
+  // Battles leave the room for their own stage; the room art stays behind it.
+  if (model.phase === 'combat') return renderBattle(root, model, readyOptions);
+  const roomFit = model.phase === 'explore' ? getDungeonHtmlRoomLayout({
     worldWidth: readyOptions.spec.width, worldHeight: readyOptions.spec.height,
     surfaceHeight: readyOptions.surfaceHeight, viewportWidth: readyOptions.viewportWidth ?? 320, safeInsets: readyOptions.safeInsets,
   }) : undefined;
   const fittedSpec = roomFit === undefined ? readyOptions.spec : fitDungeonHtmlTargets(readyOptions.spec, roomFit);
-  // The duel only moves view-local feet; every target keeps its action, radius and identity.
-  const stagedSpec = duel === undefined || roomFit === undefined ? fittedSpec : { ...fittedSpec, targets: fittedSpec.targets.map(target =>
-    target.kind === 'monster' ? { ...target, ...roomFit.unproject(duel.enemy) } : target) };
-  const options: ReadyWalkSceneOptions = roomFit === undefined ? readyOptions : { ...readyOptions, spec: stagedSpec, dungeonView: {
+  const options: ReadyWalkSceneOptions = roomFit === undefined ? readyOptions : { ...readyOptions, spec: fittedSpec, dungeonView: {
     worldPixel: roomFit.hudPixel, gateHeight: roomFit.artwork.gateHeight,
-    monsterHeight: duel === undefined ? roomFit.artwork.monsterHeight : duel.enemyHeight / roomFit.hudPixel,
+    monsterHeight: roomFit.artwork.monsterHeight,
     monsterHudTop: roomFit.targetFeet.north.y - roomFit.targetFeet.main.y - (roomFit.artwork.compact ? 54 : 58) * roomFit.hudPixel,
     compactLabels: roomFit.artwork.compact,
   } };
@@ -1604,9 +1331,7 @@ export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, sc
   const top = halfSurface - options.safeInsets.top;
   const bottom = -halfSurface + options.safeInsets.bottom;
   const safeHeight = options.surfaceHeight - options.safeInsets.top - options.safeInsets.bottom;
-  // The duel stands the hero below the exploration controls band, so its clip reaches the safe bottom.
-  const roomRect = roomFit === undefined ? undefined : duel === undefined ? roomFit.roomRect
-    : { ...roomFit.roomRect, y: bottom, height: roomFit.roomRect.y + roomFit.roomRect.height - bottom };
+  const roomRect = roomFit?.roomRect;
   const viewportHeight = roomRect?.height ?? options.surfaceHeight;
   const viewportWidth = roomRect?.width ?? 750;
   const viewportCenter = roomRect === undefined ? { x: (options.safeInsets.right - options.safeInsets.left) / 2, y: 0 }
@@ -1639,7 +1364,6 @@ export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, sc
   if (actorScale !== undefined) depth.forEach(entry => entry.node.setScale(new Vec3(actorScale.x, actorScale.y, 1)));
   const transitionStates: { target: WorldTarget; label: Label }[] = [];
   spec.targets.forEach((target) => {
-    if (duel !== undefined && target.kind === 'transition') return;
     const actor = targetActor(actors, target, model, options);
     if (actorScale !== undefined) actor.node.setScale(new Vec3(actorScale.x, actorScale.y, 1));
     depth.push(actor);
@@ -1650,7 +1374,7 @@ export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, sc
       options.bindLocal(actor.node, begin);
       const touch = makeNode(actor.node, 'WalkTargetTouch', 0, target.kind === 'portal' ? 110 : 95, target.kind === 'portal' ? 160 : 148, target.kind === 'portal' ? 220 : 190);
       options.bindLocal(touch, begin);
-    } else if (roomFit !== undefined && duel === undefined && options.roomEventSheet === undefined
+    } else if (roomFit !== undefined && options.roomEventSheet === undefined
       && target.kind === 'transition' && target.id.startsWith('door:')) {
       // As in the route prototype, tapping a door walks there and goes through on arrival;
       // a shut door stays put and says why instead.
@@ -1661,12 +1385,11 @@ export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, sc
     }
   });
 
-  const duelMark = duel === undefined || roomFit === undefined ? undefined : roomFit.unproject(duel.hero);
-  const shownPosition = duelMark ?? options.position;
+  const shownPosition = options.position;
   const player = makeNode(actors, 'WalkPlayer', shownPosition.x, -shownPosition.y, 104, 108);
   if (actorScale !== undefined) player.setScale(new Vec3(actorScale.x, actorScale.y, 1));
   const playerSize = roomFit === undefined ? courtyard ? 172 : 104
-    : (duel === undefined ? roomFit.artwork.heroVisibleHeight * hudPixel : duel.heroHeight) * 336 / 308;
+    : roomFit.artwork.heroVisibleHeight * hudPixel * 336 / 308;
   const playerBodyY = roomFit === undefined ? courtyard ? 78 : 47 : playerSize * (320.16 - 168) / 336;
   shadow(player, roomFit === undefined ? courtyard ? 31 : 24 : 15 * options.dungeonView!.worldPixel, roomFit === undefined ? courtyard ? 7.5 : 9 : 3 * options.dungeonView!.worldPixel);
   const body = makeNode(player, 'WalkPlayerBody', 0, 0, playerSize, playerSize);
@@ -1676,67 +1399,12 @@ export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, sc
   playerSprite.sizeMode = Sprite.SizeMode.CUSTOM;
   // Keep the shared logical canvas so trimmed poses retain one ground point.
   playerSprite.trim = false;
-  playerSprite.spriteFrame = walkerFrames[courtyard || duel !== undefined ? 8 : 0]!;
+  playerSprite.spriteFrame = walkerFrames[courtyard ? 8 : 0]!;
   playerSprite.color = new Color(255, 255, 255, 255);
   options.trackSprite(playerSprite);
   if (courtyard) text(player, 'WalkPlayerName', '轮回者', 0, 180, 150, 24, 12, new Color(190, 241, 217, 255));
   const playerDepth: DepthItem = { node: player, y: shownPosition.y };
   depth.push(playerDepth);
-  // Allies fight beside the hero in a duel. With a full-body figure they stand on the floor: the companion a step behind
-  // to the left, the pet behind to the right, above the combat buttons. Without one, a gold-rimmed portrait (like the HUD lineup) floats at
-  // the hero's shoulder, since a boxed portrait reads badly as a standing cut-out.
-  const allies = new Map<CombatAllyKind, Readonly<{ mark: WorldPoint; body: Node; baseY: number }>>();
-  if (duel !== undefined && roomFit !== undefined) {
-    for (const member of model.sections[1].loadout?.runParty ?? []) {
-      if (member.kind !== 'companion' && member.kind !== 'pet') continue;
-      const companion = member.kind === 'companion';
-      if (member.figureAssetKey !== undefined) {
-        // Figures share the 1024x1536 world-figure canvas, drawn for soles at 93% of its height and head at 7%.
-        const visual = options.visual(member.figureAssetKey);
-        const shown = duel.heroHeight * (companion ? ALLY_FIGURE.companion.height : ALLY_FIGURE.pet.height);
-        const height = shown / 0.86;
-        const width = height * visual.width / Math.max(1, visual.height);
-        const place = companion ? ALLY_FIGURE.companion : ALLY_FIGURE.pet;
-        const mark = roomFit.unproject({ x: duel.hero.x + place.x * duel.heroHeight, y: duel.hero.y + place.y * duel.heroHeight });
-        const ally = makeNode(actors, `WalkAlly:${member.kind}`, mark.x, -mark.y, width, height);
-        if (actorScale !== undefined) ally.setScale(new Vec3(actorScale.x, actorScale.y, 1));
-        shadow(ally, width * 0.18, width * 0.05);
-        const baseY = height * ((ALLY_FIGURE_FEET[member.figureAssetKey] ?? 0.93) - 0.5);
-        const body = makeNode(ally, `WalkAllyBody:${member.kind}`, 0, baseY, width, height);
-        const sprite = body.addComponent(Sprite);
-        sprite.sizeMode = Sprite.SizeMode.CUSTOM;
-        sprite.trim = false;
-        sprite.spriteFrame = visual.frame;
-        options.trackSprite(sprite);
-        depth.push({ node: ally, y: mark.y });
-        allies.set(member.kind, { mark, body, baseY });
-        continue;
-      }
-      if (member.visualAssetKey === undefined) continue;
-      const size = duel.heroHeight * (companion ? 0.36 : 0.3);
-      const offset = companion ? { x: -duel.heroHeight * 0.28, y: duel.heroHeight * 0.66 } : { x: duel.heroHeight * 0.34, y: duel.heroHeight * 0.52 };
-      const mark = roomFit.unproject({ x: duel.hero.x + offset.x, y: duel.hero.y + offset.y });
-      const ally = makeNode(actors, `WalkAlly:${member.kind}`, mark.x, -mark.y, size, size);
-      if (actorScale !== undefined) ally.setScale(new Vec3(actorScale.x, actorScale.y, 1));
-      const body = makeNode(ally, `WalkAllyBody:${member.kind}`, 0, size / 2, size, size);
-      const rim = body.addComponent(Graphics);
-      rim.lineWidth = Math.max(2, size * 0.05);
-      rect(rim, -size / 2, -size / 2, size, size, new Color(16, 19, 13, 235), new Color(214, 178, 112, 255));
-      const crop = makeNode(body, `WalkAllyCrop:${member.kind}`, 0, 0, size * 0.88, size * 0.88);
-      crop.addComponent(Mask).type = Mask.Type.GRAPHICS_RECT;
-      const visual = options.visual(member.visualAssetKey);
-      const scale = Math.max(size * 0.88 / Math.max(1, visual.width), size * 0.88 / Math.max(1, visual.height));
-      // A portrait's face sits in its upper part; a pet icon is centred.
-      const lift = companion ? -(visual.height * scale - size * 0.88) * 0.32 : 0;
-      const sprite = makeNode(crop, `WalkAllySprite:${member.kind}`, 0, lift, visual.width * scale, visual.height * scale).addComponent(Sprite);
-      sprite.sizeMode = Sprite.SizeMode.CUSTOM;
-      sprite.trim = false;
-      sprite.spriteFrame = visual.frame;
-      options.trackSprite(sprite);
-      depth.push({ node: ally, y: mark.y });
-      allies.set(member.kind, { mark, body, baseY: size / 2 });
-    }
-  }
   const sortDepth = (): void => {
     depth.sort((a, b) => a.y - b.y);
     depth.forEach((entry, index) => entry.node.setSiblingIndex(index));
@@ -1746,7 +1414,7 @@ export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, sc
   const controlsLeft = -375 + (options.safeInsets.left + options.safeInsets.right) / 2;
   const controlsRight = -controlsLeft;
   const joystickSize = roomFit?.artwork.compact ? 85 : 92;
-  const joystick = makeNode(scene, 'WalkJoystick', roomFit !== undefined ? controlsLeft + (model.phase === 'combat' ? 54 : (roomFit.artwork.compact ? 17 : 18) + joystickSize / 2) * hudPixel
+  const joystick = makeNode(scene, 'WalkJoystick', roomFit !== undefined ? controlsLeft + ((roomFit.artwork.compact ? 17 : 18) + joystickSize / 2) * hudPixel
     : courtyard ? -375 + ((options.viewportWidth ?? 320) <= 340 ? 67 : 73) * hudPixel : -230,
     bottom + (roomFit !== undefined ? 60 * hudPixel : courtyard ? ((options.viewportWidth ?? 320) <= 340 ? 71 : 77) * hudPixel : 128), 200, 200);
   if (courtyard) joystick.setScale(new Vec3(110 * hudPixel / 200, 110 * hudPixel / 200, 1));
@@ -1770,11 +1438,11 @@ export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, sc
   ellipse(thumb, 0, 0, 35, 35, undefined, new Color(37, 30, 25, 43));
   const compactInteract = courtyard || roomFit !== undefined;
   const htmlInteract = roomFit !== undefined && model.phase === 'explore';
-  const interactWidth = htmlInteract ? (roomFit.artwork.compact ? 64 : 68) * hudPixel : compactInteract ? (model.phase === 'combat' ? 60 : 64) * hudPixel : 120;
+  const interactWidth = htmlInteract ? (roomFit.artwork.compact ? 64 : 68) * hudPixel : compactInteract ? 64 * hudPixel : 120;
   const interactHeight = htmlInteract ? (roomFit.artwork.compact ? 65 : 69) * hudPixel : compactInteract ? 44 * hudPixel : 120;
   const interact = roomFit !== undefined
-    ? makeNode(scene, 'WalkInteract', model.phase === 'combat' ? controlsLeft + 134 * hudPixel : controlsRight - 17 * hudPixel - interactWidth / 2,
-      bottom + (model.phase === 'combat' ? 24 : 60) * hudPixel, interactWidth, interactHeight)
+    ? makeNode(scene, 'WalkInteract', controlsRight - 17 * hudPixel - interactWidth / 2,
+      bottom + 60 * hudPixel, interactWidth, interactHeight)
     : courtyard
     ? makeNode(scene, 'WalkInteract', 375 - ((options.viewportWidth ?? 320) <= 340 ? 44 : 50) * hudPixel,
       bottom + ((options.viewportWidth ?? 320) <= 340 ? 38 : 46) * hudPixel, interactWidth, interactHeight)
@@ -1810,16 +1478,9 @@ export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, sc
     interact.active = false;
     roomEventTop = roomEventSheet(scene, model, roomEvent, options, bottom, options.roomEventSheet!.close);
   }
-  if (duel !== undefined) {
-    // Combat suspends walking: the stage, not the joystick, positions both fighters.
-    joystick.active = false;
-    interact.active = false;
-    combatDuelHud(scene, model, options, duel);
-    combatDuelControls(scene, model, options, duel);
-  }
 
   let position: WorldPoint = { x: options.position.x, y: options.position.y };
-  let facing: Facing = courtyard || duel !== undefined ? 'right' : 'down';
+  let facing: Facing = courtyard ? 'right' : 'down';
   let previousFacing: Facing = facing;
   let frameIndex = 0;
   let gait = 0;
@@ -1838,7 +1499,7 @@ export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, sc
   const halfWidth = 375 / worldZoom;
   const halfHeight = safeHeight / worldZoom / 2;
   const clampCamera = (point: WorldPoint): WorldPoint => ({
-    x: roomFit !== undefined ? roomFit.cameraPoint.x : spec.width <= halfWidth * 2 ? spec.width / 2 : Math.max(halfWidth, Math.min(spec.width - halfWidth, point.x + (model.phase === 'combat' ? 220 : 0))),
+    x: roomFit !== undefined ? roomFit.cameraPoint.x : spec.width <= halfWidth * 2 ? spec.width / 2 : Math.max(halfWidth, Math.min(spec.width - halfWidth, point.x)),
     y: roomFit !== undefined ? roomFit.cameraPoint.y : courtyard || spec.height <= halfHeight * 2 ? spec.height / 2 : Math.max(halfHeight, Math.min(spec.height - halfHeight, point.y + 65)),
   });
   let cameraPoint = clampCamera(position);
@@ -1914,101 +1575,6 @@ export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, sc
   const banner = options.banner === undefined ? undefined : alarmBanner(scene, options.banner, top - safeHeight * 0.36, hudPixel);
   const bannerStart = options.banner?.age ?? 0;
   banner?.fade(bannerStart);
-  const monster = spec.targets.find((target) => target.kind === 'monster');
-  const enemyNode = monster === undefined ? undefined : actors.getChildByName(`WalkTarget:${monster.id}`);
-  const enemyBody = enemyNode?.getChildByName('WorldObjectBody');
-  const updateCombatReadout = (values: Readonly<{ playerHp?: number; enemyHp?: number }>): void => {
-    if (disposed || detail.kind !== 'combat') return;
-    if (values.playerHp !== undefined) {
-      const hud = scene.getChildByName('WalkHud');
-      const status = hud?.getChildByName('WalkPlayerStatus')?.getComponent(Label);
-      if (status !== undefined && status !== null) status.string = `${values.playerHp}/${detail.player.maxHp}`;
-      const health = hud?.getChildByName('WalkPlayerHealth')?.getComponent(Graphics);
-      if (health !== undefined && health !== null) {
-        const size = health.node.getComponent(UITransform)!.contentSize;
-        paintPlayerHealth(health, values.playerHp, detail.player.maxHp, size.width, size.height);
-      }
-    }
-    if (values.enemyHp !== undefined) {
-      const card = scene.getChildByName('WalkEnemyCard');
-      const label = card?.getChildByName('WalkEnemyHealthLabel')?.getComponent(Label);
-      if (label !== undefined && label !== null) label.string = `${values.enemyHp} / ${detail.enemy.maxHp}`;
-      const health = card?.getChildByName('WalkEnemyHealth')?.getComponent(Graphics);
-      if (health !== undefined && health !== null) {
-        const size = health.node.getComponent(UITransform)!.contentSize;
-        paintEnemyHealth(health, values.enemyHp / detail.enemy.maxHp, size.width, size.height);
-      }
-    }
-  };
-  // A separate mask ends above the controls. It shares the world camera's
-  // coordinate conversion while keeping particles and numbers off the HUD.
-  const effectBottom = 394;
-  const effectHeight = roomFit === undefined ? Math.max(1, viewportHeight - effectBottom) : viewportHeight;
-  const effectCenterY = roomFit === undefined ? effectBottom / 2 : 0;
-  const effectsMask = model.phase === 'combat'
-    ? makeNode(viewport, 'WalkCombatEffectsViewport', 0, effectCenterY, viewportWidth, effectHeight) : undefined;
-  if (effectsMask !== undefined) effectsMask.addComponent(Mask).type = Mask.Type.GRAPHICS_RECT;
-  const enemyArt = monster?.visualAssetKey === undefined ? undefined : enemyBody?.getChildByName(`WalkMonsterSprite:${monster.visualAssetKey}`);
-  const enemyAnchorY = roomFit === undefined ? 66 : (enemyArt?.getComponent(UITransform)?.contentSize.height ?? 0) / 2;
-  const enemySprite = enemyArt?.getComponent(Sprite) ?? undefined;
-  const timingCatcher = duel === undefined ? undefined : makeNode(scene, 'WalkCombatTimingCatcher', 0, 0, 750, options.surfaceHeight);
-  if (timingCatcher !== undefined) timingCatcher.active = false;
-  // Busy renders dispose walking input, so the parry window owns its own Space
-  // listener and releases it whenever the window closes, cancels or disposes.
-  const timingKey = (event: EventKeyboard): void => { if (event.keyCode === KeyCode.SPACE) effects?.tap(); };
-  let timingKeyBound = false;
-  const bindTimingKey = (active: boolean): void => {
-    if (active === timingKeyBound) return;
-    timingKeyBound = active;
-    if (active) input.on(Input.EventType.KEY_DOWN, timingKey);
-    else input.off(Input.EventType.KEY_DOWN, timingKey);
-  };
-  const viewportRest = viewportCenter;
-  const effects = effectsMask === undefined ? undefined : createInfiniteFlowCombatEffects(effectsMask, {
-    pixel: hudPixel,
-    ...(duel === undefined ? {} : { actorUnit: duel.heroHeight / 200, dashGap: duel.enemyHeight * 0.42 }),
-    shakeWorld: offset => viewport.setPosition(new Vec3(viewportRest.x + offset.x, viewportRest.y + offset.y, 0)),
-    tintPlayer: color => { playerSprite.color = color ?? new Color(255, 255, 255, 255); },
-    tintEnemy: color => { if (enemySprite !== undefined) enemySprite.color = color ?? new Color(255, 255, 255, 255); },
-    setTimingCatcher: active => {
-      if (timingCatcher === undefined) return;
-      timingCatcher.active = active;
-      bindTimingKey(active);
-    },
-    getAnchors: () => {
-      if (roomFit !== undefined) {
-        const playerFoot = roomFit.project(duelMark ?? position);
-        const enemyFoot = roomFit.project(monster ?? position);
-        return {
-          player: { x: playerFoot.x - viewportCenter.x, y: playerFoot.y - viewportCenter.y + playerBodyY - effectCenterY },
-          enemy: { x: enemyFoot.x - viewportCenter.x, y: enemyFoot.y - viewportCenter.y + enemyAnchorY - effectCenterY },
-        };
-      }
-      return {
-        player: { x: cameraOffset.x + (position.x - cameraPoint.x) * worldZoom, y: cameraOffset.y + (cameraPoint.y - position.y + playerBodyY) * worldZoom - effectCenterY },
-        enemy: { x: cameraOffset.x + ((monster?.x ?? position.x) - cameraPoint.x) * worldZoom, y: cameraOffset.y + (cameraPoint.y - (monster?.y ?? position.y) + enemyAnchorY) * worldZoom - effectCenterY },
-      };
-    },
-    getAllyAnchor: kind => {
-      const ally = allies.get(kind);
-      if (ally === undefined || roomFit === undefined) return undefined;
-      const foot = roomFit.project(ally.mark);
-      return { x: foot.x - viewportCenter.x, y: foot.y - viewportCenter.y + ally.baseY - effectCenterY };
-    },
-    moveAlly: (kind, offset) => {
-      const ally = allies.get(kind);
-      ally?.body.setPosition(new Vec3(offset.x, ally.baseY + offset.y, 0));
-    },
-    // Dungeon actor roots cancel both camera axes, so body positions are already screen units.
-    movePlayer: offset => body.setPosition(new Vec3(offset.x / (roomFit === undefined ? worldZoom : 1), playerBodyY + offset.y / (roomFit === undefined ? worldZoom : 1), 0)),
-    moveEnemy: offset => enemyBody?.setPosition(new Vec3(offset.x / (roomFit === undefined ? worldZoom : 1), offset.y / (roomFit === undefined ? worldZoom : 1), 0)),
-  });
-
-  timingCatcher?.on(Node.EventType.TOUCH_START, (event: { propagationStopped?: boolean }) => {
-    effects?.tap();
-    event.propagationStopped = true;
-  });
-
   const updateInteraction = (): void => {
     nearby = nearestWalkTarget(spec, position);
     if (interactionInitialized && targetId === nearby?.id) return;
@@ -2039,7 +1605,7 @@ export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, sc
         pixel === undefined ? nearby.kind === 'npc' ? 15 : 24 : 9 * pixel, new Color(197, 168, 106, 25), ready ? TEAL : RED);
     }
   };
-  if (duel === undefined) updateInteraction();
+  updateInteraction();
 
   return {
     joystick,
@@ -2047,29 +1613,18 @@ export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, sc
     getPosition: () => ({ x: position.x, y: position.y }),
     getFacing: () => facing,
     cancelApproach,
-    updateCombatReadout,
-    isCombatAnimating: () => effects?.isPlaying() ?? false,
-    startCombatAction: (kind, onImpact, startOptions) => {
-      if (disposed || effects === undefined) return false;
-      return effects.start(kind, onImpact, startOptions);
-    },
-    tapCombatTiming: () => !disposed && (effects?.tap() ?? false),
-    resolveCombatAction: (result, onComplete) => {
-      if (disposed || effects === undefined) return false;
-      const accepted = effects.resolve({ ...result, onCounterImpact: () => {
-        updateCombatReadout({ playerHp: result.playerHpAfterCounter, enemyHp: result.enemyHpAfterCounter });
-        result.onCounterImpact?.();
-      } }, onComplete);
-      if (!accepted) return false;
-      updateCombatReadout({ playerHp: result.playerHpAfterImpact, enemyHp: result.enemyHpAfterImpact });
-      return true;
-    },
-    cancelCombatAction: () => { if (!disposed) effects?.cancel(); },
+    // Fights play on the battle stage; walking has nothing to animate.
+    updateCombatReadout: () => {},
+    isCombatAnimating: () => false,
+    startCombatAction: () => false,
+    tapCombatTiming: () => false,
+    resolveCombatAction: () => false,
+    cancelCombatAction: () => {},
     tick: (dt, axis) => {
       if (disposed) return;
       const elapsed = Math.min(Math.max(dt, 0), courtyard ? 0.05 : 0.1);
       age += elapsed;
-      const movingBlocked = busy || duel !== undefined || (effects?.isPlaying() ?? false);
+      const movingBlocked = busy;
       let movement = axis;
       let next = movingBlocked ? position : stepWalkPosition(spec, position, axis, elapsed);
       if (axis.x !== 0 || axis.y !== 0) cancelApproach();
@@ -2140,11 +1695,10 @@ export function renderInfiniteFlowWalkScene(root: Node, model: GameViewModel, sc
         cameraPoint = { x: cameraPoint.x + (desired.x - cameraPoint.x) * smoothing, y: cameraPoint.y + (desired.y - cameraPoint.y) * smoothing };
         camera.setPosition(new Vec3(-cameraPoint.x * worldZoom, cameraPoint.y * worldZoom, 0));
       }
-      if (duel === undefined) updateInteraction();
+      updateInteraction();
       if (toast !== undefined && !failed) toast.color = new Color(DARK_UI.gold.r, DARK_UI.gold.g, DARK_UI.gold.b, Math.round(255 * Math.max(0, Math.min(1, 4 - age))));
       if (banner !== undefined && banner.node.active) banner.fade(bannerStart + age);
-      effects?.tick(elapsed);
     },
-    dispose: () => { disposed = true; cancelApproach(); effects?.dispose(); scene.destroy(); },
+    dispose: () => { disposed = true; cancelApproach(); scene.destroy(); },
   };
 }

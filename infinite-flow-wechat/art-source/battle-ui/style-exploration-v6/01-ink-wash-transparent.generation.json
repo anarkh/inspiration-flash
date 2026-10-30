@@ -1,0 +1,63 @@
+{
+  "task": "transparent white-ink overlay edit",
+  "tool": "image_gen.imagegen",
+  "prompt": "Edit the provided image into a truly transparent battle-control overlay for a dark game. Use the provided image as the edit target and retain the exact relative layout, sizes, silhouettes and dry-brush circle artwork of its SIX controls: two small utility circles stacked at far left (running figure above, circular arrow below), three middle command circles (diamond seal, tied pouch, kite shield), and one larger right attack circle with a straight sword and diamond core. Preserve exactly three small state dots on the attack rim: two active and one inactive. Keep the wide horizontal 3:1 composition, desired 1536x512 PNG; do not add any other interface or scene.\n\nCompletely remove ALL off-white xuan paper, paper grain, washes that function as opaque background, and every rectangular background. The entire background must have true transparent alpha, including empty space between controls AND every unpainted gap inside each circle. No baked checkerboard, white sheet, black rectangle, shared backplate or opaque circular fill. Only the painted glyphs, rings and dots remain as visible foreground.\n\nFor legibility on dark game floors, recolor the black and grey ink strokes into warm ivory-white and pale grey-white ink, preserving expressive broken wet-and-dry brush texture and varying stroke opacity. Tiny restrained mineral-teal color remains only on the sword/diamond attack motif and the two active dots; the third dot is dim. Preserve the existing artwork rather than redesigning it. No metallic embossing, ornament, new border, frame, plate, text, labels, numbers or watermark. Deliver one clean white-ink transparent overlay.",
+  "references": [
+    {
+      "order": 1,
+      "path": "/Users/bytedance/git/inspiration-flash/infinite-flow-wechat/art-source/battle-ui/style-exploration-v6/01-ink-wash.png",
+      "role": "edit target",
+      "sha256": "2b1bebd117219b644da53630b31c3c796bd3c24a9f87a1d26c6174db37610614"
+    }
+  ],
+  "parameters": {
+    "referenced_image_paths": [
+      "/Users/bytedance/git/inspiration-flash/infinite-flow-wechat/art-source/battle-ui/style-exploration-v6/01-ink-wash.png"
+    ],
+    "transparent_background": true
+  },
+  "sourcePath": "/Users/bytedance/.codex/generated_images/01a18682-1a5c-7e53-8b4b-bcc8aad29f31/exec-35aa498b-2cef-4a41-9e59-b0c1844a907c.png",
+  "targetPath": "/Users/bytedance/git/inspiration-flash/infinite-flow-wechat/art-source/battle-ui/style-exploration-v6/01-ink-wash-transparent.png",
+  "actual": {
+    "width": 2172,
+    "height": 724,
+    "mode": "RGBA",
+    "aspectRatio": "3:1",
+    "alpha": {
+      "minimum": 0,
+      "maximum": 255,
+      "zero": 859056,
+      "nonzero": 713472,
+      "partial": 713195,
+      "opaque": 277
+    }
+  },
+  "sourceSha256": "5a3cdd86fd8d5da697261ddb0126114ea01aeadcc8816ea1c7100363ec3dbbbe",
+  "targetSha256": "5a3cdd86fd8d5da697261ddb0126114ea01aeadcc8816ea1c7100363ec3dbbbe",
+  "sourceTargetSha256Equal": true,
+  "inspection": {
+    "onlyControlStrip": true,
+    "utilityControls": 2,
+    "middleControls": 3,
+    "attackControls": 1,
+    "stateDots": 3,
+    "activeStateDots": 2,
+    "trueTransparentBackground": true,
+    "paperRemoved": true,
+    "transparentHolesInsideCircles": true,
+    "notes": [
+      "Original spatial layout and ink-circle silhouettes retained.",
+      "Ivory and grey-white ink strokes have varying opacity; teal confined to attack and two active state dots.",
+      "Native 2172x724 output retained instead of requested 1536x512; no crop, resize, extraction or repaint.",
+      "Some broad ink wash remains as partly transparent foreground strokes; no rectangular paper background."
+    ]
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "sourcePath": "/Users/bytedance/.codex/generated_images/01a18682-1a5c-7e53-8b4b-bcc8aad29f31/exec-35aa498b-2cef-4a41-9e59-b0c1844a907c.png",
+      "accepted": true
+    }
+  ],
+  "postProcessing": "None; byte-identical copy."
+}

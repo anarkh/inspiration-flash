@@ -17,12 +17,17 @@ const manifestPath = resolve(
 const assetRoot = resolve(projectRoot, "cocos/assets");
 const resourceRoot = resolve(projectRoot, "cocos/assets/resources");
 const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
-const EXPECTED_ASSET_COUNT = 323;
+const EXPECTED_ASSET_COUNT = 324;
 const HERO_WALK_KEY = "character:reincarnator_walk";
 const HERO_WALK_SHA256 = "897deadd34e18c9e3c8e7d52461a8fddac5272503696e263cee2e7baec6bb918";
 const DUNGEON_TRANSITION_GATE_KEY = "scene:dungeon_transition_gate";
 const HUB_DUNGEON_PORTAL_KEY = "scene:hub_dungeon_portal";
 const HUB_DUNGEON_PORTAL_SHA256 = "e77658a165eab7c3fe527b309909bca1d0be7c4fddd4ab5d4c75905a33927d4e";
+// The 黑白水墨 battle controls: one transparent strip the battle scene cuts into its six controls,
+// shipped at half size so phones minify it without mipmaps and keep the thin ink outlines.
+const BATTLE_CONTROLS_KEY = "scene:battle_controls_ink";
+const BATTLE_CONTROLS_SOURCE_SHA256 = "74914479f4bd2979f1cd5f02064e26abffa7e5bc254e0d8b4772706da0ffe553";
+const BATTLE_CONTROLS_TARGET_SHA256 = "98a6783f409940999139a4f3a3745cda3710c18049d82d855d10b0d48aec19b3";
 const COURTYARD_ASSET_SPECS = [
   { key: "scene:hub_courtyard_walk", file: "walk-sanctuary-v1.png", sourceFile: "walk-sanctuary-v1.png", width: 2172, height: 724, fit: "cover", hasAlpha: false },
   { key: "scene:courtyard_pillar", file: "pillar-v1.png", sourceFile: "courtyard-props/pillar-v1.png", width: 870, height: 1808, fit: "contain", hasAlpha: true },
@@ -428,7 +433,7 @@ const monsterWorldKeys = new Set(monsterWorldAssets.map((asset) => asset.key));
 const originalAssets = assets.filter((asset) => !asset.key.startsWith("scene:dungeon_world_")
   && !NPC_GRID_ASSET_KEYS.has(asset.key) && !NPC_WORLD_ASSET_KEYS.has(asset.key)
   && !monsterWorldKeys.has(asset.key) && !PARTY_WORLD_ASSET_KEYS.has(asset.key) && !COURTYARD_ASSET_KEYS.has(asset.key)
-  && asset.key !== DUNGEON_TRANSITION_GATE_KEY && asset.key !== HUB_DUNGEON_PORTAL_KEY
+  && asset.key !== DUNGEON_TRANSITION_GATE_KEY && asset.key !== HUB_DUNGEON_PORTAL_KEY && asset.key !== BATTLE_CONTROLS_KEY
   && !asset.key.startsWith("scene:dungeon_prop_") && !RUN_RELIC_ICON_KEYS.has(asset.key));
 const frozenOriginalAssets = originalAssets.filter((asset) => (
   !STYLE_REFRESH_ASSET_KEYS.has(asset.key) && asset.key !== HERO_WALK_KEY
@@ -606,6 +611,44 @@ for (const asset of hubDungeonPortals) {
   }
 }
 
+const battleControls = assets.filter((asset) => asset.key === BATTLE_CONTROLS_KEY);
+if (battleControls.length !== 1) {
+  failures.push("battle must include its approved ink control strip");
+}
+for (const asset of battleControls) {
+  if (asset.kind !== "scene" || asset.entityId !== "battle_controls_ink"
+    || asset.role !== "scene" || asset.fit !== "contain"
+    || asset.source !== "project-original-generated" || asset.sourceRevision !== 1
+    || Object.prototype.hasOwnProperty.call(asset, "webSourcePath")
+    || asset.sourceFile !== "infinite-flow-wechat/art-source/battle-ui/style-exploration-v6/ink-muted-palettes/black-white-overlay.png"
+    || asset.resourceFile !== "scene/battle-controls-ink-v1.png"
+    || asset.resourcePath !== "scene/battle-controls-ink-v1"
+    || asset.sourceFormat !== "png" || asset.targetFormat !== "png"
+    || asset.cocosImageImport !== "supported"
+    || asset.sourceSha256 !== BATTLE_CONTROLS_SOURCE_SHA256
+    || asset.targetSha256 !== BATTLE_CONTROLS_TARGET_SHA256
+    || asset.transformation?.operation !== "resize-png" || asset.transformation?.tool !== "sips") {
+    failures.push(`battle controls provenance or approved image identity mismatch: ${asset.key}`);
+  }
+  const dimensions = asset.transformation?.targetDimensions;
+  const sourceDimensions = asset.transformation?.sourceDimensions;
+  if (asset.width !== 1086 || asset.height !== 362
+    || dimensions?.width !== asset.width || dimensions?.height !== asset.height
+    || sourceDimensions?.width !== 2172 || sourceDimensions?.height !== 724) {
+    failures.push(`battle controls must be the approved 2172x724 strip at exactly half size: ${asset.key}`);
+  }
+  try {
+    const source = pngDimensions(readFileSync(resolve(repositoryRoot, asset.sourceFile)));
+    if (source.width !== 2172 || source.height !== 724) failures.push(`battle controls source dimensions mismatch: ${asset.key}`);
+  } catch (error) {
+    failures.push(`battle controls source unreadable: ${asset.key}: ${String(error)}`);
+  }
+  const meta = readCreatorMeta(resolve(resourceRoot, `${asset.resourceFile}.meta`), asset.key);
+  if (meta?.userData?.hasAlpha !== true) {
+    failures.push(`battle controls image metadata must preserve alpha: ${asset.key}`);
+  }
+}
+
 const styleRefreshAssets = assets.filter((asset) => STYLE_REFRESH_ASSET_KEYS.has(asset.key));
 if (!sameStringSet(styleRefreshAssets.map((asset) => asset.key), STYLE_REFRESH_ASSET_KEYS)) {
   failures.push("style refresh must include all 26 approved artworks");
@@ -780,7 +823,7 @@ for (const asset of assets) {
     }
     if (monsterWorldKeys.has(asset.key) || PARTY_WORLD_ASSET_KEYS.has(asset.key) || COURTYARD_PROP_KEYS.has(asset.key)
       || STYLE_REFRESH_ALPHA_KEYS.has(asset.key) || asset.key === HERO_WALK_KEY
-      || asset.key === DUNGEON_TRANSITION_GATE_KEY || asset.key === HUB_DUNGEON_PORTAL_KEY) {
+      || asset.key === DUNGEON_TRANSITION_GATE_KEY || asset.key === HUB_DUNGEON_PORTAL_KEY || asset.key === BATTLE_CONTROLS_KEY) {
       const alpha = pngRgbaAlpha(targetBytes);
       if (alpha.transparentPixels === 0 || alpha.visiblePixels === 0) {
         failures.push(`world sprite must have both transparent and visible pixels: ${asset.key}`);
@@ -904,6 +947,7 @@ if (failures.length > 0) {
     courtyardAssets: courtyardAssets.length,
     dungeonTransitionGates: dungeonTransitionGates.length,
     hubDungeonPortals: hubDungeonPortals.length,
+    battleControls: battleControls.length,
     styleRefreshAssets: styleRefreshAssets.length,
     runRelicIcons: runRelicIcons.length,
     resourceBytes,

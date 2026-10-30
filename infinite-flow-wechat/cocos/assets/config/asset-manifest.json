@@ -1,14 +1,14 @@
 {
   "schemaVersion": 2,
-  "manifestRevision": "sha256:d72d289e104c5df869e30f45af09deee601ed52fb1bf9868229e7a266bf7bfbb",
+  "manifestRevision": "sha256:66666c18678a4db1ca2b93db19265f911dfb44e4370b777d6d21348eebed747f",
   "sourceManifest": {
     "path": "infinite-flow/src/game-assets.ts",
     "version": 1,
     "commit": "2645f0232542684d27de1abc321bb26913320420"
   },
   "resourceRoot": "cocos/assets/resources",
-  "assetCount": 323,
-  "derivedAssetCount": 5,
+  "assetCount": 324,
+  "derivedAssetCount": 6,
   "kindCounts": {
     "character": 8,
     "npc": 15,
@@ -17,15 +17,15 @@
     "pet": 12,
     "item": 50,
     "dungeon": 19,
-    "scene": 36
+    "scene": 37
   },
   "formatCounts": {
     "source": {
-      "png": 322,
+      "png": 323,
       "svg": 1
     },
     "target": {
-      "png": 323
+      "png": 324
     }
   },
   "assets": [
@@ -9557,6 +9557,39 @@
         "targetDimensions": {
           "width": 1024,
           "height": 1536
+        }
+      }
+    },
+    {
+      "key": "scene:battle_controls_ink",
+      "kind": "scene",
+      "entityId": "battle_controls_ink",
+      "resourcePath": "scene/battle-controls-ink-v1",
+      "resourceFile": "scene/battle-controls-ink-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/battle-ui/style-exploration-v6/ink-muted-palettes/black-white-overlay.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "黑白水墨战斗指令：逃跑、自动、法术、道具、防御与带三颗战意珠的攻击（半尺寸，供手机显示）",
+      "role": "scene",
+      "width": 1086,
+      "height": 362,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "74914479f4bd2979f1cd5f02064e26abffa7e5bc254e0d8b4772706da0ffe553",
+      "targetSha256": "98a6783f409940999139a4f3a3745cda3710c18049d82d855d10b0d48aec19b3",
+      "transformation": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "sourceDimensions": {
+          "width": 2172,
+          "height": 724
+        },
+        "targetDimensions": {
+          "width": 1086,
+          "height": 362
         }
       }
     }

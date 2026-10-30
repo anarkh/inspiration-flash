@@ -1,0 +1,305 @@
+:root {
+  color-scheme: dark;
+  --gold: #c6a36b;
+  --bright: #f2d49a;
+  --edge: #6b5634;
+  --text: #eee5d4;
+  --muted: #b3a891;
+  --red: #e5806f;
+  --green: #9fd39a;
+  --cyan: #8fe0d2;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: #070706; color: var(--text);
+  font: 14px/1.45 -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  -webkit-user-select: none; user-select: none;
+}
+button, select { font: inherit; color: inherit; }
+button { cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; border: none; background: none; padding: 0; }
+button:disabled { cursor: default; }
+button:focus-visible, select:focus-visible { outline: 2px solid var(--bright); outline-offset: 2px; }
+[data-icon] svg { width: 100%; height: 100%; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+
+.preview-tools {
+  width: min(100% - 12px, 430px); min-height: 56px; margin: auto; padding: 6px 0;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px; color: var(--muted); font-size: 12px;
+}
+.preview-tools button, .preview-tools select { min-height: 40px; padding: 4px 6px; background: #171510; border: 1px solid #51432e; border-radius: 3px; }
+body.shot .preview-tools { display: none; }
+
+/* Header, field, dock. One token set for 390×844-class screens, a compact set for 320×568. */
+.game {
+  --hud-h: 92px;
+  --dock-h: 132px;
+  width: min(100%, 430px);
+  height: calc(100dvh - 68px);
+  max-height: 900px; min-height: 520px;
+  margin: 0 auto; position: relative; isolation: isolate; overflow: hidden;
+  display: grid; grid-template-rows: var(--hud-h) 1fr var(--dock-h);
+  background: #0b0f0e; border: 1px solid #2c261b;
+}
+body.shot .game { height: 100dvh; border: none; }
+@media (max-width: 350px), (max-height: 600px) {
+  .game { --hud-h: 82px; --dock-h: 116px; }
+}
+
+.backdrop {
+  position: absolute; inset: 0; z-index: -1;
+  background:
+    radial-gradient(90% 60% at 50% 52%, #0000 0, #0008 100%),
+    linear-gradient(#050505f0 0, #05050588 16%, #05050566 50%, #050505a0 78%, #050505f6 100%),
+    url('../../cocos/assets/resources/dungeon-world/causal_clearinghouse-v1.png') center / cover;
+}
+
+/* HUD: the same shared header as walking. */
+.hud { grid-row: 1; display: flex; align-items: center; gap: 10px; padding: 0 8px 0 12px; z-index: 5; }
+.avatar {
+  width: 50px; height: 66px; border: 1px solid #8a8050; border-radius: 2px; background: #10190f;
+  display: flex; flex-direction: column; justify-content: flex-end; align-items: center; position: relative; overflow: hidden; color: var(--gold); font-size: 11px;
+}
+.avatar-art { position: absolute; inset: 0; background: url('../../cocos/assets/resources/character/reincarnator-v2.png') 50% 18% / 170%; }
+.avatar span:last-child { position: relative; text-shadow: 0 1px 2px #000; }
+.hud-body { flex: 1; min-width: 0; }
+.hud-name { display: flex; align-items: baseline; gap: 8px; }
+.hud-name strong { font-size: 15px; }
+.hud-hp { font-size: 13px; color: #eee5c9; }
+.hud-tools { display: flex; }
+.tool { width: 46px; height: 46px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--gold); }
+.tool [data-icon] { width: 20px; height: 20px; }
+.tool small { font-size: 10px; }
+
+.bar { position: relative; height: 5px; background: #0c0a08; border: 1px solid #3f3322; overflow: hidden; }
+.bar .fill, .bar .lag { position: absolute; left: 0; top: 0; bottom: 0; width: 100%; transition: width .35s ease-out; }
+.bar .lag { background: #f4eee0; transition: width .6s ease-in .25s; }
+.hero-bar { margin-top: 6px; width: 70%; }
+.hero-bar .fill, .unit-bar .fill { background: #74bc68; }
+.enemy-bar { height: 5px; }
+.enemy-bar .fill { background: #cd4a38; }
+
+/* The field: units are placed in px by app.js; a unit's origin is its foot point. */
+.field { grid-row: 2; position: relative; z-index: 1; }
+.unit { position: absolute; width: 0; height: 0; }
+.ring { position: absolute; left: 0; top: 0; transform: translate(-50%, -50%); border-radius: 50%; background: radial-gradient(closest-side, #000a, #0006 60%, #0000); }
+.enemy .ring { width: calc(var(--h) * .56); height: calc(var(--h) * .14); }
+.enemy.target .ring { box-shadow: 0 0 0 1.5px #f2d49acc, 0 0 10px #f2d49a88; }
+.hero .ring, .ally .ring { width: calc(var(--hero-h) * .46); height: calc(var(--hero-h) * .12); }
+.pet .ring { width: calc(var(--hero-h) * .34); }
+.art { position: absolute; left: 0; transform: translateX(-50%); pointer-events: none; filter: drop-shadow(0 5px 8px #000c); }
+
+.enemy-art { height: calc(var(--h) / .86); bottom: calc(var(--h) / .86 * -.07); pointer-events: auto; cursor: pointer; }
+.enemy.flash .enemy-art { filter: brightness(2.6) saturate(0) drop-shadow(0 0 12px #fff8); }
+.enemy.hurt .enemy-art { filter: brightness(1.4) sepia(.6) hue-rotate(-30deg) saturate(3); }
+.enemy.windup .enemy-art { filter: drop-shadow(0 0 8px #ff4a3acc) brightness(1.15) saturate(1.3); }
+.enemy.defeated { pointer-events: none; }
+.enemy.defeated .enemy-art, .enemy.defeated .plate { transition: opacity .5s, filter .5s; opacity: 0; filter: brightness(.3); }
+.plate { position: absolute; left: 0; transform: translateX(-50%); bottom: calc(var(--h) + 6px); width: max(96px, calc(var(--h) * .74)); text-align: center; }
+.plate-line { display: flex; align-items: center; justify-content: center; gap: 3px; margin-bottom: 2px; text-shadow: 0 1px 3px #000, 0 0 2px #000; white-space: nowrap; }
+.plate-line strong { font-size: 11px; color: #f3e6cc; overflow: hidden; text-overflow: ellipsis; }
+.rank { color: var(--bright); font-size: 10px; }
+
+.hero { z-index: 2; }
+.hero-sprite { position: absolute; width: calc(var(--hero-h) * 336 / 308); height: calc(var(--hero-h) * 336 / 308);
+  left: calc(var(--hero-h) * 336 / 308 * -.5); top: calc(var(--hero-h) * 336 / 308 * -.9529); transform-origin: 50% 95%; filter: drop-shadow(0 4px 6px #000b); }
+.hero-frame { position: absolute; background: url('../../cocos/assets/resources/character/reincarnator-walk-v2.png') no-repeat; }
+.hero.hurt .hero-sprite { filter: brightness(1.8) sepia(1) hue-rotate(-40deg) saturate(4) drop-shadow(0 0 8px #f33a); }
+.unit-bar { position: absolute; left: 0; transform: translateX(-50%); bottom: calc(var(--hero-h) + 6px); width: 52px; }
+.ally .art { height: calc(var(--hero-h) * .92 / .86); bottom: calc(var(--hero-h) * .92 / .86 * -.035); }
+.pet .art { height: calc(var(--hero-h) * .5 / .86); bottom: calc(var(--hero-h) * .5 / .86 * -.05); }
+/* Allies are drawn facing the viewer's right; on the diagonal they turn toward the enemy on the left. */
+.diagonal .ally .art, .vertical .pet .art { transform: translateX(-50%) scaleX(-1); }
+.tag { position: absolute; left: 0; transform: translateX(-50%); top: 6px; font-size: 10px; color: var(--muted); white-space: nowrap; text-shadow: 0 1px 2px #000; }
+.game.solo .ally { display: none; }
+
+
+/* Intent: one callout for the enemy you are fighting, at the open top corner of the field. */
+.intent {
+  position: absolute; right: 8px; top: 40%; z-index: 3; display: flex; align-items: center; gap: 7px; padding: 5px 9px 5px 6px; white-space: nowrap;
+  text-align: left; background: linear-gradient(#262016f2, #17130ef2); border: 1px solid #8b7046; border-radius: 4px; box-shadow: 0 4px 14px #000a;
+}
+.intent-icon { width: 26px; height: 26px; flex: none; border-radius: 3px; background: center / cover; box-shadow: 0 0 0 1px #8b7046; }
+.intent-copy { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
+.intent-copy strong { font-weight: 600; font-size: 12px; color: var(--bright); }
+.intent-copy span { font-size: 10px; color: var(--muted); }
+.intent.danger { border-color: #e5806f; background: linear-gradient(#45180fe8, #240d09f0); animation: pulse 1.1s ease-in-out infinite; }
+.intent.danger strong { color: #ffb4a3; }
+@keyframes pulse { 50% { box-shadow: 0 0 0 3px #e5806f44, 0 0 18px #e5806f66; } }
+
+/* ---------- The dock: the log line (round, log, escape and auto) over one row of four buttons ---------- */
+.dock { grid-row: 3; position: relative; z-index: 4; }
+.ticker { position: absolute; left: 10px; right: 128px; top: 2px; margin: 0; z-index: 1; font-size: 12px; color: #e7d9bd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 2px #000; }
+/* The round count leads the log line, leaving the top of the field to the enemy formation. */
+.round { display: inline-block; margin-right: 8px; padding: 0 7px; border: 1px solid #8b7046; border-radius: 2px; background: #1a140d; color: var(--muted); font-size: 11px; }
+.round strong { color: var(--bright); font-size: 13px; }
+.dock-body { position: absolute; left: 0; right: 0; top: 22px; bottom: 0; }
+/* Escape and auto are rare: two small switches at the end of the log line. */
+.utility { position: absolute; right: 8px; top: 0; z-index: 2; display: flex; gap: 6px; }
+.mini { position: relative; height: 22px; padding: 0 9px; display: flex; align-items: center; gap: 5px; border-radius: 11px; font-size: 11px; font-weight: 600;
+  color: var(--muted); background: #1a140d; box-shadow: 0 0 0 1px #6b5634; }
+.mini::after { content: ""; position: absolute; inset: -11px -4px; } /* 44px touch area */
+.mini .dot { width: 7px; height: 7px; border-radius: 50%; background: #4a3c28; }
+.mini[aria-pressed="true"] { color: var(--bright); box-shadow: 0 0 0 1px var(--bright); background: #3a2810; }
+.mini[aria-pressed="true"] .dot { background: #9fd39a; box-shadow: 0 0 6px #9fd39a; animation: blink 1s ease-in-out infinite; }
+@keyframes blink { 50% { opacity: .35; } }
+
+/* Effects and numbers draw over the whole screen: a glowing particle canvas, a few SVG strokes, and a screen flash. */
+.vfx { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; }
+.screen-flash { position: absolute; inset: 0; pointer-events: none; z-index: 8; opacity: 0; background: radial-gradient(circle at var(--fx, 50%) var(--fy, 40%), #fff6dd, #ffd36a66 30%, #0000 70%); }
+.screen-flash.red { background: radial-gradient(circle at 50% 50%, #0000 40%, #b0201066 75%, #6a0e08aa 100%); }
+.fx { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; overflow: visible; }
+.numbers { position: absolute; inset: 0; pointer-events: none; z-index: 7; }
+.num {
+  position: absolute; transform: translate(-50%, -50%); font: 800 34px/1 "Avenir Next Condensed", "DIN Condensed", Impact, sans-serif;
+  color: #ffd98a; -webkit-text-stroke: 2px #2a0f05; paint-order: stroke fill; text-shadow: 0 3px 0 #2a0f05, 0 0 12px #000; white-space: nowrap;
+}
+.num.hurt { color: #ff8a72; }
+.num.heal { color: #a8ef9b; }
+.num.note { font-size: 16px; color: #b9f0a8; -webkit-text-stroke: 1px #0c2206; font-family: inherit; font-weight: 700; }
+.num.small { font-size: 26px; }
+.banner {
+  position: absolute; left: 0; right: 0; top: 0; height: 0; z-index: 8; pointer-events: none;
+  display: grid; place-items: center; font: 700 28px/1 "STKaiti", "KaiTi", serif; color: var(--bright);
+  -webkit-text-stroke: 1px #2a0f05; paint-order: stroke fill; text-shadow: 0 2px 0 #2a0f05, 0 0 18px #000;
+}
+.banner.show { animation: banner 1.1s ease-out forwards; }
+@keyframes banner { 0% { opacity: 0; transform: scale(1.4); } 16% { opacity: 1; transform: scale(1); } 75% { opacity: 1; } 100% { opacity: 0; } }
+
+/* Picker: a compact sheet above the dock; the field stays visible. */
+.sheet {
+  position: absolute; left: 10px; right: 10px; bottom: calc(var(--dock-h) - 22px); z-index: 9;
+  background: linear-gradient(#211a11f7, #15110bf7); border: 1px solid var(--gold); border-radius: 4px; box-shadow: 0 -6px 24px #000c;
+}
+.sheet-head { display: flex; align-items: center; justify-content: space-between; padding: 6px 6px 6px 12px; border-bottom: 1px solid #4a3c28; }
+.sheet-head button { width: 40px; height: 40px; font-size: 22px; }
+.sheet-list { display: grid; gap: 6px; padding: 8px; }
+.option { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 5px 10px 5px 5px; text-align: left; background: #2a2116; border: 1px solid #5a482e; border-radius: 3px; }
+.option img { width: 38px; height: 38px; object-fit: cover; border-radius: 2px; box-shadow: 0 0 0 1px #8b7046; }
+.option b { flex: 1; font-weight: 600; }
+.option small { color: var(--muted); }
+.option:disabled { opacity: .45; }
+
+@media (prefers-reduced-motion: reduce) { .banner.show, .cmd, .cmd *, .cmd::before, .cmd::after { animation: none !important; } }
+
+/* Dash afterimages: fading gold copies of the runner. */
+.ghost { pointer-events: none; z-index: 1; }
+.ghost .hero-sprite, .ghost .art { filter: sepia(1) saturate(4) hue-rotate(-12deg) brightness(1.5) drop-shadow(0 0 6px #ffcf6a); }
+.ghost.foe .art { filter: sepia(1) saturate(6) hue-rotate(-50deg) brightness(1.1) drop-shadow(0 0 6px #ff4a2a); }
+.ghost .ring, .ghost .unit-bar, .ghost .tag, .ghost .plate { display: none; }
+.num.big { font-size: 46px; }
+.num { background: linear-gradient(#fff7d8, #ffd060 52%, #ff8a2a); -webkit-background-clip: text; background-clip: text; color: transparent;
+  text-shadow: none; filter: drop-shadow(0 3px 0 #2a0f05) drop-shadow(0 0 6px #000c); }
+.num.note { filter: drop-shadow(0 1px 2px #000); }
+.num.hurt { background: linear-gradient(#ffe4dc, #ff7a5c 52%, #c62a14); -webkit-background-clip: text; background-clip: text; }
+.num.heal { background: linear-gradient(#f0ffe8, #9fe68e 52%, #3c9a3a); -webkit-background-clip: text; background-clip: text; }
+.num.note { background: none; color: #b9f0a8; }
+.num .tag-skill { display: block; margin-top: -4px; font: 700 12px/1 "STKaiti", "KaiTi", serif; letter-spacing: 3px; color: #ffe9b8; -webkit-text-stroke: 0; background: none; text-align: center; text-shadow: 0 1px 2px #000; }
+
+
+/* ---------- Command buttons: one row of four (法术 · 道具 · 防御 · 攻击); the skin changes only their look ---------- */
+.cmd { position: absolute; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.cmd .face { position: relative; width: var(--size); height: var(--size); transition: transform .08s; }
+.cmd:not(:disabled):active .face { transform: scale(.93); }
+.cmd .art-box { position: absolute; inset: 0; overflow: hidden; background: #0b0805; }
+.cmd .art-box img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scale(1.2); }
+.cmd:disabled .art-box img { filter: grayscale(1) brightness(.55); }
+.cmd .focus-ring, .cmd .pips, .cmd .sub, .cmd .icon { display: none; }
+.cmd .text { display: contents; }
+.cmd .focus-ring { position: absolute; left: 50%; top: calc(var(--size) / 2); width: calc(var(--size) + 26px); height: calc(var(--size) + 26px); transform: translate(-50%, -50%); overflow: visible; pointer-events: none; }
+.cmd .pips { position: absolute; pointer-events: none; }
+.cmd .label { font-size: 12px; font-weight: 600; letter-spacing: 1px; color: #efe3c8; text-shadow: 0 1px 2px #000, 0 0 4px #000; white-space: nowrap; }
+.cmd:disabled .label { color: #8c836f; }
+.cmd .chip { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); z-index: 3; padding: 0 5px; font-size: 10px; font-style: normal; line-height: 16px;
+  background: var(--bright); color: #2a1505; border-radius: 2px; white-space: nowrap; box-shadow: 0 1px 3px #000a; }
+@keyframes glow-pulse { 50% { filter: drop-shadow(0 0 8px #ffd36a) brightness(1.12); } }
+@keyframes spin { to { rotate: 360deg; } }
+
+/* 金边圆键: item art in a gold rim; the attack's name is a lacquer plaque across its lower rim, focus as three gold arcs. */
+[data-skin="gold"] .art-box { border-radius: 50%; box-shadow: 0 0 0 1.5px #000, 0 0 0 3.5px #b08a4c, 0 0 0 4.5px #000, 0 5px 12px #000c; }
+[data-skin="gold"] .art-box::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle at 50% 30%, #fff2, #0000 45%, #000a); }
+[data-skin="gold"] .primary .art-box { box-shadow: 0 0 0 2px #000, 0 0 0 5px #e0bd7e, 0 0 0 6px #4a3519, 0 0 0 8px #a07a3e, 0 0 0 9px #000, 0 6px 16px #000d; }
+[data-skin="gold"] .primary .label { position: relative; z-index: 1; margin-top: -16px; padding: 0 10px; font-size: 14px; line-height: 18px; color: #fff1d2;
+  background: linear-gradient(#6a4219, #2a1808); border-radius: 3px; box-shadow: 0 0 0 1px #000, 0 0 0 2px #c6a36b, 0 2px 6px #000c; }
+[data-skin="gold"] .focus-ring { display: block; }
+[data-skin="gold"] .recommended .art-box, [data-skin="gold"] .ready .art-box { animation: gold-glow 1s ease-in-out infinite; }
+@keyframes gold-glow { 50% { box-shadow: 0 0 0 2px #000, 0 0 0 5px #ffe3a0, 0 0 0 6px #4a3519, 0 0 0 8px #ffd36a, 0 0 0 9px #000, 0 0 22px #ffd36acc; } }
+
+
+/* ---------- The game's own language (dark-ui.ts, battle-scene.ts, the room sheet) ----------
+   Cut-corner iron plates drawn by app.js `frame()` (a port of paintDarkFrame), the engraved line glyphs of paintDarkIcon,
+   the lit-gold primary of the room sheet, bone text with a muted caption. No round enclosures, no item art. */
+.frame { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+.frame svg { position: absolute; left: 0; top: 0; overflow: visible; }
+.game:not([data-skin="gold"]) .cmd { isolation: isolate; display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 8px; padding: 0 8px; }
+.game:not([data-skin="gold"]) .cmd .face, .game:not([data-skin="gold"]) .cmd .chip { display: none; }
+.game:not([data-skin="gold"]) .cmd .icon { display: block; flex: none; width: 22px; height: 22px; color: #f2c475; }
+.cmd .icon svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.game:not([data-skin="gold"]) .cmd .text { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; }
+.game:not([data-skin="gold"]) .cmd .label { font-size: 15px; font-weight: 700; letter-spacing: 1px; line-height: 1.15; color: #f4ebd3; text-shadow: 0 1px 2px #000a; }
+.game:not([data-skin="gold"]) .cmd .sub { display: block; margin-top: 2px; font-size: 10px; line-height: 1.2; color: #a89e8c; white-space: nowrap; }
+.game:not([data-skin="gold"]) .cmd .pips { display: inline-flex; position: static; gap: 4px; margin-top: 4px; }
+.game:not([data-skin="gold"]) .cmd .pips i { width: 7px; height: 7px; transform: rotate(45deg); background: #463a28; }
+.game:not([data-skin="gold"]) .cmd .pips i.on { background: #f2c475; }
+/* The lit primary, exactly the room sheet's 「战斗」. */
+.game:not([data-skin="gold"]) .cmd.primary .icon { color: #26180a; }
+.game:not([data-skin="gold"]) .cmd.primary .label { color: #26180a; text-shadow: none; }
+.game:not([data-skin="gold"]) .cmd.primary .sub { color: #462e10; }
+.game:not([data-skin="gold"]) .cmd.primary .pips i { background: #8a6a36; }
+.game:not([data-skin="gold"]) .cmd.primary .pips i.on { background: #26180a; }
+.game:not([data-skin="gold"]) .cmd.recommended .label { color: #ffe9bd; }
+.game:not([data-skin="gold"]) .cmd.recommended .sub { color: #f2c475; }
+.game:not([data-skin="gold"]) .cmd:disabled .icon, .game:not([data-skin="gold"]) .cmd:disabled .label, .game:not([data-skin="gold"]) .cmd:disabled .sub { color: #a89e8c; }
+.game:not([data-skin="gold"]) .cmd:disabled .pips i { background: #3a3226; }
+.game:not([data-skin="gold"]) .cmd:disabled .pips i.on { background: #a89e8c; }
+.game:not([data-skin="gold"]) .cmd:not(:disabled):active { filter: brightness(1.15); }
+
+/* 主键加宽: three compact plates stack the glyph over the name; the wide attack keeps glyph, name, caption and focus. */
+[data-skin="wide"] .cmd:not(.primary) { flex-direction: column; gap: 4px; padding: 0; }
+[data-skin="wide"] .cmd:not(.primary) .text { align-items: center; }
+[data-skin="wide"] .cmd:not(.primary) .label { font-size: 13px; }
+[data-skin="wide"] .cmd:not(.primary) .sub { display: none; }
+[data-skin="wide"] .cmd.primary .icon { width: 28px; height: 28px; }
+[data-skin="wide"] .cmd.primary .label { font-size: 18px; letter-spacing: 3px; }
+
+/* 底部弹窗: the whole dock is the room sheet; the log line is its header. */
+.dock-panel { display: none; position: absolute; left: 6px; right: 6px; top: -4px; bottom: 4px; z-index: 0; isolation: isolate; }
+[data-skin="sheet"] .dock-panel { display: block; }
+[data-skin="sheet"] .ticker { left: 16px; right: 136px !important; top: 3px; }
+[data-skin="sheet"] .utility { right: 14px; top: 0; }
+[data-skin="sheet"] .sheet { bottom: calc(var(--dock-h) + 2px); }
+[data-skin="sheet"] .cmd.primary { gap: 10px; }
+[data-skin="sheet"] .cmd.primary .text { flex-direction: row; align-items: baseline; gap: 10px; }
+[data-skin="sheet"] .cmd.primary .label { font-size: 17px; letter-spacing: 3px; }
+[data-skin="sheet"] .cmd.primary .pips { margin-top: 0; }
+
+/* 分段签条: one bar split like the bag's tabs; the attack segment is lit. */
+[data-skin="tabs"] .cmd { flex-direction: column; gap: 3px; padding: 0; }
+[data-skin="tabs"] .cmd .icon { width: 18px; height: 18px; }
+[data-skin="tabs"] .cmd .text { align-items: center; }
+[data-skin="tabs"] .cmd .label { font-size: 13px; }
+[data-skin="tabs"] .cmd .sub { margin-top: 1px; }
+[data-skin="tabs"] .cmd .pips { display: none; }
+.bar-frame { position: absolute; isolation: isolate; pointer-events: none; }
+[data-skin="tabs"] .seam { position: absolute; width: 1px; z-index: 1; background: linear-gradient(#0000, #96764a, #0000); pointer-events: none; }
+
+@media (max-width: 350px), (max-height: 600px) {
+  .game:not([data-skin="gold"]) .cmd { gap: 6px; padding: 0 5px; }
+  .game:not([data-skin="gold"]) .cmd .icon { width: 18px; height: 18px; }
+  .game:not([data-skin="gold"]) .cmd .label { font-size: 13px; letter-spacing: 0; }
+  .game:not([data-skin="gold"]) .cmd .sub { font-size: 9px; }
+  [data-skin="wide"] .cmd:not(.primary) .label { font-size: 12px; }
+  [data-skin="wide"] .cmd.primary .icon { width: 24px; height: 24px; }
+  [data-skin="wide"] .cmd.primary .label { font-size: 16px; }
+  [data-skin="tabs"] .cmd .icon { width: 15px; height: 15px; }
+  [data-skin="tabs"] .cmd .label { font-size: 12px; }
+  [data-skin="sheet"] .cmd.primary .label { font-size: 15px; }
+}
+
+/* Escape, auto and the list sheet use the same frames in every skin. */
+.mini { isolation: isolate; background: none !important; box-shadow: none !important; border-radius: 0; color: #e8e1d2; }
+.mini[aria-pressed="true"] { color: #26180a; }
+.mini[aria-pressed="true"] .dot { background: #26180a; box-shadow: none; }
+.mini:disabled { color: #a89e8c; }
+.sheet { isolation: isolate; background: none; border: none; border-radius: 0; box-shadow: 0 -6px 24px #000c; }
+.sheet-head { border-bottom-color: #58462e; }
+.option { position: relative; isolation: isolate; background: none; border: none; border-radius: 0; }
+.option img { border-radius: 0; }

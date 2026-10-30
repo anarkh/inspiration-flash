@@ -36,9 +36,9 @@ const expectedPinnedProfile = Object.freeze({
   builderConfigVersion: "1.3.9",
   platform: "wechatgame",
   manifestRevision:
-    "sha256:d72d289e104c5df869e30f45af09deee601ed52fb1bf9868229e7a266bf7bfbb",
-  assetCount: 323,
-  resourceBytes: 343_776_649,
+    "sha256:66666c18678a4db1ca2b93db19265f911dfb44e4370b777d6d21348eebed747f",
+  assetCount: 324,
+  resourceBytes: 344_175_419,
   manifestPath: "cocos/assets/config/asset-manifest.json",
   bundleName: "resources",
   bundleUuid: "fb6cd6ef-57d2-4cf7-8286-327137b480cc",

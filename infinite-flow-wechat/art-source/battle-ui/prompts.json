@@ -1,0 +1,73 @@
+{
+  "revision": 3,
+  "tool": "built-in imagegen",
+  "direction": "Battle command base for the turn-based battle: 赤金乌铁 (blackened iron with red-gold), one integrated sculpted base, matching relief emblems. Concept first, assets after a direction is chosen.",
+  "sharedPrompts": {
+    "concept": "Create a UI concept mockup for the battle screen of an original Chinese infinite-flow survival RPG: a portrait mobile game with classic turn-based battles in the spirit of Fantasy Westward Journey. Use the attached screenshot ONLY as the layout and art-style reference: keep its dark marble dungeon hall, the elite enemy standing upper left, the hero party lower right, and the slim header at the top, all recognisably the same. Redesign ONLY the empty dark band along the bottom of the screen (roughly the lowest sixth of the height) into the battle command base described below. Art direction: hand-painted premium 2D game UI, heavy and ornate, never flat. Material: blackened old iron with red-gold inlay, gilded raised rims, engraved and embossed patterns, worn edge highlights, small rivets, a faint warm glow from the gold - the same iron-and-gold family as the game's existing cut-corner iron panels, but carved and sculpted like a relic. The base is ONE continuous sculpted piece spanning the full screen width; its top edge breaks up into the scene with ornaments and a soft shadow instead of a straight panel edge, so it feels like part of the battlefield and not a settings panel. Set into the base: three equal command sockets (spells, items, guard) and one clearly larger attack socket, the most prominent element. Each socket holds a raised relief emblem cast in the same iron and red-gold: attack = a straight sword, spells = a diamond-shaped arcane seal, items = a travel pouch, guard = a kite shield. Under each socket sits a small EMPTY name plaque (names are added in the engine). Three small gem sockets for the focus gauge sit on the attack socket's rim: two lit warm gold, one dark. Two small round iron knobs for escape and auto battle sit on the left end of the base. A thin EMPTY engraved strip runs along the top of the base for the battle log. Palette: charcoal black, old gold, red-gold, a touch of cinnabar; no blue neon, no purple glow, no rainbow. No readable text, no letters, no numbers, no watermark, no logo anywhere in the new base.",
+    "revise": "Revise the attached battle-screen UI concept (the first attached image) for an original Chinese infinite-flow survival RPG. Keep everything that is not mentioned below exactly as it is: the battlefield, the characters, the header, the blackened-iron-with-red-gold material, the two gilded guardian-beast heads capping the ends of the bottom command base, and the large attack socket at the right with its sword emblem, flame-like gilded scrollwork and three focus gems on its rim (two lit warm gold, one dark). The second attached image is the game's real battle screen, for scale and composition only. This revision is a SIMPLIFICATION: fewer, calmer elements, a clear hierarchy, the same premium hand-painted quality. No readable text, letters, numbers, watermark or logo.",
+    "retheme": "Revise the attached battle-screen UI concept (the first attached image) for an original Chinese infinite-flow survival RPG, a portrait mobile game with classic turn-based battles. Keep everything that is not mentioned below exactly as it is. The other attached images are the game's own art, used ONLY as material, motif and colour references - do not copy their objects into the scene. Same premium hand-painted 2D quality, calm and readable at phone size. No readable text, letters, numbers, watermark or logo."
+  },
+  "reference": "art-source/battle-ui/reference-battle-390x844.png",
+  "assets": [
+    {
+      "id": "concept-beast",
+      "group": "concept",
+      "priority": 1,
+      "size": "1024x1536",
+      "background": "opaque",
+      "name": "兽首底座",
+      "sourceFile": "battle-ui-concept-beast-v1.png",
+      "subject": "Ornament theme: two snarling gilded guardian-beast heads (bi'an, the Chinese prison guardian beast) cap the two ends of the base, jaws gripping the iron; the attack socket is at the right, under the thumb, framed by flame-like gilded scrollwork; the base's top edge rises into short iron spikes and claw tips between the sockets."
+    },
+    {
+      "id": "concept-lintel",
+      "group": "concept",
+      "priority": 1,
+      "size": "1024x1536",
+      "background": "opaque",
+      "name": "云纹门楣",
+      "sourceFile": "battle-ui-concept-lintel-v1.png",
+      "subject": "Ornament theme: the base reads like the iron lintel of an ancient temple gate: gilded cloud-scroll brackets at both ends and a row of small hanging iron pendants and tassels along its top edge; the attack socket sits in the CENTRE under a small gilded roof-ridge crest, with spells and items to its left and guard to its right."
+    },
+    {
+      "id": "concept-chains",
+      "group": "concept",
+      "priority": 1,
+      "size": "1024x1536",
+      "background": "opaque",
+      "name": "锁链符印",
+      "sourceFile": "battle-ui-concept-chains-v1.png",
+      "subject": "Ornament theme: the base is a heavy iron slab bound with thick chains and old cinnabar talisman seals, the chains hanging from both ends up into the scene; the attack socket is at the right, a sealed iron lock-medallion ringed with red-gold runes, as if a trap is about to be broken open; torn talisman strips flutter from the base's top edge."
+    },
+    {
+      "id": "concept-beast-v2",
+      "group": "concept",
+      "priority": 1,
+      "size": "1024x1536",
+      "background": "opaque",
+      "name": "兽首底座（简化）",
+      "sourceFile": "battle-ui-concept-beast-v2.png",
+      "reference": [
+        "art-source/battle-ui/battle-ui-concept-beast-v1.png",
+        "art-source/battle-ui/reference-battle-390x844.png"
+      ],
+      "subject": "Changes: 1) Remove the row of iron spikes and claw tips along the top edge of the base; its top edge becomes one clean gilded rim, with only the two beast heads rising a little above it. 2) Remove every name plaque under the sockets and the empty engraved log strip along the top of the base; command names are not shown at all. 3) Make the base clearly lower: it occupies only about the lowest 15 percent of the image height (the beast heads may rise slightly higher), so the battlefield gets more room. 4) The three small sockets (spells = diamond-shaped arcane seal, items = travel pouch, guard = kite shield) get a dark blackened-iron background with gold relief emblems and a simpler thin gilded rim - no red inside them. Only the attack socket keeps its red-gold background, so it is clearly the main button. 5) Keep the two small round iron knobs for escape and auto battle on the left end, now with tiny gold relief marks: a running figure for escape and a circular arrow for auto. 6) Reduce the extra scrollwork and rivets on the base body so the sockets read first; keep a soft shadow where the base meets the battlefield."
+    },
+    {
+      "id": "concept-courtyard-v3",
+      "group": "concept",
+      "priority": 1,
+      "size": "1024x1536",
+      "background": "opaque",
+      "name": "轮回庭院 + 主神核心",
+      "sourceFile": "battle-ui-concept-courtyard-v3.png",
+      "reference": [
+        "art-source/battle-ui/battle-ui-concept-beast-v2.png",
+        "cocos/assets/resources/hub-courtyard/altar-v1.png",
+        "cocos/assets/resources/hub-courtyard/pillar-v1.png",
+        "cocos/assets/resources/scene/main-god-space.png"
+      ],
+      "subject": "This revision changes the THEME and MATERIAL only; keep the layout of the first attached image exactly: the low command base across the bottom (about the lowest 15 percent of the height), the two small round knobs at its left end, the three small sockets, the larger attack socket at the right with three focus beads, no names, no log strip, and the battlefield, characters and header unchanged. The game is set in the Main God's reincarnation space, a solemn cultivation sanctuary; match its courtyard architecture shown in the second and third attached images. 1) Material: the base becomes weathered blue-grey stone like that courtyard altar and pillar - carved, slightly worn, faint moss in a few crevices - with dull old bronze-gold relief inlays; no bright yellow gold, no red anywhere. 2) Remove the dragon or beast heads completely; both ends of the base finish in low old-gold cloud-scroll curls carved in relief, rising only a little above the base. 3) A thin band of lotus-petal relief runs along the base's top rim, like the lotus carvings on the altar and pillar; remove all red cloth, red tassels and red backgrounds. 4) The three small sockets (spells = diamond-shaped arcane seal, items = travel pouch, guard = kite shield) become recessed dark stone discs with thin old-gold rims and old-gold relief emblems. 5) The attack socket becomes the Main God's core: a recessed stone ring holding a softly glowing cyan-teal diamond core, like the glowing core with orbit rings in the fourth attached image, circled by two thin old-gold orbit rings; an old-gold straight-sword emblem in relief stands in front of the core; the three focus beads sit on the outer orbit ring, two lit pale cyan and one dark stone. 6) The escape and auto knobs become small stone discs with old-gold marks: a running figure and a circular arrow. Palette: blue-grey stone, charcoal, dull old gold, and a single cyan-teal accent used only in the attack core and the lit beads; no red, no purple, no neon."
+    }
+  ]
+}

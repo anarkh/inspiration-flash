@@ -30,7 +30,7 @@ declare module 'cc' {
     height: number;
   }
   export class Mask {
-    static Type: { GRAPHICS_RECT: number };
+    static Type: { GRAPHICS_RECT: number; GRAPHICS_ELLIPSE: number };
     type: number;
   }
 
@@ -61,6 +61,8 @@ declare module 'cc' {
 
   export class Node {
     active: boolean;
+    /** Rotation around Z in degrees, counter-clockwise. */
+    angle: number;
     static readonly EventType: Readonly<{
       TOUCH_START: string;
       TOUCH_END: string;
@@ -199,6 +201,9 @@ declare module 'cc' {
     fontFamily: string;
     enableShadow: boolean;
     shadowColor: Color;
+    enableOutline: boolean;
+    outlineColor: Color;
+    outlineWidth: number;
     shadowOffset: Vec2;
     shadowBlur: number;
     fontSize: number;

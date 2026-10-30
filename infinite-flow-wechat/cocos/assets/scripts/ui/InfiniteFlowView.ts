@@ -37,6 +37,7 @@ import type { WorldPoint, WorldTarget } from './walk-world';
 import { DARK_UI, paintDarkFrame } from './dark-ui';
 import { COMPACT_SHEET_THEME } from './sheet-theme';
 import { HERO_WALK_ATLAS, HERO_WALK_FRAMES, assertHeroWalkAtlasSize } from './hero-walk-atlas';
+import { BATTLE_CONTROLS_ATLAS, BATTLE_CONTROLS_KEY, BATTLE_CONTROL_FRAMES, assertBattleControlsAtlasSize } from './battle-controls-atlas';
 import type {
   ChapterDecisionViewModel,
   ChapterDirectiveViewModel,
@@ -81,6 +82,8 @@ const UI_LAYER = 1 << 25;
 
 const CONTENT_WIDTH = 702;
 const MINIMUM_TOUCH_HEIGHT = 104;
+/** Seconds auto battle waits between turns, so each one can still be read. */
+const AUTO_BATTLE_PAUSE = 0.6;
 const PRIMARY_TOUCH_HEIGHT = 112;
 const MODE_TOP = 0;
 const MODE_HEIGHT = 48;
@@ -3004,6 +3007,11 @@ export class InfiniteFlowView {
   private mobileNodeCleared = false;
   private surfaceHeight = DESIGN_HEIGHT;
   private combatPlayback: CombatPlayback | undefined;
+  /** Auto battle stays on across fights until the player switches it off. */
+  private autoBattle = false;
+  private autoBattleWait = 0;
+  /** The round whose banner already played, so re-renders within a round do not replay it. */
+  private announcedRound: number | undefined;
   private deferredCombatRender: DeferredCombatRender | undefined;
 
   constructor(
@@ -3366,7 +3374,9 @@ export class InfiniteFlowView {
   /** Scene slots share App-owned image leases, but own their frames and textures. */
   setSceneVisualAsset(image: ImageAsset, status: InfiniteFlowVisualAssetStatus): void {
     const isWalker = status.key === 'character:reincarnator_walk';
+    const isBattleControls = status.key === BATTLE_CONTROLS_KEY;
     if (isWalker) assertHeroWalkAtlasSize(image.width, image.height);
+    if (isBattleControls) assertBattleControlsAtlasSize(image.width, image.height);
     this.clearSceneVisualAsset(status.key);
     const frame = SpriteFrame.createWithImage(image);
     const texture = frame.texture;
@@ -3377,12 +3387,13 @@ export class InfiniteFlowView {
     let frames: readonly SpriteFrame[] = [];
     try {
       if (isWalker) frames = this.makeWalkerFrames(frame);
+      if (isBattleControls) frames = this.makeBattleControlFrames(frame);
       this.sceneVisuals.set(status.key, {
         frame,
         texture,
         width: image.width,
         height: image.height,
-        ...(isWalker ? { frames } : {}),
+        ...(isWalker || isBattleControls ? { frames } : {}),
       });
     } catch (error) {
       this.rethrowSceneVisualCreationError(error, [...frames, frame, texture]);
@@ -3404,6 +3415,26 @@ export class InfiniteFlowView {
           x + width / 2 - sourceFoot[0],
           HERO_WALK_ATLAS.originalSize / 2 - HERO_WALK_ATLAS.footY + sourceFoot[1] - (y + height / 2),
         );
+        frame.packable = false;
+      }
+    } catch (error) {
+      this.rethrowSceneVisualCreationError(error, frames);
+    }
+    return frames;
+  }
+
+  /** The ink control strip, cut in BATTLE_CONTROL_FRAMES order; the frames share the strip's texture. */
+  private makeBattleControlFrames(strip: SpriteFrame): readonly SpriteFrame[] {
+    const frames: SpriteFrame[] = [];
+    try {
+      for (const { rect } of BATTLE_CONTROL_FRAMES) {
+        const [x, y, width, height] = rect.map(value => value * BATTLE_CONTROLS_ATLAS.scale);
+        const frame = new SpriteFrame();
+        frames.push(frame);
+        frame.texture = strip.texture;
+        frame.rect = new Rect(x, y, width, height);
+        frame.originalSize = new Size(width, height);
+        frame.offset = new Vec2(0, 0);
         frame.packable = false;
       }
     } catch (error) {
@@ -3553,6 +3584,25 @@ export class InfiniteFlowView {
     if (!result) this.cancelCombatPlayback(true);
   }
 
+  /**
+   * Auto battle picks the command the model recommends after a short pause, through the same path as a tap:
+   * the weapon skill when the gauge is full, otherwise the recommended attack, art or guard, otherwise attack.
+   */
+  private tickAutoBattle(deltaTime: number): void {
+    this.autoBattleWait += Math.min(Math.max(0, deltaTime), 0.1);
+    if (this.autoBattleWait < AUTO_BATTLE_PAUSE) return;
+    this.autoBattleWait = 0;
+    const actions = this.lastModel?.sections[2].actions ?? [];
+    const ready = (action: ViewActionModel): boolean => action.enabled && action.event !== undefined;
+    const choice = actions.find(action => action.combatAction === 'weapon_skill' && ready(action))
+      ?? actions.find(action => ready(action) && action.recommendation === 'recommended'
+        && (action.combatAction === 'attack' || action.combatAction === 'art' || action.combatAction === 'guard'))
+      ?? actions.find(action => action.combatAction === 'attack' && ready(action));
+    if (choice?.event === undefined) return;
+    this.physicalSequence += 1;
+    this.activateSceneAction(`cocos-auto:${this.physicalSequence}`, choice, choice.event);
+  }
+
   private cancelCombatPlayback(restore = false): void {
     const next = this.deferredCombatRender;
     this.walkScene?.cancelCombatAction();
@@ -3586,8 +3636,10 @@ export class InfiniteFlowView {
       || this.lastChrome?.modeKind === 'blocked' || this.chapterCodexOpen
       || this.lastModel?.sections[4].active !== undefined) {
       this.walkScene?.cancelApproach();
+      this.autoBattleWait = 0;
       return;
     }
+    if (this.autoBattle && this.lastModel?.phase === 'combat') this.tickAutoBattle(deltaTime);
     this.walkScene?.tick(deltaTime, this.walkInput?.axis() ?? { x: 0, y: 0 });
   }
 
@@ -3846,6 +3898,16 @@ export class InfiniteFlowView {
         this.mobileSheet = { kind: 'menu', tab: group, page: 0 };
         this.renderAgain();
       },
+      ...(detail.kind === 'combat' && this.announcedRound !== detail.turn ? { roundBanner: detail.turn } : {}),
+      // The switch stays live while a turn plays out, so auto battle can be stopped before the next one.
+      ...(detail.kind === 'combat' ? { autoBattle: { active: this.autoBattle, bind: (node, onToggled) => {
+        this.bindPhysical(node, this.mobileSheet === undefined && chrome.modeKind !== 'blocked', () => {
+          if (!isCurrent()) return;
+          this.autoBattle = !this.autoBattle;
+          this.autoBattleWait = 0;
+          onToggled(this.autoBattle);
+        });
+      } } } : {}),
       spec,
       position: this.walkPosition ?? spec.spawn,
       viewportWidth: this.measureHudViewportWidth(),
@@ -3898,6 +3960,7 @@ export class InfiniteFlowView {
         });
       },
     });
+    this.announcedRound = detail.kind === 'combat' ? detail.turn : undefined;
     if (enabled && this.mobileSheet === undefined && !this.roomEventOpen && !this.chapterCodexOpen && model.sections[4].active === undefined) {
       this.walkInput = new InfiniteFlowWalkInput(this.walkScene.joystick, this.walkScene.joystickThumb,
         () => this.walkScene?.cancelApproach());

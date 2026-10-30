@@ -79,7 +79,7 @@ export class Graphics {
   clear() { this.fills=[]; this.strokes=[]; this.shape=undefined; this.roundRectCalls=0; this.circleCalls=0; }
 }
 export class BlockInputEvents {} export class EventTouch {} export class ImageAsset {}
-export class Mask { static Type={GRAPHICS_RECT:0}; }
+export class Mask { static Type={GRAPHICS_RECT:0,GRAPHICS_ELLIPSE:1}; }
 export class ScrollView {
   static EventType={SCROLLING:'scrolling'};
   set content(node) { this._content = node; }

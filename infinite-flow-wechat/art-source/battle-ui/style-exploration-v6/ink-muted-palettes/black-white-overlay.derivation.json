@@ -1,0 +1,17 @@
+{
+  "asset": "black-white-overlay",
+  "date": "2026-10-30",
+  "purpose": "黑白水墨战斗技能控件：黑红版在暗色战斗场景里与背景融在一起、按钮看不清，按用户要求试黑白水墨版。",
+  "source": "infinite-flow-wechat/art-source/battle-ui/style-exploration-v6/01-ink-wash-transparent.png",
+  "sourceNote": "黑红版（black-red-overlay.png）就是由这张白墨透明控件条改色得到的，二者是同一套六个控件与笔触。",
+  "sourceSha256": "5a3cdd86fd8d5da697261ddb0126114ea01aeadcc8816ea1c7100363ec3dbbbe",
+  "operation": "desaturate-rec601",
+  "tool": "python3 + Pillow",
+  "method": "Each pixel's RGB becomes its Rec. 601 luma (0.299 R + 0.587 G + 0.114 B), rounded; alpha is copied unchanged. The cyan accents (attack core, lit focus dots) become light grey; no other edit, resize or crop.",
+  "targetSha256": "74914479f4bd2979f1cd5f02064e26abffa7e5bc254e0d8b4772706da0ffe553",
+  "targetDimensions": {
+    "width": 2172,
+    "height": 724
+  },
+  "alphaPreserved": true
+}
