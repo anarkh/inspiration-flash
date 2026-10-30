@@ -74,8 +74,8 @@ URL 参数：`?layout=diagonal|vertical`（斜向对阵、上下对阵）、
 - 敌人反击：敌人带红色残影冲过来，三道红色撕裂刀光、红色暗角闪一下；防御时是金色六角护盾。
 - 敌人被击倒：灰烬粒子散开上浮。
 
-正式游戏里同样的效果可以用 Cocos 的发光贴图（`art-source/battle-fx/` 的特效图生成后）加缩放、淡出和叠加混合实现；
-图到位之前先按这里的程序效果做。
+这些效果已按原样移植进 Cocos（`cocos/assets/scripts/ui/combat-vfx.ts`，叠加混合），
+`art-source/battle-fx/` 的特效图生成后可以再换成发光贴图。
 
 ## 一个回合的演出
 

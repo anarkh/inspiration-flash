@@ -338,6 +338,9 @@ const virtualModules = new Map([
     export class Mask {
       static Type = { GRAPHICS_RECT: 0, GRAPHICS_ELLIPSE: 1 };
     }
+    export class Material { initialize(info) { this.info = info; } }
+    export const builtinResMgr = { get() { return { effectAsset: {} }; } };
+    export const gfx = { BlendFactor: { ONE: 1, SRC_ALPHA: 2, ONE_MINUS_SRC_ALPHA: 4 } };
     export class ScrollView {
       static EventType = { SCROLLING: 'scrolling' };
       getScrollOffset() { return this.offset ?? new Vec2(0, 0); }
@@ -700,6 +703,9 @@ const viewVirtualCc = `
   export class Rect { constructor(x, y, width, height) { Object.assign(this, {x, y, width, height}); } }
   export class Vec2 { constructor(x, y) { this.x = x; this.y = y; } }
   export class Mask { static Type = { GRAPHICS_RECT: 0, GRAPHICS_ELLIPSE: 1 }; }
+  export class Material { initialize(info) { this.info = info; } }
+  export const builtinResMgr = { get() { return { effectAsset: {} }; } };
+  export const gfx = { BlendFactor: { ONE: 1, SRC_ALPHA: 2, ONE_MINUS_SRC_ALPHA: 4 } };
   export class ScrollView {
     static EventType = { SCROLLING: 'scrolling' };
     set content(node) { this._content = node; }
@@ -12517,11 +12523,14 @@ let dungeonMultiNeighborCases = 0;
             const playerCenter = projectedNodePoint(playerBody);
             const playerBodyPosition = { ...playerBody.position };
             assert.equal(view.walkScene.startCombatAction('guard', () => {}), true);
+            // The guard throws up the prototype's hexagonal ward, fading in around the hero's body.
+            view.walkScene.tick(0.1, { x: 0, y: 0 });
             const effect = findNode(root(), 'WalkCombatEffects');
-            const shield = effect.getComponent(TestGraphics).segments[0];
-            assert.ok(shield, `${label}: native guard effect is drawn`);
+            const ward = effect.getComponent(TestGraphics).fills.find(({ shape }) => shape?.kind === 'path' && shape.closed && shape.points.length === 6);
+            assert.ok(ward, `${label}: native guard ward is drawn`);
+            const wardCentre = ward.shape.points.reduce((sum, point) => ({ x: sum.x + point.x / 6, y: sum.y + point.y / 6 }), { x: 0, y: 0 });
+            const guardAnchor = projectedNodePoint(effect, wardCentre);
             const unit = battle.hero.height / 200;
-            const guardAnchor = projectedNodePoint(effect, { x: shield.from.x, y: shield.from.y - 57 * unit });
             close(guardAnchor.x, playerCenter.x, `${label}: guard begins at the hero's body`);
             close(guardAnchor.y, playerCenter.y, `${label}: guard follows the hero's body offset`, 3 * pixel);
             view.walkScene.cancelCombatAction();
@@ -12529,6 +12538,14 @@ let dungeonMultiNeighborCases = 0;
             assert.equal(view.walkScene.startCombatAction('attack', () => { impacts += 1; }), true);
             for (let frame = 0; frame < 3; frame += 1) view.walkScene.tick(0.1, { x: 0, y: 0 });
             assert.equal(impacts, 1, `${label}: original effect impact is delivered once`);
+            // The dash leaves gold afterimages of the hero that add their light to the floor.
+            const ghosts = collectNodes(root(), node => node.name.startsWith('Afterimage:player:'));
+            assert.ok(ghosts.length >= 2, `${label}: the dash leaves afterimages of the hero`);
+            for (const ghost of ghosts) {
+              const blend = [...ghost.components.values()].find(component => component?.customMaterial)?.customMaterial.info.states.blendState.targets[0];
+              assert.equal(blend?.blendDst, 1, `${label}: afterimages blend additively`);
+              assert.equal(blend?.blendSrc, 2, `${label}: straight sprite colour is weighted by its alpha`);
+            }
             assert.equal(view.walkScene.resolveCombatAction({ enemyDamage: 13 }, () => {}), true);
             const damage = findNode(root(), 'WalkDamage');
             assert.equal(labelComponent(damage).string, '−13');

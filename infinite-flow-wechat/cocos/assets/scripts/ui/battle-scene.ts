@@ -7,9 +7,10 @@ import type { WalkWorldSpec, WorldPoint } from './walk-world';
 import { DARK_UI, paintDarkIcon } from './dark-ui';
 import { getInfiniteFlowMonsterWorldVisualKey } from './scene-visuals';
 import { createInfiniteFlowCombatEffects } from './InfiniteFlowCombatEffects';
+import { additiveSpriteMaterial } from './additive-blend';
 import { BATTLE_CONTROL_FRAMES, BATTLE_CONTROLS_KEY, BATTLE_FOCUS_DOTS, battleControlFrameIndex } from './battle-controls-atlas';
 import type { BattleControlFrameId } from './battle-controls-atlas';
-import type { CombatAllyKind } from './InfiniteFlowCombatEffects';
+import type { CombatAfterimage, CombatAllyKind } from './InfiniteFlowCombatEffects';
 
 type Point = Readonly<{ x: number; y: number }>;
 type Box = Readonly<{ x: number; y: number; width: number; height: number }>;
@@ -496,6 +497,9 @@ function roundAnnouncement(scene: Node, round: number, layout: BattleStageLayout
   return paint;
 }
 
+/** The prototype's ghosts start at 40% after a 1.5x brighten; added light needs about twice that opacity to read the same. */
+const AFTERIMAGE_GAIN = 2;
+
 type Fighter = Readonly<{
   /** Feet on the stage; the body moves relative to it. */
   root: Node;
@@ -504,6 +508,8 @@ type Fighter = Readonly<{
   /** Body centre above the feet. */
   centreY: number;
   stand: Stand;
+  /** The drawn art's size and mirroring, for afterimages; portraits in their frames have none. */
+  ghost?: Readonly<{ width: number; height: number; flip: boolean }>;
 }>;
 
 /** A full-body figure on the shared 1024x1536 canvas, mirrored to face the enemy on the left. */
@@ -517,7 +523,7 @@ function figureFighter(stage: Node, name: string, key: string, stand: Stand, opt
   const body = makeNode(root, name.replace(':', 'Body:'), 0, centreY, width, height);
   const art = sprite(body, name.replace(':', 'Sprite:'), visual, 0, 0, width, height, options);
   art.node.setScale(new Vec3(-1, 1, 1));
-  return { root, body, art, centreY, stand };
+  return { root, body, art, centreY, stand, ghost: { width, height, flip: true } };
 }
 
 /** Members without a figure keep their gold-framed portrait, floating at shoulder height. */
@@ -560,7 +566,8 @@ export function renderInfiniteFlowBattleScene(root: Node, model: GameViewModel, 
   const enemyCentre = enemyCanvas * 0.43;
   const enemyBody = makeNode(enemyRoot, 'WorldObjectBody', 0, 0, enemyCanvas, enemyCanvas);
   const enemyArt = sprite(enemyBody, `WalkMonsterSprite:${enemyKey}`, enemyVisual, 0, enemyCentre, enemyCanvas * enemyVisual.width / enemyVisual.height, enemyCanvas, options);
-  const enemy: Fighter = { root: enemyRoot, body: enemyBody, art: enemyArt, centreY: enemyCentre, stand: enemyStand };
+  const enemy: Fighter = { root: enemyRoot, body: enemyBody, art: enemyArt, centreY: enemyCentre, stand: enemyStand,
+    ghost: { width: enemyCanvas * enemyVisual.width / enemyVisual.height, height: enemyCanvas, flip: false } };
 
   const heroFrames = options.walkerFrames;
   const heroSize = layout.hero.height * 336 / 308;
@@ -575,7 +582,8 @@ export function renderInfiniteFlowBattleScene(root: Node, model: GameViewModel, 
   heroArt.spriteFrame = heroFrames[4]!;
   heroArt.color = new Color(255, 255, 255, 255);
   options.trackSprite(heroArt);
-  const hero: Fighter = { root: heroRoot, body: heroBody, art: heroArt, centreY: heroCentre, stand: layout.hero };
+  const hero: Fighter = { root: heroRoot, body: heroBody, art: heroArt, centreY: heroCentre, stand: layout.hero,
+    ghost: { width: heroSize, height: heroSize, flip: false } };
 
   const allies = new Map<CombatAllyKind, Fighter>();
   for (const member of model.sections[1].loadout?.runParty ?? []) {
@@ -650,11 +658,56 @@ export function renderInfiniteFlowBattleScene(root: Node, model: GameViewModel, 
   // Effects draw in screen space; the stage is offset by the safe-inset shift.
   const anchorOf = (fighter: Fighter): Point => ({ x: fighter.stand.x - screenX, y: fighter.stand.y + fighter.centreY });
   const stageRest = new Vec3(0, 0, 0);
+  // Shake and the camera's lean toward a blow combine: the stage scales about the hit point, then shakes.
+  let shakeOffset: Point = { x: 0, y: 0 };
+  let zoom = 1;
+  let zoomFocus: Point = { x: 0, y: 0 };
+  const placeStage = (): void => {
+    stage.setPosition(new Vec3(stageRest.x + shakeOffset.x + zoomFocus.x * (1 - zoom), stageRest.y + shakeOffset.y + zoomFocus.y * (1 - zoom), 0));
+    stage.setScale(new Vec3(zoom, zoom, 1));
+  };
+  // Afterimages: a few tinted copies of the runner's current frame behind it, reused for the whole fight. They add their
+  // light to the floor like the prototype's brightened gold ghosts; a plain tint can only darken the dark-clad runners.
+  const ghostPools = new Map<string, Sprite[]>();
+  const AFTERIMAGE_TINT = Object.freeze({ party: new Color(255, 207, 106, 255), enemy: new Color(255, 74, 42, 255) });
+  const showAfterimages = (key: string, fighter: Fighter | undefined, tint: Color, ghosts: readonly CombatAfterimage[]): void => {
+    const art = fighter?.art;
+    const shape = fighter?.ghost;
+    if (fighter === undefined || art === undefined || shape === undefined) return;
+    let pool = ghostPools.get(key);
+    if (pool === undefined) { pool = []; ghostPools.set(key, pool); }
+    while (pool.length < ghosts.length) {
+      const ghost = makeNode(fighter.root, `Afterimage:${key}:${pool.length}`, 0, 0, shape.width, shape.height);
+      ghost.setSiblingIndex(0);
+      ghost.setScale(new Vec3(shape.flip ? -1 : 1, 1, 1));
+      const ghostArt = ghost.addComponent(Sprite);
+      ghostArt.sizeMode = Sprite.SizeMode.CUSTOM;
+      ghostArt.trim = false;
+      ghostArt.customMaterial = additiveSpriteMaterial();
+      options.trackSprite(ghostArt);
+      pool.push(ghostArt);
+    }
+    pool.forEach((ghostArt, index) => {
+      const ghost = ghosts[index];
+      ghostArt.node.active = ghost !== undefined;
+      if (ghost === undefined) return;
+      ghostArt.spriteFrame = art.spriteFrame;
+      ghostArt.node.setPosition(new Vec3(ghost.offset.x, fighter.centreY + ghost.offset.y, 0));
+      ghostArt.color = new Color(tint.r, tint.g, tint.b, Math.round(255 * Math.min(1, ghost.opacity * AFTERIMAGE_GAIN)));
+    });
+  };
   const effects = createInfiniteFlowCombatEffects(effectsMask, {
     pixel: px,
     actorUnit: layout.hero.height / 200,
     dashGap: enemyStand.height * 0.42,
-    shakeWorld: offset => stage.setPosition(new Vec3(stageRest.x + offset.x, stageRest.y + offset.y, 0)),
+    heights: { player: layout.hero.height, enemy: enemyStand.height },
+    shakeWorld: offset => { shakeOffset = offset; placeStage(); },
+    punchWorld: (scale, focus) => { zoom = scale; zoomFocus = { x: focus.x + screenX, y: focus.y }; placeStage(); },
+    tiltEnemy: degrees => { enemyBody.angle = degrees; },
+    setAfterimages: (who, ghosts) => {
+      const fighter = who === 'player' ? hero : who === 'enemy' ? enemy : allies.get(who);
+      showAfterimages(who, fighter, who === 'enemy' ? AFTERIMAGE_TINT.enemy : AFTERIMAGE_TINT.party, ghosts);
+    },
     tintPlayer: color => { heroArt.color = color ?? new Color(255, 255, 255, 255); },
     tintEnemy: color => { enemyArt.color = color ?? new Color(255, 255, 255, 255); },
     setTimingCatcher: active => {

@@ -25,3 +25,9 @@
 
 逐张核对尺寸、透明度和内容后，按 `art-source/party-world/README.md` 的接入步骤登记为资源。
 没有图的特效继续用程序绘制的效果；姿势图缺失时用待机立绘加前冲、后仰等补间代替。
+
+## 现状
+
+游戏里的战斗特效已按 `prototype/combat-v3/` 的发光粒子用程序绘制并叠加混合
+（`cocos/assets/scripts/ui/combat-vfx.ts`、`additive-blend.ts`），本目录的特效图仍未生成；
+实机截图在 `proof-in-game/`。
