@@ -104,6 +104,10 @@ const CASE_RUNNER_ROWS = [
   ["AC-LAW-CORE-13", "law-core-13-auction", ["A-AC"], { "A-AC": "lawCoreScenarios" }],
   ["AC-LAW-CORE-14", "law-core-14-genesis", ["A-AC"], { "A-AC": "lawCoreScenarios" }],
   ["AC-LAW-CORE-15", "law-core-15-broadcast", ["A-AC"], { "A-AC": "lawCoreScenarios" }],
+  ["AC-LAW-CORE-16", "law-core-16-shelter", ["A-AC"], { "A-AC": "lawCoreScenarios" }],
+  ["AC-LAW-CORE-17", "law-core-17-verdict", ["A-AC"], { "A-AC": "lawCoreScenarios" }],
+  ["AC-LAW-CORE-18", "law-core-18-replay", ["A-AC"], { "A-AC": "lawCoreScenarios" }],
+  ["AC-LAW-CORE-19", "law-core-19-panopticon", ["A-AC"], { "A-AC": "lawCoreScenarios" }],
   ["AC-COMBAT-001", "combat-one-action-one-turn", ["A-AC", "A-SMOKE"], null],
   ["AC-COMBAT-002", "combat-oracle-vectors", ["A-AC"], null],
   ["AC-COMBAT-003", "combat-resource-counters", ["A-AC"], null],
@@ -402,6 +406,19 @@ export const implementedFixtureScenarioIds = Object.freeze({
   ]),
   "law-core-15-broadcast": Object.freeze([
     "relays-tune-noise-and-boss-snapshot",
+  ]),
+  "law-core-16-shelter": Object.freeze([
+    "checkpoints-move-survivor-hp-and-gates",
+  ]),
+  "law-core-17-verdict": Object.freeze([
+    "clean-evidence-and-correct-verdict",
+    "contaminated-evidence-and-wrong-verdict",
+  ]),
+  "law-core-18-replay": Object.freeze([
+    "takes-in-order-route-and-boss-snapshot",
+  ]),
+  "law-core-19-panopticon": Object.freeze([
+    "scan-exposure-relays-route-and-boss",
   ]),
   "hash-canonical-json-v1": Object.freeze([
     "canonical-utf16-key-and-array-order",

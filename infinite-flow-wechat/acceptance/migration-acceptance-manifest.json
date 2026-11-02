@@ -4,10 +4,10 @@
   "document": "docs/knowledge-base/06-migration-acceptance-checklist.md",
   "idPattern": "^AC-(?:[A-Z]+-)+(?:\\d{2}|\\d{3})$",
   "expectedCounts": {
-    "total": 118,
-    "leaf": 109,
+    "total": 122,
+    "leaf": 113,
     "activeLeaf": 94,
-    "deprecated": 15,
+    "deprecated": 19,
     "releaseEvidence": 6,
     "attestation": 2,
     "derived": 1
@@ -82,6 +82,10 @@
       "AC-LAW-CORE-13",
       "AC-LAW-CORE-14",
       "AC-LAW-CORE-15",
+      "AC-LAW-CORE-16",
+      "AC-LAW-CORE-17",
+      "AC-LAW-CORE-18",
+      "AC-LAW-CORE-19",
       "AC-COMBAT-001",
       "AC-COMBAT-002",
       "AC-COMBAT-003",
@@ -214,6 +218,26 @@
     {
       "id": "AC-LAW-15",
       "supersededBy": "AC-LAW-CORE-15",
+      "reason": "玩法有意偏离 Web 基准：首通新增灯油与追兵，冻结流程走格时被追兵拖入战斗"
+    },
+    {
+      "id": "AC-LAW-16",
+      "supersededBy": "AC-LAW-CORE-16",
+      "reason": "玩法有意偏离 Web 基准：首通新增灯油与追兵，冻结流程走格时被追兵拖入战斗"
+    },
+    {
+      "id": "AC-LAW-17",
+      "supersededBy": "AC-LAW-CORE-17",
+      "reason": "玩法有意偏离 Web 基准：战斗规则调整（胜利回复 20% 生命等），冻结的战斗回合与生命期望不再成立"
+    },
+    {
+      "id": "AC-LAW-18",
+      "supersededBy": "AC-LAW-CORE-18",
+      "reason": "玩法有意偏离 Web 基准：术法改为消耗 1 点战意（PR #29），冻结流程的术法开局被拒绝"
+    },
+    {
+      "id": "AC-LAW-19",
+      "supersededBy": "AC-LAW-CORE-19",
       "reason": "玩法有意偏离 Web 基准：首通新增灯油与追兵，冻结流程走格时被追兵拖入战斗"
     }
   ],
@@ -988,6 +1012,50 @@
       ],
       "fixtureId": "law-core-15-broadcast",
       "expected": "危险首清增噪、中继台首清待调谐并阻止离开；静默/播送改变噪声，静默档案与首领门、开战冻结噪声及首领修正与手算期望一致"
+    },
+    {
+      "id": "AC-LAW-CORE-16",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "第 16 章幸存者护送（现行规则）",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "law-core-16-shelter",
+      "expected": "危险首清扣幸存者生命、检查点首清待处理并阻止离开；救治耗双轨止血丹回血、强推扣血，生命档门禁、首领门与开战冻结生命及首领修正与手算期望一致"
+    },
+    {
+      "id": "AC-LAW-CORE-17",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "第 17 章伪证裁定（现行规则）",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "law-core-17-verdict",
+      "expected": "证据须先解陷阱才能进入、揭示后才能离开，陷阱伤害污染未揭示证据；裁决待定阻止离开，指控正误与可信证据数、首领门与开战冻结裁决及首领修正与手算期望一致"
+    },
+    {
+      "id": "AC-LAW-CORE-18",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "第 18 章战痕复演（现行规则）",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "law-core-18-replay",
+      "expected": "三段母带按序录制首个直接动作，录制前不能离开、未录前段不能进入后段；三段后一次性选择路线，路线门与首领门、开战冻结母带与路线与手算期望一致"
+    },
+    {
+      "id": "AC-LAW-CORE-19",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "第 19 章三相监察（现行规则）",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "law-core-19-panopticon",
+      "expected": "每次合法移动推进扫描相位，相位重合即曝光并扣最大生命 8%；三中继闭环后待选路线并阻止离开，影路遮蔽曝光，路线门与首领门、开战冻结快照与手算期望一致"
     },
     {
       "id": "AC-COMBAT-001",

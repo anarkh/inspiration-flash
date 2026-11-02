@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "law-core-19-panopticon",
+  "provenance": {
+    "supersedes": "AC-LAW-19",
+    "rules": [
+      "packages/core/src/dungeon-laws.ts",
+      "packages/core/src/dungeon-routes.ts",
+      "packages/core/src/game.ts"
+    ],
+    "expectedRule": "Chapter 19 scans on every legal move: before the move the scan phase p (0, 1, 2) is compared with the destination phase (x + y) mod 3, a match is scanned, then p advances by one and the move count by one. Before a route is chosen every scanned move exposes the player: exposure +1 and max(1, floor(maxHp x 8%)) damage (no matte_shell or predictive_visor here). Max HP is derived from the build (the decoder recomputes it, so no HP is given as input): 50 + 14 x body 70 + patched_coat 10 = 1040. An exposure therefore costs 83. A refused move does not scan. The first clear of each relay (north, central, south) completes it; completing the third leaves the route pending there and blocks leaving with `三座盲区中继已经闭环，请先选择影路、诱饵或折光路线再离开。`; law/select-panopticon-route works only at the pending relay and fixes the route once. Under the shadow route scanned moves no longer expose. Route nodes open only for the selected route (`完成三座盲区中继后选择影路路线；其余路线将永久关闭。` for shadow_route); the boss edges need three relays and a route (`完成三座盲区中继并选择潜入路线后，万目监察者入口开放。`). Display: title 三相监察律, status `相位:p，移动:m，曝光:e，中继:r/3，路线:<影路|诱饵|折光|未选择>，折光:c/3，诱饵奖励:d/3，Boss快照:<route/exposure/charges|未冻结>`; severity danger before three relays, warning ready for a route, stable ready for the boss, resolved once frozen; meter {relays, 3}. Selecting the boss freezes {route, exposureCount, refractionCharges} (no inverse_prism). Path from panopticon_gate (0,2): watchglass_cache (1,2) target 0 at p0 -> exposed; blindspot_theater (1,1) 2 at p1; blindline_archive (1,0) 1 at p2; north relay (2,0) 2 at p0; upper_entry (3,0) 0 at p1; central relay (3,1) 1 at p2; south relay (3,2) 2 at p0; after choosing shadow, central (3,1) 1 at p1 and south (3,2) 2 at p2 are scanned but hidden, and the boss (4,2) 0 at p0 likewise. The pursuer is a separate run system and is disabled after entry so it cannot ambush the walk. All expected values are frozen here, never read from candidate code."
+  },
+  "baseInput": {
+    "path": "packages/save-codec/tests/fixtures/new-hub-v1.json",
+    "sha256": "a1de1f1b33b59c91dea46caf55f21b6eee0b7104c2cbe4d68ac5d7a430709e0b"
+  },
+  "inputMutations": [
+    { "op": "replace", "path": ["state", "completedDungeonIds"], "value": ["demon_tower_1", "metro_abyss", "starfall_mine", "rust_hospital", "ash_arena", "dream_archive", "void_citadel", "temporal_observatory", "causal_clearinghouse", "entropy_ark", "mirror_cycle_city", "redaction_scriptorium", "legacy_auction_court", "genesis_vault", "silent_broadcast_tower", "lost_shelter", "false_testimony_court", "combat_replay_stage"] },
+    { "op": "replace", "path": ["state", "claimedTaskIds"], "value": ["clear_demon_tower", "clear_metro_abyss", "mainline_clear_starfall_mine", "mainline_clear_rust_hospital", "mainline_clear_ash_arena", "mainline_clear_dream_archive", "mainline_clear_void_citadel", "mainline_clear_temporal_observatory", "mainline_clear_causal_clearinghouse", "mainline_clear_entropy_ark", "mainline_clear_mirror_cycle_city", "mainline_clear_redaction_scriptorium", "mainline_clear_legacy_auction_court", "mainline_clear_genesis_vault", "mainline_clear_silent_broadcast_tower", "mainline_clear_lost_shelter", "mainline_clear_false_testimony_court", "mainline_clear_combat_replay_stage"] },
+    { "op": "replace", "path": ["state", "player", "base"], "value": { "body": 70, "spirit": 40, "agility": 30, "luck": 12 } },
+    { "op": "replace", "path": ["state", "learnedMethods"], "value": ["mist_breathing"] }
+  ],
+  "entry": { "dungeonId": "panopticon_city", "protocolId": "standard", "hiddenTaskSeed": 191919191 },
+  "runMutations": [
+    { "op": "replace", "path": ["run", "pursuitState", "status"], "value": "disabled" }
+  ],
+  "scenarioIds": [
+    "scan-exposure-relays-route-and-boss"
+  ],
+  "scenarios": [
+    {
+      "id": "scan-exposure-relays-route-and-boss",
+      "steps": [
+        { "do": "observe", "as": "entry", "law": ["law.scanPhase", "law.moveCount", "law.exposureCount", "law.route", "law.bossSnapshot", "display.title", "display.status", "display.severity", "display.meter"] },
+        { "do": "walk", "path": ["watchglass_cache"] },
+        { "do": "observe", "as": "exposed", "law": ["law.scanPhase", "law.moveCount", "law.exposureCount"] },
+        { "do": "observe", "as": "exposureDamage", "state": ["run.damageTaken"] },
+        { "do": "walk", "path": ["blindspot_theater", "blindline_archive"] },
+        { "do": "observe", "as": "shadowRouteBefore", "gate": "shadow_route" },
+        { "do": "attempt", "as": "closedMove", "command": { "type": "run/move", "nodeId": "shadow_route" } },
+        { "do": "attempt", "as": "earlyRoute", "command": { "type": "law/select-panopticon-route", "route": "shadow" } },
+        { "do": "walk", "path": ["north_blind_relay"] },
+        { "do": "collect" },
+        { "do": "walk", "path": ["upper_entry", "central_blind_relay"] },
+        { "do": "collect" },
+        { "do": "walk", "path": ["south_blind_relay"] },
+        { "do": "collect" },
+        { "do": "observe", "as": "relaysClosed", "law": ["law.relays", "law.pendingRouteNodeId", "display.status", "display.severity"] },
+        { "do": "observe", "as": "bossGateBeforeRoute", "gate": "all_sight_warden" },
+        { "do": "attempt", "as": "leaveWhilePending", "command": { "type": "run/move", "nodeId": "refraction_lab" } },
+        { "do": "command", "command": { "type": "law/select-panopticon-route", "route": "shadow" }, "as": "selectShadow" },
+        { "do": "observe", "as": "routeSelected", "law": ["law.route", "law.pendingRouteNodeId", "display.severity", "display.targetReached"] },
+        { "do": "attempt", "as": "secondRoute", "command": { "type": "law/select-panopticon-route", "route": "decoy" } },
+        { "do": "walk", "path": ["central_blind_relay", "south_blind_relay"] },
+        { "do": "observe", "as": "shadowHides", "law": ["law.scanPhase", "law.moveCount", "law.exposureCount"] },
+        { "do": "observe", "as": "noNewDamage", "state": ["run.damageTaken"] },
+        { "do": "observe", "as": "bossGateOpen", "gate": "all_sight_warden" },
+        { "do": "walk", "path": ["all_sight_warden"] },
+        { "do": "select", "node": "all_sight_warden" },
+        { "do": "observe", "as": "frozen", "law": ["law.bossSnapshot", "display.status", "display.severity"] },
+        { "do": "observe", "as": "roundtrip", "roundtrip": ["law.route", "law.exposureCount", "law.moveCount", "law.bossSnapshot"] }
+      ],
+      "expected": {
+        "entry": { "law.scanPhase": 0, "law.moveCount": 0, "law.exposureCount": 0, "law.route": null, "law.bossSnapshot": null, "display.title": "三相监察律", "display.status": "相位:0，移动:0，曝光:0，中继:0/3，路线:未选择，折光:0/3，诱饵奖励:0/3，Boss快照:未冻结", "display.severity": "danger", "display.meter": { "value": 0, "max": 3 } },
+        "exposed": { "law.scanPhase": 1, "law.moveCount": 1, "law.exposureCount": 1 },
+        "exposureDamage": { "run.damageTaken": 83 },
+        "shadowRouteBefore": { "from": "blindline_archive", "gateId": "panopticon_blindline_archive_to_shadow_route", "isOpen": false, "blockReason": "完成三座盲区中继后选择影路路线；其余路线将永久关闭。" },
+        "closedMove": { "status": "rejected", "code": "illegal-move", "message": "shadow_route is not a legal adjacent destination from blindline_archive." },
+        "earlyRoute": { "status": "rejected", "code": "domain-rejected", "message": "The command did not produce a domain transition." },
+        "relaysClosed": { "law.relays": { "north_blind_relay": true, "central_blind_relay": true, "south_blind_relay": true }, "law.pendingRouteNodeId": "south_blind_relay", "display.status": "相位:1，移动:7，曝光:1，中继:3/3，路线:未选择，折光:0/3，诱饵奖励:0/3，Boss快照:未冻结", "display.severity": "warning" },
+        "bossGateBeforeRoute": { "from": "south_blind_relay", "gateId": "panopticon_south_blind_relay_to_all_sight_warden", "isOpen": false, "blockReason": "完成三座盲区中继并选择潜入路线后，万目监察者入口开放。" },
+        "leaveWhilePending": { "status": "rejected", "code": "departure-blocked", "message": "三座盲区中继已经闭环，请先选择影路、诱饵或折光路线再离开。" },
+        "selectShadow": { "damageTaken": 0 },
+        "routeSelected": { "law.route": "shadow", "law.pendingRouteNodeId": null, "display.severity": "stable", "display.targetReached": true },
+        "secondRoute": { "status": "rejected", "code": "domain-rejected", "message": "The command did not produce a domain transition." },
+        "shadowHides": { "law.scanPhase": 0, "law.moveCount": 9, "law.exposureCount": 1 },
+        "noNewDamage": { "run.damageTaken": 83 },
+        "bossGateOpen": { "from": "south_blind_relay", "gateId": "panopticon_south_blind_relay_to_all_sight_warden", "isOpen": true, "blockReason": null },
+        "frozen": { "law.bossSnapshot": { "route": "shadow", "exposureCount": 1, "refractionCharges": 0 }, "display.status": "相位:1，移动:10，曝光:1，中继:3/3，路线:影路，折光:0/3，诱饵奖励:0/3，Boss快照:影路/1/0", "display.severity": "resolved" },
+        "roundtrip": { "law.route": "shadow", "law.exposureCount": 1, "law.moveCount": 10, "law.bossSnapshot": { "route": "shadow", "exposureCount": 1, "refractionCharges": 0 } }
+      }
+    }
+  ]
+}

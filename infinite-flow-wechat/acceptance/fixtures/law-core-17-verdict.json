@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "law-core-17-verdict",
+  "provenance": {
+    "supersedes": "AC-LAW-17",
+    "rules": [
+      "packages/core/src/dungeon-laws.ts",
+      "packages/core/src/dungeon-routes.ts",
+      "packages/core/src/game.ts"
+    ],
+    "expectedRule": "Chapter 17 pairs each evidence with a trap (residue_evidence with residue_sterility_trap). Entering an evidence node needs its trap cleared and leaving it needs the evidence revealed (`先揭示当前证据再离开。`). A trap that damages the player before its evidence is revealed contaminates that evidence (no custody_shell here); countering it with its item deals no damage and contaminates nothing. Collecting an evidence reveals it; a clean revealed evidence is trusted and eliminates its suspect (residue -> records_keeper). Entering verdict_chamber needs one revealed evidence (`至少揭示一份证据后开放。`); its first clear leaves a pending verdict that blocks leaving with `原始裁决尚未完成，请先选择指控对象。`. law/resolve-verdict accuses a suspect: correct only for route_surveyor, with the trusted count frozen at that moment; a second accusation changes nothing. The boss gate (verdict_chamber -> false_testimony_judge) needs a completed verdict. Selecting the boss freezes {suspect, correct, trustedCount, appealed, eliminatedSuspects}; in the boss encounter a wrong verdict gives enemy all stats +10% and outgoing force/art +10%, a correct one with 1-2 trusted evidence -4% and +8%. With mist_breathing as the main method the risked residue trap deals floor(205 x 0.45) = 92. The counter item comes from a prepared tactical loadout (one armor_patch). The pursuer is a separate run system and is disabled after entry so it cannot ambush the walk. All expected values are frozen here, never read from candidate code."
+  },
+  "baseInput": {
+    "path": "packages/save-codec/tests/fixtures/new-hub-v1.json",
+    "sha256": "a1de1f1b33b59c91dea46caf55f21b6eee0b7104c2cbe4d68ac5d7a430709e0b"
+  },
+  "inputMutations": [
+    { "op": "replace", "path": ["state", "completedDungeonIds"], "value": ["demon_tower_1", "metro_abyss", "starfall_mine", "rust_hospital", "ash_arena", "dream_archive", "void_citadel", "temporal_observatory", "causal_clearinghouse", "entropy_ark", "mirror_cycle_city", "redaction_scriptorium", "legacy_auction_court", "genesis_vault", "silent_broadcast_tower", "lost_shelter"] },
+    { "op": "replace", "path": ["state", "claimedTaskIds"], "value": ["clear_demon_tower", "clear_metro_abyss", "mainline_clear_starfall_mine", "mainline_clear_rust_hospital", "mainline_clear_ash_arena", "mainline_clear_dream_archive", "mainline_clear_void_citadel", "mainline_clear_temporal_observatory", "mainline_clear_causal_clearinghouse", "mainline_clear_entropy_ark", "mainline_clear_mirror_cycle_city", "mainline_clear_redaction_scriptorium", "mainline_clear_legacy_auction_court", "mainline_clear_genesis_vault", "mainline_clear_silent_broadcast_tower", "mainline_clear_lost_shelter"] },
+    { "op": "replace", "path": ["state", "player", "base"], "value": { "body": 70, "spirit": 40, "agility": 30, "luck": 12 } },
+    { "op": "replace", "path": ["state", "learnedMethods"], "value": ["mist_breathing"] },
+    { "op": "replace", "path": ["state", "inventory", "armor_patch"], "value": 1 },
+    { "op": "replace", "path": ["state", "preparedItemIds"], "value": ["armor_patch"] }
+  ],
+  "entry": { "dungeonId": "false_testimony_court", "protocolId": "standard", "hiddenTaskSeed": 171717171 },
+  "runMutations": [
+    { "op": "replace", "path": ["run", "pursuitState", "status"], "value": "disabled" }
+  ],
+  "scenarioIds": [
+    "clean-evidence-and-correct-verdict",
+    "contaminated-evidence-and-wrong-verdict"
+  ],
+  "scenarios": [
+    {
+      "id": "clean-evidence-and-correct-verdict",
+      "steps": [
+        { "do": "observe", "as": "entry", "law": ["law.revealedEvidenceIds", "law.contaminatedEvidenceIds", "law.pendingVerdictNodeId", "law.accusedSuspect", "law.accusationCorrect", "law.bossVerdictSnapshot", "display.title"] },
+        { "do": "walk", "path": ["residue_sterility_trap"] },
+        { "do": "observe", "as": "chamberBeforeEvidence", "gate": "verdict_chamber" },
+        { "do": "trap", "choice": "counter", "as": "counterTrap" },
+        { "do": "walk", "path": ["residue_evidence"] },
+        { "do": "observe", "as": "exitBeforeReveal", "gate": "residue_sterility_trap" },
+        { "do": "collect" },
+        { "do": "observe", "as": "revealedClean", "law": ["law.revealedEvidenceIds", "law.contaminatedEvidenceIds"] },
+        { "do": "walk", "path": ["residue_sterility_trap", "verdict_chamber"] },
+        { "do": "collect" },
+        { "do": "observe", "as": "pendingVerdict", "law": ["law.pendingVerdictNodeId"] },
+        { "do": "attempt", "as": "leaveWhilePending", "command": { "type": "run/move", "nodeId": "false_testimony_judge" } },
+        { "do": "command", "command": { "type": "law/resolve-verdict", "suspect": "route_surveyor" }, "as": "accuse" },
+        { "do": "observe", "as": "verdict", "law": ["law.accusedSuspect", "law.accusationCorrect", "law.accusationTrustedCount", "law.pendingVerdictNodeId"] },
+        { "do": "observe", "as": "judgeGateOpen", "gate": "false_testimony_judge" },
+        { "do": "attempt", "as": "secondAccusation", "command": { "type": "law/resolve-verdict", "suspect": "security_chief" } },
+        { "do": "walk", "path": ["false_testimony_judge"] },
+        { "do": "select", "node": "false_testimony_judge" },
+        { "do": "observe", "as": "frozen", "law": ["law.bossVerdictSnapshot", "modifiers.encounter.allStatsPercent", "modifiers.outgoingDamage"] },
+        { "do": "observe", "as": "roundtrip", "roundtrip": ["law.accusedSuspect", "law.bossVerdictSnapshot"] }
+      ],
+      "expected": {
+        "entry": { "law.revealedEvidenceIds": [], "law.contaminatedEvidenceIds": [], "law.pendingVerdictNodeId": null, "law.accusedSuspect": null, "law.accusationCorrect": null, "law.bossVerdictSnapshot": null, "display.title": "伪证裁定律" },
+        "chamberBeforeEvidence": { "from": "residue_sterility_trap", "gateId": "false_testimony_residue_sterility_trap_to_verdict_chamber", "isOpen": false, "blockReason": "至少揭示一份证据后开放。" },
+        "counterTrap": { "damageTaken": 0 },
+        "exitBeforeReveal": { "from": "residue_evidence", "gateId": "false_testimony_residue_evidence_to_residue_sterility_trap", "isOpen": false, "blockReason": "先揭示当前证据再离开。" },
+        "revealedClean": { "law.revealedEvidenceIds": ["residue_evidence"], "law.contaminatedEvidenceIds": [] },
+        "pendingVerdict": { "law.pendingVerdictNodeId": "verdict_chamber" },
+        "leaveWhilePending": { "status": "rejected", "code": "departure-blocked", "message": "原始裁决尚未完成，请先选择指控对象。" },
+        "accuse": { "damageTaken": 0 },
+        "verdict": { "law.accusedSuspect": "route_surveyor", "law.accusationCorrect": true, "law.accusationTrustedCount": 1, "law.pendingVerdictNodeId": null },
+        "judgeGateOpen": { "from": "verdict_chamber", "gateId": "false_testimony_verdict_chamber_to_false_testimony_judge", "isOpen": true, "blockReason": null },
+        "secondAccusation": { "status": "rejected", "code": "domain-rejected", "message": "The command did not produce a domain transition." },
+        "frozen": { "law.bossVerdictSnapshot": { "suspect": "route_surveyor", "correct": true, "trustedCount": 1, "appealed": false, "eliminatedSuspects": ["records_keeper"] }, "modifiers.encounter.allStatsPercent": -4, "modifiers.outgoingDamage": { "forcePercent": 8, "artPercent": 8 } },
+        "roundtrip": { "law.accusedSuspect": "route_surveyor", "law.bossVerdictSnapshot": { "suspect": "route_surveyor", "correct": true, "trustedCount": 1, "appealed": false, "eliminatedSuspects": ["records_keeper"] } }
+      }
+    },
+    {
+      "id": "contaminated-evidence-and-wrong-verdict",
+      "steps": [
+        { "do": "walk", "path": ["residue_sterility_trap"] },
+        { "do": "trap", "choice": "risk", "as": "riskTrap" },
+        { "do": "observe", "as": "contaminated", "law": ["law.revealedEvidenceIds", "law.contaminatedEvidenceIds"] },
+        { "do": "walk", "path": ["residue_evidence"] },
+        { "do": "collect" },
+        { "do": "observe", "as": "revealedContaminated", "law": ["law.revealedEvidenceIds", "law.contaminatedEvidenceIds"] },
+        { "do": "walk", "path": ["residue_sterility_trap", "verdict_chamber"] },
+        { "do": "collect" },
+        { "do": "command", "command": { "type": "law/resolve-verdict", "suspect": "records_keeper" } },
+        { "do": "observe", "as": "wrongVerdict", "law": ["law.accusedSuspect", "law.accusationCorrect", "law.accusationTrustedCount"] },
+        { "do": "walk", "path": ["false_testimony_judge"] },
+        { "do": "select", "node": "false_testimony_judge" },
+        { "do": "observe", "as": "frozen", "law": ["law.bossVerdictSnapshot", "modifiers.encounter.allStatsPercent", "modifiers.outgoingDamage"] }
+      ],
+      "expected": {
+        "riskTrap": { "damageTaken": 92 },
+        "contaminated": { "law.revealedEvidenceIds": [], "law.contaminatedEvidenceIds": ["residue_evidence"] },
+        "revealedContaminated": { "law.revealedEvidenceIds": ["residue_evidence"], "law.contaminatedEvidenceIds": ["residue_evidence"] },
+        "wrongVerdict": { "law.accusedSuspect": "records_keeper", "law.accusationCorrect": false, "law.accusationTrustedCount": 0 },
+        "frozen": { "law.bossVerdictSnapshot": { "suspect": "records_keeper", "correct": false, "trustedCount": 0, "appealed": false, "eliminatedSuspects": [] }, "modifiers.encounter.allStatsPercent": 10, "modifiers.outgoingDamage": { "forcePercent": 10, "artPercent": 10 } }
+      }
+    }
+  ]
+}

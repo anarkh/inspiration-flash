@@ -416,6 +416,39 @@
       ]
     },
     {
+      "fixtureId": "law-core-16-shelter",
+      "path": "law-core-16-shelter.json",
+      "sha256": "70013cb1a4873888b22ffe3192ce71f4f5d0f20017c3ddff7bbda60360b3142e",
+      "scenarioIds": [
+        "checkpoints-move-survivor-hp-and-gates"
+      ]
+    },
+    {
+      "fixtureId": "law-core-17-verdict",
+      "path": "law-core-17-verdict.json",
+      "sha256": "caa124ad15858d4c03c18673cc13afcdc9606311c3458b314cfb999745f77eb0",
+      "scenarioIds": [
+        "clean-evidence-and-correct-verdict",
+        "contaminated-evidence-and-wrong-verdict"
+      ]
+    },
+    {
+      "fixtureId": "law-core-18-replay",
+      "path": "law-core-18-replay.json",
+      "sha256": "362a44eafe6dac5f1a9c8eb0b5a54472a310f7f4ad4a765ba108c779a3aefb14",
+      "scenarioIds": [
+        "takes-in-order-route-and-boss-snapshot"
+      ]
+    },
+    {
+      "fixtureId": "law-core-19-panopticon",
+      "path": "law-core-19-panopticon.json",
+      "sha256": "46f671c3f65e74134dc933fb3633b05e52960f23e8331fd2c7a72b28c5add93a",
+      "scenarioIds": [
+        "scan-exposure-relays-route-and-boss"
+      ]
+    },
+    {
       "fixtureId": "seed-root-label-golden-v1",
       "path": "seed-root-label-golden-v1.json",
       "sha256": "8f53e064c6788f8c4ec0fe383febfeb67e12fd915058570dff945a0178308b95",

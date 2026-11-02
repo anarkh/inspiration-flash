@@ -35,7 +35,7 @@ import {
 const RUNNER_SCHEMA_VERSION = 1;
 const RUNNER_ID = "infinite-flow-migration-acceptance";
 const FROZEN_ACCEPTANCE_MANIFEST_SHA256 =
-  "d9ca406ca04a8214341f586a10d3cfd2669ff5caaab4d902a3626116dac80541";
+  "d32721f2e1bdf25523c6a3d0fbf4ddbf9c2fe54f00ad4645d52c9cee45b5e168";
 const scriptDirectory = dirname(resolve(process.argv[1]));
 const scriptProjectRoot = resolve(scriptDirectory, "..");
 const defaultRepositoryRoot = resolve(scriptProjectRoot, "..");
@@ -615,8 +615,8 @@ function loadAcceptanceRegistry() {
   if (manifest?.schemaVersion !== 2 || manifest?.acceptanceVersion !== "v2") {
     failures.push("acceptance manifest schema/version is not the frozen schema 2 / v2 contract");
   }
-  if (!Array.isArray(manifest?.cases) || manifest.cases.length !== 118) {
-    failures.push("acceptance manifest must contain exactly 118 cases");
+  if (!Array.isArray(manifest?.cases) || manifest.cases.length !== 122) {
+    failures.push("acceptance manifest must contain exactly 122 cases");
   }
   failures.push(...validateCaseRunnerRegistry(manifest));
   return { manifest, manifestSha256, failures };
