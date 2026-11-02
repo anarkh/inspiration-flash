@@ -1,5 +1,5 @@
 import {
-  BLOODLINE_CATALOG, COMPANION_CATALOG, DUNGEONS, EQUIPMENT, EQUIPMENT_SLOTS, ITEMS,
+  BLOODLINE_CATALOG, COMPANION_CATALOG, DUNGEONS, EQUIPMENT, EQUIPMENT_MASTERY_LEVEL, EQUIPMENT_SLOTS, ITEMS,
   METHODS, METHOD_TECHNIQUE_CATALOG, PETS, getGameAsset, getEquipmentKeyword, getEquipmentTemperStatus, getEquippedMethods, getMethodStats, getPetSupport,
   type Cost, type GameState, type ItemId, type EquipmentId, type GameAssetKind, type PetSupport
 } from '@infinite-flow/core';
@@ -258,7 +258,7 @@ function buildHubRows(
             ...equipmentItemDetails(equipmentItem).map(detail => detail.label === '等级' && !owned
               ? { ...detail, value: `${detail.value}（获得后为 1 级）` }
               : detail),
-            { label: '铭刻', value: attunement ? `${attunement.name}：${attunement.description}` : '尚未铭刻；支持铭刻的装备满级后可选择分支。' },
+            { label: '铭刻', value: attunement ? `${attunement.name}：${attunement.description}` : `尚未铭刻；支持铭刻的装备达到 ${EQUIPMENT_MASTERY_LEVEL} 级后可选择分支。` },
             { label: '淬炼', value: temper.eligible ? `${temper.currentRank} / ${temper.maxRank}${temper.materialId ? ` · 材料：${ITEMS[temper.materialId].name}` : ''}` : '此装备不支持淬炼' },
             { label: '生效方式', value: '兑换放入装备架，手动装备后属性生效；同部位只能穿戴一件。' }
           ]

@@ -8,6 +8,12 @@ import type { EquipmentDefinition, EquipmentId } from './game';
  * cycle through the EQUIPMENT binding. game.ts re-exports EQUIPMENT to keep the
  * public @infinite-flow/core API stable.
  */
+/**
+ * Gear levels up to 5. Inscription, tempering, resonance, memories and field surveys open at level 3,
+ * the cap before levels 4 and 5 were added, so older saves keep every unlock they had.
+ */
+export const EQUIPMENT_MASTERY_LEVEL = 3;
+
 export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
   training_blade: {
     id: 'training_blade',
@@ -87,7 +93,7 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     cost: { rewardPoints: 260 },
     base: { attack: 9, speed: 1 },
     perLevel: { attack: 4 },
-    maxLevel: 3
+    maxLevel: 5
   },
   bone_spear: {
     id: 'bone_spear',
@@ -97,7 +103,7 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     cost: { rewardPoints: 340, items: { demon_bone: 1 } },
     base: { attack: 8, speed: 4 },
     perLevel: { attack: 3, speed: 1 },
-    maxLevel: 3
+    maxLevel: 5
   },
   ember_staff: {
     id: 'ember_staff',
@@ -105,9 +111,9 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'weapon',
     description: '药炉灰压进杖芯，强化术法输出。',
     cost: { rewardPoints: 360, items: { medicine_ash: 1 } },
-    base: { attack: 4, artPower: 9 },
-    perLevel: { artPower: 4 },
-    maxLevel: 3
+    base: { attack: 6, artPower: 13 },
+    perLevel: { artPower: 6 },
+    maxLevel: 5
   },
   mist_hood: {
     id: 'mist_hood',
@@ -117,7 +123,7 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     cost: { rewardPoints: 280 },
     base: { spirit: 1, speed: 1, trapCheck: 3 },
     perLevel: { speed: 1, trapCheck: 2 },
-    maxLevel: 3
+    maxLevel: 5
   },
   spirit_robe: {
     id: 'spirit_robe',
@@ -127,7 +133,7 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     cost: { rewardPoints: 300 },
     base: { maxHp: 18, defense: 3, artPower: 2 },
     perLevel: { maxHp: 8, defense: 2 },
-    maxLevel: 3
+    maxLevel: 5
   },
   guardian_plate: {
     id: 'guardian_plate',
@@ -135,9 +141,9 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'armor',
     description: '沉重但可靠的胸甲，专门应对中后期高攻击怪物。',
     cost: { rewardPoints: 520, items: { star_iron: 1 } },
-    base: { maxHp: 28, defense: 7, speed: -1 },
-    perLevel: { maxHp: 10, defense: 3 },
-    maxLevel: 3
+    base: { maxHp: 33, defense: 8, speed: -1 },
+    perLevel: { maxHp: 12, defense: 4 },
+    maxLevel: 5
   },
   guardian_gauntlets: {
     id: 'guardian_gauntlets',
@@ -147,7 +153,7 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     cost: { rewardPoints: 420 },
     base: { maxHp: 10, attack: 3, defense: 4 },
     perLevel: { attack: 2, defense: 2 },
-    maxLevel: 3
+    maxLevel: 5
   },
   cloudstep_boots: {
     id: 'cloudstep_boots',
@@ -157,7 +163,7 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     cost: { rewardPoints: 380, lingyun: 1 },
     base: { agility: 1, speed: 5, trapCheck: 1 },
     perLevel: { speed: 3, trapCheck: 1 },
-    maxLevel: 3
+    maxLevel: 5
   },
   rift_belt: {
     id: 'rift_belt',
@@ -167,7 +173,7 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     cost: { rewardPoints: 460, items: { hidden_stone: 1 } },
     base: { spirit: 1, artPower: 3, defense: 2 },
     perLevel: { artPower: 2, defense: 1 },
-    maxLevel: 3
+    maxLevel: 5
   },
   cloudstep_charm: {
     id: 'cloudstep_charm',
@@ -175,9 +181,9 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'charm',
     description: '让撤离和先手更可靠，适合高风险探索。',
     cost: { rewardPoints: 420, lingyun: 1 },
-    base: { agility: 1, speed: 5 },
-    perLevel: { speed: 3 },
-    maxLevel: 3
+    base: { agility: 1, speed: 7 },
+    perLevel: { speed: 4 },
+    maxLevel: 5
   },
   rift_charm: {
     id: 'rift_charm',
@@ -185,9 +191,9 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'charm',
     description: '让传送门奖励更稳定。',
     cost: { rewardPoints: 360, items: { hidden_stone: 1 } },
-    base: { spirit: 1, artPower: 4 },
-    perLevel: { artPower: 3 },
-    maxLevel: 3
+    base: { spirit: 1, artPower: 3 },
+    perLevel: { artPower: 2 },
+    maxLevel: 5
   },
   starforged_edge: {
     id: 'starforged_edge',
@@ -195,9 +201,9 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'weapon',
     description: '星坠矿井的目标装备，首版先作为高阶预览。',
     cost: { rewardPoints: 540, items: { star_iron: 1, method_page: 1 } },
-    base: { attack: 15, artPower: 4 },
-    perLevel: { attack: 5, artPower: 2 },
-    maxLevel: 3
+    base: { attack: 12, artPower: 3 },
+    perLevel: { attack: 4, artPower: 2 },
+    maxLevel: 5
   },
   void_lantern: {
     id: 'void_lantern',
@@ -207,7 +213,7 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     cost: { rewardPoints: 680, lingyun: 2, items: { cracked_core: 1, rift_dust: 1 } },
     base: { spirit: 2, artPower: 10, defense: 2 },
     perLevel: { artPower: 5, defense: 1 },
-    maxLevel: 3
+    maxLevel: 5
   },
   chronal_edge: {
     id: 'chronal_edge',
@@ -215,9 +221,9 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'weapon',
     description: '以时序玻璃校准锋线，让斩击同时落在目标的前一瞬与后一瞬。',
     cost: { rewardPoints: 720, lingyun: 2, items: { chronal_glass: 1, star_iron: 1 } },
-    base: { attack: 17, artPower: 5 },
-    perLevel: { attack: 5, artPower: 2 },
-    maxLevel: 3
+    base: { attack: 21, artPower: 6 },
+    perLevel: { attack: 6, artPower: 2 },
+    maxLevel: 5
   },
   chronal_aegis: {
     id: 'chronal_aegis',
@@ -225,9 +231,9 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'armor',
     description: '把承受的冲击延后分散，在观测庭的高压战斗中维持稳定。',
     cost: { rewardPoints: 700, lingyun: 2, items: { chronal_glass: 1, cracked_core: 1 } },
-    base: { maxHp: 32, defense: 8 },
-    perLevel: { maxHp: 12, defense: 3 },
-    maxLevel: 3
+    base: { maxHp: 48, defense: 12 },
+    perLevel: { maxHp: 18, defense: 5 },
+    maxLevel: 5
   },
   chronal_lens: {
     id: 'chronal_lens',
@@ -235,9 +241,9 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'charm',
     description: '折叠近未来的观测结果，为术法落点提供一瞬先机。',
     cost: { rewardPoints: 760, lingyun: 2, items: { chronal_glass: 1, rift_dust: 1 } },
-    base: { spirit: 2, artPower: 12, defense: 3 },
-    perLevel: { artPower: 5, defense: 1 },
-    maxLevel: 3
+    base: { spirit: 2, artPower: 14, defense: 3 },
+    perLevel: { artPower: 6, defense: 1 },
+    maxLevel: 5
   },
   causal_visor: {
     id: 'causal_visor',
@@ -245,9 +251,9 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'head',
     description: '入场时冻结被动：本轮首次透支获得收益与治疗，但不会增加因果债务。',
     cost: { rewardPoints: 820, lingyun: 2, items: { causal_seal: 1, chronal_glass: 1 } },
-    base: { spirit: 1, defense: 2, trapCheck: 4 },
-    perLevel: { artPower: 2, trapCheck: 1 },
-    maxLevel: 3
+    base: { spirit: 3, defense: 7, trapCheck: 13 },
+    perLevel: { artPower: 7, trapCheck: 3 },
+    maxLevel: 5
   },
   echo_breaker_gauntlets: {
     id: 'echo_breaker_gauntlets',
@@ -257,7 +263,7 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     cost: { rewardPoints: 840, lingyun: 2, items: { causal_seal: 1, rift_dust: 1 } },
     base: { attack: 4, artPower: 4, defense: 3 },
     perLevel: { attack: 2, artPower: 1 },
-    maxLevel: 3
+    maxLevel: 5
   },
   return_anchor_belt: {
     id: 'return_anchor_belt',
@@ -267,7 +273,7 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     cost: { rewardPoints: 800, lingyun: 2, items: { causal_seal: 1, star_iron: 1 } },
     base: { maxHp: 16, defense: 4, speed: 1 },
     perLevel: { maxHp: 8, defense: 1 },
-    maxLevel: 3
+    maxLevel: 5
   },
   entropy_compass: {
     id: 'entropy_compass',
@@ -275,9 +281,9 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'charm',
     description: '入场时冻结被动：本局第一次由普通怪物或陷阱首次清理触发的自动升熵免除；玩家主动选择 rush/抢航产生的 +1 熵不免除。',
     cost: { rewardPoints: 920, lingyun: 3, items: { entropy_crystal: 1, chronal_glass: 1 } },
-    base: { spirit: 2, artPower: 13, defense: 3 },
-    perLevel: { artPower: 5, speed: 1 },
-    maxLevel: 3
+    base: { spirit: 3, artPower: 18, defense: 4 },
+    perLevel: { artPower: 7, speed: 1 },
+    maxLevel: 5
   },
   dissipation_mantle: {
     id: 'dissipation_mantle',
@@ -285,9 +291,9 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'armor',
     description: '入场时冻结被动：稳航结算时降熵效果更强。',
     cost: { rewardPoints: 900, lingyun: 3, items: { entropy_crystal: 1, rift_dust: 1 } },
-    base: { maxHp: 36, artPower: 4, defense: 8 },
-    perLevel: { maxHp: 12, artPower: 2, defense: 2 },
-    maxLevel: 3
+    base: { maxHp: 48, artPower: 5, defense: 11 },
+    perLevel: { maxHp: 16, artPower: 3, defense: 3 },
+    maxLevel: 5
   },
   ark_keel_boots: {
     id: 'ark_keel_boots',
@@ -297,7 +303,7 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     cost: { rewardPoints: 880, lingyun: 3, items: { entropy_crystal: 1, star_iron: 1 } },
     base: { agility: 1, maxHp: 12, defense: 4, speed: 3 },
     perLevel: { maxHp: 8, defense: 2, speed: 1 },
-    maxLevel: 3
+    maxLevel: 5
   },
   parallax_visor: {
     id: 'parallax_visor',
@@ -305,9 +311,9 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'head',
     description: '入场时冻结被动：当前相位的错误伤害类型不再承受 -6% 输出惩罚。',
     cost: { rewardPoints: 980, lingyun: 3, items: { phase_glass: 1, chronal_glass: 1 } },
-    base: { spirit: 2, defense: 4, trapCheck: 6 },
-    perLevel: { artPower: 3, defense: 1, trapCheck: 2 },
-    maxLevel: 3
+    base: { spirit: 4, defense: 8, trapCheck: 13 },
+    perLevel: { artPower: 6, defense: 2, trapCheck: 4 },
+    maxLevel: 5
   },
   phaseweave_mantle: {
     id: 'phaseweave_mantle',
@@ -315,9 +321,9 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'armor',
     description: '入场时冻结被动：现实与镜像相位切换的生命代价由最大生命 10% 降至 5%。',
     cost: { rewardPoints: 1000, lingyun: 3, items: { phase_glass: 1, rift_dust: 1 } },
-    base: { maxHp: 40, artPower: 6, defense: 9 },
-    perLevel: { maxHp: 14, artPower: 2, defense: 3 },
-    maxLevel: 3
+    base: { maxHp: 48, artPower: 7, defense: 11 },
+    perLevel: { maxHp: 17, artPower: 2, defense: 4 },
+    maxLevel: 5
   },
   homecoming_prism: {
     id: 'homecoming_prism',
@@ -325,9 +331,9 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'charm',
     description: '入场时冻结被动：无名镜王生成的镜壳数量减少 1。',
     cost: { rewardPoints: 1020, lingyun: 3, items: { phase_glass: 1, star_iron: 1 } },
-    base: { spirit: 2, artPower: 14, defense: 4 },
-    perLevel: { artPower: 6, defense: 1 },
-    maxLevel: 3
+    base: { spirit: 3, artPower: 20, defense: 6 },
+    perLevel: { artPower: 8, defense: 1 },
+    maxLevel: 5
   },
   redline_edge: {
     id: 'redline_edge',
@@ -335,9 +341,9 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'weapon',
     description: '以朱批切开废稿边界，入场时冻结其与删界条款联动的终稿被动。',
     cost: { rewardPoints: 1100, lingyun: 4, items: { redaction_ink: 1, phase_glass: 1 } },
-    base: { attack: 20, artPower: 6 },
-    perLevel: { attack: 6, artPower: 2 },
-    maxLevel: 3
+    base: { attack: 28, artPower: 8 },
+    perLevel: { attack: 8, artPower: 3 },
+    maxLevel: 5
   },
   palimpsest_mantle: {
     id: 'palimpsest_mantle',
@@ -345,9 +351,9 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'armor',
     description: '多层覆页把承伤记录分散到旧稿，入场时冻结其与删界条款联动的终稿被动。',
     cost: { rewardPoints: 1080, lingyun: 4, items: { redaction_ink: 1, rift_dust: 1 } },
-    base: { maxHp: 44, artPower: 7, defense: 10 },
-    perLevel: { maxHp: 15, artPower: 2, defense: 3 },
-    maxLevel: 3
+    base: { maxHp: 50, artPower: 8, defense: 11 },
+    perLevel: { maxHp: 17, artPower: 2, defense: 3 },
+    maxLevel: 5
   },
   final_proof_seal: {
     id: 'final_proof_seal',
@@ -355,9 +361,9 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'charm',
     description: '终校印面认证唯一有效版本，入场时冻结其与删界条款联动的终稿被动。',
     cost: { rewardPoints: 1120, lingyun: 4, items: { redaction_ink: 1, star_iron: 1 } },
-    base: { spirit: 2, artPower: 16, defense: 5 },
-    perLevel: { artPower: 6, defense: 2 },
-    maxLevel: 3
+    base: { spirit: 3, artPower: 22, defense: 7 },
+    perLevel: { artPower: 8, defense: 3 },
+    maxLevel: 5
   },
   legacy_gavel: {
     id: 'legacy_gavel',
@@ -365,9 +371,9 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'weapon',
     description: '旧队长的落槌仍会替最后一次有效报价定音，入场时冻结其拍卖庭被动。',
     cost: { rewardPoints: 1240, lingyun: 4, items: { legacy_scrip: 1, star_iron: 1 } },
-    base: { attack: 22, defense: 4 },
-    perLevel: { attack: 6, defense: 2 },
-    maxLevel: 3
+    base: { attack: 31, defense: 6 },
+    perLevel: { attack: 9, defense: 3 },
+    maxLevel: 5
   },
   anonymous_veil: {
     id: 'anonymous_veil',
@@ -375,9 +381,9 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'head',
     description: '面纱抹去竞标者的旧队身份，入场时冻结其拍卖庭被动。',
     cost: { rewardPoints: 1200, lingyun: 4, items: { legacy_scrip: 1, phase_glass: 1 } },
-    base: { spirit: 2, artPower: 12, speed: 2, trapCheck: 5 },
-    perLevel: { artPower: 4, speed: 2, trapCheck: 1 },
-    maxLevel: 3
+    base: { spirit: 4, artPower: 21, speed: 4, trapCheck: 9 },
+    perLevel: { artPower: 7, speed: 4, trapCheck: 2 },
+    maxLevel: 5
   },
   escrow_plate: {
     id: 'escrow_plate',
@@ -385,9 +391,9 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'armor',
     description: '契甲把承伤权暂存于无人认领的遗产名下，入场时冻结其拍卖庭被动。',
     cost: { rewardPoints: 1260, lingyun: 4, items: { legacy_scrip: 1, rift_dust: 1 } },
-    base: { maxHp: 48, defense: 12, speed: -1 },
-    perLevel: { maxHp: 16, defense: 4 },
-    maxLevel: 3
+    base: { maxHp: 72, defense: 18, speed: -1 },
+    perLevel: { maxHp: 24, defense: 6 },
+    maxLevel: 5
   },
   final_lot_bell: {
     id: 'final_lot_bell',
@@ -395,9 +401,9 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'charm',
     description: '号钟只为最后一件无人继承的拍品鸣响，入场时冻结其拍卖庭被动。',
     cost: { rewardPoints: 1220, lingyun: 4, items: { legacy_scrip: 1, chronal_glass: 1 } },
-    base: { spirit: 2, artPower: 18, speed: 3 },
-    perLevel: { artPower: 6, speed: 1 },
-    maxLevel: 3
+    base: { spirit: 3, artPower: 29, speed: 5 },
+    perLevel: { artPower: 10, speed: 2 },
+    maxLevel: 5
   },
   helix_cleaver: {
     id: 'helix_cleaver',
@@ -405,9 +411,9 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'weapon',
     description: '斧刃沿双螺旋弱点展开，以原型血清维持断链锋面。',
     cost: { rewardPoints: 1420, lingyun: 5, items: { genesis_serum: 1, star_iron: 1 } },
-    base: { attack: 25, artPower: 5 },
-    perLevel: { attack: 7, artPower: 2 },
-    maxLevel: 3
+    base: { attack: 34, artPower: 7 },
+    perLevel: { attack: 10, artPower: 3 },
+    maxLevel: 5
   },
   symbiote_cowl: {
     id: 'symbiote_cowl',
@@ -415,9 +421,9 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'head',
     description: '冠膜读取宿主神经脉冲，在危机发生前调整感知与施法节律。',
     cost: { rewardPoints: 1380, lingyun: 5, items: { genesis_serum: 1, phase_glass: 1 } },
-    base: { spirit: 3, artPower: 15, speed: 3, trapCheck: 6 },
-    perLevel: { artPower: 5, speed: 2, trapCheck: 1 },
-    maxLevel: 3
+    base: { spirit: 4, artPower: 21, speed: 4, trapCheck: 8 },
+    perLevel: { artPower: 7, speed: 3, trapCheck: 1 },
+    maxLevel: 5
   },
   carapace_harness: {
     id: 'carapace_harness',
@@ -425,9 +431,9 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'armor',
     description: '活性甲片会沿受击方向增生，把裂隙冲击分散到整副外壳。',
     cost: { rewardPoints: 1460, lingyun: 5, items: { genesis_serum: 1, rift_dust: 1 } },
-    base: { maxHp: 56, defense: 14 },
-    perLevel: { maxHp: 18, defense: 4 },
-    maxLevel: 3
+    base: { maxHp: 74, defense: 19 },
+    perLevel: { maxHp: 24, defense: 5 },
+    maxLevel: 5
   },
   rebirth_amulet: {
     id: 'rebirth_amulet',
@@ -435,9 +441,9 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'charm',
     description: '胚核保存一次尚未定型的生命节律，为术法与防护持续提供复燃余量。',
     cost: { rewardPoints: 1400, lingyun: 5, items: { genesis_serum: 1, chronal_glass: 1 } },
-    base: { spirit: 3, artPower: 20, defense: 4 },
-    perLevel: { artPower: 7, defense: 2 },
-    maxLevel: 3
+    base: { spirit: 4, artPower: 26, defense: 5 },
+    perLevel: { artPower: 9, defense: 3 },
+    maxLevel: 5
   },
   hushblade: {
     id: 'hushblade',
@@ -445,9 +451,9 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'weapon',
     description: '入场时冻结寂声法则被动：抵消本局首次战斗或陷阱清理的增噪，跨门后仍沿用本局快照。',
     cost: { rewardPoints: 1600, lingyun: 6, items: { silence_core: 1, star_iron: 1 } },
-    base: { attack: 28, artPower: 6 },
-    perLevel: { attack: 8, artPower: 2 },
-    maxLevel: 3
+    base: { attack: 36, artPower: 8 },
+    perLevel: { attack: 10, artPower: 3 },
+    maxLevel: 5
   },
   dead_air_headset: {
     id: 'dead_air_headset',
@@ -455,9 +461,9 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'head',
     description: '入场时冻结寂声法则被动：静默中继额外降低 1 点噪声，跨门后仍沿用本局快照。',
     cost: { rewardPoints: 1540, lingyun: 6, items: { silence_core: 1, phase_glass: 1 } },
-    base: { spirit: 3, artPower: 18, speed: 4, trapCheck: 7 },
-    perLevel: { artPower: 5, speed: 2, trapCheck: 2 },
-    maxLevel: 3
+    base: { spirit: 4, artPower: 24, speed: 5, trapCheck: 9 },
+    perLevel: { artPower: 7, speed: 3, trapCheck: 3 },
+    maxLevel: 5
   },
   anechoic_mantle: {
     id: 'anechoic_mantle',
@@ -465,9 +471,9 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'armor',
     description: '入场时冻结寂声法则被动：敌方与陷阱的正向噪声惩罚减半，跨门后仍沿用本局快照。',
     cost: { rewardPoints: 1620, lingyun: 6, items: { silence_core: 1, rift_dust: 1 } },
-    base: { maxHp: 62, defense: 16 },
-    perLevel: { maxHp: 20, defense: 5 },
-    maxLevel: 3
+    base: { maxHp: 76, defense: 20 },
+    perLevel: { maxHp: 25, defense: 6 },
+    maxLevel: 5
   },
   last_channel_beacon: {
     id: 'last_channel_beacon',
@@ -475,9 +481,9 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'charm',
     description: '入场时冻结寂声法则被动：首领战锁定的噪声快照降低 1 点，跨门后仍沿用本局快照。',
     cost: { rewardPoints: 1580, lingyun: 6, items: { silence_core: 1, chronal_glass: 1 } },
-    base: { spirit: 3, artPower: 23, defense: 5 },
-    perLevel: { artPower: 8, defense: 2 },
-    maxLevel: 3
+    base: { spirit: 4, artPower: 29, defense: 6 },
+    perLevel: { artPower: 10, defense: 3 },
+    maxLevel: 5
   },
   rescue_carbine: {
     id: 'rescue_carbine',
@@ -485,9 +491,9 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'weapon',
     description: '入场时冻结失联避难所护送被动：救援火力只读取本轮入场装备快照，跨门后仍沿用该快照。',
     cost: { rewardPoints: 1780, lingyun: 7, items: { rescue_badge: 1, star_iron: 1 } },
-    base: { attack: 31, artPower: 7 },
-    perLevel: { attack: 9, artPower: 2 },
-    maxLevel: 3
+    base: { attack: 37, artPower: 8 },
+    perLevel: { attack: 11, artPower: 2 },
+    maxLevel: 5
   },
   breach_shotgun: {
     id: 'breach_shotgun',
@@ -495,9 +501,9 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'weapon',
     description: '星炉专精；为近距突入与压制齐射设计的现代破门武器，专属战技可大幅降低目标防御影响。',
     cost: { rewardPoints: 1820, lingyun: 7, items: { rescue_badge: 1, star_iron: 1 } },
-    base: { attack: 35, defense: 2 },
-    perLevel: { attack: 10, defense: 1 },
-    maxLevel: 3
+    base: { attack: 42, defense: 2 },
+    perLevel: { attack: 12, defense: 1 },
+    maxLevel: 5
   },
   triage_visor: {
     id: 'triage_visor',
@@ -505,9 +511,9 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'head',
     description: '入场时冻结失联避难所护送被动：分诊判断只读取本轮入场装备快照，跨门后仍沿用该快照。',
     cost: { rewardPoints: 1720, lingyun: 7, items: { rescue_badge: 1, phase_glass: 1 } },
-    base: { spirit: 3, artPower: 21, speed: 4, trapCheck: 8 },
-    perLevel: { artPower: 6, speed: 2, trapCheck: 2 },
-    maxLevel: 3
+    base: { spirit: 4, artPower: 27, speed: 5, trapCheck: 10 },
+    perLevel: { artPower: 8, speed: 3, trapCheck: 3 },
+    maxLevel: 5
   },
   evacuation_plate: {
     id: 'evacuation_plate',
@@ -515,9 +521,9 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'armor',
     description: '入场时冻结失联避难所护送被动：撤离防护只读取本轮入场装备快照，跨门后仍沿用该快照。',
     cost: { rewardPoints: 1800, lingyun: 7, items: { rescue_badge: 1, rift_dust: 1 } },
-    base: { maxHp: 70, defense: 18 },
-    perLevel: { maxHp: 22, defense: 5 },
-    maxLevel: 3
+    base: { maxHp: 81, defense: 21 },
+    perLevel: { maxHp: 25, defense: 6 },
+    maxLevel: 5
   },
   blackbox_beacon: {
     id: 'blackbox_beacon',
@@ -525,9 +531,9 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'charm',
     description: '入场时冻结失联避难所护送被动：黑匣定位只读取本轮入场装备快照，跨门后仍沿用该快照。',
     cost: { rewardPoints: 1760, lingyun: 7, items: { rescue_badge: 1, chronal_glass: 1 } },
-    base: { spirit: 3, artPower: 26, defense: 6 },
-    perLevel: { artPower: 9, defense: 2 },
-    maxLevel: 3
+    base: { spirit: 4, artPower: 32, defense: 7 },
+    perLevel: { artPower: 11, defense: 2 },
+    maxLevel: 5
   },
   cross_examiner_sabre: {
     id: 'cross_examiner_sabre',
@@ -535,9 +541,9 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'weapon',
     description: '星炉专精；入场时冻结裁定法则被动，交叉诘问可当场拆穿敌意证人的矛盾，跨门后仍沿用该快照。',
     cost: { rewardPoints: 1960, lingyun: 8, items: { truth_fragment: 1, star_iron: 1 } },
-    base: { attack: 34, artPower: 8 },
-    perLevel: { attack: 10, artPower: 2 },
-    maxLevel: 3
+    base: { attack: 39, artPower: 9 },
+    perLevel: { attack: 11, artPower: 2 },
+    maxLevel: 5
   },
   forensic_visor: {
     id: 'forensic_visor',
@@ -545,9 +551,9 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'head',
     description: '雾行专精；入场时冻结裁定法则被动，可识别证据污染与删录封签，跨门后仍沿用该快照。',
     cost: { rewardPoints: 1900, lingyun: 8, items: { truth_fragment: 1, phase_glass: 1 } },
-    base: { spirit: 4, artPower: 24, speed: 5, trapCheck: 9 },
-    perLevel: { artPower: 7, speed: 2, trapCheck: 2 },
-    maxLevel: 3
+    base: { spirit: 4, artPower: 27, speed: 6, trapCheck: 10 },
+    perLevel: { artPower: 8, speed: 2, trapCheck: 2 },
+    maxLevel: 5
   },
   custody_shell: {
     id: 'custody_shell',
@@ -555,9 +561,9 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'armor',
     description: '裂隙专精；入场时冻结裁定法则被动，封存污染证据并压低伪证压力，跨门后仍沿用该快照。',
     cost: { rewardPoints: 1980, lingyun: 8, items: { truth_fragment: 1, rift_dust: 1 } },
-    base: { maxHp: 78, defense: 20 },
-    perLevel: { maxHp: 24, defense: 6 },
-    maxLevel: 3
+    base: { maxHp: 85, defense: 22 },
+    perLevel: { maxHp: 26, defense: 7 },
+    maxLevel: 5
   },
   appeal_seal: {
     id: 'appeal_seal',
@@ -565,9 +571,9 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'charm',
     description: '时序专精；入场时冻结裁定法则被动，可对一次原始错判发起翻案但不补发原始裁决奖励，跨门后仍沿用该快照。',
     cost: { rewardPoints: 1940, lingyun: 8, items: { truth_fragment: 1, chronal_glass: 1 } },
-    base: { spirit: 4, artPower: 29, defense: 7 },
-    perLevel: { artPower: 10, defense: 2 },
-    maxLevel: 3
+    base: { spirit: 4, artPower: 32, defense: 8 },
+    perLevel: { artPower: 11, defense: 2 },
+    maxLevel: 5
   },
   frame_engraver: {
     id: 'frame_engraver',
@@ -575,9 +581,9 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'weapon',
     description: '将直接动作刻入战斗母带的高阶武器；复演被动按入场装备冻结。',
     cost: { rewardPoints: 2140, lingyun: 9, items: { combat_reel: 1, star_iron: 1 } },
-    base: { attack: 37, artPower: 9 },
-    perLevel: { attack: 11, artPower: 2 },
-    maxLevel: 3
+    base: { attack: 41, artPower: 10 },
+    perLevel: { attack: 12, artPower: 2 },
+    maxLevel: 5
   },
   cue_visor: {
     id: 'cue_visor',
@@ -585,9 +591,9 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'head',
     description: '校准每场第一次实际复演的起拍增幅；复演被动按入场装备冻结。',
     cost: { rewardPoints: 2080, lingyun: 9, items: { combat_reel: 1, phase_glass: 1 } },
-    base: { spirit: 4, artPower: 27, speed: 5, trapCheck: 10 },
-    perLevel: { artPower: 8, speed: 2, trapCheck: 2 },
-    maxLevel: 3
+    base: { spirit: 4, artPower: 30, speed: 6, trapCheck: 11 },
+    perLevel: { artPower: 9, speed: 2, trapCheck: 2 },
+    maxLevel: 5
   },
   buffer_plate: {
     id: 'buffer_plate',
@@ -595,9 +601,9 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'armor',
     description: '令守势复演生成的缓冲跨越两次反击；复演被动按入场装备冻结。',
     cost: { rewardPoints: 2160, lingyun: 9, items: { combat_reel: 1, rift_dust: 1 } },
-    base: { maxHp: 86, defense: 22 },
-    perLevel: { maxHp: 26, defense: 6 },
-    maxLevel: 3
+    base: { maxHp: 90, defense: 23 },
+    perLevel: { maxHp: 27, defense: 6 },
+    maxLevel: 5
   },
   thaw_metronome: {
     id: 'thaw_metronome',
@@ -605,9 +611,9 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'charm',
     description: '首领开战时提前解冻第一段母带；复演被动按入场装备冻结。',
     cost: { rewardPoints: 2120, lingyun: 9, items: { combat_reel: 1, chronal_glass: 1 } },
-    base: { spirit: 4, artPower: 32, defense: 8 },
-    perLevel: { artPower: 11, defense: 2 },
-    maxLevel: 3
+    base: { spirit: 4, artPower: 35, defense: 9 },
+    perLevel: { artPower: 12, defense: 2 },
+    maxLevel: 5
   },
   blindline_cutter: {
     id: 'blindline_cutter',
@@ -615,9 +621,9 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'weapon',
     description: '入场时冻结监察城被动；Boss 战按冻结曝光与折光充能提高武力和术法伤害，最高 15%。',
     cost: { rewardPoints: 2260, lingyun: 10, items: { observation_shard: 1, star_iron: 1 } },
-    base: { attack: 40, artPower: 10 },
-    perLevel: { attack: 12, artPower: 3 },
-    maxLevel: 3
+    base: { attack: 42, artPower: 11 },
+    perLevel: { attack: 13, artPower: 3 },
+    maxLevel: 5
   },
   phase_coil_rifle: {
     id: 'phase_coil_rifle',
@@ -625,9 +631,9 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'weapon',
     description: '时序专精；以交替相位线圈切换实弹与术式输出，专属战技可贯穿动态护盾并进行攻术合流。',
     cost: { rewardPoints: 2320, lingyun: 10, items: { observation_shard: 1, chronal_glass: 1 } },
-    base: { attack: 43, artPower: 12, speed: 2 },
-    perLevel: { attack: 13, artPower: 3, speed: 1 },
-    maxLevel: 3
+    base: { attack: 41, artPower: 11, speed: 2 },
+    perLevel: { attack: 12, artPower: 3, speed: 1 },
+    maxLevel: 5
   },
   predictive_visor: {
     id: 'predictive_visor',
@@ -637,7 +643,7 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     cost: { rewardPoints: 2200, lingyun: 10, items: { observation_shard: 1, phase_glass: 1 } },
     base: { spirit: 5, artPower: 30, speed: 6, trapCheck: 11 },
     perLevel: { artPower: 9, speed: 2, trapCheck: 2 },
-    maxLevel: 3
+    maxLevel: 5
   },
   matte_shell: {
     id: 'matte_shell',
@@ -647,7 +653,7 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     cost: { rewardPoints: 2280, lingyun: 10, items: { observation_shard: 1, rift_dust: 1 } },
     base: { maxHp: 94, defense: 24 },
     perLevel: { maxHp: 28, defense: 7 },
-    maxLevel: 3
+    maxLevel: 5
   },
   inverse_prism: {
     id: 'inverse_prism',
@@ -657,6 +663,6 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     cost: { rewardPoints: 2240, lingyun: 10, items: { observation_shard: 1, chronal_glass: 1 } },
     base: { spirit: 5, artPower: 35, defense: 9 },
     perLevel: { artPower: 12, defense: 3 },
-    maxLevel: 3
+    maxLevel: 5
   }
 };

@@ -194,7 +194,7 @@ function verifyHubAndHelp(): void {
     commissionHelp?.guidance,
     commissionHelp?.readout
   ].join(' ');
-  for (const requiredCopy of ['最高等级', '未装备', '300 奖励点', '1 灵蕴', '三个不同副本', '重复副本', '撤退', '失败', '不返还', '永久背包']) {
+  for (const requiredCopy of ['3 级', '未装备', '300 奖励点', '1 灵蕴', '三个不同副本', '重复副本', '撤退', '失败', '不返还', '永久背包']) {
     assert(commissionHelpCopy.includes(requiredCopy), `commission help covers ${requiredCopy}`);
   }
   const commissionHelpEntry = viewModel.sections[4].entries.find(({ id }) => id === 'equipmentCommission');
@@ -210,7 +210,7 @@ function verifyHubAndHelp(): void {
     memoryHelp?.guidance,
     memoryHelp?.readout
   ].join(' ');
-  for (const requiredCopy of ['已装备', '满级', '合法铭刻', '淬炼达到 II', '成功抵达出口', '自动收录并激活', '装备面板']) {
+  for (const requiredCopy of ['已装备', '3 级', '合法铭刻', '淬炼达到 II', '成功抵达出口', '自动收录并激活', '装备面板']) {
     assert(memoryHelpCopy.includes(requiredCopy), `modern equipment-memory help covers ${requiredCopy}`);
   }
   for (const developerTerm of ['legacy', 'flowVersion', '现代', '兼容']) {
@@ -656,7 +656,7 @@ function verifyEquipmentMemoryProjection(): void {
   equal(noUnlockView.sections[1].detail.equipmentMemory?.active, false, 'no-active state is explicit');
   const acquisitionReadout = noUnlockView.sections[1].detail.equipmentMemory?.acquisitionReadout ?? '';
   assert(acquisitionReadout.includes('无需另接记忆狩猎任务'), 'empty library states the modern no-hunt boundary');
-  assert(['满级', '铭刻', '淬炼 II', '穿戴', '副本出口'].every((condition) => acquisitionReadout.includes(condition)), 'empty library explains the collection requirements to the player');
+  assert(['3 级', '铭刻', '淬炼 II', '穿戴', '副本出口'].every((condition) => acquisitionReadout.includes(condition)), 'empty library explains the collection requirements to the player');
 
   const unsupportedView = buildGameViewModel(rich, {
     hubPanel: 'equipment',

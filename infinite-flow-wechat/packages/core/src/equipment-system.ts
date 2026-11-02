@@ -1,4 +1,5 @@
-import { EQUIPMENT } from './equipment-catalog';
+import { getEquipmentSourceChapter } from './dungeon-loot';
+import { EQUIPMENT, EQUIPMENT_MASTERY_LEVEL } from './equipment-catalog';
 import type { DerivedStats, EquipmentId, EquipmentSlot, ItemId } from './game';
 
 export type EquipmentSetTag = 'mist' | 'forge' | 'rift' | 'chronal';
@@ -105,13 +106,14 @@ type SetEffect = {
   name: string;
   pieces: 2;
   bonus: Partial<DerivedStats>;
-  description: string;
   mastery: {
     pieces: 3;
     bonus: Partial<DerivedStats>;
-    description: string;
   };
 };
+
+/** An attunement's numbers are written per equipment, so its description is built from the scaled bonus. */
+type AttunementSeed = Omit<EquipmentAttunementDefinition, 'description'> & { readonly summary: string };
 
 const SET_ORDER: EquipmentSetTag[] = ['mist', 'forge', 'rift', 'chronal'];
 const DERIVED_STAT_KEYS: readonly (keyof DerivedStats)[] = [
@@ -623,103 +625,95 @@ const SET_EFFECTS: Record<EquipmentSetTag, SetEffect> = {
     name: '雾行',
     pieces: 2,
     bonus: { speed: 2, trapCheck: 3 },
-    description: '雾行2件套：速度 +2，陷阱判定 +3。',
     mastery: {
       pieces: 3,
-      bonus: { speed: 1, trapCheck: 2 },
-      description: '雾行3件专精：速度 +1，陷阱判定 +2。'
+      bonus: { speed: 1, trapCheck: 2 }
     }
   },
   forge: {
     name: '星炉',
     pieces: 2,
     bonus: { attack: 3, defense: 3 },
-    description: '星炉2件套：攻击 +3，防御 +3。',
     mastery: {
       pieces: 3,
-      bonus: { attack: 2, defense: 1 },
-      description: '星炉3件专精：攻击 +2，防御 +1。'
+      bonus: { attack: 2, defense: 1 }
     }
   },
   rift: {
     name: '裂隙',
     pieces: 2,
     bonus: { spirit: 1, artPower: 4 },
-    description: '裂隙2件套：灵识 +1，术法 +4。',
     mastery: {
       pieces: 3,
-      bonus: { artPower: 3 },
-      description: '裂隙3件专精：术法 +3。'
+      bonus: { artPower: 3 }
     }
   },
   chronal: {
     name: '时序',
     pieces: 2,
     bonus: { speed: 2, defense: 2 },
-    description: '时序2件套：速度 +2，防御 +2。',
     mastery: {
       pieces: 3,
-      bonus: { attack: 2, artPower: 2 },
-      description: '时序3件专精：攻击 +2，术法 +2。'
+      bonus: { attack: 2, artPower: 2 }
     }
   }
 };
 
-const EQUIPMENT_ATTUNEMENTS: Record<EquipmentAttunementId, EquipmentAttunementDefinition> = {
+const EQUIPMENT_ATTUNEMENTS: Record<EquipmentAttunementId, AttunementSeed> = {
   mist_vanguard: {
     id: 'mist_vanguard',
     setTag: 'mist',
     name: '追雾先机',
-    description: '强化雾行装备的先手与探路定位：速度 +2，陷阱判定 +2。',
+    summary: '强化雾行装备的先手与探路定位',
     bonus: { speed: 2, trapCheck: 2 }
   },
   mist_veilguard: {
     id: 'mist_veilguard',
     setTag: 'mist',
     name: '雾幕回护',
-    description: '以攻防稳定性补足轻装取舍：攻击 +1，防御 +1。',
+    summary: '以攻防稳定性补足轻装取舍',
     bonus: { attack: 1, defense: 1 }
   },
   forge_overdrive: {
     id: 'forge_overdrive',
     setTag: 'forge',
     name: '星炉重铸',
-    description: '强化星炉装备的正面压制定位：攻击 +2，防御 +2。',
+    summary: '强化星炉装备的正面压制定位',
     bonus: { attack: 2, defense: 2 }
   },
   forge_channeling: {
     id: 'forge_channeling',
     setTag: 'forge',
     name: '余热导流',
-    description: '将炉火余热导向术法与机动，补足重装取舍：术法 +3，速度 +2。',
+    summary: '将炉火余热导向术法与机动，补足重装取舍',
     bonus: { artPower: 3, speed: 2 }
   },
   rift_resonance: {
     id: 'rift_resonance',
     setTag: 'rift',
     name: '虚界共鸣',
-    description: '强化裂隙装备的术法爆发定位：术法 +4。',
+    summary: '强化裂隙装备的术法爆发定位',
     bonus: { artPower: 4 }
   },
   rift_anchor: {
     id: 'rift_anchor',
     setTag: 'rift',
     name: '裂隙固锚',
-    description: '以生存稳定性补足施法取舍：生命上限 +24，防御 +2。',
+    summary: '以生存稳定性补足施法取舍',
     bonus: { maxHp: 24, defense: 2 }
   },
   chronal_acceleration: {
     id: 'chronal_acceleration',
     setTag: 'chronal',
     name: '时序加速',
-    description: '推动观测结果提前落定：攻击 +1，术法 +2，速度 +2。',
+    summary: '推动观测结果提前落定',
     bonus: { attack: 1, artPower: 2, speed: 2 }
   },
   chronal_stasis: {
     id: 'chronal_stasis',
     setTag: 'chronal',
     name: '时序停滞',
-    description: '冻结承伤最重的一瞬：生命上限 +24，防御 +2。',
+    summary: '冻结承伤最重的一瞬',
     bonus: { maxHp: 24, defense: 2 }
   }
 };
@@ -775,7 +769,7 @@ const ATTUNEMENT_RESONANCE_COPY: Record<
 
 const INACTIVE_RESONANCE_COPY = {
   name: '同源铭刻共鸣',
-  effectDescription: '当前武器满级并完成铭刻后，可与同套同分支装备形成共鸣。'
+  effectDescription: `当前武器达到 ${EQUIPMENT_MASTERY_LEVEL} 级并完成铭刻后，可与同套同分支装备形成共鸣。`
 } as const;
 
 const STAT_SCORE_WEIGHTS: Record<keyof DerivedStats, number> = {
@@ -795,6 +789,59 @@ function addStats(target: Partial<DerivedStats>, source: Partial<DerivedStats>):
   for (const [key, value] of Object.entries(source) as Array<[keyof DerivedStats, number]>) {
     target[key] = (target[key] ?? 0) + value;
   }
+}
+
+/**
+ * Affixes, inscriptions, tempering and set bonuses grow with the chapter that first offers the gear, by the same
+ * 15% per chapter as their prices, so a late chapter's add-on keeps the value of an early one.
+ */
+const ADD_ON_CHAPTER_STEP_PERCENT = 15;
+const STAT_LABELS: Readonly<Record<keyof DerivedStats, string>> = {
+  body: '体魄',
+  spirit: '心神',
+  agility: '身法',
+  luck: '气运',
+  maxHp: '生命上限',
+  attack: '攻击',
+  artPower: '术法',
+  defense: '防御',
+  speed: '速度',
+  trapCheck: '陷阱感知'
+};
+
+function getChapterAddOnPercent(chapter: number): number {
+  return 100 + ADD_ON_CHAPTER_STEP_PERCENT * (chapter - 1);
+}
+
+function getAddOnPercent(equipmentId: EquipmentId): number {
+  return getChapterAddOnPercent(getEquipmentSourceChapter(equipmentId));
+}
+
+/** Positive add-on values scale and stay at least 1; penalties are left as written. */
+function scaleAddOnStats(stats: Readonly<Partial<DerivedStats>>, percent: number): Partial<DerivedStats> {
+  return Object.fromEntries(
+    (Object.entries(stats) as Array<[keyof DerivedStats, number]>).map(([key, value]) => [
+      key,
+      value > 0 ? Math.max(1, Math.round((value * percent) / 100)) : value
+    ])
+  );
+}
+
+function formatStats(stats: Readonly<Partial<DerivedStats>>): string {
+  return (Object.entries(stats) as Array<[keyof DerivedStats, number]>)
+    .map(([key, value]) => `${STAT_LABELS[key]} ${value > 0 ? '+' : ''}${value}`)
+    .join('，');
+}
+
+function describeAttunement(seed: AttunementSeed, percent: number): EquipmentAttunementDefinition {
+  const bonus = scaleAddOnStats(seed.bonus, percent);
+  return {
+    id: seed.id,
+    setTag: seed.setTag,
+    name: seed.name,
+    description: `${seed.summary}：${formatStats(bonus)}。`,
+    bonus
+  };
 }
 
 const IF_EQUIPMENT_CATALOG_DIAG = 'IF_EQUIPMENT_CATALOG_DIAG_V1';
@@ -861,24 +908,19 @@ function getWeightedScore(stats: Partial<DerivedStats>): number {
 
 function getAffixBonus(equipmentId: EquipmentId, level: number): Partial<DerivedStats> {
   const bonus: Partial<DerivedStats> = {};
+  const percent = getAddOnPercent(equipmentId);
 
   for (const affix of EQUIPMENT_SYSTEM[equipmentId].affixes) {
-    addStats(bonus, affix.bonus);
+    addStats(bonus, scaleAddOnStats(affix.bonus, percent));
     if (affix.perLevel) {
+      const perLevel = scaleAddOnStats(affix.perLevel, percent);
       for (let i = 1; i < level; i += 1) {
-        addStats(bonus, affix.perLevel);
+        addStats(bonus, perLevel);
       }
     }
   }
 
   return bonus;
-}
-
-function cloneAttunementDefinition(definition: EquipmentAttunementDefinition): EquipmentAttunementDefinition {
-  return {
-    ...definition,
-    bonus: { ...definition.bonus }
-  };
 }
 
 function getMatchingAttunement(
@@ -887,12 +929,12 @@ function getMatchingAttunement(
 ): EquipmentAttunementDefinition | undefined {
   if (!attunementId) return undefined;
 
-  const definition = EQUIPMENT_ATTUNEMENTS[attunementId];
+  const seed = EQUIPMENT_ATTUNEMENTS[attunementId];
 
   // A saved or externally supplied ID only applies to equipment from its own set.
-  if (!definition || !EQUIPMENT_SYSTEM[equipmentId].setTags.includes(definition.setTag)) return undefined;
+  if (!seed || !EQUIPMENT_SYSTEM[equipmentId].setTags.includes(seed.setTag)) return undefined;
 
-  return definition;
+  return describeAttunement(seed, getAddOnPercent(equipmentId));
 }
 
 function getActiveAttunement(
@@ -900,7 +942,7 @@ function getActiveAttunement(
   level: number,
   attunementId: EquipmentAttunementId | undefined
 ): EquipmentAttunementDefinition | undefined {
-  if (!attunementId || level !== EQUIPMENT[equipmentId].maxLevel) return undefined;
+  if (!attunementId || level < EQUIPMENT_MASTERY_LEVEL) return undefined;
 
   return getMatchingAttunement(equipmentId, attunementId);
 }
@@ -927,14 +969,15 @@ export function getEquipmentTemperDefinition(equipmentId: EquipmentId): Equipmen
     };
   }
 
+  const percent = getAddOnPercent(equipmentId);
   return {
     equipmentId,
     eligible: true,
     maxRank: 2,
     materialId: definition.materialId,
     rankBonuses: {
-      1: { ...definition.rankBonuses[1] },
-      2: { ...definition.rankBonuses[2] }
+      1: scaleAddOnStats(definition.rankBonuses[1], percent),
+      2: scaleAddOnStats(definition.rankBonuses[2], percent)
     }
   };
 }
@@ -976,16 +1019,19 @@ export function getEquipmentSetTags(equipmentId: EquipmentId): EquipmentSetTag[]
   return [...EQUIPMENT_SYSTEM[equipmentId].setTags];
 }
 
+/** The inscription as written on `equipmentId`; without one, its chapter-1 values. */
 export function getEquipmentAttunementDefinition(
-  attunementId: EquipmentAttunementId
+  attunementId: EquipmentAttunementId,
+  equipmentId?: EquipmentId
 ): EquipmentAttunementDefinition {
-  return cloneAttunementDefinition(EQUIPMENT_ATTUNEMENTS[attunementId]);
+  const percent = equipmentId === undefined ? getChapterAddOnPercent(1) : getAddOnPercent(equipmentId);
+  return describeAttunement(EQUIPMENT_ATTUNEMENTS[attunementId], percent);
 }
 
 export function getEquipmentAttunementOptions(equipmentId: EquipmentId): EquipmentAttunementDefinition[] {
   return EQUIPMENT_SYSTEM[equipmentId].setTags.flatMap((setTag) => {
     return ATTUNEMENT_OPTIONS_BY_SET[setTag].map((attunementId) => {
-      return getEquipmentAttunementDefinition(attunementId);
+      return getEquipmentAttunementDefinition(attunementId, equipmentId);
     });
   });
 }
@@ -1012,7 +1058,7 @@ export function getEquipmentAttunementResonanceProgress(
   }
 
   const uniqueEquippedIds = Array.from(new Set(equippedIds));
-  // Only unique, max-level items with the exact same valid branch count toward the threshold.
+  // Only unique items at the mastery level with the exact same valid branch count toward the threshold.
   const matchingAttunedCount = uniqueEquippedIds.filter((equipmentId) => {
     const level = getSafeLevel(equipmentId, equipmentLevels[equipmentId] ?? 1);
     return getActiveAttunement(equipmentId, level, attunements[equipmentId])?.id === branch.id;
@@ -1062,6 +1108,7 @@ export function getEquipmentSystemBonus(
   const bonus: Partial<DerivedStats> = {};
   const descriptions: string[] = [];
   const setCounts: Record<EquipmentSetTag, number> = { mist: 0, forge: 0, rift: 0, chronal: 0 };
+  const setChapters: Record<EquipmentSetTag, number[]> = { mist: [], forge: [], rift: [], chronal: [] };
   const equipmentScores: Partial<Record<EquipmentId, number>> = {};
 
   for (const equipmentId of uniqueEquippedIds) {
@@ -1088,6 +1135,7 @@ export function getEquipmentSystemBonus(
     }
     for (const setTag of EQUIPMENT_SYSTEM[equipmentId].setTags) {
       setCounts[setTag] += 1;
+      setChapters[setTag].push(getEquipmentSourceChapter(equipmentId));
     }
   }
 
@@ -1095,15 +1143,19 @@ export function getEquipmentSystemBonus(
   const activeMasteries: EquipmentSetTag[] = [];
   for (const setTag of SET_ORDER) {
     const effect = SET_EFFECTS[setTag];
+    // The newest pieces count first, so a bonus follows the chapter of the piece that completes it.
+    const chapters = [...setChapters[setTag]].sort((a, b) => b - a);
     if (setCounts[setTag] >= effect.pieces) {
+      const setBonus = scaleAddOnStats(effect.bonus, getChapterAddOnPercent(chapters[effect.pieces - 1]));
       activeSets.push(setTag);
-      addStats(bonus, effect.bonus);
-      descriptions.push(effect.description);
+      addStats(bonus, setBonus);
+      descriptions.push(`${effect.name}${effect.pieces}件套：${formatStats(setBonus)}。`);
     }
     if (setCounts[setTag] >= effect.mastery.pieces) {
+      const masteryBonus = scaleAddOnStats(effect.mastery.bonus, getChapterAddOnPercent(chapters[effect.mastery.pieces - 1]));
       activeMasteries.push(setTag);
-      addStats(bonus, effect.mastery.bonus);
-      descriptions.push(effect.mastery.description);
+      addStats(bonus, masteryBonus);
+      descriptions.push(`${effect.name}${effect.mastery.pieces}件专精：${formatStats(masteryBonus)}。`);
     }
   }
 

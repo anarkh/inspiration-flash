@@ -4,6 +4,7 @@ import {
   DEFAULT_PREPARED_TACTICAL_ITEM_IDS,
   DUNGEONS,
   EQUIPMENT,
+  EQUIPMENT_MASTERY_LEVEL,
   EQUIPMENT_SLOTS,
   ITEMS,
   METHODS,
@@ -651,7 +652,7 @@ function isSavedEquipmentAttunements(
     const typedAttunementId = attunementId as EquipmentAttunementId;
     return (
       ownedEquipment.includes(typedEquipmentId) &&
-      equipmentLevels[typedEquipmentId] === EQUIPMENT[typedEquipmentId].maxLevel &&
+      (equipmentLevels[typedEquipmentId] ?? 1) >= EQUIPMENT_MASTERY_LEVEL &&
       getEquipmentAttunementOptions(typedEquipmentId).some((option) => option.id === typedAttunementId)
     );
   });
@@ -672,7 +673,7 @@ function isSavedEquipmentTemperRanks(
     if (
       !getEquipmentTemperDefinition(typedEquipmentId).eligible ||
       !ownedEquipment.includes(typedEquipmentId) ||
-      equipmentLevels[typedEquipmentId] !== EQUIPMENT[typedEquipmentId].maxLevel
+      (equipmentLevels[typedEquipmentId] ?? 1) < EQUIPMENT_MASTERY_LEVEL
     ) {
       return false;
     }
@@ -744,7 +745,7 @@ function isSavedEquipmentCommissionConsistent(
     const temperDefinition = getEquipmentTemperDefinition(equipmentId);
     return (
       ownedEquipment.has(equipmentId) &&
-      equipmentLevels[equipmentId] === EQUIPMENT[equipmentId].maxLevel &&
+      (equipmentLevels[equipmentId] ?? 1) >= EQUIPMENT_MASTERY_LEVEL &&
       temperDefinition.eligible &&
       !equippedEquipment.has(equipmentId)
     );

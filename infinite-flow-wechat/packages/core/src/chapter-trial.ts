@@ -42,7 +42,13 @@ function sourceChapter(equipmentId: EquipmentId): number | undefined {
   return chapters.length > 0 ? Math.min(...chapters) : undefined;
 }
 
-/** The strongest piece per slot among gear first offered before `chapter`, at max level. */
+/** Gear from the latest cleared chapter is at level 3; every chapter older adds a level, up to the cap. */
+function trialLevel(equipmentId: EquipmentId, chapter: number): number {
+  const first = sourceChapter(equipmentId) ?? 1;
+  return Math.min(EQUIPMENT[equipmentId].maxLevel, 3 + Math.max(0, chapter - 1 - first));
+}
+
+/** The strongest piece per slot among gear first offered before `chapter`, at its trial level. */
 function equipChapterGear(state: GameState, chapter: number): GameState {
   const cleared = Math.max(1, chapter - 1);
   let next = state;
@@ -55,7 +61,7 @@ function equipChapterGear(state: GameState, chapter: number): GameState {
       const trial: GameState = {
         ...next,
         ownedEquipment: [...next.ownedEquipment, item.id],
-        equipmentLevels: { ...next.equipmentLevels, [item.id]: item.maxLevel },
+        equipmentLevels: { ...next.equipmentLevels, [item.id]: trialLevel(item.id, chapter) },
         equipped: { ...next.equipped, [slot]: item.id }
       };
       const power = getPlayerPower(trial);
@@ -67,7 +73,7 @@ function equipChapterGear(state: GameState, chapter: number): GameState {
     next = {
       ...next,
       ownedEquipment: next.ownedEquipment.includes(item.id) ? next.ownedEquipment : [...next.ownedEquipment, item.id],
-      equipmentLevels: { ...next.equipmentLevels, [item.id]: item.maxLevel },
+      equipmentLevels: { ...next.equipmentLevels, [item.id]: trialLevel(item.id, chapter) },
       ...(temper ? { equipmentTemperRanks: { ...(next.equipmentTemperRanks ?? {}), [item.id]: temper } } : {}),
       equipped: { ...next.equipped, [slot]: item.id }
     };

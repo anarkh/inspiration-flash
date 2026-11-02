@@ -1,4 +1,5 @@
 import type { DungeonId, EquipmentId, ItemId, MonsterId } from './game';
+import { DUNGEON_ORDER } from './level-content';
 
 export const DUNGEON_ELITE_MONSTERS = {
   demon_tower_1: 'tower_butcher',
@@ -125,6 +126,17 @@ export function getEquipmentRecipeDungeonIds(equipmentId: EquipmentId): DungeonI
   return DUNGEON_IDS.filter((dungeonId) =>
     DUNGEON_EQUIPMENT_POOLS[dungeonId].some((candidate) => candidate === equipmentId)
   );
+}
+
+/** The first chapter whose loot offers this equipment; starter gear counts as chapter 1. */
+export function getEquipmentSourceChapter(equipmentId: EquipmentId): number {
+  const chapters = getEquipmentRecipeDungeonIds(equipmentId).map((dungeonId) => DUNGEON_ORDER.indexOf(dungeonId) + 1);
+  return chapters.length > 0 ? Math.min(...chapters) : 1;
+}
+
+/** The material of the chapter that first offers this equipment. */
+export function getEquipmentSourceMaterial(equipmentId: EquipmentId): ItemId {
+  return DUNGEON_MATERIAL_REWARDS[DUNGEON_ORDER[getEquipmentSourceChapter(equipmentId) - 1]].itemId;
 }
 
 export const DUNGEON_SALVAGE_REWARD_POINTS = {

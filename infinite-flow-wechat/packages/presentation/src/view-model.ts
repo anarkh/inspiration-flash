@@ -12,6 +12,7 @@ import {
   DUNGEON_FEATURE_HELP_IDS,
   DUNGEON_ORDER,
   EQUIPMENT,
+  EQUIPMENT_MASTERY_LEVEL,
   EQUIPMENT_SLOTS,
   ITEMS,
   METHOD_TECHNIQUE_CATALOG,
@@ -216,7 +217,7 @@ const FIRST_DUNGEON_ID: DungeonId = DUNGEON_ORDER[0];
 const EQUIPMENT_COMMISSION_HELP = Object.freeze({
   title: '装备封存委托',
   summary: '封存两件合格装备，完成三个不同副本的成功出口后，换取所选淬炼材料。',
-  mechanic: '候选装备必须已拥有、达到最高等级、可淬炼且当前未装备。委托进行中，两件装备被封存，不能装备、升级、铭刻、淬炼，也不能作为装备记忆狩猎目标。',
+  mechanic: `候选装备必须已拥有、达到 ${EQUIPMENT_MASTERY_LEVEL} 级、可淬炼且当前未装备。委托进行中，两件装备被封存，不能装备、升级、铭刻、淬炼，也不能作为装备记忆狩猎目标。`,
   guidance: '启动固定消耗 300 奖励点与 1 灵蕴；两件装备必须不同，目标材料必须来自其中一件装备的淬炼材料。只有成功抵达三个不同副本的出口才推进，重复副本、主动撤退或失败都不推进。',
   readout: '撤回不返还启动消耗，并会清空已完成的不同副本进度。完成后两件装备解除封存，目标材料 x2 直接存入永久背包。',
   keywords: ['装备', '封存', '委托', '不同副本', '撤回', '淬炼材料'] as const
@@ -224,9 +225,9 @@ const EQUIPMENT_COMMISSION_HELP = Object.freeze({
 
 const EQUIPMENT_MEMORY_HELP = Object.freeze({
   title: '装备记忆',
-  summary: '已装备、满级、采用合法铭刻且淬炼达到 II 的成熟装备，会在成功抵达出口后自动收录并激活当前章节记忆。',
+  summary: `已装备、达到 ${EQUIPMENT_MASTERY_LEVEL} 级、采用合法铭刻且淬炼达到 II 的成熟装备，会在成功抵达出口后自动收录并激活当前章节记忆。`,
   mechanic: '装备记忆是长期装备能力：入场时只锁定已装备且已激活的记忆。已经收录多段记忆时，可在装备面板聚焦该装备并循环切换当前激活记忆。',
-  guidance: '想收录本章记忆时，先在主神空间完成装备、满级、合法铭刻与淬炼 II 的整备，再正常通关；不需要额外接取任务。',
+  guidance: `想收录本章记忆时，先在主神空间完成装备、升到 ${EQUIPMENT_MASTERY_LEVEL} 级、合法铭刻与淬炼 II 的整备，再正常通关；不需要额外接取任务。`,
   readout: '已收录的记忆显示在对应装备上；当前激活的一段在下次入场时生效。',
   keywords: ['装备记忆', '自动收录', '成功出口', '装备面板切换', '入场锁定'] as const
 });
@@ -1366,8 +1367,8 @@ function buildEquipmentCommissionProjection(
         `hub.equipment.commission.toggle:${focusedEquipmentId}`,
         `封存选择：${EQUIPMENT[focusedEquipmentId].name}`,
         'preparation',
-        '需先拥有这件装备，将其升至满级，并确认可淬炼且当前未装备。',
-        { readout: '选择两件满级、可淬炼且未装备的装备，暂时封存，通关后换取淬炼材料。' }
+        `需先拥有这件装备，将其升至 ${EQUIPMENT_MASTERY_LEVEL} 级，并确认可淬炼且当前未装备。`,
+        { readout: `选择两件达到 ${EQUIPMENT_MASTERY_LEVEL} 级、可淬炼且未装备的装备，暂时封存，通关后换取淬炼材料。` }
       ));
     } else if (!focusedSelected && draft.equipmentIds.length >= 2) {
       actions.push(disabledAction(
@@ -1401,7 +1402,7 @@ function buildEquipmentCommissionProjection(
         '选择目标淬炼材料',
         'preparation',
         '先选择至少一件合格装备，才能选择其淬炼材料。',
-        { readout: '选择委托完成后领取哪种淬炼材料，用于强化满级装备。' }
+        { readout: `选择委托完成后领取哪种淬炼材料，用于淬炼 ${EQUIPMENT_MASTERY_LEVEL} 级以上的装备。` }
       ));
     } else if (materialOptions.length === 1 && materialOptions[0]!.selected) {
       actions.push(disabledAction(
@@ -1498,7 +1499,7 @@ function buildEquipmentCommissionProjection(
       eligible: focusedCandidate !== undefined,
       selected: focusedSelected,
       ...(!focusedCandidate
-        ? { disabledReason: '需先拥有这件装备，将其升至满级，并确认可淬炼且当前未装备。' }
+        ? { disabledReason: `需先拥有这件装备，将其升至 ${EQUIPMENT_MASTERY_LEVEL} 级，并确认可淬炼且当前未装备。` }
         : active && !activeEquipmentIds.has(focusedEquipmentId)
           ? { disabledReason: '已有装备封存委托进行中，不能改选装备。' }
           : {})
@@ -1567,7 +1568,7 @@ function buildEquipmentMemoryLibraryProjection(
       '装备记忆：尚未收录',
       'preparation',
       '当前装备尚未收录任何记忆；可通过附近的 ? 查看收录条件。',
-      { readout: '穿戴满级、已铭刻且淬炼 II 的装备，成功走到副本出口后可收录本章记忆。' }
+      { readout: `穿戴达到 ${EQUIPMENT_MASTERY_LEVEL} 级、已铭刻且淬炼 II 的装备，成功走到副本出口后可收录本章记忆。` }
     );
   } else if (status.unlockedMemories.length === 1 && nextMemory.id === activeMemoryId) {
     action = disabledAction(
@@ -1598,7 +1599,7 @@ function buildEquipmentMemoryLibraryProjection(
   const acquisitionReadout = !status.supported
     ? '当前装备不承载装备记忆。'
     : status.unlockedMemories.length === 0
-      ? '装备达到满级、完成铭刻与淬炼 II 后，穿戴它成功走到副本出口，即可自动收录并启用本章记忆；无需另接记忆狩猎任务。'
+      ? `装备达到 ${EQUIPMENT_MASTERY_LEVEL} 级、完成铭刻与淬炼 II 后，穿戴它成功走到副本出口，即可自动收录并启用本章记忆；无需另接记忆狩猎任务。`
       : `已收录 ${status.unlockedMemories.length} 段；当前${activeMemory ? `激活「${activeMemory.name}」` : '未激活'}。`;
   return {
     action,
@@ -1695,7 +1696,7 @@ function buildEquipmentPanel(
       `${equipment.name}铭刻`,
       'preparation',
       '该装备没有可用的铭刻分支。',
-      { readout: '为满级装备选择一种额外属性；只有支持铭刻的装备可用。' }
+      { readout: `为达到 ${EQUIPMENT_MASTERY_LEVEL} 级的装备选择一种额外属性；只有支持铭刻的装备可用。` }
     ));
   } else {
     for (const attunement of attunements) {
@@ -1705,7 +1706,7 @@ function buildEquipmentPanel(
             `铭刻：${attunement.name}`,
             'preparation',
             `${equipment.name}已经生效${attunement.name}。`,
-            { readout: `为满级装备选择额外属性，穿戴时生效。${attunement.description}` }
+            { readout: `为达到 ${EQUIPMENT_MASTERY_LEVEL} 级的装备选择额外属性，穿戴时生效。${attunement.description}` }
           )
         : previewCommandAction(
             state,
@@ -1713,7 +1714,7 @@ function buildEquipmentPanel(
             `铭刻：${attunement.name}`,
             'preparation',
             { type: 'hub/attune-equipment', equipmentId, attunementId: attunement.id },
-            { readout: `为满级装备选择额外属性，穿戴时生效；改选会替换原铭刻并重新消耗资源。${attunement.description}` }
+            { readout: `为达到 ${EQUIPMENT_MASTERY_LEVEL} 级的装备选择额外属性，穿戴时生效；改选会替换原铭刻并重新消耗资源。${attunement.description}` }
           ));
     }
   }
@@ -1723,7 +1724,7 @@ function buildEquipmentPanel(
     `淬炼${equipment.name}`,
     'preparation',
     { type: 'hub/temper-equipment', equipmentId },
-    { readout: `进一步提高满级装备的属性，穿戴时生效；淬炼 II 还需先完成铭刻。当前淬炼 ${temper.currentRank}/${temper.maxRank}。` }
+    { readout: `进一步提高达到 ${EQUIPMENT_MASTERY_LEVEL} 级的装备的属性，穿戴时生效；淬炼 II 还需先完成铭刻。当前淬炼 ${temper.currentRank}/${temper.maxRank}。` }
   ));
   const commission = buildEquipmentCommissionProjection(state, equipmentId, commissionDraft);
   actions.push(...commission.actions);
@@ -1733,7 +1734,7 @@ function buildEquipmentPanel(
     actions,
     summary: `${equipment.name} · ${EQUIPMENT_SLOT_LABELS[equipment.slot]} · ${owned ? `等级 ${level}/${equipment.maxLevel}` : '未拥有'} · ${equipped ? '已装备' : '未装备'} · 委托${commission.detail.status === 'active' ? `进行中 ${commission.detail.active?.completedCount ?? 0}/${commission.detail.requiredDungeonCount}` : commission.detail.status === 'draft' ? '草稿' : '待配置'}`,
     objectiveTitle: '先获得并穿戴装备，再逐步强化',
-    objectiveSummary: `${equipment.description} 兑换后需手动装备；升级提高属性，满级后可铭刻或淬炼。${attunementId ? `当前铭刻：${getEquipmentAttunementOptions(equipmentId).find(({ id }) => id === attunementId)?.name ?? '存档分支异常'}。` : ''}`,
+    objectiveSummary: `${equipment.description} 兑换后需手动装备；升级提高属性，达到 ${EQUIPMENT_MASTERY_LEVEL} 级后可铭刻或淬炼，最高 ${equipment.maxLevel} 级。${attunementId ? `当前铭刻：${getEquipmentAttunementOptions(equipmentId).find(({ id }) => id === attunementId)?.name ?? '存档分支异常'}。` : ''}`,
     equipmentCommission: commission.detail,
     equipmentMemory: memory.detail,
     // Panel-wide services stay out of the per-item actions; only the quartermaster's service list shows them.
