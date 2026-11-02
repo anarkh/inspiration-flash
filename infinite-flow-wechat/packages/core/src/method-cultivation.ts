@@ -296,33 +296,6 @@ export function createMethodRunSnapshot(progress: unknown): MethodRunSnapshot | 
   });
 }
 
-export function createMethodRunSnapshots(progress: unknown): readonly MethodRunSnapshot[] {
-  if (
-    !isRecord(progress) ||
-    progress.rulesVersion !== METHOD_CULTIVATION_RULES_VERSION ||
-    !isRecord(progress.ranks)
-  ) {
-    return Object.freeze([]);
-  }
-
-  const snapshots = METHOD_TECHNIQUE_CATALOG.flatMap(({ methodId }) => {
-    const rank = getMethodRank(methodId, progress);
-    return rank === undefined
-      ? []
-      : [Object.freeze({
-          rulesVersion: METHOD_CULTIVATION_RULES_VERSION,
-          methodId,
-          rank
-        })];
-  });
-  if (isKnownMethodId(progress.activeMethod)) {
-    const activeIndex = snapshots.findIndex(({ methodId }) => methodId === progress.activeMethod);
-    if (activeIndex > 0) snapshots.unshift(...snapshots.splice(activeIndex, 1));
-  }
-
-  return Object.freeze(snapshots);
-}
-
 export function normalizeMethodRunSnapshot(value: unknown): MethodRunSnapshot | undefined {
   if (
     !isRecord(value) ||

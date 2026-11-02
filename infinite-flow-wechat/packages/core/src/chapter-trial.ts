@@ -4,7 +4,9 @@ import { MAIN_GOD_TASKS } from './task-system';
 import {
   activateBloodline,
   activateCompanion,
+  activateMethod,
   activatePet,
+  assignSupportMethod,
   buyPet,
   createInitialState,
   DUNGEON_ORDER,
@@ -32,6 +34,8 @@ export const CHAPTER_TRIAL_METHOD_ORDER: readonly MethodId[] = [
   'mist_breathing', 'iron_body', 'cloud_step', 'gate_sense', 'beast_taming', 'star_core_method', 'void_heart'
 ];
 const TRIAL_COMPANIONS: readonly CompanionId[] = ['qin_che', 'zhou_yingxue', 'lu_guanlan'];
+/** The 主修 the boss duels favoured, best first; 铁衣诀 is the 辅修 whenever it is learned. */
+const TRIAL_MAIN_METHOD_PREFERENCE: readonly MethodId[] = ['void_heart', 'star_core_method', 'gate_sense', 'cloud_step', 'mist_breathing'];
 
 function sourceChapter(equipmentId: EquipmentId): number | undefined {
   const chapters = getEquipmentRecipeDungeonIds(equipmentId).map((dungeonId) => DUNGEON_ORDER.indexOf(dungeonId) + 1);
@@ -96,6 +100,9 @@ export function createChapterTrialState(chapter: number): GameState {
     if (target >= 8) state = upgradeMethod(state, methodId);
     if (target >= 14) state = upgradeMethod(state, methodId);
   }
+  const trialMain = TRIAL_MAIN_METHOD_PREFERENCE.find((methodId) => state.learnedMethods.includes(methodId));
+  if (trialMain) state = activateMethod(state, trialMain);
+  if (state.learnedMethods.includes('iron_body')) state = assignSupportMethod(state, 'iron_body');
 
   state = activatePet(buyPet(state, 'contract_sprite'), 'contract_sprite');
   if (upgradePet && target >= 4) state = upgradePet(state, 'contract_sprite');

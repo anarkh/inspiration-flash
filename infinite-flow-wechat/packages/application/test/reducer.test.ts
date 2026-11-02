@@ -11,6 +11,7 @@ import './economy-sinks.test.js';
 import './boss-mechanics.test.js';
 import './test-jump.test.js';
 import './party-combat.test.js';
+import './method-loadout.test.js';
 import {
   createInitialState,
   getCombatEncounterProfile,
