@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "law-core-04-hospital",
+  "provenance": {
+    "supersedes": "AC-LAW-04",
+    "rules": [
+      "packages/core/src/dungeon-laws.ts",
+      "packages/core/src/dungeon-routes.ts",
+      "packages/core/src/dungeon-events.ts"
+    ],
+    "expectedRule": "Chapter 4 pollution (0-4). Any first node clear that dealt damage raises pollution by 1 and a harmless clear leaves it; clearing pharmacy_reward lowers it by 1; an event outcome that deals damage raises it by 1 and succeeding at triage_ward lowers it by 1; the result is clamped to 0-4. Display: title 锈疫污染, status `污染 n/4`, severity stable at 0, warning at 1-2, danger at 3-4, meter {n, 4}, targetReached at 0. At pollution 3 healing is -10% and enemy art power +10%; at 4 they are -20% and +20%. triage_ward: burn_focus_incense without incense fails for 26 damage; sterilize_with_iron_body succeeds without damage when iron_body is equipped (here the support method, picked as the next learned method). With mist_breathing as the main method every trap is seen through and iron_body cuts the rest by 20%, so a risked trap deals max(4, floor(damage x 0.45 x 0.8)): rust_gurney_trap 34 -> 12, disinfectant_mist_trap 36 -> 12, sterile_corridor 38 -> 13. Run pressure stays 0% below 6 clears. Gates open at pollution at most: hospital_pristine_isolation_corridor 0, hospital_clean_sterile_corridor 1, hospital_clean_roof_lane 2, hospital_emergency_antidote_corridor 3; a closed one reads `污染需降至 n 或以下；先去药房抽屉或完成分诊净化。`. plague_orderly (80 HP) outlives the first strike, and a surviving monster always lands at least 1 damage. The pursuer is a separate run system and is disabled after entry so it cannot ambush the walk. All expected values are frozen here, never read from candidate code."
+  },
+  "baseInput": {
+    "path": "packages/save-codec/tests/fixtures/new-hub-v1.json",
+    "sha256": "a1de1f1b33b59c91dea46caf55f21b6eee0b7104c2cbe4d68ac5d7a430709e0b"
+  },
+  "inputMutations": [
+    { "op": "replace", "path": ["state", "completedDungeonIds"], "value": ["demon_tower_1", "metro_abyss", "starfall_mine"] },
+    { "op": "replace", "path": ["state", "claimedTaskIds"], "value": ["clear_demon_tower", "clear_metro_abyss", "mainline_clear_starfall_mine"] },
+    { "op": "replace", "path": ["state", "player", "hp"], "value": 300 },
+    { "op": "replace", "path": ["state", "player", "maxHp"], "value": 300 },
+    { "op": "replace", "path": ["state", "player", "base"], "value": { "body": 7, "spirit": 4, "agility": 4, "luck": 2 } },
+    { "op": "replace", "path": ["state", "learnedMethods"], "value": ["mist_breathing", "iron_body"] },
+    { "op": "replace", "path": ["state", "methodRanks"], "value": { "mist_breathing": 1, "iron_body": 1 } }
+  ],
+  "entry": { "dungeonId": "rust_hospital", "protocolId": "standard", "hiddenTaskSeed": 404040404 },
+  "runMutations": [
+    { "op": "replace", "path": ["run", "pursuitState", "status"], "value": "disabled" }
+  ],
+  "scenarioIds": [
+    "pollution-rises-on-damage-and-clamps",
+    "triage-and-pharmacy-purify"
+  ],
+  "scenarios": [
+    {
+      "id": "pollution-rises-on-damage-and-clamps",
+      "steps": [
+        { "do": "observe", "as": "entry", "law": ["law", "display", "modifiers.healingPercent", "modifiers.encounter.artPowerPercent"] },
+        { "do": "event", "eventId": "triage_ward", "optionId": "burn_focus_incense", "as": "triageWithoutIncense" },
+        { "do": "observe", "as": "afterFailedTriage", "law": ["law.pollution", "display.status", "display.severity", "resolvedEventIds"] },
+        { "do": "walk", "path": ["medicine_cabinet"] },
+        { "do": "collect" },
+        { "do": "observe", "as": "afterHarmlessClear", "law": ["law.pollution", "clearedNodeIds"] },
+        { "do": "walk", "path": ["plague_orderly"] },
+        { "do": "fight", "node": "plague_orderly" },
+        { "do": "observe", "as": "afterFight", "law": ["law.pollution"] },
+        { "do": "walk", "path": ["rust_gurney_trap"] },
+        { "do": "trap", "choice": "risk", "as": "gurneyTrap" },
+        { "do": "observe", "as": "dangerAtThree", "law": ["law.pollution", "display.severity", "modifiers.healingPercent", "modifiers.encounter.artPowerPercent"] },
+        { "do": "observe", "as": "isolationAtThree", "gate": "isolation_chart_reward" },
+        { "do": "walk", "path": ["disinfectant_mist_trap"] },
+        { "do": "trap", "choice": "risk", "as": "mistTrap" },
+        { "do": "observe", "as": "maxPollution", "law": ["law.pollution", "display.status", "modifiers.healingPercent", "modifiers.encounter.artPowerPercent"] },
+        { "do": "walk", "path": ["sterile_corridor"] },
+        { "do": "trap", "choice": "risk", "as": "sterileTrap" },
+        { "do": "observe", "as": "clamped", "law": ["law.pollution"] },
+        { "do": "observe", "as": "sterileGateAtFour", "gate": "disinfectant_mist_trap" },
+        { "do": "attempt", "as": "closedMove", "command": { "type": "run/move", "nodeId": "disinfectant_mist_trap" } }
+      ],
+      "expected": {
+        "entry": {
+          "law": { "kind": "rust_hospital", "pollution": 0 },
+          "display": { "title": "锈疫污染", "status": "污染 0/4", "severity": "stable", "meter": { "value": 0, "max": 4 }, "targetReached": true },
+          "modifiers.healingPercent": 0,
+          "modifiers.encounter.artPowerPercent": 0
+        },
+        "triageWithoutIncense": { "damageTaken": 26 },
+        "afterFailedTriage": { "law.pollution": 1, "display.status": "污染 1/4", "display.severity": "warning", "resolvedEventIds": ["triage_ward"] },
+        "afterHarmlessClear": { "law.pollution": 1, "clearedNodeIds": ["medicine_cabinet"] },
+        "afterFight": { "law.pollution": 2 },
+        "gurneyTrap": { "damageTaken": 12 },
+        "dangerAtThree": { "law.pollution": 3, "display.severity": "danger", "modifiers.healingPercent": -10, "modifiers.encounter.artPowerPercent": 10 },
+        "isolationAtThree": { "from": "rust_gurney_trap", "gateId": "hospital_pristine_isolation_corridor", "isOpen": false, "blockReason": "污染需降至 0 或以下；先去药房抽屉或完成分诊净化。" },
+        "mistTrap": { "damageTaken": 12 },
+        "maxPollution": { "law.pollution": 4, "display.status": "污染 4/4", "modifiers.healingPercent": -20, "modifiers.encounter.artPowerPercent": 20 },
+        "sterileTrap": { "damageTaken": 13 },
+        "clamped": { "law.pollution": 4 },
+        "sterileGateAtFour": { "from": "sterile_corridor", "gateId": "hospital_clean_sterile_corridor", "isOpen": false, "blockReason": "污染需降至 1 或以下；先去药房抽屉或完成分诊净化。" },
+        "closedMove": { "status": "rejected", "code": "illegal-move", "message": "disinfectant_mist_trap is not a legal adjacent destination from sterile_corridor." }
+      }
+    },
+    {
+      "id": "triage-and-pharmacy-purify",
+      "steps": [
+        { "do": "walk", "path": ["contaminated_ward_reward", "ward_orderly_patrol"] },
+        { "do": "fight", "node": "ward_orderly_patrol" },
+        { "do": "observe", "as": "afterFight", "law": ["law.pollution"] },
+        { "do": "walk", "path": ["contaminated_ward_reward", "triage_reward"] },
+        { "do": "event", "eventId": "triage_ward", "optionId": "sterilize_with_iron_body", "as": "ironBodyTriage" },
+        { "do": "observe", "as": "purified", "law": ["law.pollution", "display.targetReached", "resolvedEventIds"] },
+        { "do": "walk", "path": ["medicine_cabinet", "plague_orderly"] },
+        { "do": "fight", "node": "plague_orderly" },
+        { "do": "walk", "path": ["rust_gurney_trap"] },
+        { "do": "trap", "choice": "risk" },
+        { "do": "walk", "path": ["disinfectant_mist_trap"] },
+        { "do": "trap", "choice": "risk" },
+        { "do": "observe", "as": "beforePharmacy", "law": ["law.pollution", "modifiers.healingPercent"] },
+        { "do": "walk", "path": ["pharmacy_reward"] },
+        { "do": "collect" },
+        { "do": "observe", "as": "pharmacyRelief", "law": ["law.pollution", "display.severity", "modifiers.healingPercent"] },
+        { "do": "observe", "as": "roundtrip", "roundtrip": ["law", "clearedNodeIds", "resolvedEventIds"] }
+      ],
+      "expected": {
+        "afterFight": { "law.pollution": 1 },
+        "ironBodyTriage": { "damageTaken": 0 },
+        "purified": { "law.pollution": 0, "display.targetReached": true, "resolvedEventIds": ["triage_ward"] },
+        "beforePharmacy": { "law.pollution": 3, "modifiers.healingPercent": -10 },
+        "pharmacyRelief": { "law.pollution": 2, "display.severity": "warning", "modifiers.healingPercent": 0 },
+        "roundtrip": {
+          "law": { "kind": "rust_hospital", "pollution": 2 },
+          "clearedNodeIds": ["ward_orderly_patrol", "plague_orderly", "rust_gurney_trap", "disinfectant_mist_trap", "pharmacy_reward"],
+          "resolvedEventIds": ["triage_ward"]
+        }
+      }
+    }
+  ]
+}

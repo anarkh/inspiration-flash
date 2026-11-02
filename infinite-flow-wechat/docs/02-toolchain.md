@@ -192,14 +192,15 @@ production 仍必须用真实 AppID/CDN 重复同一边界。模板成功不扩�
 校验器执行以下只读检查：
 
 - 文件存在且为合法 JSON，根 schema/acceptance version 和 ID pattern 与冻结协议一致。
-- 原始文件 SHA-256 与源快照一致，防止稳定 ID、fixture 或精确预期静默改义。
-- 恰有 103 个唯一 case，全部为 P0，字段非空且 kind 与 ID 规则一致。
-- 分区与 case 顺序逐项一致，数量为 94/6/2/1。
+- 原始文件 SHA-256 与固定的当前修订一致，防止稳定 ID、fixture 或精确预期静默改义。
+- 恰有 108 个唯一 case，全部为 P0，字段非空且 kind 与 ID 规则一致。
+- 分区与 case 顺序逐项一致，数量为 99/6/2/1。
+- 废弃记录只指向已登记 leaf，替代项是未废弃的 leaf；有效 leaf 恰为 94，废弃 5 项。
 - `--ac` 恰好选择一个稳定 ID；未知或零结果失败。
 
 它不运行领域 reducer、Cocos smoke 或真机步骤，因此输出使用 `MANIFEST_VALID`，不使用 `PASS`。
 
-独立 runner 使用 `npm run test:migration -- --ac <ID>` 执行单个稳定 ID；全部 103 项
+独立 runner 使用 `npm run test:migration -- --ac <ID>` 执行单个稳定 ID；全部 108 项
 都有显式 registration，未实现项固定返回 `BLOCKED/2`。当前只有 `AC-HASH-001`、
 `AC-SEED-002` 和 `AC-ASSET-002` 拥有完整自动 fixture。普通 PASS 不构成正式 evidence；
 带 `--evidence` 的执行要求 clean Git identity 与仓外独占 evidence 目录，并从该 HEAD 的

@@ -155,6 +155,11 @@ function checkPassCases() {
     "AC-SEED-002": 4,
     "AC-ASSET-002": 6,
     "AC-ASSET-003": 9,
+    "AC-LAW-CORE-01": 3,
+    "AC-LAW-CORE-02": 2,
+    "AC-LAW-CORE-03": 2,
+    "AC-LAW-CORE-04": 2,
+    "AC-LAW-CORE-05": 1,
   };
   for (const [id, scenarioCount] of Object.entries(expectedScenarios)) {
     const result = invoke(["--ac", id]);
@@ -182,7 +187,22 @@ function checkPassCases() {
     );
     equal(result.report.candidate.formalEvidence, false, `${id} ordinary run is not formal evidence`);
     equal(result.report.candidate.releaseEligible, false, `${id} ordinary run cannot claim release evidence`);
+    equal(result.report.case.deprecation, undefined, `${id} is an active case`);
   }
+}
+
+function checkDeprecatedCaseReport() {
+  const result = invoke(["--ac", "AC-LAW-01"]);
+  equal(
+    result.report.case.deprecation?.supersededBy,
+    "AC-LAW-CORE-01",
+    "deprecated AC-LAW-01 reports its replacement",
+  );
+  assert(
+    result.report.case.deprecation.reason.startsWith("玩法有意偏离 Web 基准"),
+    "deprecated AC-LAW-01 reports the intentional divergence",
+  );
+  equal(result.report.case.fixtureId, "law-01-demon-tower", "deprecated AC-LAW-01 keeps its frozen fixture");
 }
 
 async function checkAssetManifestExtensionBoundaries() {
@@ -242,6 +262,11 @@ function checkMethodRegistrations() {
     "AC-SEED-002": "seedRootLabelGoldenV1",
     "AC-ASSET-002": "assetKeyRevisionCache",
     "AC-ASSET-003": "assetErrorTaxonomy",
+    "AC-LAW-CORE-01": "lawCoreScenarios",
+    "AC-LAW-CORE-02": "lawCoreScenarios",
+    "AC-LAW-CORE-03": "lawCoreScenarios",
+    "AC-LAW-CORE-04": "lawCoreScenarios",
+    "AC-LAW-CORE-05": "lawCoreScenarios",
   };
   for (const [id, implementation] of Object.entries(expected)) {
     const registration = caseRunners.find((entry) => entry.id === id);
@@ -1920,6 +1945,7 @@ function checkExclusiveEvidence() {
 }
 
 checkPassCases();
+checkDeprecatedCaseReport();
 await checkAssetManifestExtensionBoundaries();
 checkMethodRegistrations();
 checkMultiMethodIsolation();
@@ -1927,7 +1953,7 @@ checkExitTaxonomy();
 checkStableDigest();
 checkExclusiveEvidence();
 
-const EXPECTED_ASSERTIONS = 929;
+const EXPECTED_ASSERTIONS = 1034;
 if (assertions !== EXPECTED_ASSERTIONS) {
   throw new Error(
     `Assertion count drifted; expected ${EXPECTED_ASSERTIONS}, received ${assertions}`,
@@ -1940,6 +1966,7 @@ console.log(
     assertions,
     suites: [
       "pass-cases",
+      "deprecated-case-report",
       "asset-manifest-extension-boundaries",
       "method-registration-capabilities",
       "multi-method-pass-isolation",

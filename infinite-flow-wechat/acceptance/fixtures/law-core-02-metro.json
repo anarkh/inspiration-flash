@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "law-core-02-metro",
+  "provenance": {
+    "supersedes": "AC-LAW-02",
+    "rules": [
+      "packages/core/src/dungeon-laws.ts",
+      "packages/core/src/dungeon-routes.ts"
+    ],
+    "expectedRule": "Chapter 2 tide order ebb -> flood -> mirror -> ebb. Every first clear of any node advances the tide one step, except the calibration node signal_cache, whose first clear resets the tide to ebb. Display: title 末班潮序, status 退潮/涨潮/镜潮, severity stable/warning/danger, meter {0/1/2, 2}, targetReached only at ebb. Mirror tide scales trap damage and DC by +20% (rounded up); the encounter bonus applies only to the reflection fight, not to ordinary fights. With mist_breathing as the main method every trap is seen through, so a risked trap deals max(4, floor(damage x 0.45)): reflection_fork 24 at mirror -> ceil(28.8) = 29 -> 13; mirror_tide_trap 28 at ebb -> 12. Run pressure stays 0% below 6 clears. Gate metro_ebb_platform_track (tide_boatman -> mirror_tide_trap) opens only at ebb and while closed reads `仅退潮时通行；先到信号箱暗格复位潮序。`; the move is then not a legal destination. The pursuer is a separate run system and is disabled after entry so it cannot ambush the walk. All expected values are frozen here, never read from candidate code."
+  },
+  "baseInput": {
+    "path": "packages/save-codec/tests/fixtures/new-hub-v1.json",
+    "sha256": "a1de1f1b33b59c91dea46caf55f21b6eee0b7104c2cbe4d68ac5d7a430709e0b"
+  },
+  "inputMutations": [
+    { "op": "replace", "path": ["state", "completedDungeonIds"], "value": ["demon_tower_1"] },
+    { "op": "replace", "path": ["state", "claimedTaskIds"], "value": ["clear_demon_tower"] },
+    { "op": "replace", "path": ["state", "player", "hp"], "value": 300 },
+    { "op": "replace", "path": ["state", "player", "maxHp"], "value": 300 },
+    { "op": "replace", "path": ["state", "player", "base"], "value": { "body": 5, "spirit": 3, "agility": 3, "luck": 2 } },
+    { "op": "replace", "path": ["state", "learnedMethods"], "value": ["mist_breathing"] }
+  ],
+  "entry": { "dungeonId": "metro_abyss", "protocolId": "standard", "hiddenTaskSeed": 305419896 },
+  "runMutations": [
+    { "op": "replace", "path": ["run", "pursuitState", "status"], "value": "disabled" }
+  ],
+  "scenarioIds": [
+    "tide-cycles-on-first-clears",
+    "signal-cache-calibrates-and-gates-follow-tide"
+  ],
+  "scenarios": [
+    {
+      "id": "tide-cycles-on-first-clears",
+      "steps": [
+        { "do": "observe", "as": "entry", "law": ["law", "display", "modifiers.trap"] },
+        { "do": "collect" },
+        { "do": "observe", "as": "afterFirstClear", "law": ["law.tide", "display.status", "display.severity", "display.meter"] },
+        { "do": "walk", "path": ["tide_boatman"] },
+        { "do": "fight", "node": "tide_boatman" },
+        { "do": "observe", "as": "mirrorTide", "law": ["law.tide", "display.status", "display.severity", "display.meter", "display.targetReached", "modifiers.trap", "modifiers.encounter.allStatsPercent"] },
+        { "do": "walk", "path": ["reflection_fork"] },
+        { "do": "trap", "choice": "risk", "as": "mirrorTrap" },
+        { "do": "observe", "as": "cycledToEbb", "law": ["law.tide", "clearedNodeIds"] }
+      ],
+      "expected": {
+        "entry": {
+          "law": { "kind": "metro_abyss", "tide": "ebb" },
+          "display": { "title": "末班潮序", "status": "退潮", "severity": "stable", "meter": { "value": 0, "max": 2 }, "targetReached": true },
+          "modifiers.trap": { "damagePercent": 0, "dcPercent": 0 }
+        },
+        "afterFirstClear": { "law.tide": "flood", "display.status": "涨潮", "display.severity": "warning", "display.meter": { "value": 1, "max": 2 } },
+        "mirrorTide": {
+          "law.tide": "mirror",
+          "display.status": "镜潮",
+          "display.severity": "danger",
+          "display.meter": { "value": 2, "max": 2 },
+          "display.targetReached": false,
+          "modifiers.trap": { "damagePercent": 20, "dcPercent": 20 },
+          "modifiers.encounter.allStatsPercent": 0
+        },
+        "mirrorTrap": { "damageTaken": 13 },
+        "cycledToEbb": { "law.tide": "ebb", "clearedNodeIds": ["platform_arrival", "tide_boatman", "reflection_fork"] }
+      }
+    },
+    {
+      "id": "signal-cache-calibrates-and-gates-follow-tide",
+      "steps": [
+        { "do": "collect" },
+        { "do": "walk", "path": ["tide_boatman"] },
+        { "do": "fight", "node": "tide_boatman" },
+        { "do": "observe", "as": "gateAtMirror", "gate": "mirror_tide_trap" },
+        { "do": "attempt", "as": "closedMove", "command": { "type": "run/move", "nodeId": "mirror_tide_trap" } },
+        { "do": "walk", "path": ["reflection_fork"] },
+        { "do": "trap", "choice": "risk" },
+        { "do": "walk", "path": ["tide_boatman"] },
+        { "do": "observe", "as": "gateAtEbb", "gate": "mirror_tide_trap" },
+        { "do": "walk", "path": ["mirror_tide_trap"] },
+        { "do": "trap", "choice": "risk", "as": "ebbTrap" },
+        { "do": "walk", "path": ["rail_portal", "spare_train_portal", "wet_ticket_hall", "signal_cache"] },
+        { "do": "observe", "as": "beforeCalibration", "law": ["law.tide"] },
+        { "do": "collect" },
+        { "do": "observe", "as": "calibrated", "law": ["law.tide", "display.status", "display.targetReached"] },
+        { "do": "observe", "as": "roundtrip", "roundtrip": ["law", "clearedNodeIds"] }
+      ],
+      "expected": {
+        "gateAtMirror": { "from": "tide_boatman", "gateId": "metro_ebb_platform_track", "isOpen": false, "blockReason": "仅退潮时通行；先到信号箱暗格复位潮序。" },
+        "closedMove": { "status": "rejected", "code": "illegal-move", "message": "mirror_tide_trap is not a legal adjacent destination from tide_boatman." },
+        "gateAtEbb": { "from": "tide_boatman", "gateId": "metro_ebb_platform_track", "isOpen": true, "blockReason": null },
+        "ebbTrap": { "damageTaken": 12 },
+        "beforeCalibration": { "law.tide": "flood" },
+        "calibrated": { "law.tide": "ebb", "display.status": "退潮", "display.targetReached": true },
+        "roundtrip": {
+          "law": { "kind": "metro_abyss", "tide": "ebb" },
+          "clearedNodeIds": ["platform_arrival", "tide_boatman", "reflection_fork", "mirror_tide_trap", "signal_cache"]
+        }
+      }
+    }
+  ]
+}

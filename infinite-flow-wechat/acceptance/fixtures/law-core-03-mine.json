@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "law-core-03-mine",
+  "provenance": {
+    "supersedes": "AC-LAW-03",
+    "rules": [
+      "packages/core/src/dungeon-laws.ts",
+      "packages/core/src/dungeon-routes.ts"
+    ],
+    "expectedRule": "Chapter 3 gravity starts upward and flips only on the first clear of tilted_gravity_switch or backup_gravity_well; every other clear leaves it alone. Display: title 重力极向, status 上浮/下沉, severity warning, no meter, targetReached false. Upward gravity scales trap damage and DC by -20% and encounter defense by +20%; downward gravity scales trap damage and DC by +20% and encounter defense by -20% (trap values rounded up). With mist_breathing as the main method every trap is seen through, so a risked trap deals max(4, floor(damage x 0.45)): tilted_gravity_switch 28 upward -> ceil(22.4) = 23 -> 10; coil_burst_trap 30 downward -> 36 -> 16; magnetic_rail_trap 34 upward -> ceil(27.2) = 28 -> 12. Run pressure stays 0% below 6 clears. Gates mine_upward_coil_lift (magnetic_rail_trap -> coil_burst_trap) and mine_upward_beast_lane need upward gravity; mine_downward_branch_lift (tilted_gravity_switch -> gravity_branch_reward) and mine_downward_dust_lift need downward gravity. A closed gate reads `仅上浮重力时通行；触发重力岔路闸或备用重力井换向。` or `仅下沉重力时通行；触发重力岔路闸或备用重力井换向。`, and the move is then not a legal destination. The pursuer is a separate run system and is disabled after entry so it cannot ambush the walk. All expected values are frozen here, never read from candidate code."
+  },
+  "baseInput": {
+    "path": "packages/save-codec/tests/fixtures/new-hub-v1.json",
+    "sha256": "a1de1f1b33b59c91dea46caf55f21b6eee0b7104c2cbe4d68ac5d7a430709e0b"
+  },
+  "inputMutations": [
+    { "op": "replace", "path": ["state", "completedDungeonIds"], "value": ["demon_tower_1", "metro_abyss"] },
+    { "op": "replace", "path": ["state", "claimedTaskIds"], "value": ["clear_demon_tower", "clear_metro_abyss"] },
+    { "op": "replace", "path": ["state", "player", "hp"], "value": 300 },
+    { "op": "replace", "path": ["state", "player", "maxHp"], "value": 300 },
+    { "op": "replace", "path": ["state", "player", "base"], "value": { "body": 7, "spirit": 4, "agility": 4, "luck": 2 } },
+    { "op": "replace", "path": ["state", "learnedMethods"], "value": ["mist_breathing"] }
+  ],
+  "entry": { "dungeonId": "starfall_mine", "protocolId": "standard", "hiddenTaskSeed": 240000007 },
+  "runMutations": [
+    { "op": "replace", "path": ["run", "pursuitState", "status"], "value": "disabled" }
+  ],
+  "scenarioIds": [
+    "gravity-flips-only-at-switches",
+    "upward-gravity-softens-traps"
+  ],
+  "scenarios": [
+    {
+      "id": "gravity-flips-only-at-switches",
+      "steps": [
+        { "do": "observe", "as": "entry", "law": ["law", "display", "modifiers.trap", "modifiers.encounter.defensePercent"] },
+        { "do": "collect" },
+        { "do": "walk", "path": ["shell_patrol_alpha"] },
+        { "do": "fight", "node": "shell_patrol_alpha" },
+        { "do": "observe", "as": "afterOrdinaryClears", "law": ["law.gravity", "clearedNodeIds"] },
+        { "do": "walk", "path": ["rail_chain_cache", "tilted_gravity_switch"] },
+        { "do": "observe", "as": "branchLiftUpward", "gate": "gravity_branch_reward" },
+        { "do": "trap", "choice": "risk", "as": "upwardSwitchTrap" },
+        { "do": "observe", "as": "afterSwitch", "law": ["law.gravity", "display.status", "modifiers.trap", "modifiers.encounter.defensePercent"] },
+        { "do": "observe", "as": "branchLiftDownward", "gate": "gravity_branch_reward" },
+        { "do": "walk", "path": ["gravity_branch_reward", "coil_burst_trap"] },
+        { "do": "trap", "choice": "risk", "as": "downwardCoilTrap" },
+        { "do": "walk", "path": ["magnetic_rail_trap"] },
+        { "do": "trap", "choice": "risk" },
+        { "do": "observe", "as": "coilLiftDownward", "gate": "coil_burst_trap" },
+        { "do": "attempt", "as": "closedMove", "command": { "type": "run/move", "nodeId": "coil_burst_trap" } },
+        { "do": "observe", "as": "roundtrip", "roundtrip": ["law", "clearedNodeIds"] }
+      ],
+      "expected": {
+        "entry": {
+          "law": { "kind": "starfall_mine", "gravity": "upward" },
+          "display": { "title": "重力极向", "status": "上浮", "severity": "warning", "meter": null, "targetReached": false },
+          "modifiers.trap": { "damagePercent": -20, "dcPercent": -20 },
+          "modifiers.encounter.defensePercent": 20
+        },
+        "afterOrdinaryClears": { "law.gravity": "upward", "clearedNodeIds": ["mine_arrival", "shell_patrol_alpha"] },
+        "branchLiftUpward": { "from": "tilted_gravity_switch", "gateId": "mine_downward_branch_lift", "isOpen": false, "blockReason": "仅下沉重力时通行；触发重力岔路闸或备用重力井换向。" },
+        "upwardSwitchTrap": { "damageTaken": 10 },
+        "afterSwitch": {
+          "law.gravity": "downward",
+          "display.status": "下沉",
+          "modifiers.trap": { "damagePercent": 20, "dcPercent": 20 },
+          "modifiers.encounter.defensePercent": -20
+        },
+        "branchLiftDownward": { "from": "tilted_gravity_switch", "gateId": "mine_downward_branch_lift", "isOpen": true, "blockReason": null },
+        "downwardCoilTrap": { "damageTaken": 16 },
+        "coilLiftDownward": { "from": "magnetic_rail_trap", "gateId": "mine_upward_coil_lift", "isOpen": false, "blockReason": "仅上浮重力时通行；触发重力岔路闸或备用重力井换向。" },
+        "closedMove": { "status": "rejected", "code": "illegal-move", "message": "coil_burst_trap is not a legal adjacent destination from magnetic_rail_trap." },
+        "roundtrip": {
+          "law": { "kind": "starfall_mine", "gravity": "downward" },
+          "clearedNodeIds": ["mine_arrival", "shell_patrol_alpha", "tilted_gravity_switch", "coil_burst_trap", "magnetic_rail_trap"]
+        }
+      }
+    },
+    {
+      "id": "upward-gravity-softens-traps",
+      "steps": [
+        { "do": "walk", "path": ["mine_shell_guard"] },
+        { "do": "fight", "node": "mine_shell_guard" },
+        { "do": "walk", "path": ["magnetic_rail_trap"] },
+        { "do": "trap", "choice": "risk", "as": "upwardRailTrap" },
+        { "do": "observe", "as": "coilLiftUpward", "gate": "coil_burst_trap" },
+        { "do": "attempt", "as": "openMove", "command": { "type": "run/move", "nodeId": "coil_burst_trap" } },
+        { "do": "observe", "as": "stillUpward", "law": ["law.gravity", "clearedNodeIds"] }
+      ],
+      "expected": {
+        "upwardRailTrap": { "damageTaken": 12 },
+        "coilLiftUpward": { "from": "magnetic_rail_trap", "gateId": "mine_upward_coil_lift", "isOpen": true, "blockReason": null },
+        "openMove": { "status": "committed", "code": null, "message": null },
+        "stillUpward": { "law.gravity": "upward", "clearedNodeIds": ["mine_shell_guard", "magnetic_rail_trap"] }
+      }
+    }
+  ]
+}

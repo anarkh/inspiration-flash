@@ -1,11 +1,13 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "acceptanceVersion": "v2",
   "document": "docs/knowledge-base/06-migration-acceptance-checklist.md",
   "idPattern": "^AC-(?:[A-Z]+-)+(?:\\d{2}|\\d{3})$",
   "expectedCounts": {
-    "total": 103,
-    "leaf": 94,
+    "total": 108,
+    "leaf": 99,
+    "activeLeaf": 94,
+    "deprecated": 5,
     "releaseEvidence": 6,
     "attestation": 2,
     "derived": 1
@@ -65,6 +67,11 @@
       "AC-LAW-17",
       "AC-LAW-18",
       "AC-LAW-19",
+      "AC-LAW-CORE-01",
+      "AC-LAW-CORE-02",
+      "AC-LAW-CORE-03",
+      "AC-LAW-CORE-04",
+      "AC-LAW-CORE-05",
       "AC-COMBAT-001",
       "AC-COMBAT-002",
       "AC-COMBAT-003",
@@ -123,6 +130,33 @@
       "AC-RELEASE-001"
     ]
   },
+  "deprecations": [
+    {
+      "id": "AC-LAW-01",
+      "supersededBy": "AC-LAW-CORE-01",
+      "reason": "玩法有意偏离 Web 基准：胜利回复 20% 生命（PR #29）后，冻结流程按生命差记录的战斗伤害不再成立"
+    },
+    {
+      "id": "AC-LAW-02",
+      "supersededBy": "AC-LAW-CORE-02",
+      "reason": "玩法有意偏离 Web 基准：首通新增灯油与追兵，冻结流程走格时被追兵拖入战斗"
+    },
+    {
+      "id": "AC-LAW-03",
+      "supersededBy": "AC-LAW-CORE-03",
+      "reason": "玩法有意偏离 Web 基准：首通新增灯油与追兵，冻结流程走格时被追兵拖入战斗"
+    },
+    {
+      "id": "AC-LAW-04",
+      "supersededBy": "AC-LAW-CORE-04",
+      "reason": "玩法有意偏离 Web 基准：首通新增灯油与追兵，冻结流程走格时被追兵拖入战斗"
+    },
+    {
+      "id": "AC-LAW-05",
+      "supersededBy": "AC-LAW-CORE-05",
+      "reason": "玩法有意偏离 Web 基准：术法改为消耗 1 点战意（PR #29），冻结流程的术法开局被拒绝"
+    }
+  ],
   "cases": [
     {
       "id": "AC-CONTENT-001",
@@ -729,6 +763,61 @@
       ],
       "fixtureId": "law-19-panopticon",
       "expected": "三相扫描、曝光、中继、路线与 Boss 快照一致"
+    },
+    {
+      "id": "AC-LAW-CORE-01",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "第 1 章妖塔雾压（现行规则）",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "law-core-01-demon-tower",
+      "expected": "受伤首清与伤害事件升雾、减压地标与成功事件降雾并钳制在 0–3；显示、遭遇加成、陷阱伤害与雾压门禁与手算期望一致"
+    },
+    {
+      "id": "AC-LAW-CORE-02",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "第 2 章地铁潮序（现行规则）",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "law-core-02-metro",
+      "expected": "每次首清推进退潮→涨潮→镜潮、信号箱首清复位退潮；镜潮陷阱 +20% 与退潮门禁与手算期望一致"
+    },
+    {
+      "id": "AC-LAW-CORE-03",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "第 3 章矿井重力（现行规则）",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "law-core-03-mine",
+      "expected": "仅重力开关首清换向；上浮/下沉的陷阱与防御修正、矿梯门禁与手算期望一致"
+    },
+    {
+      "id": "AC-LAW-CORE-04",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "第 4 章医院污染（现行规则）",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "law-core-04-hospital",
+      "expected": "受伤首清与伤害事件升污染、药房与分诊成功降污染并钳制在 0–4；治疗与敌方术强修正、污染门禁与手算期望一致"
+    },
+    {
+      "id": "AC-LAW-CORE-05",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "第 5 章竞技场开局（现行规则）",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "law-core-05-arena",
+      "expected": "非首领战按首个攻击/术法/防御记录开局；连续复招 -20%、三式齐全改判 +10%，开局门禁与手算期望一致"
     },
     {
       "id": "AC-COMBAT-001",

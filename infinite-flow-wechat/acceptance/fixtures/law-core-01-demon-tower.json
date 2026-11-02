@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "law-core-01-demon-tower",
+  "provenance": {
+    "supersedes": "AC-LAW-01",
+    "rules": [
+      "packages/core/src/dungeon-laws.ts",
+      "packages/core/src/dungeon-routes.ts",
+      "packages/core/src/dungeon-events.ts"
+    ],
+    "expectedRule": "Chapter 1 fog pressure (0-3). A first clear of a monster or trap that dealt damage raises fog by 1; clearing the relief nodes sealed_cache or quiet_prayer_reward, or succeeding at the relief events blood_rune_stair or mist_sealed_cache, lowers it by 1; an event outcome that deals damage raises it by 1; the result is clamped to 0-3. Display: title 妖雾压境, status `雾压 n/3`, severity stable at 0, warning at 1, danger at 2-3, meter {n, 3}, targetReached at 0. Encounter allStatsPercent is +10 at fog 2 and +20 at fog 3. With mist_breathing as the main method every trap is seen through, so a risked trap deals max(4, floor(damage x 0.45)): blood_rune_trap 24 -> 10, ash_pit_trap 19 -> 8. blood_rune_stair: send_pet_first without a trap-scout pet fails for 20 damage; breathe_through_runes succeeds with mist_breathing and deals none; mist_sealed_cache match_cache_breath likewise succeeds. A resolved event is rejected the second time. Gate demon_clear_blood_stair (blood_rune_trap -> left_watch_trap) needs fog 0 and while closed reads `雾压需降至 0 或以下；先去雾后暗格或静默香案减压。`; the move is then not a legal destination. The fog_lesser_demon (42 HP) outlives the first strike of the starting blade, and a surviving monster always lands at least 1 damage, so its first clear raises fog. Chapter 1 entered for the first time carries no lantern, so no pursuer interrupts the walk. All expected values are frozen here, never read from candidate code."
+  },
+  "baseInput": {
+    "path": "packages/save-codec/tests/fixtures/new-hub-v1.json",
+    "sha256": "a1de1f1b33b59c91dea46caf55f21b6eee0b7104c2cbe4d68ac5d7a430709e0b"
+  },
+  "inputMutations": [
+    { "op": "replace", "path": ["state", "player", "hp"], "value": 300 },
+    { "op": "replace", "path": ["state", "player", "maxHp"], "value": 300 },
+    { "op": "replace", "path": ["state", "player", "base"], "value": { "body": 5, "spirit": 3, "agility": 3, "luck": 2 } },
+    { "op": "replace", "path": ["state", "learnedMethods"], "value": ["mist_breathing"] }
+  ],
+  "entry": { "dungeonId": "demon_tower_1", "protocolId": "standard", "hiddenTaskSeed": 101010101 },
+  "runMutations": [],
+  "scenarioIds": [
+    "fog-rises-on-damage-and-clamps",
+    "relief-landmarks-lower-fog",
+    "fog-gates-follow-pressure"
+  ],
+  "scenarios": [
+    {
+      "id": "fog-rises-on-damage-and-clamps",
+      "steps": [
+        { "do": "observe", "as": "entry", "law": ["law", "display", "modifiers.encounter"] },
+        { "do": "fight", "node": "fog_lesser_demon" },
+        { "do": "observe", "as": "afterMonster", "law": ["law.fogPressure", "display.status", "display.severity"] },
+        { "do": "walk", "path": ["blood_rune_trap"] },
+        { "do": "trap", "choice": "risk", "as": "bloodRuneTrap" },
+        { "do": "observe", "as": "afterTrap", "law": ["law.fogPressure", "display.severity", "modifiers.encounter.allStatsPercent"] },
+        { "do": "event", "eventId": "blood_rune_stair", "optionId": "send_pet_first", "as": "petProbeFails" },
+        { "do": "observe", "as": "afterEvent", "law": ["law.fogPressure", "display.status", "display.targetReached", "modifiers.encounter.allStatsPercent"] },
+        { "do": "walk", "path": ["fog_lesser_demon", "ash_pit_trap"] },
+        { "do": "trap", "choice": "risk", "as": "ashPitTrap" },
+        { "do": "observe", "as": "clamped", "law": ["law.fogPressure", "clearedNodeIds"] }
+      ],
+      "expected": {
+        "entry": {
+          "law": { "kind": "demon_tower", "fogPressure": 0 },
+          "display": { "title": "妖雾压境", "status": "雾压 0/3", "severity": "stable", "meter": { "value": 0, "max": 3 }, "targetReached": true },
+          "modifiers.encounter": { "allStatsPercent": 0, "defensePercent": 0, "artPowerPercent": 0 }
+        },
+        "afterMonster": { "law.fogPressure": 1, "display.status": "雾压 1/3", "display.severity": "warning" },
+        "bloodRuneTrap": { "damageTaken": 10 },
+        "afterTrap": { "law.fogPressure": 2, "display.severity": "danger", "modifiers.encounter.allStatsPercent": 10 },
+        "petProbeFails": { "damageTaken": 20 },
+        "afterEvent": { "law.fogPressure": 3, "display.status": "雾压 3/3", "display.targetReached": false, "modifiers.encounter.allStatsPercent": 20 },
+        "ashPitTrap": { "damageTaken": 8 },
+        "clamped": { "law.fogPressure": 3, "clearedNodeIds": ["fog_lesser_demon", "blood_rune_trap", "ash_pit_trap"] }
+      }
+    },
+    {
+      "id": "relief-landmarks-lower-fog",
+      "steps": [
+        { "do": "fight", "node": "fog_lesser_demon" },
+        { "do": "walk", "path": ["blood_rune_trap"] },
+        { "do": "trap", "choice": "risk" },
+        { "do": "event", "eventId": "blood_rune_stair", "optionId": "breathe_through_runes", "as": "runeBreathing" },
+        { "do": "observe", "as": "afterBreathing", "law": ["law.fogPressure", "resolvedEventIds"] },
+        { "do": "walk", "path": ["cracked_portal", "sealed_cache"] },
+        { "do": "collect" },
+        { "do": "observe", "as": "afterCache", "law": ["law.fogPressure", "display.status", "display.severity", "display.targetReached"] },
+        { "do": "event", "eventId": "mist_sealed_cache", "optionId": "match_cache_breath", "as": "cacheBreathing" },
+        { "do": "observe", "as": "clampedAtZero", "law": ["law.fogPressure", "resolvedEventIds"] },
+        { "do": "attempt", "as": "repeatEvent", "command": { "type": "node/resolve-event", "eventId": "mist_sealed_cache", "optionId": "match_cache_breath" } },
+        { "do": "observe", "as": "roundtrip", "roundtrip": ["law", "clearedNodeIds", "resolvedEventIds"] }
+      ],
+      "expected": {
+        "runeBreathing": { "damageTaken": 0 },
+        "afterBreathing": { "law.fogPressure": 1, "resolvedEventIds": ["blood_rune_stair"] },
+        "afterCache": { "law.fogPressure": 0, "display.status": "雾压 0/3", "display.severity": "stable", "display.targetReached": true },
+        "cacheBreathing": { "damageTaken": 0 },
+        "clampedAtZero": { "law.fogPressure": 0, "resolvedEventIds": ["blood_rune_stair", "mist_sealed_cache"] },
+        "repeatEvent": { "status": "rejected", "code": "domain-rejected", "message": "这个关卡事件已经结算过，主神不会重复发放奖励。" },
+        "roundtrip": {
+          "law": { "kind": "demon_tower", "fogPressure": 0 },
+          "clearedNodeIds": ["fog_lesser_demon", "blood_rune_trap", "sealed_cache"],
+          "resolvedEventIds": ["blood_rune_stair", "mist_sealed_cache"]
+        }
+      }
+    },
+    {
+      "id": "fog-gates-follow-pressure",
+      "steps": [
+        { "do": "fight", "node": "fog_lesser_demon" },
+        { "do": "walk", "path": ["blood_rune_trap"] },
+        { "do": "observe", "as": "gateAtOne", "gate": "left_watch_trap" },
+        { "do": "trap", "choice": "risk" },
+        { "do": "attempt", "as": "closedMove", "command": { "type": "run/move", "nodeId": "left_watch_trap" } },
+        { "do": "observe", "as": "fogAfterRejectedMove", "law": ["law.fogPressure"] },
+        { "do": "event", "eventId": "blood_rune_stair", "optionId": "breathe_through_runes" },
+        { "do": "walk", "path": ["cracked_portal", "sealed_cache"] },
+        { "do": "collect" },
+        { "do": "walk", "path": ["cracked_portal", "blood_rune_trap"] },
+        { "do": "observe", "as": "gateAtZero", "gate": "left_watch_trap" },
+        { "do": "attempt", "as": "openMove", "command": { "type": "run/move", "nodeId": "left_watch_trap" } }
+      ],
+      "expected": {
+        "gateAtOne": { "from": "blood_rune_trap", "gateId": "demon_clear_blood_stair", "isOpen": false, "blockReason": "雾压需降至 0 或以下；先去雾后暗格或静默香案减压。" },
+        "closedMove": { "status": "rejected", "code": "illegal-move", "message": "left_watch_trap is not a legal adjacent destination from blood_rune_trap." },
+        "fogAfterRejectedMove": { "law.fogPressure": 2 },
+        "gateAtZero": { "from": "blood_rune_trap", "gateId": "demon_clear_blood_stair", "isOpen": true, "blockReason": null },
+        "openMove": { "status": "committed", "code": null, "message": null }
+      }
+    }
+  ]
+}

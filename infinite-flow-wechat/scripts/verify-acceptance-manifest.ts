@@ -37,6 +37,12 @@ type AcceptanceCase = {
   expected: string;
 };
 
+type AcceptanceDeprecation = {
+  id: string;
+  supersededBy: string;
+  reason: string;
+};
+
 type AcceptanceManifest = {
   schemaVersion: number;
   acceptanceVersion: string;
@@ -44,6 +50,7 @@ type AcceptanceManifest = {
   idPattern: string;
   expectedCounts: Record<string, number>;
   partitions: Record<AcceptanceKind, string[]>;
+  deprecations: AcceptanceDeprecation[];
   cases: AcceptanceCase[];
 };
 
@@ -56,7 +63,7 @@ type CliOptions = {
 type ValidationResult = {
   manifest: AcceptanceManifest;
   sha256: string;
-  counts: Record<'total' | AcceptanceKind, number>;
+  counts: Record<keyof typeof EXPECTED_COUNTS, number>;
 };
 
 const SCRIPT_DIRECTORY = dirname(resolve(nodeProcess.argv[1]));
@@ -64,7 +71,7 @@ const DEFAULT_MANIFEST_PATH = resolve(
   SCRIPT_DIRECTORY,
   '../acceptance/migration-acceptance-manifest.json'
 );
-const FROZEN_MANIFEST_SHA256 = '9c9da7e7f83c05422b3b1ac2ad77cc0260fd8dcd1b0df2d62f3b5556af4867c7';
+const FROZEN_MANIFEST_SHA256 = 'd990875da321258ff52031423b5d6752ac5166ee8f415a564f89e86ea98417c8';
 const FROZEN_ID_PATTERN = '^AC-(?:[A-Z]+-)+(?:\\d{2}|\\d{3})$';
 const ID_PATTERN = /^AC-(?:[A-Z]+-)+(?:\d{2}|\d{3})$/;
 const KINDS: readonly AcceptanceKind[] = [
@@ -73,9 +80,13 @@ const KINDS: readonly AcceptanceKind[] = [
   'attestation',
   'derived'
 ];
+// activeLeaf (leaf minus deprecated) keeps the 94 leaf checks of the Web v2 contract;
+// a deprecated leaf stays registered and executable but no longer counts toward it.
 const EXPECTED_COUNTS = {
-  total: 103,
-  leaf: 94,
+  total: 108,
+  leaf: 99,
+  activeLeaf: 94,
+  deprecated: 5,
   releaseEvidence: 6,
   attestation: 2,
   derived: 1
@@ -87,6 +98,7 @@ const ROOT_KEYS = [
   'idPattern',
   'expectedCounts',
   'partitions',
+  'deprecations',
   'cases'
 ] as const;
 const CASE_KEYS = [
@@ -98,6 +110,7 @@ const CASE_KEYS = [
   'fixtureId',
   'expected'
 ] as const;
+const DEPRECATION_KEYS = ['id', 'supersededBy', 'reason'] as const;
 
 function usage(): string {
   return [
@@ -169,6 +182,53 @@ function expectedKindFor(id: string): AcceptanceKind {
   return 'leaf';
 }
 
+/**
+ * A deprecation retires a leaf whose frozen semantics the game deliberately left;
+ * its replacement is a new, active leaf, so the stable ID is never reused.
+ */
+function validateDeprecations(
+  value: unknown,
+  cases: readonly AcceptanceCase[],
+  failures: string[]
+): AcceptanceDeprecation[] {
+  if (!Array.isArray(value)) {
+    failures.push('deprecations must be an array');
+    return [];
+  }
+  const kindById = new Map(cases.map((entry) => [entry.id, entry.kind]));
+  const deprecatedIds = new Set(
+    value.flatMap((entry) => (isRecord(entry) && typeof entry.id === 'string' ? [entry.id] : []))
+  );
+  const deprecations: AcceptanceDeprecation[] = [];
+  const seen = new Set<string>();
+  for (const [index, entry] of value.entries()) {
+    if (!isRecord(entry) || !hasExactKeys(entry, DEPRECATION_KEYS)) {
+      failures.push(`deprecation ${index} keys do not match schema v2`);
+      continue;
+    }
+    const { id, supersededBy, reason } = entry;
+    if (typeof id !== 'string' || kindById.get(id) !== 'leaf') {
+      failures.push(`deprecation ${index} must name a registered leaf case: ${String(id)}`);
+      continue;
+    }
+    if (seen.has(id)) {
+      failures.push(`duplicate deprecation: ${id}`);
+      continue;
+    }
+    seen.add(id);
+    if (
+      typeof supersededBy !== 'string'
+      || kindById.get(supersededBy) !== 'leaf'
+      || deprecatedIds.has(supersededBy)
+    ) {
+      failures.push(`${id} must be superseded by an active leaf case: ${String(supersededBy)}`);
+    }
+    if (!isNonEmptyString(reason)) failures.push(`${id} deprecation reason must be non-empty`);
+    deprecations.push({ id, supersededBy: String(supersededBy), reason: String(reason) });
+  }
+  return deprecations;
+}
+
 function validateManifest(raw: string): ValidationResult {
   const failures: string[] = [];
   const sha256 = createHash('sha256').update(raw).digest('hex');
@@ -185,9 +245,9 @@ function validateManifest(raw: string): ValidationResult {
     throw new Error(`manifest is not valid JSON: ${String(error)}`);
   }
   if (!isRecord(parsed)) throw new Error('manifest root must be an object');
-  if (!hasExactKeys(parsed, ROOT_KEYS)) failures.push('manifest root keys do not match schema v1');
+  if (!hasExactKeys(parsed, ROOT_KEYS)) failures.push('manifest root keys do not match schema v2');
 
-  if (parsed.schemaVersion !== 1) failures.push('schemaVersion must be 1');
+  if (parsed.schemaVersion !== 2) failures.push('schemaVersion must be 2');
   if (parsed.acceptanceVersion !== 'v2') failures.push('acceptanceVersion must be v2');
   if (parsed.document !== 'docs/knowledge-base/06-migration-acceptance-checklist.md') {
     failures.push('document must retain the authoritative Web checklist path');
@@ -197,7 +257,7 @@ function validateManifest(raw: string): ValidationResult {
   if (!isRecord(parsed.expectedCounts)) {
     failures.push('expectedCounts must be an object');
   } else if (JSON.stringify(parsed.expectedCounts) !== JSON.stringify(EXPECTED_COUNTS)) {
-    failures.push('expectedCounts do not match the frozen 103/94/6/2/1 contract');
+    failures.push('expectedCounts do not match the frozen 108/99/94/5/6/2/1 contract');
   }
 
   const rawCases = Array.isArray(parsed.cases) ? parsed.cases : [];
@@ -214,7 +274,7 @@ function validateManifest(raw: string): ValidationResult {
       failures.push(`case ${index} must be an object`);
       continue;
     }
-    if (!hasExactKeys(rawCase, CASE_KEYS)) failures.push(`case ${index} keys do not match schema v1`);
+    if (!hasExactKeys(rawCase, CASE_KEYS)) failures.push(`case ${index} keys do not match schema v2`);
 
     const id = typeof rawCase.id === 'string' ? rawCase.id : '';
     if (!ID_PATTERN.test(id)) failures.push(`case ${index} has invalid ID: ${String(rawCase.id)}`);
@@ -253,9 +313,12 @@ function validateManifest(raw: string): ValidationResult {
   const actualPartitions = Object.fromEntries(
     KINDS.map((kind) => [kind, cases.filter((entry) => entry.kind === kind).map((entry) => entry.id)])
   ) as Record<AcceptanceKind, string[]>;
+  const deprecations = validateDeprecations(parsed.deprecations, cases, failures);
   const counts = {
     total: cases.length,
     leaf: actualPartitions.leaf.length,
+    activeLeaf: actualPartitions.leaf.length - deprecations.length,
+    deprecated: deprecations.length,
     releaseEvidence: actualPartitions.releaseEvidence.length,
     attestation: actualPartitions.attestation.length,
     derived: actualPartitions.derived.length
@@ -269,7 +332,7 @@ function validateManifest(raw: string): ValidationResult {
   if (!isRecord(parsed.partitions)) {
     failures.push('partitions must be an object');
   } else {
-    if (!hasExactKeys(parsed.partitions, KINDS)) failures.push('partition keys do not match schema v1');
+    if (!hasExactKeys(parsed.partitions, KINDS)) failures.push('partition keys do not match schema v2');
     for (const kind of KINDS) {
       const partition = parsed.partitions[kind];
       if (!Array.isArray(partition) || !partition.every(isNonEmptyString)) {
@@ -310,9 +373,14 @@ function main(): void {
 
   const result = loadAndValidate(options.manifestPath);
   if (options.mode === 'list') {
-    terminal.log('id\tkind\tfixtureId\tmethods');
+    const supersededBy = new Map(
+      result.manifest.deprecations.map((entry) => [entry.id, entry.supersededBy])
+    );
+    terminal.log('id\tkind\tfixtureId\tmethods\tsupersededBy');
     for (const entry of result.manifest.cases) {
-      terminal.log(`${entry.id}\t${entry.kind}\t${entry.fixtureId}\t${entry.methods.join(',')}`);
+      terminal.log(
+        `${entry.id}\t${entry.kind}\t${entry.fixtureId}\t${entry.methods.join(',')}\t${supersededBy.get(entry.id) ?? ''}`
+      );
     }
     return;
   }
@@ -325,11 +393,13 @@ function main(): void {
     if (selected.length !== 1) {
       throw new Error(`AC selector must resolve exactly one case: ${options.acId}`);
     }
+    const deprecation = result.manifest.deprecations.find((entry) => entry.id === options.acId);
     terminal.log(JSON.stringify({
       ok: true,
       result: 'MANIFEST_VALID',
       manifestSha256: result.sha256,
-      case: selected[0]
+      case: selected[0],
+      ...(deprecation === undefined ? {} : { deprecation })
     }, null, 2));
     return;
   }

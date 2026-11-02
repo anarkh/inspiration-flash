@@ -35,7 +35,7 @@ import {
 const RUNNER_SCHEMA_VERSION = 1;
 const RUNNER_ID = "infinite-flow-migration-acceptance";
 const FROZEN_ACCEPTANCE_MANIFEST_SHA256 =
-  "9c9da7e7f83c05422b3b1ac2ad77cc0260fd8dcd1b0df2d62f3b5556af4867c7";
+  "d990875da321258ff52031423b5d6752ac5166ee8f415a564f89e86ea98417c8";
 const scriptDirectory = dirname(resolve(process.argv[1]));
 const scriptProjectRoot = resolve(scriptDirectory, "..");
 const defaultRepositoryRoot = resolve(scriptProjectRoot, "..");
@@ -612,11 +612,11 @@ function loadAcceptanceRegistry() {
       `acceptance manifest SHA-256 drifted from ${FROZEN_ACCEPTANCE_MANIFEST_SHA256}`,
     );
   }
-  if (manifest?.schemaVersion !== 1 || manifest?.acceptanceVersion !== "v2") {
-    failures.push("acceptance manifest schema/version is not the frozen v2 contract");
+  if (manifest?.schemaVersion !== 2 || manifest?.acceptanceVersion !== "v2") {
+    failures.push("acceptance manifest schema/version is not the frozen schema 2 / v2 contract");
   }
-  if (!Array.isArray(manifest?.cases) || manifest.cases.length !== 103) {
-    failures.push("acceptance manifest must contain exactly 103 cases");
+  if (!Array.isArray(manifest?.cases) || manifest.cases.length !== 108) {
+    failures.push("acceptance manifest must contain exactly 108 cases");
   }
   failures.push(...validateCaseRunnerRegistry(manifest));
   return { manifest, manifestSha256, failures };
@@ -1518,6 +1518,10 @@ async function main() {
   const manifestCase = Array.isArray(registry.manifest?.cases)
     ? registry.manifest.cases.find((entry) => entry?.id === options.acId)
     : undefined;
+  // A deprecated case still runs against its frozen fixture; the report names its replacement.
+  const deprecation = Array.isArray(registry.manifest?.deprecations)
+    ? registry.manifest.deprecations.find((entry) => entry?.id === options.acId)
+    : undefined;
   if (manifestCase === undefined) {
     const message = "selected registered AC is missing from the frozen acceptance manifest";
     emitAndExit(
@@ -1880,6 +1884,9 @@ async function main() {
       fixtureId: manifestCase.fixtureId,
       expected: manifestCase.expected,
       requiredMethods: manifestCase.methods,
+      ...(deprecation === undefined
+        ? {}
+        : { deprecation: { supersededBy: deprecation.supersededBy, reason: deprecation.reason } }),
     },
     candidate,
     acceptance: {
