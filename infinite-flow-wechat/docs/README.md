@@ -9,6 +9,7 @@
 3. [状态与风险](03-status-and-risks.md)：当前完成度、非声明项、风险与下一道门禁。
 4. [DevTools 本地试玩 Smoke](04-devtools-smoke.md)：无真实 AppID 的 NON_RELEASE 试玩纵切；DevTools 可玩 ≠ 真机/发布/持久性验收。
 5. [验收 registry 说明](../acceptance/README.md)：122 个稳定 AC ID（其中 19 个显式废弃）的冻结登记和维护规则。
+6. [数值与战力改造](06-numbers-and-power-overhaul.md)：改造决定、验收目标、基线诊断和 `npm run balance:*` 数值模拟工具。
 
 ## 权威基线
 
