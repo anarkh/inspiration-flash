@@ -37,6 +37,8 @@ function enterCombat(withMethods: boolean): GameState {
   if (withMethods) {
     state = commit(state, { type: 'hub/learn-method', methodId: 'mist_breathing' });
     state = commit(state, { type: 'hub/learn-method', methodId: 'iron_body' });
+    // 铁衣诀 is the 主修 and 吐纳诀 the 辅修.
+    state = commit(state, { type: 'hub/activate-method', methodId: 'iron_body' });
   }
   const entry = requireAction(state, 'hub.entry.confirm');
   assert(entry.event?.kind === 'local' && entry.event.action.type === 'entry/request-enter', 'entry must use the host entry flow');
@@ -54,14 +56,12 @@ function verifyMethodChoices(): void {
   const state = enterCombat(true);
   const actions = buildGameViewModel(state, {}).sections[2].actions;
   const techniques = actions.filter(action => action.actionId.startsWith('combat.method:'));
-  assert(techniques.length === 2, 'both learned entry techniques are directly selectable');
+  assert(techniques.map(action => action.actionId).join(',') === 'combat.method:iron_body', 'only the 主修 brings a technique; the 辅修 has none');
   assert(techniques.every(action => action.placement === 'advanced'), 'techniques retain the established action placement');
   assert(!actions.some(action => action.actionId === 'combat.advanced.toggle'), 'combat no longer offers an advanced tactics toggle');
   assert(commandFrom(requireAction(state, 'combat.retreat-run')).type === 'run/retreat', 'run retreat is available to the menu without a tactics gate');
   const iron = requireAction(state, 'combat.method:iron_body');
-  const mist = requireAction(state, 'combat.method:mist_breathing');
   assert(iron.readout?.includes('进入守势'), 'iron body shows its actual guarding effect');
-  assert(mist.readout?.includes('1 层蓄息'), 'mist breathing shows the entry rank effect');
   assert(iron.readout?.includes('每场一次，不耗回合，不触发反击'), 'technique timing and use limit are explicit');
   const command = commandFrom(iron);
   assert(command.type === 'combat/use-method-technique' && command.methodId === 'iron_body', 'selected method is included in the dispatched command');
@@ -75,10 +75,19 @@ function verifyMethodChoices(): void {
   assert(selected.player.hp === state.player.hp, 'technique does not trigger an enemy counterattack');
   const used = requireAction(selected, 'combat.method:iron_body');
   assert(!used.enabled && !used.event && used.disabledReason?.includes('已经使用'), 'used technique stays visible and disabled');
-  assert(requireAction(selected, 'combat.method:mist_breathing').enabled, 'the other technique remains independently selectable');
-  const afterMist = commit(selected, commandFrom(requireAction(selected, 'combat.method:mist_breathing')));
+
+  // A run entered before the loadout froze every learned method; it keeps them until it ends.
+  const legacyRun: GameState = {
+    ...state,
+    run: { ...state.run!, methodSnapshots: [...state.run!.methodSnapshots!, { rulesVersion: 1, methodId: 'mist_breathing', rank: 1 }] }
+  };
+  const mist = requireAction(legacyRun, 'combat.method:mist_breathing');
+  assert(mist.readout?.includes('1 层蓄息'), 'mist breathing shows the entry rank effect');
+  const legacySelected = commit(legacyRun, commandFrom(requireAction(legacyRun, 'combat.method:iron_body')));
+  assert(requireAction(legacySelected, 'combat.method:mist_breathing').enabled, 'the other frozen technique remains independently selectable');
+  const afterMist = commit(legacySelected, commandFrom(requireAction(legacySelected, 'combat.method:mist_breathing')));
   assert(afterMist.combat?.effects?.breathStacks === 1, 'the second chosen technique applies its own effect');
-  assert(afterMist.combat.turn === selected.combat.turn, 'each technique preserves the current turn');
+  assert(afterMist.combat.turn === legacySelected.combat!.turn, 'each technique preserves the current turn');
 
   const learnedAfterEntry: GameState = { ...state, learnedMethods: [...state.learnedMethods, 'cloud_step'] };
   assert(!buildGameViewModel(learnedAfterEntry, {}).sections[2].actions.some(action => action.actionId === 'combat.method:cloud_step'), 'only entry snapshot methods are exposed');

@@ -91,6 +91,7 @@ export type GameCommand =
   | Readonly<{ type: 'hub/learn-method'; methodId: MethodId }>
   | Readonly<{ type: 'hub/upgrade-method'; methodId: MethodId }>
   | Readonly<{ type: 'hub/activate-method'; methodId: MethodId }>
+  | Readonly<{ type: 'hub/assign-support-method'; methodId: MethodId }>
   | Readonly<{ type: 'hub/unlock-bloodline'; bloodlineId: BloodlineId }>
   | Readonly<{ type: 'hub/upgrade-bloodline'; bloodlineId: BloodlineId }>
   | Readonly<{ type: 'hub/activate-bloodline'; bloodlineId: BloodlineId }>
@@ -207,6 +208,7 @@ const COMMAND_TYPES: ReadonlySet<string> = new Set<GameCommandType>([
   'hub/learn-method',
   'hub/upgrade-method',
   'hub/activate-method',
+  'hub/assign-support-method',
   'hub/unlock-bloodline',
   'hub/upgrade-bloodline',
   'hub/activate-bloodline',
@@ -353,6 +355,7 @@ function isCommandPayloadValid(command: Record<string, unknown>, type: GameComma
     case 'hub/learn-method':
     case 'hub/upgrade-method':
     case 'hub/activate-method':
+    case 'hub/assign-support-method':
       return isString(command.methodId);
     case 'hub/unlock-bloodline':
     case 'hub/upgrade-bloodline':
@@ -484,6 +487,7 @@ const HUB_COMMANDS: ReadonlySet<GameCommandType> = new Set([
   'hub/learn-method',
   'hub/upgrade-method',
   'hub/activate-method',
+  'hub/assign-support-method',
   'hub/unlock-bloodline',
   'hub/upgrade-bloodline',
   'hub/activate-bloodline',

@@ -1648,8 +1648,8 @@ const PARTY_SECTIONS = [
     facts: ['并肩作战'], on: '★ 出战中', pick: '点击设为出战', empty: '尚未招募同伴', where: '首通对应副本后，可在同行引路人处招募' },
   { tab: 'bloodlines', category: '血统', kind: 'bloodline', rule: '同时激活 1 种，属性常驻，命中时自动触发血统效果',
     facts: ['1 阶属性', '2 阶属性', '3 阶属性', '命中效果'], on: '★ 已激活', pick: '点击激活', empty: '尚未觉醒血统', where: '可在血脉祭司处觉醒' },
-  { tab: 'methods', category: '功法', kind: undefined, rule: '已学的全部生效；常用的战技排在「法术」首位',
-    facts: ['功法被动', '主动战技'], on: '★ 常用', pick: '点击设为常用', empty: '尚未学习功法', where: '可在修行导师处学习' },
+  { tab: 'methods', category: '功法', kind: undefined, rule: '主修、辅修各装配 1 门：主修给属性、被动和战技，辅修给属性和被动，其余不生效',
+    facts: ['功法被动', '主动战技'], on: '★ 主修', pick: '点下方「主修」或「辅修」装配', empty: '尚未学习功法', where: '可在修行导师处学习' },
 ] as const;
 
 /** One kind of companion on the character sheet: chosen in the hub, read-only on a run. */
@@ -1660,34 +1660,40 @@ function renderPartyLoadout(context: SheetContext, section: typeof PARTY_SECTION
   const runParty = section.kind === undefined ? [] : (context.model.sections[1].loadout?.runParty ?? []).filter(member => member.kind === section.kind);
   const gap = 4 * u;
   const footerHeight = 28 * u;
+  // A method takes one of two slots, so its card carries both choices as a row of buttons under its text instead of one tap.
+  const slotted = section.tab === 'methods';
+  const slotButtonWidth = slotted ? catalogButtonWidth(context, '主修') : 0;
+  const slotRowHeight = slotted ? 46 : 0;
   const textWidth = context.width - 62 * u;
   const units = (size: number) => Math.max(8, Math.floor(textWidth / (size * u)));
   const ruleLines = wrapInfiniteFlowLine(section.rule, Math.max(8, Math.floor((context.width - 16 * u) / (10.5 * u))));
   const ruleHeight = (ruleLines.length * 16 + 12) * u;
   type PartyCard = Readonly<{ id: string; name: string; level: string; status: string; lines: readonly string[]; active: boolean;
-    visualAssetKey?: string; action?: ViewActionModel; height: number }>;
+    visualAssetKey?: string; action?: ViewActionModel; slotActions: readonly ViewActionModel[]; height: number }>;
   const cards: PartyCard[] = hub
     ? rows.map(row => {
-      const active = /出战中|已激活|常用/.test(row.status);
-      const action = row.actions.find(candidate => candidate.actionId.includes('.activate:'));
+      const slot = slotted ? row.status.match(/主修|辅修/)?.[0] : undefined;
+      const active = /出战中|已激活/.test(row.status) || slot !== undefined;
+      const action = slotted ? undefined : row.actions.find(candidate => candidate.actionId.includes('.activate:'));
+      const slotActions = slotted ? row.actions.filter(candidate => /\.(?:activate|support):/.test(candidate.actionId)) : [];
       const usable = !active && action !== undefined && canExecute(context, action);
       const level = row.status.split('·').map(part => part.trim())
-        .filter(part => !/^(出战中|已激活|常用|未出战|未激活|已拥有)$/.test(part)).join(' · ');
+        .filter(part => !/^(出战中|已激活|主修|辅修|未出战|未激活|已拥有)$/.test(part)).join(' · ');
       const lines = section.facts.flatMap(label => {
         const value = row.details.find(item => item.label === label)?.value;
         return value === undefined ? [] : wrapInfiniteFlowLine(readable(`${label.replace(/^\d 阶属性$/, '属性')}：${value}`), units(11));
       }).slice(0, 4);
-      return { id: row.id, name: row.name, level, lines, active, visualAssetKey: row.visualAssetKey,
-        status: active ? section.on : usable ? section.pick : readable(action?.disabledReason ?? '暂不可更换'),
-        ...(usable ? { action } : {}), height: Math.max(60, 46 + lines.length * 17) * u };
+      return { id: row.id, name: row.name, level, lines, active, visualAssetKey: row.visualAssetKey, slotActions,
+        status: slot === '辅修' ? '◆ 辅修' : active ? section.on : usable || slotted ? section.pick : readable(action?.disabledReason ?? '暂不可更换'),
+        ...(usable ? { action } : {}), height: (Math.max(60, 46 + lines.length * 17) + slotRowHeight) * u };
     })
     : runParty.map(member => {
       const lines = wrapInfiniteFlowLine(member.description, units(11)).slice(0, 4);
       return { id: `${member.kind}/${member.id}`, name: member.name, level: '', lines, active: true, visualAssetKey: member.visualAssetKey,
-        status: `本局${section.on.replace('★ ', '')}`, height: Math.max(60, 46 + lines.length * 17) * u };
+        slotActions: [], status: `本局${section.on.replace('★ ', '')}`, height: Math.max(60, 46 + lines.length * 17) * u };
     });
   const emptyLines = section.kind === undefined && !hub
-    ? wrapInfiniteFlowLine('副本中按入场时已学的全部功法生效，战技在战斗「法术 → 功法」里使用。', units(11))
+    ? wrapInfiniteFlowLine('副本中按入场时的主修和辅修生效，主修的战技在战斗「法术 → 功法」里使用。', units(11))
     : [hub ? section.empty : '本局未带', ...(hub ? wrapInfiniteFlowLine(section.where, units(11)) : [])];
   const emptyHeight = (emptyLines.length * 18 + 12) * u;
   const contentHeight = ruleHeight + gap + (cards.length > 0 ? cards.reduce((sum, card) => sum + card.height + gap, 0) : emptyHeight);
@@ -1717,11 +1723,18 @@ function renderPartyLoadout(context: SheetContext, section: typeof PARTY_SECTION
     catalogText(context, node0, 'PartyCardEffect', card.lines.join('\n'), textX,
       card.height / 2 - 43 * u - linesHeight / 2, textWidth, linesHeight, 11, palette().textMuted);
     if (card.action) context.options.bindAction(node0, card.action);
+    card.slotActions.forEach((slotAction, index) => {
+      const enabled = canExecute(context, slotAction);
+      const x = context.width / 2 - slotButtonWidth / 2 - 6 * u - (card.slotActions.length - 1 - index) * (slotButtonWidth + 6 * u);
+      const control = catalogButton(context, node0, `MobileSheetPartySlot:${slotAction.actionId}`,
+        slotAction.actionId.includes('.support:') ? '辅修' : '主修', x, -card.height / 2 + 24 * u, slotButtonWidth, enabled, undefined, enabled);
+      if (enabled) context.options.bindAction(control, slotAction);
+    });
     cursor += card.height + gap;
   }
   const footerTop = -context.bodyHeight / 2 + footerHeight;
   catalogRule(context.body, 'MobileSheetPartyFooterRule', footerTop, context.width);
-  catalogText(context, context.body, 'MobileSheetPartyFooter', hub ? '点卡片更换 · 下次入场生效' : '副本中不能更换 · 返回主神空间后调整',
+  catalogText(context, context.body, 'MobileSheetPartyFooter', hub ? `${slotted ? '点「主修」「辅修」更换' : '点卡片更换'} · 下次入场生效` : '副本中不能更换 · 返回主神空间后调整',
     0, footerTop - footerHeight / 2, context.width, footerHeight, 11, palette().textMuted, true);
 }
 

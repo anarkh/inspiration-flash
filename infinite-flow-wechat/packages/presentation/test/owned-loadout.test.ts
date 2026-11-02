@@ -53,9 +53,17 @@ function verifyOwnedLoadout(): void {
 
   state = commit(state, { type: 'hub/learn-method', methodId: 'mist_breathing' });
   state = commit(state, { type: 'hub/learn-method', methodId: 'iron_body' });
-  const methodTarget = state.activeMethod === 'iron_body' ? 'mist_breathing' : 'iron_body';
-  state = configure(state, `methods/${methodTarget}`, 'hub/activate-method');
-  assert(state.activeMethod === methodTarget, 'learned method can become the preferred method');
+  state = commit(state, { type: 'hub/learn-method', methodId: 'gate_sense' });
+  assert(state.activeMethod === 'mist_breathing' && state.supportMethod === 'iron_body', 'the first two methods fill 主修 and 辅修');
+  state = configure(state, 'methods/iron_body', 'hub/activate-method');
+  assert(state.activeMethod === 'iron_body' && state.supportMethod === 'mist_breathing', 'raising the 辅修 to 主修 swaps the two');
+  state = configure(state, 'methods/gate_sense', 'hub/assign-support-method');
+  assert(state.activeMethod === 'iron_body' && state.supportMethod === 'gate_sense', 'an idle learned method can become the 辅修');
+  const mainRow = ownedRow(state, 'methods/iron_body');
+  assert(mainRow.status.includes('主修') && ownedRow(state, 'methods/gate_sense').status.includes('辅修')
+    && !ownedRow(state, 'methods/mist_breathing').status.match(/主修|辅修/), 'rows name their slot and an idle method has none');
+  assert(mainRow.actions.every(candidate => !candidate.actionId.startsWith('hub.methods.activate:') || !candidate.enabled),
+    'the 主修 cannot be chosen as 主修 again');
 
   state = commit(state, { type: 'hub/unlock-bloodline', bloodlineId: 'titan_marrow' });
   state = commit(state, { type: 'hub/unlock-bloodline', bloodlineId: 'void_symbiote' });
@@ -102,7 +110,7 @@ function verifyOwnedLoadout(): void {
   assert(new Set(view.rows.map(row => row.id)).size === view.rows.length, 'owned row IDs must be globally unique');
   assert(new Set(actions.map(action => action.actionId)).size === actions.length, 'owned action IDs must be globally unique');
   const commandTypes = new Set<GameCommand['type']>([
-    'hub/equip-equipment', 'hub/activate-pet', 'hub/activate-method',
+    'hub/equip-equipment', 'hub/activate-pet', 'hub/activate-method', 'hub/assign-support-method',
     'hub/activate-bloodline', 'hub/activate-companion', 'hub/activate-equipment-memory'
   ]);
   for (const action of actions as readonly ViewActionModel[]) {

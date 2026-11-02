@@ -2439,8 +2439,10 @@ export function describeHubPreparationChange(
         if (before === '未觉醒') return `${row.name}已觉醒 · 在「角色 → 血统」激活`;
         break;
       case 'methods':
-        if (before === '未学习') return `${row.name}已学会 · 战技在副本战斗「法术 → 功法」`;
-        break;
+        if (before !== '未学习') break;
+        if (row.status.includes('主修')) return `${row.name}已学会 · 已设为主修，属性、被动和战技生效`;
+        if (row.status.includes('辅修')) return `${row.name}已学会 · 已设为辅修，属性和被动生效`;
+        return `${row.name}已学会 · 在「角色 → 功法」设为主修或辅修后生效`;
       default:
         break;
     }

@@ -1,6 +1,6 @@
 import {
   BLOODLINE_CATALOG, COMPANION_CATALOG, DUNGEONS, EQUIPMENT, EQUIPMENT_SLOTS, ITEMS,
-  METHODS, METHOD_TECHNIQUE_CATALOG, PETS, getGameAsset, getEquipmentTemperStatus, getPetSupport,
+  METHODS, METHOD_TECHNIQUE_CATALOG, PETS, getGameAsset, getEquipmentTemperStatus, getEquippedMethods, getMethodStats, getPetSupport,
   type Cost, type GameState, type ItemId, type EquipmentId, type GameAssetKind, type PetSupport
 } from '@infinite-flow/core';
 import { MAIN_GOD_TASKS, evaluateTask } from '@infinite-flow/core/task-system';
@@ -223,7 +223,7 @@ function buildHubRows(
       if (!action.actionId.startsWith(`hub.${rowPanel}.`) || action.actionId.includes('.select:')) return false;
       if (rowPanel === 'equipment' && /^hub\.equipment\.commission\.(material|start|recall)$/.test(action.actionId)) return false;
       // Merchants only sell and train; wearing, carrying and choosing who goes along live on the character sheet.
-      if (/^hub\.(?:equipment\.(?:equip:|memory\.)|supplies\.toggle:|(?:pets|methods|bloodlines|companions)\.activate:)/.test(action.actionId)) return false;
+      if (/^hub\.(?:equipment\.(?:equip:|memory\.)|supplies\.toggle:|(?:pets|methods|bloodlines|companions)\.activate:|methods\.support:)/.test(action.actionId)) return false;
       // What is already owned offers no second purchase, only training and taking it along.
       if (owned && /^hub\.(?:equipment\.buy|pets\.buy|methods\.learn|bloodlines\.unlock|companions\.recruit):/.test(action.actionId)) return false;
       return true;
@@ -299,23 +299,26 @@ function buildHubRows(
         }, owned);
       });
       break;
-    case 'methods':
+    case 'methods': {
+      const [main, support] = getEquippedMethods(state);
       rows = METHOD_TECHNIQUE_CATALOG.filter(technique => included(technique.methodId)).map(technique => {
         const method = METHODS[technique.methodId];
         const rank = state.methodRanks[method.id];
+        const slot = method.id === main ? '主修' : method.id === support ? '辅修' : undefined;
         return rowFromView(panel, method.id, {
           name: method.name, category: '功法', description: method.description, visualAssetKey: asset('item', `method_${method.id}`),
-          status: rank ? `${rank} 阶${state.activeMethod === method.id ? ' · 常用' : ''}` : '未学习',
+          status: rank ? `${rank} 阶${slot ? ` · ${slot}` : ''}` : '未学习',
           details: [
             { label: '功法被动', value: method.passive },
-            { label: '学习属性', value: statsReadout(method.stats) },
+            { label: '功法属性', value: `${statsReadout(getMethodStats(method.id, rank ?? 1))}（每阶 ${statsReadout(method.stats)}，装配为主修或辅修时生效）` },
             { label: '主动战技', value: `${technique.name}：${effectReadout(technique.effects[rank ?? 1])}${technique.requiresActivePet ? '；需要出战灵宠' : ''}` },
             { label: '学习消耗', value: costReadout(method.cost) },
-            { label: '生效方式', value: `被动学会即生效；战技「${technique.name}」在副本战斗「法术」里使用，每场一次。精研后下次入场生效；常用在「角色 → 功法」设置，只调整列表顺序。` }
+            { label: '生效方式', value: `在「角色 → 功法」装配主修和辅修各一门：主修给属性、被动和战技「${technique.name}」（副本战斗「法术」里使用，每场一次），辅修给属性和被动，其余已学功法不生效。下次入场生效。` }
           ]
         }, rank !== undefined);
       });
       break;
+    }
     case 'bloodlines':
       rows = BLOODLINE_CATALOG.filter(bloodline => included(bloodline.id)).map(bloodline => {
         const rank = state.bloodlineRanks[bloodline.id];
@@ -434,8 +437,9 @@ function shopListing(state: GameState, panel: HubCatalogPanel, row: HubShopRowVi
     case 'methods': {
       const rank = state.methodRanks[row.id as keyof typeof state.methodRanks];
       const technique = row.details.find(fact => fact.label === '主动战技')?.value ?? '';
+      const slot = row.status.match(/主修|辅修/)?.[0];
       return {
-        ...(rank === undefined ? { badge: { label: '未学习', tone: 'locked' } } : state.activeMethod === row.id ? { badge: { label: '常用', tone: 'info' } } : {}),
+        ...(rank === undefined ? { badge: { label: '未学习', tone: 'locked' } } : slot ? { badge: { label: slot, tone: 'info' } } : {}),
         ...(rank === undefined ? {} : { level: { current: rank, max: 3 } }),
         lines: [`被动：${METHODS[row.id as keyof typeof METHODS].passive}`, `战技：${technique}`],
         ...inline(rank === undefined ? find('learn') : find('upgrade'))
@@ -588,7 +592,8 @@ export function buildHubOwnedLoadoutCatalog(
         // A piece already worn has nothing to press; its row only shows that it is worn.
         const worn = panel === 'equipment' && Object.values(state.equipped).includes(id as EquipmentId);
         const actions = view.actions
-          .filter(action => action.actionId.startsWith(`hub.${panel}.${panel === 'equipment' ? 'equip' : 'activate'}:`))
+          .filter(action => action.actionId.startsWith(`hub.${panel}.${panel === 'equipment' ? 'equip' : 'activate'}:`)
+            || (panel === 'methods' && action.actionId.startsWith('hub.methods.support:')))
           .filter(action => !worn || !action.actionId.startsWith('hub.equipment.equip:'))
           .map(action => ({ ...action, actionId: `${action.actionId}::owned/${panel}/${id}` }));
         if (panel === 'equipment') {

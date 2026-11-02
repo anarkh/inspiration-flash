@@ -406,7 +406,6 @@ import type {
 import {
   METHOD_CULTIVATION_RULES_VERSION,
   createMethodRunSnapshot,
-  createMethodRunSnapshots,
   getMethodTechniqueDefinition,
   getMethodTechniqueEffect,
   getMethodUpgradeStatus,
@@ -1145,7 +1144,10 @@ export type GameState = {
   preparedEquipmentMemoryHunt?: PreparedEquipmentMemoryHunt;
   learnedMethods: MethodId[];
   methodRanks: Partial<Record<MethodId, MethodRank>>;
+  /** 主修: its stats, passive and technique apply. */
   activeMethod?: MethodId;
+  /** 辅修: its stats and passive apply, without a technique. Other learned methods stay idle. */
+  supportMethod?: MethodId;
   bloodlineRanks: Partial<Record<BloodlineId, BloodlineRank>>;
   activeBloodline?: BloodlineId;
   completedDungeonIds: DungeonId[];
@@ -2066,7 +2068,7 @@ function getDungeonEventContext(state: GameState): DungeonEventContext {
   const activePet = getAvailableActivePet(state);
 
   return {
-    learnedMethods: getAvailableLearnedMethods(state),
+    learnedMethods: getAvailableEquippedMethods(state),
     ownedEquipment: state.ownedEquipment,
     equipped,
     activeEquipmentSetTags: getEquipmentSystemStatus(state).activeSets,
@@ -2081,7 +2083,7 @@ function getCombatMechanicsContext(state: GameState) {
   const activePet = getAvailableActivePet(state);
   return {
     stats: getDerivedStats(state),
-    learnedMethods: getAvailableLearnedMethods(state),
+    learnedMethods: getAvailableEquippedMethods(state),
     activePetPassiveTags: activePet ? getPetPassiveTags(PETS[activePet]) : [],
     activePetId: activePet
   };
@@ -3283,8 +3285,34 @@ export function isCurrentDungeonFeatureAvailable(state: GameState, feature: Arch
   return !lawState || isArchiveFeatureAvailable(lawState, feature);
 }
 
-function getAvailableLearnedMethods(state: GameState): MethodId[] {
-  return isCurrentDungeonFeatureAvailable(state, 'method') ? state.learnedMethods : [];
+/** The 主修: the chosen one, or the first learned when none was chosen (saves from before the loadout). */
+export function getMainMethod(state: Pick<GameState, 'learnedMethods' | 'activeMethod'>): MethodId | undefined {
+  return state.activeMethod !== undefined && state.learnedMethods.includes(state.activeMethod)
+    ? state.activeMethod
+    : state.learnedMethods[0];
+}
+
+/** A method's stats grow with its rank: R2 doubles and R3 triples the per-rank values. */
+export function getMethodStats(methodId: MethodId, rank: MethodRank): Partial<CoreStats> {
+  return Object.fromEntries(Object.entries(METHODS[methodId].stats).map(([stat, value]) => [stat, (value as number) * rank])) as Partial<CoreStats>;
+}
+
+/**
+ * 主修 then 辅修: the only learned methods whose stats and passives apply. Without a chosen 辅修 (saves from before the
+ * loadout) the next learned method fills it, so no save loses its second method.
+ */
+export function getEquippedMethods(state: Pick<GameState, 'learnedMethods' | 'activeMethod' | 'supportMethod'>): MethodId[] {
+  const main = getMainMethod(state);
+  if (main === undefined) return [];
+  const chosen = state.supportMethod;
+  const support = chosen !== undefined && chosen !== main && state.learnedMethods.includes(chosen)
+    ? chosen
+    : state.learnedMethods.find((methodId) => methodId !== main);
+  return support === undefined ? [main] : [main, support];
+}
+
+function getAvailableEquippedMethods(state: GameState): MethodId[] {
+  return isCurrentDungeonFeatureAvailable(state, 'method') ? getEquippedMethods(state) : [];
 }
 
 function getAvailableActivePet(state: GameState): PetId | undefined {
@@ -4631,7 +4659,7 @@ export function getCurrentCombatIntent(state: GameState): CombatIntent | undefin
     turn: state.combat.turn,
     effects: state.combat.effects,
     equipped: state.equipped,
-    learnedMethods: getAvailableLearnedMethods(state),
+    learnedMethods: getAvailableEquippedMethods(state),
     ...(encounterRank ? { encounterRank } : {})
   });
 }
@@ -5534,8 +5562,8 @@ function getPermanentDerivedStats(state: GameState): DerivedStats {
     speed: 8
   };
 
-  for (const methodId of state.learnedMethods) {
-    addPartialStats(statTotals, METHODS[methodId].stats);
+  for (const methodId of getEquippedMethods(state)) {
+    addPartialStats(statTotals, getMethodStats(methodId, state.methodRanks[methodId] ?? 1));
   }
 
   for (const equipment of getEquippedDefinitions(state)) {
@@ -5924,7 +5952,7 @@ export function getMethodCultivationProgress(state: GameState): MethodCultivatio
   return normalizeMethodCultivationProgress(state.learnedMethods, {
     rulesVersion: METHOD_CULTIVATION_RULES_VERSION,
     ranks: state.methodRanks,
-    activeMethod: state.activeMethod
+    activeMethod: getMainMethod(state)
   });
 }
 
@@ -6145,6 +6173,9 @@ export function learnMethod(state: GameState, methodId: MethodId): GameState {
   if (!canPay(state, method.cost)) return appendLog(state, `资源不足，无法学习${method.name}。`);
 
   const progress = getMethodCultivationProgress(state);
+  // The first method learned becomes the 主修 and the second fills the empty 辅修; later ones wait until chosen.
+  const main = progress.activeMethod ?? methodId;
+  const support = getEquippedMethods(state)[1] ?? (main === methodId ? undefined : methodId);
 
   return appendLog(
     normalizeHealth({
@@ -6154,9 +6185,10 @@ export function learnMethod(state: GameState, methodId: MethodId): GameState {
         ...progress.ranks,
         [methodId]: 1
       },
-      activeMethod: progress.activeMethod ?? methodId
+      activeMethod: main,
+      ...(support === undefined ? {} : { supportMethod: support })
     }),
-    `${method.name}灌入识海。${method.passive}`
+    `${method.name}灌入识海。${method.passive}${main === methodId ? '已设为主修。' : support === methodId ? '已设为辅修。' : '在「角色 → 功法」设为主修或辅修后生效。'}`
   );
 }
 
@@ -6186,15 +6218,34 @@ export function activateMethod(state: GameState, methodId: MethodId): GameState 
 
   const progress = getMethodCultivationProgress(state);
   if (progress.ranks[methodId] === undefined || progress.activeMethod === methodId) return state;
+  // Raising the 辅修 swaps the two; any other method replaces the 主修.
+  const [main, support] = getEquippedMethods(state);
+  const nextSupport = support === methodId ? main : support;
 
   return appendLog(
     {
       ...state,
       methodRanks: { ...progress.ranks },
-      activeMethod: methodId
+      activeMethod: methodId,
+      ...(nextSupport === undefined ? {} : { supportMethod: nextSupport })
     },
     `${METHODS[methodId].name}设为主修功法。`
   );
+}
+
+export function assignSupportMethod(state: GameState, methodId: MethodId): GameState {
+  if (state.phase !== 'hub' || !state.learnedMethods.includes(methodId)) return state;
+
+  const [main, support] = getEquippedMethods(state);
+  if (support === methodId) return state;
+  // Moving the 主修 down swaps the two; without a 辅修 there is nothing to swap with.
+  if (methodId === main) {
+    if (support === undefined) return state;
+    return appendLog({ ...state, activeMethod: support, supportMethod: main }, `${METHODS[methodId].name}改为辅修功法。`);
+  }
+
+  return appendLog({ ...state, ...(main === undefined ? {} : { activeMethod: main }), supportMethod: methodId },
+    `${METHODS[methodId].name}设为辅修功法。`);
 }
 
 export function buyPet(state: GameState, petId: PetId): GameState {
@@ -6456,9 +6507,10 @@ export function enterDungeon(
     falseTestimonyEntryGear,
     companionSnapshot
   );
+  // Only the 主修's technique enters the run; the 辅修 adds its stats and passive.
   const methodProgress = getMethodCultivationProgress(entryState);
-  const methodSnapshots = createMethodRunSnapshots(methodProgress);
   const methodSnapshot = createMethodRunSnapshot(methodProgress);
+  const methodSnapshots = methodSnapshot === undefined ? [] : [methodSnapshot];
   const combatReplayState = dungeonId === 'combat_replay_stage'
     ? createCombatReplayRunState(entryState)
     : undefined;
@@ -7312,7 +7364,7 @@ function getTrapRiskResolution(state: GameState, node: DungeonNode) {
     context: getCombatMechanicsContext(state),
     baseTrapCheck: stats.trapCheck
   });
-  const availableMethods = getAvailableLearnedMethods(state);
+  const availableMethods = getAvailableEquippedMethods(state);
 
   return {
     trap,
@@ -7898,7 +7950,7 @@ function getResolvedNodeReward(
   let reward: RewardBundle = node.reward;
   let line = `${node.title}结算完成，主神记录新增奖励。`;
 
-  if (node.reward.methodBonus && getAvailableLearnedMethods(state).includes(node.reward.methodBonus.methodId)) {
+  if (node.reward.methodBonus && getAvailableEquippedMethods(state).includes(node.reward.methodBonus.methodId)) {
     reward = {
       rewardPoints: (reward.rewardPoints ?? 0) + (node.reward.methodBonus.reward.rewardPoints ?? 0),
       lingyun: (reward.lingyun ?? 0) + (node.reward.methodBonus.reward.lingyun ?? 0),
@@ -9191,7 +9243,7 @@ function resolveMonsterEffects(
     player: {
       stats: getDerivedStats(state),
       equipped: combatEquipped,
-      learnedMethods: getAvailableLearnedMethods(state),
+      learnedMethods: getAvailableEquippedMethods(state),
       activePet,
       action: getCombatEffectAction(action, damageKind)
     },
@@ -9371,9 +9423,10 @@ export function getCurrentRunMethodSnapshots(state: Pick<GameState, 'run'>): rea
 }
 
 function getMethodTechniqueBreathCap(state: GameState): number {
+  // The 辅修's passive breath counts too, so a 主修 technique that adds breath fills the same cap the passive uses.
   const learnedMethods = state.run
-    ? getCurrentRunMethodSnapshots(state).map(({ methodId }) => methodId)
-    : getAvailableLearnedMethods(state);
+    ? [...getCurrentRunMethodSnapshots(state).map(({ methodId }) => methodId), ...getEquippedMethods(state)]
+    : getAvailableEquippedMethods(state);
   if (learnedMethods.includes('star_core_method')) return 3;
   if (learnedMethods.includes('mist_breathing')) return 2;
   return 0;
@@ -9431,7 +9484,7 @@ export function getCurrentMethodTechniqueStatus(
       legacyDisabled: false,
       available: false,
       reason: 'not_in_run',
-      unavailableReason: '这门功法不在本局入场功法库中。'
+      unavailableReason: '这门功法不是本局入场时的主修，没有战技。'
     };
   }
 
@@ -9760,7 +9813,7 @@ function monsterAttack(
     ? getGuardReduction(state, combat, strikeDamage, HEAVY_BLOW_GUARD_KEPT_RATE, directGuardMultiplier)
     : getPureGuardReduction(state, monster, combat, directGuardMultiplier);
   const guardedDamage = Math.max(0, strikeDamage - guardReduction);
-  const ironBodyGuard = combat.guarding && getAvailableLearnedMethods(state).includes('iron_body');
+  const ironBodyGuard = combat.guarding && getAvailableEquippedMethods(state).includes('iron_body');
   const ironBodyDamage = ironBodyGuard ? Math.floor(guardedDamage * 0.7) : guardedDamage;
   const perfectParry = blow.heavy && blow.perfectParry && combat.guarding;
   const parriedDamage = perfectParry ? Math.ceil(ironBodyDamage / 2) : ironBodyDamage;
@@ -10158,7 +10211,7 @@ export function performCombatAction(
     const statusPrefix = escapeOutcome.statusLines.length > 0 ? `${escapeOutcome.statusLines.join(' ')} ` : '';
 
     if (escapeOutcome.success) {
-      const escapeDamage = getAvailableLearnedMethods(state).includes('cloud_step') ? 2 : 8;
+      const escapeDamage = getAvailableEquippedMethods(state).includes('cloud_step') ? 2 : 8;
       const escapeLine =
         escapeDamage < 8
           ? `你借云隙步游斗拉开距离，只付出 ${escapeDamage} 点擦伤代价撤出战斗节点。`
@@ -10222,7 +10275,7 @@ export function performCombatAction(
   } else {
     const pierceBonus =
       state.equipped.weapon === 'armor_piercing_sword' && ['tower_butcher', 'mine_shell_guard'].includes(monster.id) ? 6 : 0;
-    cloudStepSkirmishBonus = getCloudStepSkirmishBonus(stats, monster, getAvailableLearnedMethods(state));
+    cloudStepSkirmishBonus = getCloudStepSkirmishBonus(stats, monster, getAvailableEquippedMethods(state));
     damage = calculatePhysicalDamage(stats.attack + pierceBonus + cloudStepSkirmishBonus, monster.defense);
   }
 

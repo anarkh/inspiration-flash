@@ -1438,6 +1438,14 @@ function sanitizeSavedMethodFields(value: unknown): unknown {
   } else {
     delete sanitized.activeMethod;
   }
+  // The 辅修 must be another learned method than the 主修 (the chosen one, or the first learned).
+  const mainMethod = progress.activeMethod ?? learnedMethods[0];
+  const supportMethod = value.supportMethod;
+  if (typeof supportMethod === 'string' && learnedMethods.includes(supportMethod as MethodId) && supportMethod !== mainMethod) {
+    sanitized.supportMethod = supportMethod;
+  } else {
+    delete sanitized.supportMethod;
+  }
 
   let methodSnapshots: readonly MethodRunSnapshot[] | undefined;
   let methodSnapshot: MethodRunSnapshot | undefined;

@@ -65,6 +65,7 @@ import {
   getEquipmentSoulSkillRechargeStatus,
   getEquipmentRecipePurchaseStatus,
   getEquipmentTemperStatus,
+  getEquippedMethods,
   getGameAsset,
   getInfernoUnlockedTier,
   getMethodCultivationProgress,
@@ -1792,8 +1793,11 @@ function buildMethodsPanel(state: GameState, requestedId: string | undefined): H
   const rank = progress.ranks[methodId];
   const learned = rank !== undefined;
   const technique = METHOD_TECHNIQUE_CATALOG[index]!;
-  const learnReadout = `学会后立即获得属性与被动，下次入场可使用战技「${technique.name}」。${method.passive}`;
-  const activateReadout = '将这门功法排到下次副本战技列表首位；不增加额外属性，也不影响使用其他已学功法。';
+  const [main, support] = getEquippedMethods(state);
+  const slot = methodId === main ? '主修' : methodId === support ? '辅修' : undefined;
+  const learnReadout = `学会后设为主修或辅修才生效：主修给属性、被动和战技「${technique.name}」，辅修给属性和被动。${method.passive}`;
+  const mainReadout = `主修给属性、被动，并带战技「${technique.name}」入场；原辅修若是这门，两门互换。下次入场生效。`;
+  const supportReadout = '辅修给属性和被动，不带战技；原主修若是这门，两门互换。下次入场生效。';
   const actions = [
     ...buildCatalogCycleActions('methods', entries, index),
     learned
@@ -1806,7 +1810,7 @@ function buildMethodsPanel(state: GameState, requestedId: string | undefined): H
       'primary',
       { type: 'hub/upgrade-method', methodId },
       {
-        readout: `永久提高功法阶位，增强战技「${technique.name}」；下次入场按新阶位生效。当前${rank === undefined ? '未学习' : `${rank}/3 阶`}。`,
+        readout: `永久提高功法阶位：属性按阶位成倍提高，并增强战技「${technique.name}」（作主修时可用）；下次入场按新阶位生效。当前${rank === undefined ? '未学习' : `${rank}/3 阶`}。`,
         fallbackDisabledReason: upgrade?.state === 'max_rank'
           ? `${method.name}已经达到 R3。`
           : !learned
@@ -1814,22 +1818,33 @@ function buildMethodsPanel(state: GameState, requestedId: string | undefined): H
             : `当前资源不足，无法精研${method.name}。`
       }
     ),
-    progress.activeMethod === methodId
-      ? disabledAction(`hub.methods.activate:${methodId}`, `设为常用：${method.name}`, 'primary', `${method.name}已经是常用功法。`, { readout: activateReadout })
+    slot === '主修'
+      ? disabledAction(`hub.methods.activate:${methodId}`, `设为主修：${method.name}`, 'primary', `${method.name}已经是主修。`, { readout: mainReadout })
       : previewCommandAction(
           state,
           `hub.methods.activate:${methodId}`,
-          `设为常用：${method.name}`,
+          `设为主修：${method.name}`,
           'primary',
           { type: 'hub/activate-method', methodId },
-          { recommendation: 'recommended', readout: activateReadout, fallbackDisabledReason: `请先学习${method.name}。` }
+          { recommendation: 'recommended', readout: mainReadout, fallbackDisabledReason: `请先学习${method.name}。` }
+        ),
+    slot === '辅修' || (slot === '主修' && support === undefined)
+      ? disabledAction(`hub.methods.support:${methodId}`, `设为辅修：${method.name}`, 'primary',
+        slot === '辅修' ? `${method.name}已经是辅修。` : '只学会一门功法时它就是主修，学会第二门后才能调换。', { readout: supportReadout })
+      : previewCommandAction(
+          state,
+          `hub.methods.support:${methodId}`,
+          `设为辅修：${method.name}`,
+          'primary',
+          { type: 'hub/assign-support-method', methodId },
+          { readout: supportReadout, fallbackDisabledReason: `请先学习${method.name}。` }
         )
   ];
   return {
     actions,
-    summary: `${method.name} · ${rank === undefined ? '未学习' : `${rank} 阶`} · ${state.activeMethod === methodId ? '常用功法' : '未设为常用'}`,
-    objectiveTitle: '学习获得被动，精研强化战技',
-    objectiveSummary: `${method.description} 已学功法的被动都可生效；常用设置只调整战技顺序。`
+    summary: `${method.name} · ${rank === undefined ? '未学习' : `${rank} 阶`} · ${slot ?? (learned ? '未装配' : '未学习')}`,
+    objectiveTitle: '主修与辅修',
+    objectiveSummary: `${method.description} 同时装配主修和辅修各一门：主修给属性、被动和战技，辅修给属性和被动，其余已学功法不生效。`
   };
 }
 

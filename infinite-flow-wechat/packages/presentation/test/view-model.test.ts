@@ -1160,10 +1160,17 @@ function verifyHubPanelsAndGrowthCommands(): void {
 
   const methodLearnView = buildGameViewModel(rich, { hubPanel: 'methods', hubSelections: { methods: 'mist_breathing' } });
   const learnedMethod = assertEnabledCommand(rich, methodLearnView, 'hub.methods.learn:mist_breathing', 'hub/learn-method');
-  const inactiveMethod: GameState = { ...learnedMethod, activeMethod: undefined };
+  // 吐纳诀 is learned but idle: 铁衣诀 is the 主修 and 观门法 the 辅修.
+  const inactiveMethod: GameState = { ...learnedMethod, learnedMethods: ['iron_body', 'mist_breathing', 'gate_sense'],
+    methodRanks: { iron_body: 1, mist_breathing: 1, gate_sense: 1 }, activeMethod: 'iron_body', supportMethod: 'gate_sense' };
   const methodGrowthView = buildGameViewModel(inactiveMethod, { hubPanel: 'methods', hubSelections: { methods: 'mist_breathing' } });
   assertEnabledCommand(inactiveMethod, methodGrowthView, 'hub.methods.upgrade:mist_breathing', 'hub/upgrade-method');
   assertEnabledCommand(inactiveMethod, methodGrowthView, 'hub.methods.activate:mist_breathing', 'hub/activate-method');
+  assertEnabledCommand(inactiveMethod, methodGrowthView, 'hub.methods.support:mist_breathing', 'hub/assign-support-method');
+  const onlyMain = buildGameViewModel(learnedMethod, { hubPanel: 'methods', hubSelections: { methods: 'mist_breathing' } })
+    .sections[2].actions.filter(action => /^hub\.methods\.(activate|support):/.test(action.actionId));
+  assert(onlyMain.length === 2 && onlyMain.every(action => !action.enabled && action.disabledReason),
+    'the only learned method is the 主修 and cannot move to the 辅修');
 
   const bloodlineUnlockView = buildGameViewModel(rich, { hubPanel: 'bloodlines', hubSelections: { bloodlines: 'titan_marrow' } });
   const unlockedBloodline = assertEnabledCommand(rich, bloodlineUnlockView, 'hub.bloodlines.unlock:titan_marrow', 'hub/unlock-bloodline');

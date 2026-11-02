@@ -123,6 +123,29 @@ describe('Web v1 golden compatibility', () => {
     );
   });
 
+  it('keeps a valid 辅修 and drops one that is not another learned method', () => {
+    const decodeWithSupport = (supportMethod: unknown, activeMethod: unknown = 'mist_breathing') => {
+      const raw = JSON.parse(fixture('new-hub-v1.json')) as { state: Record<string, unknown> };
+      raw.state.learnedMethods = ['mist_breathing', 'iron_body'];
+      raw.state.methodRanks = { mist_breathing: 1, iron_body: 2 };
+      if (activeMethod === undefined) delete raw.state.activeMethod;
+      else raw.state.activeMethod = activeMethod;
+      raw.state.supportMethod = supportMethod;
+      const result = decodeWebV1({ kind: 'web-local-storage-text', text: JSON.stringify(raw) });
+      expect(result.status).toBe('decoded');
+      if (result.status !== 'decoded') throw new Error(result.reason.message);
+      return result.state;
+    };
+
+    expect(decodeWithSupport('iron_body').supportMethod).toBe('iron_body');
+    expect(decodeWithSupport('mist_breathing').supportMethod).toBeUndefined();
+    expect(decodeWithSupport('void_heart').supportMethod).toBeUndefined();
+    expect(decodeWithSupport('not_a_method').supportMethod).toBeUndefined();
+    // Without a chosen 主修 the first learned method is the 主修, so it cannot also be the 辅修.
+    expect(decodeWithSupport('mist_breathing', undefined).supportMethod).toBeUndefined();
+    expect(decodeWithSupport('iron_body', undefined).supportMethod).toBe('iron_body');
+  });
+
   it('distinguishes invalid JSON, invalid state, old versions, and future versions', () => {
     const invalidJson = decodeFixture('invalid-json.txt');
     expect(invalidJson.status).toBe('rejected');

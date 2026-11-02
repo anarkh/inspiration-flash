@@ -6,6 +6,7 @@ import {
   activateMethod,
   activateOwnedEquipmentMemory,
   activatePet,
+  assignSupportMethod,
   attuneEquipment,
   beginPursuerAmbush,
   buyEquipment,
@@ -379,6 +380,8 @@ function applyDomainCommand(
       return upgradeMethod(state, command.methodId);
     case 'hub/activate-method':
       return activateMethod(state, command.methodId);
+    case 'hub/assign-support-method':
+      return assignSupportMethod(state, command.methodId);
     case 'hub/unlock-bloodline':
       return unlockBloodline(state, command.bloodlineId);
     case 'hub/upgrade-bloodline':

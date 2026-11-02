@@ -818,6 +818,13 @@ function assertDarkSheet(view, kind, insets) {
       assert.ok(action.enabled && action.event?.kind === 'command', 'party cards bind only executable original commands');
       assert.ok(['hub/activate-pet', 'hub/activate-companion', 'hub/activate-bloodline', 'hub/activate-method'].includes(action.event.command.type),
         'party cards only send an owned pet, companion, bloodline or method along');
+    } else if (name.startsWith('MobileSheetPartySlot:')) {
+      assert.equal(kind, 'character', 'choosing the 主修 and 辅修 belongs to the character sheet');
+      assert.ok(action.enabled && action.event?.kind === 'command', 'method slot buttons bind only executable original commands');
+      assert.ok(['hub/activate-method', 'hub/assign-support-method'].includes(action.event.command.type),
+        'method slot buttons only choose the 主修 or 辅修');
+      assert.ok(Math.abs(get(name).getComponent(api.UITransform).contentSize.height / catalogCssUnit() - 44) < 0.6,
+        'method slot buttons keep the 44 CSS-pixel touch height');
     } else if (name.startsWith('MobileSheetShopAction:')) {
       assert.ok(kind === 'npc' || kind === 'character', 'catalog direct action stays on its owning sheet');
       assert.ok(action.enabled && action.event, 'catalog directly binds only executable original actions');
@@ -1256,8 +1263,21 @@ let checkedRunRelicCards = 0;
   const pick = pets.actions.get('MobileSheetPartyCard:pets/mist_kitten');
   assert.ok(pick?.enabled && pick.event.command.type === 'hub/activate-pet', 'another owned pet card sends it along');
   assert.equal(commit(party, pick.event.command).activePet, 'mist_kitten', 'the party card commits the real activation');
-  const common = tab('methods').actions.get('MobileSheetPartyCard:methods/iron_body');
-  assert.ok(common?.enabled && common.event.command.type === 'hub/activate-method', 'a learned method can be made the common one');
+  // 吐纳诀 is the 主修 and 铁衣诀 the 辅修; each card offers the slot it does not hold.
+  const methods = tab('methods');
+  assert.equal(methods.actions.get('MobileSheetPartyCard:methods/iron_body'), undefined, 'a method card itself binds nothing');
+  const slotButton = (methodId, slot) => methods.actions.get(
+    `MobileSheetPartySlot:hub.methods.${slot}:${methodId}::owned/methods/${methodId}`);
+  const raise = slotButton('iron_body', 'activate');
+  assert.ok(raise?.enabled && raise.event.command.type === 'hub/activate-method', 'the 辅修 can be raised to 主修');
+  assert.equal(slotButton('iron_body', 'support'), undefined, 'the current 辅修 does not offer the 辅修 again');
+  assert.equal(slotButton('mist_breathing', 'activate'), undefined, 'the current 主修 does not offer the 主修 again');
+  const lower = slotButton('mist_breathing', 'support');
+  assert.ok(lower?.enabled && lower.event.command.type === 'hub/assign-support-method', 'the 主修 can move down to 辅修');
+  const raised = commit(party, raise.event.command);
+  assert.ok(raised.activeMethod === 'iron_body' && raised.supportMethod === 'mist_breathing', 'the slot button commits the real swap');
+  const labels = nodesIn(methods.rootNode).map(node => node.getComponent(api.Label)?.string).filter(Boolean);
+  assert.ok(labels.includes('★ 主修') && labels.includes('◆ 辅修'), 'the cards say which method holds which slot');
   assert.ok(nodesIn(tab('companions').rootNode).some(node => node.name === 'MobileSheetPartyEmpty:companions'), 'an empty tab says where to get one');
   const equipment = render(model, { kind: 'character', page: 0, tab: 'loadout' }, safeInsets, { ownedLoadout: () => owned });
   assert.ok(!nodesIn(equipment.rootNode).some(node => /:(?:pets|methods|bloodlines|companions)\//.test(node.name)),
@@ -1514,7 +1534,7 @@ function renderCarry(state, sheetState = { kind: 'character', page: 0, tab: 'car
   const state = { ...battle, player: { ...battle.player, hp: battle.player.maxHp - 10 } };
   const model = add(state);
   const methods = api.getInfiniteFlowCombatChoiceActions(model, 'spells').filter(action => action.actionId.startsWith('combat.method:'));
-  assert.deepEqual(methods.map(action => action.actionId).sort(), ['combat.method:iron_body', 'combat.method:mist_breathing'], 'both learned techniques appear in the default projection');
+  assert.deepEqual(methods.map(action => action.actionId), ['combat.method:mist_breathing'], 'only the 主修 technique enters the run; the 辅修 has none');
   for (const group of ['spells', 'medicines']) {
     const hud = renderCombatHud(model);
     assert.ok(hud.local.has(`WalkCombatChoice:${group}`), `${group}: persistent HUD entry exists`);
@@ -1544,7 +1564,6 @@ function renderCarry(state, sheetState = { kind: 'character', page: 0, tab: 'car
     const used = commit(state, method.event.command);
     const nextMethods = api.getInfiniteFlowCombatChoiceActions(add(used), 'spells');
     assert.equal(nextMethods.find(action => action.actionId === method.actionId).enabled, false, 'the selected technique is spent');
-    assert.equal(nextMethods.find(action => action.actionId === methods.find(other => other !== method).actionId).enabled, true, 'the other technique remains independently available');
   }
 
   const soulState = { ...state, run: { ...state.run,
@@ -2981,13 +3000,15 @@ const PARTY_CATEGORIES = new Set(['灵宠', '同伴', '血统', '功法']);
 const PARTY_TABS = { pets: 'pets', companions: 'companions', bloodlines: 'bloodlines', methods: 'methods' };
 /** Pets, companions, bloodlines and methods are sent along from their own character tab. */
 function assertPartyReachable(model, owned, configured) {
-  const tab = PARTY_TABS[configured.actionId.match(/^hub\.(\w+)\.activate:/)?.[1]];
+  const tab = PARTY_TABS[configured.actionId.match(/^hub\.(\w+)\.(?:activate|support):/)?.[1]];
   assert.ok(tab, `${configured.actionId}: activation belongs to a character tab`);
   const view = render(model, { kind: 'character', page: 0, tab }, safeInsets, { ownedLoadout: () => owned, actionPool: owned.rows.flatMap(row => row.actions) });
   assertDarkSheet(view, 'character', safeInsets);
   const row = owned.rows.find(candidate => candidate.actions.includes(configured));
   assert.ok(row && nodesIn(view.rootNode).some(node => node.name === `MobileSheetPartyCard:${row.id}`), `${configured.actionId}: its own tab shows the card`);
-  if (configured.enabled) assert.equal(view.actions.get(`MobileSheetPartyCard:${row.id}`), configured, `${configured.actionId}: the card binds the exact activation`);
+  // A method card holds two slots, so its 主修 and 辅修 buttons bind the choices instead of the card.
+  const control = configured.actionId.startsWith('hub.methods.') ? `MobileSheetPartySlot:${configured.actionId}` : `MobileSheetPartyCard:${row.id}`;
+  if (configured.enabled) assert.equal(view.actions.get(control), configured, `${configured.actionId}: the card binds the exact activation`);
 }
 
 function assertCatalogReachable(model, kind, catalog, extras = {}) {
@@ -3130,7 +3151,7 @@ function assertNpcActionDestination(model, original) {
     // exercised above. The obsolete bulk presets have no merchant replacement.
     return;
   }
-  if (/^hub\.(equipment\.(equip:|memory\.)|(?:pets|methods|bloodlines|companions)\.activate:)/.test(original.actionId)) {
+  if (/^hub\.(equipment\.(equip:|memory\.)|(?:pets|methods|bloodlines|companions)\.activate:|methods\.support:)/.test(original.actionId)) {
     replacedLegacyControls.add('owned-configuration');
     const owned = ownedFor(model);
     const actions = owned.rows.flatMap(row => row.actions);
@@ -3140,7 +3161,7 @@ function assertNpcActionDestination(model, original) {
       assert.ok(configured, `${original.actionId}: usable configuration remains on the owned character page`);
       assert.deepEqual(configured.event, original.event, 'owned configuration preserves the actual command');
     }
-    if (configured && original.actionId.includes('.activate:')) assertPartyReachable(model, owned, configured);
+    if (configured && /\.(?:activate|support):/.test(original.actionId)) assertPartyReachable(model, owned, configured);
     else if (configured) assertCatalogReachable(model, 'character', owned, { ownedLoadout: () => owned, actionPool: actions });
     return;
   }
