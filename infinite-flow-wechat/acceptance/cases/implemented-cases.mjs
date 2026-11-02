@@ -13263,6 +13263,182 @@ export async function law19Panopticon({ fixture, core, application, saveCodec, p
   };
 }
 
+/**
+ * Shared runner for the AC-LAW-CORE-* cases, which supersede AC-LAW-01..19 after
+ * the WeChat gameplay deliberately left the Web baseline. Each fixture holds a
+ * static hub input, static post-entry run patches, and per-scenario steps whose
+ * expected observations were derived by hand from the rules; every scenario
+ * starts from the same freshly entered run.
+ */
+export async function lawCoreScenarios({ fixture, core, application, saveCodec, projectRoot }) {
+  const label = fixture.fixtureId;
+  const base = loadFrozenJsonInput(projectRoot, fixture.baseInput);
+  const envelope = applyFrozenMutations(base.value, fixture.inputMutations);
+  const decoded = saveCodec.decodeWebV1({
+    kind: "web-local-storage-text",
+    text: JSON.stringify(envelope),
+  });
+  equal(decoded.status, "decoded", `${label} hub input decodes`);
+  if (decoded.status !== "decoded") {
+    throw new AcceptanceAssertionError(`${label} hub input must decode`);
+  }
+
+  const commit = (state, command, where) => {
+    const result = application.reduceGameCommand(state, command);
+    if (result.status !== "committed") {
+      throw new AcceptanceAssertionError(
+        `${label} ${where}: ${result.reason.code} ${result.reason.message}`,
+      );
+    }
+    return result.state;
+  };
+  const entered = commit(
+    decoded.state,
+    {
+      type: "run/enter",
+      dungeonId: fixture.entry.dungeonId,
+      protocolId: fixture.entry.protocolId,
+      seeds: { rulesVersion: 1, hiddenTaskSeed: fixture.entry.hiddenTaskSeed },
+    },
+    `enter ${fixture.entry.dungeonId}`,
+  );
+  const start = applyFrozenMutations(entered, fixture.runMutations);
+
+  const pick = (source, paths, where) =>
+    Object.fromEntries(paths.map((path) => {
+      const value = path.split(".").reduce((node, key) => node?.[key], source);
+      assert(value !== undefined, `${label} ${where} has no ${path}`);
+      return [path, value];
+    }));
+  const lawReadout = (state, where) => {
+    const law = core.getCurrentDungeonLaw(state);
+    assert(law !== undefined, `${label} ${where} has no dungeon law`);
+    return {
+      law: law.state.law,
+      display: {
+        title: law.display.title,
+        status: law.display.status,
+        severity: law.display.severity,
+        meter: law.display.meter,
+        targetReached: law.display.targetReached,
+      },
+      modifiers: law.modifiers,
+      clearedNodeIds: law.state.clearedNodeIds,
+      resolvedEventIds: law.state.resolvedEventIds,
+      combatOpenings: law.state.combatOpenings,
+      combatVictoryNodeIds: law.state.combatVictoryNodeIds,
+    };
+  };
+  const observe = (state, step, where) => {
+    if (step.law !== undefined) return pick(lawReadout(state, where), step.law, where);
+    if (step.gate !== undefined) {
+      const status = core.getCurrentRouteGateStatus(state, step.gate);
+      assert(status !== undefined, `${label} ${where} has no route gate to ${step.gate}`);
+      return {
+        from: state.run.currentNodeId,
+        gateId: status.gate.id,
+        isOpen: status.isOpen,
+        blockReason: status.blockReason ?? null,
+      };
+    }
+    if (step.roundtrip !== undefined) {
+      const reloaded = saveCodec.decodeWebV1({
+        kind: "web-local-storage-text",
+        text: JSON.stringify({ version: 1, state }),
+      });
+      equal(reloaded.status, "decoded", `${label} ${where} round-trip decodes`);
+      return pick(lawReadout(reloaded.state, where), step.roundtrip, where);
+    }
+    throw new AcceptanceBlockedError(`${label} ${where} observe step names no readout`);
+  };
+  // Trap and event steps can record the run damage they dealt, which is how the
+  // laws that scale traps or react to damage are seen from outside.
+  const withDamage = (state, command, where) => {
+    const before = state.run.damageTaken;
+    const next = commit(state, command, where);
+    return { state: next, record: { damageTaken: next.run.damageTaken - before } };
+  };
+
+  const runStep = (state, step, where) => {
+    switch (step.do) {
+      case "walk":
+        for (const nodeId of step.path) {
+          state = commit(state, { type: "run/move", nodeId }, `${where} move ${nodeId}`);
+        }
+        return { state };
+      case "fight": {
+        state = commit(state, { type: "run/select-node", nodeId: step.node }, `${where} select ${step.node}`);
+        const opening = step.opening ?? [];
+        for (let round = 0; state.phase === "combat"; round += 1) {
+          assert(round < 60, `${label} ${where} fight ${step.node} did not end`);
+          const action = opening[round] ?? "attack";
+          state = action === "technique"
+            ? commit(state, { type: "combat/use-method-technique" }, `${where} technique`)
+            : commit(state, { type: "combat/act", action }, `${where} ${action} r${round}`);
+        }
+        equal(state.phase, "explore", `${label} ${where} fight ${step.node} returns to exploration`);
+        return { state };
+      }
+      case "trap":
+        return withDamage(state, { type: "node/handle-trap", choice: step.choice }, where);
+      case "event":
+        return withDamage(
+          state,
+          { type: "node/resolve-event", eventId: step.eventId, optionId: step.optionId },
+          where,
+        );
+      case "collect":
+        return { state: commit(state, { type: "node/collect-reward" }, where) };
+      case "attempt": {
+        const result = application.reduceGameCommand(state, step.command);
+        return {
+          state: result.status === "committed" ? result.state : state,
+          record: {
+            status: result.status,
+            code: result.reason?.code ?? null,
+            message: result.reason?.message ?? null,
+          },
+        };
+      }
+      case "observe":
+        return { state, record: observe(state, step, where) };
+      default:
+        throw new AcceptanceBlockedError(`${label} ${where} has unknown step ${String(step.do)}`);
+    }
+  };
+
+  const results = [];
+  for (const scenario of fixture.scenarios) {
+    let state = start;
+    const observations = {};
+    for (const [index, step] of scenario.steps.entries()) {
+      const where = `${scenario.id} step ${index + 1}`;
+      const outcome = runStep(state, step, where);
+      state = outcome.state;
+      if (step.as !== undefined) {
+        assert(outcome.record !== undefined, `${label} ${where} records nothing for ${step.as}`);
+        assert(!Object.hasOwn(observations, step.as), `${label} ${where} reuses ${step.as}`);
+        observations[step.as] = JSON.parse(JSON.stringify(outcome.record));
+      }
+    }
+    deepEqual(
+      Object.keys(observations).sort(),
+      Object.keys(scenario.expected).sort(),
+      `${label} ${scenario.id} observation keys`,
+    );
+    for (const [key, value] of Object.entries(scenario.expected)) {
+      deepEqual(observations[key], value, `${label} ${scenario.id} ${key}`);
+    }
+    results.push({ id: scenario.id, status: "PASS", observations });
+  }
+
+  return {
+    fixtureId: label,
+    dungeonId: fixture.entry.dungeonId,
+    scenarios: results,
+  };
+}
+
 async function loadActualCocosAssetContract(projectRoot) {
   let esbuild;
   try {
@@ -13661,4 +13837,5 @@ export const implementedCaseFunctions = Object.freeze({
   law17Verdict,
   law18Replay,
   law19Panopticon,
+  lawCoreScenarios,
 });

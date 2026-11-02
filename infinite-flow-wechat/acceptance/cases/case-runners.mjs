@@ -89,6 +89,11 @@ const CASE_RUNNER_ROWS = [
   ["AC-LAW-17", "law-17-verdict", ["A-AC", "A-SMOKE"], { "A-AC": "law17Verdict" }],
   ["AC-LAW-18", "law-18-replay", ["A-AC", "A-SMOKE"], { "A-AC": "law18Replay" }],
   ["AC-LAW-19", "law-19-panopticon", ["A-AC", "A-SMOKE"], { "A-AC": "law19Panopticon" }],
+  ["AC-LAW-CORE-01", "law-core-01-demon-tower", ["A-AC"], { "A-AC": "lawCoreScenarios" }],
+  ["AC-LAW-CORE-02", "law-core-02-metro", ["A-AC"], { "A-AC": "lawCoreScenarios" }],
+  ["AC-LAW-CORE-03", "law-core-03-mine", ["A-AC"], { "A-AC": "lawCoreScenarios" }],
+  ["AC-LAW-CORE-04", "law-core-04-hospital", ["A-AC"], { "A-AC": "lawCoreScenarios" }],
+  ["AC-LAW-CORE-05", "law-core-05-arena", ["A-AC"], { "A-AC": "lawCoreScenarios" }],
   ["AC-COMBAT-001", "combat-one-action-one-turn", ["A-AC", "A-SMOKE"], null],
   ["AC-COMBAT-002", "combat-oracle-vectors", ["A-AC"], null],
   ["AC-COMBAT-003", "combat-resource-counters", ["A-AC"], null],
@@ -332,6 +337,26 @@ export const implementedFixtureScenarioIds = Object.freeze({
     "panopticon-boss-snapshot-and-freeze",
     "panopticon-decoy-rewards-idempotency",
     "panopticon-shadow-route-no-exposure",
+  ]),
+  "law-core-01-demon-tower": Object.freeze([
+    "fog-rises-on-damage-and-clamps",
+    "relief-landmarks-lower-fog",
+    "fog-gates-follow-pressure",
+  ]),
+  "law-core-02-metro": Object.freeze([
+    "tide-cycles-on-first-clears",
+    "signal-cache-calibrates-and-gates-follow-tide",
+  ]),
+  "law-core-03-mine": Object.freeze([
+    "gravity-flips-only-at-switches",
+    "upward-gravity-softens-traps",
+  ]),
+  "law-core-04-hospital": Object.freeze([
+    "pollution-rises-on-damage-and-clamps",
+    "triage-and-pharmacy-purify",
+  ]),
+  "law-core-05-arena": Object.freeze([
+    "opening-styles-repeat-and-rewrite",
   ]),
   "hash-canonical-json-v1": Object.freeze([
     "canonical-utf16-key-and-array-order",

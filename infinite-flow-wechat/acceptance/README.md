@@ -1,24 +1,51 @@
 # 迁移验收 registry
 
-`migration-acceptance-manifest.json` 是 Web 权威 registry 的独立冻结副本。它不是从 Markdown、代码扫描或已有测试自动生成的集合，因此删除实现或测试不会让验收范围跟着变小。
+`migration-acceptance-manifest.json` 由 Web 权威 registry 的独立冻结副本修订而来：原有 103 个 case 条目逐字保留，schema 2 只追加新 ID 与显式废弃记录，并相应更新数量和分区。它不是从 Markdown、代码扫描或已有测试自动生成的集合，因此删除实现或测试不会让验收范围跟着变小。
 
 ## 冻结合同
 
 | 分区 | 数量 | 作用 |
 | --- | ---: | --- |
-| `leaf` | 94 | 自动、Cocos smoke、Web oracle 与真机方法的基础阻断项 |
+| `leaf` | 99 | 自动、Cocos smoke、Web oracle 与真机方法的基础阻断项；其中 5 项已废弃，有效 94 项 |
 | `releaseEvidence` | 6 | 绑定冻结 leaf 证据的发布场景 |
 | `attestation` | 2 | 独立责任人签核与版本追溯 |
-| `derived` | 1 | 只读其余 102 项派生最终闭合 |
-| 总计 | 103 | 全部 P0，只有 PASS 可放行 |
+| `derived` | 1 | 只读其余有效 102 项派生最终闭合 |
+| 总计 | 108 | 全部 P0；有效 103 项只有 PASS 可放行 |
 
-来源：[Web migration acceptance manifest](../../infinite-flow/docs/knowledge-base/migration-acceptance-manifest.json)。冻结源文件 SHA-256：
+来源：[Web migration acceptance manifest](../../infinite-flow/docs/knowledge-base/migration-acceptance-manifest.json)。Web 冻结源文件 SHA-256：
 
 ```text
 9c9da7e7f83c05422b3b1ac2ad77cc0260fd8dcd1b0df2d62f3b5556af4867c7
 ```
 
+当前修订（schema 2）文件 SHA-256，校验器与 runner 均固定此值：
+
+```text
+d990875da321258ff52031423b5d6752ac5166ee8f415a564f89e86ea98417c8
+```
+
 稳定 ID 不可复用；语义变化时新增 ID 并显式废弃旧 ID。不得直接修改 `name`、`methods`、`fixtureId` 或 `expected` 来让已有实现通过。
+
+## 废弃
+
+根字段 `deprecations` 逐项登记 `{id, supersededBy, reason}`：`id` 必须是已登记 leaf，
+`supersededBy` 必须是未废弃的 leaf，`reason` 写明偏离原因。废弃项保留原 case、fixture、
+registration 与实现，仍可按 ID 执行，报告在 `case.deprecation` 中给出替代 ID 和原因；
+它不再计入有效 leaf，也不能作为放行证据。
+
+当前废弃的都是“玩法有意偏离 Web 基准”的章节法则流程，由按现行规则手算期望的
+`AC-LAW-CORE-*` 替代：
+
+| 废弃 | 替代 | 偏离 |
+| --- | --- | --- |
+| `AC-LAW-01` | `AC-LAW-CORE-01` | 胜利回复 20% 生命后，按生命差记录的战斗伤害不再成立 |
+| `AC-LAW-02..04` | `AC-LAW-CORE-02..04` | 首通新增灯油与追兵，冻结流程走格时被拖入战斗 |
+| `AC-LAW-05` | `AC-LAW-CORE-05` | 术法改为消耗 1 点战意，冻结流程的术法开局被拒绝 |
+
+`AC-LAW-CORE-*` 共用 `lawCoreScenarios`：fixture 给出静态大厅输入、入场后的静态 run
+补丁（如关闭追兵这一独立系统）和逐步操作，每个 scenario 从同一入场状态开始，只核对
+法则状态、显示、修正、门禁、受到的陷阱/事件伤害与存档往返。`AC-LAW-06..19` 仍是
+冻结旧流程，后续按同一规则逐批替换。
 
 ## 校验
 
@@ -34,13 +61,13 @@ node --experimental-strip-types scripts/verify-acceptance-manifest.ts --ac AC-SA
 
 ## 按 AC-ID 执行
 
-当前 runner 为全部 103 个稳定 ID 建立了显式注册，未实现的 case 会返回 `BLOCKED`
+当前 runner 为全部 108 个稳定 ID 建立了显式注册，未实现的 case 会返回 `BLOCKED`
 而不会被跳过或误报。每个实现按 method 显式登记；当前只有 `A-AC` 可以执行进程内
 fixture。`A-WEB`、`A-SMOKE`、`M-DEVICE`、release/review/derive 方法必须由各自独立执行器
 或同 candidate 的密封外部证据完成，给这些方法误填进程内函数会使 registry 失效。一个
 `A-AC` PASS 不会提升同 case 中未执行的方法，aggregate 仍为 `BLOCKED` 且不能取得
-release eligibility。已有二十八项纯自动 A-AC fixture（共 132 个完整 scenario），runner 自检固定覆盖
-923 项合同：
+release eligibility。已有三十三项纯自动 A-AC fixture（共 142 个完整 scenario，其中 5 项属于已废弃
+case），runner 自检固定覆盖 1034 项合同：
 
 ```bash
 npm run build
@@ -68,6 +95,11 @@ npm run test:migration -- --ac AC-LAW-16
 npm run test:migration -- --ac AC-LAW-17
 npm run test:migration -- --ac AC-LAW-18
 npm run test:migration -- --ac AC-LAW-19
+npm run test:migration -- --ac AC-LAW-CORE-01
+npm run test:migration -- --ac AC-LAW-CORE-02
+npm run test:migration -- --ac AC-LAW-CORE-03
+npm run test:migration -- --ac AC-LAW-CORE-04
+npm run test:migration -- --ac AC-LAW-CORE-05
 npm run test:migration -- --ac AC-HASH-001
 npm run test:migration -- --ac AC-SEED-002
 npm run test:migration -- --ac AC-ASSET-002
@@ -136,5 +168,5 @@ runner 进程、恶意候选 case、自删除/自隐藏 preload、动态 `eval`/
 swap-and-restore 或能删除 drift marker 的外部进程超出本地 attestation 威胁模型。正式结果
 必须在独立 CI 的受信 checkout/runner 中生成，并立即把完整目录和 hash 转存到不同所有者的
 WORM/签名存储；本地 seal 不能无条件称为不可变。当前工程尚未冻结 clean candidate，因此正式 leaf
-PASS 仍为 0/94；二十八项可执行 fixture 不能替代其余 66 个 leaf 或 9 项
+PASS 仍为 0/94；三十三项可执行 fixture（其中 5 项属于已废弃 case）不能替代其余 66 个有效 leaf 或 9 项
 release/attestation/derived 链。

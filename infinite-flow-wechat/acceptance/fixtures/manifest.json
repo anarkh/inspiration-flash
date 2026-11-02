@@ -286,6 +286,51 @@
       ]
     },
     {
+      "fixtureId": "law-core-01-demon-tower",
+      "path": "law-core-01-demon-tower.json",
+      "sha256": "125e0c6f53e1ff70abe0e5747deb1101c0db12ed0fa5fc6f8e43dd0793fb41cc",
+      "scenarioIds": [
+        "fog-rises-on-damage-and-clamps",
+        "relief-landmarks-lower-fog",
+        "fog-gates-follow-pressure"
+      ]
+    },
+    {
+      "fixtureId": "law-core-02-metro",
+      "path": "law-core-02-metro.json",
+      "sha256": "b9d732c53f861710be740f48599e60b91c0ca9fc709f6a22e09d32508eb241a4",
+      "scenarioIds": [
+        "tide-cycles-on-first-clears",
+        "signal-cache-calibrates-and-gates-follow-tide"
+      ]
+    },
+    {
+      "fixtureId": "law-core-03-mine",
+      "path": "law-core-03-mine.json",
+      "sha256": "849a5982e7493f366438cca61d8394f9614de824b7e602f937d77b546991d4df",
+      "scenarioIds": [
+        "gravity-flips-only-at-switches",
+        "upward-gravity-softens-traps"
+      ]
+    },
+    {
+      "fixtureId": "law-core-04-hospital",
+      "path": "law-core-04-hospital.json",
+      "sha256": "c3df503ca64ef6f73ff3d50037e2af436493886c215ba84f591cce55626c9e55",
+      "scenarioIds": [
+        "pollution-rises-on-damage-and-clamps",
+        "triage-and-pharmacy-purify"
+      ]
+    },
+    {
+      "fixtureId": "law-core-05-arena",
+      "path": "law-core-05-arena.json",
+      "sha256": "d6bf4a4660f720ca34d5a4347c78a1d6399dc2ea810e1b5af81279e0541a62f8",
+      "scenarioIds": [
+        "opening-styles-repeat-and-rewrite"
+      ]
+    },
+    {
       "fixtureId": "seed-root-label-golden-v1",
       "path": "seed-root-label-golden-v1.json",
       "sha256": "8f53e064c6788f8c4ec0fe383febfeb67e12fd915058570dff945a0178308b95",

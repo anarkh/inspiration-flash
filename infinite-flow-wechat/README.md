@@ -174,7 +174,7 @@ law/pursuit/fail-closed/JSON/deep-freeze/动作不变，headless 覆盖 320×568
 - `packages/client/`：唯一 session 编排、入场 seed、物理输入去重和生命周期绑定。
 - `packages/presentation/`：四阶段只读 ViewModel、帮助语义和移动端设计令牌。
 - `cocos/`：Cocos 3.8.8 场景、行走及详情 UI、323 个资源（PNG 约 344 MB）和微信平台适配。
-- `acceptance/`：冻结的 103 项迁移验收登记；登记有效不等于 case PASS。
+- `acceptance/`：冻结的 108 项迁移验收登记（5 项显式废弃，有效 103 项）；登记有效不等于 case PASS。
 - `docs/`：迁移阶段、工具链、当前状态和风险。
 
 59 种怪物各有独立的透明全身世界图 `monster:<id>_world`，探索与战斗按同一怪物身份
@@ -199,7 +199,7 @@ npm run verify
 `verify` 会核对精确 Node/npm/TypeScript 版本，按依赖顺序构建六个共享包，并检查
 六包的 resolved `target/lib` 与发布 JavaScript 均满足 ES2020、源码目录无生成物
 污染、305 项资源及 Creator metadata、Cocos 场景、headless
-bootstrap/销毁/视觉资源与装备系统竞态、连续移动及手机详情检查、103 项 registry、验收 runner 合同、远程 bundle
+bootstrap/销毁/视觉资源与装备系统竞态、连续移动及手机详情检查、108 项 registry、验收 runner 合同、远程 bundle
 配置/产物合同、全部
 workspace 类型、137 项微信平台自检和包级测试。
 `npm run typecheck` 与 `npm test` 也会先构建依赖，因此可在 clean clone 独立执行。
