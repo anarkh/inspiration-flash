@@ -1,6 +1,6 @@
 import {
   BLOODLINE_CATALOG, COMPANION_CATALOG, DUNGEONS, EQUIPMENT, EQUIPMENT_SLOTS, ITEMS,
-  METHODS, METHOD_TECHNIQUE_CATALOG, PETS, getGameAsset, getEquipmentTemperStatus, getEquippedMethods, getMethodStats, getPetSupport,
+  METHODS, METHOD_TECHNIQUE_CATALOG, PETS, getGameAsset, getEquipmentKeyword, getEquipmentTemperStatus, getEquippedMethods, getMethodStats, getPetSupport,
   type Cost, type GameState, type ItemId, type EquipmentId, type GameAssetKind, type PetSupport
 } from '@infinite-flow/core';
 import { MAIN_GOD_TASKS, evaluateTask } from '@infinite-flow/core/task-system';
@@ -87,6 +87,7 @@ export function buildEquipmentItemViewModel(
 ): EquipmentItemViewModel {
   const equipment = EQUIPMENT[equipmentId];
   const affixes = getEquipmentSystemBonus([equipmentId], { [equipmentId]: level });
+  const keyword = getEquipmentKeyword(equipmentId, level);
   return {
     equipmentId,
     name: equipment.name,
@@ -103,7 +104,8 @@ export function buildEquipmentItemViewModel(
     affixReadout: affixes.descriptions.length
       ? `${affixes.descriptions.join(' ')} ${statsReadout(affixes.bonus)}`
       : '无固定词缀',
-    ...(roll ? { rollReadout: `炼狱第 ${roll.sourceTier} 层 · 强度 ${roll.itemPower} · ${roll.affixes.map(affix => `${STAT_LABELS[affix.stat] ?? affix.stat} +${affix.value}${affix.greater ? '（强效）' : ''}`).join(' · ')}` } : {})
+    ...(roll ? { rollReadout: `炼狱第 ${roll.sourceTier} 层 · 强度 ${roll.itemPower} · ${roll.affixes.map(affix => `${STAT_LABELS[affix.stat] ?? affix.stat} +${affix.value}${affix.greater ? '（强效）' : ''}`).join(' · ')}` } : {}),
+    ...(keyword ? { mechanicName: keyword.name, mechanicReadout: `${keyword.readout}（Lv.${level}，任何章节都生效，同名词条只取最高）` } : {})
   };
 }
 
@@ -113,6 +115,7 @@ function equipmentItemDetails(item: EquipmentItemViewModel): HubShopRowViewModel
     { label: item.baseStatsLabel, value: item.baseStatsReadout },
     { label: '每级成长', value: item.growthStatsReadout },
     { label: `固定词缀（Lv.${item.level}）`, value: item.affixReadout },
+    ...(item.mechanicReadout ? [{ label: '机制词条', value: item.mechanicReadout }] : []),
     { label: '等级', value: `${item.level} / ${item.maxLevel}` },
     ...(item.rollReadout ? [{ label: '随机词条', value: item.rollReadout }] : [])
   ];

@@ -65,6 +65,8 @@ import {
   getEquipmentSoulSkillRechargeStatus,
   getEquipmentRecipePurchaseStatus,
   getEquipmentTemperStatus,
+  getCombatEquipmentKeywords,
+  getEquipmentKeyword,
   getEquippedMethods,
   getGameAsset,
   getInfernoUnlockedTier,
@@ -3707,7 +3709,7 @@ function buildCombatProjection(state: GameState, localUiState: PresentationLocal
         : action === 'weapon_skill'
           ? `战意 ${focus.current}/${focus.required}`
           : action === 'use_healing_pill'
-            ? `库存 ${state.inventory.healing_pill}；基础回复 ${getHealingPillBaseHealing(state)} 点生命（最大生命一半，受场域影响）。推进 1 回合，敌人会反击。`
+            ? `库存 ${state.inventory.healing_pill}；基础回复 ${getHealingPillBaseHealing(state)} 点生命（最大生命一半${getCombatEquipmentKeywords(state).potency ? `，药效词条 +${getCombatEquipmentKeywords(state).potency}%` : ''}，受场域影响）。推进 1 回合，敌人会反击。`
             : action === 'use_thunder_talisman'
               ? `库存 ${state.inventory.thunder_talisman}`
               : action === 'guard' && parryable
@@ -4531,13 +4533,16 @@ function buildCharacterLoadout(state: GameState): CharacterLoadoutViewModel {
     equipment: EQUIPMENT_SLOTS.map((slot) => {
       const equipmentId = state.equipped[slot]!;
       const equipment = EQUIPMENT[equipmentId];
+      const level = state.equipmentLevels[equipmentId] ?? 1;
+      const keyword = getEquipmentKeyword(equipmentId, level);
       return {
         slot,
         slotLabel: EQUIPMENT_SLOT_LABELS[slot],
         equipmentId,
         name: equipment.name,
-        level: state.equipmentLevels[equipmentId] ?? 1,
+        level,
         maxLevel: equipment.maxLevel,
+        ...(keyword ? { mechanicReadout: keyword.readout } : {}),
       };
     }),
     ownedEquipment: buildOwnedEquipmentCatalog(state, equipmentId => buildEquipmentEquipAction(

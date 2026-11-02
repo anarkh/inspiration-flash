@@ -1,7 +1,7 @@
 import { reduceGameCommand, type GameCommand } from '@infinite-flow/application';
 import {
-  DUNGEON_ORDER, EQUIPMENT, createInitialState, getGameAsset,
-  type GameState, type ItemId, type GameAssetKind
+  DUNGEON_ORDER, EQUIPMENT, createInitialState, getEquipmentSourceChapter, getGameAsset,
+  type EquipmentId, type GameState, type ItemId, type GameAssetKind
 } from '@infinite-flow/core';
 import { MAIN_GOD_TASKS } from '@infinite-flow/core/task-system';
 import {
@@ -64,6 +64,14 @@ export function verifyHubShops(): void {
         const [kind, assetId] = row.visualAssetKey.split(':') as [GameAssetKind, string];
         assert(getGameAsset(kind, assetId)?.key === row.visualAssetKey, 'shop icons must use verified asset keys');
       }
+    }
+    if (panel === 'equipment') {
+      // Gear first offered from chapter 9 on shows its mechanic keyword; earlier gear has none.
+      const keyworded = shop.rows.filter(row => row.details.some(fact => fact.label === '机制词条'));
+      assert(keyworded.length === 42, 'the 42 late pieces show their mechanic keyword');
+      assert(keyworded.every(row => getEquipmentSourceChapter(row.id as EquipmentId) >= 9), 'only late gear carries a keyword');
+      const redline = shop.rows.find(row => row.id === 'redline_edge')?.details.find(fact => fact.label === '机制词条')?.value;
+      assert(redline?.startsWith('斩杀：敌人生命不高于 30% 时') && redline.includes('同名词条只取最高'), 'the keyword says what it does and how it stacks');
     }
     for (const candidate of [...shop.rows.flatMap(row => row.actions), ...shop.services]) {
       assert(!actionIds.has(candidate.actionId), `duplicate shop action ${candidate.actionId}`);

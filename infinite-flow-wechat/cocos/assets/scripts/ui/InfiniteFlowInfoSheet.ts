@@ -1969,12 +1969,14 @@ function equipmentOfferContent(model: GameViewModel, state: MobileSheetState, wi
   const facts = selected ? [
     { name: 'EquipmentOfferBaseStats', lines: wrap(`${selected.baseStatsLabel}：${selected.baseStatsReadout}`) },
     { name: 'EquipmentOfferAffix', lines: wrap(`固定词缀：${selected.affixReadout}`) },
+    ...(selected.mechanicReadout ? [{ name: 'EquipmentOfferMechanic', lines: wrap(`机制词条：${selected.mechanicReadout}`) }] : []),
     ...(selected.rollReadout ? [{ name: 'EquipmentOfferRoll', lines: wrap(selected.rollReadout) }] : []),
     ...(selectedAction?.readout ? [{ name: 'EquipmentOfferClaimReadout', lines: wrap(selectedAction.readout) }] : []),
     ...(selectedAction?.disabledReason ? [{ name: 'EquipmentOfferDisabledReason', lines: wrap(`不可用：${selectedAction.disabledReason}`) }] : []),
   ] : [];
   const names = choices.map(entry => wrapInfiniteFlowLine(entry.name, Math.max(5, Math.floor((width / u - 89) / 13))));
-  const previews = choices.map(entry => wrapInfiniteFlowLine(entry.baseStatsReadout, Math.max(5, Math.floor((width / u - 89) / 11))));
+  const previews = choices.map(entry => wrapInfiniteFlowLine(entry.mechanicName ? `${entry.baseStatsReadout} · ${entry.mechanicName}` : entry.baseStatsReadout,
+    Math.max(5, Math.floor((width / u - 89) / 11))));
   const rowHeights = names.map((lines, index) => Math.max(64, 16 + lines.length * 20 + 17 + previews[index]!.length * 17));
   const rowsHeight = rowHeights.reduce((sum, height) => sum + height, 0) + Math.max(0, choices.length - 1) * 6;
   const selectedName = selected ? wrapInfiniteFlowLine(selected.name, Math.max(8, Math.floor((width / u - 16) / 13))) : [];
@@ -2939,6 +2941,7 @@ function renderSheetTip(context: SheetContext, backdrop: Node): void {
       append(`${owned.baseStatsLabel}：${owned.baseStatsReadout}`, palette0.positive);
       if (owned.growthStatsReadout) append(`每级成长：${owned.growthStatsReadout}`);
       append(`固定词缀：${owned.affixReadout}`, palette0.accent);
+      if (owned.mechanicReadout) append(`机制词条：${owned.mechanicReadout}`, palette0.accent);
       if (owned.rollReadout) append(owned.rollReadout, palette0.accent);
       if (!equipmentAction.enabled && equipmentAction.disabledReason && !owned.equipped) {
         append(equipmentAction.disabledReason, palette0.danger);
@@ -2950,6 +2953,7 @@ function renderSheetTip(context: SheetContext, backdrop: Node): void {
         const label = EQUIP_STAT_LABELS[key] ?? key;
         lines.push({ text: `${label} ${value > 0 ? '+' : ''}${value}`, color: palette0.positive });
       }
+      if (equipped?.mechanicReadout) lines.push({ text: `机制词条：${equipped.mechanicReadout}`, color: palette0.accent });
       lines.push({ text: definition.description, color: palette0.positive });
       const flavor = getGameAsset('equipment', tip.id)?.alt;
       if (flavor) lines.push({ text: flavor, color: palette0.accent, italic: true });
