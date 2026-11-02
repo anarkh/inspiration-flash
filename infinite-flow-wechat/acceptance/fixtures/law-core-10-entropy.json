@@ -1,0 +1,126 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "law-core-10-entropy",
+  "provenance": {
+    "supersedes": "AC-LAW-10",
+    "rules": [
+      "packages/core/src/dungeon-laws.ts",
+      "packages/core/src/dungeon-routes.ts",
+      "packages/core/src/game.ts"
+    ],
+    "expectedRule": "Chapter 10 entropy runs 0-4 and starts at 2. The first clear of a monster or trap (not the last_helmsman boss) raises it by 1 and the first clear of a reward lowers it by 1, clamped; the first clear of a heading console (bow, midship, stern) instead leaves a pending heading that blocks leaving with `方舟航向尚未指定，请先选择稳航或抢航。` until law/resolve-entropy-heading picks steady (-1) or rush (+1); with nothing pending a heading is refused with `当前没有待指定的方舟航向。`. Display: title 方舟航态, status `熵值 n/4`, `熵值 n/4，待选航` or, once locked, `熵值 n/4，已锁定，崩解层 k`; meter {n, 4}; resolved (targetReached) only at 2 with nothing pending and no collapse layer, danger at 0, 4 or two layers, otherwise warning. Modifiers: at entropy <= 1 enemy defense +(2-n)x10% and trap damage/DC -(2-n)x10%; at entropy >= 3 trap damage/DC, non-boss enemy all stats and outgoing force/art damage +(n-2)x10%; in the boss encounter enemy all stats are +10% per collapse layer instead. Selecting the boss locks entropy and sets collapseLayers = clamp(|n - 2| - ark_keel_boots, 0, 2). With mist_breathing as the main method every trap is seen through, so a risked trap deals max(4, floor(damage x 0.45)): port_pressure_lock 94 at entropy 0 -> ceil(75.2) = 76 -> 34. Run pressure stays 0% below 6 clears. Gates: ark_bow_port_relic_lane needs entropy >= 3, ark_bow_dissipation_lane entropy <= 1 (closed: `艏部消散航道仅在熵值 1 或以下开放。`), ark_manifest_helmsman_lane entropy 1-3 (closed: `方舟显化需熵值维持在 1 至 3 之间。`). The pursuer is a separate run system and is disabled after entry so it cannot ambush the walk. All expected values are frozen here, never read from candidate code."
+  },
+  "baseInput": {
+    "path": "packages/save-codec/tests/fixtures/new-hub-v1.json",
+    "sha256": "a1de1f1b33b59c91dea46caf55f21b6eee0b7104c2cbe4d68ac5d7a430709e0b"
+  },
+  "inputMutations": [
+    { "op": "replace", "path": ["state", "completedDungeonIds"], "value": ["demon_tower_1", "metro_abyss", "starfall_mine", "rust_hospital", "ash_arena", "dream_archive", "void_citadel", "temporal_observatory", "causal_clearinghouse"] },
+    { "op": "replace", "path": ["state", "claimedTaskIds"], "value": ["clear_demon_tower", "clear_metro_abyss", "mainline_clear_starfall_mine", "mainline_clear_rust_hospital", "mainline_clear_ash_arena", "mainline_clear_dream_archive", "mainline_clear_void_citadel", "mainline_clear_temporal_observatory", "mainline_clear_causal_clearinghouse"] },
+    { "op": "replace", "path": ["state", "player", "base"], "value": { "body": 30, "spirit": 20, "agility": 15, "luck": 8 } },
+    { "op": "replace", "path": ["state", "learnedMethods"], "value": ["mist_breathing"] }
+  ],
+  "entry": { "dungeonId": "entropy_ark", "protocolId": "standard", "hiddenTaskSeed": 101010101 },
+  "runMutations": [
+    { "op": "replace", "path": ["run", "pursuitState", "status"], "value": "disabled" }
+  ],
+  "scenarioIds": [
+    "entropy-follows-clears-and-headings",
+    "low-entropy-and-boss-lock"
+  ],
+  "scenarios": [
+    {
+      "id": "entropy-follows-clears-and-headings",
+      "steps": [
+        { "do": "observe", "as": "entry", "law": ["law.entropy", "law.pendingHeadingNodeId", "law.resolvedHeadingChoices", "display", "modifiers"] },
+        { "do": "walk", "path": ["entropy_deckhand"] },
+        { "do": "fight", "node": "entropy_deckhand" },
+        { "do": "observe", "as": "afterFight", "law": ["law.entropy", "display.status", "display.severity", "modifiers.trap", "modifiers.encounter", "modifiers.outgoingDamage"] },
+        { "do": "walk", "path": ["wake_inversion"] },
+        { "do": "collect" },
+        { "do": "observe", "as": "afterReward", "law": ["law.entropy", "display.severity", "modifiers.outgoingDamage"] },
+        { "do": "walk", "path": ["port_ballast_core", "bow_heading_console"] },
+        { "do": "collect" },
+        { "do": "observe", "as": "headingPending", "law": ["law.entropy", "law.pendingHeadingNodeId", "display.status", "display.severity", "display.targetReached"] },
+        { "do": "attempt", "as": "leaveWhilePending", "command": { "type": "run/move", "nodeId": "port_relic_hold" } },
+        { "do": "command", "as": "rush", "command": { "type": "law/resolve-entropy-heading", "choice": "rush" } },
+        { "do": "observe", "as": "rushed", "law": ["law.entropy", "law.pendingHeadingNodeId", "law.resolvedHeadingChoices"] },
+        { "do": "observe", "as": "relicLaneAtThree", "gate": "port_relic_hold" },
+        { "do": "observe", "as": "dissipationLaneAtThree", "gate": "dissipation_navigator_alpha" },
+        { "do": "attempt", "as": "headingWithoutPending", "command": { "type": "law/resolve-entropy-heading", "choice": "steady" } },
+        { "do": "observe", "as": "roundtrip", "roundtrip": ["law.entropy", "law.pendingHeadingNodeId", "law.resolvedHeadingChoices"] }
+      ],
+      "expected": {
+        "entry": {
+          "law.entropy": 2,
+          "law.pendingHeadingNodeId": null,
+          "law.resolvedHeadingChoices": {},
+          "display": { "title": "方舟航态", "status": "熵值 2/4", "severity": "resolved", "meter": { "value": 2, "max": 4 }, "targetReached": true },
+          "modifiers": {
+            "encounter": { "allStatsPercent": 0, "defensePercent": 0, "artPowerPercent": 0 },
+            "trap": { "damagePercent": 0, "dcPercent": 0 },
+            "healingPercent": 0,
+            "outgoingDamage": { "forcePercent": 0, "artPercent": 0 },
+            "guardEffectPercent": 0
+          }
+        },
+        "afterFight": {
+          "law.entropy": 3,
+          "display.status": "熵值 3/4",
+          "display.severity": "warning",
+          "modifiers.trap": { "damagePercent": 10, "dcPercent": 10 },
+          "modifiers.encounter": { "allStatsPercent": 10, "defensePercent": 0, "artPowerPercent": 0 },
+          "modifiers.outgoingDamage": { "forcePercent": 10, "artPercent": 10 }
+        },
+        "afterReward": { "law.entropy": 2, "display.severity": "resolved", "modifiers.outgoingDamage": { "forcePercent": 0, "artPercent": 0 } },
+        "headingPending": { "law.entropy": 2, "law.pendingHeadingNodeId": "bow_heading_console", "display.status": "熵值 2/4，待选航", "display.severity": "warning", "display.targetReached": false },
+        "leaveWhilePending": { "status": "rejected", "code": "departure-blocked", "message": "方舟航向尚未指定，请先选择稳航或抢航。" },
+        "rush": { "damageTaken": 0 },
+        "rushed": { "law.entropy": 3, "law.pendingHeadingNodeId": null, "law.resolvedHeadingChoices": { "bow_heading_console": "rush" } },
+        "relicLaneAtThree": { "from": "bow_heading_console", "gateId": "ark_bow_port_relic_lane", "isOpen": true, "blockReason": null },
+        "dissipationLaneAtThree": { "from": "bow_heading_console", "gateId": "ark_bow_dissipation_lane", "isOpen": false, "blockReason": "艏部消散航道仅在熵值 1 或以下开放。" },
+        "headingWithoutPending": { "status": "rejected", "code": "domain-rejected", "message": "当前没有待指定的方舟航向。" },
+        "roundtrip": { "law.entropy": 3, "law.pendingHeadingNodeId": null, "law.resolvedHeadingChoices": { "bow_heading_console": "rush" } }
+      }
+    },
+    {
+      "id": "low-entropy-and-boss-lock",
+      "steps": [
+        { "do": "collect" },
+        { "do": "observe", "as": "lowOne", "law": ["law.entropy", "display.status", "display.severity", "modifiers.encounter.defensePercent", "modifiers.trap"] },
+        { "do": "walk", "path": ["port_supply"] },
+        { "do": "collect" },
+        { "do": "observe", "as": "lowZero", "law": ["law.entropy", "display.severity", "modifiers.encounter.defensePercent", "modifiers.trap"] },
+        { "do": "walk", "path": ["ark_gate", "entropy_deckhand"] },
+        { "do": "fight", "node": "entropy_deckhand" },
+        { "do": "walk", "path": ["wake_inversion", "ark_manifest"] },
+        { "do": "observe", "as": "manifestAtOne", "gate": "last_helmsman" },
+        { "do": "collect" },
+        { "do": "observe", "as": "manifestAtZero", "gate": "last_helmsman" },
+        { "do": "walk", "path": ["entropy_ballast_deck", "port_pressure_lock"] },
+        { "do": "trap", "choice": "risk", "as": "lowEntropyTrap" },
+        { "do": "walk", "path": ["last_helmsman"] },
+        { "do": "select", "node": "last_helmsman" },
+        { "do": "observe", "as": "bossLocked", "law": ["law.entropy", "law.bossEntropyLocked", "law.collapseLayers", "law.pendingHeadingNodeId", "display.status", "display.severity", "modifiers.encounter"] },
+        { "do": "observe", "as": "roundtrip", "roundtrip": ["law.entropy", "law.bossEntropyLocked", "law.collapseLayers"] }
+      ],
+      "expected": {
+        "lowOne": { "law.entropy": 1, "display.status": "熵值 1/4", "display.severity": "warning", "modifiers.encounter.defensePercent": 10, "modifiers.trap": { "damagePercent": -10, "dcPercent": -10 } },
+        "lowZero": { "law.entropy": 0, "display.severity": "danger", "modifiers.encounter.defensePercent": 20, "modifiers.trap": { "damagePercent": -20, "dcPercent": -20 } },
+        "manifestAtOne": { "from": "ark_manifest", "gateId": "ark_manifest_helmsman_lane", "isOpen": true, "blockReason": null },
+        "manifestAtZero": { "from": "ark_manifest", "gateId": "ark_manifest_helmsman_lane", "isOpen": false, "blockReason": "方舟显化需熵值维持在 1 至 3 之间。" },
+        "lowEntropyTrap": { "damageTaken": 34 },
+        "bossLocked": {
+          "law.entropy": 1,
+          "law.bossEntropyLocked": true,
+          "law.collapseLayers": 1,
+          "law.pendingHeadingNodeId": null,
+          "display.status": "熵值 1/4，已锁定，崩解层 1",
+          "display.severity": "warning",
+          "modifiers.encounter": { "allStatsPercent": 10, "defensePercent": 10, "artPowerPercent": 0 }
+        },
+        "roundtrip": { "law.entropy": 1, "law.bossEntropyLocked": true, "law.collapseLayers": 1 }
+      }
+    }
+  ]
+}

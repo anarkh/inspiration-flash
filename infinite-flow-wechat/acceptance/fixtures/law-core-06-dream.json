@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "law-core-06-dream",
+  "provenance": {
+    "supersedes": "AC-LAW-06",
+    "rules": [
+      "packages/core/src/dungeon-laws.ts",
+      "packages/core/src/dungeon-routes.ts",
+      "packages/core/src/game.ts"
+    ],
+    "expectedRule": "Chapter 6 seals run features in the fixed order consumable -> method -> pet: the first clear of each monster or trap seals the next one, and once all three are sealed further dangerous clears seal nothing. Clearing an index node (index_reward or cracked_core_index_reward) or succeeding at the failure_index event lifts every seal. Display: title 失败封存, status `已封存 n/3`, severity stable at 0, warning at 1, danger at 2-3, meter {n, 3}, targetReached at 0. While consumables are sealed a healing pill is refused with `梦档案馆已封存消耗品，止血丹暂时无法使用。`; while methods are sealed an art is refused with `梦档案馆已封存功法，本场暂时无法运转术法。` (checked before the focus cost). Gates archive_consumable_librarian_spine (failed_file_reward -> paper_librarian) and archive_method_ink_spine (paper_librarian_echo -> ink_sleep_trap) need their feature unsealed and while closed read `道具已封存；先到索引柜或裂核索引解除封存。` and `功法已封存；先到索引柜或裂核索引解除封存。`; the move is then not a legal destination. The pursuer is a separate run system and is disabled after entry so it cannot ambush the walk. All expected values are frozen here, never read from candidate code."
+  },
+  "baseInput": {
+    "path": "packages/save-codec/tests/fixtures/new-hub-v1.json",
+    "sha256": "a1de1f1b33b59c91dea46caf55f21b6eee0b7104c2cbe4d68ac5d7a430709e0b"
+  },
+  "inputMutations": [
+    { "op": "replace", "path": ["state", "completedDungeonIds"], "value": ["demon_tower_1", "metro_abyss", "starfall_mine", "rust_hospital", "ash_arena"] },
+    { "op": "replace", "path": ["state", "claimedTaskIds"], "value": ["clear_demon_tower", "clear_metro_abyss", "mainline_clear_starfall_mine", "mainline_clear_rust_hospital", "mainline_clear_ash_arena"] },
+    { "op": "replace", "path": ["state", "player", "base"], "value": { "body": 30, "spirit": 20, "agility": 15, "luck": 8 } },
+    { "op": "replace", "path": ["state", "learnedMethods"], "value": ["mist_breathing"] }
+  ],
+  "entry": { "dungeonId": "dream_archive", "protocolId": "standard", "hiddenTaskSeed": 606060606 },
+  "runMutations": [
+    { "op": "replace", "path": ["run", "pursuitState", "status"], "value": "disabled" }
+  ],
+  "scenarioIds": [
+    "seals-follow-dangerous-clears-and-index-lifts-them"
+  ],
+  "scenarios": [
+    {
+      "id": "seals-follow-dangerous-clears-and-index-lifts-them",
+      "steps": [
+        { "do": "observe", "as": "entry", "law": ["law", "display"] },
+        { "do": "walk", "path": ["failed_file_reward"] },
+        { "do": "observe", "as": "consumableSpineOpen", "gate": "paper_librarian" },
+        { "do": "walk", "path": ["index_reward", "rejected_strategy_reward", "broken_save_trap"] },
+        { "do": "trap", "choice": "risk" },
+        { "do": "observe", "as": "oneSeal", "law": ["law.sealedFeatures", "display.status", "display.severity"] },
+        { "do": "walk", "path": ["footnote_cache_reward", "hallucination_patrol"] },
+        { "do": "select", "node": "hallucination_patrol" },
+        { "do": "attempt", "as": "pillWhileSealed", "command": { "type": "combat/act", "action": "use_healing_pill" } },
+        { "do": "fight", "node": "hallucination_patrol" },
+        { "do": "observe", "as": "twoSeals", "law": ["law.sealedFeatures", "display.status", "display.severity"] },
+        { "do": "walk", "path": ["failed_file_reward"] },
+        { "do": "observe", "as": "consumableSpineSealed", "gate": "paper_librarian" },
+        { "do": "attempt", "as": "sealedMove", "command": { "type": "run/move", "nodeId": "paper_librarian" } },
+        { "do": "walk", "path": ["hallucination_patrol", "footnote_cache_reward", "paper_librarian_echo"] },
+        { "do": "select", "node": "paper_librarian_echo" },
+        { "do": "attempt", "as": "artWhileSealed", "command": { "type": "combat/act", "action": "art" } },
+        { "do": "fight", "node": "paper_librarian_echo" },
+        { "do": "observe", "as": "threeSeals", "law": ["law.sealedFeatures", "display.status", "display.meter"] },
+        { "do": "observe", "as": "inkSpineSealed", "gate": "ink_sleep_trap" },
+        { "do": "walk", "path": ["memory_loop_trap"] },
+        { "do": "trap", "choice": "risk" },
+        { "do": "observe", "as": "noFourthSeal", "law": ["law.sealedFeatures"] },
+        { "do": "walk", "path": ["hallucination_patrol", "failed_file_reward", "index_reward"] },
+        { "do": "collect" },
+        { "do": "observe", "as": "indexLifts", "law": ["law.sealedFeatures", "display.status", "display.severity", "display.targetReached"] },
+        { "do": "walk", "path": ["failed_file_reward"] },
+        { "do": "observe", "as": "consumableSpineReopened", "gate": "paper_librarian" },
+        { "do": "observe", "as": "roundtrip", "roundtrip": ["law", "clearedNodeIds"] }
+      ],
+      "expected": {
+        "entry": {
+          "law": { "kind": "dream_archive", "sealedFeatures": [] },
+          "display": { "title": "失败封存", "status": "已封存 0/3", "severity": "stable", "meter": { "value": 0, "max": 3 }, "targetReached": true }
+        },
+        "consumableSpineOpen": { "from": "failed_file_reward", "gateId": "archive_consumable_librarian_spine", "isOpen": true, "blockReason": null },
+        "oneSeal": { "law.sealedFeatures": ["consumable"], "display.status": "已封存 1/3", "display.severity": "warning" },
+        "pillWhileSealed": { "status": "rejected", "code": "domain-rejected", "message": "梦档案馆已封存消耗品，止血丹暂时无法使用。" },
+        "twoSeals": { "law.sealedFeatures": ["consumable", "method"], "display.status": "已封存 2/3", "display.severity": "danger" },
+        "consumableSpineSealed": { "from": "failed_file_reward", "gateId": "archive_consumable_librarian_spine", "isOpen": false, "blockReason": "道具已封存；先到索引柜或裂核索引解除封存。" },
+        "sealedMove": { "status": "rejected", "code": "illegal-move", "message": "paper_librarian is not a legal adjacent destination from failed_file_reward." },
+        "artWhileSealed": { "status": "rejected", "code": "domain-rejected", "message": "梦档案馆已封存功法，本场暂时无法运转术法。" },
+        "threeSeals": { "law.sealedFeatures": ["consumable", "method", "pet"], "display.status": "已封存 3/3", "display.meter": { "value": 3, "max": 3 } },
+        "inkSpineSealed": { "from": "paper_librarian_echo", "gateId": "archive_method_ink_spine", "isOpen": false, "blockReason": "功法已封存；先到索引柜或裂核索引解除封存。" },
+        "noFourthSeal": { "law.sealedFeatures": ["consumable", "method", "pet"] },
+        "indexLifts": { "law.sealedFeatures": [], "display.status": "已封存 0/3", "display.severity": "stable", "display.targetReached": true },
+        "consumableSpineReopened": { "from": "failed_file_reward", "gateId": "archive_consumable_librarian_spine", "isOpen": true, "blockReason": null },
+        "roundtrip": {
+          "law": { "kind": "dream_archive", "sealedFeatures": [] },
+          "clearedNodeIds": ["broken_save_trap", "hallucination_patrol", "paper_librarian_echo", "memory_loop_trap", "index_reward"]
+        }
+      }
+    }
+  ]
+}

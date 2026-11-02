@@ -8,7 +8,7 @@
 2. [工具链与验证](02-toolchain.md)：本地命令、Cocos/微信开发者工具边界和证据要求。
 3. [状态与风险](03-status-and-risks.md)：当前完成度、非声明项、风险与下一道门禁。
 4. [DevTools 本地试玩 Smoke](04-devtools-smoke.md)：无真实 AppID 的 NON_RELEASE 试玩纵切；DevTools 可玩 ≠ 真机/发布/持久性验收。
-5. [验收 registry 说明](../acceptance/README.md)：108 个稳定 AC ID（其中 5 个显式废弃）的冻结登记和维护规则。
+5. [验收 registry 说明](../acceptance/README.md)：113 个稳定 AC ID（其中 10 个显式废弃）的冻结登记和维护规则。
 
 ## 权威基线
 
@@ -32,7 +32,7 @@ node --experimental-strip-types scripts/verify-acceptance-manifest.ts --ac AC-CO
 node --experimental-strip-types scripts/verify-acceptance-manifest.ts --manifest acceptance/migration-acceptance-manifest.json
 ```
 
-- 无筛选参数：校验冻结摘要、108 个 case、字段、分区、顺序、废弃记录和源快照摘要。
+- 无筛选参数：校验冻结摘要、113 个 case、字段、分区、顺序、废弃记录和源快照摘要。
 - `--list`：以 TSV 列出全部登记项，供后续 runner 注册 fixture。
 - `--ac <id>`：精确选择一个已登记项；未知 ID 或选择结果为 0 时非零退出。
 - `--manifest <path>`：验证指定路径，便于做缺文件、损坏或零 case 的负向门禁。

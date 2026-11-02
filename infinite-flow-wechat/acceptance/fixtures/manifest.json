@@ -331,6 +331,50 @@
       ]
     },
     {
+      "fixtureId": "law-core-06-dream",
+      "path": "law-core-06-dream.json",
+      "sha256": "0aeb52ef8e86f6dfcb6d5d2172f183184e152be9dffa3967e7b726f16553a3ef",
+      "scenarioIds": [
+        "seals-follow-dangerous-clears-and-index-lifts-them"
+      ]
+    },
+    {
+      "fixtureId": "law-core-07-virtual",
+      "path": "law-core-07-virtual.json",
+      "sha256": "a0286b8e0e615a125d6b4ad9e3304402c02bac4ad99ae4b923ca8dcf58dcdd89",
+      "scenarioIds": [
+        "force-bias-locks-a-counter",
+        "balanced-openings-close-the-counter"
+      ]
+    },
+    {
+      "fixtureId": "law-core-08-chronal",
+      "path": "law-core-08-chronal.json",
+      "sha256": "6756522169d0e3f8f5a3344cfdbeb7499af0cd86fbb19f1a61a986969ff74b33",
+      "scenarioIds": [
+        "past-anchor-calibrates-and-opens-its-shortcut",
+        "future-anchor-then-dual-sync"
+      ]
+    },
+    {
+      "fixtureId": "law-core-09-causal",
+      "path": "law-core-09-causal.json",
+      "sha256": "ecff6ad45a7d4a026374d3162bb57320e1f80940294d1e7bea3d1444c85075a3",
+      "scenarioIds": [
+        "ledger-choices-move-debt-and-gates",
+        "boss-locks-debt-into-collection-seals"
+      ]
+    },
+    {
+      "fixtureId": "law-core-10-entropy",
+      "path": "law-core-10-entropy.json",
+      "sha256": "a0dc98801775ffe3fb3de40d055fd3c43cbd0ac5347a1022f6f76ab307e7d941",
+      "scenarioIds": [
+        "entropy-follows-clears-and-headings",
+        "low-entropy-and-boss-lock"
+      ]
+    },
+    {
       "fixtureId": "seed-root-label-golden-v1",
       "path": "seed-root-label-golden-v1.json",
       "sha256": "8f53e064c6788f8c4ec0fe383febfeb67e12fd915058570dff945a0178308b95",

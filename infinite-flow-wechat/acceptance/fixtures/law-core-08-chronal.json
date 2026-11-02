@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "law-core-08-chronal",
+  "provenance": {
+    "supersedes": "AC-LAW-08",
+    "rules": [
+      "packages/core/src/dungeon-laws.ts",
+      "packages/core/src/dungeon-routes.ts"
+    ],
+    "expectedRule": "Chapter 8 has two anchors that both start uncalibrated: the first clear of past_calibration_anchor sets pastCalibrated, the first clear of future_calibration_anchor sets futureCalibrated. Display: title 时间校准, status `0/2 时序漂移` (danger), `1/2 单锚锁定` (warning) or `2/2 双锚同步` (resolved, targetReached), meter {calibrated, 2}. While the past anchor is uncalibrated encounters get +20% defense; while the future anchor is uncalibrated traps get +20% damage and DC (rounded up); the boss bonus applies only in the boss encounter. With mist_breathing as the main method every trap is seen through, so a risked trap deals max(4, floor(damage x 0.45)): aged_gear_trap 62 drifting -> ceil(74.4) = 75 -> 33; zero_meridian 64 calibrated -> 28. Run pressure stays 0% below 6 clears. Gates: temporal_past_shortcut (past_shortcut_foyer -> erased_patrol) needs the past anchor and reads `先校准过去锚点后开放。`; temporal_future_shortcut (future_shortcut_foyer -> accelerated_patrol) needs the future anchor and reads `先校准未来锚点后开放。`; temporal_calibration_bridge (calibration_bridge -> zero_hour_regent) needs both and reads `过去与未来锚点均校准后开放。`; a closed gate is not a legal destination. The epoch sentinels are elites, so their loot offer is declined (node/resolve-equipment-loot without an item) before moving on. The pursuer is a separate run system and is disabled after entry so it cannot ambush the walk. All expected values are frozen here, never read from candidate code."
+  },
+  "baseInput": {
+    "path": "packages/save-codec/tests/fixtures/new-hub-v1.json",
+    "sha256": "a1de1f1b33b59c91dea46caf55f21b6eee0b7104c2cbe4d68ac5d7a430709e0b"
+  },
+  "inputMutations": [
+    { "op": "replace", "path": ["state", "completedDungeonIds"], "value": ["demon_tower_1", "metro_abyss", "starfall_mine", "rust_hospital", "ash_arena", "dream_archive", "void_citadel"] },
+    { "op": "replace", "path": ["state", "claimedTaskIds"], "value": ["clear_demon_tower", "clear_metro_abyss", "mainline_clear_starfall_mine", "mainline_clear_rust_hospital", "mainline_clear_ash_arena", "mainline_clear_dream_archive", "mainline_clear_void_citadel"] },
+    { "op": "replace", "path": ["state", "player", "base"], "value": { "body": 30, "spirit": 20, "agility": 15, "luck": 8 } },
+    { "op": "replace", "path": ["state", "learnedMethods"], "value": ["mist_breathing"] }
+  ],
+  "entry": { "dungeonId": "temporal_observatory", "protocolId": "standard", "hiddenTaskSeed": 808080808 },
+  "runMutations": [
+    { "op": "replace", "path": ["run", "pursuitState", "status"], "value": "disabled" }
+  ],
+  "scenarioIds": [
+    "past-anchor-calibrates-and-opens-its-shortcut",
+    "future-anchor-then-dual-sync"
+  ],
+  "scenarios": [
+    {
+      "id": "past-anchor-calibrates-and-opens-its-shortcut",
+      "steps": [
+        { "do": "observe", "as": "entry", "law": ["law", "display", "modifiers.encounter", "modifiers.trap"] },
+        { "do": "walk", "path": ["entry_chronometer", "past_shortcut_foyer"] },
+        { "do": "observe", "as": "pastShortcutClosed", "gate": "erased_patrol" },
+        { "do": "attempt", "as": "closedMove", "command": { "type": "run/move", "nodeId": "erased_patrol" } },
+        { "do": "walk", "path": ["epoch_sentinel_alpha"] },
+        { "do": "fight", "node": "epoch_sentinel_alpha" },
+        { "do": "command", "command": { "type": "node/resolve-equipment-loot" } },
+        { "do": "walk", "path": ["past_calibration_anchor"] },
+        { "do": "collect" },
+        { "do": "observe", "as": "pastCalibrated", "law": ["law", "display.status", "display.severity", "display.meter", "modifiers.encounter.defensePercent", "modifiers.trap"] },
+        { "do": "walk", "path": ["past_relic_archive", "aged_gear_trap"] },
+        { "do": "trap", "choice": "risk", "as": "driftTrap" },
+        { "do": "walk", "path": ["boss_north_lock"] },
+        { "do": "trap", "choice": "risk" },
+        { "do": "walk", "path": ["field_observation_deck", "calibration_bridge"] },
+        { "do": "observe", "as": "bridgeSingleAnchor", "gate": "zero_hour_regent" },
+        { "do": "walk", "path": ["field_observation_deck", "past_relic_archive", "past_calibration_anchor", "epoch_sentinel_alpha", "past_shortcut_foyer"] },
+        { "do": "observe", "as": "pastShortcutOpen", "gate": "erased_patrol" },
+        { "do": "observe", "as": "roundtrip", "roundtrip": ["law", "display.status"] }
+      ],
+      "expected": {
+        "entry": {
+          "law": { "kind": "temporal_observatory", "pastCalibrated": false, "futureCalibrated": false },
+          "display": { "title": "时间校准", "status": "0/2 时序漂移", "severity": "danger", "meter": { "value": 0, "max": 2 }, "targetReached": false },
+          "modifiers.encounter": { "allStatsPercent": 0, "defensePercent": 20, "artPowerPercent": 0 },
+          "modifiers.trap": { "damagePercent": 20, "dcPercent": 20 }
+        },
+        "pastShortcutClosed": { "from": "past_shortcut_foyer", "gateId": "temporal_past_shortcut", "isOpen": false, "blockReason": "先校准过去锚点后开放。" },
+        "closedMove": { "status": "rejected", "code": "illegal-move", "message": "erased_patrol is not a legal adjacent destination from past_shortcut_foyer." },
+        "pastCalibrated": {
+          "law": { "kind": "temporal_observatory", "pastCalibrated": true, "futureCalibrated": false },
+          "display.status": "1/2 单锚锁定",
+          "display.severity": "warning",
+          "display.meter": { "value": 1, "max": 2 },
+          "modifiers.encounter.defensePercent": 0,
+          "modifiers.trap": { "damagePercent": 20, "dcPercent": 20 }
+        },
+        "driftTrap": { "damageTaken": 33 },
+        "bridgeSingleAnchor": { "from": "calibration_bridge", "gateId": "temporal_calibration_bridge", "isOpen": false, "blockReason": "过去与未来锚点均校准后开放。" },
+        "pastShortcutOpen": { "from": "past_shortcut_foyer", "gateId": "temporal_past_shortcut", "isOpen": true, "blockReason": null },
+        "roundtrip": {
+          "law": { "kind": "temporal_observatory", "pastCalibrated": true, "futureCalibrated": false },
+          "display.status": "1/2 单锚锁定"
+        }
+      }
+    },
+    {
+      "id": "future-anchor-then-dual-sync",
+      "steps": [
+        { "do": "walk", "path": ["future_supply", "future_shortcut_foyer"] },
+        { "do": "observe", "as": "futureShortcutClosed", "gate": "accelerated_patrol" },
+        { "do": "walk", "path": ["epoch_sentinel_omega"] },
+        { "do": "fight", "node": "epoch_sentinel_omega" },
+        { "do": "command", "command": { "type": "node/resolve-equipment-loot" } },
+        { "do": "walk", "path": ["future_calibration_anchor"] },
+        { "do": "collect" },
+        { "do": "observe", "as": "futureCalibrated", "law": ["law", "display.status", "modifiers.encounter.defensePercent", "modifiers.trap"] },
+        { "do": "walk", "path": ["epoch_sentinel_omega", "future_shortcut_foyer"] },
+        { "do": "observe", "as": "futureShortcutOpen", "gate": "accelerated_patrol" },
+        { "do": "walk", "path": ["accelerated_patrol"] },
+        { "do": "fight", "node": "accelerated_patrol" },
+        { "do": "walk", "path": ["zero_meridian"] },
+        { "do": "trap", "choice": "risk", "as": "calibratedTrap" },
+        { "do": "walk", "path": ["erased_patrol"] },
+        { "do": "fight", "node": "erased_patrol" },
+        { "do": "walk", "path": ["past_calibration_anchor"] },
+        { "do": "collect" },
+        { "do": "observe", "as": "dualSynced", "law": ["law", "display", "modifiers.encounter.defensePercent", "modifiers.trap"] },
+        { "do": "walk", "path": ["past_relic_archive", "field_observation_deck", "calibration_bridge"] },
+        { "do": "observe", "as": "bridgeOpen", "gate": "zero_hour_regent" },
+        { "do": "observe", "as": "roundtrip", "roundtrip": ["law", "display.status"] }
+      ],
+      "expected": {
+        "futureShortcutClosed": { "from": "future_shortcut_foyer", "gateId": "temporal_future_shortcut", "isOpen": false, "blockReason": "先校准未来锚点后开放。" },
+        "futureCalibrated": {
+          "law": { "kind": "temporal_observatory", "pastCalibrated": false, "futureCalibrated": true },
+          "display.status": "1/2 单锚锁定",
+          "modifiers.encounter.defensePercent": 20,
+          "modifiers.trap": { "damagePercent": 0, "dcPercent": 0 }
+        },
+        "futureShortcutOpen": { "from": "future_shortcut_foyer", "gateId": "temporal_future_shortcut", "isOpen": true, "blockReason": null },
+        "calibratedTrap": { "damageTaken": 28 },
+        "dualSynced": {
+          "law": { "kind": "temporal_observatory", "pastCalibrated": true, "futureCalibrated": true },
+          "display": { "title": "时间校准", "status": "2/2 双锚同步", "severity": "resolved", "meter": { "value": 2, "max": 2 }, "targetReached": true },
+          "modifiers.encounter.defensePercent": 0,
+          "modifiers.trap": { "damagePercent": 0, "dcPercent": 0 }
+        },
+        "bridgeOpen": { "from": "calibration_bridge", "gateId": "temporal_calibration_bridge", "isOpen": true, "blockReason": null },
+        "roundtrip": {
+          "law": { "kind": "temporal_observatory", "pastCalibrated": true, "futureCalibrated": true },
+          "display.status": "2/2 双锚同步"
+        }
+      }
+    }
+  ]
+}

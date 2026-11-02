@@ -94,6 +94,11 @@ const CASE_RUNNER_ROWS = [
   ["AC-LAW-CORE-03", "law-core-03-mine", ["A-AC"], { "A-AC": "lawCoreScenarios" }],
   ["AC-LAW-CORE-04", "law-core-04-hospital", ["A-AC"], { "A-AC": "lawCoreScenarios" }],
   ["AC-LAW-CORE-05", "law-core-05-arena", ["A-AC"], { "A-AC": "lawCoreScenarios" }],
+  ["AC-LAW-CORE-06", "law-core-06-dream", ["A-AC"], { "A-AC": "lawCoreScenarios" }],
+  ["AC-LAW-CORE-07", "law-core-07-virtual", ["A-AC"], { "A-AC": "lawCoreScenarios" }],
+  ["AC-LAW-CORE-08", "law-core-08-chronal", ["A-AC"], { "A-AC": "lawCoreScenarios" }],
+  ["AC-LAW-CORE-09", "law-core-09-causal", ["A-AC"], { "A-AC": "lawCoreScenarios" }],
+  ["AC-LAW-CORE-10", "law-core-10-entropy", ["A-AC"], { "A-AC": "lawCoreScenarios" }],
   ["AC-COMBAT-001", "combat-one-action-one-turn", ["A-AC", "A-SMOKE"], null],
   ["AC-COMBAT-002", "combat-oracle-vectors", ["A-AC"], null],
   ["AC-COMBAT-003", "combat-resource-counters", ["A-AC"], null],
@@ -357,6 +362,25 @@ export const implementedFixtureScenarioIds = Object.freeze({
   ]),
   "law-core-05-arena": Object.freeze([
     "opening-styles-repeat-and-rewrite",
+  ]),
+  "law-core-06-dream": Object.freeze([
+    "seals-follow-dangerous-clears-and-index-lifts-them",
+  ]),
+  "law-core-07-virtual": Object.freeze([
+    "force-bias-locks-a-counter",
+    "balanced-openings-close-the-counter",
+  ]),
+  "law-core-08-chronal": Object.freeze([
+    "past-anchor-calibrates-and-opens-its-shortcut",
+    "future-anchor-then-dual-sync",
+  ]),
+  "law-core-09-causal": Object.freeze([
+    "ledger-choices-move-debt-and-gates",
+    "boss-locks-debt-into-collection-seals",
+  ]),
+  "law-core-10-entropy": Object.freeze([
+    "entropy-follows-clears-and-headings",
+    "low-entropy-and-boss-lock",
   ]),
   "hash-canonical-json-v1": Object.freeze([
     "canonical-utf16-key-and-array-order",

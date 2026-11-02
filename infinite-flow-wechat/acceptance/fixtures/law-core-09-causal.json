@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "law-core-09-causal",
+  "provenance": {
+    "supersedes": "AC-LAW-09",
+    "rules": [
+      "packages/core/src/dungeon-laws.ts",
+      "packages/core/src/dungeon-routes.ts",
+      "packages/core/src/game.ts"
+    ],
+    "expectedRule": "Chapter 9 keeps causal debt 0-4. The first clear of a monster or trap (not the zero_sum_auditor boss) opens a pending ledger for that node; while it is pending, leaving is blocked with `因果账本尚未结算，请先选择平衡、透支或偿还。`. law/resolve-causal-ledger settles it: balance leaves debt alone, overdraw adds 1 debt and heals, repay removes 1 debt and costs max(1, floor(maxHp x 15%)) HP; max HP is derived from the build (the decoder recomputes it, so no HP is given as input): 50 + 14 x body 30 + patched_coat 10 = 480, so repay costs 72; repay with no debt is refused with `当前没有可偿还的因果债。`. Display: title 因果账本, status `因果债 n/4，账目已结`, `因果债 n/4，待平账` or, while the boss holds seals, `因果债 n/4，追缴印 k`; severity danger while collecting or at 4, warning while pending or in debt, resolved at 0 with nothing pending (targetReached). Gates open at debt at most: causal_verdict_bridge (verdict_bridge -> zero_sum_auditor) 2, causal_north_verdict_lock 1, causal_east_verdict_lock 3, and while closed read `因果债需降至 n 或以下；在待平账中选择偿还以降债。`. Selecting the boss locks the debt and mints collection seals equal to it (no echo_breaker_gauntlets here); the first damaging attack on the boss spends one seal. The pursuer is a separate run system and is disabled after entry so it cannot ambush the walk. All expected values are frozen here, never read from candidate code."
+  },
+  "baseInput": {
+    "path": "packages/save-codec/tests/fixtures/new-hub-v1.json",
+    "sha256": "a1de1f1b33b59c91dea46caf55f21b6eee0b7104c2cbe4d68ac5d7a430709e0b"
+  },
+  "inputMutations": [
+    { "op": "replace", "path": ["state", "completedDungeonIds"], "value": ["demon_tower_1", "metro_abyss", "starfall_mine", "rust_hospital", "ash_arena", "dream_archive", "void_citadel", "temporal_observatory"] },
+    { "op": "replace", "path": ["state", "claimedTaskIds"], "value": ["clear_demon_tower", "clear_metro_abyss", "mainline_clear_starfall_mine", "mainline_clear_rust_hospital", "mainline_clear_ash_arena", "mainline_clear_dream_archive", "mainline_clear_void_citadel", "mainline_clear_temporal_observatory"] },
+    { "op": "replace", "path": ["state", "player", "base"], "value": { "body": 30, "spirit": 20, "agility": 15, "luck": 8 } },
+    { "op": "replace", "path": ["state", "learnedMethods"], "value": ["mist_breathing"] }
+  ],
+  "entry": { "dungeonId": "causal_clearinghouse", "protocolId": "standard", "hiddenTaskSeed": 909090909 },
+  "runMutations": [
+    { "op": "replace", "path": ["run", "pursuitState", "status"], "value": "disabled" }
+  ],
+  "scenarioIds": [
+    "ledger-choices-move-debt-and-gates",
+    "boss-locks-debt-into-collection-seals"
+  ],
+  "scenarios": [
+    {
+      "id": "ledger-choices-move-debt-and-gates",
+      "steps": [
+        { "do": "observe", "as": "entry", "law": ["law.debt", "law.pendingLedgerNodeId", "law.bossDebtLocked", "law.collectionSeals", "display"] },
+        { "do": "walk", "path": ["verdict_usher"] },
+        { "do": "fight", "node": "verdict_usher" },
+        { "do": "observe", "as": "pendingLedger", "law": ["law.debt", "law.pendingLedgerNodeId", "display.status", "display.severity", "display.targetReached"] },
+        { "do": "attempt", "as": "leaveWhilePending", "command": { "type": "run/move", "nodeId": "contradiction_line" } },
+        { "do": "attempt", "as": "repayWithoutDebt", "command": { "type": "law/resolve-causal-ledger", "choice": "repay" } },
+        { "do": "command", "as": "overdraw", "command": { "type": "law/resolve-causal-ledger", "choice": "overdraw" } },
+        { "do": "observe", "as": "afterOverdraw", "law": ["law.debt", "law.pendingLedgerNodeId", "law.settledLedgerNodeIds", "display.status", "display.severity"] },
+        { "do": "walk", "path": ["contradiction_line"] },
+        { "do": "trap", "choice": "risk" },
+        { "do": "command", "command": { "type": "law/resolve-causal-ledger", "choice": "overdraw" } },
+        { "do": "walk", "path": ["verdict_bridge"] },
+        { "do": "observe", "as": "bridgeAtTwo", "gate": "zero_sum_auditor" },
+        { "do": "walk", "path": ["evidence_survey_dais", "north_verdict_lock"] },
+        { "do": "trap", "choice": "risk" },
+        { "do": "command", "command": { "type": "law/resolve-causal-ledger", "choice": "overdraw" } },
+        { "do": "observe", "as": "debtThree", "law": ["law.debt", "display.status"] },
+        { "do": "observe", "as": "northLockAtThree", "gate": "zero_sum_auditor" },
+        { "do": "walk", "path": ["evidence_survey_dais", "verdict_bridge"] },
+        { "do": "observe", "as": "bridgeAtThree", "gate": "zero_sum_auditor" },
+        { "do": "attempt", "as": "closedMove", "command": { "type": "run/move", "nodeId": "zero_sum_auditor" } },
+        { "do": "walk", "path": ["evidence_survey_dais", "north_verdict_lock", "retroactive_sentence_trap"] },
+        { "do": "trap", "choice": "risk" },
+        { "do": "command", "as": "repay", "command": { "type": "law/resolve-causal-ledger", "choice": "repay" } },
+        { "do": "observe", "as": "afterRepay", "law": ["law.debt", "law.settledLedgerNodeIds"] },
+        { "do": "walk", "path": ["north_verdict_lock", "evidence_survey_dais", "verdict_bridge"] },
+        { "do": "observe", "as": "bridgeReopened", "gate": "zero_sum_auditor" },
+        { "do": "observe", "as": "roundtrip", "roundtrip": ["law.debt", "law.pendingLedgerNodeId", "law.settledLedgerNodeIds"] }
+      ],
+      "expected": {
+        "entry": {
+          "law.debt": 0,
+          "law.pendingLedgerNodeId": null,
+          "law.bossDebtLocked": false,
+          "law.collectionSeals": 0,
+          "display": { "title": "因果账本", "status": "因果债 0/4，账目已结", "severity": "resolved", "meter": { "value": 0, "max": 4 }, "targetReached": true }
+        },
+        "pendingLedger": { "law.debt": 0, "law.pendingLedgerNodeId": "verdict_usher", "display.status": "因果债 0/4，待平账", "display.severity": "warning", "display.targetReached": false },
+        "leaveWhilePending": { "status": "rejected", "code": "departure-blocked", "message": "因果账本尚未结算，请先选择平衡、透支或偿还。" },
+        "repayWithoutDebt": { "status": "rejected", "code": "domain-rejected", "message": "当前没有可偿还的因果债。" },
+        "overdraw": { "damageTaken": 0 },
+        "afterOverdraw": { "law.debt": 1, "law.pendingLedgerNodeId": null, "law.settledLedgerNodeIds": ["verdict_usher"], "display.status": "因果债 1/4，账目已结", "display.severity": "warning" },
+        "bridgeAtTwo": { "from": "verdict_bridge", "gateId": "causal_verdict_bridge", "isOpen": true, "blockReason": null },
+        "debtThree": { "law.debt": 3, "display.status": "因果债 3/4，账目已结" },
+        "northLockAtThree": { "from": "north_verdict_lock", "gateId": "causal_north_verdict_lock", "isOpen": false, "blockReason": "因果债需降至 1 或以下；在待平账中选择偿还以降债。" },
+        "bridgeAtThree": { "from": "verdict_bridge", "gateId": "causal_verdict_bridge", "isOpen": false, "blockReason": "因果债需降至 2 或以下；在待平账中选择偿还以降债。" },
+        "closedMove": { "status": "rejected", "code": "illegal-move", "message": "zero_sum_auditor is not a legal adjacent destination from verdict_bridge." },
+        "repay": { "damageTaken": 72 },
+        "afterRepay": { "law.debt": 2, "law.settledLedgerNodeIds": ["verdict_usher", "contradiction_line", "north_verdict_lock", "retroactive_sentence_trap"] },
+        "bridgeReopened": { "from": "verdict_bridge", "gateId": "causal_verdict_bridge", "isOpen": true, "blockReason": null },
+        "roundtrip": {
+          "law.debt": 2,
+          "law.pendingLedgerNodeId": null,
+          "law.settledLedgerNodeIds": ["verdict_usher", "contradiction_line", "north_verdict_lock", "retroactive_sentence_trap"]
+        }
+      }
+    },
+    {
+      "id": "boss-locks-debt-into-collection-seals",
+      "steps": [
+        { "do": "walk", "path": ["verdict_usher"] },
+        { "do": "fight", "node": "verdict_usher" },
+        { "do": "command", "command": { "type": "law/resolve-causal-ledger", "choice": "overdraw" } },
+        { "do": "walk", "path": ["contradiction_line"] },
+        { "do": "trap", "choice": "risk" },
+        { "do": "command", "as": "balance", "command": { "type": "law/resolve-causal-ledger", "choice": "balance" } },
+        { "do": "observe", "as": "afterBalance", "law": ["law.debt", "law.settledLedgerNodeIds"] },
+        { "do": "walk", "path": ["verdict_bridge", "zero_sum_auditor"] },
+        { "do": "select", "node": "zero_sum_auditor" },
+        { "do": "observe", "as": "bossLocked", "law": ["law.debt", "law.bossDebtLocked", "law.collectionSeals", "display.status", "display.severity"] },
+        { "do": "attempt", "as": "firstBossAttack", "command": { "type": "combat/act", "action": "attack" } },
+        { "do": "observe", "as": "sealSpent", "law": ["law.collectionSeals", "display.status", "display.severity"] },
+        { "do": "observe", "as": "roundtrip", "roundtrip": ["law.debt", "law.bossDebtLocked", "law.collectionSeals"] }
+      ],
+      "expected": {
+        "balance": { "damageTaken": 0 },
+        "afterBalance": { "law.debt": 1, "law.settledLedgerNodeIds": ["verdict_usher", "contradiction_line"] },
+        "bossLocked": { "law.debt": 1, "law.bossDebtLocked": true, "law.collectionSeals": 1, "display.status": "因果债 1/4，追缴印 1", "display.severity": "danger" },
+        "firstBossAttack": { "status": "committed", "code": null, "message": null },
+        "sealSpent": { "law.collectionSeals": 0, "display.status": "因果债 1/4，账目已结", "display.severity": "warning" },
+        "roundtrip": { "law.debt": 1, "law.bossDebtLocked": true, "law.collectionSeals": 0 }
+      }
+    }
+  ]
+}
