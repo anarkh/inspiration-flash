@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "law-core-18-replay",
+  "provenance": {
+    "supersedes": "AC-LAW-18",
+    "rules": [
+      "packages/core/src/dungeon-laws.ts",
+      "packages/core/src/dungeon-routes.ts",
+      "packages/core/src/game.ts"
+    ],
+    "expectedRule": "Chapter 18 records three takes in order at take_alpha, take_beta and take_gamma: the first direct action (attack, art or guard) of each take fight is recorded with the value it produced. Leaving a take node needs its take (`录制当前战斗母带后才能离开。`); entering the next take node needs the earlier takes. Route nodes open only for the selected route (`三段母带完成后选择顺序路线；其余路线将永久关闭。` for sequence_route), and the boss edges need three takes plus a route; an edge with several conditions reads `需同时满足这条战痕复演门的全部条件。`. After three takes law/select-combat-replay-route fixes the route once; another selection changes nothing. Display: title 战痕复演律; severity danger before three takes, warning ready for a route, stable ready for the boss, resolved once frozen; meter {takes, 3}; targetReached when ready for the boss. Selecting the boss freezes {takes, route}. The recorded values depend on combat and are not asserted; the actions are. An art costs 1 focus and fights start at 0 focus, so the art take first spends the gate_sense method technique (rank 1: +1 focus, not a combat action). take_beta is an elite, so its loot offer is declined before moving on. The pursuer is a separate run system and is disabled after entry so it cannot ambush the walk. All expected values are frozen here, never read from candidate code."
+  },
+  "baseInput": {
+    "path": "packages/save-codec/tests/fixtures/new-hub-v1.json",
+    "sha256": "a1de1f1b33b59c91dea46caf55f21b6eee0b7104c2cbe4d68ac5d7a430709e0b"
+  },
+  "inputMutations": [
+    { "op": "replace", "path": ["state", "completedDungeonIds"], "value": ["demon_tower_1", "metro_abyss", "starfall_mine", "rust_hospital", "ash_arena", "dream_archive", "void_citadel", "temporal_observatory", "causal_clearinghouse", "entropy_ark", "mirror_cycle_city", "redaction_scriptorium", "legacy_auction_court", "genesis_vault", "silent_broadcast_tower", "lost_shelter", "false_testimony_court"] },
+    { "op": "replace", "path": ["state", "claimedTaskIds"], "value": ["clear_demon_tower", "clear_metro_abyss", "mainline_clear_starfall_mine", "mainline_clear_rust_hospital", "mainline_clear_ash_arena", "mainline_clear_dream_archive", "mainline_clear_void_citadel", "mainline_clear_temporal_observatory", "mainline_clear_causal_clearinghouse", "mainline_clear_entropy_ark", "mainline_clear_mirror_cycle_city", "mainline_clear_redaction_scriptorium", "mainline_clear_legacy_auction_court", "mainline_clear_genesis_vault", "mainline_clear_silent_broadcast_tower", "mainline_clear_lost_shelter", "mainline_clear_false_testimony_court"] },
+    { "op": "replace", "path": ["state", "player", "base"], "value": { "body": 70, "spirit": 40, "agility": 30, "luck": 12 } },
+    { "op": "replace", "path": ["state", "learnedMethods"], "value": ["gate_sense"] }
+  ],
+  "entry": { "dungeonId": "combat_replay_stage", "protocolId": "standard", "hiddenTaskSeed": 181818181 },
+  "runMutations": [
+    { "op": "replace", "path": ["run", "pursuitState", "status"], "value": "disabled" }
+  ],
+  "scenarioIds": [
+    "takes-in-order-route-and-boss-snapshot"
+  ],
+  "scenarios": [
+    {
+      "id": "takes-in-order-route-and-boss-snapshot",
+      "steps": [
+        { "do": "observe", "as": "entry", "law": ["law.takes", "law.route", "law.bossSnapshot", "display.title", "display.status", "display.severity", "display.meter"] },
+        { "do": "walk", "path": ["script_stacks"] },
+        { "do": "observe", "as": "sequenceRouteBefore", "gate": "sequence_route" },
+        { "do": "walk", "path": ["take_alpha"] },
+        { "do": "observe", "as": "alphaExitBefore", "gate": "continuity_break_trap" },
+        { "do": "fight", "node": "take_alpha" },
+        { "do": "observe", "as": "alphaRecorded", "law": ["law.takes.0.action", "display.meter"] },
+        { "do": "observe", "as": "alphaExitAfter", "gate": "continuity_break_trap" },
+        { "do": "walk", "path": ["continuity_break_trap"] },
+        { "do": "trap", "choice": "risk" },
+        { "do": "observe", "as": "betaEntryOpen", "gate": "take_beta" },
+        { "do": "walk", "path": ["take_beta"] },
+        { "do": "fight", "node": "take_beta", "opening": ["guard"] },
+        { "do": "command", "command": { "type": "node/resolve-equipment-loot" } },
+        { "do": "walk", "path": ["take_gamma"] },
+        { "do": "fight", "node": "take_gamma", "opening": ["technique", "art"] },
+        { "do": "observe", "as": "threeTakes", "law": ["law.takes.0.action", "law.takes.1.action", "law.takes.2.action", "display.severity", "display.meter"] },
+        { "do": "observe", "as": "bossGateBeforeRoute", "gate": "final_cut_director" },
+        { "do": "command", "command": { "type": "law/select-combat-replay-route", "route": "sequence" }, "as": "selectSequence" },
+        { "do": "observe", "as": "routeSelected", "law": ["law.route", "display.severity", "display.targetReached"] },
+        { "do": "attempt", "as": "secondRoute", "command": { "type": "law/select-combat-replay-route", "route": "burst" } },
+        { "do": "observe", "as": "bossGateAfterRoute", "gate": "final_cut_director" },
+        { "do": "walk", "path": ["final_cut_director"] },
+        { "do": "select", "node": "final_cut_director" },
+        { "do": "observe", "as": "frozen", "law": ["law.bossSnapshot.route", "law.bossSnapshot.takes.0.action", "law.bossSnapshot.takes.1.action", "law.bossSnapshot.takes.2.action", "display.severity"] },
+        { "do": "observe", "as": "roundtrip", "roundtrip": ["law.route", "law.bossSnapshot.route", "law.takes.2.action"] }
+      ],
+      "expected": {
+        "entry": { "law.takes": [null, null, null], "law.route": null, "law.bossSnapshot": null, "display.title": "战痕复演律", "display.status": "1:未录制，2:未录制，3:未录制，路线:未选择，Boss快照:未冻结", "display.severity": "danger", "display.meter": { "value": 0, "max": 3 } },
+        "sequenceRouteBefore": { "from": "script_stacks", "gateId": "combat_replay_script_stacks_to_sequence_route", "isOpen": false, "blockReason": "三段母带完成后选择顺序路线；其余路线将永久关闭。" },
+        "alphaExitBefore": { "from": "take_alpha", "gateId": "combat_replay_take_alpha_to_continuity_break_trap", "isOpen": false, "blockReason": "录制当前战斗母带后才能离开。" },
+        "alphaRecorded": { "law.takes.0.action": "attack", "display.meter": { "value": 1, "max": 3 } },
+        "alphaExitAfter": { "from": "take_alpha", "gateId": "combat_replay_take_alpha_to_continuity_break_trap", "isOpen": true, "blockReason": null },
+        "betaEntryOpen": { "from": "continuity_break_trap", "gateId": "combat_replay_continuity_break_trap_to_take_beta", "isOpen": true, "blockReason": null },
+        "threeTakes": { "law.takes.0.action": "attack", "law.takes.1.action": "guard", "law.takes.2.action": "art", "display.severity": "warning", "display.meter": { "value": 3, "max": 3 } },
+        "bossGateBeforeRoute": { "from": "take_gamma", "gateId": "combat_replay_take_gamma_to_final_cut_director", "isOpen": false, "blockReason": "需同时满足这条战痕复演门的全部条件。" },
+        "selectSequence": { "damageTaken": 0 },
+        "routeSelected": { "law.route": "sequence", "display.severity": "stable", "display.targetReached": true },
+        "secondRoute": { "status": "rejected", "code": "domain-rejected", "message": "The command did not produce a domain transition." },
+        "bossGateAfterRoute": { "from": "take_gamma", "gateId": "combat_replay_take_gamma_to_final_cut_director", "isOpen": true, "blockReason": null },
+        "frozen": { "law.bossSnapshot.route": "sequence", "law.bossSnapshot.takes.0.action": "attack", "law.bossSnapshot.takes.1.action": "guard", "law.bossSnapshot.takes.2.action": "art", "display.severity": "resolved" },
+        "roundtrip": { "law.route": "sequence", "law.bossSnapshot.route": "sequence", "law.takes.2.action": "art" }
+      }
+    }
+  ]
+}

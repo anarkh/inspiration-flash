@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "law-core-16-shelter",
+  "provenance": {
+    "supersedes": "AC-LAW-16",
+    "rules": [
+      "packages/core/src/dungeon-laws.ts",
+      "packages/core/src/dungeon-routes.ts",
+      "packages/core/src/game.ts"
+    ],
+    "expectedRule": "Chapter 16 escorts a survivor whose HP runs 0-100 from 100. The first clear of a monster costs it 10 and of a trap 15 (no rescue_carbine, evacuation_plate or qin_che here). The first clear of a checkpoint (north, central, south) leaves a pending checkpoint that blocks leaving with `护送检查点尚未处理，请先选择救治或强推。`; law/resolve-escort-checkpoint treats for one healing pill available on both the run and hub tracks (+25, clamped at 100; refused at full HP) or pushes (-10 and 200 run reward points); a refused choice changes nothing. shelter_gate and south_checkpoint each give one healing pill to both tracks, and every third cleared node adds an exploration supply item in the rotation healing pill, armor patch, focus incense, so south_checkpoint (the third clear after shelter_gate and alarm_grid_trap) adds a second pill: 1 + 2 - 1 treated = 2 left. Display: title 失联护送律; severity resolved once all three checkpoints are resolved or frozen, otherwise danger while pending or at HP <= 40, warning at <= 74, stable above; meter {HP, 100}; targetReached when all are resolved and nothing is pending. Gates: shelter_evacuation_cache_* need all checkpoints and HP >= 75 (`完成三处检查点且幸存者HP至少75。`), shelter_memory_boss_gate (survivor_memory_stage -> shelter_overseer) all checkpoints (`完成三处护送检查点后开放。`). Selecting the boss freezes bossSurvivorSnapshot = HP (no blackbox_beacon); in the boss encounter HP >= 75 gives enemy all stats -6% and outgoing force/art +6%. The pursuer is a separate run system and is disabled after entry so it cannot ambush the walk. All expected values are frozen here, never read from candidate code."
+  },
+  "baseInput": {
+    "path": "packages/save-codec/tests/fixtures/new-hub-v1.json",
+    "sha256": "a1de1f1b33b59c91dea46caf55f21b6eee0b7104c2cbe4d68ac5d7a430709e0b"
+  },
+  "inputMutations": [
+    { "op": "replace", "path": ["state", "completedDungeonIds"], "value": ["demon_tower_1", "metro_abyss", "starfall_mine", "rust_hospital", "ash_arena", "dream_archive", "void_citadel", "temporal_observatory", "causal_clearinghouse", "entropy_ark", "mirror_cycle_city", "redaction_scriptorium", "legacy_auction_court", "genesis_vault", "silent_broadcast_tower"] },
+    { "op": "replace", "path": ["state", "claimedTaskIds"], "value": ["clear_demon_tower", "clear_metro_abyss", "mainline_clear_starfall_mine", "mainline_clear_rust_hospital", "mainline_clear_ash_arena", "mainline_clear_dream_archive", "mainline_clear_void_citadel", "mainline_clear_temporal_observatory", "mainline_clear_causal_clearinghouse", "mainline_clear_entropy_ark", "mainline_clear_mirror_cycle_city", "mainline_clear_redaction_scriptorium", "mainline_clear_legacy_auction_court", "mainline_clear_genesis_vault", "mainline_clear_silent_broadcast_tower"] },
+    { "op": "replace", "path": ["state", "player", "base"], "value": { "body": 70, "spirit": 40, "agility": 30, "luck": 12 } },
+    { "op": "replace", "path": ["state", "learnedMethods"], "value": ["mist_breathing"] }
+  ],
+  "entry": { "dungeonId": "lost_shelter", "protocolId": "standard", "hiddenTaskSeed": 161616161 },
+  "runMutations": [
+    { "op": "replace", "path": ["run", "pursuitState", "status"], "value": "disabled" }
+  ],
+  "scenarioIds": [
+    "checkpoints-move-survivor-hp-and-gates"
+  ],
+  "scenarios": [
+    {
+      "id": "checkpoints-move-survivor-hp-and-gates",
+      "steps": [
+        { "do": "observe", "as": "entry", "law": ["law.survivorHp", "law.pendingCheckpointNodeId", "law.resolvedCheckpointChoices", "law.bossSurvivorSnapshot", "display.title", "display.severity", "display.meter", "display.targetReached"] },
+        { "do": "collect" },
+        { "do": "observe", "as": "pillsFromGate", "state": ["run.lootBag.items.healing_pill", "inventory.healing_pill"] },
+        { "do": "walk", "path": ["north_entry"] },
+        { "do": "observe", "as": "evacuationBefore", "gate": "evacuation_cache" },
+        { "do": "walk", "path": ["shelter_gate", "alarm_grid_trap"] },
+        { "do": "trap", "choice": "risk" },
+        { "do": "observe", "as": "afterTrap", "law": ["law.survivorHp", "display.severity"] },
+        { "do": "walk", "path": ["south_checkpoint"] },
+        { "do": "collect" },
+        { "do": "observe", "as": "pendingSouth", "law": ["law.pendingCheckpointNodeId", "display.severity"] },
+        { "do": "attempt", "as": "leaveWhilePending", "command": { "type": "run/move", "nodeId": "evacuation_horror_omega" } },
+        { "do": "command", "command": { "type": "law/resolve-escort-checkpoint", "choice": "treat" }, "as": "treatSouth" },
+        { "do": "observe", "as": "treated", "law": ["law.survivorHp", "law.resolvedCheckpointChoices"] },
+        { "do": "observe", "as": "pillsAfterTreat", "state": ["run.lootBag.items.healing_pill", "inventory.healing_pill"] },
+        { "do": "walk", "path": ["alarm_grid_trap", "survivor_memory_stage"] },
+        { "do": "observe", "as": "bossGateBefore", "gate": "shelter_overseer" },
+        { "do": "walk", "path": ["survivor_cell", "central_checkpoint"] },
+        { "do": "collect" },
+        { "do": "attempt", "as": "treatAtFullHp", "command": { "type": "law/resolve-escort-checkpoint", "choice": "treat" } },
+        { "do": "command", "command": { "type": "law/resolve-escort-checkpoint", "choice": "push" }, "as": "pushCentral" },
+        { "do": "walk", "path": ["north_checkpoint"] },
+        { "do": "collect" },
+        { "do": "command", "command": { "type": "law/resolve-escort-checkpoint", "choice": "push" } },
+        { "do": "attempt", "as": "checkpointWithoutPending", "command": { "type": "law/resolve-escort-checkpoint", "choice": "push" } },
+        { "do": "observe", "as": "allResolved", "law": ["law.survivorHp", "law.resolvedCheckpointChoices", "display.severity", "display.meter", "display.targetReached"] },
+        { "do": "walk", "path": ["central_checkpoint", "survivor_cell", "survivor_memory_stage"] },
+        { "do": "observe", "as": "bossGateOpen", "gate": "shelter_overseer" },
+        { "do": "walk", "path": ["alarm_grid_trap", "shelter_gate", "north_entry"] },
+        { "do": "observe", "as": "evacuationOpen", "gate": "evacuation_cache" },
+        { "do": "walk", "path": ["shelter_gate", "alarm_grid_trap", "survivor_memory_stage", "shelter_overseer"] },
+        { "do": "select", "node": "shelter_overseer" },
+        { "do": "observe", "as": "frozen", "law": ["law.bossSurvivorSnapshot", "display.severity", "modifiers.encounter", "modifiers.outgoingDamage"] },
+        { "do": "observe", "as": "roundtrip", "roundtrip": ["law.survivorHp", "law.resolvedCheckpointChoices", "law.bossSurvivorSnapshot"] }
+      ],
+      "expected": {
+        "entry": { "law.survivorHp": 100, "law.pendingCheckpointNodeId": null, "law.resolvedCheckpointChoices": {}, "law.bossSurvivorSnapshot": null, "display.title": "失联护送律", "display.severity": "stable", "display.meter": { "value": 100, "max": 100 }, "display.targetReached": false },
+        "pillsFromGate": { "run.lootBag.items.healing_pill": 1, "inventory.healing_pill": 1 },
+        "evacuationBefore": { "from": "north_entry", "gateId": "shelter_evacuation_cache_south_in", "isOpen": false, "blockReason": "完成三处检查点且幸存者HP至少75。" },
+        "afterTrap": { "law.survivorHp": 85, "display.severity": "stable" },
+        "pendingSouth": { "law.pendingCheckpointNodeId": "south_checkpoint", "display.severity": "danger" },
+        "leaveWhilePending": { "status": "rejected", "code": "departure-blocked", "message": "护送检查点尚未处理，请先选择救治或强推。" },
+        "treatSouth": { "damageTaken": 0 },
+        "treated": { "law.survivorHp": 100, "law.resolvedCheckpointChoices": { "south_checkpoint": "treat" } },
+        "pillsAfterTreat": { "run.lootBag.items.healing_pill": 2, "inventory.healing_pill": 2 },
+        "bossGateBefore": { "from": "survivor_memory_stage", "gateId": "shelter_memory_boss_gate", "isOpen": false, "blockReason": "完成三处护送检查点后开放。" },
+        "treatAtFullHp": { "status": "rejected", "code": "domain-rejected", "message": "The command did not produce a domain transition." },
+        "pushCentral": { "damageTaken": 0 },
+        "checkpointWithoutPending": { "status": "rejected", "code": "domain-rejected", "message": "The command did not produce a domain transition." },
+        "allResolved": { "law.survivorHp": 80, "law.resolvedCheckpointChoices": { "south_checkpoint": "treat", "central_checkpoint": "push", "north_checkpoint": "push" }, "display.severity": "resolved", "display.meter": { "value": 80, "max": 100 }, "display.targetReached": true },
+        "bossGateOpen": { "from": "survivor_memory_stage", "gateId": "shelter_memory_boss_gate", "isOpen": true, "blockReason": null },
+        "evacuationOpen": { "from": "north_entry", "gateId": "shelter_evacuation_cache_south_in", "isOpen": true, "blockReason": null },
+        "frozen": { "law.bossSurvivorSnapshot": 80, "display.severity": "resolved", "modifiers.encounter": { "allStatsPercent": -6, "defensePercent": 0, "artPowerPercent": 0 }, "modifiers.outgoingDamage": { "forcePercent": 6, "artPercent": 6 } },
+        "roundtrip": { "law.survivorHp": 80, "law.resolvedCheckpointChoices": { "south_checkpoint": "treat", "central_checkpoint": "push", "north_checkpoint": "push" }, "law.bossSurvivorSnapshot": 80 }
+      }
+    }
+  ]
+}
