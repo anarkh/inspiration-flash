@@ -1,9 +1,11 @@
 import {
-  createInitialState, DUNGEON_ORDER, enterDungeon, getCurrentCombatIntent, getDerivedStats, isCurrentCombatParryable, selectNode,
+  createChapterTrialState, createInitialState, DUNGEON_ORDER, enterDungeon, getCombatIntent, getCurrentCombatIntent, getDerivedStats, isCurrentCombatParryable, performCombatAction, selectNode,
   type GameState
 } from '@infinite-flow/core';
 import {
-  applyMonsterCombatEffects, ZERO_HOUR_CLOCK, ZERO_HOUR_STRIKE_HP_PERCENT, type CombatEffectAction, type CombatEffectInput
+  applyMonsterCombatEffects, AUDIT_BASE_PERCENT, AUDIT_DEBT_PERCENT, CHANNEL_STEAL_DAMAGE, getAuditAllowance, MIRROR_MEND_PERCENT,
+  MIRROR_STRIKE_PERCENT, SENTRY_DAMAGE, VERDICT_AFTERSHOCK, VERDICT_DISMISSED_TURNS, getVerdictRebuttalTarget, ZERO_HOUR_CLOCK, ZERO_HOUR_STRIKE_HP_PERCENT,
+  type CombatEffectAction, type CombatEffectInput
 } from '@infinite-flow/core/combat-effects';
 import { getBossDefinition } from '@infinite-flow/core/boss-system';
 import { reduceGameCommand, type GameCommand } from '../src/index.js';
@@ -121,3 +123,95 @@ const warden = bossFight('panopticon_city', { relays: { north_blind_relay: true,
 assert(warden.phase === 'combat', 'the warden opens once the relays and route are done');
 const beamTurn = { ...warden, combat: { ...warden.combat!, turn: 3, effects: { exposure: 3 } } };
 assert(getCurrentCombatIntent(beamTurn)?.id === 'all-sight-beam' && isCurrentCombatParryable(beamTurn), '终审光束 is telegraphed and parryable');
+
+// --- Chapters 9, 11, 15, 16, 17: each boss tests a different answer; chapter 18's replay is now telegraphed. ---
+const player = (action: CombatEffectAction, extra: Partial<CombatEffectInput['player']> = {}) =>
+  ({ stats, equipped: {}, learnedMethods: [], action, ...extra });
+
+// Chapter 9, 零和审计官: every third turn it throws back what was dealt past an allowance; debt raises the rate.
+assert(bossFight('causal_clearinghouse', { debt: 2 }).combat!.effects!.auditRate === AUDIT_BASE_PERCENT + 2 * AUDIT_DEBT_PERCENT,
+  'each point of map debt raises the settlement rate');
+assert(hook('zero_sum_auditor', { turn: 1, incomingDamage: 100 }).nextState.auditTally === 100, 'damage dealt goes on the ledger');
+const settlement = hook('zero_sum_auditor', { turn: 3, incomingDamage: 40, monsterMaxHp: 400, state: { auditTally: 100, auditRate: 50 } });
+assert(settlement.damageToPlayer === Math.ceil((140 - getAuditAllowance(400)) * 0.5) && settlement.nextState.auditTally === undefined,
+  'the settlement throws back the share past the allowance and clears the ledger');
+assert(hook('zero_sum_auditor', { turn: 3, incomingDamage: 0, monsterMaxHp: 400, state: { auditTally: 50 } }).damageToPlayer === 0,
+  'a ledger inside the allowance settles free');
+assert(hook('zero_sum_auditor', { turn: 3, incomingDamage: 0, monsterMaxHp: 400, state: { auditTally: 300, auditRate: 50 } }, 'guard').damageToPlayer > 0,
+  'a guard does not stop the settlement');
+const auditor = bossFight('causal_clearinghouse');
+assert(getCurrentCombatIntent({ ...auditor, combat: { ...auditor.combat!, turn: 3 } })?.id === 'audit-settlement', 'the settlement turn is telegraphed');
+
+// Chapter 11, 无名镜王: it repeats your last turn.
+const recordedStrike = hook('nameless_reflection', { turn: 1, incomingDamage: 80 });
+assert(recordedStrike.nextState.mirrorCopy === 'strike' && recordedStrike.nextState.mirrorCopyValue === 80, 'a hit is recorded');
+const copiedStrike = (action: CombatEffectAction) =>
+  hook('nameless_reflection', { turn: 2, state: { mirrorCopy: 'strike', mirrorCopyValue: 80 }, player: player(action) }, action).damageToPlayer;
+assert(copiedStrike('attack') === Math.ceil(80 * MIRROR_STRIKE_PERCENT / 100) && copiedStrike('guard') === Math.ceil(Math.ceil(80 * MIRROR_STRIKE_PERCENT / 100) / 2),
+  'the copied hit lands on the counter, halved by a guard');
+assert(hook('nameless_reflection', { turn: 2, incomingDamage: 100, state: { mirrorCopy: 'guard' } }).damageToMonster === 50, 'a copied guard halves your hit');
+assert(hook('nameless_reflection', { turn: 2, incomingDamage: 0, state: { mirrorCopy: 'mend' } }, 'guard').monsterHealing === Math.ceil(300 * MIRROR_MEND_PERCENT / 100),
+  'a copied pill heals it');
+const reflection = bossFight('mirror_cycle_city');
+assert(reflection.phase === 'combat', 'the mirror king fight opens');
+assert(getCurrentCombatIntent({ ...reflection, combat: { ...reflection.combat!, turn: 3, effects: { mirrorCopy: 'strike', mirrorCopyValue: 90 } } })?.id === 'mirror-strike',
+  'the copy is telegraphed');
+
+// Chapter 15, 末频道播音主: on turns 4, 7, 10 it seizes the focus left in hand, unless the channel is held with a guard.
+const seized = hook('last_broadcaster', { turn: 4, player: player('attack', { focus: 2 }) });
+assert(seized.damageToPlayer === 2 * CHANNEL_STEAL_DAMAGE && seized.nextState.channelStolen === 2, 'the focus left in hand is seized as damage');
+assert(hook('last_broadcaster', { turn: 4, player: player('guard', { focus: 2 }) }, 'guard').nextState.channelStolen === undefined,
+  'a guard holds the channel');
+assert([2, 3, 5].every(turn => hook('last_broadcaster', { turn, player: player('attack', { focus: 3 }) }).damageToPlayer === 0),
+  'only on turns 4, 7, 10, never right after a heavy blow');
+// A hero geared for chapter 15, so the real fight survives the seize.
+const trialEntered = enterDungeon(createChapterTrialState(15), 'silent_broadcast_tower', 'standard', undefined, { flowVersion: 2, hiddenTaskSeed: 7 });
+const broadcasterNode = getBossDefinition('silent_broadcast_tower').nodeId;
+const broadcaster = selectNode({ ...trialEntered, phase: 'explore', run: { ...trialEntered.run!, currentNodeId: broadcasterNode } }, broadcasterNode);
+const seizeTurn = { ...broadcaster, combat: { ...broadcaster.combat!, turn: 4, weaponFocus: 2 as const } };
+assert(getCurrentCombatIntent(seizeTurn)?.id === 'channel-seize', 'the seize is telegraphed');
+const robbed = performCombatAction(seizeTurn, 'attack');
+assert(robbed.combat?.weaponFocus === 0 && robbed.combat.effects?.channelStolen === undefined, 'in a real fight the seized focus is gone');
+assert(performCombatAction(seizeTurn, 'guard').combat?.weaponFocus === 3, 'holding the channel keeps the focus and still earns the guard');
+const quiet = { ...broadcaster, combat: { ...broadcaster.combat!, turn: 3, weaponFocus: 0 as const } };
+assert(getCurrentCombatIntent(quiet)?.steadyFocus === true && performCombatAction(quiet, 'attack').combat?.weaponFocus === 1,
+  'a quiet mechanic turn builds focus like a regular pursuit');
+
+// Chapter 16, 失联总控: the sentry adds to every counter until an art or talisman knocks it out; it comes back on turns 6, 11, ...
+assert(hook('shelter_overseer', { turn: 1 }).damageToPlayer === SENTRY_DAMAGE, 'the sentry adds to the counter');
+assert(hook('shelter_overseer', { turn: 1, player: player('guard') }, 'guard').damageToPlayer === Math.ceil(SENTRY_DAMAGE / 2), 'a guard halves it');
+const knocked = hook('shelter_overseer', { turn: 2, incomingDamage: 60, player: player('art') }, 'art');
+assert(knocked.damageToMonster === 0 && knocked.nextState.sentryDown === true, 'an art spends its hit on the sentry');
+assert(hook('shelter_overseer', { turn: 5, state: { sentryDown: true } }).damageToPlayer === 0, 'with the sentry down the counter is plain');
+assert(hook('shelter_overseer', { turn: 6, state: { sentryDown: true } }).damageToPlayer === SENTRY_DAMAGE, 'the sentry is back on turn 6');
+
+// Chapter 17, 伪证主审: perfect parries of the verdict hammer build rebuttals; taking it builds guilt.
+const parry = (state: CombatEffectInput['state'], turn = 2) =>
+  hook('false_testimony_judge', { turn, state, player: player('guard', { perfectParry: true }) }, 'guard');
+assert(parry({ rebuttalTarget: 2 }).nextState.rebuttals === 1 && parry({ rebuttalTarget: 2 }).damageToPlayer === 0,
+  'a perfect parry of the hammer is a rebuttal and dodges the aftershock');
+assert(hook('false_testimony_judge', { turn: 2, player: player('guard') }, 'guard').damageToPlayer === VERDICT_AFTERSHOCK,
+  'a plain guard still takes the aftershock');
+assert(parry({ rebuttalTarget: 2, rebuttals: 1 }).nextState.dismissedTurns === VERDICT_DISMISSED_TURNS, 'enough rebuttals dismiss the judge');
+const dismissedTurn = hook('false_testimony_judge', { turn: 5, incomingDamage: 100, state: { dismissedTurns: 2 } });
+assert(dismissedTurn.retaliationMultiplier === 0 && dismissedTurn.damageToMonster === 150, 'a dismissed judge cannot counter and takes more damage');
+assert(hook('false_testimony_judge', { turn: 6, incomingDamage: 100, state: { dismissedTurns: 1 } }).retaliationMultiplier === undefined,
+  'the second dismissed turn only raises the damage it takes');
+assert(hook('false_testimony_judge', { turn: 2, state: { guilt: 1 } }).nextState.guilt === 2, 'taking the hammer is guilt');
+const convicted = hook('false_testimony_judge', { turn: 2, state: { guilt: 2 } });
+assert(convicted.nextState.convicted === true && convicted.retaliationMultiplier === 1.3, 'full guilt convicts: its damage rises for good');
+assert([0, 1, 2, 3].map(getVerdictRebuttalTarget).join(',') === '3,2,1,1', 'each trusted piece of evidence leaves one rebuttal fewer to make');
+const judge = bossFight('false_testimony_court');
+assert(judge.phase === 'combat' && judge.combat!.effects!.rebuttalTarget === 3, 'without a trusted verdict the judge needs three rebuttals');
+const hammer = { ...judge, combat: { ...judge.combat!, turn: 2 } };
+assert(getCurrentCombatIntent(hammer)?.id === 'verdict-hammer' && isCurrentCombatParryable(hammer), 'the verdict hammer is telegraphed and parryable');
+const parried = performCombatAction(hammer, 'guard', undefined, { timing: 'perfect' });
+assert(parried.combat?.effects?.rebuttals === 1, 'a perfect parry in a real fight is a rebuttal');
+
+// Chapter 18, 终剪导演: the intent names the recorded take to play or to avoid.
+const replayIntent = (awakened: boolean) => getCombatIntent({
+  monsterId: 'final_cut_director', turn: 1, equipped: createInitialState().equipped, learnedMethods: [],
+  replay: { awakened, nextAction: 'art' }
+});
+assert(replayIntent(false).id === 'replay-take' && replayIntent(false).recommendedActions.includes('art'), 'sealed: play the recorded action');
+assert(replayIntent(true).id === 'replay-counter-cut' && replayIntent(true).dangerousActions.includes('art'), 'awakened: avoid the recorded action');

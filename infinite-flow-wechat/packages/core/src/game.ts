@@ -4,7 +4,9 @@ import {
 } from './progression';
 import type { PlayerPowerBreakdown, ProgressionReadiness } from './progression';
 
-import { ALL_SIGHT_BEAM_EXPOSURE, applyMonsterCombatEffects, ZERO_HOUR_CLOCK } from './combat-effects';
+import {
+  ALL_SIGHT_BEAM_EXPOSURE, applyMonsterCombatEffects, AUDIT_BASE_PERCENT, AUDIT_DEBT_PERCENT, getVerdictRebuttalTarget, ZERO_HOUR_CLOCK
+} from './combat-effects';
 import type { CombatDamageKind, CombatEffectAction, CombatEffectState } from './combat-effects';
 import { COMBAT_ART_FOCUS_COST, COMBAT_FOCUS_MAX, normalizeCombatFocus, resolveCombatFocus } from './combat-focus';
 import type { CombatFocus } from './combat-focus';
@@ -4558,6 +4560,15 @@ function getOpeningCombatEffects(state: GameState, monsterId: MonsterId): Combat
     return { regentClock: ZERO_HOUR_CLOCK - missing };
   }
   if (monsterId === 'last_helmsman') return { helmEntropy: law?.kind === 'entropy_ark' ? law.entropy : 2 };
+  if (monsterId === 'zero_sum_auditor') {
+    // Every point of debt still owed when the auditor is reached makes its settlements throw back more.
+    const debt = law?.kind === 'causal_clearinghouse' ? law.debt : 0;
+    return { auditRate: AUDIT_BASE_PERCENT + AUDIT_DEBT_PERCENT * debt };
+  }
+  if (monsterId === 'false_testimony_judge') {
+    const trusted = law?.kind === 'false_testimony_court' ? law.bossVerdictSnapshot?.trustedCount ?? 0 : 0;
+    return { rebuttalTarget: getVerdictRebuttalTarget(trusted) };
+  }
   if (monsterId === 'all_sight_warden' && law?.kind === 'panopticon_city') {
     // Half the exposure built on the map carries into the fight, at most one step short of 终审光束.
     const seen = Math.min(ALL_SIGHT_BEAM_EXPOSURE - 1, Math.floor((law.bossSnapshot?.exposureCount ?? law.exposureCount) / 2));
@@ -4690,14 +4701,28 @@ export function getCombatEncounterRank(state: GameState): CombatEncounterRank | 
 export function getCurrentCombatIntent(state: GameState): CombatIntent | undefined {
   if (!state.combat) return undefined;
   const encounterRank = getCombatEncounterRank(state);
+  const monsterMaxHp = getCombatEncounterProfile(state)?.monster.maxHp;
+  const replay = getBossReplayIntent(state);
   return getCombatIntent({
     monsterId: state.combat.monsterId,
     turn: state.combat.turn,
     effects: state.combat.effects,
     equipped: state.equipped,
     learnedMethods: getAvailableEquippedMethods(state),
-    ...(encounterRank ? { encounterRank } : {})
+    focus: normalizeCombatFocus(state.combat.weaponFocus),
+    ...(encounterRank ? { encounterRank } : {}),
+    ...(monsterMaxHp === undefined ? {} : { monsterMaxHp }),
+    ...(replay ? { replay } : {})
   });
+}
+
+/** 终剪导演's next recorded take, which its intent names so the replay can be played on purpose. */
+function getBossReplayIntent(state: GameState): { awakened: boolean; nextAction: CombatReplayDirectAction } | undefined {
+  const replay = normalizeCombatReplayCombatState(state.combat?.combatReplayState);
+  if (!state.combat || !replay?.enabled || !replay.boss || replay.cursor >= 3) return undefined;
+  const takeId = getCombatReplayTakeIdAtCursor(replay.cursor);
+  const nextAction = takeId ? replay.recordings[takeId]?.action : undefined;
+  return nextAction ? { awakened: state.combat.bossPhase === 'awakened', nextAction } : undefined;
 }
 
 /** True when guarding this turn can be upgraded to a perfect parry. */
@@ -9244,7 +9269,8 @@ function resolveMonsterEffects(
   combat: CombatState,
   incomingDamage: number,
   damageKind: CombatDamageKind,
-  action: CombatAction
+  action: CombatAction,
+  perfectParry = false
 ): {
   damageToMonster: number;
   damageToPlayer: number;
@@ -9281,7 +9307,9 @@ function resolveMonsterEffects(
       equipped: combatEquipped,
       learnedMethods: getAvailableEquippedMethods(state),
       activePet,
-      action: getCombatEffectAction(action, damageKind)
+      action: getCombatEffectAction(action, damageKind),
+      focus: getFocusLeftAfterAction(combat, action),
+      perfectParry
     },
     state: combat.effects
   });
@@ -9951,6 +9979,13 @@ function monsterAttack(
   };
 }
 
+/** The focus a turn's action leaves in hand: an art pays 1, a weapon skill spends the whole gauge. */
+function getFocusLeftAfterAction(combat: CombatState, action: CombatAction): number {
+  const focus = normalizeCombatFocus(combat.weaponFocus);
+  if (action === 'weapon_skill') return 0;
+  return action === 'art' ? Math.max(0, focus - COMBAT_ART_FOCUS_COST) : focus;
+}
+
 function applyContinuingCombatFocus(
   state: GameState,
   action: CombatAction,
@@ -9958,12 +9993,18 @@ function applyContinuingCombatFocus(
 ): GameState {
   if (state.phase !== 'combat' || !state.combat || state.player.hp <= 0 || !intent) return state;
 
-  const resolution = resolveCombatFocus({
+  const seized = resolveCombatFocus({
     currentFocus: state.combat.weaponFocus,
     action,
     intent,
     combatContinues: true
   });
+  // 末频道播音主 seized what was left in hand this turn; only what the action itself earned remains.
+  const stolen = state.combat.effects?.channelStolen ?? 0;
+  const resolution = stolen > 0
+    ? { ...seized, after: normalizeCombatFocus(Math.max(0, seized.after - stolen)) as CombatFocus }
+    : seized;
+  const { channelStolen: _seized, ...effectsAfterSeize } = state.combat.effects ?? {};
   const equipmentMemoryResult = applyEquipmentMemoryCombatFocusResolution(
     state.combat.equipmentMemoryState,
     resolution,
@@ -9988,6 +10029,7 @@ function applyContinuingCombatFocus(
       : undefined;
   const nextCombat: CombatState = {
     ...state.combat,
+    ...(stolen > 0 ? { effects: effectsAfterSeize } : {}),
     weaponFocus: equipmentMemoryResult.resolution.after,
     log: equipmentMemoryLine || focusLine
       ? [
@@ -10117,7 +10159,7 @@ export function performCombatAction(
       guarding: true,
       log: ['你转入防御，准备吃下下一次伤害。', ...nextCombat.log].slice(0, 8)
     };
-    const effects = resolveMonsterEffects(nextState, monster, nextCombat, 0, 'physical', action);
+    const effects = resolveMonsterEffects(nextState, monster, nextCombat, 0, 'physical', action, counterBlow.perfectParry);
     nextCombat = {
       ...effects.nextCombat,
       log: [...effects.statusLines, ...effects.nextCombat.log].slice(0, 8)

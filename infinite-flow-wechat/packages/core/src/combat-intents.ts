@@ -1,5 +1,8 @@
 import {
   ALL_SIGHT_BEAM_EXPOSURE, ALL_SIGHT_BEAM_RETALIATION, AUCTION_BID_INTERVAL, AUCTION_SHIELD_PERCENT, getMutationWeakness,
+  AUDIT_BASE_PERCENT, AUDIT_INTERVAL, CHANNEL_STEAL_DAMAGE, getAuditAllowance, getTurnsUntilChannelSeize, isAuditSettlementTurn,
+  isChannelSeizeTurn, isSentryRedeployTurn, isVerdictHammerTurn, MIRROR_MEND_PERCENT, MIRROR_STRIKE_PERCENT, SENTRY_DAMAGE,
+  VERDICT_AFTERSHOCK, VERDICT_DISMISSED_TURNS, VERDICT_GUILT_LIMIT, VERDICT_REBUTTAL_BASE,
   MUTATION_OTHER_DAMAGE, MUTATION_WEAK_DAMAGE, type CombatDamageKind,
   getHelmHeading, getRedactionTarget, HELM_FULL_DAMAGE_TAKEN, HELM_FULL_RETALIATION, HELM_REVERSE_DAMAGE_TAKEN, HELM_REVERSE_RETALIATION,
   REDACTION_INTERVAL, REDACTION_TURNS, ZERO_HOUR_CLOCK, ZERO_HOUR_PUSHBACK_PERCENT, ZERO_HOUR_STRIKE_HP_PERCENT,
@@ -29,6 +32,21 @@ export type CombatIntentId =
   | 'mutation-weakness'
   | 'all-sight-exposure'
   | 'all-sight-beam'
+  | 'audit-ledger'
+  | 'audit-settlement'
+  | 'mirror-copy'
+  | 'mirror-strike'
+  | 'mirror-guard'
+  | 'mirror-mend'
+  | 'channel-countdown'
+  | 'channel-seize'
+  | 'sentry-online'
+  | 'sentry-down'
+  | 'verdict-testimony'
+  | 'verdict-hammer'
+  | 'verdict-dismissed'
+  | 'replay-take'
+  | 'replay-counter-cut'
   | 'heavy-blow';
 
 export type CombatIntentSeverity = 'normal' | 'warning' | 'danger';
@@ -40,8 +58,16 @@ export type CombatIntentInput = Readonly<
     Pick<GameState, 'equipped' | 'learnedMethods'> & {
       /** Elite and boss encounters telegraph heavy blows; ordinary encounters omit this. */
       encounterRank?: CombatEncounterRank;
+      /** The encounter's max health, for mechanics measured against it. */
+      monsterMaxHp?: number;
+      /** The focus gauge before this turn's action. */
+      focus?: number;
+      /** 终剪导演: the action of the next recorded take and whether the director has awakened. */
+      replay?: Readonly<{ awakened: boolean; nextAction: ReplayAction }>;
     }
 >;
+
+type ReplayAction = 'attack' | 'art' | 'guard';
 
 export type CombatIntent = Readonly<{
   id: CombatIntentId;
@@ -50,6 +76,8 @@ export type CombatIntent = Readonly<{
   consequence: string;
   recommendedActions: readonly CombatAction[];
   dangerousActions: readonly CombatAction[];
+  /** A mechanic's quiet turn: attacks and guards still build focus as on a regular pursuit. */
+  steadyFocus?: true;
 }>;
 
 const REGULAR_PURSUIT: CombatIntent = {
@@ -77,10 +105,12 @@ function isHeavyBlowTurn(input: CombatIntentInput): boolean {
   return input.encounterRank !== undefined && input.turn > 0 && input.turn % HEAVY_BLOW_TURN_INTERVAL === 2;
 }
 
-/** Only a telegraphed heavy blow, including 零时斩, can be perfectly parried. */
+/** Only a telegraphed heavy blow, including 零时斩, 终审光束 and 判决锤, can be perfectly parried. */
 export function isParryableCombatIntent(intent: Pick<CombatIntent, 'id'> | undefined): boolean {
-  return intent?.id === 'heavy-blow' || intent?.id === 'zero-hour-strike' || intent?.id === 'all-sight-beam';
+  return intent?.id === 'heavy-blow' || intent?.id === 'zero-hour-strike' || intent?.id === 'all-sight-beam' || intent?.id === 'verdict-hammer';
 }
+
+const REPLAY_ACTION_LABELS: Readonly<Record<ReplayAction, string>> = { attack: '攻击', art: '术法', guard: '防御' };
 
 const DAMAGE_KIND_LABELS: Readonly<Record<CombatDamageKind, string>> = { physical: '武力', art: '术法', talisman: '符咒' };
 
@@ -431,6 +461,145 @@ export function getCombatIntent(input: CombatIntentInput): CombatIntent {
       recommendedActions: exposure === ALL_SIGHT_BEAM_EXPOSURE - 1 ? ['guard', 'attack', 'art'] : ['attack', 'art', 'weapon_skill'],
       dangerousActions: []
     };
+  }
+
+  if (input.monsterId === 'zero_sum_auditor') {
+    const tally = input.effects?.auditTally ?? 0;
+    const rate = input.effects?.auditRate ?? AUDIT_BASE_PERCENT;
+    const allowance = input.monsterMaxHp === undefined ? undefined : getAuditAllowance(input.monsterMaxHp);
+    const allowanceNote = allowance === undefined ? '超出免责额度的部分' : `超出免责额度 ${allowance} 的部分`;
+    if (isAuditSettlementTurn(input.turn)) {
+      return {
+        id: 'audit-settlement',
+        name: `强制轧差 ${rate}%`,
+        severity: 'danger',
+        consequence: `本回合清算：账面 ${tally} 加上这回合造成的伤害，${allowanceNote}按 ${rate}% 反噬，无法防御；这回合少出手，账面就少。`,
+        recommendedActions: ['guard', 'use_healing_pill'],
+        dangerousActions: ['weapon_skill', 'use_thunder_talisman']
+      };
+    }
+    const turnsUntil = AUDIT_INTERVAL - (input.turn % AUDIT_INTERVAL);
+    const note = `轧差账面 ${tally}：${turnsUntil} 回合后清算，${allowanceNote}按 ${rate}% 反噬（无法防御）；大招别都挤进同一次清算。`;
+    if (isHeavyBlowTurn(input)) return withHeavyBlow(note);
+    return {
+      id: 'audit-ledger',
+      name: `轧差账面 ${tally}`,
+      severity: 'normal',
+      steadyFocus: true,
+      consequence: note,
+      recommendedActions: ['attack', 'art', 'weapon_skill'],
+      dangerousActions: []
+    };
+  }
+
+  if (input.monsterId === 'nameless_reflection') {
+    const copy = input.effects?.mirrorCopy;
+    const echoed = Math.ceil(((input.effects?.mirrorCopyValue ?? 0) * MIRROR_STRIKE_PERCENT) / 100);
+    const note = copy === 'strike'
+      ? `镜王复刻你上回合的出手：本回合反击追加 ${echoed} 点，防御可减半。`
+      : copy === 'guard'
+        ? '镜王复刻你上回合的防御：本回合你造成的伤害减半。'
+        : copy === 'mend'
+          ? `镜王复刻你上回合的用药：本回合回复最大生命的 ${MIRROR_MEND_PERCENT}%。`
+          : '镜王会在下回合复刻你这回合的动作：出手它追加伤害，防御它也防御，用药它也回血。';
+    if (isHeavyBlowTurn(input)) return withHeavyBlow(note);
+    if (copy === 'strike') {
+      return { id: 'mirror-strike', name: `镜像复刻：出手 +${echoed}`, severity: 'warning', consequence: note,
+        recommendedActions: ['guard'], dangerousActions: [] };
+    }
+    if (copy === 'guard') {
+      return { id: 'mirror-guard', name: '镜像复刻：防御', severity: 'warning', consequence: note,
+        recommendedActions: ['use_healing_pill', 'attack', 'art'], dangerousActions: ['weapon_skill', 'use_thunder_talisman'] };
+    }
+    if (copy === 'mend') {
+      return { id: 'mirror-mend', name: '镜像复刻：用药', severity: 'normal', steadyFocus: true, consequence: note,
+        recommendedActions: ['weapon_skill', 'attack', 'art'], dangerousActions: [] };
+    }
+    return { id: 'mirror-copy', name: '镜像复刻', severity: 'normal', steadyFocus: true, consequence: note,
+      recommendedActions: ['attack', 'art', 'guard'], dangerousActions: [] };
+  }
+
+  if (input.monsterId === 'last_broadcaster') {
+    const focus = input.focus ?? 0;
+    if (isChannelSeizeTurn(input.turn)) {
+      return {
+        id: 'channel-seize',
+        name: '抢占频道',
+        severity: focus > 0 ? 'danger' : 'normal',
+        ...(focus > 0 ? {} : { steadyFocus: true as const }),
+        consequence: focus > 0
+          ? `本回合抢占频道：不防御会夺走你出手后剩下的全部战意（现在 ${focus} 点），每点追加 ${CHANNEL_STEAL_DAMAGE} 点伤害；防御守住频道，或先用武器战技花掉战意。`
+          : '本回合抢占频道，你现在没有战意，不会被夺走。',
+        recommendedActions: focus > 0 ? ['guard', 'weapon_skill'] : ['attack', 'art'],
+        dangerousActions: focus > 0 ? ['attack', 'use_healing_pill', 'use_thunder_talisman'] : []
+      };
+    }
+    const turnsUntil = getTurnsUntilChannelSeize(input.turn);
+    const note = `${turnsUntil} 回合后抢占频道：那回合不防御，会被夺走剩下的全部战意，每点追加 ${CHANNEL_STEAL_DAMAGE} 点伤害。`;
+    if (isHeavyBlowTurn(input)) return withHeavyBlow(note);
+    return { id: 'channel-countdown', name: `频道倒数 ${turnsUntil}`, severity: 'normal', steadyFocus: true, consequence: note,
+      recommendedActions: ['attack', 'art', 'weapon_skill'], dangerousActions: [] };
+  }
+
+  if (input.monsterId === 'shelter_overseer') {
+    const down = input.effects?.sentryDown === true && !isSentryRedeployTurn(input.turn);
+    if (!down) {
+      const note = `哨戒炮在线：每次反击追加 ${SENTRY_DAMAGE} 点（防御减半）；术法（含术法类武器战技）或雷火符会打掉它，那一击不伤失联总控。`;
+      if (isHeavyBlowTurn(input)) return withHeavyBlow(note);
+      return { id: 'sentry-online', name: '哨戒炮在线', severity: 'warning', consequence: note,
+        recommendedActions: ['art', 'use_thunder_talisman'], dangerousActions: [] };
+    }
+    let redeploy = input.turn + 1;
+    while (!isSentryRedeployTurn(redeploy)) redeploy += 1;
+    const note = `哨戒炮已拆除，第 ${redeploy} 回合重新架设。`;
+    if (isHeavyBlowTurn(input)) return withHeavyBlow(note);
+    return { id: 'sentry-down', name: '哨戒炮已拆', severity: 'normal', steadyFocus: true, consequence: note,
+      recommendedActions: ['attack', 'art', 'weapon_skill'], dangerousActions: [] };
+  }
+
+  if (input.monsterId === 'false_testimony_judge') {
+    const effects = input.effects;
+    const target = effects?.rebuttalTarget ?? VERDICT_REBUTTAL_BASE;
+    const status = `反证 ${effects?.rebuttals ?? 0}/${target} · ${effects?.convicted ? '已定罪（它的伤害 +30%）' : `罪证 ${effects?.guilt ?? 0}/${VERDICT_GUILT_LIMIT}`}`;
+    const dismissed = effects?.dismissedTurns ?? 0;
+    if (dismissed > 0) {
+      return {
+        id: 'verdict-dismissed',
+        name: '裁定驳回',
+        severity: 'normal',
+        steadyFocus: true,
+        consequence: dismissed === VERDICT_DISMISSED_TURNS ? '裁定被驳回：本回合它不反击，受到的伤害 +50%。' : '仍在驳回中：受到的伤害 +50%。',
+        recommendedActions: ['weapon_skill', 'attack', 'art'],
+        dangerousActions: []
+      };
+    }
+    if (isVerdictHammerTurn(input.turn, effects)) {
+      return {
+        id: 'verdict-hammer',
+        name: '判决锤',
+        severity: 'danger',
+        consequence: `判决锤按重击结算，完美格挡以外还会追加 ${VERDICT_AFTERSHOCK} 点余波：把握时机完美格挡攒反证，攒满驳回它（停手一回合、两回合受伤 +50%）；不防御攒罪证，攒满它此后的伤害 +30%。${status}。`,
+        recommendedActions: ['guard'],
+        dangerousActions: ['attack', 'art', 'weapon_skill', 'use_healing_pill', 'use_thunder_talisman']
+      };
+    }
+    return { id: 'verdict-testimony', name: '证词', severity: 'normal', steadyFocus: true, consequence: `下回合落下判决锤。${status}。`,
+      recommendedActions: ['attack', 'art', 'weapon_skill'], dangerousActions: [] };
+  }
+
+  if (input.monsterId === 'final_cut_director' && input.replay) {
+    const { awakened, nextAction } = input.replay;
+    const label = REPLAY_ACTION_LABELS[nextAction];
+    const note = awakened
+      ? `反剪：下一段录制是『${label}』，再用它只造成一半直接伤害；换用其他动作，会以 75% 释放这段录制。`
+      : `复演：下一段录制是『${label}』，用同一动作把它释放出来（打出录下的伤害或护盾）。`;
+    const others = (['attack', 'art', 'guard'] as const).filter((action) => action !== nextAction);
+    if (isHeavyBlowTurn(input)) return withHeavyBlow(note, awakened ? [nextAction] : []);
+    return awakened
+      ? { id: 'replay-counter-cut', name: `反剪『${label}』`, severity: 'warning', consequence: note,
+          recommendedActions: others, dangerousActions: [nextAction] }
+      : { id: 'replay-take', name: `复演『${label}』`, severity: 'normal', steadyFocus: true, consequence: note,
+          recommendedActions: [nextAction], dangerousActions: [] };
   }
 
   // Monster-specific mechanics above keep priority; the heavy blow only fills ordinary turns.

@@ -325,8 +325,8 @@ export const MONSTERS: Record<MonsterId, MonsterDefinition> = {
     speed: 19,
     rewardPoints: 1030,
     drop: { causal_seal: 3, method_page: 1 },
-    ability: '在因端收益与果端代价之间强制轧差，重复获利会被折算成终审伤害。',
-    counter: '完成双侧证词核验并均衡轮换行动，能阻止它把战斗写成零和账本。'
+    ability: '每三回合强制轧差：结清这三回合你造成的伤害，超出免责额度的部分按比例反噬，无法防御；地图上每欠 1 点债，比例再高 10%。',
+    counter: '先在地图上还清因果账；大招别都挤进同一次清算，清算那回合少出手或防御。'
   },
   entropy_deckhand: {
     id: 'entropy_deckhand',
@@ -409,8 +409,8 @@ export const MONSTERS: Record<MonsterId, MonsterDefinition> = {
     speed: 25,
     rewardPoints: 1380,
     drop: { phase_glass: 3, method_page: 1 },
-    ability: '以未锚定相位生成镜壳，觉醒后仍保留尚未击碎的外壳并持续改写伤害归属。',
-    counter: '完成相位选择并尽量校准双锚，用不同的正伤害行动逐层击碎镜壳。'
+    ability: '镜像复刻：下回合复刻你这回合的动作，出手它追加伤害，防御它也防御让你的伤害减半，用药它也回血；未锚定的镜壳仍会抵消伤害。',
+    counter: '完成相位选择并校准双锚，减少镜壳；打出重击后接防御，把它复刻的出手减半。'
   },
   erasure_copyist: {
     id: 'erasure_copyist',
@@ -591,8 +591,8 @@ export const MONSTERS: Record<MonsterId, MonsterDefinition> = {
     speed: 36,
     rewardPoints: 2280,
     drop: { silence_core: 3, method_page: 1 },
-    ability: '每三回合完成一次三拍终播，第三拍追加 16 点噪声伤害；格挡时只剩 4 点余波。',
-    counter: '先重启北段、中央与南段中继台；数好拍子，在第三拍格挡。'
+    ability: '从第 4 回合起每三回合抢占频道：不防御就夺走你出手后剩下的全部战意，每点追加 24 点噪声伤害。',
+    counter: '先重启北段、中央与南段中继台；抢台前用武器战技花掉战意，或那回合防御守住。'
   },
   mimic_survivor: {
     id: 'mimic_survivor',
@@ -661,8 +661,8 @@ export const MONSTERS: Record<MonsterId, MonsterDefinition> = {
     speed: 38,
     rewardPoints: 2480,
     drop: { rescue_badge: 3, method_page: 1 },
-    ability: '冻结首领战开始时的幸存者生命快照，把三处检查点的护送选择写入接管协议，并在觉醒后放大单一选择的代价。',
-    counter: '先完成三处检查点，至少治疗与强推各一次并让幸存者保持半数以上生命；首领觉醒后继续轮换攻防，在接管间隙集中终结。'
+    ability: '架起失控哨戒炮，每次反击追加 14 点伤害（防御减半）；被拆掉后在第 6、11、16……回合重新架设。',
+    counter: '用术法或雷火符打掉哨戒炮（那一击不伤总控），在它重新架设前集中输出。'
   },
   hostile_witness: {
     id: 'hostile_witness',
@@ -717,8 +717,8 @@ export const MONSTERS: Record<MonsterId, MonsterDefinition> = {
     speed: 40,
     rewardPoints: 2690,
     drop: { truth_fragment: 3, method_page: 1 },
-    ability: '冻结首领战开始时的三证裁定快照，把未揭示、未净证与错误指控写入终审判词；觉醒后还会放大已经翻案的缺口。',
-    counter: '先揭示三份证据、至少净证两份并完成正确指控，保留未翻案状态进入首领战；觉醒后轮换攻防，在判词换页时集中终结。'
+    ability: '每两回合落下判决锤（按重击结算，完美格挡以外还有 12 点余波）：完美格挡攒反证，攒满驳回它的裁定；硬吃攒罪证，攒满它当庭定罪，此后伤害 +30%。',
+    counter: '先揭示并净证证据，信任的证据越多，驳回需要的反证越少；判决锤来时把握时机完美格挡。'
   },
   cue_stalker: {
     id: 'cue_stalker',
@@ -773,8 +773,8 @@ export const MONSTERS: Record<MonsterId, MonsterDefinition> = {
     speed: 42,
     rewardPoints: 2900,
     drop: { combat_reel: 3, method_page: 1 },
-    ability: '冻结首领战开始时的三段录制与路线快照，把缺失镜头、未完成路线和重拍痕迹写入终剪版本。',
-    counter: '先完成甲乙丙三段录制并锁定路线，再轮换攻防，在终剪换卷时集中终结。'
+    ability: '冻结三段录制：封存时用录下的动作释放录制；觉醒后反剪，重复录下的动作只造成一半伤害，换别的动作会以 75% 释放录制。',
+    counter: '先完成甲乙丙三段录制并锁定路线；照战斗预告提示的录制动作去释放或避开。'
   },
   sweep_sentinel: {
     id: 'sweep_sentinel',
