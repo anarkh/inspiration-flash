@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "law-core-13-auction",
+  "provenance": {
+    "supersedes": "AC-LAW-13",
+    "rules": [
+      "packages/core/src/dungeon-laws.ts",
+      "packages/core/src/dungeon-routes.ts",
+      "packages/core/src/game.ts"
+    ],
+    "expectedRule": "Chapter 13 auctions four lots (force, guard, art, return). Legacy scrip is a run-only loot item: estate_gate gives 2, each lot dais gives 1 when collected, and a won inheritance_mimic fight drops 2. The first clear of a lot dais leaves a pending lot that blocks leaving with `遗产拍品尚未裁定，请先选择竞得、焚毁或放弃。`; law/resolve-auction-lot bids for max(1, 1 + earlier bids) scrip (no entry passive discounts here), burns for 1 or folds for 0. A claim vault (force: force_relic_gallery/archive_survey_gallery -> force_claim_vault; art: lower_bid_supply/art_relic_gallery -> art_claim_vault; ...) opens only for a bid lot; a burnt or folded lot keeps it closed with `对应遗产拍品必须竞得；焚毁或放弃后该认领区永久关闭。`. The four boss approaches need every lot resolved (`力、守、术与归返四件遗产拍品全部裁定后开放。`). Display severity is resolved once all four are resolved or frozen, danger while pending, otherwise warning; meter {resolved, 4}; targetReached when all are resolved and nothing is pending. Selecting the boss freezes the choices; in the sealed boss encounter a bid force lot gives +8% outgoing force, a bid guard lot +10% guard effect, a folded art lot gives the boss +10% art power, and a burnt lot gives nothing. inheritance_mimic_omega is an elite, so its loot offer is declined before moving on. The pursuer is a separate run system and is disabled after entry so it cannot ambush the walk. All expected values are frozen here, never read from candidate code."
+  },
+  "baseInput": {
+    "path": "packages/save-codec/tests/fixtures/new-hub-v1.json",
+    "sha256": "a1de1f1b33b59c91dea46caf55f21b6eee0b7104c2cbe4d68ac5d7a430709e0b"
+  },
+  "inputMutations": [
+    { "op": "replace", "path": ["state", "completedDungeonIds"], "value": ["demon_tower_1", "metro_abyss", "starfall_mine", "rust_hospital", "ash_arena", "dream_archive", "void_citadel", "temporal_observatory", "causal_clearinghouse", "entropy_ark", "mirror_cycle_city", "redaction_scriptorium"] },
+    { "op": "replace", "path": ["state", "claimedTaskIds"], "value": ["clear_demon_tower", "clear_metro_abyss", "mainline_clear_starfall_mine", "mainline_clear_rust_hospital", "mainline_clear_ash_arena", "mainline_clear_dream_archive", "mainline_clear_void_citadel", "mainline_clear_temporal_observatory", "mainline_clear_causal_clearinghouse", "mainline_clear_entropy_ark", "mainline_clear_mirror_cycle_city", "mainline_clear_redaction_scriptorium"] },
+    { "op": "replace", "path": ["state", "player", "base"], "value": { "body": 50, "spirit": 30, "agility": 25, "luck": 10 } },
+    { "op": "replace", "path": ["state", "learnedMethods"], "value": ["mist_breathing"] }
+  ],
+  "entry": { "dungeonId": "legacy_auction_court", "protocolId": "standard", "hiddenTaskSeed": 131313131 },
+  "runMutations": [
+    { "op": "replace", "path": ["run", "pursuitState", "status"], "value": "disabled" }
+  ],
+  "scenarioIds": [
+    "lots-spend-scrip-and-gate-claim-vaults"
+  ],
+  "scenarios": [
+    {
+      "id": "lots-spend-scrip-and-gate-claim-vaults",
+      "steps": [
+        { "do": "observe", "as": "entry", "law": ["law.pendingLotNodeId", "law.resolvedLotChoices", "law.bossLotSnapshot", "display.severity", "display.meter"] },
+        { "do": "collect" },
+        { "do": "observe", "as": "scripFromGate", "state": ["run.lootBag.items.legacy_scrip"] },
+        { "do": "walk", "path": ["archive_survey_gallery"] },
+        { "do": "observe", "as": "forceVaultBefore", "gate": "force_claim_vault" },
+        { "do": "walk", "path": ["force_lot_dais"] },
+        { "do": "collect" },
+        { "do": "observe", "as": "pendingForce", "law": ["law.pendingLotNodeId", "display.severity"] },
+        { "do": "observe", "as": "scripFromDais", "state": ["run.lootBag.items.legacy_scrip"] },
+        { "do": "attempt", "as": "leaveWhilePending", "command": { "type": "run/move", "nodeId": "hammerfall_trap" } },
+        { "do": "command", "command": { "type": "law/resolve-auction-lot", "choice": "bid" } },
+        { "do": "observe", "as": "scripAfterFirstBid", "state": ["run.lootBag.items.legacy_scrip"] },
+        { "do": "walk", "path": ["archive_survey_gallery"] },
+        { "do": "observe", "as": "forceVaultBid", "gate": "force_claim_vault" },
+        { "do": "walk", "path": ["estate_gate", "lower_bid_supply", "art_lot_dais"] },
+        { "do": "collect" },
+        { "do": "command", "command": { "type": "law/resolve-auction-lot", "choice": "fold" } },
+        { "do": "observe", "as": "scripAfterFold", "state": ["run.lootBag.items.legacy_scrip"] },
+        { "do": "walk", "path": ["lower_bid_supply"] },
+        { "do": "observe", "as": "artVaultFolded", "gate": "art_claim_vault" },
+        { "do": "attempt", "as": "foldedMove", "command": { "type": "run/move", "nodeId": "art_claim_vault" } },
+        { "do": "walk", "path": ["art_lot_dais", "inheritance_mimic_omega"] },
+        { "do": "fight", "node": "inheritance_mimic_omega" },
+        { "do": "command", "command": { "type": "node/resolve-equipment-loot" } },
+        { "do": "walk", "path": ["dead_team_testimony_stage"] },
+        { "do": "observe", "as": "bossGateTwoLots", "gate": "estate_auctioneer" },
+        { "do": "walk", "path": ["return_lot_dais"] },
+        { "do": "collect" },
+        { "do": "command", "command": { "type": "law/resolve-auction-lot", "choice": "burn" } },
+        { "do": "observe", "as": "scripAfterBurn", "state": ["run.lootBag.items.legacy_scrip"] },
+        { "do": "walk", "path": ["boss_side_rostrum"] },
+        { "do": "trap", "choice": "risk" },
+        { "do": "walk", "path": ["guard_lot_dais"] },
+        { "do": "collect" },
+        { "do": "observe", "as": "scripBeforeSecondBid", "state": ["run.lootBag.items.legacy_scrip"] },
+        { "do": "command", "command": { "type": "law/resolve-auction-lot", "choice": "bid" } },
+        { "do": "observe", "as": "scripAfterSecondBid", "state": ["run.lootBag.items.legacy_scrip"] },
+        { "do": "attempt", "as": "lotWithoutPending", "command": { "type": "law/resolve-auction-lot", "choice": "fold" } },
+        { "do": "observe", "as": "allResolved", "law": ["law.resolvedLotChoices", "display.severity", "display.meter", "display.targetReached"] },
+        { "do": "walk", "path": ["boss_side_rostrum"] },
+        { "do": "observe", "as": "bossGateAllLots", "gate": "estate_auctioneer" },
+        { "do": "walk", "path": ["estate_auctioneer"] },
+        { "do": "select", "node": "estate_auctioneer" },
+        { "do": "observe", "as": "frozen", "law": ["law.bossLotSnapshot", "modifiers.outgoingDamage", "modifiers.guardEffectPercent", "modifiers.encounter", "modifiers.healingPercent"] },
+        { "do": "observe", "as": "roundtrip", "roundtrip": ["law.bossLotSnapshot"] }
+      ],
+      "expected": {
+        "entry": { "law.pendingLotNodeId": null, "law.resolvedLotChoices": {}, "law.bossLotSnapshot": null, "display.severity": "warning", "display.meter": { "value": 0, "max": 4 } },
+        "scripFromGate": { "run.lootBag.items.legacy_scrip": 2 },
+        "forceVaultBefore": { "from": "archive_survey_gallery", "gateId": "auction_force_archive_vault", "isOpen": false, "blockReason": "对应遗产拍品必须竞得；焚毁或放弃后该认领区永久关闭。" },
+        "pendingForce": { "law.pendingLotNodeId": "force_lot_dais", "display.severity": "danger" },
+        "scripFromDais": { "run.lootBag.items.legacy_scrip": 3 },
+        "leaveWhilePending": { "status": "rejected", "code": "departure-blocked", "message": "遗产拍品尚未裁定，请先选择竞得、焚毁或放弃。" },
+        "scripAfterFirstBid": { "run.lootBag.items.legacy_scrip": 2 },
+        "forceVaultBid": { "from": "archive_survey_gallery", "gateId": "auction_force_archive_vault", "isOpen": true, "blockReason": null },
+        "scripAfterFold": { "run.lootBag.items.legacy_scrip": 3 },
+        "artVaultFolded": { "from": "lower_bid_supply", "gateId": "auction_art_supply_vault", "isOpen": false, "blockReason": "对应遗产拍品必须竞得；焚毁或放弃后该认领区永久关闭。" },
+        "foldedMove": { "status": "rejected", "code": "illegal-move", "message": "art_claim_vault is not a legal adjacent destination from lower_bid_supply." },
+        "bossGateTwoLots": { "from": "dead_team_testimony_stage", "gateId": "auction_testimony_boss_gate", "isOpen": false, "blockReason": "力、守、术与归返四件遗产拍品全部裁定后开放。" },
+        "scripAfterBurn": { "run.lootBag.items.legacy_scrip": 5 },
+        "scripBeforeSecondBid": { "run.lootBag.items.legacy_scrip": 6 },
+        "scripAfterSecondBid": { "run.lootBag.items.legacy_scrip": 4 },
+        "lotWithoutPending": { "status": "rejected", "code": "domain-rejected", "message": "当前没有待裁定的遗产拍品。" },
+        "allResolved": { "law.resolvedLotChoices": { "force_lot_dais": "bid", "art_lot_dais": "fold", "return_lot_dais": "burn", "guard_lot_dais": "bid" }, "display.severity": "resolved", "display.meter": { "value": 4, "max": 4 }, "display.targetReached": true },
+        "bossGateAllLots": { "from": "boss_side_rostrum", "gateId": "auction_rostrum_boss_gate", "isOpen": true, "blockReason": null },
+        "frozen": { "law.bossLotSnapshot": { "force_lot_dais": "bid", "art_lot_dais": "fold", "return_lot_dais": "burn", "guard_lot_dais": "bid" }, "modifiers.outgoingDamage": { "forcePercent": 8, "artPercent": 0 }, "modifiers.guardEffectPercent": 10, "modifiers.encounter": { "allStatsPercent": 0, "defensePercent": 0, "artPowerPercent": 10 }, "modifiers.healingPercent": 0 },
+        "roundtrip": { "law.bossLotSnapshot": { "force_lot_dais": "bid", "art_lot_dais": "fold", "return_lot_dais": "burn", "guard_lot_dais": "bid" } }
+      }
+    }
+  ]
+}

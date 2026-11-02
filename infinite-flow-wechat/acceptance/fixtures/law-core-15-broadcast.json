@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "law-core-15-broadcast",
+  "provenance": {
+    "supersedes": "AC-LAW-15",
+    "rules": [
+      "packages/core/src/dungeon-laws.ts",
+      "packages/core/src/dungeon-routes.ts",
+      "packages/core/src/game.ts"
+    ],
+    "expectedRule": "Chapter 15 keeps noise 0-6, starting at 0. The first clear of a monster or trap raises noise by 1 (no hushblade here). The first clear of a relay console (north, central, south) leaves a pending relay that blocks leaving with `广播中继尚未调谐，请先选择静默或播送。`; law/resolve-broadcast-relay mutes (-1, clamped at 0; no dead_air_headset) or broadcasts (+1 and 180 run reward points). Display: title 寂声广播律, status `噪声 n/6，北中继:x，中央中继:x，南中继:x，静默 m，播送 b[，待调谐 <relay>]，Boss快照 未冻结|k`; severity resolved once all relays are resolved or the boss froze, danger while pending or at noise 5+, warning at 3+, otherwise stable; meter {noise, 6}. Gates: broadcast_silent_archive_gate needs 2 mutes and noise <= 1, broadcast_memory_boss_gate (broadcast_memory_stage -> last_broadcaster) all relays resolved (`三座中继全部调谐后，末频道王门开放。`). Selecting the boss freezes bossNoiseSnapshot = noise (no last_channel_beacon); in the boss encounter a snapshot of 0/1/2 sets encounter defense to 12/8/4%. The pursuer is a separate run system and is disabled after entry so it cannot ambush the walk. All expected values are frozen here, never read from candidate code."
+  },
+  "baseInput": {
+    "path": "packages/save-codec/tests/fixtures/new-hub-v1.json",
+    "sha256": "a1de1f1b33b59c91dea46caf55f21b6eee0b7104c2cbe4d68ac5d7a430709e0b"
+  },
+  "inputMutations": [
+    { "op": "replace", "path": ["state", "completedDungeonIds"], "value": ["demon_tower_1", "metro_abyss", "starfall_mine", "rust_hospital", "ash_arena", "dream_archive", "void_citadel", "temporal_observatory", "causal_clearinghouse", "entropy_ark", "mirror_cycle_city", "redaction_scriptorium", "legacy_auction_court", "genesis_vault"] },
+    { "op": "replace", "path": ["state", "claimedTaskIds"], "value": ["clear_demon_tower", "clear_metro_abyss", "mainline_clear_starfall_mine", "mainline_clear_rust_hospital", "mainline_clear_ash_arena", "mainline_clear_dream_archive", "mainline_clear_void_citadel", "mainline_clear_temporal_observatory", "mainline_clear_causal_clearinghouse", "mainline_clear_entropy_ark", "mainline_clear_mirror_cycle_city", "mainline_clear_redaction_scriptorium", "mainline_clear_legacy_auction_court", "mainline_clear_genesis_vault"] },
+    { "op": "replace", "path": ["state", "player", "base"], "value": { "body": 50, "spirit": 30, "agility": 25, "luck": 10 } },
+    { "op": "replace", "path": ["state", "learnedMethods"], "value": ["mist_breathing"] }
+  ],
+  "entry": { "dungeonId": "silent_broadcast_tower", "protocolId": "standard", "hiddenTaskSeed": 151515151 },
+  "runMutations": [
+    { "op": "replace", "path": ["run", "pursuitState", "status"], "value": "disabled" }
+  ],
+  "scenarioIds": [
+    "relays-tune-noise-and-boss-snapshot"
+  ],
+  "scenarios": [
+    {
+      "id": "relays-tune-noise-and-boss-snapshot",
+      "steps": [
+        { "do": "observe", "as": "entry", "law": ["law.noise", "law.pendingRelayNodeId", "law.resolvedRelayChoices", "law.bossNoiseSnapshot", "display"] },
+        { "do": "walk", "path": ["static_screen_trap"] },
+        { "do": "trap", "choice": "risk" },
+        { "do": "observe", "as": "trapNoise", "law": ["law.noise", "display.severity"] },
+        { "do": "walk", "path": ["north_relay_console"] },
+        { "do": "collect" },
+        { "do": "observe", "as": "pendingNorth", "law": ["law.pendingRelayNodeId", "display.status", "display.severity"] },
+        { "do": "attempt", "as": "leaveWhilePending", "command": { "type": "run/move", "nodeId": "north_echo_cache" } },
+        { "do": "command", "command": { "type": "law/resolve-broadcast-relay", "choice": "mute" }, "as": "muteNorth" },
+        { "do": "walk", "path": ["static_screen_trap", "south_relay_console"] },
+        { "do": "collect" },
+        { "do": "command", "command": { "type": "law/resolve-broadcast-relay", "choice": "mute" } },
+        { "do": "observe", "as": "twoMutes", "law": ["law.noise", "display.status", "display.severity"] },
+        { "do": "walk", "path": ["static_screen_trap", "north_relay_console", "north_echo_cache"] },
+        { "do": "observe", "as": "silentArchiveOpen", "gate": "silent_archive" },
+        { "do": "walk", "path": ["north_relay_console", "acoustic_tripwire"] },
+        { "do": "trap", "choice": "risk" },
+        { "do": "walk", "path": ["broadcast_memory_stage"] },
+        { "do": "observe", "as": "bossGateTwoRelays", "gate": "last_broadcaster" },
+        { "do": "walk", "path": ["acoustic_tripwire", "dead_air_gallery", "central_relay_console"] },
+        { "do": "collect" },
+        { "do": "command", "command": { "type": "law/resolve-broadcast-relay", "choice": "broadcast" }, "as": "broadcastCentral" },
+        { "do": "attempt", "as": "relayWithoutPending", "command": { "type": "law/resolve-broadcast-relay", "choice": "mute" } },
+        { "do": "observe", "as": "allTuned", "law": ["law.noise", "law.resolvedRelayChoices", "display.status", "display.severity", "display.targetReached"] },
+        { "do": "walk", "path": ["dead_air_gallery", "acoustic_tripwire", "broadcast_memory_stage"] },
+        { "do": "observe", "as": "bossGateOpen", "gate": "last_broadcaster" },
+        { "do": "walk", "path": ["last_broadcaster"] },
+        { "do": "select", "node": "last_broadcaster" },
+        { "do": "observe", "as": "frozen", "law": ["law.bossNoiseSnapshot", "display.status", "modifiers.encounter"] },
+        { "do": "observe", "as": "roundtrip", "roundtrip": ["law.noise", "law.resolvedRelayChoices", "law.bossNoiseSnapshot"] }
+      ],
+      "expected": {
+        "entry": { "law.noise": 0, "law.pendingRelayNodeId": null, "law.resolvedRelayChoices": {}, "law.bossNoiseSnapshot": null, "display": { "title": "寂声广播律", "status": "噪声 0/6，北中继:未定，中央中继:未定，南中继:未定，静默 0，播送 0，Boss快照 未冻结", "severity": "stable", "meter": { "value": 0, "max": 6 }, "targetReached": false } },
+        "trapNoise": { "law.noise": 1, "display.severity": "stable" },
+        "pendingNorth": { "law.pendingRelayNodeId": "north_relay_console", "display.status": "噪声 1/6，北中继:未定，中央中继:未定，南中继:未定，静默 0，播送 0，待调谐 北中继，Boss快照 未冻结", "display.severity": "danger" },
+        "leaveWhilePending": { "status": "rejected", "code": "departure-blocked", "message": "广播中继尚未调谐，请先选择静默或播送。" },
+        "muteNorth": { "damageTaken": 0 },
+        "twoMutes": { "law.noise": 0, "display.status": "噪声 0/6，北中继:静默，中央中继:未定，南中继:静默，静默 2，播送 0，Boss快照 未冻结", "display.severity": "stable" },
+        "silentArchiveOpen": { "from": "north_echo_cache", "gateId": "broadcast_silent_archive_gate", "isOpen": true, "blockReason": null },
+        "bossGateTwoRelays": { "from": "broadcast_memory_stage", "gateId": "broadcast_memory_boss_gate", "isOpen": false, "blockReason": "三座中继全部调谐后，末频道王门开放。" },
+        "broadcastCentral": { "damageTaken": 0 },
+        "relayWithoutPending": { "status": "rejected", "code": "domain-rejected", "message": "The command did not produce a domain transition." },
+        "allTuned": { "law.noise": 2, "law.resolvedRelayChoices": { "north_relay_console": "mute", "south_relay_console": "mute", "central_relay_console": "broadcast" }, "display.status": "噪声 2/6，北中继:静默，中央中继:播送，南中继:静默，静默 2，播送 1，Boss快照 未冻结", "display.severity": "resolved", "display.targetReached": true },
+        "bossGateOpen": { "from": "broadcast_memory_stage", "gateId": "broadcast_memory_boss_gate", "isOpen": true, "blockReason": null },
+        "frozen": { "law.bossNoiseSnapshot": 2, "display.status": "噪声 2/6，北中继:静默，中央中继:播送，南中继:静默，静默 2，播送 1，Boss快照 2", "modifiers.encounter": { "allStatsPercent": 0, "defensePercent": 4, "artPowerPercent": 0 } },
+        "roundtrip": { "law.noise": 2, "law.resolvedRelayChoices": { "north_relay_console": "mute", "south_relay_console": "mute", "central_relay_console": "broadcast" }, "law.bossNoiseSnapshot": 2 }
+      }
+    }
+  ]
+}

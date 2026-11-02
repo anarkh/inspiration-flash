@@ -165,6 +165,11 @@ function checkPassCases() {
     "AC-LAW-CORE-08": 2,
     "AC-LAW-CORE-09": 2,
     "AC-LAW-CORE-10": 2,
+    "AC-LAW-CORE-11": 2,
+    "AC-LAW-CORE-12": 1,
+    "AC-LAW-CORE-13": 1,
+    "AC-LAW-CORE-14": 1,
+    "AC-LAW-CORE-15": 1,
   };
   for (const [id, scenarioCount] of Object.entries(expectedScenarios)) {
     const result = invoke(["--ac", id]);
@@ -277,6 +282,11 @@ function checkMethodRegistrations() {
     "AC-LAW-CORE-08": "lawCoreScenarios",
     "AC-LAW-CORE-09": "lawCoreScenarios",
     "AC-LAW-CORE-10": "lawCoreScenarios",
+    "AC-LAW-CORE-11": "lawCoreScenarios",
+    "AC-LAW-CORE-12": "lawCoreScenarios",
+    "AC-LAW-CORE-13": "lawCoreScenarios",
+    "AC-LAW-CORE-14": "lawCoreScenarios",
+    "AC-LAW-CORE-15": "lawCoreScenarios",
   };
   for (const [id, implementation] of Object.entries(expected)) {
     const registration = caseRunners.find((entry) => entry.id === id);
@@ -1963,7 +1973,7 @@ checkExitTaxonomy();
 checkStableDigest();
 checkExclusiveEvidence();
 
-const EXPECTED_ASSERTIONS = 1124;
+const EXPECTED_ASSERTIONS = 1214;
 if (assertions !== EXPECTED_ASSERTIONS) {
   throw new Error(
     `Assertion count drifted; expected ${EXPECTED_ASSERTIONS}, received ${assertions}`,

@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "law-core-12-redaction",
+  "provenance": {
+    "supersedes": "AC-LAW-12",
+    "rules": [
+      "packages/core/src/dungeon-laws.ts",
+      "packages/core/src/dungeon-routes.ts",
+      "packages/core/src/game.ts"
+    ],
+    "expectedRule": "Chapter 12 has three clause desks (body 肉身, memory 记忆, return 归返). The first clear of a desk leaves a pending clause that blocks leaving with `终稿条款尚未裁定，请先选择认证或删改。`; law/resolve-redaction-clause certifies for free or redacts for max(1, floor(maxHp x 8%)) HP. Max HP is derived from the build (the decoder recomputes it, so no HP is given as input): 50 + 14 x body 50 + patched_coat 10 = 760. A redaction therefore costs 60. Display: title 删界终稿, status `抉择 r/3，认证 c，删改 d[，待裁定 <clause>]，预估|冻结条款 k/3`; severity resolved once all three are resolved or frozen, danger while pending, otherwise warning; meter {resolved, 3}; targetReached when all are resolved and nothing is pending. Each clause sector (memory: north_clue_cache/upper_supply_margin -> memory_survey_archive; return: south_clue_cache/lower_supply_margin -> return_revision_portal; body: palimpsest_censor_alpha/upper_revision_portal -> body_proof_vault) opens only for a certified clause; a redacted one stays closed with `对应条款必须选择认证；删改后该选区永久关闭。`. The four boss approaches need all three clauses resolved (`肉身、记忆与归返三份条款全部裁定后开放。`). Selecting the boss freezes the choices; in the sealed boss encounter a certified body clause gives the boss +10% defense, a certified memory clause +10% art power, a certified return clause -10% healing and -10% guard effect, a redacted clause nothing (no entry passives here). The pursuer is a separate run system and is disabled after entry so it cannot ambush the walk. All expected values are frozen here, never read from candidate code."
+  },
+  "baseInput": {
+    "path": "packages/save-codec/tests/fixtures/new-hub-v1.json",
+    "sha256": "a1de1f1b33b59c91dea46caf55f21b6eee0b7104c2cbe4d68ac5d7a430709e0b"
+  },
+  "inputMutations": [
+    { "op": "replace", "path": ["state", "completedDungeonIds"], "value": ["demon_tower_1", "metro_abyss", "starfall_mine", "rust_hospital", "ash_arena", "dream_archive", "void_citadel", "temporal_observatory", "causal_clearinghouse", "entropy_ark", "mirror_cycle_city"] },
+    { "op": "replace", "path": ["state", "claimedTaskIds"], "value": ["clear_demon_tower", "clear_metro_abyss", "mainline_clear_starfall_mine", "mainline_clear_rust_hospital", "mainline_clear_ash_arena", "mainline_clear_dream_archive", "mainline_clear_void_citadel", "mainline_clear_temporal_observatory", "mainline_clear_causal_clearinghouse", "mainline_clear_entropy_ark", "mainline_clear_mirror_cycle_city"] },
+    { "op": "replace", "path": ["state", "player", "base"], "value": { "body": 50, "spirit": 30, "agility": 25, "luck": 10 } },
+    { "op": "replace", "path": ["state", "learnedMethods"], "value": ["mist_breathing"] }
+  ],
+  "entry": { "dungeonId": "redaction_scriptorium", "protocolId": "standard", "hiddenTaskSeed": 121212121 },
+  "runMutations": [
+    { "op": "replace", "path": ["run", "pursuitState", "status"], "value": "disabled" }
+  ],
+  "scenarioIds": [
+    "clauses-gate-sectors-and-freeze-at-boss"
+  ],
+  "scenarios": [
+    {
+      "id": "clauses-gate-sectors-and-freeze-at-boss",
+      "steps": [
+        { "do": "observe", "as": "entry", "law": ["law.pendingClauseNodeId", "law.resolvedClauseChoices", "law.bossClauseSnapshot", "display"] },
+        { "do": "walk", "path": ["upper_supply_margin"] },
+        { "do": "observe", "as": "memorySectorBefore", "gate": "memory_survey_archive" },
+        { "do": "walk", "path": ["body_clause_desk"] },
+        { "do": "collect" },
+        { "do": "observe", "as": "pendingBody", "law": ["law.pendingClauseNodeId", "display.status", "display.severity"] },
+        { "do": "attempt", "as": "leaveWhilePending", "command": { "type": "run/move", "nodeId": "north_clue_cache" } },
+        { "do": "command", "command": { "type": "law/resolve-redaction-clause", "choice": "certify" }, "as": "certifyBody" },
+        { "do": "walk", "path": ["severed_sentence_trap"] },
+        { "do": "trap", "choice": "risk" },
+        { "do": "walk", "path": ["memory_clause_desk"] },
+        { "do": "collect" },
+        { "do": "command", "command": { "type": "law/resolve-redaction-clause", "choice": "redact" }, "as": "redactMemory" },
+        { "do": "walk", "path": ["final_proof_nexus"] },
+        { "do": "observe", "as": "bossGateTwoClauses", "gate": "last_redactor" },
+        { "do": "walk", "path": ["memory_clause_desk", "severed_sentence_trap", "body_clause_desk", "upper_supply_margin"] },
+        { "do": "observe", "as": "memorySectorRedacted", "gate": "memory_survey_archive" },
+        { "do": "attempt", "as": "redactedMove", "command": { "type": "run/move", "nodeId": "memory_survey_archive" } },
+        { "do": "walk", "path": ["folio_gate", "lower_supply_margin"] },
+        { "do": "observe", "as": "returnSectorBefore", "gate": "return_revision_portal" },
+        { "do": "walk", "path": ["return_clause_desk"] },
+        { "do": "collect" },
+        { "do": "command", "command": { "type": "law/resolve-redaction-clause", "choice": "certify" } },
+        { "do": "walk", "path": ["lower_supply_margin"] },
+        { "do": "observe", "as": "returnSectorCertified", "gate": "return_revision_portal" },
+        { "do": "attempt", "as": "clauseWithoutPending", "command": { "type": "law/resolve-redaction-clause", "choice": "certify" } },
+        { "do": "observe", "as": "allResolved", "law": ["law.resolvedClauseChoices", "display.status", "display.severity", "display.targetReached"] },
+        { "do": "walk", "path": ["folio_gate", "upper_supply_margin", "body_clause_desk", "severed_sentence_trap", "memory_clause_desk", "final_proof_nexus"] },
+        { "do": "observe", "as": "bossGateAllClauses", "gate": "last_redactor" },
+        { "do": "walk", "path": ["last_redactor"] },
+        { "do": "select", "node": "last_redactor" },
+        { "do": "observe", "as": "frozen", "law": ["law.bossClauseSnapshot", "law.pendingClauseNodeId", "display.status", "modifiers.encounter", "modifiers.healingPercent", "modifiers.guardEffectPercent"] },
+        { "do": "observe", "as": "roundtrip", "roundtrip": ["law.bossClauseSnapshot"] }
+      ],
+      "expected": {
+        "entry": { "law.pendingClauseNodeId": null, "law.resolvedClauseChoices": {}, "law.bossClauseSnapshot": null, "display": { "title": "删界终稿", "status": "抉择 0/3，认证 0，删改 0，预估条款 0/3", "severity": "warning", "meter": { "value": 0, "max": 3 }, "targetReached": false } },
+        "memorySectorBefore": { "from": "upper_supply_margin", "gateId": "redaction_memory_upper_entry", "isOpen": false, "blockReason": "对应条款必须选择认证；删改后该选区永久关闭。" },
+        "pendingBody": { "law.pendingClauseNodeId": "body_clause_desk", "display.status": "抉择 0/3，认证 0，删改 0，待裁定 肉身，预估条款 0/3", "display.severity": "danger" },
+        "leaveWhilePending": { "status": "rejected", "code": "departure-blocked", "message": "终稿条款尚未裁定，请先选择认证或删改。" },
+        "certifyBody": { "damageTaken": 0 },
+        "redactMemory": { "damageTaken": 60 },
+        "bossGateTwoClauses": { "from": "final_proof_nexus", "gateId": "redaction_final_proof_boss_gate", "isOpen": false, "blockReason": "肉身、记忆与归返三份条款全部裁定后开放。" },
+        "memorySectorRedacted": { "from": "upper_supply_margin", "gateId": "redaction_memory_upper_entry", "isOpen": false, "blockReason": "对应条款必须选择认证；删改后该选区永久关闭。" },
+        "redactedMove": { "status": "rejected", "code": "illegal-move", "message": "memory_survey_archive is not a legal adjacent destination from upper_supply_margin." },
+        "returnSectorBefore": { "from": "lower_supply_margin", "gateId": "redaction_return_lower_entry", "isOpen": false, "blockReason": "对应条款必须选择认证；删改后该选区永久关闭。" },
+        "returnSectorCertified": { "from": "lower_supply_margin", "gateId": "redaction_return_lower_entry", "isOpen": true, "blockReason": null },
+        "clauseWithoutPending": { "status": "rejected", "code": "domain-rejected", "message": "当前没有待裁定的终稿条款。" },
+        "allResolved": { "law.resolvedClauseChoices": { "body_clause_desk": "certify", "memory_clause_desk": "redact", "return_clause_desk": "certify" }, "display.status": "抉择 3/3，认证 2，删改 1，预估条款 3/3", "display.severity": "resolved", "display.targetReached": true },
+        "bossGateAllClauses": { "from": "final_proof_nexus", "gateId": "redaction_final_proof_boss_gate", "isOpen": true, "blockReason": null },
+        "frozen": { "law.bossClauseSnapshot": { "body_clause_desk": "certify", "memory_clause_desk": "redact", "return_clause_desk": "certify" }, "law.pendingClauseNodeId": null, "display.status": "抉择 3/3，认证 2，删改 1，冻结条款 3/3", "modifiers.encounter": { "allStatsPercent": 0, "defensePercent": 10, "artPowerPercent": 0 }, "modifiers.healingPercent": -10, "modifiers.guardEffectPercent": -10 },
+        "roundtrip": { "law.bossClauseSnapshot": { "body_clause_desk": "certify", "memory_clause_desk": "redact", "return_clause_desk": "certify" } }
+      }
+    }
+  ]
+}

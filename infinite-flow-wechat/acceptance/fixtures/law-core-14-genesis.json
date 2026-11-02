@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "law-core-14-genesis",
+  "provenance": {
+    "supersedes": "AC-LAW-14",
+    "rules": [
+      "packages/core/src/dungeon-laws.ts",
+      "packages/core/src/dungeon-routes.ts",
+      "packages/core/src/game.ts"
+    ],
+    "expectedRule": "Chapter 14 splices three genes at three consoles. Genesis serum is kept on two tracks (run loot bag and hub inventory) and a reward or drop adds to both: genesis_gate gives 2, each splice console 1 and a won gene_stalker fight drops 1. The first clear of a console leaves a pending splice that blocks leaving with `原型拼接尚未完成，请先选择武力、术法、守御或复生基因。`; law/resolve-genesis-splice costs as many serum as copies of that gene already spliced (no entry gear discounts), taken from both tracks; with nothing pending it changes nothing and is refused. Outside and inside the boss fight every spliced gene gives the player +4% (sealed) of its kind: force/art outgoing damage, guard effect or healing; in the boss encounter a gene spliced at least twice also strengthens the boss (force: +8% defense, sealed). Display: title 众生原型拼接, severity resolved once three are spliced or frozen, danger while pending, otherwise warning; meter {spliced, 3}. Gates: genesis_force_* need force spliced twice (`力之原型需专精至少2次后开放。`), genesis_mosaic_* need three different genes (`完成三次拼接且选择三种互异原型后开放。`), the boss approaches need three splices (`完成三次拼接后，原型馆长入口才会开放。`). Selecting the boss freezes the sequence. The pursuer is a separate run system and is disabled after entry so it cannot ambush the walk. All expected values are frozen here, never read from candidate code."
+  },
+  "baseInput": {
+    "path": "packages/save-codec/tests/fixtures/new-hub-v1.json",
+    "sha256": "a1de1f1b33b59c91dea46caf55f21b6eee0b7104c2cbe4d68ac5d7a430709e0b"
+  },
+  "inputMutations": [
+    { "op": "replace", "path": ["state", "completedDungeonIds"], "value": ["demon_tower_1", "metro_abyss", "starfall_mine", "rust_hospital", "ash_arena", "dream_archive", "void_citadel", "temporal_observatory", "causal_clearinghouse", "entropy_ark", "mirror_cycle_city", "redaction_scriptorium", "legacy_auction_court"] },
+    { "op": "replace", "path": ["state", "claimedTaskIds"], "value": ["clear_demon_tower", "clear_metro_abyss", "mainline_clear_starfall_mine", "mainline_clear_rust_hospital", "mainline_clear_ash_arena", "mainline_clear_dream_archive", "mainline_clear_void_citadel", "mainline_clear_temporal_observatory", "mainline_clear_causal_clearinghouse", "mainline_clear_entropy_ark", "mainline_clear_mirror_cycle_city", "mainline_clear_redaction_scriptorium", "mainline_clear_legacy_auction_court"] },
+    { "op": "replace", "path": ["state", "player", "base"], "value": { "body": 50, "spirit": 30, "agility": 25, "luck": 10 } },
+    { "op": "replace", "path": ["state", "learnedMethods"], "value": ["mist_breathing"] }
+  ],
+  "entry": { "dungeonId": "genesis_vault", "protocolId": "standard", "hiddenTaskSeed": 141414141 },
+  "runMutations": [
+    { "op": "replace", "path": ["run", "pursuitState", "status"], "value": "disabled" }
+  ],
+  "scenarioIds": [
+    "force-specialisation-and-boss-genome"
+  ],
+  "scenarios": [
+    {
+      "id": "force-specialisation-and-boss-genome",
+      "steps": [
+        { "do": "observe", "as": "entry", "law": ["law.pendingSpliceNodeId", "law.spliceSequence", "law.bossGenomeSnapshot", "display.title", "display.severity", "display.meter"] },
+        { "do": "collect" },
+        { "do": "observe", "as": "serumFromGate", "state": ["run.lootBag.items.genesis_serum", "inventory.genesis_serum"] },
+        { "do": "walk", "path": ["bloodline_survey_archive"] },
+        { "do": "observe", "as": "forceVaultBefore", "gate": "force_gene_vault" },
+        { "do": "walk", "path": ["first_splice_console"] },
+        { "do": "collect" },
+        { "do": "observe", "as": "pendingFirst", "law": ["law.pendingSpliceNodeId", "display.severity"] },
+        { "do": "attempt", "as": "leaveWhilePending", "command": { "type": "run/move", "nodeId": "helix_collapse_trap" } },
+        { "do": "command", "command": { "type": "law/resolve-genesis-splice", "gene": "force" } },
+        { "do": "observe", "as": "serumAfterFirstForce", "state": ["run.lootBag.items.genesis_serum", "inventory.genesis_serum"] },
+        { "do": "walk", "path": ["helix_collapse_trap"] },
+        { "do": "trap", "choice": "risk" },
+        { "do": "walk", "path": ["gene_stalker_alpha"] },
+        { "do": "fight", "node": "gene_stalker_alpha" },
+        { "do": "walk", "path": ["second_splice_console"] },
+        { "do": "collect" },
+        { "do": "command", "command": { "type": "law/resolve-genesis-splice", "gene": "force" } },
+        { "do": "observe", "as": "serumAfterSecondForce", "state": ["run.lootBag.items.genesis_serum", "inventory.genesis_serum"] },
+        { "do": "observe", "as": "twoForce", "law": ["law.spliceSequence", "modifiers.outgoingDamage"] },
+        { "do": "walk", "path": ["gene_stalker_alpha"] },
+        { "do": "observe", "as": "bossGateTwoSplices", "gate": "primal_curator" },
+        { "do": "walk", "path": ["helix_collapse_trap", "first_splice_console", "bloodline_survey_archive"] },
+        { "do": "observe", "as": "forceVaultOpen", "gate": "force_gene_vault" },
+        { "do": "walk", "path": ["genesis_gate", "lower_serum_supply", "third_splice_console"] },
+        { "do": "collect" },
+        { "do": "command", "command": { "type": "law/resolve-genesis-splice", "gene": "art" } },
+        { "do": "observe", "as": "serumAfterArt", "state": ["run.lootBag.items.genesis_serum", "inventory.genesis_serum"] },
+        { "do": "attempt", "as": "spliceAfterThree", "command": { "type": "law/resolve-genesis-splice", "gene": "guard" } },
+        { "do": "observe", "as": "spliced", "law": ["law.spliceSequence", "display.severity", "display.targetReached", "modifiers.outgoingDamage"] },
+        { "do": "walk", "path": ["lower_serum_supply", "genesis_gate", "sample_corridor_guard"] },
+        { "do": "observe", "as": "mosaicClosed", "gate": "mosaic_gene_vault" },
+        { "do": "trap", "choice": "risk" },
+        { "do": "walk", "path": ["first_splice_console", "helix_collapse_trap", "gene_stalker_alpha"] },
+        { "do": "observe", "as": "bossGateOpen", "gate": "primal_curator" },
+        { "do": "walk", "path": ["primal_curator"] },
+        { "do": "select", "node": "primal_curator" },
+        { "do": "observe", "as": "frozen", "law": ["law.bossGenomeSnapshot", "modifiers.outgoingDamage", "modifiers.encounter"] },
+        { "do": "observe", "as": "roundtrip", "roundtrip": ["law.spliceSequence", "law.bossGenomeSnapshot"] }
+      ],
+      "expected": {
+        "entry": { "law.pendingSpliceNodeId": null, "law.spliceSequence": [], "law.bossGenomeSnapshot": null, "display.title": "众生原型拼接", "display.severity": "warning", "display.meter": { "value": 0, "max": 3 } },
+        "serumFromGate": { "run.lootBag.items.genesis_serum": 2, "inventory.genesis_serum": 2 },
+        "forceVaultBefore": { "from": "bloodline_survey_archive", "gateId": "genesis_force_archive_vault", "isOpen": false, "blockReason": "力之原型需专精至少2次后开放。" },
+        "pendingFirst": { "law.pendingSpliceNodeId": "first_splice_console", "display.severity": "danger" },
+        "leaveWhilePending": { "status": "rejected", "code": "departure-blocked", "message": "原型拼接尚未完成，请先选择武力、术法、守御或复生基因。" },
+        "serumAfterFirstForce": { "run.lootBag.items.genesis_serum": 3, "inventory.genesis_serum": 3 },
+        "serumAfterSecondForce": { "run.lootBag.items.genesis_serum": 4, "inventory.genesis_serum": 4 },
+        "twoForce": { "law.spliceSequence": ["force", "force"], "modifiers.outgoingDamage": { "forcePercent": 8, "artPercent": 0 } },
+        "bossGateTwoSplices": { "from": "gene_stalker_alpha", "gateId": "genesis_stalker_boss_gate", "isOpen": false, "blockReason": "完成三次拼接后，原型馆长入口才会开放。" },
+        "forceVaultOpen": { "from": "bloodline_survey_archive", "gateId": "genesis_force_archive_vault", "isOpen": true, "blockReason": null },
+        "serumAfterArt": { "run.lootBag.items.genesis_serum": 5, "inventory.genesis_serum": 5 },
+        "spliceAfterThree": { "status": "rejected", "code": "domain-rejected", "message": "The command did not produce a domain transition." },
+        "spliced": { "law.spliceSequence": ["force", "force", "art"], "display.severity": "resolved", "display.targetReached": true, "modifiers.outgoingDamage": { "forcePercent": 8, "artPercent": 4 } },
+        "mosaicClosed": { "from": "sample_corridor_guard", "gateId": "genesis_mosaic_corridor_vault", "isOpen": false, "blockReason": "完成三次拼接且选择三种互异原型后开放。" },
+        "bossGateOpen": { "from": "gene_stalker_alpha", "gateId": "genesis_stalker_boss_gate", "isOpen": true, "blockReason": null },
+        "frozen": { "law.bossGenomeSnapshot": ["force", "force", "art"], "modifiers.outgoingDamage": { "forcePercent": 8, "artPercent": 4 }, "modifiers.encounter": { "allStatsPercent": 0, "defensePercent": 8, "artPowerPercent": 0 } },
+        "roundtrip": { "law.spliceSequence": ["force", "force", "art"], "law.bossGenomeSnapshot": ["force", "force", "art"] }
+      }
+    }
+  ]
+}

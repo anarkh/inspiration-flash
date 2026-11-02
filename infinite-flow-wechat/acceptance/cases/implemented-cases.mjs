@@ -13331,6 +13331,8 @@ export async function lawCoreScenarios({ fixture, core, application, saveCodec, 
   };
   const observe = (state, step, where) => {
     if (step.law !== undefined) return pick(lawReadout(state, where), step.law, where);
+    // Run-only resources a law spends (scrip, serum) live outside the law state.
+    if (step.state !== undefined) return pick(state, step.state, where);
     if (step.gate !== undefined) {
       const status = core.getCurrentRouteGateStatus(state, step.gate);
       assert(status !== undefined, `${label} ${where} has no route gate to ${step.gate}`);
