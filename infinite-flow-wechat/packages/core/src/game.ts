@@ -403,6 +403,7 @@ import type {
   CompanionRank,
   CompanionRunSnapshot
 } from './companion-system';
+import { getWornEquipmentKeywords, type EquipmentKeywordId } from './equipment-keywords';
 import {
   METHOD_CULTIVATION_RULES_VERSION,
   createMethodRunSnapshot,
@@ -2091,7 +2092,42 @@ function getCombatMechanicsContext(state: GameState) {
 
 /** A healing pill restores half of the current maximum HP before field modifiers. */
 export function getHealingPillBaseHealing(state: GameState): number {
-  return Math.floor(state.player.maxHp / 2);
+  return Math.floor((state.player.maxHp / 2) * (100 + (getCombatEquipmentKeywords(state).potency ?? 0)) / 100);
+}
+
+/** Mechanic keywords on the worn gear, each at its highest worn value. */
+export function getCombatEquipmentKeywords(state: GameState): Readonly<Partial<Record<EquipmentKeywordId, number>>> {
+  return getWornEquipmentKeywords(Object.values(state.equipped), state.equipmentLevels);
+}
+
+/**
+ * The keywords that raise this hit: 斩杀 against a low enemy, 先手 on the first turn, 凝神 on a full gauge and the
+ * masteries of each kind of hit. They add up into one percent.
+ */
+function getKeywordHitBoost(
+  keywords: Readonly<Partial<Record<EquipmentKeywordId, number>>>,
+  action: CombatAction,
+  combat: CombatState,
+  monsterMaxHp: number
+): { percent: number; names: string[] } {
+  const direct = action === 'attack' || action === 'art' || action === 'weapon_skill';
+  const parts: [EquipmentKeywordId, string, boolean][] = [
+    ['execute', '斩杀', direct && combat.monsterHp <= monsterMaxHp * 0.3],
+    ['opening', '先手', direct && combat.turn === 1],
+    ['composure', '凝神', (action === 'attack' || action === 'art') && normalizeCombatFocus(combat.weaponFocus) === COMBAT_FOCUS_MAX],
+    ['skill_mastery', '战技精通', action === 'weapon_skill'],
+    ['art_mastery', '术法精通', action === 'art'],
+    ['talisman_mastery', '符咒精通', action === 'use_thunder_talisman']
+  ];
+  let percent = 0;
+  const names: string[] = [];
+  for (const [id, name, applies] of parts) {
+    const value = keywords[id] ?? 0;
+    if (!applies || value <= 0) continue;
+    percent += value;
+    names.push(name);
+  }
+  return { percent, names };
 }
 
 function getAdjustedDungeonHealing(state: GameState, healing: number): number {
@@ -9807,12 +9843,18 @@ function monsterAttack(
   retaliationMultiplier = 1
 ): GameState {
   const stats = getDerivedStats(state);
+  const keywords = getCombatEquipmentKeywords(state);
   const baseDamage = Math.ceil(calculatePhysicalDamage(monster.attack, stats.defense) * retaliationMultiplier);
-  const strikeDamage = blow.heavy ? Math.ceil(baseDamage * HEAVY_BLOW_DAMAGE_RATE) : baseDamage;
+  const heavyDamage = blow.heavy ? Math.ceil(baseDamage * HEAVY_BLOW_DAMAGE_RATE) : baseDamage;
+  // 预判 softens a heavy blow before anything else meets it.
+  const foresight = blow.heavy ? keywords.foresight ?? 0 : 0;
+  const strikeDamage = foresight > 0 ? Math.ceil((heavyDamage * (100 - foresight)) / 100) : heavyDamage;
   const guardReduction = blow.heavy
     ? getGuardReduction(state, combat, strikeDamage, HEAVY_BLOW_GUARD_KEPT_RATE, directGuardMultiplier)
     : getPureGuardReduction(state, monster, combat, directGuardMultiplier);
-  const guardedDamage = Math.max(0, strikeDamage - guardReduction);
+  // 坚壁 trims what the guard lets through.
+  const bulwark = combat.guarding ? keywords.bulwark ?? 0 : 0;
+  const guardedDamage = Math.floor((Math.max(0, strikeDamage - guardReduction) * (100 - bulwark)) / 100);
   const ironBodyGuard = combat.guarding && getAvailableEquippedMethods(state).includes('iron_body');
   const ironBodyDamage = ironBodyGuard ? Math.floor(guardedDamage * 0.7) : guardedDamage;
   const perfectParry = blow.heavy && blow.perfectParry && combat.guarding;
@@ -9823,7 +9865,10 @@ function monsterAttack(
   const incomingDamage = parriedDamage - allyBlock - counterCut;
   // A cancelled or fully blocked counterattack deals nothing, not the usual minimum of 1.
   let damage = (retaliationMultiplier === 0 || ((allyBlock > 0 || counterCut > 0) && incomingDamage === 0) ? 0 : Math.max(1, incomingDamage)) + effectDamageToPlayer;
-  const counterDamage = ironBodyGuard ? Math.max(2, Math.floor(stats.defense * 0.25)) : 0;
+  const ironBodyCounter = ironBodyGuard ? Math.max(2, Math.floor(stats.defense * 0.25)) : 0;
+  // 反震 throws part of the blow's own weight back while guarding.
+  const riposte = combat.guarding && strikeDamage > 0 ? Math.floor((strikeDamage * (keywords.riposte ?? 0)) / 100) : 0;
+  const counterDamage = ironBodyCounter + riposte;
   let nextState = state;
   let statusLines: string[] = [];
   const armorPatchAvailability = getTacticalItemAvailability(state, 'armor_patch');
@@ -9875,8 +9920,13 @@ function monsterAttack(
     statusLines.push(`护盾吸收 ${absorbedDamage} 点最终入伤，剩余 ${remainingBarrier} 点。`);
   }
 
+  const damaged = applyPlayerDamage(nextState, damage);
+  // 回春 heals after a guarded turn the hero survives.
+  const renewal = combat.guarding && damaged.player.hp > 0 ? Math.floor((damaged.player.maxHp * (keywords.renewal ?? 0)) / 100) : 0;
+  const renewed = renewal > 0 ? normalizeHealth(damaged, renewal) : damaged;
+  const renewedHealing = renewed.player.hp - damaged.player.hp;
   return {
-    ...applyPlayerDamage(nextState, damage),
+    ...renewed,
     combat: {
       ...combat,
       monsterHp: Math.max(0, combat.monsterHp - counterDamage),
@@ -9886,7 +9936,11 @@ function monsterAttack(
       turn: combat.turn + 1,
       log: [
         ...statusLines,
-        ...(ironBodyGuard ? [`铁衣诀守反卸力，承伤降至 ${damage} 点并反震 ${counterDamage} 点。`] : []),
+        ...(ironBodyGuard ? [`铁衣诀守反卸力，承伤降至 ${damage} 点并反震 ${ironBodyCounter} 点。`] : []),
+        ...(foresight > 0 ? [`预判：重击伤害降低 ${foresight}%。`] : []),
+        ...(bulwark > 0 && strikeDamage > 0 ? [`坚壁：防御承伤再降低 ${bulwark}%。`] : []),
+        ...(riposte > 0 ? [`反震：反弹 ${riposte} 点伤害。`] : []),
+        ...(renewedHealing > 0 ? [`回春：回复 ${renewedHealing} 点生命。`] : []),
         ...(perfectParry ? ['完美格挡！重击余力再减半。'] : []),
         blow.heavy
           ? `${monster.name}蓄力重击造成 ${damage} 点伤害。`
@@ -10044,6 +10098,9 @@ export function performCombatAction(
   const directMultiplier = directAction ? getBossReplayDirectMultiplier(state, directAction) : 1;
   if (!state.combat) return appendLog(state, '当前没有战斗。');
   const stats = getDerivedStats(state);
+  const keywords = getCombatEquipmentKeywords(state);
+  // 破甲 counts only part of the target's defense against attacks, arts and weapon skills.
+  const targetDefense = keywords.pierce ? Math.floor((monster.defense * (100 - keywords.pierce)) / 100) : monster.defense;
   let nextState = state;
   let nextCombat: CombatState = { ...state.combat };
   let damage = 0;
@@ -10182,7 +10239,7 @@ export function performCombatAction(
     nextState = consumeItem(state, 'thunder_talisman');
     nextState = recordUsedItem(nextState, 'thunder_talisman');
   } else if (action === 'art') {
-    damage = calculateArtDamage(stats.artPower, monster.defense);
+    damage = calculateArtDamage(stats.artPower, targetDefense);
     damageKind = 'art';
   } else if (action === 'weapon_skill') {
     const status = getWeaponSkillStatus(state);
@@ -10195,7 +10252,7 @@ export function performCombatAction(
       weaponId: status.weaponId,
       weaponLevel: state.equipmentLevels[status.weaponId] ?? 1,
       playerStats: stats,
-      targetStats: monster,
+      targetStats: { defense: targetDefense, speed: monster.speed },
       bossPhase: state.combat.bossPhase,
       resonance: status.resonance
     });
@@ -10276,7 +10333,7 @@ export function performCombatAction(
     const pierceBonus =
       state.equipped.weapon === 'armor_piercing_sword' && ['tower_butcher', 'mine_shell_guard'].includes(monster.id) ? 6 : 0;
     cloudStepSkirmishBonus = getCloudStepSkirmishBonus(stats, monster, getAvailableEquippedMethods(state));
-    damage = calculatePhysicalDamage(stats.attack + pierceBonus + cloudStepSkirmishBonus, monster.defense);
+    damage = calculatePhysicalDamage(stats.attack + pierceBonus + cloudStepSkirmishBonus, targetDefense);
   }
 
   nextState = signalCurrentCombatOpening(nextState, action, damageKind);
@@ -10288,6 +10345,9 @@ export function performCombatAction(
         ? (outgoingModifiers?.artPercent ?? 0)
         : 0;
   damage = scaleByPercent(damage, outgoingPercent, 0);
+  const keywordBoost = getKeywordHitBoost(keywords, action, state.combat, monster.maxHp);
+  if (keywordBoost.percent > 0) damage = scaleByPercent(damage, keywordBoost.percent, 0);
+  const keywordLine = keywordBoost.percent > 0 ? `${keywordBoost.names.join('、')}：本次伤害 +${keywordBoost.percent}%。` : undefined;
 
   const effects = resolveMonsterEffects(nextState, monster, nextCombat, damage, damageKind, action);
   let finalDamageToMonster = effects.damageToMonster;
@@ -10352,6 +10412,7 @@ export function performCombatAction(
     monsterHp,
     log: [
       actionLine,
+      ...(keywordLine ? [keywordLine] : []),
       ...(mirrorShellLine ? [mirrorShellLine] : []),
       ...(causalSealLine ? [causalSealLine] : []),
       ...(weaponSkillResolution?.statusLines ?? []),

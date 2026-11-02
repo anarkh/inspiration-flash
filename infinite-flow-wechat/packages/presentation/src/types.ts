@@ -428,6 +428,9 @@ export type EquipmentItemViewModel = Readonly<{
   /** Fixed affix names and their combined contribution at the displayed level. */
   affixReadout: string;
   rollReadout?: string;
+  /** The mechanic keyword of gear first offered from chapter 9 on, at the displayed level. */
+  mechanicName?: string;
+  mechanicReadout?: string;
 }>;
 
 export type EquipmentLootOptionViewModel = EquipmentItemViewModel & Readonly<{
@@ -1058,6 +1061,8 @@ export type CharacterLoadoutViewModel = Readonly<{
     name: string;
     level: number;
     maxLevel: number;
+    /** The worn piece's mechanic keyword, for gear first offered from chapter 9 on. */
+    mechanicReadout?: string;
   }>[];
   /** Permanently owned equipment, including worn entries; usable by the inventory in every phase. */
   ownedEquipment: readonly OwnedEquipmentEntryViewModel[];

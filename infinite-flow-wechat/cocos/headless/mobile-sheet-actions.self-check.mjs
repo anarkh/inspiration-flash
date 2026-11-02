@@ -2268,6 +2268,23 @@ function assertSheetReachable(model, kind, expected, initialTab = 'actions') {
   sheetLists += 1;
 }
 
+// Late gear shows its mechanic keyword on the elite offer: the card preview names it and the selected card spells it out.
+{
+  const entered = enter(initial);
+  const lateOffer = { ...entered, run: { ...entered.run, pendingEquipmentOffer: {
+    offerId: 'keyword-offer', equipmentIds: ['redline_edge', 'causal_visor', 'rebirth_amulet'],
+  } } };
+  const model = add(lateOffer);
+  const options = model.sections[1].detail.pending.equipmentOptions;
+  assert.deepEqual(options.map(option => option.mechanicName), ['斩杀', '预判', '药效'], 'each late offer carries its keyword');
+  const list = render(model, { kind: 'interaction', page: 0 });
+  assert.ok(list.labels.some(({ text }) => text.includes('· 斩杀')), 'the card preview names the keyword');
+  const selected = render(model, { kind: 'interaction', page: 0, selectedActionId: options[0].actionId });
+  assertDarkSheet(selected, 'interaction', safeInsets);
+  assert.ok(selected.labels.some(({ text }) => text.startsWith('机制词条：斩杀：敌人生命不高于 30% 时')),
+    'the selected offer spells out what its keyword does');
+}
+
 // Claim through the real application reducer, then inspect the permanent bag
 // in every phase. Metadata and equip commands come from the real projection.
 let checkedOwnedEquipmentSheets = 0;

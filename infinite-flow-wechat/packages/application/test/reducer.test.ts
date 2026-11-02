@@ -12,6 +12,7 @@ import './boss-mechanics.test.js';
 import './test-jump.test.js';
 import './party-combat.test.js';
 import './method-loadout.test.js';
+import './equipment-keywords.test.js';
 import {
   createInitialState,
   getCombatEncounterProfile,
