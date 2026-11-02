@@ -13351,8 +13351,8 @@ export async function lawCoreScenarios({ fixture, core, application, saveCodec, 
     }
     throw new AcceptanceBlockedError(`${label} ${where} observe step names no readout`);
   };
-  // Trap and event steps can record the run damage they dealt, which is how the
-  // laws that scale traps or react to damage are seen from outside.
+  // Trap, event and law-command steps can record the run damage they dealt, which
+  // is how the laws that scale traps or charge HP are seen from outside.
   const withDamage = (state, command, where) => {
     const before = state.run.damageTaken;
     const next = commit(state, command, where);
@@ -13366,8 +13366,13 @@ export async function lawCoreScenarios({ fixture, core, application, saveCodec, 
           state = commit(state, { type: "run/move", nodeId }, `${where} move ${nodeId}`);
         }
         return { state };
+      case "select":
+        return { state: commit(state, { type: "run/select-node", nodeId: step.node }, `${where} select ${step.node}`) };
       case "fight": {
-        state = commit(state, { type: "run/select-node", nodeId: step.node }, `${where} select ${step.node}`);
+        // A fight may already be under way when earlier steps probed it.
+        if (state.phase !== "combat" || state.combat?.nodeId !== step.node) {
+          state = commit(state, { type: "run/select-node", nodeId: step.node }, `${where} select ${step.node}`);
+        }
         const opening = step.opening ?? [];
         for (let round = 0; state.phase === "combat"; round += 1) {
           assert(round < 60, `${label} ${where} fight ${step.node} did not end`);
@@ -13389,6 +13394,8 @@ export async function lawCoreScenarios({ fixture, core, application, saveCodec, 
         );
       case "collect":
         return { state: commit(state, { type: "node/collect-reward" }, where) };
+      case "command":
+        return withDamage(state, step.command, where);
       case "attempt": {
         const result = application.reduceGameCommand(state, step.command);
         return {

@@ -1,0 +1,128 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "law-core-07-virtual",
+  "provenance": {
+    "supersedes": "AC-LAW-07",
+    "rules": [
+      "packages/core/src/dungeon-laws.ts",
+      "packages/core/src/dungeon-routes.ts",
+      "packages/core/src/game.ts",
+      "packages/core/src/method-cultivation.ts"
+    ],
+    "expectedRule": "Chapter 7 records the opening style of every non-boss fight (first attack, art or guard decides force, art or guard). A distribution is balanced when all three styles have won and the spread is at most 1; otherwise the counter is the most used style (ties force -> art -> guard), or none when nothing was recorded. Before the boss the display previews it: `尚无开局记录`, `偏科预警：力|术|守` or `开局分布均衡`, all stable. Selecting the boss writes a placeholder record {isBoss: true, style: null} and locks the assessment from the non-boss records: bossAssessmentLocked true and bossCounter the counter (null when balanced). Locked status reads `克制偏科：力|术|守` (danger) or `分布均衡，克制关闭` (resolved, targetReached). In the boss encounter the locked counter style loses 20% (force/art outgoing damage or guard effect). The player's real first action in the boss fight does not overwrite the placeholder. Title 终局回声, no meter. An art costs 1 focus and fights start at 0 focus, so the art opening first spends the gate_sense method technique (rank 1: +1 focus, not a combat action). Gates: citadel_force_identity_lane, citadel_art_growth_lane and citadel_guard_echo_lane open after one win with force, art or guard; citadel_balanced_core_lane (growth_mirror_trap -> main_god_echo) opens only for a balanced distribution and while closed reads `力、术、守均有胜场且次数差不超过 1 后开放。`. The pursuer is a separate run system and is disabled after entry so it cannot ambush the walk. All expected values are frozen here, never read from candidate code."
+  },
+  "baseInput": {
+    "path": "packages/save-codec/tests/fixtures/new-hub-v1.json",
+    "sha256": "a1de1f1b33b59c91dea46caf55f21b6eee0b7104c2cbe4d68ac5d7a430709e0b"
+  },
+  "inputMutations": [
+    { "op": "replace", "path": ["state", "completedDungeonIds"], "value": ["demon_tower_1", "metro_abyss", "starfall_mine", "rust_hospital", "ash_arena", "dream_archive"] },
+    { "op": "replace", "path": ["state", "claimedTaskIds"], "value": ["clear_demon_tower", "clear_metro_abyss", "mainline_clear_starfall_mine", "mainline_clear_rust_hospital", "mainline_clear_ash_arena", "mainline_clear_dream_archive"] },
+    { "op": "replace", "path": ["state", "player", "base"], "value": { "body": 30, "spirit": 20, "agility": 15, "luck": 8 } },
+    { "op": "replace", "path": ["state", "learnedMethods"], "value": ["gate_sense"] },
+    { "op": "replace", "path": ["state", "methodRanks"], "value": { "gate_sense": 1 } }
+  ],
+  "entry": { "dungeonId": "void_citadel", "protocolId": "standard", "hiddenTaskSeed": 707070707 },
+  "runMutations": [
+    { "op": "replace", "path": ["run", "pursuitState", "status"], "value": "disabled" }
+  ],
+  "scenarioIds": [
+    "force-bias-locks-a-counter",
+    "balanced-openings-close-the-counter"
+  ],
+  "scenarios": [
+    {
+      "id": "force-bias-locks-a-counter",
+      "steps": [
+        { "do": "observe", "as": "entry", "law": ["law", "display"] },
+        { "do": "walk", "path": ["gate_oath_cache", "void_knight"] },
+        { "do": "fight", "node": "void_knight" },
+        { "do": "observe", "as": "forcePreview", "law": ["display.status", "display.severity", "combatOpenings"] },
+        { "do": "observe", "as": "forceLaneOpen", "gate": "identity_trap" },
+        { "do": "walk", "path": ["gate_oath_cache", "citadel_gate", "identity_trial_reward", "terminal_cache", "broken_name_trap"] },
+        { "do": "trap", "choice": "risk" },
+        { "do": "walk", "path": ["main_god_echo"] },
+        { "do": "select", "node": "main_god_echo" },
+        { "do": "observe", "as": "lockedForce", "law": ["law", "display.status", "display.severity", "display.targetReached", "modifiers.outgoingDamage", "modifiers.guardEffectPercent", "combatOpenings"] },
+        { "do": "attempt", "as": "bossOpeningAttack", "command": { "type": "combat/act", "action": "attack" } },
+        { "do": "observe", "as": "lockHolds", "law": ["law.bossCounter", "combatOpenings.main_god_echo"] },
+        { "do": "observe", "as": "roundtrip", "roundtrip": ["law", "combatOpenings"] }
+      ],
+      "expected": {
+        "entry": {
+          "law": { "kind": "void_citadel", "bossAssessmentLocked": false, "bossCounter": null },
+          "display": { "title": "终局回声", "status": "尚无开局记录", "severity": "stable", "meter": null, "targetReached": false }
+        },
+        "forcePreview": {
+          "display.status": "偏科预警：力",
+          "display.severity": "stable",
+          "combatOpenings": { "void_knight": { "isBoss": false, "style": "force" } }
+        },
+        "forceLaneOpen": { "from": "void_knight", "gateId": "citadel_force_identity_lane", "isOpen": true, "blockReason": null },
+        "lockedForce": {
+          "law": { "kind": "void_citadel", "bossAssessmentLocked": true, "bossCounter": "force" },
+          "display.status": "克制偏科：力",
+          "display.severity": "danger",
+          "display.targetReached": false,
+          "modifiers.outgoingDamage": { "forcePercent": -20, "artPercent": 0 },
+          "modifiers.guardEffectPercent": 0,
+          "combatOpenings": {
+            "void_knight": { "isBoss": false, "style": "force" },
+            "main_god_echo": { "isBoss": true, "style": null }
+          }
+        },
+        "bossOpeningAttack": { "status": "committed", "code": null, "message": null },
+        "lockHolds": { "law.bossCounter": "force", "combatOpenings.main_god_echo": { "isBoss": true, "style": null } },
+        "roundtrip": {
+          "law": { "kind": "void_citadel", "bossAssessmentLocked": true, "bossCounter": "force" },
+          "combatOpenings": {
+            "void_knight": { "isBoss": false, "style": "force" },
+            "main_god_echo": { "isBoss": true, "style": null }
+          }
+        }
+      }
+    },
+    {
+      "id": "balanced-openings-close-the-counter",
+      "steps": [
+        { "do": "walk", "path": ["gate_oath_cache", "void_knight"] },
+        { "do": "fight", "node": "void_knight" },
+        { "do": "walk", "path": ["gate_oath_cache", "first_echo_patrol"] },
+        { "do": "fight", "node": "first_echo_patrol", "opening": ["technique", "art"] },
+        { "do": "observe", "as": "artLaneOpen", "gate": "growth_mirror_trap" },
+        { "do": "walk", "path": ["growth_mirror_trap"] },
+        { "do": "trap", "choice": "risk" },
+        { "do": "observe", "as": "balancedCoreClosed", "gate": "main_god_echo" },
+        { "do": "walk", "path": ["mirror_supply", "echo_gate_guard"] },
+        { "do": "fight", "node": "echo_gate_guard", "opening": ["guard"] },
+        { "do": "observe", "as": "balancedPreview", "law": ["display.status", "display.severity", "display.targetReached", "combatOpenings"] },
+        { "do": "walk", "path": ["mirror_supply", "growth_mirror_trap"] },
+        { "do": "observe", "as": "balancedCoreOpen", "gate": "main_god_echo" },
+        { "do": "walk", "path": ["main_god_echo"] },
+        { "do": "select", "node": "main_god_echo" },
+        { "do": "observe", "as": "lockedBalanced", "law": ["law", "display", "modifiers.outgoingDamage", "modifiers.guardEffectPercent"] }
+      ],
+      "expected": {
+        "artLaneOpen": { "from": "first_echo_patrol", "gateId": "citadel_art_growth_lane", "isOpen": true, "blockReason": null },
+        "balancedCoreClosed": { "from": "growth_mirror_trap", "gateId": "citadel_balanced_core_lane", "isOpen": false, "blockReason": "力、术、守均有胜场且次数差不超过 1 后开放。" },
+        "balancedPreview": {
+          "display.status": "开局分布均衡",
+          "display.severity": "stable",
+          "display.targetReached": false,
+          "combatOpenings": {
+            "void_knight": { "isBoss": false, "style": "force" },
+            "first_echo_patrol": { "isBoss": false, "style": "art" },
+            "echo_gate_guard": { "isBoss": false, "style": "guard" }
+          }
+        },
+        "balancedCoreOpen": { "from": "growth_mirror_trap", "gateId": "citadel_balanced_core_lane", "isOpen": true, "blockReason": null },
+        "lockedBalanced": {
+          "law": { "kind": "void_citadel", "bossAssessmentLocked": true, "bossCounter": null },
+          "display": { "title": "终局回声", "status": "分布均衡，克制关闭", "severity": "resolved", "meter": null, "targetReached": true },
+          "modifiers.outgoingDamage": { "forcePercent": 0, "artPercent": 0 },
+          "modifiers.guardEffectPercent": 0
+        }
+      }
+    }
+  ]
+}

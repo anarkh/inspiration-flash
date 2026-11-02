@@ -4,10 +4,10 @@
   "document": "docs/knowledge-base/06-migration-acceptance-checklist.md",
   "idPattern": "^AC-(?:[A-Z]+-)+(?:\\d{2}|\\d{3})$",
   "expectedCounts": {
-    "total": 108,
-    "leaf": 99,
+    "total": 113,
+    "leaf": 104,
     "activeLeaf": 94,
-    "deprecated": 5,
+    "deprecated": 10,
     "releaseEvidence": 6,
     "attestation": 2,
     "derived": 1
@@ -72,6 +72,11 @@
       "AC-LAW-CORE-03",
       "AC-LAW-CORE-04",
       "AC-LAW-CORE-05",
+      "AC-LAW-CORE-06",
+      "AC-LAW-CORE-07",
+      "AC-LAW-CORE-08",
+      "AC-LAW-CORE-09",
+      "AC-LAW-CORE-10",
       "AC-COMBAT-001",
       "AC-COMBAT-002",
       "AC-COMBAT-003",
@@ -155,6 +160,31 @@
       "id": "AC-LAW-05",
       "supersededBy": "AC-LAW-CORE-05",
       "reason": "玩法有意偏离 Web 基准：术法改为消耗 1 点战意（PR #29），冻结流程的术法开局被拒绝"
+    },
+    {
+      "id": "AC-LAW-06",
+      "supersededBy": "AC-LAW-CORE-06",
+      "reason": "玩法有意偏离 Web 基准：首通新增灯油与追兵，冻结流程走格时被追兵拖入战斗"
+    },
+    {
+      "id": "AC-LAW-07",
+      "supersededBy": "AC-LAW-CORE-07",
+      "reason": "玩法有意偏离 Web 基准：术法改为消耗 1 点战意（PR #29），冻结流程的术法开局被拒绝"
+    },
+    {
+      "id": "AC-LAW-08",
+      "supersededBy": "AC-LAW-CORE-08",
+      "reason": "玩法有意偏离 Web 基准：首通新增灯油与追兵，冻结流程走格时被追兵拖入战斗"
+    },
+    {
+      "id": "AC-LAW-09",
+      "supersededBy": "AC-LAW-CORE-09",
+      "reason": "玩法有意偏离 Web 基准：首通新增灯油与追兵，冻结流程走格时被追兵拖入战斗"
+    },
+    {
+      "id": "AC-LAW-10",
+      "supersededBy": "AC-LAW-CORE-10",
+      "reason": "玩法有意偏离 Web 基准：首通新增灯油与追兵，冻结流程走格时被追兵拖入战斗"
     }
   ],
   "cases": [
@@ -818,6 +848,61 @@
       ],
       "fixtureId": "law-core-05-arena",
       "expected": "非首领战按首个攻击/术法/防御记录开局；连续复招 -20%、三式齐全改判 +10%，开局门禁与手算期望一致"
+    },
+    {
+      "id": "AC-LAW-CORE-06",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "第 6 章档案馆封存（现行规则）",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "law-core-06-dream",
+      "expected": "危险首清依次封存道具→功法→灵宠且至多三项，索引柜首清解除；封存时止血丹与术法被拒、书脊门禁与手算期望一致"
+    },
+    {
+      "id": "AC-LAW-CORE-07",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "第 7 章虚空城克制（现行规则）",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "law-core-07-virtual",
+      "expected": "非首领战开局记录与偏科预警；首领开战锁定克制（偏科 -20%、均衡关闭）且首领战真实开局不改写，开局门禁与手算期望一致"
+    },
+    {
+      "id": "AC-LAW-CORE-08",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "第 8 章观测台校准（现行规则）",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "law-core-08-chronal",
+      "expected": "过去/未来锚点首清分别校准；未校准时遭遇防御与陷阱 +20%，单锚与双锚的显示、捷径与校准桥门禁与手算期望一致"
+    },
+    {
+      "id": "AC-LAW-CORE-09",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "第 9 章清算所账本（现行规则）",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "law-core-09-causal",
+      "expected": "危险首清待平账并阻止离开；平衡/透支/偿还改变因果债与生命，债务门禁、首领开战锁债与追缴印消耗与手算期望一致"
+    },
+    {
+      "id": "AC-LAW-CORE-10",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "第 10 章方舟熵值（现行规则）",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "law-core-10-entropy",
+      "expected": "危险首清升熵、奖励首清降熵、航向台待选航阻止离开；稳航/抢航、熵值阈值修正与门禁、首领开战锁熵崩解层与手算期望一致"
     },
     {
       "id": "AC-COMBAT-001",
