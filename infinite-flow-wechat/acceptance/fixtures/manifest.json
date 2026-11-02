@@ -375,6 +375,47 @@
       ]
     },
     {
+      "fixtureId": "law-core-11-mirror",
+      "path": "law-core-11-mirror.json",
+      "sha256": "624a9746ae31081298b06726d1e53c62f2407824c4b737c8189d42ec110e4e54",
+      "scenarioIds": [
+        "phase-choices-and-anchors",
+        "boss-snapshots-anchors-into-shells"
+      ]
+    },
+    {
+      "fixtureId": "law-core-12-redaction",
+      "path": "law-core-12-redaction.json",
+      "sha256": "11865ece3a214d49a568035a1eaaeed3f18324b6a89b2e1c9ec33d131cfe8faa",
+      "scenarioIds": [
+        "clauses-gate-sectors-and-freeze-at-boss"
+      ]
+    },
+    {
+      "fixtureId": "law-core-13-auction",
+      "path": "law-core-13-auction.json",
+      "sha256": "118e1bf4e9950b3bef50b86fed04fbbd3f41e69e8d295b512ce7a13ee3d12a2b",
+      "scenarioIds": [
+        "lots-spend-scrip-and-gate-claim-vaults"
+      ]
+    },
+    {
+      "fixtureId": "law-core-14-genesis",
+      "path": "law-core-14-genesis.json",
+      "sha256": "0d47927784c33ceb3fc76c85efd6b599902ddc0667e79884f9ebbb996db682f9",
+      "scenarioIds": [
+        "force-specialisation-and-boss-genome"
+      ]
+    },
+    {
+      "fixtureId": "law-core-15-broadcast",
+      "path": "law-core-15-broadcast.json",
+      "sha256": "9ac0284e38fe6bfce3d0a36f04cd21ca4b9a995855548646210a29f4240768f0",
+      "scenarioIds": [
+        "relays-tune-noise-and-boss-snapshot"
+      ]
+    },
+    {
       "fixtureId": "seed-root-label-golden-v1",
       "path": "seed-root-label-golden-v1.json",
       "sha256": "8f53e064c6788f8c4ec0fe383febfeb67e12fd915058570dff945a0178308b95",

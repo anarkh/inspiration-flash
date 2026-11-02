@@ -4,10 +4,10 @@
   "document": "docs/knowledge-base/06-migration-acceptance-checklist.md",
   "idPattern": "^AC-(?:[A-Z]+-)+(?:\\d{2}|\\d{3})$",
   "expectedCounts": {
-    "total": 113,
-    "leaf": 104,
+    "total": 118,
+    "leaf": 109,
     "activeLeaf": 94,
-    "deprecated": 10,
+    "deprecated": 15,
     "releaseEvidence": 6,
     "attestation": 2,
     "derived": 1
@@ -77,6 +77,11 @@
       "AC-LAW-CORE-08",
       "AC-LAW-CORE-09",
       "AC-LAW-CORE-10",
+      "AC-LAW-CORE-11",
+      "AC-LAW-CORE-12",
+      "AC-LAW-CORE-13",
+      "AC-LAW-CORE-14",
+      "AC-LAW-CORE-15",
       "AC-COMBAT-001",
       "AC-COMBAT-002",
       "AC-COMBAT-003",
@@ -184,6 +189,31 @@
     {
       "id": "AC-LAW-10",
       "supersededBy": "AC-LAW-CORE-10",
+      "reason": "玩法有意偏离 Web 基准：首通新增灯油与追兵，冻结流程走格时被追兵拖入战斗"
+    },
+    {
+      "id": "AC-LAW-11",
+      "supersededBy": "AC-LAW-CORE-11",
+      "reason": "玩法有意偏离 Web 基准：首通新增灯油与追兵，冻结流程走格时被追兵拖入战斗"
+    },
+    {
+      "id": "AC-LAW-12",
+      "supersededBy": "AC-LAW-CORE-12",
+      "reason": "玩法有意偏离 Web 基准：首通新增灯油与追兵，冻结流程走格时被追兵拖入战斗"
+    },
+    {
+      "id": "AC-LAW-13",
+      "supersededBy": "AC-LAW-CORE-13",
+      "reason": "玩法有意偏离 Web 基准：首通新增灯油与追兵，冻结流程走格时被追兵拖入战斗"
+    },
+    {
+      "id": "AC-LAW-14",
+      "supersededBy": "AC-LAW-CORE-14",
+      "reason": "玩法有意偏离 Web 基准：首通新增灯油与追兵，冻结流程走格时被追兵拖入战斗"
+    },
+    {
+      "id": "AC-LAW-15",
+      "supersededBy": "AC-LAW-CORE-15",
       "reason": "玩法有意偏离 Web 基准：首通新增灯油与追兵，冻结流程走格时被追兵拖入战斗"
     }
   ],
@@ -903,6 +933,61 @@
       ],
       "fixtureId": "law-core-10-entropy",
       "expected": "危险首清升熵、奖励首清降熵、航向台待选航阻止离开；稳航/抢航、熵值阈值修正与门禁、首领开战锁熵崩解层与手算期望一致"
+    },
+    {
+      "id": "AC-LAW-CORE-11",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "第 11 章镜城相位（现行规则）",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "law-core-11-mirror",
+      "expected": "相位镜首清待定相位并阻止离开；保持免费、切换付最大生命 10%，锚点只在对应相位点亮，相位修正与门禁、首领开战镜壳快照与击破与手算期望一致"
+    },
+    {
+      "id": "AC-LAW-CORE-12",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "第 12 章终稿条款（现行规则）",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "law-core-12-redaction",
+      "expected": "条款台首清待裁定并阻止离开；认证免费、删改付最大生命 8% 且该选区永久关闭，首领门与开战冻结条款及首领修正与手算期望一致"
+    },
+    {
+      "id": "AC-LAW-CORE-13",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "第 13 章遗产拍卖（现行规则）",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "law-core-13-auction",
+      "expected": "拍品台首清待裁定并阻止离开；竞得/焚毁/放弃按规则消耗遗产筹码，认领区与首领门、开战冻结拍品及首领修正与手算期望一致"
+    },
+    {
+      "id": "AC-LAW-CORE-14",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "第 14 章原型拼接（现行规则）",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "law-core-14-genesis",
+      "expected": "拼接台首清待拼接并阻止离开；同基因按已有次数消耗双轨血清，基因加成、专精/互异/首领门与开战冻结基因组及首领修正与手算期望一致"
+    },
+    {
+      "id": "AC-LAW-CORE-15",
+      "priority": "P0",
+      "kind": "leaf",
+      "name": "第 15 章寂声广播（现行规则）",
+      "methods": [
+        "A-AC"
+      ],
+      "fixtureId": "law-core-15-broadcast",
+      "expected": "危险首清增噪、中继台首清待调谐并阻止离开；静默/播送改变噪声，静默档案与首领门、开战冻结噪声及首领修正与手算期望一致"
     },
     {
       "id": "AC-COMBAT-001",

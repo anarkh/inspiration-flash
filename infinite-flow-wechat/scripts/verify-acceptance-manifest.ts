@@ -71,7 +71,7 @@ const DEFAULT_MANIFEST_PATH = resolve(
   SCRIPT_DIRECTORY,
   '../acceptance/migration-acceptance-manifest.json'
 );
-const FROZEN_MANIFEST_SHA256 = '44a6de083266d9b6867fc35c3aa4b81cc6b5deee585b3e17abe7934c7af624a7';
+const FROZEN_MANIFEST_SHA256 = 'd9ca406ca04a8214341f586a10d3cfd2669ff5caaab4d902a3626116dac80541';
 const FROZEN_ID_PATTERN = '^AC-(?:[A-Z]+-)+(?:\\d{2}|\\d{3})$';
 const ID_PATTERN = /^AC-(?:[A-Z]+-)+(?:\d{2}|\d{3})$/;
 const KINDS: readonly AcceptanceKind[] = [
@@ -83,10 +83,10 @@ const KINDS: readonly AcceptanceKind[] = [
 // activeLeaf (leaf minus deprecated) keeps the 94 leaf checks of the Web v2 contract;
 // a deprecated leaf stays registered and executable but no longer counts toward it.
 const EXPECTED_COUNTS = {
-  total: 113,
-  leaf: 104,
+  total: 118,
+  leaf: 109,
   activeLeaf: 94,
-  deprecated: 10,
+  deprecated: 15,
   releaseEvidence: 6,
   attestation: 2,
   derived: 1
@@ -257,7 +257,7 @@ function validateManifest(raw: string): ValidationResult {
   if (!isRecord(parsed.expectedCounts)) {
     failures.push('expectedCounts must be an object');
   } else if (JSON.stringify(parsed.expectedCounts) !== JSON.stringify(EXPECTED_COUNTS)) {
-    failures.push('expectedCounts do not match the frozen 113/104/94/10/6/2/1 contract');
+    failures.push('expectedCounts do not match the frozen 118/109/94/15/6/2/1 contract');
   }
 
   const rawCases = Array.isArray(parsed.cases) ? parsed.cases : [];

@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "law-core-11-mirror",
+  "provenance": {
+    "supersedes": "AC-LAW-11",
+    "rules": [
+      "packages/core/src/dungeon-laws.ts",
+      "packages/core/src/dungeon-routes.ts",
+      "packages/core/src/game.ts"
+    ],
+    "expectedRule": "Chapter 11 starts in the real phase. The first clear of a phase mirror (first, second, third) leaves a pending phase choice that blocks leaving with `镜城相位尚未指定，请先选择现实或镜像。`; law/resolve-mirror-city-phase keeps the phase for free or switches it for max(1, floor(maxHp x 10%)) HP, and with nothing pending is refused with `当前没有待指定的镜城相位。`. Max HP is derived from the build (the decoder recomputes it, so no HP is given as input): 50 + 14 x body 50 + patched_coat 10 = 760. A switch therefore costs 76. The first clear of real_anchor lights the real anchor only in the real phase and mirror_anchor lights the mirror anchor only in the mirror phase; a wrong-phase clear stays dark. Real phase: outgoing force +12%, art -6%; mirror phase: force -6%, art +12%. Display: title 镜海相位, status `<phase>相位，抉择 n/3，锚点 a/2`, `<phase>相位，待定相位，锚点 a/2` while pending, `<phase>相位，镜壳 r/t` once the boss started; severity danger while pending or with 2+ shells left, warning with 1 shell left or unresolved mirrors, resolved with both anchors or a started boss; meter {resolved, 3}. Selecting the boss snapshots the anchors and mints max(0, 2 - lit anchors) shells (no homecoming_prism); a damaging hit on the boss breaks one. Gates: mirror_city_real_relic_phase_lane needs the real phase (`仅现实相位可开启这条支路。`), mirror_city_real_anchor_survey_lane the real anchor, mirror_city_mirror_anchor_recharge_lane the mirror anchor (`需在镜像相位点亮镜像锚点。`), the boss approaches all three choices (`完成三处相位抉择后，镜王门才会显形。`). The pursuer is a separate run system and is disabled after entry so it cannot ambush the walk. All expected values are frozen here, never read from candidate code."
+  },
+  "baseInput": {
+    "path": "packages/save-codec/tests/fixtures/new-hub-v1.json",
+    "sha256": "a1de1f1b33b59c91dea46caf55f21b6eee0b7104c2cbe4d68ac5d7a430709e0b"
+  },
+  "inputMutations": [
+    { "op": "replace", "path": ["state", "completedDungeonIds"], "value": ["demon_tower_1", "metro_abyss", "starfall_mine", "rust_hospital", "ash_arena", "dream_archive", "void_citadel", "temporal_observatory", "causal_clearinghouse", "entropy_ark"] },
+    { "op": "replace", "path": ["state", "claimedTaskIds"], "value": ["clear_demon_tower", "clear_metro_abyss", "mainline_clear_starfall_mine", "mainline_clear_rust_hospital", "mainline_clear_ash_arena", "mainline_clear_dream_archive", "mainline_clear_void_citadel", "mainline_clear_temporal_observatory", "mainline_clear_causal_clearinghouse", "mainline_clear_entropy_ark"] },
+    { "op": "replace", "path": ["state", "player", "base"], "value": { "body": 50, "spirit": 30, "agility": 25, "luck": 10 } },
+    { "op": "replace", "path": ["state", "learnedMethods"], "value": ["mist_breathing"] }
+  ],
+  "entry": { "dungeonId": "mirror_cycle_city", "protocolId": "standard", "hiddenTaskSeed": 111111111 },
+  "runMutations": [
+    { "op": "replace", "path": ["run", "pursuitState", "status"], "value": "disabled" }
+  ],
+  "scenarioIds": [
+    "phase-choices-and-anchors",
+    "boss-snapshots-anchors-into-shells"
+  ],
+  "scenarios": [
+    {
+      "id": "phase-choices-and-anchors",
+      "steps": [
+        { "do": "observe", "as": "entry", "law": ["law.currentPhase", "law.pendingPhaseNodeId", "law.resolvedPhaseChoices", "law.anchors", "law.bossAnchorSnapshot", "display", "modifiers.outgoingDamage"] },
+        { "do": "walk", "path": ["parallax_hunter_spine"] },
+        { "do": "fight", "node": "parallax_hunter_spine" },
+        { "do": "walk", "path": ["second_phase_mirror"] },
+        { "do": "collect" },
+        { "do": "observe", "as": "pending", "law": ["law.pendingPhaseNodeId", "display.status", "display.severity"] },
+        { "do": "attempt", "as": "leaveWhilePending", "command": { "type": "run/move", "nodeId": "mirror_anchor" } },
+        { "do": "command", "command": { "type": "law/resolve-mirror-city-phase", "phase": "real" }, "as": "keepReal" },
+        { "do": "observe", "as": "keptReal", "law": ["law.currentPhase", "law.resolvedPhaseChoices", "display.status"] },
+        { "do": "walk", "path": ["mirror_anchor"] },
+        { "do": "collect" },
+        { "do": "observe", "as": "wrongPhaseAnchor", "law": ["law.anchors", "clearedNodeIds"] },
+        { "do": "observe", "as": "mirrorAnchorLaneDark", "gate": "soul_recharge_mirror" },
+        { "do": "walk", "path": ["second_phase_mirror", "real_anchor"] },
+        { "do": "collect" },
+        { "do": "observe", "as": "realAnchor", "law": ["law.anchors", "display.status"] },
+        { "do": "observe", "as": "realAnchorLaneLit", "gate": "mirror_city_survey" },
+        { "do": "walk", "path": ["first_phase_mirror"] },
+        { "do": "collect" },
+        { "do": "command", "command": { "type": "law/resolve-mirror-city-phase", "phase": "mirror" }, "as": "switchToMirror" },
+        { "do": "observe", "as": "mirrorPhase", "law": ["law.currentPhase", "law.resolvedPhaseChoices", "display.status", "display.severity", "modifiers.outgoingDamage"] },
+        { "do": "observe", "as": "realRelicAtMirror", "gate": "real_relic_gallery" },
+        { "do": "attempt", "as": "phaseWithoutPending", "command": { "type": "law/resolve-mirror-city-phase", "phase": "real" } },
+        { "do": "observe", "as": "roundtrip", "roundtrip": ["law.currentPhase", "law.anchors", "law.resolvedPhaseChoices"] }
+      ],
+      "expected": {
+        "entry": { "law.currentPhase": "real", "law.pendingPhaseNodeId": null, "law.resolvedPhaseChoices": {}, "law.anchors": { "real": false, "mirror": false }, "law.bossAnchorSnapshot": null, "display": { "title": "镜海相位", "status": "现实相位，抉择 0/3，锚点 0/2", "severity": "warning", "meter": { "value": 0, "max": 3 }, "targetReached": false }, "modifiers.outgoingDamage": { "forcePercent": 12, "artPercent": -6 } },
+        "pending": { "law.pendingPhaseNodeId": "second_phase_mirror", "display.status": "现实相位，待定相位，锚点 0/2", "display.severity": "danger" },
+        "leaveWhilePending": { "status": "rejected", "code": "departure-blocked", "message": "镜城相位尚未指定，请先选择现实或镜像。" },
+        "keepReal": { "damageTaken": 0 },
+        "keptReal": { "law.currentPhase": "real", "law.resolvedPhaseChoices": { "second_phase_mirror": "real" }, "display.status": "现实相位，抉择 1/3，锚点 0/2" },
+        "wrongPhaseAnchor": { "law.anchors": { "real": false, "mirror": false }, "clearedNodeIds": ["parallax_hunter_spine", "second_phase_mirror", "mirror_anchor"] },
+        "mirrorAnchorLaneDark": { "from": "mirror_anchor", "gateId": "mirror_city_mirror_anchor_recharge_lane", "isOpen": false, "blockReason": "需在镜像相位点亮镜像锚点。" },
+        "realAnchor": { "law.anchors": { "real": true, "mirror": false }, "display.status": "现实相位，抉择 1/3，锚点 1/2" },
+        "realAnchorLaneLit": { "from": "real_anchor", "gateId": "mirror_city_real_anchor_survey_lane", "isOpen": true, "blockReason": null },
+        "switchToMirror": { "damageTaken": 76 },
+        "mirrorPhase": { "law.currentPhase": "mirror", "law.resolvedPhaseChoices": { "second_phase_mirror": "real", "first_phase_mirror": "mirror" }, "display.status": "镜像相位，抉择 2/3，锚点 1/2", "display.severity": "warning", "modifiers.outgoingDamage": { "forcePercent": -6, "artPercent": 12 } },
+        "realRelicAtMirror": { "from": "first_phase_mirror", "gateId": "mirror_city_real_relic_phase_lane", "isOpen": false, "blockReason": "仅现实相位可开启这条支路。" },
+        "phaseWithoutPending": { "status": "rejected", "code": "domain-rejected", "message": "当前没有待指定的镜城相位。" },
+        "roundtrip": { "law.currentPhase": "mirror", "law.anchors": { "real": true, "mirror": false }, "law.resolvedPhaseChoices": { "second_phase_mirror": "real", "first_phase_mirror": "mirror" } }
+      }
+    },
+    {
+      "id": "boss-snapshots-anchors-into-shells",
+      "steps": [
+        { "do": "walk", "path": ["parallax_hunter_spine"] },
+        { "do": "fight", "node": "parallax_hunter_spine" },
+        { "do": "walk", "path": ["second_phase_mirror"] },
+        { "do": "collect" },
+        { "do": "command", "command": { "type": "law/resolve-mirror-city-phase", "phase": "mirror" } },
+        { "do": "walk", "path": ["real_anchor", "first_phase_mirror"] },
+        { "do": "collect" },
+        { "do": "command", "command": { "type": "law/resolve-mirror-city-phase", "phase": "mirror" }, "as": "keepMirror" },
+        { "do": "walk", "path": ["real_anchor", "second_phase_mirror", "mirror_anchor"] },
+        { "do": "collect" },
+        { "do": "observe", "as": "mirrorAnchor", "law": ["law.anchors"] },
+        { "do": "walk", "path": ["reflection_event_stage", "mirror_relic_gallery", "identity_fracture_trap"] },
+        { "do": "trap", "choice": "risk" },
+        { "do": "walk", "path": ["third_phase_mirror"] },
+        { "do": "collect" },
+        { "do": "observe", "as": "bossGateTwoChoices", "gate": "nameless_reflection" },
+        { "do": "command", "command": { "type": "law/resolve-mirror-city-phase", "phase": "mirror" } },
+        { "do": "observe", "as": "bossGateThreeChoices", "gate": "nameless_reflection" },
+        { "do": "walk", "path": ["nameless_reflection"] },
+        { "do": "select", "node": "nameless_reflection" },
+        { "do": "observe", "as": "shellsMinted", "law": ["law.bossAnchorSnapshot", "law.brokenMirrorShells", "display.status", "display.severity"] },
+        { "do": "attempt", "as": "firstBossAttack", "command": { "type": "combat/act", "action": "attack" } },
+        { "do": "observe", "as": "shellBroken", "law": ["law.brokenMirrorShells", "display.status", "display.severity"] },
+        { "do": "observe", "as": "roundtrip", "roundtrip": ["law.bossAnchorSnapshot", "law.brokenMirrorShells"] }
+      ],
+      "expected": {
+        "keepMirror": { "damageTaken": 0 },
+        "mirrorAnchor": { "law.anchors": { "real": false, "mirror": true } },
+        "bossGateTwoChoices": { "from": "third_phase_mirror", "gateId": "mirror_city_lower_boss_approach", "isOpen": false, "blockReason": "完成三处相位抉择后，镜王门才会显形。" },
+        "bossGateThreeChoices": { "from": "third_phase_mirror", "gateId": "mirror_city_lower_boss_approach", "isOpen": true, "blockReason": null },
+        "shellsMinted": { "law.bossAnchorSnapshot": { "real": false, "mirror": true }, "law.brokenMirrorShells": 0, "display.status": "镜像相位，镜壳 1/1", "display.severity": "warning" },
+        "firstBossAttack": { "status": "committed", "code": null, "message": null },
+        "shellBroken": { "law.brokenMirrorShells": 1, "display.status": "镜像相位，镜壳 0/1", "display.severity": "resolved" },
+        "roundtrip": { "law.bossAnchorSnapshot": { "real": false, "mirror": true }, "law.brokenMirrorShells": 1 }
+      }
+    }
+  ]
+}

@@ -99,6 +99,11 @@ const CASE_RUNNER_ROWS = [
   ["AC-LAW-CORE-08", "law-core-08-chronal", ["A-AC"], { "A-AC": "lawCoreScenarios" }],
   ["AC-LAW-CORE-09", "law-core-09-causal", ["A-AC"], { "A-AC": "lawCoreScenarios" }],
   ["AC-LAW-CORE-10", "law-core-10-entropy", ["A-AC"], { "A-AC": "lawCoreScenarios" }],
+  ["AC-LAW-CORE-11", "law-core-11-mirror", ["A-AC"], { "A-AC": "lawCoreScenarios" }],
+  ["AC-LAW-CORE-12", "law-core-12-redaction", ["A-AC"], { "A-AC": "lawCoreScenarios" }],
+  ["AC-LAW-CORE-13", "law-core-13-auction", ["A-AC"], { "A-AC": "lawCoreScenarios" }],
+  ["AC-LAW-CORE-14", "law-core-14-genesis", ["A-AC"], { "A-AC": "lawCoreScenarios" }],
+  ["AC-LAW-CORE-15", "law-core-15-broadcast", ["A-AC"], { "A-AC": "lawCoreScenarios" }],
   ["AC-COMBAT-001", "combat-one-action-one-turn", ["A-AC", "A-SMOKE"], null],
   ["AC-COMBAT-002", "combat-oracle-vectors", ["A-AC"], null],
   ["AC-COMBAT-003", "combat-resource-counters", ["A-AC"], null],
@@ -381,6 +386,22 @@ export const implementedFixtureScenarioIds = Object.freeze({
   "law-core-10-entropy": Object.freeze([
     "entropy-follows-clears-and-headings",
     "low-entropy-and-boss-lock",
+  ]),
+  "law-core-11-mirror": Object.freeze([
+    "phase-choices-and-anchors",
+    "boss-snapshots-anchors-into-shells",
+  ]),
+  "law-core-12-redaction": Object.freeze([
+    "clauses-gate-sectors-and-freeze-at-boss",
+  ]),
+  "law-core-13-auction": Object.freeze([
+    "lots-spend-scrip-and-gate-claim-vaults",
+  ]),
+  "law-core-14-genesis": Object.freeze([
+    "force-specialisation-and-boss-genome",
+  ]),
+  "law-core-15-broadcast": Object.freeze([
+    "relays-tune-noise-and-boss-snapshot",
   ]),
   "hash-canonical-json-v1": Object.freeze([
     "canonical-utf16-key-and-array-order",
