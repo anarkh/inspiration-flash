@@ -48,9 +48,29 @@ describe('saves made in the middle of a late boss mechanic', () => {
     }
   });
 
+  it('keep the ledger, mirror, channel, sentry and verdict state of chapters 9, 11, 15, 16 and 17', () => {
+    const fight = bossFight('temporal_observatory');
+    for (const effects of [
+      { auditTally: 120, auditRate: 70 },
+      { mirrorCopy: 'strike', mirrorCopyValue: 88 },
+      { mirrorCopy: 'guard' },
+      { channelStolen: 2 },
+      { sentryDown: true },
+      { rebuttals: 1, rebuttalTarget: 2, guilt: 2 },
+      { dismissedTurns: 1, convicted: true }
+    ]) {
+      const result = decode({ ...fight, combat: { ...fight.combat!, effects } as never });
+      expect(result.status).toBe('decoded');
+      if (result.status !== 'decoded') throw new Error(result.reason.message);
+      expect(result.state.combat?.effects).toEqual(effects);
+    }
+  });
+
   it('rejects out-of-range mechanic values instead of loading a broken fight', () => {
     const fight = bossFight('temporal_observatory');
     expect(decode({ ...fight, combat: { ...fight.combat!, effects: { regentClock: 9 } } }).status).toBe('rejected');
+    expect(decode({ ...fight, combat: { ...fight.combat!, effects: { rebuttals: 9 } } }).status).toBe('rejected');
+    expect(decode({ ...fight, combat: { ...fight.combat!, effects: { mirrorCopy: 'dance' } } as never }).status).toBe('rejected');
   });
 });
 

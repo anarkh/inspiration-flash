@@ -9,7 +9,7 @@ export const COMBAT_FOCUS_MAX: CombatFocus = 3;
 export const COMBAT_ART_FOCUS_COST = 1;
 
 export type CombatFocusIntent = Readonly<
-  Pick<CombatIntent, 'id' | 'severity' | 'recommendedActions' | 'dangerousActions'>
+  Pick<CombatIntent, 'id' | 'severity' | 'recommendedActions' | 'dangerousActions' | 'steadyFocus'>
 >;
 
 export type CombatFocusReason =
@@ -66,7 +66,7 @@ export function resolveCombatFocus(input: CombatFocusResolutionInput): CombatFoc
     } else {
       reason = 'weapon-skill-not-ready';
     }
-  } else if (input.intent.id === 'regular-pursuit') {
+  } else if (input.intent.id === 'regular-pursuit' || input.intent.steadyFocus === true) {
     if (input.action === 'attack' || input.action === 'guard') {
       after = normalizeCombatFocus(before + 1);
       reason = 'regular-action-gain';

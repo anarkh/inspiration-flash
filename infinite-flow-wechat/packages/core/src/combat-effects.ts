@@ -10,6 +10,10 @@ export type CombatEffectPlayerContext = {
   learnedMethods: MethodId[];
   activePet?: PetId;
   action?: CombatEffectAction;
+  /** Focus left once this action has paid for itself (an art spends 1, a weapon skill all of it). */
+  focus?: number;
+  /** A perfectly timed guard against a parryable blow this turn. */
+  perfectParry?: boolean;
 };
 
 export type CombatEffectState = {
@@ -52,7 +56,26 @@ export type CombatEffectState = {
   bidShield?: number;
   /** 全视监察者: exposure toward 终审光束. */
   exposure?: number;
+  /** 零和审计官: damage dealt since the last settlement, and the percent each settlement throws back. */
+  auditTally?: number;
+  auditRate?: number;
+  /** 无名镜王: what it copies from your last turn, and how much (the hit it repeats). */
+  mirrorCopy?: MirrorCopy;
+  mirrorCopyValue?: number;
+  /** 末频道播音主: focus it just seized, taken off when the turn's focus settles. */
+  channelStolen?: number;
+  /** 失联总控: the sentry gun is down until it is set up again. */
+  sentryDown?: boolean;
+  /** 伪证主审: rebuttals from perfect parries, the rebuttals that dismiss it, guilt from unguarded verdicts. */
+  rebuttals?: number;
+  rebuttalTarget?: number;
+  guilt?: number;
+  /** 伪证主审: turns left of a dismissal (no counter on the first, more damage taken on both). */
+  dismissedTurns?: number;
+  convicted?: boolean;
 };
+
+export type MirrorCopy = 'strike' | 'guard' | 'mend';
 
 export type RedactionKind = 'attack' | 'art' | 'talisman';
 
@@ -99,6 +122,66 @@ export const MUTATION_OTHER_DAMAGE = 0.75;
 /** 全视监察者 fires 终审光束 once exposure fills up. */
 export const ALL_SIGHT_BEAM_EXPOSURE = 3;
 export const ALL_SIGHT_BEAM_RETALIATION = 1.6;
+/**
+ * 零和审计官 settles every few turns. Damage up to an allowance (a share of its max health) settles free; the rest is
+ * thrown back at a rate that each point of map debt raises, so bursts stacked into one settlement cost the most.
+ */
+export const AUDIT_INTERVAL = 3;
+export const AUDIT_ALLOWANCE_PERCENT = 15;
+export const AUDIT_BASE_PERCENT = 40;
+export const AUDIT_DEBT_PERCENT = 10;
+
+export function getAuditAllowance(monsterMaxHp: number): number {
+  return Math.ceil((monsterMaxHp * AUDIT_ALLOWANCE_PERCENT) / 100);
+}
+/** 无名镜王 repeats your last turn: part of a hit (halved by a guard), a guard that halves your damage, or a heal. */
+export const MIRROR_STRIKE_PERCENT = 30;
+export const MIRROR_GUARD_DAMAGE = 0.5;
+export const MIRROR_MEND_PERCENT = 8;
+/** 末频道播音主 seizes the channel every few turns, turning the focus it takes into damage. */
+export const CHANNEL_INTERVAL = 3;
+export const CHANNEL_STEAL_DAMAGE = 24;
+/** 失联总控's sentry gun adds to every counter until an art or talisman knocks it out, and comes back on a cycle. */
+export const SENTRY_DAMAGE = 14;
+export const SENTRY_REDEPLOY_INTERVAL = 5;
+/** 伪证主审 swings its verdict on even turns; rebuttals dismiss it, guilt convicts you. */
+export const VERDICT_REBUTTAL_BASE = 3;
+export const VERDICT_GUILT_LIMIT = 3;
+export const VERDICT_DISMISSED_TURNS = 2;
+export const VERDICT_DISMISSED_DAMAGE = 1.5;
+export const VERDICT_CONVICTED_RETALIATION = 1.3;
+/** The hammer's aftershock lands on anything short of a perfect parry. */
+export const VERDICT_AFTERSHOCK = 12;
+
+export function isAuditSettlementTurn(turn: number): boolean {
+  return turn > 0 && turn % AUDIT_INTERVAL === 0;
+}
+
+/** The channel is seized on turns 4, 7, 10, ...: never right after a heavy blow (2, 5, 8), when focus was just spent. */
+export function isChannelSeizeTurn(turn: number): boolean {
+  return turn > 1 && turn % CHANNEL_INTERVAL === 1;
+}
+
+export function getTurnsUntilChannelSeize(turn: number): number {
+  let until = 0;
+  while (!isChannelSeizeTurn(turn + until)) until += 1;
+  return until;
+}
+
+/** The sentry is set up again on turns 6, 11, 16, ... */
+export function isSentryRedeployTurn(turn: number): boolean {
+  return turn > 1 && turn % SENTRY_REDEPLOY_INTERVAL === 1;
+}
+
+/** Each trusted piece of evidence in the verdict means one rebuttal fewer is needed to dismiss the judge. */
+export function getVerdictRebuttalTarget(trustedEvidence: number): number {
+  return Math.max(1, VERDICT_REBUTTAL_BASE - Math.max(0, Math.floor(trustedEvidence)));
+}
+
+/** The verdict hammer falls on even turns, except while the judge is dismissed. */
+export function isVerdictHammerTurn(turn: number, state: CombatEffectState | undefined): boolean {
+  return turn > 0 && turn % 2 === 0 && !((state?.dismissedTurns ?? 0) > 0);
+}
 
 export function getMutationWeakness(turn: number): CombatDamageKind {
   return (['physical', 'art', 'talisman'] as const)[(Math.max(1, Math.floor(turn)) - 1) % 3]!;
@@ -196,8 +279,13 @@ export function createInitialCombatEffectState(state: CombatEffectState = {}): C
   } else {
     delete normalized.reserveBidDamage;
   }
-  const caps = { regentClock: ZERO_HOUR_CLOCK, helmEntropy: 4, redactedTurns: REDACTION_TURNS, exposure: ALL_SIGHT_BEAM_EXPOSURE } as const;
-  for (const key of ['regentClock', 'helmEntropy', 'redactAttackCount', 'redactArtCount', 'redactTalismanCount', 'redactedTurns', 'bidShield', 'exposure'] as const) {
+  const caps = {
+    regentClock: ZERO_HOUR_CLOCK, helmEntropy: 4, redactedTurns: REDACTION_TURNS, exposure: ALL_SIGHT_BEAM_EXPOSURE,
+    rebuttals: VERDICT_REBUTTAL_BASE, rebuttalTarget: VERDICT_REBUTTAL_BASE, guilt: VERDICT_GUILT_LIMIT, dismissedTurns: VERDICT_DISMISSED_TURNS,
+    channelStolen: 3
+  } as const;
+  for (const key of ['regentClock', 'helmEntropy', 'redactAttackCount', 'redactArtCount', 'redactTalismanCount', 'redactedTurns', 'bidShield', 'exposure',
+    'auditTally', 'auditRate', 'mirrorCopyValue', 'channelStolen', 'rebuttals', 'rebuttalTarget', 'guilt', 'dismissedTurns'] as const) {
     if (state[key] === undefined) continue;
     const value = clampStack(state[key], key in caps ? caps[key as keyof typeof caps] : Number.MAX_SAFE_INTEGER);
     if (value > 0 || key === 'helmEntropy') normalized[key] = value;
@@ -206,6 +294,14 @@ export function createInitialCombatEffectState(state: CombatEffectState = {}): C
   if (!['attack', 'art', 'talisman'].includes(state.redactedKind ?? '') || !normalized.redactedTurns) {
     delete normalized.redactedKind;
     delete normalized.redactedTurns;
+  }
+  if (!['strike', 'guard', 'mend'].includes(state.mirrorCopy ?? '')) {
+    delete normalized.mirrorCopy;
+    delete normalized.mirrorCopyValue;
+  }
+  for (const key of ['sentryDown', 'convicted'] as const) {
+    if (state[key] === true) normalized[key] = true;
+    else delete normalized[key];
   }
   return normalized;
 }
@@ -662,18 +758,17 @@ export function applyMonsterCombatEffects(input: CombatEffectInput): CombatEffec
     }
   }
 
-  if (input.monsterId === 'last_broadcaster') {
-    const countdown = 3 - ((input.turn - 1) % 3);
-    if (countdown === 1) {
-      const burstDamage = input.player.action === 'guard' ? 4 : 16;
-      damageToPlayer += burstDamage;
-      statusLines.push(
-        input.player.action === 'guard'
-          ? '末频道播音主的三拍终播命中格挡，仅造成 4 点余波伤害。'
-          : '末频道播音主完成三拍终播，追加 16 点噪声伤害；第三拍格挡可削弱。'
-      );
+  if (input.monsterId === 'last_broadcaster' && isChannelSeizeTurn(input.turn)) {
+    // 抢占频道: the focus left after your action is seized and turned into noise, unless you hold the channel with a guard.
+    const focus = clampStack(input.player.focus, 3);
+    if (input.player.action === 'guard') {
+      statusLines.push('末频道播音主抢占频道，你守住了频道，战意保留。');
+    } else if (focus > 0) {
+      damageToPlayer += focus * CHANNEL_STEAL_DAMAGE;
+      nextState.channelStolen = focus;
+      statusLines.push(`末频道播音主抢占频道，夺走你 ${focus} 点战意，追加 ${focus * CHANNEL_STEAL_DAMAGE} 点噪声伤害。`);
     } else {
-      statusLines.push(`末频道播音主正在蓄积三拍终播：还剩 ${countdown - 1} 回合，可在第三拍格挡。`);
+      statusLines.push('末频道播音主抢占频道，你手里没有战意可被夺走。');
     }
   }
 
@@ -729,17 +824,22 @@ export function applyMonsterCombatEffects(input: CombatEffectInput): CombatEffec
   }
 
   if (input.monsterId === 'shelter_overseer') {
-    const countdown = 3 - ((input.turn - 1) % 3);
-    if (countdown === 1) {
-      const purgeDamage = input.player.action === 'guard' ? 5 : 18;
-      damageToPlayer += purgeDamage;
-      statusLines.push(
-        input.player.action === 'guard'
-          ? '失联总控的三拍清场被格挡压低，仅造成 5 点余波伤害。'
-          : '失联总控完成三拍清场，追加 18 点伤害；第三拍格挡可削弱。'
-      );
-    } else {
-      statusLines.push(`失联总控正在执行三拍清场：还剩 ${countdown - 1} 回合，可在第三拍格挡。`);
+    // 哨戒炮: while it stands every counter carries a burst; an art or talisman spends its hit knocking it out.
+    if (nextState.sentryDown && isSentryRedeployTurn(input.turn)) {
+      delete nextState.sentryDown;
+      statusLines.push('失联总控重新架起哨戒炮。');
+    }
+    if (!nextState.sentryDown) {
+      const action = input.player.action;
+      if ((action === 'art' || action === 'use_thunder_talisman') && damageToMonster > 0) {
+        damageToMonster = 0;
+        nextState.sentryDown = true;
+        statusLines.push('你打掉了哨戒炮，这一击没有落在失联总控身上。');
+      } else {
+        const burst = action === 'guard' ? Math.ceil(SENTRY_DAMAGE / 2) : SENTRY_DAMAGE;
+        damageToPlayer += burst;
+        statusLines.push(`哨戒炮扫射，追加 ${burst} 点伤害${action === 'guard' ? '（防御减半）' : ''}；术法或雷火符可以打掉它。`);
+      }
     }
   }
 
@@ -812,18 +912,45 @@ export function applyMonsterCombatEffects(input: CombatEffectInput): CombatEffec
   }
 
   if (input.monsterId === 'false_testimony_judge') {
-    const countdown = 3 - ((input.turn - 1) % 3);
-    if (countdown === 1) {
-      const judgmentDamage = input.player.action === 'guard' ? 6 : 20;
-      damageToPlayer += judgmentDamage;
-      statusLines.push(
-        input.player.action === 'guard'
-          ? '伪证主审的三拍错判被格挡压低，仅造成 6 点余波伤害。'
-          : '伪证主审完成三拍错判，追加 20 点裁定伤害；第三拍格挡可削弱。'
-      );
-    } else {
-      statusLines.push(`伪证主审正在宣读三拍裁定：还剩 ${countdown - 1} 回合，可在第三拍格挡。`);
+    // 当庭对质: perfect parries of the verdict hammer build rebuttals that dismiss it; taking the hammer builds guilt.
+    const dismissed = nextState.dismissedTurns ?? 0;
+    if (dismissed > 0) {
+      damageToMonster = scaleDamage(damageToMonster, VERDICT_DISMISSED_DAMAGE);
+      if (dismissed === VERDICT_DISMISSED_TURNS) retaliationMultiplier = 0;
+      if (dismissed > 1) nextState.dismissedTurns = dismissed - 1;
+      else delete nextState.dismissedTurns;
+      statusLines.push(dismissed === VERDICT_DISMISSED_TURNS
+        ? '伪证主审的裁定被驳回，本回合无法反击，受到的伤害 +50%。'
+        : '伪证主审仍在驳回中，受到的伤害 +50%。');
+    } else if (isVerdictHammerTurn(input.turn, nextState)) {
+      const target = nextState.rebuttalTarget ?? VERDICT_REBUTTAL_BASE;
+      if (!input.player.perfectParry) {
+        damageToPlayer += VERDICT_AFTERSHOCK;
+        statusLines.push(`判决锤的余波追加 ${VERDICT_AFTERSHOCK} 点伤害（完美格挡才能避开）。`);
+      }
+      if (input.player.perfectParry) {
+        const rebuttals = (nextState.rebuttals ?? 0) + 1;
+        if (rebuttals >= target) {
+          delete nextState.rebuttals;
+          nextState.dismissedTurns = VERDICT_DISMISSED_TURNS;
+          statusLines.push(`反证 ${target}/${target}，伪证主审的裁定被驳回：下回合停手，接下来两回合受到的伤害 +50%。`);
+        } else {
+          nextState.rebuttals = rebuttals;
+          statusLines.push(`完美格挡判决锤，反证 ${rebuttals}/${target}。`);
+        }
+      } else if (input.player.action !== 'guard' && !nextState.convicted) {
+        const guilt = (nextState.guilt ?? 0) + 1;
+        if (guilt >= VERDICT_GUILT_LIMIT) {
+          delete nextState.guilt;
+          nextState.convicted = true;
+          statusLines.push(`罪证 ${VERDICT_GUILT_LIMIT}/${VERDICT_GUILT_LIMIT}，伪证主审当庭定罪：它此后的伤害 +30%。`);
+        } else {
+          nextState.guilt = guilt;
+          statusLines.push(`硬吃判决锤，罪证 ${guilt}/${VERDICT_GUILT_LIMIT}。`);
+        }
+      }
     }
+    if (nextState.convicted && retaliationMultiplier !== 0) retaliationMultiplier *= VERDICT_CONVICTED_RETALIATION;
   }
 
   if (input.monsterId === 'dream_jailer') {
@@ -976,6 +1103,52 @@ export function applyMonsterCombatEffects(input: CombatEffectInput): CombatEffec
       else delete nextState.exposure;
       if (next >= ALL_SIGHT_BEAM_EXPOSURE) statusLines.push('曝光已满，全视监察者下回合落下终审光束。');
     }
+  }
+
+  if (input.monsterId === 'zero_sum_auditor') {
+    // 强制轧差: every few turns it settles the books, throwing back part of everything dealt to it since the last settlement.
+    const tally = (nextState.auditTally ?? 0) + Math.max(0, damageToMonster);
+    if (isAuditSettlementTurn(input.turn)) {
+      const rate = nextState.auditRate ?? AUDIT_BASE_PERCENT;
+      const allowance = getAuditAllowance(input.monsterMaxHp);
+      const settled = Math.ceil((Math.max(0, tally - allowance) * rate) / 100);
+      if (settled > 0) {
+        damageToPlayer += settled;
+        statusLines.push(`零和审计官强制轧差：账面 ${tally} 超出免责额度 ${allowance}，按 ${rate}% 反噬 ${settled} 点，无法防御。`);
+      } else {
+        statusLines.push(`零和审计官强制轧差：账面 ${tally} 在免责额度 ${allowance} 以内，没有反噬。`);
+      }
+      delete nextState.auditTally;
+    } else if (tally > 0) {
+      nextState.auditTally = tally;
+    }
+  }
+
+  if (input.monsterId === 'nameless_reflection') {
+    // 镜像复刻: it repeats your last turn this turn, then records this one.
+    const copy = nextState.mirrorCopy;
+    const copiedValue = nextState.mirrorCopyValue ?? 0;
+    const action = input.player.action;
+    if (copy === 'guard' && damageToMonster > 0) {
+      damageToMonster = scaleDamage(damageToMonster, MIRROR_GUARD_DAMAGE);
+      statusLines.push('无名镜王复刻你的防御，这一击只打出一半。');
+    } else if (copy === 'strike' && copiedValue > 0) {
+      const echoed = Math.ceil((copiedValue * MIRROR_STRIKE_PERCENT) / 100);
+      const landed = action === 'guard' ? Math.ceil(echoed / 2) : echoed;
+      damageToPlayer += landed;
+      statusLines.push(`无名镜王复刻你上回合的出手，追加 ${landed} 点伤害${action === 'guard' ? '（防御减半）' : ''}。`);
+    } else if (copy === 'mend') {
+      const mended = Math.ceil((input.monsterMaxHp * MIRROR_MEND_PERCENT) / 100);
+      monsterHealing += mended;
+      statusLines.push(`无名镜王复刻你的用药，回复 ${mended} 点生命。`);
+    }
+    delete nextState.mirrorCopyValue;
+    if (action === 'guard') nextState.mirrorCopy = 'guard';
+    else if (action === 'use_healing_pill') nextState.mirrorCopy = 'mend';
+    else if ((action === 'attack' || action === 'art' || action === 'use_thunder_talisman') && damageToMonster > 0) {
+      nextState.mirrorCopy = 'strike';
+      nextState.mirrorCopyValue = damageToMonster;
+    } else delete nextState.mirrorCopy;
   }
 
   return {

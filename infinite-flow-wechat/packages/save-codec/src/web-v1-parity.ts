@@ -472,7 +472,18 @@ const COMBAT_EFFECT_KEYS: Readonly<Record<keyof NonNullable<CombatState['effects
   redactedKind: true,
   redactedTurns: true,
   bidShield: true,
-  exposure: true
+  exposure: true,
+  auditTally: true,
+  auditRate: true,
+  mirrorCopy: true,
+  mirrorCopyValue: true,
+  channelStolen: true,
+  sentryDown: true,
+  rebuttals: true,
+  rebuttalTarget: true,
+  guilt: true,
+  dismissedTurns: true,
+  convicted: true
 };
 
 function isSavedCombatEffects(value: unknown): value is NonNullable<CombatState['effects']> {
@@ -497,6 +508,17 @@ function isSavedCombatEffects(value: unknown): value is NonNullable<CombatState[
     optionalInteger(value.redactTalismanCount) &&
     (value.redactedKind === undefined || ['attack', 'art', 'talisman'].includes(String(value.redactedKind))) &&
     optionalInteger(value.redactedTurns, 2) &&
+    optionalInteger(value.auditTally) &&
+    optionalInteger(value.auditRate, 100) &&
+    (value.mirrorCopy === undefined || ['strike', 'guard', 'mend'].includes(String(value.mirrorCopy))) &&
+    optionalInteger(value.mirrorCopyValue) &&
+    optionalInteger(value.channelStolen, 3) &&
+    optionalBoolean(value.sentryDown) &&
+    optionalInteger(value.rebuttals, 3) &&
+    optionalInteger(value.rebuttalTarget, 3) &&
+    optionalInteger(value.guilt, 3) &&
+    optionalInteger(value.dismissedTurns, 2) &&
+    optionalBoolean(value.convicted) &&
     optionalInteger(value.rustPoisonStacks, 3) &&
     optionalBoolean(value.armorCracked) &&
     optionalInteger(value.lastShiftTurn) &&
