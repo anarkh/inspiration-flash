@@ -108,6 +108,7 @@ const CASE_RUNNER_ROWS = [
   ["AC-LAW-CORE-17", "law-core-17-verdict", ["A-AC"], { "A-AC": "lawCoreScenarios" }],
   ["AC-LAW-CORE-18", "law-core-18-replay", ["A-AC"], { "A-AC": "lawCoreScenarios" }],
   ["AC-LAW-CORE-19", "law-core-19-panopticon", ["A-AC"], { "A-AC": "lawCoreScenarios" }],
+  ["AC-LAW-CORE-20", "law-core-20-arena", ["A-AC"], { "A-AC": "lawCoreScenarios" }],
   ["AC-COMBAT-001", "combat-one-action-one-turn", ["A-AC", "A-SMOKE"], null],
   ["AC-COMBAT-002", "combat-oracle-vectors", ["A-AC"], null],
   ["AC-COMBAT-003", "combat-resource-counters", ["A-AC"], null],
@@ -419,6 +420,9 @@ export const implementedFixtureScenarioIds = Object.freeze({
   ]),
   "law-core-19-panopticon": Object.freeze([
     "scan-exposure-relays-route-and-boss",
+  ]),
+  "law-core-20-arena": Object.freeze([
+    "opening-styles-repeat-and-rewrite",
   ]),
   "hash-canonical-json-v1": Object.freeze([
     "canonical-utf16-key-and-array-order",

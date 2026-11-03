@@ -125,6 +125,7 @@ const DERIVED_STAT_KEYS: readonly (keyof DerivedStats)[] = [
   'attack',
   'artPower',
   'defense',
+  'resistance',
   'speed',
   'trapCheck'
 ];
@@ -781,6 +782,7 @@ const STAT_SCORE_WEIGHTS: Record<keyof DerivedStats, number> = {
   attack: 4,
   artPower: 3.5,
   defense: 4,
+  resistance: 2,
   speed: 2,
   trapCheck: 1.5
 };
@@ -805,6 +807,7 @@ const STAT_LABELS: Readonly<Record<keyof DerivedStats, string>> = {
   attack: '攻击',
   artPower: '术法',
   defense: '防御',
+  resistance: '术抗',
   speed: '速度',
   trapCheck: '陷阱感知'
 };

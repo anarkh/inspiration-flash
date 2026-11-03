@@ -1036,6 +1036,8 @@ export type CharacterLoadoutViewModel = Readonly<{
   attack: number;
   artPower: number;
   defense: number;
+  /** 术抗, what enemy art power meets. */
+  resistance: number;
   speed: number;
   /** Acquired relics active during this exploration or combat; excludes draft candidates and archive seeds. */
   runRelics: readonly Readonly<{

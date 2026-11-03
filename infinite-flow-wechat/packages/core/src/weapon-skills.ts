@@ -1,3 +1,4 @@
+import { calculatePhysicalHit, mitigateDamage } from './combat-math';
 import type { CombatState, DerivedStats, EquipmentId, MonsterDefinition } from './game';
 import type {
   EquipmentAttunementId,
@@ -168,6 +169,11 @@ export function getChargedStrikeDefinition(weaponId: EquipmentId): WeaponSkillDe
   };
 }
 
+/** A skill's raw damage against the share of defense it counts. */
+function afterDefense(raw: number, countedDefense: number): number {
+  return Math.round(mitigateDamage(raw, countedDefense));
+}
+
 export function resolveWeaponSkill(context: WeaponSkillContext): WeaponSkillResolution {
   const level = clampInteger(context.weaponLevel, 1, 3);
   const attack = clampInteger(context.playerStats?.attack, 0, MAX_COMBAT_STAT);
@@ -182,7 +188,7 @@ export function resolveWeaponSkill(context: WeaponSkillContext): WeaponSkillReso
     const defensePercent = defensePercentByLevel[level - 1];
     const baseDamage = Math.max(
       5 + level,
-      attack + 2 + level * 3 - Math.floor((targetDefense * defensePercent) / 100)
+      afterDefense(attack + 2 + level * 3, (targetDefense * defensePercent) / 100)
     );
     const resonanceBranch = getActiveResonanceBranch(context, 'forge');
     let damage = baseDamage;
@@ -198,7 +204,7 @@ export function resolveWeaponSkill(context: WeaponSkillContext): WeaponSkillReso
       const channelingPower = Math.min(attack + 18 + level * 4, rawChannelingPower);
       const channelingDamage = Math.max(
         5 + level,
-        channelingPower + 2 + level * 3 - Math.floor((targetDefense * defensePercent) / 100)
+        afterDefense(channelingPower + 2 + level * 3, (targetDefense * defensePercent) / 100)
       );
       damage = Math.max(baseDamage, channelingDamage);
       statusLines.push(`余热导流以攻术优势值替代缩放，本次斩击增幅 ${damage - baseDamage} 点。`);
@@ -218,7 +224,7 @@ export function resolveWeaponSkill(context: WeaponSkillContext): WeaponSkillReso
     const hitCount = 2 + Math.min(level, Math.floor(speedAdvantage / 6));
     const damagePerHit = Math.max(
       2 + level,
-      Math.floor(attack * 0.24) + level + pursuitBonus - Math.floor(targetDefense * 0.08)
+      afterDefense(Math.floor(attack * 0.24) + level + pursuitBonus, targetDefense * 0.08)
     );
     const baseDamage = damagePerHit * hitCount;
     const resonanceBranch = getActiveResonanceBranch(context, 'mist');
@@ -248,7 +254,7 @@ export function resolveWeaponSkill(context: WeaponSkillContext): WeaponSkillReso
   if (context.weaponId === 'ember_staff') {
     const baseDamage = Math.max(
       8 + level * 2,
-      artPower + 8 + level * 4 - Math.floor(targetDefense * 0.22)
+      afterDefense(artPower + 8 + level * 4, targetDefense * 0.22)
     );
     // Healing grows mostly with weapon level and only lightly with art power, keeping it a small sustain tool.
     const baseHealing = 4 + level * 3 + Math.min(5, Math.floor(artPower / 15));
@@ -279,7 +285,7 @@ export function resolveWeaponSkill(context: WeaponSkillContext): WeaponSkillReso
     const hybridPower = Math.floor(attack * 0.55 + artPower * 0.7);
     const baseDamage = Math.max(
       12 + level * 3,
-      hybridPower + 8 + level * 4 - Math.floor(targetDefense * 0.16)
+      afterDefense(hybridPower + 8 + level * 4, targetDefense * 0.16)
     );
     const awakeningBonus =
       context.bossPhase === 'awakened' ? 6 + level * 4 + Math.floor(hybridPower * 0.25) : 0;
@@ -317,7 +323,7 @@ export function resolveWeaponSkill(context: WeaponSkillContext): WeaponSkillReso
     const reversalBonus = Math.min(12 + level * 2, Math.floor(timingGap / 2));
     const baseDamage = Math.max(
       14 + level * 3,
-      hybridPower + 10 + level * 4 + reversalBonus - Math.floor(targetDefense * 0.14)
+      afterDefense(hybridPower + 10 + level * 4 + reversalBonus, targetDefense * 0.14)
     );
     const resonanceBranch = getActiveResonanceBranch(context, 'chronal');
     let damage = baseDamage;
@@ -347,7 +353,7 @@ export function resolveWeaponSkill(context: WeaponSkillContext): WeaponSkillReso
     const defensePercent = defensePercentByLevel[level - 1];
     const baseDamage = Math.max(
       16 + level * 3,
-      attack + 10 + level * 5 - Math.floor((targetDefense * defensePercent) / 100)
+      afterDefense(attack + 10 + level * 5, (targetDefense * defensePercent) / 100)
     );
     const resonanceBranch = getActiveResonanceBranch(context, 'forge');
     let damage = baseDamage;
@@ -382,8 +388,7 @@ export function resolveWeaponSkill(context: WeaponSkillContext): WeaponSkillReso
     const phaseBonus = Math.min(8 + level * 3, Math.floor(timingGap / 3));
     const baseDamage = Math.max(
       17 + level * 4,
-      hybridPower + 10 + level * 4 + phaseBonus -
-        Math.floor((targetDefense * defensePercent) / 100)
+      afterDefense(hybridPower + 10 + level * 4 + phaseBonus, (targetDefense * defensePercent) / 100)
     );
     const resonanceBranch = getActiveResonanceBranch(context, 'chronal');
     let damage = baseDamage;
@@ -409,6 +414,6 @@ export function resolveWeaponSkill(context: WeaponSkillContext): WeaponSkillReso
   }
 
   // Same physical formula as a basic attack, scaled up.
-  const damage = Math.ceil(Math.max(3, attack - Math.floor(targetDefense * 0.6)) * CHARGED_STRIKE_DAMAGE_RATE);
+  const damage = Math.ceil(calculatePhysicalHit(attack, targetDefense) * CHARGED_STRIKE_DAMAGE_RATE);
   return createResolution(damage, 'physical', 0, [`【蓄势斩】战意灌注刀锋，造成 ${damage} 点物理伤害。`]);
 }

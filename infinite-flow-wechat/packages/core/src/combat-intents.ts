@@ -313,13 +313,26 @@ export function getCombatIntent(input: CombatIntentInput): CombatIntent {
   }
 
   if (input.monsterId === 'main_god_echo') {
+    const copiedStat = input.effects?.echoCopiedStat;
+    // Copied attack or art adds pressure every turn that a guard cannot reduce, so the answer is to end
+    // the fight; a copied defense or speed blunts each hit, so the biggest single hits get through best.
+    if (copiedStat === 'attack' || copiedStat === 'artPower') {
+      return {
+        id: 'echo-copy-pressure',
+        name: '复制压迫',
+        severity: 'danger',
+        consequence: `${getEchoConsequence(input)}压迫伤害无法防御，尽快击败它。`,
+        recommendedActions: ['attack', 'art', 'weapon_skill'],
+        dangerousActions: ['guard']
+      };
+    }
     return {
       id: 'echo-copy-pressure',
       name: '复制压迫',
-      severity: 'danger',
-      consequence: getEchoConsequence(input),
-      recommendedActions: ['guard'],
-      dangerousActions: ['attack', 'art', 'weapon_skill', 'use_healing_pill', 'use_thunder_talisman']
+      severity: 'warning',
+      consequence: copiedStat ? `${getEchoConsequence(input)}高额单次伤害更能穿透。` : getEchoConsequence(input),
+      recommendedActions: copiedStat ? ['art', 'weapon_skill', 'use_thunder_talisman'] : ['attack', 'art', 'weapon_skill'],
+      dangerousActions: []
     };
   }
 

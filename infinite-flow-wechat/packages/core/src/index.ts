@@ -9,3 +9,4 @@ export type { EquipmentKeyword, EquipmentKeywordId } from './equipment-keywords'
 export type { DirectiveObjective, DirectiveObjectiveResult } from './directive-system';
 export { getCombatIntent, HEAVY_BLOW_TURN_INTERVAL, isParryableCombatIntent } from './combat-intents';
 export type { CombatEncounterRank, CombatIntentId } from './combat-intents';
+export * from './combat-math';

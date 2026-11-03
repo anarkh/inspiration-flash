@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "fixtureId": "law-core-20-arena",
+  "provenance": {
+    "supersedes": "AC-LAW-CORE-05",
+    "rules": [
+      "packages/core/src/dungeon-laws.ts",
+      "packages/core/src/dungeon-routes.ts",
+      "packages/core/src/combat-focus.ts",
+      "packages/core/src/method-cultivation.ts"
+    ],
+    "expectedRule": "Chapter 5 records the opening style of every non-boss fight: the first attack, art or guard action decides force, art or guard. Over the won fights in order, two consecutive wins with the same style make it a repeat that costs that style -20% (force/art outgoing damage or guard effect); once all three styles have won at least once the ruling is rewritten to +10% force, +10% art and +10% guard effect, which overrides any repeat. Display: title 熔炉判词; status `已记录 n/3` (stable), `连续复招：力|术|守` (danger) or `三式齐全，裁决改判` (resolved); meter {styles seen, 3}; targetReached only when rewritten. An art costs 1 focus and fights start at 0 focus, so the art opening first spends the gate_sense method technique (rank 1: +1 focus, not a combat action) and then casts. Gates: arena_force_champion_lane, arena_art_bench_lane and arena_guard_oath_lane open after one win with force, art or guard; arena_three_style_judge_lane opens once all three styles have won. A closed style lane reads `先用力|术|守式开局获胜 1 场。`. The pursuer is a separate run system and is disabled after entry so it cannot ambush the walk. The hero is raised to body 18 (AC-LAW-CORE-05 used body 10) so that plain attacks still win all four arena fights against the monsters refitted to the standard player curve; body only changes HP, attack, defense and resistance, and no expected value below depends on it. All expected values are frozen here, never read from candidate code."
+  },
+  "baseInput": {
+    "path": "packages/save-codec/tests/fixtures/new-hub-v1.json",
+    "sha256": "a1de1f1b33b59c91dea46caf55f21b6eee0b7104c2cbe4d68ac5d7a430709e0b"
+  },
+  "inputMutations": [
+    { "op": "replace", "path": ["state", "completedDungeonIds"], "value": ["demon_tower_1", "metro_abyss", "starfall_mine", "rust_hospital"] },
+    { "op": "replace", "path": ["state", "claimedTaskIds"], "value": ["clear_demon_tower", "clear_metro_abyss", "mainline_clear_starfall_mine", "mainline_clear_rust_hospital"] },
+    { "op": "replace", "path": ["state", "player", "hp"], "value": 500 },
+    { "op": "replace", "path": ["state", "player", "maxHp"], "value": 500 },
+    { "op": "replace", "path": ["state", "player", "base"], "value": { "body": 18, "spirit": 8, "agility": 6, "luck": 3 } },
+    { "op": "replace", "path": ["state", "learnedMethods"], "value": ["gate_sense"] },
+    { "op": "replace", "path": ["state", "methodRanks"], "value": { "gate_sense": 1 } }
+  ],
+  "entry": { "dungeonId": "ash_arena", "protocolId": "standard", "hiddenTaskSeed": 505050505 },
+  "runMutations": [
+    { "op": "replace", "path": ["run", "pursuitState", "status"], "value": "disabled" }
+  ],
+  "scenarioIds": [
+    "opening-styles-repeat-and-rewrite"
+  ],
+  "scenarios": [
+    {
+      "id": "opening-styles-repeat-and-rewrite",
+      "steps": [
+        { "do": "observe", "as": "entry", "law": ["law", "display", "modifiers.outgoingDamage", "modifiers.guardEffectPercent"] },
+        { "do": "walk", "path": ["odds_marker", "ash_duelist"] },
+        { "do": "fight", "node": "ash_duelist" },
+        { "do": "observe", "as": "oneForce", "law": ["display.status", "display.meter", "combatOpenings", "combatVictoryNodeIds"] },
+        { "do": "observe", "as": "forceLaneOpen", "gate": "judgement_flame" },
+        { "do": "walk", "path": ["ember_pit_duelist"] },
+        { "do": "fight", "node": "ember_pit_duelist" },
+        { "do": "observe", "as": "repeatForce", "law": ["display.status", "display.severity", "modifiers.outgoingDamage", "modifiers.guardEffectPercent"] },
+        { "do": "observe", "as": "artLaneClosed", "gate": "side_bench_supplies" },
+        { "do": "walk", "path": ["repeat_brazier"] },
+        { "do": "trap", "choice": "risk" },
+        { "do": "walk", "path": ["cinder_lancer"] },
+        { "do": "fight", "node": "cinder_lancer", "opening": ["technique", "art"] },
+        { "do": "observe", "as": "artBreaksRepeat", "law": ["display.status", "display.severity", "display.meter", "modifiers.outgoingDamage", "combatOpenings.cinder_lancer"] },
+        { "do": "observe", "as": "guardLaneClosed", "gate": "oath_cinders" },
+        { "do": "walk", "path": ["ringbreaker_duelist"] },
+        { "do": "fight", "node": "ringbreaker_duelist", "opening": ["guard"] },
+        { "do": "observe", "as": "rewritten", "law": ["display", "modifiers.outgoingDamage", "modifiers.guardEffectPercent"] },
+        { "do": "walk", "path": ["cinder_lancer"] },
+        { "do": "observe", "as": "guardLaneOpen", "gate": "oath_cinders" },
+        { "do": "walk", "path": ["oath_cinders"] },
+        { "do": "trap", "choice": "risk" },
+        { "do": "observe", "as": "judgeLaneOpen", "gate": "furnace_judge" },
+        { "do": "observe", "as": "roundtrip", "roundtrip": ["law", "combatOpenings", "combatVictoryNodeIds", "display.status"] }
+      ],
+      "expected": {
+        "entry": {
+          "law": { "kind": "ash_arena" },
+          "display": { "title": "熔炉判词", "status": "已记录 0/3", "severity": "stable", "meter": { "value": 0, "max": 3 }, "targetReached": false },
+          "modifiers.outgoingDamage": { "forcePercent": 0, "artPercent": 0 },
+          "modifiers.guardEffectPercent": 0
+        },
+        "oneForce": {
+          "display.status": "已记录 1/3",
+          "display.meter": { "value": 1, "max": 3 },
+          "combatOpenings": { "ash_duelist": { "isBoss": false, "style": "force" } },
+          "combatVictoryNodeIds": ["ash_duelist"]
+        },
+        "forceLaneOpen": { "from": "ash_duelist", "gateId": "arena_force_champion_lane", "isOpen": true, "blockReason": null },
+        "repeatForce": {
+          "display.status": "连续复招：力",
+          "display.severity": "danger",
+          "modifiers.outgoingDamage": { "forcePercent": -20, "artPercent": 0 },
+          "modifiers.guardEffectPercent": 0
+        },
+        "artLaneClosed": { "from": "ember_pit_duelist", "gateId": "arena_art_bench_lane", "isOpen": false, "blockReason": "先用术式开局获胜 1 场。" },
+        "artBreaksRepeat": {
+          "display.status": "已记录 2/3",
+          "display.severity": "stable",
+          "display.meter": { "value": 2, "max": 3 },
+          "modifiers.outgoingDamage": { "forcePercent": 0, "artPercent": 0 },
+          "combatOpenings.cinder_lancer": { "isBoss": false, "style": "art" }
+        },
+        "guardLaneClosed": { "from": "cinder_lancer", "gateId": "arena_guard_oath_lane", "isOpen": false, "blockReason": "先用守式开局获胜 1 场。" },
+        "rewritten": {
+          "display": { "title": "熔炉判词", "status": "三式齐全，裁决改判", "severity": "resolved", "meter": { "value": 3, "max": 3 }, "targetReached": true },
+          "modifiers.outgoingDamage": { "forcePercent": 10, "artPercent": 10 },
+          "modifiers.guardEffectPercent": 10
+        },
+        "guardLaneOpen": { "from": "cinder_lancer", "gateId": "arena_guard_oath_lane", "isOpen": true, "blockReason": null },
+        "judgeLaneOpen": { "from": "oath_cinders", "gateId": "arena_three_style_judge_lane", "isOpen": true, "blockReason": null },
+        "roundtrip": {
+          "law": { "kind": "ash_arena" },
+          "combatOpenings": {
+            "ash_duelist": { "isBoss": false, "style": "force" },
+            "ember_pit_duelist": { "isBoss": false, "style": "force" },
+            "cinder_lancer": { "isBoss": false, "style": "art" },
+            "ringbreaker_duelist": { "isBoss": false, "style": "guard" }
+          },
+          "combatVictoryNodeIds": ["ash_duelist", "ember_pit_duelist", "cinder_lancer", "ringbreaker_duelist"],
+          "display.status": "三式齐全，裁决改判"
+        }
+      }
+    }
+  ]
+}

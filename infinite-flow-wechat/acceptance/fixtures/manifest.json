@@ -449,6 +449,14 @@
       ]
     },
     {
+      "fixtureId": "law-core-20-arena",
+      "path": "law-core-20-arena.json",
+      "sha256": "dac3432ec691513e9a11d800e76a42b9d9ad5e8e1c675c998fff21cc8b722940",
+      "scenarioIds": [
+        "opening-styles-repeat-and-rewrite"
+      ]
+    },
+    {
       "fixtureId": "seed-root-label-golden-v1",
       "path": "seed-root-label-golden-v1.json",
       "sha256": "8f53e064c6788f8c4ec0fe383febfeb67e12fd915058570dff945a0178308b95",

@@ -798,7 +798,7 @@ const DOLL_ROW_Y = [72, 24, -24, -72] as const;
 const DOLL_STAGE_HEIGHT = 200;
 const DOLL_PORTRAIT_W = 80;
 const DOLL_PORTRAIT_H = 96;
-const STAT_BOX_HEIGHT = 128;
+const STAT_BOX_HEIGHT = 148;
 
 function metricAccent(metric: StatusMetric | undefined): Color {
   if (metric?.severity === 'danger') return palette().danger;
@@ -889,25 +889,26 @@ function renderCharacter(context: SheetContext): void {
     rule.strokeColor = palette().edge; rule.lineWidth = u;
     rule.moveTo(-(context.width - 16 * u) / 2, 0); rule.lineTo((context.width - 16 * u) / 2, 0); rule.stroke();
   };
-  heading('属性', 52 * u);
+  heading('属性', 62 * u);
   const rows: readonly Readonly<{ name: string; label: string; value: string; color?: Color }>[] = [
     { name: 'MobileSheetKpi:power', label: '战力', value: String(loadout.power), color: palette().danger },
     { name: 'MobileSheetMetric:hp', label: '生命', value: `${loadout.hp}/${loadout.maxHp}` },
     { name: 'MobileSheetKpi:attack', label: '攻击', value: String(loadout.attack) },
     { name: 'MobileSheetKpi:artPower', label: '术法强度', value: String(loadout.artPower) },
     { name: 'MobileSheetKpi:defense', label: '防御', value: String(loadout.defense) },
+    { name: 'MobileSheetKpi:resistance', label: '术抗', value: String(loadout.resistance) },
     { name: 'MobileSheetKpi:speed', label: '速度', value: String(loadout.speed) },
   ];
   // Two columns of label/value pairs with a 24px gutter; value keeps its framed
   // semantic node (gate contract) but the cell is compact like the prototype.
   const columnW = (context.width - 16 * u - 14 * u) / 2;
-  const statYs = [29, 9, -11] as const;
+  const statYs = [39, 19, -1, -21] as const;
   rows.forEach((row, index) => {
     const col = index % 2 === 0 ? -1 : 1;
     const left = col < 0 ? -context.width / 2 + 8 * u : 7 * u;
     statPair(context, box, `StatLabel:${index}`, row.name, row.label, row.value, left, statYs[Math.floor(index / 2)]! * u, columnW, row.color ?? palette().text);
   });
-  heading('货币', -34 * u);
+  heading('货币', -44 * u);
   const currencies: readonly Readonly<{ name: string; label: string; id: string; color: Color }>[] = [
     { name: 'MobileSheetMetric:reward-points', label: '奖励点', id: 'reward-points', color: palette().text },
     { name: 'MobileSheetMetric:lingyun', label: '灵蕴', id: 'lingyun', color: palette().positive },
@@ -915,7 +916,7 @@ function renderCharacter(context: SheetContext): void {
   currencies.forEach((currency, index) => {
     const col = index === 0 ? -1 : 1;
     const left = col < 0 ? -context.width / 2 + 8 * u : 7 * u;
-    statPair(context, box, `MoneyLabel:${currency.id}`, currency.name, currency.label, metricValue(currency.id), left, -53 * u, columnW, currency.color);
+    statPair(context, box, `MoneyLabel:${currency.id}`, currency.name, currency.label, metricValue(currency.id), left, -63 * u, columnW, currency.color);
   });
 }
 

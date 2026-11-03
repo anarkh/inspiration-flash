@@ -1,5 +1,5 @@
 import { getEquipmentRecipeDungeonIds } from './dungeon-loot';
-import { getEquipmentTemperProgress } from './equipment-system';
+import { getEquipmentAttunementOptions, getEquipmentTemperProgress } from './equipment-system';
 import { MAIN_GOD_TASKS } from './task-system';
 import {
   activateBloodline,
@@ -11,6 +11,7 @@ import {
   createInitialState,
   DUNGEON_ORDER,
   EQUIPMENT,
+  EQUIPMENT_MASTERY_LEVEL,
   getDerivedStats,
   getPlayerPower,
   learnMethod,
@@ -77,8 +78,21 @@ function equipChapterGear(state: GameState, chapter: number): GameState {
       ...(temper ? { equipmentTemperRanks: { ...(next.equipmentTemperRanks ?? {}), [item.id]: temper } } : {}),
       equipped: { ...next.equipped, [slot]: item.id }
     };
+    next = inscribeTrialGear(next, item.id);
   }
   return next;
+}
+
+/** Gear at the mastery level carries its strongest inscription, as a player's would by then. */
+function inscribeTrialGear(state: GameState, equipmentId: EquipmentId): GameState {
+  if ((state.equipmentLevels[equipmentId] ?? 1) < EQUIPMENT_MASTERY_LEVEL) return state;
+  let best: { state: GameState; power: number } | undefined;
+  for (const option of getEquipmentAttunementOptions(equipmentId)) {
+    const inscribed: GameState = { ...state, equipmentAttunements: { ...(state.equipmentAttunements ?? {}), [equipmentId]: option.id } };
+    const power = getPlayerPower(inscribed);
+    if (!best || power > best.power) best = { state: inscribed, power };
+  }
+  return best?.state ?? state;
 }
 
 export function createChapterTrialState(chapter: number): GameState {

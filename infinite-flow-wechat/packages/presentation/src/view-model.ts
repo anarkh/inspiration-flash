@@ -3244,7 +3244,7 @@ function buildRoomEvent(
     const share = encounter.playerHp > 0 ? encounter.expectedDamage / encounter.playerHp : Infinity;
     const survives = encounter.expectedDamage < encounter.playerHp;
     const rows: RoomEventRow[] = [
-      { id: 'enemy', label: '敌人', value: `生命 ${encounter.maxHp} · 攻击 ${encounter.attack} · 防御 ${encounter.defense}${encounter.pressurePercent > 0 ? `（压力 +${encounter.pressurePercent}%）` : ''}`, tone: encounter.pressurePercent > 0 ? 'bad' : 'neutral' },
+      { id: 'enemy', label: '敌人', value: `生命 ${encounter.maxHp} · 攻击 ${encounter.attack}${encounter.artPower > 0 ? ` · 术法 ${encounter.artPower}` : ''} · 防御 ${encounter.defense}${encounter.pressurePercent > 0 ? `（压力 +${encounter.pressurePercent}%）` : ''}`, tone: encounter.pressurePercent > 0 ? 'bad' : 'neutral' },
       ...(encounter.awakened
         ? [{ id: 'awakened', label: '觉醒', value: `半血后觉醒：攻击 ${encounter.awakened.attack} · 防御 ${encounter.awakened.defense}`, tone: 'bad' as const }]
         : []),
@@ -4518,6 +4518,7 @@ function buildCharacterLoadout(state: GameState): CharacterLoadoutViewModel {
     attack: stats.attack,
     artPower: stats.artPower,
     defense: stats.defense,
+    resistance: stats.resistance,
     speed: stats.speed,
     runParty: state.phase === 'explore' || state.phase === 'combat' ? buildRunParty(state) : [],
     runRelics: state.phase === 'explore' || state.phase === 'combat'
