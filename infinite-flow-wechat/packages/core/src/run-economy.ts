@@ -1,4 +1,3 @@
-export type RunReadiness = 'ready' | 'hard' | 'deadly';
 export type RunExitStatus = 'cleared' | 'retreated' | 'failed';
 export type RunOutcome = 'clean_clear' | 'normal_clear' | 'retreat' | 'failed_recovered';
 
@@ -8,7 +7,6 @@ export type RunEconomyInput = {
   totalNodes: number;
   damageTaken: number;
   captures: number;
-  readiness: RunReadiness;
   dungeonTier: number;
   exitStatus: RunExitStatus;
 };
@@ -43,18 +41,6 @@ export type RunLootItemConsumption<ItemId extends string = string, EquipmentId e
 export type RunLootSettlement<ItemId extends string = string, EquipmentId extends string = string> = {
   readonly retained: RunLootBag<ItemId, EquipmentId>;
   readonly lost: RunLootBag<ItemId, EquipmentId>;
-};
-
-const READINESS_RISK_BONUS: Record<RunReadiness, number> = {
-  ready: 0,
-  hard: 0.12,
-  deadly: 0.24
-};
-
-const READINESS_SCORE_BONUS: Record<RunReadiness, number> = {
-  ready: 0,
-  hard: 70,
-  deadly: 140
 };
 
 const OUTCOME_SCORE_BONUS: Record<RunOutcome, number> = {
@@ -244,7 +230,7 @@ export function calculateRunEconomy(input: RunEconomyInput): RunEconomyResult {
   const clearDepthBonus = clearedRatio * 0.35;
   const captureRewardBonus = paidCaptureCount * 0.04;
   const clearBaseMultiplier =
-    0.85 + tierRiskBonus + READINESS_RISK_BONUS[input.readiness] + clearDepthBonus + captureRewardBonus - damagePenalty;
+    0.85 + tierRiskBonus + clearDepthBonus + captureRewardBonus - damagePenalty;
   let rewardMultiplier = clearBaseMultiplier;
 
   if (outcome === 'clean_clear') {
@@ -256,7 +242,6 @@ export function calculateRunEconomy(input: RunEconomyInput): RunEconomyResult {
       FAILED_RECOVERY_FLOOR +
         clearedRatio * 0.14 +
         tierRiskBonus * 0.2 +
-        READINESS_RISK_BONUS[input.readiness] * 0.1 +
         captureRewardBonus * 0.5 -
         damagePenalty * 0.15,
       FAILED_RECOVERY_FLOOR,
@@ -269,7 +254,6 @@ export function calculateRunEconomy(input: RunEconomyInput): RunEconomyResult {
     Math.round(
       dungeonTier * 80 +
         clearedRatio * 420 +
-        READINESS_SCORE_BONUS[input.readiness] +
         paidCaptureCount * 55 +
         OUTCOME_SCORE_BONUS[outcome] -
         damagePenalty * 220

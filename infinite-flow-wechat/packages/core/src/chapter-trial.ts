@@ -49,38 +49,39 @@ function trialLevel(equipmentId: EquipmentId, chapter: number): number {
   return Math.min(EQUIPMENT[equipmentId].maxLevel, 3 + Math.max(0, chapter - 1 - first));
 }
 
-/** The strongest piece per slot among gear first offered before `chapter`, at its trial level. */
+/**
+ * The strongest piece per slot among gear first offered before `chapter`, at its trial level with its temper and
+ * inscription. The slots are chosen twice over, so every piece is weighed with the rest of the set in place.
+ */
 function equipChapterGear(state: GameState, chapter: number): GameState {
   const cleared = Math.max(1, chapter - 1);
   let next = state;
   const slots = new Set(Object.values(EQUIPMENT).map((item) => item.slot));
-  for (const slot of slots) {
-    let best: { id: EquipmentId; power: number } | undefined;
-    for (const item of Object.values(EQUIPMENT)) {
-      const first = sourceChapter(item.id);
-      if (item.slot !== slot || first === undefined || first > cleared) continue;
-      const trial: GameState = {
-        ...next,
-        ownedEquipment: [...next.ownedEquipment, item.id],
-        equipmentLevels: { ...next.equipmentLevels, [item.id]: trialLevel(item.id, chapter) },
-        equipped: { ...next.equipped, [slot]: item.id }
-      };
-      const power = getPlayerPower(trial);
-      if (!best || power > best.power) best = { id: item.id, power };
+  for (let pass = 0; pass < 2; pass += 1) {
+    for (const slot of slots) {
+      let best: { state: GameState; power: number } | undefined;
+      for (const item of Object.values(EQUIPMENT)) {
+        const first = sourceChapter(item.id);
+        if (item.slot !== slot || first === undefined || first > cleared) continue;
+        const worn = wearTrialPiece(next, item.id, chapter);
+        const power = getPlayerPower(worn);
+        if (!best || power > best.power) best = { state: worn, power };
+      }
+      if (best) next = best.state;
     }
-    if (!best) continue;
-    const item = EQUIPMENT[best.id];
-    const temper = chapter >= 9 && getEquipmentTemperProgress(item.id, 0).eligible ? 1 : 0;
-    next = {
-      ...next,
-      ownedEquipment: next.ownedEquipment.includes(item.id) ? next.ownedEquipment : [...next.ownedEquipment, item.id],
-      equipmentLevels: { ...next.equipmentLevels, [item.id]: trialLevel(item.id, chapter) },
-      ...(temper ? { equipmentTemperRanks: { ...(next.equipmentTemperRanks ?? {}), [item.id]: temper } } : {}),
-      equipped: { ...next.equipped, [slot]: item.id }
-    };
-    next = inscribeTrialGear(next, item.id);
   }
   return next;
+}
+
+function wearTrialPiece(state: GameState, equipmentId: EquipmentId, chapter: number): GameState {
+  const temper = chapter >= 9 && getEquipmentTemperProgress(equipmentId, 0).eligible ? 1 : 0;
+  return inscribeTrialGear({
+    ...state,
+    ownedEquipment: state.ownedEquipment.includes(equipmentId) ? state.ownedEquipment : [...state.ownedEquipment, equipmentId],
+    equipmentLevels: { ...state.equipmentLevels, [equipmentId]: trialLevel(equipmentId, chapter) },
+    ...(temper ? { equipmentTemperRanks: { ...(state.equipmentTemperRanks ?? {}), [equipmentId]: temper } } : {}),
+    equipped: { ...state.equipped, [EQUIPMENT[equipmentId].slot]: equipmentId }
+  }, equipmentId);
 }
 
 /** Gear at the mastery level carries its strongest inscription, as a player's would by then. */

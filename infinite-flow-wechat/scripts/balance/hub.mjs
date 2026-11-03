@@ -3,7 +3,6 @@ import { core, tryApply, power, ROOT } from './lib.mjs';
 
 const { getEquipmentAttunementOptions } = await import(`${ROOT}/core/dist/equipment-system.js`);
 const { getEquipmentRecipeDungeonIds } = await import(`${ROOT}/core/dist/dungeon-loot.js`);
-const { getCompanionBattleEffect } = await import(`${ROOT}/core/dist/companion-system.js`);
 
 export const PILL_TARGET = 3;
 export const LINGYUN_VALUE = 1500; // matches the base reward-point price of one lingyun exchange
@@ -24,21 +23,9 @@ export function materialsOf(state) {
   return out;
 }
 
-/** Companions add no stats, so they get a stand-in power value: their per-turn strike share plus heal/guard help. */
-function companionValue(state) {
-  if (!state.activeCompanion) return 0;
-  const rank = state.companionRanks?.[state.activeCompanion] ?? 1;
-  const effect = getCompanionBattleEffect({ rulesVersion: 1, companionId: state.activeCompanion, rank });
-  if (!effect) return 0;
-  const stats = core.getDerivedStats(state);
-  const base = effect.strikeStat === 'attack' ? stats.attack * 3
-    : effect.strikeStat === 'artPower' ? stats.artPower * 2.4
-      : Math.max(stats.attack * 3, stats.artPower * 2.4);
-  return Math.round(base * effect.strikePercent / 100 + effect.emergencyHealPercent / 100 * stats.maxHp * 0.25 + effect.guardBlock * 1.5);
-}
-
+/** Power already counts the companion, bloodline, pet and keywords, so the bot buys by power alone. */
 export function scorePower(state) {
-  return power(state) + companionValue(state);
+  return power(state);
 }
 
 function candidateCommands(state) {

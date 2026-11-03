@@ -5,7 +5,7 @@ export const dreamArchiveDungeon: DungeonDefinition = {
   name: '梦档案馆',
   tier: 6,
   genre: 'anomaly',
-  recommendedPower: 345,
+  recommendedPower: 900,
   theme: '档案馆记录玩家失败过的每一种路线，并把它们折成新的幻觉。',
   recommended: '推荐虚心诀或灵力 7。',
   rewardPreview: '功法残页、隐藏石、奖励点 430-1040',

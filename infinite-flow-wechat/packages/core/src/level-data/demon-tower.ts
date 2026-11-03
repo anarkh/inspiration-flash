@@ -5,7 +5,7 @@ export const demonTowerDungeon: DungeonDefinition = {
   name: '妖塔一层',
   tier: 1,
   genre: 'cultivation',
-  recommendedPower: 150,
+  recommendedPower: 170,
   theme: '妖雾封住石阶，塔内每一层都在测试准备是否足够。',
   recommended: '入门副本，无硬门槛。',
   rewardPreview: '妖骨、雾后石、奖励点 160-370',

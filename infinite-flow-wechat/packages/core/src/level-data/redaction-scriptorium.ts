@@ -5,7 +5,7 @@ export const redactionScriptoriumDungeon: DungeonDefinition = {
   name: '删界终稿院',
   tier: 12,
   genre: 'anomaly',
-  recommendedPower: 700,
+  recommendedPower: 2690,
   theme: '终稿院把现实拆成正文、覆页与删界批注，只有保住可核验的句子，才能带着未被删除的自己离开。',
   recommended: '推荐战力 700、终盘套装、稳定界门补给与足以支付删改代价的生命储备。',
   rewardPreview: '删界墨、终局材料、奖励点 1020-2500',
