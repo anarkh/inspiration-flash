@@ -140,8 +140,10 @@ import {
   DUNGEON_MATERIAL_REWARDS,
   getDungeonLootOffer,
   getEquipmentRecipe,
-  getEquipmentRecipeDungeonIds
+  getEquipmentSourceChapter,
+  getEquipmentSourceMaterial
 } from './dungeon-loot';
+export { getEquipmentSourceChapter, getEquipmentSourceMaterial } from './dungeon-loot';
 import {
   getBossCombatStats,
   getBossDefinition,
@@ -476,7 +478,7 @@ export type {
 };
 
 import { DUNGEONS, DUNGEON_ORDER, MONSTERS } from './level-content';
-import { EQUIPMENT } from './equipment-catalog';
+import { EQUIPMENT, EQUIPMENT_MASTERY_LEVEL } from './equipment-catalog';
 
 export { DUNGEONS, DUNGEON_ORDER, MONSTERS };
 
@@ -1577,7 +1579,7 @@ export const ITEMS: Record<ItemId, ItemDefinition> = {
 };
 
 // EQUIPMENT catalog moved to ./equipment-catalog to break the game <-> equipment-system runtime cycle.
-export { EQUIPMENT };
+export { EQUIPMENT, EQUIPMENT_MASTERY_LEVEL };
 
 export const METHODS: Record<MethodId, MethodDefinition> = {
   mist_breathing: {
@@ -1640,8 +1642,13 @@ export const METHODS: Record<MethodId, MethodDefinition> = {
 
 const UPGRADE_COSTS: Record<number, Cost> = {
   2: { rewardPoints: 220 },
-  3: { rewardPoints: 360, lingyun: 1, items: { cracked_core: 1 } }
+  3: { rewardPoints: 360, lingyun: 1, items: { cracked_core: 1 } },
+  4: { rewardPoints: 600, lingyun: 2 },
+  5: { rewardPoints: 900, lingyun: 3, items: { cracked_core: 1 } }
 };
+
+/** Levels 4 and 5 also take the gear's own chapter material, which otherwise piles up. */
+const UPGRADE_SOURCE_MATERIAL_AMOUNTS: Partial<Record<number, number>> = { 4: 3, 5: 5 };
 
 export const EQUIPMENT_ATTUNEMENT_COST = {
   rewardPoints: 480,
@@ -1652,11 +1659,6 @@ export const EQUIPMENT_ATTUNEMENT_COST = {
 /** Upgrade, attunement and temper point prices grow this share per chapter of the gear's first source. */
 export const EQUIPMENT_CHAPTER_PRICE_STEP_PERCENT = 15;
 
-/** The first chapter whose loot offers this equipment; starter gear counts as chapter 1. */
-export function getEquipmentSourceChapter(equipmentId: EquipmentId): number {
-  const chapters = getEquipmentRecipeDungeonIds(equipmentId).map((dungeonId) => DUNGEON_ORDER.indexOf(dungeonId) + 1);
-  return chapters.length > 0 ? Math.min(...chapters) : 1;
-}
 
 /** Scales only the reward points, rounded up to 10; lingyun and materials stay as they are. */
 function scaleEquipmentCost<T extends { rewardPoints?: number }>(equipmentId: EquipmentId, cost: T): T {
@@ -1666,7 +1668,12 @@ function scaleEquipmentCost<T extends { rewardPoints?: number }>(equipmentId: Eq
 
 export function getEquipmentUpgradeCost(equipmentId: EquipmentId, nextLevel: number): Cost | undefined {
   const cost = UPGRADE_COSTS[nextLevel];
-  return cost && scaleEquipmentCost(equipmentId, cost);
+  if (!cost) return undefined;
+  const materialAmount = UPGRADE_SOURCE_MATERIAL_AMOUNTS[nextLevel] ?? 0;
+  const materialId = getEquipmentSourceMaterial(equipmentId);
+  const items: Partial<Record<ItemId, number>> = { ...cost.items };
+  if (materialAmount > 0) items[materialId] = (items[materialId] ?? 0) + materialAmount;
+  return scaleEquipmentCost(equipmentId, { ...cost, ...(Object.keys(items).length > 0 ? { items } : {}) });
 }
 
 export function getEquipmentAttunementCost(equipmentId: EquipmentId): Cost {
@@ -3548,10 +3555,10 @@ function getEquipmentMemoryHuntCandidateStatus(
   if (!equipped) {
     unavailableReasons.push(equipmentMemoryPreparationIssue('not_equipped', '目标装备当前未装备。'));
   }
-  if (currentLevel !== equipment.maxLevel) {
+  if (currentLevel < EQUIPMENT_MASTERY_LEVEL) {
     unavailableReasons.push(equipmentMemoryPreparationIssue(
       'not_max_level',
-      `目标装备需要达到最高等级 ${equipment.maxLevel}。`
+      `目标装备需要达到 ${EQUIPMENT_MASTERY_LEVEL} 级。`
     ));
   }
   if (!attunement) {
@@ -3588,7 +3595,7 @@ function getEquipmentMemoryHuntCandidateStatus(
     maxLevel: equipment.maxLevel,
     ...(attunement === undefined
       ? {}
-      : { attunementId: attunement.id, attunement: getEquipmentAttunementDefinition(attunement.id) }),
+      : { attunementId: attunement.id, attunement: getEquipmentAttunementDefinition(attunement.id, equipmentId) }),
     temperRank,
     sealed,
     memoryUnlocked,
@@ -3799,7 +3806,7 @@ export function getCurrentEquipmentMemoryHuntStatus(
     ...(evidenceState === undefined ? {} : { equipment: EQUIPMENT[evidenceState.equipmentId] }),
     ...(evidenceState === undefined
       ? {}
-      : { attunement: getEquipmentAttunementDefinition(evidenceState.attunementId) }),
+      : { attunement: getEquipmentAttunementDefinition(evidenceState.attunementId, evidenceState.equipmentId) }),
     progress,
     display,
     ...(settlement === undefined ? {} : { settlement })
@@ -5519,10 +5526,9 @@ export function getEquipmentCommissionStatus(state: GameState): EquipmentCommiss
     if (seenEquipmentIds.has(equipmentId) || equippedEquipmentIds.has(equipmentId)) continue;
     seenEquipmentIds.add(equipmentId);
 
-    const equipment = EQUIPMENT[equipmentId];
     const temperDefinition = getEquipmentTemperDefinition(equipmentId);
     if (
-      (state.equipmentLevels[equipmentId] ?? 1) !== equipment.maxLevel ||
+      (state.equipmentLevels[equipmentId] ?? 1) < EQUIPMENT_MASTERY_LEVEL ||
       !temperDefinition.eligible ||
       !temperDefinition.materialId
     ) {
@@ -5562,7 +5568,7 @@ export function startEquipmentCommission(
   const firstCandidate = candidates.get(firstEquipmentId);
   const secondCandidate = candidates.get(secondEquipmentId);
   if (!firstCandidate || !secondCandidate) {
-    return appendLog(state, '封存失败：两件装备都必须已拥有、达到最高等级、可淬炼且当前未装备。');
+    return appendLog(state, `封存失败：两件装备都必须已拥有、达到 ${EQUIPMENT_MASTERY_LEVEL} 级、可淬炼且当前未装备。`);
   }
   if (![firstCandidate.materialId, secondCandidate.materialId].includes(targetMaterialId)) {
     return appendLog(state, '封存失败：目标材料必须来自所选装备的淬炼材料。');
@@ -6153,7 +6159,7 @@ export function attuneEquipment(
 
   const equipment = EQUIPMENT[equipmentId];
   const level = state.equipmentLevels[equipmentId] ?? 1;
-  if (level !== equipment.maxLevel) return appendLog(state, `${equipment.name}达到最高等级后才能铭刻。`);
+  if (level < EQUIPMENT_MASTERY_LEVEL) return appendLog(state, `${equipment.name}达到 ${EQUIPMENT_MASTERY_LEVEL} 级后才能铭刻。`);
 
   const option = getEquipmentAttunementOptions(equipmentId).find((candidate) => candidate.id === attunementId);
   if (!option) return appendLog(state, `${equipment.name}无法选择这条铭刻分支。`);
@@ -6189,7 +6195,7 @@ export function temperEquipment(state: GameState, equipmentId: EquipmentId): Gam
   if (!progress.eligible) return appendLog(state, `${equipment.name}不是可淬炼的高阶装备。`);
 
   const level = state.equipmentLevels[equipmentId] ?? 1;
-  if (level !== equipment.maxLevel) return appendLog(state, `${equipment.name}达到最高等级后才能淬炼。`);
+  if (level < EQUIPMENT_MASTERY_LEVEL) return appendLog(state, `${equipment.name}达到 ${EQUIPMENT_MASTERY_LEVEL} 级后才能淬炼。`);
   if (!progress.nextRank || !progress.nextCost) return appendLog(state, `${equipment.name}已经达到淬炼上限。`);
 
   if (progress.nextRank === 2) {

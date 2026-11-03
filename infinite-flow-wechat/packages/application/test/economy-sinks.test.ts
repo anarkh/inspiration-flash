@@ -1,5 +1,6 @@
 import {
-  createInitialState, EQUIPMENT, getEquipmentSourceChapter, LINGYUN_EXCHANGE_BASE_PRICE, LINGYUN_EXCHANGE_PRICE_STEP,
+  createInitialState, EQUIPMENT, EQUIPMENT_MASTERY_LEVEL, getEquipmentSourceChapter, getEquipmentSourceMaterial,
+  LINGYUN_EXCHANGE_BASE_PRICE, LINGYUN_EXCHANGE_PRICE_STEP,
   type EquipmentId, type GameState
 } from '@infinite-flow/core';
 import { reduceGameCommand, type GameCommand } from '../src/index.js';
@@ -30,7 +31,7 @@ function spent(before: GameState, after: GameState) {
 }
 
 // Gear prices grow 15% per chapter of the gear's first source; lingyun and materials stay the same.
-const upgradable = (Object.keys(EQUIPMENT) as EquipmentId[]).filter(id => EQUIPMENT[id].maxLevel === 3);
+const upgradable = (Object.keys(EQUIPMENT) as EquipmentId[]).filter(id => EQUIPMENT[id].maxLevel > 1);
 const first = upgradable.find(id => getEquipmentSourceChapter(id) === 1)!;
 const last = upgradable.find(id => getEquipmentSourceChapter(id) === 19)!;
 assert(first && last, 'fixtures need gear first offered in chapters 1 and 19');
@@ -42,6 +43,23 @@ assert(upgradeCost(first, 1).rewardPoints === 220 && upgradeCost(first, 2).rewar
 assert(upgradeCost(last, 1).rewardPoints === 820 && upgradeCost(last, 2).rewardPoints === 1340,
   'chapter 19 gear costs 3.7 times as many points, rounded up to 10');
 assert(upgradeCost(last, 2).lingyun === 1, 'the lingyun part of a price does not scale');
+
+// Levels 4 and 5 add the gear's own chapter material on top of points and lingyun.
+assert(upgradable.every(id => EQUIPMENT[id].maxLevel === 5) && EQUIPMENT_MASTERY_LEVEL === 3, 'gear levels to 5; unlocks stay at 3');
+for (const [id, scale] of [[first, 1], [last, 3.7]] as const) {
+  const material = getEquipmentSourceMaterial(id);
+  const before4 = owning(id, 3);
+  const after4 = apply(before4, { type: 'hub/upgrade-equipment', equipmentId: id });
+  assert(after4.equipmentLevels[id] === 4 && spent(before4, after4).rewardPoints === Math.ceil(600 * scale / 10) * 10
+    && spent(before4, after4).lingyun === 2 && before4.inventory[material] - after4.inventory[material] === 3,
+  `${id} level 4 costs scaled points, 2 lingyun and 3 of its chapter material`);
+  const after5 = apply(after4, { type: 'hub/upgrade-equipment', equipmentId: id });
+  assert(after5.equipmentLevels[id] === 5 && spent(after4, after5).rewardPoints === Math.ceil(900 * scale / 10) * 10
+    && spent(after4, after5).lingyun === 3 && after4.inventory[material] - after5.inventory[material] === 5
+    && after4.inventory.cracked_core - after5.inventory.cracked_core === 1,
+  `${id} level 5 costs scaled points, 3 lingyun, a cracked core and 5 of its chapter material`);
+  assert(reduceGameCommand(after5, { type: 'hub/upgrade-equipment', equipmentId: id }).status === 'rejected', `${id} stops at level 5`);
+}
 
 // Lingyun exchange: 1500 points, then 100 more for every later exchange, never capped.
 let state = rich();

@@ -1,4 +1,4 @@
-import { EQUIPMENT, type EquipmentId, type ItemId, type RewardBundle } from './game';
+import { EQUIPMENT, EQUIPMENT_MASTERY_LEVEL, type EquipmentId, type ItemId, type RewardBundle } from './game';
 import { getEquipmentAttunementOptions, type EquipmentAttunementId, type EquipmentAttunementMap } from './equipment-system';
 
 export const FIELD_SURVEY_RULES_VERSION = 1 as const;
@@ -174,7 +174,7 @@ export function createFieldSurveyRunState(
   for (const equipmentId of ids) {
     if (seen.has(equipmentId) || !EQUIPMENT[equipmentId]) continue;
     seen.add(equipmentId);
-    if (equipmentLevels[equipmentId] !== EQUIPMENT[equipmentId].maxLevel) continue;
+    if ((equipmentLevels[equipmentId] ?? 1) < EQUIPMENT_MASTERY_LEVEL) continue;
     const attunementId = attunements[equipmentId];
     if (attunementId && getEquipmentAttunementOptions(equipmentId).some((item) => item.id === attunementId)) frozenSources.push({ equipmentId, attunementId });
   }
