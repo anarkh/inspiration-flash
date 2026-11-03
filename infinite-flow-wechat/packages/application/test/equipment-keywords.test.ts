@@ -1,5 +1,5 @@
 import {
-  createInitialState, DUNGEON_ORDER, enterDungeon, EQUIPMENT, EQUIPMENT_KEYWORD_ASSIGNMENTS, getCombatEncounterProfile, getDerivedStats,
+  calculatePhysicalHit, createInitialState, DUNGEON_ORDER, enterDungeon, EQUIPMENT, EQUIPMENT_KEYWORD_ASSIGNMENTS, getCombatEncounterProfile, getDerivedStats,
   getEquipmentKeyword, getEquipmentSourceChapter, getHealingPillBaseHealing, getWornEquipmentKeywords, performCombatAction,
   selectNode, type EquipmentId, type GameState
 } from '@infinite-flow/core';
@@ -80,7 +80,7 @@ const pierce = wear(['helix_cleaver']);
 const pierceFight = fight(pierce, 'blindspot_auditor_north', 2, {}, 'panopticon_city');
 const defense = getCombatEncounterProfile(pierceFight)!.monster.defense;
 const pierced = Math.floor((defense * (100 - getEquipmentKeyword('helix_cleaver', 3)!.value)) / 100);
-assert(dealt(pierceFight, 'attack').damage === Math.max(3, getDerivedStats(pierceFight).attack - Math.floor(pierced * 0.6)),
+assert(dealt(pierceFight, 'attack').damage === calculatePhysicalHit(getDerivedStats(pierceFight).attack, pierced),
   '破甲 attacks through the reduced defense');
 
 // 药效 strengthens the healing pill; 术法精通 marks the arts it raises.

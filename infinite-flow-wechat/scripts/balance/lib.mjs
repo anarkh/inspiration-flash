@@ -40,7 +40,7 @@ export const power = (state) => core.getPlayerPower(state);
 
 export function statsOf(state) {
   const s = core.getDerivedStats(state);
-  return { maxHp: s.maxHp, attack: s.attack, artPower: s.artPower, defense: s.defense, speed: s.speed, trapCheck: s.trapCheck };
+  return { maxHp: s.maxHp, attack: s.attack, artPower: s.artPower, defense: s.defense, resistance: s.resistance, speed: s.speed, trapCheck: s.trapCheck };
 }
 
 export function bossNodeId(dungeonId) {
@@ -50,7 +50,7 @@ export function bossNodeId(dungeonId) {
 // ---------------------------------------------------------------- combat
 
 /**
- * The "smart" policy (technique, pill under 35%, safe weapon skill, guard on danger,
+ * The "smart" policy (technique, pill under 35%, safe weapon skill, guard when a danger calls for it first,
  * intent hints, attack) with two "typical player" amendments:
  *  - anti-stall: after 2 guards in a row the next turn attacks (the pure policy guards forever against
  *    main_god_echo, whose intent always says "guard");
@@ -68,7 +68,8 @@ function chooseCombatAction(state, actions, ctx) {
   const intent = core.getCurrentCombatIntent(state);
   const guard = find('combat.action:guard');
   const stalled = ctx.consecutiveGuards >= 2;
-  if (!stalled && guard && intent?.severity === 'danger' && intent.recommendedActions.includes('guard')) return guard;
+  // Guard only when guarding is the intent's first answer; some dangers (an item lock) merely allow it.
+  if (!stalled && guard && intent?.severity === 'danger' && intent.recommendedActions[0] === 'guard') return guard;
   for (const kind of ['art', 'use_thunder_talisman', 'attack', 'guard', 'use_healing_pill']) {
     if (stalled && kind === 'guard') continue;
     const candidate = find(`combat.action:${kind}`);

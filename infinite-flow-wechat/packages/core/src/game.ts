@@ -9,6 +9,7 @@ import {
 } from './combat-effects';
 import type { CombatDamageKind, CombatEffectAction, CombatEffectState } from './combat-effects';
 import { COMBAT_ART_FOCUS_COST, COMBAT_FOCUS_MAX, normalizeCombatFocus, resolveCombatFocus } from './combat-focus';
+import { ART_DEFENSE_SHARE, calculateArtHit, calculateEnemyHit, calculatePhysicalHit, mitigateDamage } from './combat-math';
 import type { CombatFocus } from './combat-focus';
 import { getCombatIntent, HEAVY_BLOW_TURN_INTERVAL, isParryableCombatIntent } from './combat-intents';
 import type { CombatEncounterRank, CombatIntent } from './combat-intents';
@@ -742,6 +743,8 @@ export type DerivedStats = CoreStats & {
   attack: number;
   artPower: number;
   defense: number;
+  /** 术抗: what enemy art power meets, as defense is to their attack. */
+  resistance: number;
   speed: number;
   trapCheck: number;
 };
@@ -4227,8 +4230,10 @@ function estimateEncounter(state: GameState, node: DungeonNode, fuseBoss: boolea
     ? getProtocolMonster(encounterState, monsterDefinition, bossDefinition, 'awakened', anchorCompleted)
     : opening;
   const stats = getDerivedStats(state);
-  const dealt = calculatePhysicalDamage(stats.attack, monster.defense);
-  const taken = calculatePhysicalDamage(monster.attack, stats.defense);
+  // Attacks build the focus that arts spend, so a fight trades the two about evenly.
+  const struck = calculatePhysicalDamage(stats.attack, monster.defense);
+  const dealt = Math.max(struck, Math.round((struck + calculateArtDamage(stats.artPower, monster.defense)) / 2));
+  const taken = calculateEnemyHit(monster, stats);
   const hits = Math.ceil(Math.max(1, monster.maxHp) / dealt);
   const heavyBlows = Boolean(bossDefinition) || DUNGEON_ELITE_MONSTERS[run.dungeonId] === monsterDefinition.id;
   let cost = 0;
@@ -4258,6 +4263,8 @@ export type EncounterPreview = {
   /** Opening stats; a boss starts sealed. */
   readonly maxHp: number;
   readonly attack: number;
+  /** Enemy art power, which the player's 术抗 meets. */
+  readonly artPower: number;
   readonly defense: number;
   /** A boss's stats once it awakens, which the danger estimate reads. */
   readonly awakened?: { readonly attack: number; readonly defense: number };
@@ -4293,6 +4300,7 @@ export function getCurrentEncounterPreview(state: GameState): EncounterPreview |
     rank: estimate.rank,
     maxHp: estimate.opening.maxHp,
     attack: estimate.opening.attack,
+    artPower: estimate.opening.artPower,
     defense: estimate.opening.defense,
     ...(bossDefinition ? { awakened: { attack: estimate.monster.attack, defense: estimate.monster.defense } } : {}),
     pressurePercent: getRunPressureStatus(run.pressureState)?.pressurePercent ?? 0,
@@ -4618,7 +4626,7 @@ function getProtocolMonster(
     ? {
         ...encounterMonster,
         maxHp: scaleByPercent(encounterMonster.maxHp, allStatsPercent, 1),
-        // The law's art pressure lands on attack, the only enemy stat that deals damage.
+        // The law's art pressure lands on attack, so it also presses enemies that have no art power.
         attack: scaleByPercent(
           scaleByPercent(encounterMonster.attack, allStatsPercent, 1),
           lawModifiers.encounter.artPowerPercent,
@@ -5669,6 +5677,7 @@ function getPermanentDerivedStats(state: GameState): DerivedStats {
     attack: statTotals.attack + body * 3,
     artPower: statTotals.artPower + spirit * 4,
     defense: statTotals.defense + body * 2,
+    resistance: (statTotals.resistance ?? 0) + spirit * 3 + Math.floor((statTotals.defense + body * 2) / 2),
     speed: statTotals.speed + agility * 3,
     trapCheck: spirit * 2 + luck + (statTotals.trapCheck ?? 0)
   };
@@ -5683,6 +5692,7 @@ export function getDerivedStats(state: GameState): DerivedStats {
     attack: stats.attack + bonuses.attack,
     artPower: stats.artPower + bonuses.artPower,
     defense: stats.defense + bonuses.defense,
+    resistance: stats.resistance + Math.floor(bonuses.defense / 2),
     speed: stats.speed + bonuses.speed,
     trapCheck: stats.trapCheck + bonuses.trapCheck
   };
@@ -8508,7 +8518,7 @@ export function claimAllTaskRewards(state: GameState): GameState {
 }
 
 function calculatePhysicalDamage(attack: number, defense: number): number {
-  return Math.max(3, attack - Math.floor(defense * 0.6));
+  return calculatePhysicalHit(attack, defense);
 }
 
 function getCloudStepSkirmishBonus(stats: DerivedStats, monster: MonsterDefinition, learnedMethods: readonly MethodId[]): number {
@@ -8520,7 +8530,7 @@ function getCloudStepSkirmishBonus(stats: DerivedStats, monster: MonsterDefiniti
 }
 
 function calculateArtDamage(artPower: number, defense: number): number {
-  return Math.max(5, artPower + 8 - Math.floor(defense * 0.3));
+  return calculateArtHit(artPower, defense);
 }
 
 function applyEncounterEquipmentLoot(
@@ -9743,8 +9753,9 @@ function applyBloodlineHitAftermath(state: GameState, dealt: number): GameState 
 export function getPartyStrikes(state: GameState, monster: MonsterDefinition): PartyStrike[] {
   const strikes: PartyStrike[] = [];
   const stats = getDerivedStats(state);
-  // Allies scale with the player, minus a share of the target's defense, and always land at least 1.
-  const strikeDamage = (base: number, percent: number) => Math.max(1, Math.ceil((base * percent) / 100) - Math.floor(monster.defense * 0.3));
+  // Allies scale with the player, meet the share of the target's defense an art counts, and always land at least 1.
+  const strikeDamage = (base: number, percent: number) =>
+    Math.max(1, Math.round(mitigateDamage(Math.ceil((base * percent) / 100), monster.defense * ART_DEFENSE_SHARE)));
   const companion = getCompanionBattleStatus(state.run?.companionSnapshot);
   if (companion.active && companion.snapshot && companion.effect) {
     const base = companion.effect.strikeStat === 'best' ? Math.max(stats.attack, stats.artPower) : stats[companion.effect.strikeStat];
@@ -9852,7 +9863,7 @@ function getPureGuardReduction(
   directGuardMultiplier = 1
 ): number {
   const stats = getDerivedStats(state);
-  const baseDamage = calculatePhysicalDamage(monster.attack, stats.defense);
+  const baseDamage = calculateEnemyHit(monster, stats);
   return getGuardReduction(state, combat, baseDamage, 0.5, directGuardMultiplier);
 }
 
@@ -9878,7 +9889,7 @@ function monsterAttack(
 ): GameState {
   const stats = getDerivedStats(state);
   const keywords = getCombatEquipmentKeywords(state);
-  const baseDamage = Math.ceil(calculatePhysicalDamage(monster.attack, stats.defense) * retaliationMultiplier);
+  const baseDamage = Math.ceil(calculateEnemyHit(monster, stats) * retaliationMultiplier);
   const heavyDamage = blow.heavy ? Math.ceil(baseDamage * HEAVY_BLOW_DAMAGE_RATE) : baseDamage;
   // 预判 softens a heavy blow before anything else meets it.
   const foresight = blow.heavy ? keywords.foresight ?? 0 : 0;

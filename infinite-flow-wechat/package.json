@@ -1,6 +1,6 @@
 {
   "name": "infinite-flow-wechat",
-  "version": "0.1.27",
+  "version": "0.1.28",
   "private": true,
   "type": "module",
   "packageManager": "npm@11.19.0",
@@ -50,6 +50,8 @@
     "balance:sim": "node scripts/balance/campaign.mjs",
     "balance:report": "node scripts/balance/report.mjs",
     "balance:trial": "node scripts/balance/trial.mjs",
+    "balance:fit": "node scripts/balance/fit-monsters.mjs",
+    "balance:calibrate": "node scripts/balance/calibrate.mjs",
     "test:migration": "node scripts/test-migration.mjs",
     "test:migration:self-check": "node scripts/test-migration-self-check.mjs",
     "platform:typecheck": "tsc -p cocos/headless/tsconfig.platform-self-check.json",

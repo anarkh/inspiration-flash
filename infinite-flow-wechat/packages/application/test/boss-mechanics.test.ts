@@ -101,7 +101,12 @@ assert(sold.monsterHealing === 20 && sold.nextState.bidShield === 32, 'an unbrok
 const auction = bossFight('legacy_auction_court');
 const auctionHit = apply({ ...auction, combat: { ...auction.combat!, turn: 3, effects: { bidShield: 1 } } }, { type: 'combat/act', action: 'attack' } as GameCommand);
 assert(auctionHit.player.hp === auction.player.hp, 'a cancelled counterattack deals no damage at all');
-const healing = { ...auction, combat: { ...auction.combat!, turn: 4, monsterHp: auction.combat!.monsterHp - 100, effects: { bidShield: 30 } } };
+// A chapter-13 counterattack would end a new save's fight, so this hero has the health to stand one guarded turn.
+const healing = {
+  ...auction,
+  player: { ...auction.player, hp: 1000, maxHp: 1000 },
+  combat: { ...auction.combat!, turn: 4, monsterHp: auction.combat!.monsterHp - 100, effects: { bidShield: 30 } }
+};
 assert(apply(healing, { type: 'combat/act', action: 'guard' } as GameCommand).combat!.monsterHp === healing.combat.monsterHp + 30,
   'the sale heals the boss on a turn without a hit');
 
