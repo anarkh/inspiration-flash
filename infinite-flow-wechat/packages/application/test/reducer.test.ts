@@ -15,6 +15,7 @@ import './method-loadout.test.js';
 import './equipment-keywords.test.js';
 import './gear-growth.test.js';
 import './combat-curve.test.js';
+import './power-curve.test.js';
 import {
   createInitialState,
   getCombatEncounterProfile,

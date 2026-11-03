@@ -1,5 +1,6 @@
 import {
   getPlayerPowerBreakdown as calculatePlayerPowerBreakdown,
+  getPowerReferenceTarget,
   getReadinessFromPower
 } from './progression';
 import type { PlayerPowerBreakdown, ProgressionReadiness } from './progression';
@@ -5698,10 +5699,30 @@ export function getDerivedStats(state: GameState): DerivedStats {
   };
 }
 
+/** Power reads the build as it enters a fight: permanent stats, worn keywords, the companion, bloodline and pet. */
 export function getPlayerPowerBreakdown(state: GameState): PlayerPowerBreakdown {
+  const companionSnapshot = state.run ? state.run.companionSnapshot : createCompanionRunSnapshot(getCompanionProgress(state));
+  const companion = getCompanionBattleEffect(companionSnapshot);
+  const bloodline = getBloodlineHitEffect(getEffectiveBloodlineSnapshot(state));
+  const pet = state.activePet ? getPetSupport(PETS[state.activePet], state.petLevels[state.activePet] ?? 1) : undefined;
   const stats = getPermanentDerivedStats(state);
+  const keywords = getCombatEquipmentKeywords(state);
+  const weaponSkill = resolveWeaponSkill({
+    weaponId: state.equipped.weapon,
+    weaponLevel: state.equipmentLevels[state.equipped.weapon] ?? 1,
+    playerStats: stats,
+    targetStats: getPowerReferenceTarget(stats, keywords),
+    resonance: getCurrentWeaponResonanceProgress(state)
+  });
 
-  return calculatePlayerPowerBreakdown({ stats });
+  return calculatePlayerPowerBreakdown({
+    stats,
+    keywords,
+    weaponSkill: { damage: weaponSkill.damage, damageKind: weaponSkill.damageKind },
+    ...(companion ? { companion } : {}),
+    ...(bloodline ? { bloodline } : {}),
+    ...(pet ? { pet } : {})
+  });
 }
 
 export function getPlayerPower(state: GameState): number {
@@ -8818,7 +8839,6 @@ export function getRunEconomyPreview(
     totalNodes: dungeon.nodes.length,
     damageTaken: state.run.damageTaken,
     captures: state.run.captures,
-    readiness: getDungeonReadiness(state, state.run.dungeonId),
     dungeonTier: dungeon.tier,
     exitStatus
   });

@@ -5,7 +5,7 @@ export const lostShelterDungeon: DungeonDefinition = {
   name: '失联避难所',
   tier: 16,
   genre: 'modern',
-  recommendedPower: 1040,
+  recommendedPower: 3610,
   theme: '现代城市防灾避难所仍按失效名单执行武装撤离；探索者必须利用枪械、掩体与急救物资护送最后一批幸存者穿过三处检查点，并终止失联总控。',
   recommended: '推荐战力 1040、完整终盘套装、三类机关反制品，以及足以维持幸存者护送与首领战的恢复储备。',
   rewardPreview: '救援铭牌、终局材料、奖励点 1580-3900',
