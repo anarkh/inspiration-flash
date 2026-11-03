@@ -45,9 +45,14 @@ assert(lightPressure.rewardPointBonus === Math.floor((exitShare * 15) / 100),
   'an empty bag leaves only the exit share for the pressure bonus');
 assert(heavyPressure.rewardPointBonus === Math.floor(((exitShare + 1000) * 15) / 100),
   'the stable-tier bonus scales the bag plus the exit share');
-// Bag points are credited on pickup (a failure claws back the lost share), so the clear only adds the bonus.
-assert(heavyClear.rewardPoints - lightClear.rewardPoints === heavyPressure.rewardPointBonus - lightPressure.rewardPointBonus,
-  'the larger bag only changes the clear payout through its bonus');
+// 气运 (a new save has 1) adds 1% of the same base: floor(base x 1 / 100).
+const lightLuck = Math.floor(exitShare / 100);
+const heavyLuck = Math.floor((exitShare + 1000) / 100);
+// Bag points are credited on pickup (a failure claws back the lost share), so the clear only adds the bonuses.
+assert(heavyClear.rewardPoints - lightClear.rewardPoints
+  === heavyPressure.rewardPointBonus - lightPressure.rewardPointBonus + heavyLuck - lightLuck,
+  'the larger bag only changes the clear payout through its bonuses');
+assert(heavyClear.log.some(line => line.includes(`气运 +1%：整局奖励点 +${heavyLuck}`)), 'the settlement log names the luck bonus');
 assert(heavyClear.log.some(line => line.includes(`整局奖励点加成 +${heavyPressure.rewardPointBonus}`)),
   'the settlement log names the whole-run bonus');
 

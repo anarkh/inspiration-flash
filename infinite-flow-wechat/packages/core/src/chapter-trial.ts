@@ -126,8 +126,9 @@ export function createChapterTrialState(chapter: number): GameState {
   if (state.learnedMethods.includes('iron_body')) state = assignSupportMethod(state, 'iron_body');
 
   state = activatePet(buyPet(state, 'contract_sprite'), 'contract_sprite');
-  if (upgradePet && target >= 4) state = upgradePet(state, 'contract_sprite');
-  if (upgradePet && target >= 8) state = upgradePet(state, 'contract_sprite');
+  // Pet levels 2 and 3 open after chapters 6 and 12 (GROWTH_TIER_UNLOCK_CHAPTERS).
+  if (upgradePet && target >= 7) state = upgradePet(state, 'contract_sprite');
+  if (upgradePet && target >= 13) state = upgradePet(state, 'contract_sprite');
 
   if (target >= 5) {
     state = unlockBloodline(state, 'titan_marrow');

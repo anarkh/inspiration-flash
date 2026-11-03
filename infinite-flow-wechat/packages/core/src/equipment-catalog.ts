@@ -121,8 +121,8 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'head',
     description: '兜帽内侧缝着雾后石粉，能提前感到陷阱风向。',
     cost: { rewardPoints: 280 },
-    base: { spirit: 1, speed: 1, trapCheck: 3 },
-    perLevel: { speed: 1, trapCheck: 2 },
+    base: { spirit: 1, speed: 1, luck: 1, trapCheck: 2 },
+    perLevel: { speed: 1, luck: 1, trapCheck: 1 },
     maxLevel: 5
   },
   spirit_robe: {
@@ -251,8 +251,8 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'head',
     description: '入场时冻结被动：本轮首次透支获得收益与治疗，但不会增加因果债务。',
     cost: { rewardPoints: 820, lingyun: 2, items: { causal_seal: 1, chronal_glass: 1 } },
-    base: { spirit: 3, defense: 7, trapCheck: 13 },
-    perLevel: { artPower: 7, trapCheck: 3 },
+    base: { spirit: 3, defense: 7, luck: 4, trapCheck: 9 },
+    perLevel: { artPower: 7, luck: 1, trapCheck: 2 },
     maxLevel: 5
   },
   echo_breaker_gauntlets: {
@@ -311,8 +311,8 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'head',
     description: '入场时冻结被动：当前相位的错误伤害类型不再承受 -6% 输出惩罚。',
     cost: { rewardPoints: 980, lingyun: 3, items: { phase_glass: 1, chronal_glass: 1 } },
-    base: { spirit: 4, defense: 8, trapCheck: 13 },
-    perLevel: { artPower: 6, defense: 2, trapCheck: 4 },
+    base: { spirit: 4, defense: 8, luck: 4, trapCheck: 9 },
+    perLevel: { artPower: 6, defense: 2, luck: 1, trapCheck: 3 },
     maxLevel: 5
   },
   phaseweave_mantle: {
@@ -381,8 +381,8 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'head',
     description: '面纱抹去竞标者的旧队身份，入场时冻结其拍卖庭被动。',
     cost: { rewardPoints: 1200, lingyun: 4, items: { legacy_scrip: 1, phase_glass: 1 } },
-    base: { spirit: 4, artPower: 21, speed: 4, trapCheck: 9 },
-    perLevel: { artPower: 7, speed: 4, trapCheck: 2 },
+    base: { spirit: 4, artPower: 21, speed: 4, luck: 3, trapCheck: 6 },
+    perLevel: { artPower: 7, speed: 4, luck: 1, trapCheck: 1 },
     maxLevel: 5
   },
   escrow_plate: {
@@ -421,7 +421,7 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'head',
     description: '冠膜读取宿主神经脉冲，在危机发生前调整感知与施法节律。',
     cost: { rewardPoints: 1380, lingyun: 5, items: { genesis_serum: 1, phase_glass: 1 } },
-    base: { spirit: 4, artPower: 21, speed: 4, trapCheck: 8 },
+    base: { spirit: 4, artPower: 21, speed: 4, luck: 3, trapCheck: 5 },
     perLevel: { artPower: 7, speed: 3, trapCheck: 1 },
     maxLevel: 5
   },
@@ -461,8 +461,8 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'head',
     description: '入场时冻结寂声法则被动：静默中继额外降低 1 点噪声，跨门后仍沿用本局快照。',
     cost: { rewardPoints: 1540, lingyun: 6, items: { silence_core: 1, phase_glass: 1 } },
-    base: { spirit: 4, artPower: 24, speed: 5, trapCheck: 9 },
-    perLevel: { artPower: 7, speed: 3, trapCheck: 3 },
+    base: { spirit: 4, artPower: 24, speed: 5, luck: 3, trapCheck: 6 },
+    perLevel: { artPower: 7, speed: 3, luck: 1, trapCheck: 2 },
     maxLevel: 5
   },
   anechoic_mantle: {
@@ -511,8 +511,8 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'head',
     description: '入场时冻结失联避难所护送被动：分诊判断只读取本轮入场装备快照，跨门后仍沿用该快照。',
     cost: { rewardPoints: 1720, lingyun: 7, items: { rescue_badge: 1, phase_glass: 1 } },
-    base: { spirit: 4, artPower: 27, speed: 5, trapCheck: 10 },
-    perLevel: { artPower: 8, speed: 3, trapCheck: 3 },
+    base: { spirit: 4, artPower: 27, speed: 5, luck: 3, trapCheck: 7 },
+    perLevel: { artPower: 8, speed: 3, luck: 1, trapCheck: 2 },
     maxLevel: 5
   },
   evacuation_plate: {
@@ -551,8 +551,8 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'head',
     description: '雾行专精；入场时冻结裁定法则被动，可识别证据污染与删录封签，跨门后仍沿用该快照。',
     cost: { rewardPoints: 1900, lingyun: 8, items: { truth_fragment: 1, phase_glass: 1 } },
-    base: { spirit: 4, artPower: 27, speed: 6, trapCheck: 10 },
-    perLevel: { artPower: 8, speed: 2, trapCheck: 2 },
+    base: { spirit: 4, artPower: 27, speed: 6, luck: 3, trapCheck: 7 },
+    perLevel: { artPower: 8, speed: 2, luck: 1, trapCheck: 1 },
     maxLevel: 5
   },
   custody_shell: {
@@ -591,8 +591,8 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'head',
     description: '校准每场第一次实际复演的起拍增幅；复演被动按入场装备冻结。',
     cost: { rewardPoints: 2080, lingyun: 9, items: { combat_reel: 1, phase_glass: 1 } },
-    base: { spirit: 4, artPower: 30, speed: 6, trapCheck: 11 },
-    perLevel: { artPower: 9, speed: 2, trapCheck: 2 },
+    base: { spirit: 4, artPower: 30, speed: 6, luck: 4, trapCheck: 7 },
+    perLevel: { artPower: 9, speed: 2, luck: 1, trapCheck: 1 },
     maxLevel: 5
   },
   buffer_plate: {
@@ -641,8 +641,8 @@ export const EQUIPMENT: Record<EquipmentId, EquipmentDefinition> = {
     slot: 'head',
     description: '入场时冻结监察城被动；每个扫描相位第一次曝光各闪避一次，并记录已经使用的保护相位。',
     cost: { rewardPoints: 2200, lingyun: 10, items: { observation_shard: 1, phase_glass: 1 } },
-    base: { spirit: 5, artPower: 30, speed: 6, trapCheck: 11 },
-    perLevel: { artPower: 9, speed: 2, trapCheck: 2 },
+    base: { spirit: 5, artPower: 30, speed: 6, luck: 4, trapCheck: 7 },
+    perLevel: { artPower: 9, speed: 2, luck: 1, trapCheck: 1 },
     maxLevel: 5
   },
   matte_shell: {

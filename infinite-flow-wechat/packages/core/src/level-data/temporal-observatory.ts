@@ -5,7 +5,7 @@ export const temporalObservatoryDungeon: DungeonDefinition = {
   name: '时序观测庭',
   tier: 8,
   genre: 'science_fiction',
-  recommendedPower: 1090,
+  recommendedPower: 1080,
   theme: '过去与未来在零点子午线上互相校准，只有同时稳定两枚时序锚点才能穿过观测庭。',
   recommended: '推荐战力 435、时序套装、虚心诀或稳定的界门补给。',
   rewardPreview: '时序玻璃、终局材料、奖励点 590-1480',

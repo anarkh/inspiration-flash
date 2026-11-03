@@ -114,8 +114,8 @@ function verifyOwnedEquipmentInventory(): void {
   }
   const hood = row(view, 'mist_hood');
   assert(hood.level === 2 && hood.slotLabel === '头部' && !hood.equipped, 'a level-two unworn hood must report its actual level, slot and state');
-  assert(hood.baseStatsReadout === '心神 +1 · 速度 +1 · 陷阱感知 +3', 'level two must retain the level-one hood material rather than include growth');
-  assert(hood.growthStatsReadout === '速度 +1 · 陷阱感知 +2', 'the hood growth must remain a separate per-level readout');
+  assert(hood.baseStatsReadout === '心神 +1 · 速度 +1 · 气运 +1 · 陷阱感知 +2', 'level two must retain the level-one hood material rather than include growth');
+  assert(hood.growthStatsReadout === '速度 +1 · 气运 +1 · 陷阱感知 +1', 'the hood growth must remain a separate per-level readout');
   assert(hood.affixReadout.includes('雾听预兆') && hood.affixReadout.includes('陷阱感知 +3'), 'level-two fixed hood affixes must include their actual trap-check contribution');
   assert(!hood.rollReadout, 'ordinary material must not invent a random roll');
   assert(JSON.stringify(state) === before, 'inventory projection and command preflight must not alter the source state');
@@ -191,7 +191,7 @@ function verifyEliteEquipmentMetadataAndClaim(): void {
   const offeredHood = options[0]!;
   const ownedHood = row(view, 'mist_hood');
   assert(offeredHood.slotLabel === '头部' && options[1]!.slotLabel === '护甲' && options[2]!.slotLabel === '武器', 'loot cards must use the actual equipment slot labels');
-  assert(offeredHood.baseStatsReadout === '心神 +1 · 速度 +1 · 陷阱感知 +47', 'the offered hood must display the offer roll rather than the owned material');
+  assert(offeredHood.baseStatsReadout === '心神 +1 · 速度 +1 · 气运 +1 · 陷阱感知 +47', 'the offered hood must display the offer roll rather than the owned material');
   assert(offeredHood.rollReadout?.includes('炼狱第 5 层') && offeredHood.rollReadout.includes('强度 3047') && offeredHood.rollReadout.includes('陷阱感知 +47'), 'the offer roll readout must use the exact tier, power and affix');
   assert(ownedHood.baseStatsReadout.includes('陷阱感知 +11') && ownedHood.rollReadout?.includes('炼狱第 2 层'), 'the owned hood must independently retain its existing roll');
   assert(offeredHood.affixReadout.includes('陷阱感知 +2') && ownedHood.affixReadout.includes('陷阱感知 +3'), 'candidate fixed affixes use level one while owned fixed affixes use the current level');

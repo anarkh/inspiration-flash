@@ -30,7 +30,8 @@ function spent(before: GameState, after: GameState) {
   return { rewardPoints: before.rewardPoints - after.rewardPoints, lingyun: before.lingyun - after.lingyun };
 }
 
-// Gear prices grow 15% per chapter of the gear's first source; lingyun and materials stay the same.
+// Gear prices follow the chapter of the gear's first source: points compound 15% a chapter (x1.15^18 = 12.375 at
+// chapter 19, rounded up to 10) and lingyun grows 15% a chapter (x3.7 at chapter 19, rounded).
 const upgradable = (Object.keys(EQUIPMENT) as EquipmentId[]).filter(id => EQUIPMENT[id].maxLevel > 1);
 const first = upgradable.find(id => getEquipmentSourceChapter(id) === 1)!;
 const last = upgradable.find(id => getEquipmentSourceChapter(id) === 19)!;
@@ -39,25 +40,33 @@ const upgradeCost = (id: EquipmentId, level: number) => {
   const before = owning(id, level);
   return spent(before, apply(before, { type: 'hub/upgrade-equipment', equipmentId: id }));
 };
-assert(upgradeCost(first, 1).rewardPoints === 220 && upgradeCost(first, 2).rewardPoints === 360, 'chapter 1 gear keeps its old prices');
-assert(upgradeCost(last, 1).rewardPoints === 820 && upgradeCost(last, 2).rewardPoints === 1340,
-  'chapter 19 gear costs 3.7 times as many points, rounded up to 10');
-assert(upgradeCost(last, 2).lingyun === 1, 'the lingyun part of a price does not scale');
+assert(upgradeCost(first, 1).rewardPoints === 220 && upgradeCost(first, 2).rewardPoints === 360 && upgradeCost(first, 2).lingyun === 1,
+  'chapter 1 gear keeps its old level 2 and 3 prices');
+assert(upgradeCost(last, 1).rewardPoints === 2730 && upgradeCost(last, 2).rewardPoints === 4460,
+  'chapter 19 gear: 220 x 12.375 = 2722.5 -> 2730, 360 x 12.375 = 4455 -> 4460');
+assert(upgradeCost(last, 2).lingyun === 4, 'chapter 19 level 3: 1 lingyun x 3.7 -> 4');
 
-// Levels 4 and 5 add the gear's own chapter material on top of points and lingyun.
+// Levels 4 and 5 are the long sink: 900 points + 3 lingyun, then 1500 points + 5 lingyun + a cracked core, each with
+// the gear's own chapter material.
 assert(upgradable.every(id => EQUIPMENT[id].maxLevel === 5) && EQUIPMENT_MASTERY_LEVEL === 3, 'gear levels to 5; unlocks stay at 3');
-for (const [id, scale] of [[first, 1], [last, 3.7]] as const) {
+for (const [id, level4, level5] of [
+  [first, { rewardPoints: 900, lingyun: 3 }, { rewardPoints: 1500, lingyun: 5 }],
+  // 900 x 12.375 = 11137.5 -> 11140, 3 x 3.7 = 11.1 -> 11; 1500 x 12.375 = 18562.5 -> 18570, 5 x 3.7 = 18.5 -> 19.
+  [last, { rewardPoints: 11140, lingyun: 11 }, { rewardPoints: 18570, lingyun: 19 }]
+] as const) {
   const material = getEquipmentSourceMaterial(id);
   const before4 = owning(id, 3);
   const after4 = apply(before4, { type: 'hub/upgrade-equipment', equipmentId: id });
-  assert(after4.equipmentLevels[id] === 4 && spent(before4, after4).rewardPoints === Math.ceil(600 * scale / 10) * 10
-    && spent(before4, after4).lingyun === 2 && before4.inventory[material] - after4.inventory[material] === 3,
-  `${id} level 4 costs scaled points, 2 lingyun and 3 of its chapter material`);
+  const paid4 = spent(before4, after4);
+  assert(after4.equipmentLevels[id] === 4 && paid4.rewardPoints === level4.rewardPoints && paid4.lingyun === level4.lingyun
+    && before4.inventory[material] - after4.inventory[material] === 3,
+  `${id} level 4 costs ${level4.rewardPoints} points, ${level4.lingyun} lingyun and 3 of its chapter material`);
   const after5 = apply(after4, { type: 'hub/upgrade-equipment', equipmentId: id });
-  assert(after5.equipmentLevels[id] === 5 && spent(after4, after5).rewardPoints === Math.ceil(900 * scale / 10) * 10
-    && spent(after4, after5).lingyun === 3 && after4.inventory[material] - after5.inventory[material] === 5
+  const paid5 = spent(after4, after5);
+  assert(after5.equipmentLevels[id] === 5 && paid5.rewardPoints === level5.rewardPoints && paid5.lingyun === level5.lingyun
+    && after4.inventory[material] - after5.inventory[material] === 5
     && after4.inventory.cracked_core - after5.inventory.cracked_core === 1,
-  `${id} level 5 costs scaled points, 3 lingyun, a cracked core and 5 of its chapter material`);
+  `${id} level 5 costs ${level5.rewardPoints} points, ${level5.lingyun} lingyun, a cracked core and 5 of its chapter material`);
   assert(reduceGameCommand(after5, { type: 'hub/upgrade-equipment', equipmentId: id }).status === 'rejected', `${id} stops at level 5`);
 }
 

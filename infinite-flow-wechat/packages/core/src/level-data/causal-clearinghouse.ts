@@ -5,7 +5,7 @@ export const causalClearinghouseDungeon: DungeonDefinition = {
   name: '因果清算所',
   tier: 9,
   genre: 'anomaly',
-  recommendedPower: 1440,
+  recommendedPower: 1420,
   theme: '原因与结果被拆成两份独立卷宗，只有完成双向核验，清算所才会承认同一条因果链。',
   recommended: '推荐战力 500、时序套装、界门补给与足以承受终审的稳定防护。',
   rewardPreview: '因果印章、终局材料、奖励点 650-1750',
