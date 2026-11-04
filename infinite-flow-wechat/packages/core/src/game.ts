@@ -1647,8 +1647,8 @@ export const METHODS: Record<MethodId, MethodDefinition> = {
 const UPGRADE_COSTS: Record<number, Cost> = {
   2: { rewardPoints: 220 },
   3: { rewardPoints: 360, lingyun: 1, items: { cracked_core: 1 } },
-  4: { rewardPoints: 600, lingyun: 2 },
-  5: { rewardPoints: 900, lingyun: 3, items: { cracked_core: 1 } }
+  4: { rewardPoints: 900, lingyun: 3 },
+  5: { rewardPoints: 1500, lingyun: 5, items: { cracked_core: 1 } }
 };
 
 /** Levels 4 and 5 also take the gear's own chapter material, which otherwise piles up. */
@@ -1660,14 +1660,23 @@ export const EQUIPMENT_ATTUNEMENT_COST = {
   items: { cycle_imprint: 1 }
 } as const;
 
-/** Upgrade, attunement and temper point prices grow this share per chapter of the gear's first source. */
+/**
+ * Upgrade, attunement and temper prices follow the chapter of the gear's first source: reward points compound by
+ * this share per chapter, as run income does, and lingyun grows by its own share per chapter.
+ */
 export const EQUIPMENT_CHAPTER_PRICE_STEP_PERCENT = 15;
+export const EQUIPMENT_CHAPTER_LINGYUN_STEP_PERCENT = 15;
 
-
-/** Scales only the reward points, rounded up to 10; lingyun and materials stay as they are. */
-function scaleEquipmentCost<T extends { rewardPoints?: number }>(equipmentId: EquipmentId, cost: T): T {
-  const percent = 100 + EQUIPMENT_CHAPTER_PRICE_STEP_PERCENT * (getEquipmentSourceChapter(equipmentId) - 1);
-  return { ...cost, rewardPoints: Math.ceil(((cost.rewardPoints ?? 0) * percent) / 1000) * 10 };
+/** Scales reward points (rounded up to 10) and lingyun (rounded); materials stay as they are. */
+function scaleEquipmentCost<T extends { rewardPoints?: number; lingyun?: number }>(equipmentId: EquipmentId, cost: T): T {
+  const steps = getEquipmentSourceChapter(equipmentId) - 1;
+  const pointScale = Math.pow(1 + EQUIPMENT_CHAPTER_PRICE_STEP_PERCENT / 100, steps);
+  const lingyunScale = 1 + (EQUIPMENT_CHAPTER_LINGYUN_STEP_PERCENT * steps) / 100;
+  return {
+    ...cost,
+    rewardPoints: Math.ceil(((cost.rewardPoints ?? 0) * pointScale) / 10 - 1e-9) * 10,
+    ...(cost.lingyun ? { lingyun: Math.round(cost.lingyun * lingyunScale) } : {})
+  };
 }
 
 export function getEquipmentUpgradeCost(equipmentId: EquipmentId, nextLevel: number): Cost | undefined {
@@ -5932,15 +5941,34 @@ export function unlockBloodline(state: GameState, bloodlineId: BloodlineId): Gam
   );
 }
 
+/** Each point of 气运 adds this share of a successful run's reward points, up to the cap. */
+export const LUCK_REWARD_PERCENT_PER_POINT = 1;
+export const LUCK_REWARD_PERCENT_CAP = 30;
+
+export function getLuckRewardPercent(state: GameState): number {
+  return Math.min(LUCK_REWARD_PERCENT_CAP, Math.max(0, getPermanentDerivedStats(state).luck) * LUCK_REWARD_PERCENT_PER_POINT);
+}
+
+/** Tiers 2 and 3 of methods, companions, bloodlines and pets open once these chapters are first cleared. */
+export const GROWTH_TIER_UNLOCK_CHAPTERS: Readonly<Record<2 | 3, number>> = { 2: 6, 3: 12 };
+
+/** The chapter whose first clear still has to open `tier`, if any. */
+export function getGrowthTierLockChapter(state: GameState, tier: number): number | undefined {
+  const chapter = tier === 2 || tier === 3 ? GROWTH_TIER_UNLOCK_CHAPTERS[tier] : undefined;
+  return chapter !== undefined && !state.completedDungeonIds.includes(DUNGEON_ORDER[chapter - 1]!) ? chapter : undefined;
+}
+
 export function upgradeBloodline(state: GameState, bloodlineId: BloodlineId): GameState {
   if (state.phase !== 'hub' || !isBloodlineId(bloodlineId)) return state;
   const progress = getBloodlineProgress(state);
   const status = getBloodlineUpgradeStatus(bloodlineId, progress);
   if (status?.state !== 'upgradeable' || !status.cost || !status.targetRank) return state;
-  if (!canPay(state, status.cost)) return state;
 
   const definition = getBloodlineDefinition(bloodlineId);
   if (!definition) return state;
+  const lockedUntil = getGrowthTierLockChapter(state, status.targetRank);
+  if (lockedUntil) return appendLog(state, `第 ${lockedUntil} 章首次通关后才能把${definition.name}晋升至 R${status.targetRank}。`);
+  if (!canPay(state, status.cost)) return state;
   return appendLog(
     normalizeHealth({
       ...payCost(state, status.cost),
@@ -6017,6 +6045,8 @@ export function upgradeCompanion(state: GameState, companionId: CompanionId): Ga
   if (!definition || status?.state !== 'upgradeable' || !status.cost || !status.targetRank) {
     return state;
   }
+  const lockedUntil = getGrowthTierLockChapter(state, status.targetRank);
+  if (lockedUntil) return appendLog(state, `第 ${lockedUntil} 章首次通关后才能把${definition.name}训练至 R${status.targetRank}。`);
   if (!canPay(state, status.cost)) return state;
 
   return appendLog(
@@ -6296,6 +6326,8 @@ export function upgradeMethod(state: GameState, methodId: MethodId): GameState {
   const progress = getMethodCultivationProgress(state);
   const status = getMethodUpgradeStatus(methodId, progress);
   if (status?.state !== 'upgradeable' || !status.cost || !status.targetRank) return state;
+  const lockedUntil = getGrowthTierLockChapter(state, status.targetRank);
+  if (lockedUntil) return appendLog(state, `第 ${lockedUntil} 章首次通关后才能把${METHODS[methodId].name}精研至 R${status.targetRank}。`);
   if (!canPay(state, status.cost)) return state;
 
   return appendLog(
@@ -6375,6 +6407,8 @@ function upgradePetInternal(state: GameState, petId: PetId): GameState {
   const nextLevel = currentLevel + 1;
 
   if (nextLevel > pet.maxLevel) return appendLog(state, `${pet.name}暂时无法继续培养。`);
+  const lockedUntil = getGrowthTierLockChapter(state, nextLevel);
+  if (lockedUntil) return appendLog(state, `第 ${lockedUntil} 章首次通关后才能把${pet.name}培养到 ${nextLevel} 级。`);
 
   const cost = getPetUpgradeCost(pet, nextLevel);
   if (!canPay(state, cost)) return appendLog(state, `资源不足，无法把${pet.name}培养到 ${nextLevel} 级。`);
@@ -10713,6 +10747,9 @@ export function resolveExit(state: GameState): GameState {
   const pressureRewardPointBonus = economy && pressureStatus
     ? calculateRunPressureBonus(bonusBaseRewardPoints, pressureStatus.state)
     : 0;
+  // 气运 raises the whole run's reward points the same way.
+  const luckRewardPercent = economy ? getLuckRewardPercent(state) : 0;
+  const luckRewardPointBonus = Math.floor((bonusBaseRewardPoints * luckRewardPercent) / 100);
   const pressureSettlement: RunPressureSettlement | undefined =
     economy && pressureStatus
       ? {
@@ -10821,6 +10858,7 @@ export function resolveExit(state: GameState): GameState {
         rewardPoints:
           economy.rewardPoints +
           pressureRewardPointBonus +
+          luckRewardPointBonus +
           (protocolSucceeded ? protocolRewardPointBonus : 0) +
           (shouldClaimDirective ? (directive.reward.rewardPoints ?? 0) : 0),
         lingyun: (node.reward.lingyun ?? 0) + (shouldClaimDirective ? (directive.reward.lingyun ?? 0) : 0),
@@ -10902,6 +10940,7 @@ export function resolveExit(state: GameState): GameState {
   const pressureLog = pressureSettlement
     ? ` 侵蚀结算「${pressureStatus?.label ?? pressureSettlement.tier}」：累计清理 ${pressureSettlement.state.clearedNodeCount} 个节点，整局奖励点加成 +${pressureSettlement.rewardPointBonus}。`
     : '';
+  const luckLog = luckRewardPointBonus > 0 ? ` 气运 +${luckRewardPercent}%：整局奖励点 +${luckRewardPointBonus}。` : '';
   const routeContractDefinition = routeContractSettlement?.state
     ? getRouteContractById(routeContractSettlement.state.contractId, routeContractSettlement.state.dungeonId)
     : undefined;
@@ -10979,8 +11018,8 @@ export function resolveExit(state: GameState): GameState {
     equipmentMemoryResult.state,
     economy
       ? isRepeatClear
-        ? `${node.title}亮起，已通关副本复刷结算：${RUN_ECONOMY_OUTCOME_LABELS[economy.outcome]}，倍率 ${economy.rewardMultiplier}x。${protocolLog}${pressureLog}${routeContractLog}${materialLog}${bankedEquipmentCount ? ` 本轮领取的 ${bankedEquipmentCount} 件装备已永久保留。` : ''}`
-        : `${node.title}亮起，首次通关结算：${RUN_ECONOMY_OUTCOME_LABELS[economy.outcome]}，倍率 ${economy.rewardMultiplier}x。${protocolLog}${pressureLog}${routeContractLog}${materialLog}${bankedEquipmentCount ? ` 本轮领取的 ${bankedEquipmentCount} 件装备已永久保留。` : ''}`
+        ? `${node.title}亮起，已通关副本复刷结算：${RUN_ECONOMY_OUTCOME_LABELS[economy.outcome]}，倍率 ${economy.rewardMultiplier}x。${protocolLog}${pressureLog}${luckLog}${routeContractLog}${materialLog}${bankedEquipmentCount ? ` 本轮领取的 ${bankedEquipmentCount} 件装备已永久保留。` : ''}`
+        : `${node.title}亮起，首次通关结算：${RUN_ECONOMY_OUTCOME_LABELS[economy.outcome]}，倍率 ${economy.rewardMultiplier}x。${protocolLog}${pressureLog}${luckLog}${routeContractLog}${materialLog}${bankedEquipmentCount ? ` 本轮领取的 ${bankedEquipmentCount} 件装备已永久保留。` : ''}`
       : isRepeatClear
         ? `${node.title}亮起，已通关副本重复探索完成。${routeContractLog}`
         : `${node.title}亮起，你首次通关本轮副本探索。${routeContractLog}`
