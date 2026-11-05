@@ -48,3 +48,35 @@ test("spawnWithInput keeps a verdict that quotes a known-error phrase", async ()
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test("spawnWithInput keeps a successful CLI envelope that quotes a known-error phrase", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "agent-bridge-process-"));
+  try {
+    const result = await spawnWithInput(process.execPath, [
+      "-e",
+      "console.log(JSON.stringify({ type: 'result', subtype: 'success', is_error: false, result: 'Unauthorized request means invalid credentials.' }))"
+    ], "", {
+      cwd: dir,
+      timeout: 10_000,
+      env: process.env
+    });
+    assert.match(result.stdout, /Unauthorized request/);
+    assert.match(result.stdout, /"is_error":false/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("spawnWithInput allows known-error phrases in plain chat output", async () => {
+  const result = await spawnWithInput(process.execPath, [
+    "-e",
+    "process.stdout.write('Unauthorized request is only an example')"
+  ], "", {
+    cwd: process.cwd(),
+    timeout: 5_000,
+    env: process.env,
+    allowKnownErrorText: true
+  });
+
+  assert.match(result.stdout, /Unauthorized request/);
+});

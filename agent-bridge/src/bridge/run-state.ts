@@ -1,5 +1,5 @@
 import { BRIDGE_RUNS_FILE } from "../core/constants.ts";
-import type { Agent, BridgeResponse, BridgeResult, BridgeRunRecord, BridgeRunSource, BridgeRunStatus, ConsumerRunRecord, NormalizedHookPayload } from "../core/types.ts";
+import type { Agent, BridgeOutputMode, BridgeResponse, BridgeResult, BridgeRunRecord, BridgeRunSource, BridgeRunStatus, ConsumerRunRecord, NormalizedHookPayload } from "../core/types.ts";
 import { readJson, writeJson } from "../utils/fs.ts";
 
 const MAX_RUN_RECORDS = 50;
@@ -14,7 +14,7 @@ export async function recordBridgeRunStarted(
   payload: NormalizedHookPayload,
   hash: string,
   agents: Agent[],
-  options: { source?: BridgeRunSource; directMessagePreview?: string } = {}
+  options: { source?: BridgeRunSource; directMessagePreview?: string; outputMode?: BridgeOutputMode } = {}
 ): Promise<string> {
   const now = new Date().toISOString();
   const id = `${Date.now().toString(36)}-${hash.slice(0, 8)}`;
@@ -28,6 +28,7 @@ export async function recordBridgeRunStarted(
     sessionId: payload.sessionId,
     turnId: payload.turnId,
     directMessagePreview: options.directMessagePreview,
+    outputMode: options.outputMode,
     status: "running",
     startedAt: now,
     updatedAt: now,
