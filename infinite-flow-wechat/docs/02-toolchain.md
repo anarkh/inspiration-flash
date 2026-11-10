@@ -100,7 +100,10 @@ npm run build:wechat:template
 已声明分包根目录外的全部文件）：production 构建超过 4 MiB 即以
 `wechat-main-package-too-large` 失败；template 构建只在结果中报告
 `mainPackageWithinLimit`，不阻断本地 NON_RELEASE 试玩。上述 2026-08-12 模板主包已超出
-该上限，production 前需启用引擎插件或把代码移入分包后重新构建。
+该上限。0.1.31 起引擎裁剪到 2D 游戏实际使用的 9 个模块
+（`cocos/settings/v2/packages/engine.json`），场景不再引用默认天空盒贴图；2026-11-10 的
+NON_RELEASE 命令行构建主包为 3,545,973 bytes。`npm run scene:verify` 固定模块清单与天空盒，
+新增引擎模块要同时改该清单并复核主包体积。
 
 生产 remote 配置只从环境读取 AppID 和 CDN 基址，并将 manifest revision 固定进 HTTPS
 路径。`resources` metadata 已静态绑定 remote-only Creator preset；旧

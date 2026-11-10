@@ -98,10 +98,28 @@ if (
   fail("scene contains an unexpected custom component");
 }
 
+// The WeChat main package is capped at 4 MiB. Two things keep the engine and its built-in assets small:
+// the scene must not reference the default skybox cubemaps, and the engine is cropped to the modules the
+// 2D game uses (Creator falls back to every module when this list is missing).
+const skybox = scene.find((entry) => entry?.__type__ === "cc.SkyboxInfo");
+for (const field of ["_envmap", "_envmapHDR", "_envmapLDR"]) {
+  if (skybox?.[field] != null) fail(`scene skybox ${field} must stay empty to keep cubemaps out of the main package`);
+}
+const engineModulesPath = resolve(projectRoot, "cocos/settings/v2/packages/engine.json");
+const engineModules = requireJson(engineModulesPath).modules;
+const includedEngineModules = engineModules?.configs?.[engineModules.globalConfigKey]?.includeModules;
+const expectedEngineModules = [
+  "2d", "affine-transform", "base", "custom-pipeline", "gfx-webgl", "graphics", "mask", "profiler", "ui",
+];
+if (JSON.stringify(includedEngineModules) !== JSON.stringify(expectedEngineModules)) {
+  fail(`engine modules must be exactly ${expectedEngineModules.join(", ")}; found ${JSON.stringify(includedEngineModules)}`);
+}
+
 console.log(JSON.stringify({
   status: "COCOS_SCENE_VALID",
   sceneUuid: sceneMeta.uuid,
   scriptUuid: scriptMeta.uuid,
   scriptType: expectedScriptType,
   canvasComponents: canvasNode._components?.length ?? 0,
+  engineModules: includedEngineModules.length,
 }, null, 2));
