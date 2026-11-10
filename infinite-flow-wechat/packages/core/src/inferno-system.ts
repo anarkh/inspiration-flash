@@ -144,13 +144,16 @@ export function sanitizeInfernoProgress(
   return result;
 }
 
+export const INFERNO_TIER_ENEMY_STEP_PERCENT = 15;
+
 export function getInfernoTierModifiers(value: number): InfernoTierModifiers {
   const tier = normalizeInfernoTier(value) ?? 1;
   const depth = tier - 1;
   const logarithmicGrowth = Math.floor(Math.log2(tier) * 4);
   return {
     tier,
-    enemyStatMultiplierPercent: clampSafeInteger(100 + depth * 18 + logarithmicGrowth, 1),
+    // Every tier past the first adds 15% to all enemy stats, on top of the chapter's own inferno multiplier.
+    enemyStatMultiplierPercent: clampSafeInteger(100 + depth * INFERNO_TIER_ENEMY_STEP_PERCENT, 1),
     trapDamageMultiplierPercent: clampSafeInteger(100 + depth * 14 + logarithmicGrowth, 1),
     trapDcMultiplierPercent: clampSafeInteger(100 + depth * 3 + Math.floor(Math.log2(tier)), 1),
     rewardPointMultiplierPercent: clampSafeInteger(100 + depth * 15 + logarithmicGrowth, 1),
