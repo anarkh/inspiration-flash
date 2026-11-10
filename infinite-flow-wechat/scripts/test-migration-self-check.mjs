@@ -242,6 +242,9 @@ async function checkAssetManifestExtensionBoundaries() {
     ["new dungeon-world byte hash drift", (value) => {
       value.assets.find((asset) => asset.key === "scene:dungeon_world_demon_tower_1").targetSha256 = "0".repeat(64);
     }, "physical SHA-256"],
+    ["slimmed replacement cannot claim its source bytes", (value) => {
+      value.assets.find((asset) => asset.key === "equipment:triage_visor").transformation.operation = "byte-copy";
+    }, "Cocos replacement byte-copy SHA-256"],
     ["new dungeon-world cannot enter the frozen Web snapshot", (value) => {
       value.assets.find((asset) => asset.key === "scene:dungeon_world_demon_tower_1").webSourcePath = "/dungeon-world/demon_tower_1-v1.png";
     }, "frozen Web asset count"],
@@ -1982,7 +1985,7 @@ checkExitTaxonomy();
 checkStableDigest();
 checkExclusiveEvidence();
 
-const EXPECTED_ASSERTIONS = 1289;
+const EXPECTED_ASSERTIONS = 1290;
 if (assertions !== EXPECTED_ASSERTIONS) {
   throw new Error(
     `Assertion count drifted; expected ${EXPECTED_ASSERTIONS}, received ${assertions}`,

@@ -7,6 +7,13 @@ import {
 import { relative, resolve, sep } from "node:path";
 import { inflateSync } from "node:zlib";
 import { loadWechatBundleProfiles } from "./verify-wechat-build-config.mjs";
+import {
+  JPEG_QUALITY,
+  SLIMMING_TOOL,
+  slimmedDimensions,
+  slimmingOperation,
+  slimmingPlan,
+} from "./resource-slimming.mjs";
 
 const projectRoot = resolve(import.meta.dirname, "..");
 const repositoryRoot = resolve(projectRoot, "..");
@@ -18,6 +25,9 @@ const assetRoot = resolve(projectRoot, "cocos/assets");
 const resourceRoot = resolve(projectRoot, "cocos/assets/resources");
 const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
 const EXPECTED_ASSET_COUNT = 324;
+// Opaque art ships as JPEG, art with transparency as PNG (scripts/resource-slimming.mjs).
+const EXPECTED_FORMAT_COUNTS = { jpg: 32, png: 292 };
+const IMAGE_EXTENSIONS = Object.keys(EXPECTED_FORMAT_COUNTS).map((format) => `.${format}`);
 const HERO_WALK_KEY = "character:reincarnator_walk";
 const HERO_WALK_SHA256 = "897deadd34e18c9e3c8e7d52461a8fddac5272503696e263cee2e7baec6bb918";
 const DUNGEON_TRANSITION_GATE_KEY = "scene:dungeon_transition_gate";
@@ -177,6 +187,49 @@ function pngDimensions(bytes) {
   };
 }
 
+function jpegDimensions(bytes) {
+  if (bytes.length < 4 || bytes[0] !== 0xff || bytes[1] !== 0xd8) throw new Error("not a JPEG file");
+  for (let offset = 2; offset + 9 < bytes.length;) {
+    if (bytes[offset] !== 0xff) break;
+    const marker = bytes[offset + 1];
+    if (marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc) {
+      return { width: bytes.readUInt16BE(offset + 7), height: bytes.readUInt16BE(offset + 5) };
+    }
+    offset += 2 + bytes.readUInt16BE(offset + 2);
+  }
+  throw new Error("JPEG has no frame header");
+}
+
+function imageDimensions(bytes, format) {
+  if (format === "png") return pngDimensions(bytes);
+  if (format === "jpg") return jpegDimensions(bytes);
+  throw new Error(`unsupported target format ${String(format)}`);
+}
+
+function sameDimensions(actual, expected) {
+  return actual?.width === expected?.width && actual?.height === expected?.height;
+}
+
+/**
+ * An entry with a slimming rule must be exactly that derivation of its source: format, file extension,
+ * operation, sips version, JPEG quality, and target size from the source size.
+ */
+function validateSlimming(asset, sourceDimensions) {
+  const plan = slimmingPlan(asset.key);
+  if (!plan) return;
+  const transformation = asset.transformation ?? {};
+  const target = slimmedDimensions(plan, sourceDimensions.width, sourceDimensions.height);
+  if (asset.targetFormat !== plan.format || asset.resourceFile !== `${asset.resourcePath}.${plan.format}`
+    || transformation.operation !== slimmingOperation(plan, sourceDimensions.width, sourceDimensions.height)
+    || transformation.tool !== SLIMMING_TOOL.tool || transformation.version !== SLIMMING_TOOL.version
+    || transformation.quality !== (plan.format === "jpg" ? JPEG_QUALITY : undefined)
+    || !sameDimensions(transformation.sourceDimensions, sourceDimensions)
+    || !sameDimensions(transformation.targetDimensions, target)
+    || asset.width !== target.width || asset.height !== target.height) {
+    failures.push(`slimmed texture differs from its resource-slimming rule: ${asset.key}`);
+  }
+}
+
 function pngRgbaAlpha(bytes) {
   const { width, height } = pngDimensions(bytes);
   if (bytes[24] !== 8 || bytes[25] !== 6 || bytes[26] !== 0
@@ -243,7 +296,7 @@ function isRecord(value) {
 
 function expectedImporter(targetPath, directoryPaths) {
   if (directoryPaths.has(targetPath)) return "directory";
-  if (targetPath.endsWith(".png")) return "image";
+  if (IMAGE_EXTENSIONS.some((extension) => targetPath.endsWith(extension))) return "image";
   if (targetPath.endsWith(".ts")) return "typescript";
   if (targetPath.endsWith(".scene")) return "scene";
   if (targetPath.endsWith(".json")) return "json";
@@ -252,8 +305,9 @@ function expectedImporter(targetPath, directoryPaths) {
 }
 
 function validateImageMeta(meta, displayPath) {
-  if (!sameStringSet(meta.files, [".json", ".png"])) {
-    failures.push(`image meta files must be .json/.png: ${displayPath}`);
+  const extension = IMAGE_EXTENSIONS.find((candidate) => displayPath.endsWith(`${candidate}.meta`));
+  if (!sameStringSet(meta.files, [".json", extension])) {
+    failures.push(`image meta files must be .json/${extension}: ${displayPath}`);
   }
   const redirect = meta.userData?.redirect;
   const redirectPrefix = `${meta.uuid}@`;
@@ -484,16 +538,15 @@ for (const asset of worldAssets) {
     || asset.source !== "project-original-generated" || asset.sourceRevision !== 1
     || Object.prototype.hasOwnProperty.call(asset, "webSourcePath")
     || asset.sourceFile !== `infinite-flow-wechat/art-source/dungeon-world/${dungeonId}-v1.png`
-    || asset.resourceFile !== `dungeon-world/${dungeonId}-v1.png`
     || asset.resourcePath !== `dungeon-world/${dungeonId}-v1`
-    || asset.sourceFormat !== "png" || asset.targetFormat !== "png"
-    || asset.transformation?.operation !== "byte-copy") {
+    || asset.sourceFormat !== "png" || asset.targetFormat !== "jpg"
+    || !slimmingPlan(asset.key)) {
     failures.push(`dungeon-world provenance or versioned identity mismatch: ${asset.key}`);
   }
   const dimensions = asset.transformation?.targetDimensions;
   if (!Number.isSafeInteger(asset.width) || asset.width <= 0 || asset.width !== asset.height
     || asset.width !== dimensions?.width || asset.height !== dimensions?.height) {
-    failures.push(`dungeon-world target must retain its actual square PNG dimensions: ${asset.key}`);
+    failures.push(`dungeon-world target must retain its actual square dimensions: ${asset.key}`);
   }
 }
 
@@ -510,17 +563,14 @@ for (const asset of npcWorldAssets) {
     || asset.source !== "project-original-generated" || asset.sourceRevision !== 1
     || Object.prototype.hasOwnProperty.call(asset, "webSourcePath")
     || asset.sourceFile !== `infinite-flow-wechat/art-source/npc-world/${slug}-v1.png`
-    || asset.resourceFile !== `npc/${slug}-world-v1.png`
     || asset.resourcePath !== `npc/${slug}-world-v1`
     || asset.sourceFormat !== "png" || asset.targetFormat !== "png"
     || asset.cocosImageImport !== "supported"
-    || asset.transformation?.operation !== "byte-copy") {
+    || !slimmingPlan(asset.key)) {
     failures.push(`NPC world provenance or versioned identity mismatch: ${asset.key}`);
   }
-  const dimensions = asset.transformation?.targetDimensions;
-  if (asset.width !== 1024 || asset.height !== 1536
-    || dimensions?.width !== asset.width || dimensions?.height !== asset.height) {
-    failures.push(`NPC world portraits must retain their original 1024x1536 PNG dimensions: ${asset.key}`);
+  if (!sameDimensions(asset.transformation?.sourceDimensions, { width: 1024, height: 1536 })) {
+    failures.push(`NPC world portraits must derive from their original 1024x1536 PNG sources: ${asset.key}`);
   }
 }
 
@@ -535,17 +585,14 @@ for (const asset of courtyardAssets) {
     || asset.source !== "project-original-generated" || asset.sourceRevision !== 1
     || Object.prototype.hasOwnProperty.call(asset, "webSourcePath")
     || asset.sourceFile !== `infinite-flow-wechat/prototype/hub-draw/assets/${spec.sourceFile}`
-    || asset.resourceFile !== `hub-courtyard/${spec.file}`
     || asset.resourcePath !== `hub-courtyard/${spec.file.slice(0, -".png".length)}`
-    || asset.sourceFormat !== "png" || asset.targetFormat !== "png"
+    || asset.sourceFormat !== "png" || asset.targetFormat !== (spec.hasAlpha ? "png" : "jpg")
     || asset.cocosImageImport !== "supported"
-    || asset.transformation?.operation !== "byte-copy") {
+    || !slimmingPlan(asset.key)) {
     failures.push(`hub courtyard provenance or versioned identity mismatch: ${asset.key}`);
   }
-  const dimensions = asset.transformation?.targetDimensions;
-  if (asset.width !== spec.width || asset.height !== spec.height
-    || dimensions?.width !== asset.width || dimensions?.height !== asset.height) {
-    failures.push(`hub courtyard must retain its approved PNG dimensions: ${asset.key}`);
+  if (!sameDimensions(asset.transformation?.sourceDimensions, spec)) {
+    failures.push(`hub courtyard must derive from its approved PNG dimensions: ${asset.key}`);
   }
   const meta = readCreatorMeta(resolve(resourceRoot, `${asset.resourceFile}.meta`), asset.key);
   if (meta?.userData?.hasAlpha !== spec.hasAlpha) {
@@ -563,17 +610,14 @@ for (const asset of dungeonTransitionGates) {
     || asset.source !== "project-original-generated" || asset.sourceRevision !== 1
     || Object.prototype.hasOwnProperty.call(asset, "webSourcePath")
     || asset.sourceFile !== "infinite-flow-wechat/prototype/dungeon-transition/assets/ruined-stone-gate-v1.png"
-    || asset.resourceFile !== "dungeon-world/ruined-stone-gate-v1.png"
     || asset.resourcePath !== "dungeon-world/ruined-stone-gate-v1"
     || asset.sourceFormat !== "png" || asset.targetFormat !== "png"
     || asset.cocosImageImport !== "supported"
-    || asset.transformation?.operation !== "byte-copy") {
+    || !slimmingPlan(asset.key)) {
     failures.push(`dungeon gate provenance or versioned identity mismatch: ${asset.key}`);
   }
-  const dimensions = asset.transformation?.targetDimensions;
-  if (asset.width !== 1073 || asset.height !== 1465
-    || dimensions?.width !== asset.width || dimensions?.height !== asset.height) {
-    failures.push(`dungeon gate must retain its approved PNG dimensions: ${asset.key}`);
+  if (!sameDimensions(asset.transformation?.sourceDimensions, { width: 1073, height: 1465 })) {
+    failures.push(`dungeon gate must derive from its approved PNG dimensions: ${asset.key}`);
   }
   const meta = readCreatorMeta(resolve(resourceRoot, `${asset.resourceFile}.meta`), asset.key);
   if (meta?.userData?.hasAlpha !== true) {
@@ -591,19 +635,15 @@ for (const asset of hubDungeonPortals) {
     || asset.source !== "project-original-generated" || asset.sourceRevision !== 1
     || Object.prototype.hasOwnProperty.call(asset, "webSourcePath")
     || asset.sourceFile !== "infinite-flow-wechat/prototype/hub-portals-ten/assets/hub-portal-07.png"
-    || asset.resourceFile !== "hub-courtyard/wanxiang-scroll-portal-v1.png"
     || asset.resourcePath !== "hub-courtyard/wanxiang-scroll-portal-v1"
     || asset.sourceFormat !== "png" || asset.targetFormat !== "png"
     || asset.cocosImageImport !== "supported"
     || asset.sourceSha256 !== HUB_DUNGEON_PORTAL_SHA256
-    || asset.targetSha256 !== HUB_DUNGEON_PORTAL_SHA256
-    || asset.transformation?.operation !== "byte-copy") {
+    || !slimmingPlan(asset.key)) {
     failures.push(`hub dungeon portal provenance or approved image identity mismatch: ${asset.key}`);
   }
-  const dimensions = asset.transformation?.targetDimensions;
-  if (asset.width !== 1018 || asset.height !== 1545
-    || dimensions?.width !== asset.width || dimensions?.height !== asset.height) {
-    failures.push(`hub dungeon portal must retain its approved PNG dimensions: ${asset.key}`);
+  if (!sameDimensions(asset.transformation?.sourceDimensions, { width: 1018, height: 1545 })) {
+    failures.push(`hub dungeon portal must derive from its approved PNG dimensions: ${asset.key}`);
   }
   const meta = readCreatorMeta(resolve(resourceRoot, `${asset.resourceFile}.meta`), asset.key);
   if (meta?.userData?.hasAlpha !== true) {
@@ -659,18 +699,15 @@ for (const asset of styleRefreshAssets) {
     || asset.source !== "project-original-generated" || asset.sourceRevision !== spec.sourceRevision
     || Object.prototype.hasOwnProperty.call(asset, "webSourcePath")
     || asset.sourceFile !== `infinite-flow-wechat/prototype/style-refresh/assets/${spec.candidate}`
-    || asset.resourceFile !== spec.resourceFile
     || asset.resourcePath !== spec.resourceFile.slice(0, -".png".length)
-    || asset.sourceFormat !== "png" || asset.targetFormat !== "png"
+    || asset.sourceFormat !== "png" || asset.targetFormat !== (spec.hasAlpha ? "png" : "jpg")
     || asset.cocosImageImport !== "supported"
-    || asset.sourceSha256 !== spec.sha256 || asset.targetSha256 !== spec.sha256
-    || asset.transformation?.operation !== "byte-copy") {
+    || asset.sourceSha256 !== spec.sha256
+    || !slimmingPlan(asset.key)) {
     failures.push(`style refresh provenance or approved image identity mismatch: ${asset.key}`);
   }
-  const dimensions = asset.transformation?.targetDimensions;
-  if (asset.width !== spec.width || asset.height !== spec.height
-    || dimensions?.width !== spec.width || dimensions?.height !== spec.height) {
-    failures.push(`style refresh must retain its approved PNG dimensions: ${asset.key}`);
+  if (!sameDimensions(asset.transformation?.sourceDimensions, spec)) {
+    failures.push(`style refresh must derive from its approved PNG dimensions: ${asset.key}`);
   }
   const meta = readCreatorMeta(resolve(resourceRoot, `${asset.resourceFile}.meta`), asset.key);
   if (meta?.userData?.hasAlpha !== spec.hasAlpha) {
@@ -693,17 +730,14 @@ for (const asset of monsterWorldAssets) {
     || asset.source !== "project-original-generated" || asset.sourceRevision !== 1
     || Object.prototype.hasOwnProperty.call(asset, "webSourcePath")
     || asset.sourceFile !== `infinite-flow-wechat/art-source/monster-world/${slug}-world-v1.png`
-    || asset.resourceFile !== `monster-world/${slug}-world-v1.png`
     || asset.resourcePath !== `monster-world/${slug}-world-v1`
     || asset.sourceFormat !== "png" || asset.targetFormat !== "png"
     || asset.cocosImageImport !== "supported"
-    || asset.transformation?.operation !== "byte-copy") {
+    || !slimmingPlan(asset.key)) {
     failures.push(`monster world provenance or versioned identity mismatch: ${asset.key}`);
   }
-  const dimensions = asset.transformation?.targetDimensions;
-  if (asset.width !== 1024 || asset.height !== 1536
-    || dimensions?.width !== asset.width || dimensions?.height !== asset.height) {
-    failures.push(`monster world sprites must retain their original 1024x1536 PNG dimensions: ${asset.key}`);
+  if (!sameDimensions(asset.transformation?.sourceDimensions, { width: 1024, height: 1536 })) {
+    failures.push(`monster world sprites must derive from their original 1024x1536 PNG sources: ${asset.key}`);
   }
   const meta = readCreatorMeta(resolve(resourceRoot, `${asset.resourceFile}.meta`), asset.key);
   if (meta?.userData?.hasAlpha !== true) {
@@ -724,18 +758,15 @@ for (const asset of partyWorldAssets) {
     || asset.source !== "project-original-generated" || asset.sourceRevision !== 1
     || Object.prototype.hasOwnProperty.call(asset, "webSourcePath")
     || asset.sourceFile !== `infinite-flow-wechat/art-source/party-world/${spec.slug}-world-v1.png`
-    || asset.resourceFile !== `${spec.folder}/${spec.slug}-world-v1.png`
     || asset.resourcePath !== `${spec.folder}/${spec.slug}-world-v1`
     || asset.sourceFormat !== "png" || asset.targetFormat !== "png"
     || asset.cocosImageImport !== "supported"
-    || asset.sourceSha256 !== spec.sha256 || asset.targetSha256 !== spec.sha256
-    || asset.transformation?.operation !== "byte-copy") {
+    || asset.sourceSha256 !== spec.sha256
+    || !slimmingPlan(asset.key)) {
     failures.push(`party world provenance or approved image identity mismatch: ${asset.key}`);
   }
-  const dimensions = asset.transformation?.targetDimensions;
-  if (asset.width !== 1024 || asset.height !== 1536
-    || dimensions?.width !== asset.width || dimensions?.height !== asset.height) {
-    failures.push(`party world figures must retain their original 1024x1536 PNG dimensions: ${asset.key}`);
+  if (!sameDimensions(asset.transformation?.sourceDimensions, { width: 1024, height: 1536 })) {
+    failures.push(`party world figures must derive from their original 1024x1536 PNG sources: ${asset.key}`);
   }
   const meta = readCreatorMeta(resolve(resourceRoot, `${asset.resourceFile}.meta`), asset.key);
   if (meta?.userData?.hasAlpha !== true) {
@@ -755,18 +786,15 @@ for (const asset of runRelicIcons) {
     || asset.source !== "project-original-generated" || asset.sourceRevision !== 1
     || Object.prototype.hasOwnProperty.call(asset, "webSourcePath")
     || asset.sourceFile !== `infinite-flow-wechat/prototype/hud-buff-icons-v1/assets/${spec.id}.png`
-    || asset.resourceFile !== `run-relic/${spec.id}-v1.png`
     || asset.resourcePath !== `run-relic/${spec.id}-v1`
-    || asset.sourceFormat !== "png" || asset.targetFormat !== "png"
+    || asset.sourceFormat !== "png" || asset.targetFormat !== "jpg"
     || asset.cocosImageImport !== "supported"
-    || asset.sourceSha256 !== spec.sha256 || asset.targetSha256 !== spec.sha256
-    || asset.transformation?.operation !== "byte-copy") {
+    || asset.sourceSha256 !== spec.sha256
+    || !slimmingPlan(asset.key)) {
     failures.push(`run relic icon provenance or approved image identity mismatch: ${asset.key}`);
   }
-  if (asset.width !== 1254 || asset.height !== 1254
-    || asset.transformation?.targetDimensions?.width !== asset.width
-    || asset.transformation?.targetDimensions?.height !== asset.height) {
-    failures.push(`run relic icon must retain its approved 1254x1254 PNG dimensions: ${asset.key}`);
+  if (!sameDimensions(asset.transformation?.sourceDimensions, { width: 1254, height: 1254 })) {
+    failures.push(`run relic icon must derive from its approved 1254x1254 PNG source: ${asset.key}`);
   }
   const meta = readCreatorMeta(resolve(resourceRoot, `${asset.resourceFile}.meta`), asset.key);
   if (meta?.userData?.hasAlpha !== false) {
@@ -813,7 +841,7 @@ for (const asset of assets) {
     if (actualTargetHash !== asset.targetSha256) {
       failures.push(`target SHA-256 mismatch: ${asset.key}`);
     }
-    const dimensions = pngDimensions(targetBytes);
+    const dimensions = imageDimensions(targetBytes, asset.targetFormat);
     const expectedDimensions = asset.transformation?.targetDimensions;
     if (
       dimensions.width !== expectedDimensions?.width
@@ -851,13 +879,13 @@ for (const asset of assets) {
     ) {
       failures.push(`byte-copy is not byte-identical: ${asset.key}`);
     }
-    if (monsterWorldKeys.has(asset.key) || PARTY_WORLD_ASSET_KEYS.has(asset.key) || COURTYARD_ASSET_KEYS.has(asset.key)
-      || STYLE_REFRESH_ASSET_KEYS.has(asset.key) || RUN_RELIC_ICON_KEYS.has(asset.key) || asset.key === HERO_WALK_KEY
-      || asset.key === DUNGEON_TRANSITION_GATE_KEY || asset.key === HUB_DUNGEON_PORTAL_KEY) {
+    if (slimmingPlan(asset.key) || asset.key === HERO_WALK_KEY) {
       const dimensions = pngDimensions(sourceBytes);
-      if (dimensions.width !== asset.width || dimensions.height !== asset.height) {
+      const recorded = asset.transformation?.sourceDimensions ?? { width: asset.width, height: asset.height };
+      if (!sameDimensions(dimensions, recorded)) {
         failures.push(`world source dimensions mismatch: ${asset.key}`);
       }
+      validateSlimming(asset, dimensions);
     }
   } catch (error) {
     failures.push(`source unreadable: ${asset.key}: ${String(error)}`);
@@ -873,14 +901,14 @@ if (
 ) {
   failures.push("formatCounts do not match ordered asset entries");
 }
-if (formatCounts.png !== EXPECTED_ASSET_COUNT || Object.keys(formatCounts).length !== 1) {
-  failures.push(`Cocos target must contain exactly ${EXPECTED_ASSET_COUNT} PNG manifest entries`);
+if (JSON.stringify(sortedRecord(formatCounts)) !== JSON.stringify(sortedRecord(EXPECTED_FORMAT_COUNTS))) {
+  failures.push(`Cocos target must contain exactly ${EXPECTED_FORMAT_COUNTS.jpg} JPEG and ${EXPECTED_FORMAT_COUNTS.png} PNG manifest entries`);
 }
 
 const resourceTreeFiles = listFiles(resourceRoot)
   .map((path) => asPosix(relative(resourceRoot, path)))
   .sort();
-const physicalFiles = resourceTreeFiles.filter((path) => path.endsWith(".png"));
+const physicalFiles = resourceTreeFiles.filter((path) => IMAGE_EXTENSIONS.some((extension) => path.endsWith(extension)));
 const declaredFiles = [...resourceFiles].sort();
 if (JSON.stringify(physicalFiles) !== JSON.stringify(declaredFiles)) {
   failures.push("physical resource files differ from manifest declarations");
@@ -893,12 +921,14 @@ const expectedResourceTreeFiles = [
   ...resourceDirectoryMetaFiles,
 ].sort();
 if (JSON.stringify(resourceTreeFiles) !== JSON.stringify(expectedResourceTreeFiles)) {
-  failures.push("resource tree must contain only manifest PNGs and their Creator metadata");
+  failures.push("resource tree must contain only manifest images and their Creator metadata");
 }
 
 const creatorMetadata = validateCreatorMetadata();
 validateBundleContracts();
-const imageMetaCount = creatorMetadata.metaFiles.filter((path) => path.endsWith(".png.meta")).length;
+const imageMetaCount = creatorMetadata.metaFiles.filter((path) => (
+  IMAGE_EXTENSIONS.some((extension) => path.endsWith(`${extension}.meta`))
+)).length;
 if (imageMetaCount !== EXPECTED_ASSET_COUNT) failures.push(`expected ${EXPECTED_ASSET_COUNT} image metas, found ${imageMetaCount}`);
 
 const revisionPayload = {

@@ -40,8 +40,9 @@
 - 复用已有素材和已完成生成结果，保留原图、来源及处理记录。世界图与头像是不同资源，
   不用更新世界图的方式覆盖原有头像。
 - 增加或替换资源时同步核对源文件、转换方式、尺寸/alpha、source/target SHA-256、
-  manifest key/path/revision/count、正式 PNG 与 `.meta`、运行时固定值、微信 bundle
-  profile 和相关校验器。保留已有资源身份；新增 UUID 必须唯一，相关 submeta 一致。
+  manifest key/path/revision/count、正式图片与 `.meta`、运行时固定值、微信 bundle
+  profile 和相关校验器。替换素材的尺寸与格式按 `scripts/resource-slimming.mjs`，用
+  `npm run assets:slim` 从源图生成。保留已有资源身份；新增 UUID 必须唯一，相关 submeta 一致。
 - 冻结 Web 原始素材与 Cocos 替代素材分别校验。视觉替换保留历史映射及来源，
   不通过减少冻结清单、修改原始 hash 或重生成 expected 让验收变绿。历史图和
   生成留档放在 `art-source/`，不作为未登记资源混入正式 resources。

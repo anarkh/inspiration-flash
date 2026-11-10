@@ -45,6 +45,46 @@ is the SHA-256 of compact `JSON.stringify` output for the ordered object
 target paths, metadata, source revision, source commit, both byte hashes, and all
 transformation audit data.
 
+## Resource slimming (0.1.36)
+
+The replacement art was integrated at its generated resolution (mostly 1254 px and 1024 × 1536), several times
+what a phone draws, which made the remote bundle 344 MB. Since 0.1.36 each replacement texture is derived from
+its unchanged source at the size it is drawn at, and opaque art is stored as JPEG:
+
+- Rule table: `scripts/resource-slimming.mjs`. Drawn sizes were measured in the real web-mobile build at
+  430 × 932 design points; at a device pixel ratio of 3 the largest draws need monster figures 474 px, NPC
+  figures 681 px, companion and pet figures 336 px, courtyard props 541 px, the hub portal 812 px, dungeon props
+  342 px, the dungeon gate 270 px, icons 198 px and portraits 240 px. Room backdrops (2796 px) and the
+  courtyard panorama are drawn larger than their sources and keep their size.
+- Derivation: `npm run assets:slim` (`scripts/slim-resources.mjs`) runs `sips` (sips-316) on every source:
+  `resize-png` (`sips -Z <long side>`, the short side rounded down) or `encode-jpeg`
+  (`sips -s format jpeg -s formatOptions 88`, plus `-Z` when resized). The manifest entry records the command,
+  JPEG quality, source and target dimensions and both hashes. A JPEG keeps the image's Creator UUID: its metadata
+  moves from `<name>.png.meta` to `<name>.jpg.meta`, and `resourcePath` is unchanged.
+- Results (136 entries; bytes in MB):
+
+| Group | Entries | Target | Before | After |
+|---|---|---|---|---|
+| Monster world figures | 59 | PNG, long side 768 | 149.5 | 32.0 |
+| Room backdrops | 19 | JPEG, 1254 × 1254 | 53.2 | 13.1 |
+| Run relic icons | 9 | JPEG, 384 | 22.9 | 0.6 |
+| Method, bloodline and equipment icons (style refresh) | 14 | PNG, 384 | 20.9 | 2.1 |
+| Dungeon props and stone gate | 10 | PNG, 512 | 20.7 | 3.0 |
+| Companion and pet world figures | 9 | PNG, 768 | 18.7 | 3.5 |
+| NPC world figures | 7 | PNG, 1024 | 14.6 | 4.8 |
+| Courtyard props | 4 | PNG, 768 | 6.9 | 1.7 |
+| Hero and guide portraits (style refresh) | 2 | JPEG, 512 | 5.5 | 0.2 |
+| Courtyard panorama and mirror-city banner | 2 | JPEG, 2172 × 724 | 5.5 | 1.4 |
+| Hub portal | 1 | PNG, 1024 | 2.3 | 1.0 |
+
+- Unchanged: the 182 frozen Web originals (their entries keep the pinned hash), the hero walk atlas and the
+  battle control strip (cut by pixel frame tables), and the four 256 px portraits that were already resized.
+- `npm run assets:verify` checks every slimmed entry against its rule (format, extension, operation, sips version,
+  quality, source and target dimensions) and still pins each approved source SHA-256.
+
+The group sections below describe each group as it was integrated; where they say byte copy or original
+dimensions, the source is still that file and the shipped target is its slimmed derivation.
+
 ## Cocos walking atlas
 
 `character:reincarnator_walk` resolves to
@@ -72,8 +112,8 @@ other resources. `character:reincarnator` remains the original portrait key.
 
 Source generation and frame measurements are recorded in
 [`art-source/hero-redesign/`](../art-source/hero-redesign/README.md). The current
-manifest contains 324 resources, totaling 344,175,419 bytes; its revision is
-`sha256:66666c18678a4db1ca2b93db19265f911dfb44e4370b777d6d21348eebed747f`.
+manifest contains 324 resources (292 PNG, 32 JPEG), totaling 86,691,137 bytes; its revision is
+`sha256:5e16397dc92b94f7d4f36855c4fe5e5bd2733a9096e0b137b626db1e910255d7`.
 
 ## Cocos battle controls
 

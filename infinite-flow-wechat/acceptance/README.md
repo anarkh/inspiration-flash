@@ -70,7 +70,7 @@ fixture。`A-WEB`、`A-SMOKE`、`M-DEVICE`、release/review/derive 方法必须�
 或同 candidate 的密封外部证据完成，给这些方法误填进程内函数会使 registry 失效。一个
 `A-AC` PASS 不会提升同 case 中未执行的方法，aggregate 仍为 `BLOCKED` 且不能取得
 release eligibility。已有四十八项纯自动 A-AC fixture（共 163 个完整 scenario，其中 20 项属于已废弃
-case），runner 自检固定覆盖 1289 项合同：
+case），runner 自检固定覆盖 1290 项合同：
 
 ```bash
 npm run build

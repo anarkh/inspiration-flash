@@ -13575,14 +13575,23 @@ export async function assetKeyRevisionCache({ fixture, projectRoot, assetManifes
     assert(asset.sourceRevision > original.sourceRevision, `${asset.key} Cocos replacement revision must advance`);
     assert(asset.resourcePath !== original.resourcePath, `${asset.key} Cocos replacement must use a new resource path`);
     equal(asset.sourceFormat, "png", `${asset.key} Cocos replacement source format`);
-    equal(asset.targetFormat, "png", `${asset.key} Cocos replacement target format`);
     equal(asset.cocosImageImport, "supported", `${asset.key} Cocos replacement import support`);
-    equal(asset.transformation?.operation, "byte-copy", `${asset.key} Cocos replacement transformation`);
+    // A replacement ships its source bytes or, since 0.1.36, the sips derivation recorded by
+    // scripts/resource-slimming.mjs (whose rules assets:verify checks): PNG resized, or JPEG.
+    const operation = asset.transformation?.operation;
+    assert(
+      operation === "byte-copy" || (asset.transformation?.tool === "sips"
+        && (operation === "resize-png" || operation === "encode-jpeg")),
+      `${asset.key} Cocos replacement transformation`,
+    );
+    equal(asset.targetFormat, operation === "encode-jpeg" ? "jpg" : "png", `${asset.key} Cocos replacement target format`);
     const sourcePath = resolve(repositoryRoot, asset.sourceFile);
     assert(isPathInside(projectRoot, sourcePath), `${asset.key} Cocos replacement source escapes project`);
     assert(existsSync(sourcePath), `${asset.key} Cocos replacement source is missing`);
     equal(sha256(readFileSync(sourcePath)), asset.sourceSha256, `${asset.key} Cocos replacement source SHA-256`);
-    equal(asset.sourceSha256, asset.targetSha256, `${asset.key} Cocos replacement byte-copy SHA-256`);
+    if (operation === "byte-copy") {
+      equal(asset.sourceSha256, asset.targetSha256, `${asset.key} Cocos replacement byte-copy SHA-256`);
+    }
     replacementKeys.push(asset.key);
   }
 
@@ -13594,7 +13603,8 @@ export async function assetKeyRevisionCache({ fixture, projectRoot, assetManifes
     assert(!keys.has(asset.key), `${asset.key} must be unique`);
     keys.add(asset.key);
     assert(extname(asset.resourcePath) === "", `${asset.key} resourcePath must be extensionless`);
-    equal(asset.resourceFile, `${asset.resourcePath}.png`, `${asset.key} resource file mapping`);
+    assert(asset.targetFormat === "png" || asset.targetFormat === "jpg", `${asset.key} resource file format`);
+    equal(asset.resourceFile, `${asset.resourcePath}.${asset.targetFormat}`, `${asset.key} resource file mapping`);
     assert(!paths.has(asset.resourcePath), `${asset.resourcePath} must be unique`);
     paths.add(asset.resourcePath);
     const physicalPath = resolve(resourcesRoot, asset.resourceFile);

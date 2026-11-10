@@ -1,6 +1,6 @@
 # 状态与风险
 
-核对日期：2026-11-10，游戏版本 0.1.35。本文描述当前工程证据，不是发布验收报告。
+核对日期：2026-11-10，游戏版本 0.1.36。本文描述当前工程证据，不是发布验收报告。
 
 一句话：玩法和数值持续迭代，自动化检查全部通过；微信侧只完成了本地 NON_RELEASE 构建，
 主包已压到上限以内，但真实 AppID 构建、CDN、真机和正式验收都还没有开始。发布状态保持 `BLOCKED`。
@@ -18,10 +18,10 @@
 | presentation | 19 章完成 | 四 phase 单一 ViewModel；大厅 8 个面板、角色六页签、11 种手机弹层、五态地图、23 项帮助、章节法则 / 指令 / 路线契约 / 压力 / 追兵、战斗意图与伤害预览；动作全部由 reducer 预检 | 未冻结为 registry evidence |
 | Cocos scene/UI | Web 预览完成 | 庭院行走、19 章房间、独立战斗舞台与特效；headless 门禁：启动与生命周期 153 场景、行走 50 项、弹层 3652 个 ViewModel；每个 UI 改动在真实引擎（web-mobile，无头 Chrome）查看 320×568 与 390×844 | 0.1.19 起的版本没有在微信开发者工具或真机运行的记录；`cocos:web-mobile:smoke` 脚本已落后于现有界面，未修 |
 | 微信平台适配 | 包级完成 | 双槽整键空间 journal、安全 seed 预填充、六个必需 lifecycle 能力、AssetPort/loader；137 项断言 / 4 个 suite | 默认 flush 明确 `durability-unattested`；真实 CDN/弱网/缓存/低内存与强杀/配额/延迟真机签核缺失 |
-| 资源 | Creator 快照完成 | 324 key = 324 PNG；396 个 Creator metadata/UUID 一一对应；revision `sha256:66666c18678a4db1ca2b93db19265f911dfb44e4370b777d6d21348eebed747f`；`resources-remote-wechat-v1` 把微信资源固定为 remote，`config` 留在本地 | 源 PNG 共 344,175,419 bytes（怪物全身图 143 MB、房间底图 71 MB），未降采样或压缩纹理；无真实 CDN 上传、白名单或设备缓存 / 弱网验证 |
-| 微信构建 | 本地 NON_RELEASE | 2026-11-10 Creator 3.8.8 命令行构建（`platform=wechatgame;debug=false`，游客 AppID）：主包 3,545,973 bytes（3.38 MiB），低于 4 MiB 上限；远程 resources 约 331 MB；已派生 DevTools 试玩副本，自检 38 项通过 | 派生副本尚未在微信开发者工具里打开；最近一次带凭证模板的严格构建（`build:wechat:template`）是 2026-08-12，早于现有资源与界面；无真实 AppID/CDN 的 production 构建 |
+| 资源 | Creator 快照完成 | 324 key = 292 PNG + 32 JPEG；396 个 Creator metadata/UUID 一一对应；revision `sha256:5e16397dc92b94f7d4f36855c4fe5e5bd2733a9096e0b137b626db1e910255d7`；`resources-remote-wechat-v1` 把微信资源固定为 remote，`config` 留在本地 | 0.1.36 起替换素材按实际绘制尺寸降采样、不透明图转 JPEG（`scripts/resource-slimming.mjs`），资源共 86,691,137 bytes（原 344 MB，冻结的 182 个 Web 原图未动）；未用压缩纹理；无真实 CDN 上传、白名单或设备缓存 / 弱网验证 |
+| 微信构建 | 本地 NON_RELEASE | 2026-11-10 Creator 3.8.8 命令行构建（`platform=wechatgame;debug=false`，游客 AppID）：主包 3,550,178 bytes（3.39 MiB），低于 4 MiB 上限；远程 resources 约 87 MB（0.1.36 降采样后，原约 331 MB）；已由该构建重新派生 DevTools 试玩副本 | 派生副本尚未在微信开发者工具里打开；最近一次带凭证模板的严格构建（`build:wechat:template`）是 2026-08-12，早于现有资源与界面；无真实 AppID/CDN 的 production 构建 |
 | 工具链 | 已固定 | Node 26.7.0、npm 11.19.0、TypeScript 5.9.3 精确门禁；六包 ES2020 语法 / 内建门禁；Creator 3.8.8 executable 取证与 36 项合同 gate；展开运算符降级门禁 | production 配置与 clean-candidate 构建；完整 `.app` bundle 取证 |
-| 验收 | registry 与部分 runner | 123 = 114 leaf（20 个废弃，有效 94）+ 6 release-evidence + 2 attestation + 1 derived；48 个可执行 fixture；有效 leaf 中普通 runner 28 PASS / 66 BLOCKED；runner 合同 1289 项断言 / 21 个 suite | 普通执行不构成 evidence；正式 acceptance leaf PASS 仍为 0/94，下游 6 + 2 + 1 均未放行；无独立 CI/WORM、正式 smoke 或真机 evidence |
+| 验收 | registry 与部分 runner | 123 = 114 leaf（20 个废弃，有效 94）+ 6 release-evidence + 2 attestation + 1 derived；48 个可执行 fixture；有效 leaf 中普通 runner 28 PASS / 66 BLOCKED；runner 合同 1290 项断言 / 21 个 suite | 普通执行不构成 evidence；正式 acceptance leaf PASS 仍为 0/94，下游 6 + 2 + 1 均未放行；无独立 CI/WORM、正式 smoke 或真机 evidence |
 
 任何包级测试、机器人数据或 Web 预览成功都不得提升为正式 AC PASS。
 
@@ -30,9 +30,9 @@
 1. **目标平台落后**：0.1.19 起的版本只在电脑 Chrome 的 web-mobile 预览里验证过。下一步先在微信
    开发者工具导入 `cocos/build/wechatgame-devtools-smoke` 跑通首章，再做真机预览（需要测试号或
    真实 AppID；游客号不能真机预览）。
-2. **资源交付**：远程资源约 331 MB，首次进入一章要下载该章底图和怪物全身图（单张约 2–4 MB）。
-   上 CDN 前需要降采样或压缩纹理并定下每章下载预算；之后确定 CDN/HTTPS 域名与微信白名单，
-   上传并核对远端树 hash，验证 revision 缓存、弱网、失败 fallback 和低内存释放。
+2. **资源交付**：0.1.36 起远程资源约 87 MB，首次进入一章要下载该章底图（约 0.7 MB）和怪物全身图（单张约 0.5–0.7 MB）。
+   还需定下每章下载预算，确定 CDN/HTTPS 域名与微信白名单，上传并核对远端树 hash，验证 revision 缓存、
+   弱网、失败 fallback 和低内存释放。
 3. **Creator 生产构建**：需要真实 AppID/CDN，在 clean candidate 上执行 `build:wechat` 并归档
    production 产物与日志。production 门禁会按 4 MiB 复核主包。
 4. **持久性签核**：微信同步写入 + 读回只形成 candidate，不是强杀后 durable 证明。必须在真实设备
@@ -55,7 +55,7 @@
 | R2 | P0 | implicit random/seed 重启漂移 | core 删除 fallback；client host-on-confirm 生成并持久化 seed | `AC-SEED-001..009` 正式 fixture |
 | R3 | P0 | 缓存读回被误报为 durable ack | journal `requires-flush`；无 attestation 默认阻断 | 真机强杀 / 配额 / 延迟证据与具名边界 |
 | R4 | P0 | 原始坏档在拒绝前被改写或丢失 | codec 保留原 text/bytes；当前不执行导入提交 | `AC-SAVE-001..012` 与 rejected 三件套 |
-| R5 | P0 | 344 MB 图片进入主包、revision 混用，或首次下载过大 | 324 项 checksum manifest、AssetPort 强制 revision、remote-only Creator preset；主包 4 MiB 门禁 | 降采样 / 压缩后的 production 输出、CDN hash 与弱网 / 缓存真机证据 |
+| R5 | P0 | 图片进入主包、revision 混用，或首次下载过大 | 324 项 checksum manifest、AssetPort 强制 revision、remote-only Creator preset；主包 4 MiB 门禁；替换素材按绘制尺寸降采样（资源 87 MB） | production 输出、CDN hash 与弱网 / 缓存真机证据 |
 | R6 | P0 | 微信构建或降级与 Web 预览行为不一致（曾出现展开运算符被降级成错误代码） | `spread:verify` 门禁；NON_RELEASE 构建与 DevTools 试玩副本 | 每个候选在 DevTools 和真机重跑首章 |
 | R7 | P0 | 小屏遮挡、触控过小或只靠颜色表达 | host safe-area 换算；104 design-px 触控门禁；对比度断言；320×568 与 390×844 真实引擎截图 | 至少两台真机截图 / 触控 trace |
 | R8 | P0 | “registry 有效”或“机器人通关”被误报为验收通过 | verifier 只输出 `MANIFEST_VALID`；状态表固定 0/94 正式 leaf PASS | 94 leaf → 6 release → 2 attestation → 1 derived 证据链 |
@@ -67,7 +67,7 @@
 
 1. 在微信开发者工具导入当前版本的试玩副本（步骤见 `docs/04-devtools-smoke.md`），跑通首章；
    取得测试号或真实 AppID 后做真机预览，记录加载时间、内存和触控问题。
-2. 资源降采样 / 压缩纹理，定下每章下载预算，重新生成 manifest 与 revision。
+2. 定下每章下载预算（0.1.36 已按绘制尺寸降采样并重新生成 manifest 与 revision）。
 3. 决定远程资源服务器，用 renderer 生成含真实 AppID 与版本化 HTTPS server 的 production 配置；
    在 clean candidate 上执行 `build:wechat`，冻结构建日志、产物 hash、工具版本、manifest revision
    和包体报告，并把 `remote/resources` 上传到已加入微信白名单的 CDN。

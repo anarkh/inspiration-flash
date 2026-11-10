@@ -325,7 +325,7 @@ try {
   assert.equal(profile.creator.version, "3.8.8");
   assert.equal(profile.creator.builderConfigVersion, "1.3.9");
   assert.equal(profile.source.assetCount, 324);
-  assert.equal(profile.source.resourceBytes, 344_175_419);
+  assert.equal(profile.source.resourceBytes, 86_691_137);
   assert.equal(profile.bundle.uuid, "fb6cd6ef-57d2-4cf7-8286-327137b480cc");
   assert.equal(profile.bundle.bundleConfigID, "resources-remote-wechat-v1");
   assert.deepEqual(validateProjectBundlePolicy(profile, projectBundlePolicy), []);

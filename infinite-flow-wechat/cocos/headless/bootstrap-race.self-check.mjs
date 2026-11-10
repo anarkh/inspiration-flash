@@ -13,7 +13,7 @@ const HERO_WALK_LAYOUT = JSON.parse(await readFile(new URL('../../art-source/her
 
 const TEST_CONTROL_KEY = '__INFINITE_FLOW_BOOTSTRAP_RACE_CONTROL__';
 const MANIFEST_UUID = '3d0842ec-43f7-4b5f-961f-39edb535ccd7';
-const MANIFEST_REVISION = 'sha256:66666c18678a4db1ca2b93db19265f911dfb44e4370b777d6d21348eebed747f';
+const MANIFEST_REVISION = 'sha256:5e16397dc92b94f7d4f36855c4fe5e5bd2733a9096e0b137b626db1e910255d7';
 const RUN_RELIC_FIXTURES = Object.keys(RUN_RELIC_DEFINITIONS).map(id => ({
   key: `item:run_relic_${id}`, kind: 'item', entityId: `run_relic_${id}`, resourcePath: `run-relic/${id}-v1`,
 }));
