@@ -477,6 +477,8 @@ export type HubEntryServiceViewModel = Readonly<{
     dungeon?: Readonly<{
       chapter: number;
       recommendedPower: number;
+      /** 速通线: rooms a clear may have cleared and still earn the speedrun bounty. */
+      speedrunRoomLimit: number;
       status: 'locked' | 'available' | 'completed';
       requirement: string;
       visualAssetKey: string;
@@ -628,6 +630,8 @@ export type ChapterPressureViewModel = Readonly<{
   clearedNodeCount?: number;
   /** A burnt-out lantern dropped the run straight into breach. */
   breachForced?: boolean;
+  /** 速通悬赏 of this run; absent on inferno maps. `onPace` turns false once the line is passed. */
+  speedrun?: Readonly<{ roomLimit: number; lingyun: number; cycleImprints: number; onPace: boolean }>;
 }>;
 
 export type ChapterPursuitViewModel = Readonly<{
@@ -745,14 +749,14 @@ export type ExploreDetailViewModel = Readonly<{
 }>;
 
 export type TaskTrackerLineViewModel = Readonly<{
-  id: 'mainline' | 'directive' | 'hidden' | 'claims';
-  /** Two-character tag, such as 主线, 指令, 隐藏 or 待领. */
+  id: 'mainline' | 'directive' | 'hidden' | 'speedrun' | 'claims';
+  /** Two-character tag, such as 主线, 指令, 隐藏, 速通 or 待领. */
   kicker: string;
   text: string;
   tone: 'active' | 'done' | 'failed';
 }>;
 
-/** This chapter's mainline and directive, a hidden task once found, and how many finished tasks wait in the hub. */
+/** This chapter's mainline and directive, a hidden task once found, the speedrun line, and how many finished tasks wait in the hub. */
 export type TaskTrackerViewModel = Readonly<{
   lines: readonly TaskTrackerLineViewModel[];
 }>;
@@ -989,6 +993,8 @@ export type ResultPressureSettlementViewModel = Readonly<{
   state: 'valid';
   tierLabel: string;
   rewardPointBonus: number;
+  /** The speedrun bounty this clear earned, with the rooms it had cleared. */
+  speedrunBounty?: Readonly<{ clearedNodeCount: number; roomLimit: number; lingyun: number; cycleImprints: number }>;
 }> | ResultSettlementInvalid;
 
 export type ResultPursuitSettlementViewModel = Readonly<{

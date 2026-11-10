@@ -1,8 +1,8 @@
 # 状态与风险
 
-核对日期：2026-11-10，游戏版本 0.1.31。本文描述当前工程证据，不是发布验收报告。
+核对日期：2026-11-10，游戏版本 0.1.32。本文描述当前工程证据，不是发布验收报告。
 
-一句话：玩法和数值已迭代到 0.1.31，自动化检查全部通过；微信侧只完成了本地 NON_RELEASE 构建，
+一句话：玩法和数值持续迭代，自动化检查全部通过；微信侧只完成了本地 NON_RELEASE 构建，
 主包已压到上限以内，但真实 AppID 构建、CDN、真机和正式验收都还没有开始。发布状态保持 `BLOCKED`。
 
 ## 1. 当前状态
@@ -11,7 +11,7 @@
 | --- | --- | --- | --- |
 | Web oracle | 已冻结 | 源 revision `2645f0232542684d27de1abc321bb26913320420`；迁移工作未改 `infinite-flow/src` | 2026-10-23 起玩法有意偏离 Web 基准（战后回血、术法耗战意、追兵与灯油、比例防御等），Web 不再是这些规则的对照；偏离的 20 个验收用例已显式废弃并由现行规则用例替代 |
 | core | 包级完成 | 50 个规则模块加 19 章关卡数据；65 件装备、59 种怪物、19 个首领；显式 seed、DOM-free、Node ESM 与确定性 seed 门禁 | 未绑定正式 `AC-CONTENT` vectors |
-| 玩法与数值 | 0.1.31 | 玩法评审 10 项改动（`docs/05`）与数值改造 5 个 PR（`docs/06`）已合入；`npm run balance:sim` 的典型玩家机器人与每章跳章存档都能一次通关 19 章 | 只有机器人数据和开发者短时试玩，没有完整真人通关记录；困难 / 炼狱协议未校准；选路取舍、音效、逐章引导未做（见 `docs/05`） |
+| 玩法与数值 | 持续迭代 | 玩法评审 11 项改动（`docs/05`）与数值改造 5 个 PR（`docs/06`）已合入；`npm run balance:sim` 的典型玩家机器人与每章跳章存档都能一次通关 19 章 | 只有机器人数据和开发者短时试玩，没有完整真人通关记录；困难 / 炼狱协议未校准；音效、逐章引导未做（见 `docs/05`） |
 | runtime | 包级完成 | canonical JSON/SHA-256、seed lineage、串行 session、ledger/state revision、tmp/formal/backup、256 receipt retention、suspend/resume 和故障注入自检 | generic/fake storage 不能证明微信真机 durable boundary |
 | Web v1 codec | 包级完成 | 严格 UTF-8/BOM、原始 text/bytes 保留、兼容 sanitizer、legacy seed 报告、checksum fixture；新增存档字段（阶位、铭刻、淬炼、灵蕴兑换计数等）均有读回测试 | 仅 preview/decode；尚无 rejected payload/reason/index 三件套 durable commit |
 | application/client | 19 章完成 | 54 种可序列化命令；phase guard；显式入场 seed；物理输入去重；生命周期注册失败与销毁均回滚清理；六个包共 40 个测试文件全部通过 | schema-v2 invariant/import 仍不完整 |
@@ -27,7 +27,7 @@
 
 ## 2. 当前 P0 阻断
 
-1. **目标平台落后**：0.1.19–0.1.31 只在电脑 Chrome 的 web-mobile 预览里验证过。下一步先在微信
+1. **目标平台落后**：0.1.19 起的版本只在电脑 Chrome 的 web-mobile 预览里验证过。下一步先在微信
    开发者工具导入 `cocos/build/wechatgame-devtools-smoke` 跑通首章，再做真机预览（需要测试号或
    真实 AppID；游客号不能真机预览）。
 2. **资源交付**：远程资源约 331 MB，首次进入一章要下载该章底图和怪物全身图（单张约 2–4 MB）。
@@ -65,7 +65,7 @@
 
 ## 4. 下一道门禁
 
-1. 在微信开发者工具导入 0.1.31 的试玩副本（步骤见 `docs/04-devtools-smoke.md`），跑通首章；
+1. 在微信开发者工具导入当前版本的试玩副本（步骤见 `docs/04-devtools-smoke.md`），跑通首章；
    取得测试号或真实 AppID 后做真机预览，记录加载时间、内存和触控问题。
 2. 资源降采样 / 压缩纹理，定下每章下载预算，重新生成 manifest 与 revision。
 3. 决定远程资源服务器，用 renderer 生成含真实 AppID 与版本化 HTTPS server 的 production 配置；

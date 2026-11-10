@@ -6,6 +6,7 @@ export const combatReplayStageDungeon: DungeonDefinition = {
   tier: 18,
   genre: 'science_fiction',
   recommendedPower: 3820,
+  speedrunRoomLimit: 7,
   theme: '未来军事模拟系统把同一场战斗拆成三次全息录制；探索者必须在战术回放路线中保留有效片段，并阻止终剪核心删去真实胜利。',
   recommended: '推荐战力 1240、完整终盘套装、定神香、破禁符与护甲补片，以及足以完成三段录制和终剪挑战的恢复储备。',
   rewardPreview: '战斗母带、终局材料、奖励点 1800-4400',

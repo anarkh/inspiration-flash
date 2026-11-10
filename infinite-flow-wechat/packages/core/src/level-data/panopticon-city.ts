@@ -6,6 +6,7 @@ export const panopticonCityDungeon: DungeonDefinition = {
   tier: 19,
   genre: 'science_fiction',
   recommendedPower: 3980,
+  speedrunRoomLimit: 11,
   theme: '轨道监察天幕、巡猎无人机与自动机甲以三相扫描覆盖未来城每一条街巷；探索者必须校准三座盲区中继，在被观测的代价中锁定唯一潜入路线。',
   recommended: '推荐战力 1350、完整终盘套装、稳定传送物资，以及能承受多次最大生命比例扫描伤害的恢复储备。',
   rewardPreview: '观测棱片、终局材料、奖励点 2000-4800',

@@ -6,6 +6,7 @@ export const rustHospitalDungeon: DungeonDefinition = {
   tier: 4,
   genre: 'modern',
   recommendedPower: 710,
+  speedrunRoomLimit: 6,
   theme: '废弃病院把治疗流程变成试炼，补给、毒性和精神压力同时考验玩家。',
   recommended: '推荐防御 14 或学会铁衣诀。',
   rewardPreview: '功法残页、裂隙尘、奖励点 320-780',

@@ -75,6 +75,7 @@ import {
   getMethodUpgradeStatus,
   getNodeDepartureBlock,
   getPlayerPower,
+  getCurrentSpeedrun,
   getReadyCombatCapturePetId,
   getRouteContractById,
   getRunRelicPreparationStatus,
@@ -947,6 +948,7 @@ function buildEntryServices(
           dungeon: {
             chapter: index + 1,
             recommendedPower: DUNGEONS[gate.dungeonId].recommendedPower,
+            speedrunRoomLimit: DUNGEONS[gate.dungeonId].speedrunRoomLimit,
             status: gate.status,
             requirement: gate.requirementText,
             visualAssetKey: `dungeon:${gate.dungeonId}`
@@ -2173,6 +2175,7 @@ function buildTaskTracker(state: GameState, routeContract: ChapterRouteContractV
   const directive = evaluations.find(({ task }) => task.id === `side_directive_${run.dungeonId}`);
   const hiddenKicker = run.entryFlowVersion === 2 ? '隐藏' : '契约';
   const claimable = evaluations.filter(({ status }) => status === 'completed').length;
+  const speedrun = getCurrentSpeedrun(state);
   const lines: TaskTrackerLineViewModel[] = [
     ...(mainline?.status === 'active' ? [{ id: 'mainline' as const, kicker: '主线', text: `通关${dungeonName}`, tone: 'active' as const }] : []),
     ...(directive?.status === 'active' ? [buildDirectiveTrackerLine(state, directive, dungeonName)] : []),
@@ -2183,6 +2186,11 @@ function buildTaskTracker(state: GameState, routeContract: ChapterRouteContractV
         : routeContract.status === 'failed'
           ? [{ id: 'hidden' as const, kicker: hiddenKicker, text: '顺序错误 · 本轮已失败', tone: 'failed' as const }]
           : []),
+    ...(speedrun
+      ? [speedrun.onPace
+        ? { id: 'speedrun' as const, kicker: '速通', text: `已清 ${speedrun.clearedNodeCount}/${speedrun.roomLimit} 间 · 灵蕴 +${speedrun.lingyun}`, tone: 'active' as const }
+        : { id: 'speedrun' as const, kicker: '速通', text: `已超 ${speedrun.roomLimit} 间 · 无悬赏`, tone: 'failed' as const }]
+      : []),
     ...(claimable > 0 ? [{ id: 'claims' as const, kicker: '待领', text: `${claimable} 项 · 回主神空间领取`, tone: 'done' as const }] : [])
   ];
   return lines.length > 0 ? { lines } : undefined;
@@ -3097,6 +3105,7 @@ function buildChapterPressure(state: GameState): ChapterPressureViewModel {
   if (pressure.legacyDisabled) return { legacyDisabled: true, present: false };
   if (!pressure.status) return { legacyDisabled: false, present: false };
   const { status } = pressure;
+  const speedrun = getCurrentSpeedrun(state);
   return {
     legacyDisabled: false,
     present: true,
@@ -3106,7 +3115,10 @@ function buildChapterPressure(state: GameState): ChapterPressureViewModel {
     rewardBonusPercent: status.rewardBonusPercent,
     nextTierAt: status.nextTierAt,
     clearedNodeCount: status.state.clearedNodeCount,
-    breachForced: status.breachForced
+    breachForced: status.breachForced,
+    ...(speedrun
+      ? { speedrun: { roomLimit: speedrun.roomLimit, lingyun: speedrun.lingyun, cycleImprints: speedrun.cycleImprints, onPace: speedrun.onPace } }
+      : {})
   };
 }
 
@@ -4301,10 +4313,24 @@ function buildResultPressureSettlement(
     if (!isNonNegativeInteger(pressure.rewardPointBonus)) {
       return invalidSettlement('pressure', '侵蚀压力结算记录不可用');
     }
+    const bounty: unknown = pressure.speedrunBounty;
+    let speedrunBounty: { clearedNodeCount: number; roomLimit: number; lingyun: number; cycleImprints: number } | undefined;
+    if (bounty !== undefined) {
+      if (!isSettlementRecord(bounty)) return invalidSettlement('pressure', '侵蚀压力结算记录不可用');
+      const { roomLimit, lingyun, cycleImprints } = bounty;
+      if (
+        !isNonNegativeInteger(roomLimit) || !isNonNegativeInteger(lingyun) || !isNonNegativeInteger(cycleImprints)
+        || pressureState.clearedNodeCount > roomLimit
+      ) {
+        return invalidSettlement('pressure', '侵蚀压力结算记录不可用');
+      }
+      speedrunBounty = { clearedNodeCount: pressureState.clearedNodeCount, roomLimit, lingyun, cycleImprints };
+    }
     return Object.freeze({
       state: 'valid',
       tierLabel: PRESSURE_TIER_LABELS[tier],
-      rewardPointBonus: pressure.rewardPointBonus
+      rewardPointBonus: pressure.rewardPointBonus,
+      ...(speedrunBounty ? { speedrunBounty: Object.freeze(speedrunBounty) } : {})
     });
   } catch {
     return invalidSettlement('pressure', '侵蚀压力结算记录不可用');

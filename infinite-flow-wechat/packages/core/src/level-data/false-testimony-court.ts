@@ -6,6 +6,7 @@ export const falseTestimonyCourtDungeon: DungeonDefinition = {
   tier: 17,
   genre: 'modern',
   recommendedPower: 3730,
+  speedrunRoomLimit: 6,
   theme: '三份证据被伪证裁定庭拆成声纹、时间线与残留物，探索者必须逐一揭示并净证，在翻案前锁定真正的伪证者。',
   recommended: '推荐战力 1140、完整终盘套装、定神香、破禁符与护甲补片，以及足以完成三证诘问和终审裁定的恢复储备。',
   rewardPreview: '真证碎片、终局材料、奖励点 1690-4100',

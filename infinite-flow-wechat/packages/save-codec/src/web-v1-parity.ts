@@ -888,8 +888,21 @@ function isSavedRunPressureSettlement(value: unknown): value is RunPressureSettl
   ) {
     return false;
   }
+  if (value.speedrunBounty !== undefined) {
+    const bounty: unknown = value.speedrunBounty;
+    if (
+      !isRecord(bounty) ||
+      !isNonNegativeInteger(bounty.roomLimit) ||
+      !isNonNegativeInteger(bounty.lingyun) ||
+      !isNonNegativeInteger(bounty.cycleImprints)
+    ) {
+      return false;
+    }
+  }
 
   const count = value.state.clearedNodeCount;
+  // The bounty is only paid within its own line.
+  if (isRecord(value.speedrunBounty) && count > (value.speedrunBounty.roomLimit as number)) return false;
   // A burnt-out lantern forces breach regardless of how many rooms were cleared.
   const expectedTier: RunPressureTier =
     value.state.breachForced === true || count >= 12 ? 'breach' : count >= 6 ? 'hunted' : 'stable';

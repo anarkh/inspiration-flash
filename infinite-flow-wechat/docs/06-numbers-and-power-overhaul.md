@@ -300,12 +300,14 @@
 npm run build                               # 机器人读取 packages/*/dist
 npm run balance:sim                         # 典型玩家 1→19 章，结果写 .balance/campaign.json（约 15 秒）
 npm run balance:sim -- --mode rush --name rush   # 只打首领加顺路奖励的玩家
+npm run balance:sim -- --mode direct --name direct # 知道地图、走清理房间最少的路线直奔首领
 npm run balance:sim -- --pills 0 --name nopills  # 不囤药
 npm run balance:report                      # 打印每章表格和目标比对；加 --check 时不达标返回 1
 npm run balance:trial                       # 用每章的跳章存档各打一次
 npm run balance:fit                         # 按标准玩家曲线打印怪物与首领的新数值；加 -- --write 写回源码（之后重新 build）
 npm run balance:calibrate                   # 迭代逐章校准系数并重配怪物（约 1.5 分钟，会改源码）
 npm run balance:recommend                   # 按新存档与跳章存档的战力打印各章推荐值；加 -- --write 写回章节数据
+npm run balance:speedline                   # 按直奔首领的实际清理数加 2 间打印各章速通线；加 -- --write 写回章节数据
 ```
 
 ### 机器人的行为与局限

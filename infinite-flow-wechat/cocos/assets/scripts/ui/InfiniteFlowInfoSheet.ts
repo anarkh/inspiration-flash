@@ -3214,10 +3214,11 @@ function renderEntryDungeons(context: SheetContext, footerHeight: number): Scrol
     if (option.selected) catalogText(context, row, 'EntryDungeonSelected', '✓', width / 2 - 13 * u,
       rowHeight / 2 - 18 * u, 16 * u, 22 * u, 12, palette().accent, true);
     if (chapter) {
-      catalogText(context, row, 'EntryDungeonPower', `推荐 ${chapter.recommendedPower}`, copyX - copyWidth / 4, rowHeight / 2 - 43 * u,
-        copyWidth / 2, 18 * u, 10, palette().textMuted);
+      // The recommendation and the speedrun line share the left two thirds; the state keeps the right third.
+      catalogText(context, row, 'EntryDungeonPower', `推荐 ${chapter.recommendedPower} · 速通 ${chapter.speedrunRoomLimit} 间`, copyX - copyWidth / 6, rowHeight / 2 - 43 * u,
+        (copyWidth * 2) / 3, 18 * u, 10, palette().textMuted);
       catalogText(context, row, 'EntryDungeonState', chapter.status === 'locked' ? '未解锁' : chapter.status === 'completed' ? '已通关' : '可进入',
-        copyX + copyWidth / 4, rowHeight / 2 - 43 * u, copyWidth / 2, 18 * u, 10,
+        copyX + copyWidth / 3, rowHeight / 2 - 43 * u, copyWidth / 3, 18 * u, 10,
         chapter.status === 'locked' ? palette().textMuted : palette().accent, true);
     }
     if (lines.length) catalogText(context, row, 'EntryDungeonRequirement', lines.join('\n'), copyX,
