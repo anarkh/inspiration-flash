@@ -344,11 +344,11 @@ Node 的文件系统 API 在这里提供的是逐文件 no-follow FD 与目录/r
 ```bash
 npm run wechat:devtools-smoke:derive     # 已验证构建 -> cocos/build/wechatgame-devtools-smoke
 npm run wechat:devtools-smoke:serve      # 127.0.0.1:8947 loopback 远程资源服务
-npm run wechat:devtools-smoke:self-check # 正例 + 负例自检（36 项）
+npm run wechat:devtools-smoke:self-check # 正例 + 负例自检（38 项）
 ```
 
 派生副本使用官方公开小游戏游客 AppID（DevTools 显示为 touristappid），
-`assets.server` 指向 `http://127.0.0.1:8947/`，远程 bundle（2026-08-12 构建时约 22MB；当前源资源已约 325MB）仍由本地
+`assets.server` 指向 `http://127.0.0.1:8947/`，远程 bundle（约 331 MB）仍由本地
 fail-closed 静态服务提供，不进主包。副本根目录带 `NON_RELEASE_SMOKE.md` 与
 `devtools-smoke.derived.json` 标记。导入时目录选 `wechatgame-devtools-smoke`
 （不是 `wechatgame`），详见 [docs/04-devtools-smoke.md](docs/04-devtools-smoke.md)。

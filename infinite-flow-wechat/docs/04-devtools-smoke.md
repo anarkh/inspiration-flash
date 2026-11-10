@@ -71,6 +71,18 @@ npm run wechat:devtools-smoke:check
 
 `serve` 启动后输出 `LOOPBACK_SERVER_LISTENING` JSON，Ctrl-C 退出。
 
+默认的派生来源是 `cocos/build/wechatgame`。要试玩当前代码，先用 Creator 命令行出一份本地构建
+（约 1 分钟，退出码 36 为成功），再从它派生：
+
+```bash
+npm run build
+/Applications/Cocos/Creator/3.8.8/CocosCreator.app/Contents/MacOS/CocosCreator \
+  --project "$PWD/cocos" --build "platform=wechatgame;debug=false;outputName=wechatgame-local"
+node scripts/derive-devtools-smoke.mjs --source cocos/build/wechatgame-local
+```
+
+这份本地构建同样是 NON_RELEASE：它使用 Creator 默认的游客 AppID，没有经过 `build:wechat` 的取证流程。
+
 ## 导入微信开发者工具
 
 1. 启动 `npm run wechat:devtools-smoke:serve`，保持运行。
@@ -84,13 +96,13 @@ npm run wechat:devtools-smoke:check
 
 ## 自检覆盖
 
-`wechat:devtools-smoke:self-check` 在临时副本上断言（36 项）：
+`wechat:devtools-smoke:self-check` 在临时副本上断言（38 项）：
 
 - 派生标记：`NON_RELEASE_SMOKE.md`、`devtools-smoke.derived.json`、
   `nonRelease/releaseEligible=false`。
 - 配置：游客 AppID、`urlCheck=false`、`assets.server` 指向 loopback、
   `remoteBundles` 含 `resources`。
-- 布局：`assets/resources` 不存在（22MB 不进主包）、`remote/resources` 存在、
+- 布局：`assets/resources` 不存在（远程资源不进主包）、`remote/resources` 存在、
   bundle 脚本在主包 `src/bundle-scripts/`。
 - 正例：版本化 `config.<ver>.json`、一个 native PNG、一个 import JSON 经
   loopback 可读且字节一致。
