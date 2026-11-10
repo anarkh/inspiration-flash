@@ -96,8 +96,11 @@ function legalFrom(state, nodeId) {
   return core.getCurrentLegalAdjacentTargetIds({ ...state, run: { ...state.run, currentNodeId: nodeId } });
 }
 
-/** Dijkstra over legal moves. Walking into an uncleared fight/trap costs more; the boss is only entered as the target. */
-function route(state, targetId, bossId) {
+/**
+ * Dijkstra over legal moves. Walking into an uncleared fight/trap costs more; the boss is only entered as the target.
+ * `fewestRooms` counts the rooms that would have to be cleared first and uses the steps only to break ties.
+ */
+function route(state, targetId, bossId, fewestRooms = false) {
   const cleared = new Set(state.run.clearedNodeIds);
   const start = state.run.currentNodeId;
   const dist = new Map([[start, 0]]);
@@ -111,7 +114,8 @@ function route(state, targetId, bossId) {
     for (const next of legalFrom(state, id)) {
       if (next === bossId && next !== targetId && !cleared.has(next)) continue;
       const node = nodeOf(state.run.dungeonId, next);
-      const step = cleared.has(next) ? 1 : node.type === 'monster' ? 6 : node.type === 'trap' ? 4 : 1;
+      const blocks = !cleared.has(next) && (node.type === 'monster' || node.type === 'trap');
+      const step = fewestRooms ? (blocks ? 100 : 1) : cleared.has(next) ? 1 : node.type === 'monster' ? 6 : node.type === 'trap' ? 4 : 1;
       const nd = d + step;
       if (nd < (dist.get(next) ?? Infinity)) {
         dist.set(next, nd);
@@ -165,6 +169,58 @@ function pickTarget(state, visited, bossId, cautious, mode) {
   return undefined;
 }
 
+/** The straight line of a speedrun: the boss by the route that clears the fewest rooms, then the exit. */
+function directTarget(state, bossId) {
+  const run = state.run;
+  const exit = core.DUNGEONS[run.dungeonId].nodes.find((node) => node.type === 'exit');
+  const targetId = bossId && !run.clearedNodeIds.includes(bossId) ? bossId : exit?.id;
+  if (!targetId || targetId === run.currentNodeId) return undefined;
+  const r = route(state, targetId, bossId, true);
+  return r && { id: targetId, path: r.path, why: targetId === bossId ? 'boss' : 'exit' };
+}
+
+/** How open the map is: every legal move, with a large bonus once the boss can be reached. */
+function openness(state, bossId) {
+  const edges = core.DUNGEONS[state.run.dungeonId].nodes.reduce((sum, node) => sum + legalFrom(state, node.id).length, 0);
+  return edges + (bossId && route(state, bossId, bossId, true) ? 10_000 : 0);
+}
+
+/**
+ * While the boss's gates are closed, a direct run fetches the nearest law landmark: a room whose clearing asks
+ * for a law choice or opens a gate. The room is tried on a copy of the save first, fights included.
+ */
+function pickLandmark(state, bossId) {
+  const cleared = new Set(state.run.clearedNodeIds);
+  const before = openness(state, bossId);
+  let best;
+  for (const node of core.DUNGEONS[state.run.dungeonId].nodes) {
+    if (cleared.has(node.id) || node.id === bossId || !['reward', 'trap', 'monster'].includes(node.type)) continue;
+    const r = route(state, node.id, bossId, true);
+    if (!r || (best && r.cost >= best.cost)) continue;
+    let probe = { ...state, run: { ...state.run, currentNodeId: node.id } };
+    let askedLaw = false;
+    const fight = { consecutiveGuards: 0 };
+    for (let step = 0; step < 80; step += 1) {
+      const actions = enabledCommands(probe);
+      askedLaw ||= actions.some((action) => action.actionId.startsWith('law.'));
+      const next = probe.phase === 'combat'
+        ? chooseCombatAction(probe, actions, fight)
+        : orderPending(probe, actions)[0]
+          ?? actions.find((action) => action.actionId === `node.reward:${node.id}`)
+          ?? actions.find((action) => action.actionId === `node.trap:${node.id}:counter`)
+          ?? actions.find((action) => action.actionId === `node.trap:${node.id}:risk`)
+          ?? actions.find((action) => action.actionId === `node.select:${node.id}`);
+      const applied = next && tryApply(probe, next.event.command);
+      if (!applied || (applied.phase !== 'explore' && applied.phase !== 'combat')) break;
+      fight.consecutiveGuards = next.actionId === 'combat.action:guard' ? fight.consecutiveGuards + 1 : 0;
+      probe = applied;
+    }
+    if (probe.phase !== 'explore') continue;
+    if (askedLaw || openness(probe, bossId) > before) best = { id: node.id, path: r.path, cost: r.cost, why: 'landmark' };
+  }
+  return best;
+}
+
 /** Pending choices in preference order: best loot piece, safe law/event/survey options first, risky ones last. */
 function orderPending(state, actions) {
   const pending = actions.filter((action) => action.actionId.startsWith('pending.') || action.actionId.startsWith('law.'));
@@ -190,6 +246,8 @@ function orderPending(state, actions) {
 /**
  * Plays one run from the current explore state to the result screen and back to the hub.
  * Returns the hub state and per-run statistics.
+ * Modes: `full` clears everything; `rush` heads for the boss once its room is discovered; `direct` knows the map
+ * and takes the route that clears the fewest rooms, leaving chests alone, as a speedrun would.
  */
 export function playRun(state, { maxSteps = 4000, mode = 'full' } = {}) {
   const dungeonId = state.run.dungeonId;
@@ -247,6 +305,7 @@ export function playRun(state, { maxSteps = 4000, mode = 'full' } = {}) {
 
     if (state.phase === 'result') {
       stats.outcome = state.lastOutcome;
+      stats.speedrunBounty = state.run?.lastPressureSettlement?.speedrunBounty ?? null;
       const actions = enabledCommands(state);
       const archive = actions.find((action) => action.actionId.startsWith('result.archive-relic:') && !action.actionId.endsWith(':skip'))
         ?? actions.find((action) => action.actionId === 'result.archive-relic:skip');
@@ -290,13 +349,19 @@ export function playRun(state, { maxSteps = 4000, mode = 'full' } = {}) {
       stats.trapDamage += Math.max(0, hpBefore - state.player.hp);
       continue;
     }
+    // A direct run leaves chests alone, except the law landmark it fetches while the boss's gates are closed;
+    // with neither a route nor a landmark it explores like a rush.
+    const bossDown = !bossId || state.run.clearedNodeIds.includes(bossId);
+    const direct = mode === 'direct' ? directTarget(state, bossId) : undefined;
+    const landmark = mode === 'direct' && !direct && !bossDown ? pickLandmark(state, bossId) : undefined;
     const reward = actions.find((action) => action.actionId === `node.reward:${here}`);
-    if (reward) { state = apply(state, reward.event.command); stats.rewardsCollected += 1; continue; }
+    const skipChest = direct || (landmark && landmark.id !== here);
+    if (reward && !skipChest) { state = apply(state, reward.event.command); stats.rewardsCollected += 1; continue; }
 
     const cautious = state.player.hp < state.player.maxHp * 0.35 && (state.inventory.healing_pill ?? 0) === 0;
-    const target = pickTarget(state, visited, bossId, cautious, mode);
+    const target = direct ?? landmark ?? pickTarget(state, visited, bossId, cautious, mode === 'direct' ? 'rush' : mode);
     const exitAction = actions.find((action) => action.actionId.startsWith('node.exit:'));
-    if (exitAction && (!target || target.why === 'exit' || target.why === 'fallback')) {
+    if (exitAction && (!target || target.why === 'exit' || target.why === 'fallback' || (mode === 'direct' && bossDown))) {
       state = apply(state, exitAction.event.command);
       continue;
     }

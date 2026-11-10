@@ -6,6 +6,7 @@ export const ashArenaDungeon: DungeonDefinition = {
   tier: 5,
   genre: 'anomaly',
   recommendedPower: 830,
+  speedrunRoomLimit: 7,
   theme: '竞技场把每一次行动都公开审判，玩家必须管理爆发、承伤和节奏。',
   recommended: '推荐一件 +1 装备和至少一只宠物。',
   rewardPreview: '星铁、裂核、奖励点 380-920',

@@ -6,6 +6,7 @@ export const silentBroadcastTowerDungeon: DungeonDefinition = {
   tier: 15,
   genre: 'modern',
   recommendedPower: 3290,
+  speedrunRoomLimit: 4,
   theme: '一座现代应急广播塔在停播后仍向所有轮回频道发送空白讯号；探索者必须重启三座模拟中继台，穿过死频伪声并终止末频道播音主。',
   recommended: '推荐战力 950、完整终盘套装、三类陷阱反制品，以及足以承受高频剥离和静默压制的恢复储备。',
   rewardPreview: '静默晶核、终局材料、奖励点 1450-3600',

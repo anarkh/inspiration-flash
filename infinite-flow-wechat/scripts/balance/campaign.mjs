@@ -1,5 +1,5 @@
 // "Typical player" campaign: new save -> chapters 1..19 with the real reducer, one hub cycle before every entry.
-// Usage: node scripts/balance/campaign.mjs [--out .balance] [--name campaign] [--seed 1000] [--pills 3] [--mode full|rush]
+// Usage: node scripts/balance/campaign.mjs [--out .balance] [--name campaign] [--seed 1000] [--pills 3] [--mode full|rush|direct]
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
@@ -18,7 +18,7 @@ const { values: options } = parseArgs({
 const seedBase = Number(options.seed);
 const pillTarget = Number(options.pills);
 const mode = options.mode;
-if (mode !== 'full' && mode !== 'rush') throw new Error(`--mode must be full or rush, received ${mode}`);
+if (!['full', 'rush', 'direct'].includes(mode)) throw new Error(`--mode must be full, rush or direct, received ${mode}`);
 const MAX_ATTEMPTS = 3;
 
 const avg = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
@@ -86,13 +86,13 @@ for (let chapter = 1; chapter <= 19; chapter += 1) {
       pursuerTakenPct: round(avg(pursuer.map(pct))),
       boss: boss ? { result: boss.result, turns: boss.turns, takenPct: round(pct(boss)), pills: boss.pills, hpStartPct: round((boss.hpStart / boss.maxHp) * 100) } : null,
       pillsUsed: run.pillsUsed, thunderUsed: run.thunderUsed, trapsRisked: run.trapsRisked, trapsCountered: run.trapsCountered, trapDamage: run.trapDamage,
-      moves: run.moves, maxPressure: run.maxPressure, lanternExhausted: run.lanternExhausted, lootTaken: run.lootTaken, lawChoices: run.lawChoices,
+      moves: run.moves, speedrunBounty: run.speedrunBounty ?? null, maxPressure: run.maxPressure, lanternExhausted: run.lanternExhausted, lootTaken: run.lootTaken, lawChoices: run.lawChoices,
       runRewardPoints: state.rewardPoints - entry.rewardPoints, runLingyun: state.lingyun - entry.lingyun,
       runMaterials: diffMaterials(materialsOf(state), entry.materials),
       fightLog: run.fights.map((f) => ({ m: f.monsterId, boss: f.boss, pursuer: f.pursuer, r: f.result, t: f.turns, pct: round(pct(f)), pills: f.pills }))
     };
     attempts.push(record);
-    console.log(`ch${String(chapter).padStart(2)} a${attempt}${jumped ? '(JUMP)' : ''} pow ${powerBefore}/${recommended} (trial ${trialPower}) -> ${cleared ? 'CLEAR' : 'FAIL '} fights ${record.fights} turns ${record.avgTurnsNormal} taken ${record.avgTakenPctNormal}%/fight boss ${boss ? `${boss.result} ${record.boss.takenPct}%/${boss.turns}t` : '-'} pills ${run.pillsUsed} | +${record.runRewardPoints}rp +${record.runLingyun}ly | wallet@entry ${entry.rewardPoints}rp ${entry.lingyun}ly | bought ${hub.log.bought.length}`);
+    console.log(`ch${String(chapter).padStart(2)} a${attempt}${jumped ? '(JUMP)' : ''} pow ${powerBefore}/${recommended} (trial ${trialPower}) -> ${cleared ? 'CLEAR' : 'FAIL '} fights ${record.fights} turns ${record.avgTurnsNormal} taken ${record.avgTakenPctNormal}%/fight boss ${boss ? `${boss.result} ${record.boss.takenPct}%/${boss.turns}t` : '-'} pills ${run.pillsUsed}${run.speedrunBounty ? ' 速通' : ''} | +${record.runRewardPoints}rp +${record.runLingyun}ly | wallet@entry ${entry.rewardPoints}rp ${entry.lingyun}ly | bought ${hub.log.bought.length}`);
   }
   if (!cleared) {
     console.error(`chapter ${chapter} not cleared even after jump; stopping`);

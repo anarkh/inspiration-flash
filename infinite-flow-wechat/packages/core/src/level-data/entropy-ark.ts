@@ -6,6 +6,7 @@ export const entropyArkDungeon: DungeonDefinition = {
   tier: 10,
   genre: 'science_fiction',
   recommendedPower: 2100,
+  speedrunRoomLimit: 4,
   theme: '方舟在热寂潮汐中持续失序，探索者必须校正双舷压载并重刻航迹，才能抵达终末舵轮。',
   recommended: '推荐战力 565、熵航装备、稳定的界门补给与足以承受崩解的持续防护。',
   rewardPreview: '熵晶、终局材料、奖励点 720-1980',

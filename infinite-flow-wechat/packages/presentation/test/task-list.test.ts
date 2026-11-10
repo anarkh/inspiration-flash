@@ -132,8 +132,12 @@ const trackerOf = (state: GameState) => {
   assert(detail.kind === 'explore', 'the tracker belongs to exploration');
   return detail.taskTracker?.lines.map(({ kicker, text, tone }) => `${kicker}|${tone}|${text}`).join(' / ');
 };
-assert(trackerOf(entered) === '主线|active|通关妖塔一层 / 指令|active|捕获雾爪幼兽 0/1 +2 / 待领|done|1 项 · 回主神空间领取',
-  'a fresh run tracks its mainline, its directive and the scouting task waiting in the hub');
+// Chapter 1's speedrun line is 5 rooms; its exit pays 1 lingyun, so the bounty is 1 lingyun (half, rounded up) and 1 imprint.
+assert(trackerOf(entered) === '主线|active|通关妖塔一层 / 指令|active|捕获雾爪幼兽 0/1 +2 / 速通|active|已清 0/5 间 · 灵蕴 +1 / 待领|done|1 项 · 回主神空间领取',
+  'a fresh run tracks its mainline, its directive, the speedrun line and the scouting task waiting in the hub');
+const cleared = (count: number): GameState => ({ ...entered, run: { ...entered.run!, pressureState: { ...entered.run!.pressureState!, clearedNodeCount: count } } });
+assert(trackerOf(cleared(5))?.includes('速通|active|已清 5/5 间'), 'the line itself is still on pace');
+assert(trackerOf(cleared(6))?.includes('速通|failed|已超 5 间 · 无悬赏'), 'one room past the line, the bounty is gone and says so');
 assert(trackerOf({ ...entered, run: { ...entered.run!, damageTaken: 21 } })?.includes('指令|failed|承伤不超过 20 已失败'),
   'a broken directive limit stays in view as a failure');
 assert(trackerOf(readyToExit)?.includes('指令|done|条件已满足 · 去出口结算'), 'a met directive points to the exit');

@@ -1807,7 +1807,9 @@ function touch(node) {
   const replay = { ...entered, completedDungeonIds: ['demon_tower_1'], claimedDirectiveIds: ['directive_demon_tower_1'],
     claimedTaskIds: ['mainline_clear_demon_tower_1', 'side_enter_demon_tower_1', 'side_directive_demon_tower_1'] };
   show(replay);
-  assert.equal(named('WalkTaskTracker'), undefined, 'a run with nothing left to do shows no tracker');
+  assert.deepEqual(named('WalkTaskTracker')?.children.map(child => child.name), ['WalkTaskLine:speedrun'],
+    'a run with every task claimed tracks only its speedrun line');
+  assert.equal(trackerText('speedrun'), '已清 0/5 间 · 灵蕴 +1', 'the speedrun line shows the rooms cleared, the limit and the lingyun at stake');
 
   // Arriving in the hub with finished tasks opens the claim sheet; the envoy wears a gold question mark.
   const hub = { ...api.createInitialState(), completedDungeonIds: ['demon_tower_1'], enteredDungeonIds: ['demon_tower_1'] };

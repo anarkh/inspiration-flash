@@ -845,6 +845,8 @@ export type DungeonDefinition = {
   tier: number;
   genre: DungeonGenre;
   recommendedPower: number;
+  /** 速通线: clear the chapter having cleared at most this many rooms to earn the speedrun bounty. */
+  speedrunRoomLimit: number;
   theme: string;
   recommended: string;
   rewardPreview: string;
@@ -955,10 +957,18 @@ export type EquipmentRollSettlement = {
   salvageRewardPoints: number;
 };
 
+export type SpeedrunBounty = {
+  readonly roomLimit: number;
+  readonly lingyun: number;
+  readonly cycleImprints: number;
+};
+
 export type RunPressureSettlement = {
   readonly state: RunPressureState;
   readonly tier: RunPressureTier;
   readonly rewardPointBonus: number;
+  /** Present when the clear stayed within the chapter's 速通线. */
+  readonly speedrunBounty?: SpeedrunBounty;
 };
 
 export type RunRelicSettlement = {
@@ -4136,6 +4146,36 @@ export function getCurrentRunPressure(state: GameState): CurrentRunPressure {
     legacyDisabled: false,
     status
   };
+}
+
+/**
+ * 速通悬赏: clearing a chapter within its 速通线 adds half of the exit's lingyun (rounded up) and one cycle imprint,
+ * which a full clear cannot earn. Inferno runs redraw the map, so they carry no line.
+ */
+export const SPEEDRUN_BOUNTY_CYCLE_IMPRINTS = 1;
+
+export function getSpeedrunBounty(dungeonId: DungeonId): SpeedrunBounty {
+  const dungeon = DUNGEONS[dungeonId];
+  const exitLingyun = dungeon.nodes.find((node) => node.type === 'exit')?.reward?.lingyun ?? 0;
+  return {
+    roomLimit: dungeon.speedrunRoomLimit,
+    lingyun: Math.max(1, Math.ceil(exitLingyun / 2)),
+    cycleImprints: SPEEDRUN_BOUNTY_CYCLE_IMPRINTS
+  };
+}
+
+export type CurrentSpeedrun = SpeedrunBounty & {
+  readonly clearedNodeCount: number;
+  /** Still within the line; false once one room too many has been cleared. */
+  readonly onPace: boolean;
+};
+
+export function getCurrentSpeedrun(state: GameState): CurrentSpeedrun | undefined {
+  const status = getCurrentRunPressure(state).status;
+  if (!state.run || !status || getRunProtocolId(state.run) === 'deep') return undefined;
+  const bounty = getSpeedrunBounty(state.run.dungeonId);
+  const clearedNodeCount = status.state.clearedNodeCount;
+  return { ...bounty, clearedNodeCount, onPace: clearedNodeCount <= bounty.roomLimit };
 }
 
 export type CurrentRunPursuit = {
@@ -10750,12 +10790,17 @@ export function resolveExit(state: GameState): GameState {
   // 气运 raises the whole run's reward points the same way.
   const luckRewardPercent = economy ? getLuckRewardPercent(state) : 0;
   const luckRewardPointBonus = Math.floor((bonusBaseRewardPoints * luckRewardPercent) / 100);
+  const speedrun = economy ? getCurrentSpeedrun(state) : undefined;
+  const speedrunBounty: SpeedrunBounty | undefined = speedrun?.onPace
+    ? { roomLimit: speedrun.roomLimit, lingyun: speedrun.lingyun, cycleImprints: speedrun.cycleImprints }
+    : undefined;
   const pressureSettlement: RunPressureSettlement | undefined =
     economy && pressureStatus
       ? {
           state: pressureStatus.state,
           tier: pressureStatus.tier,
-          rewardPointBonus: pressureRewardPointBonus
+          rewardPointBonus: pressureRewardPointBonus,
+          ...(speedrunBounty ? { speedrunBounty } : {})
         }
       : undefined;
   const protocolId = getRunProtocolId(state.run);
@@ -10861,18 +10906,24 @@ export function resolveExit(state: GameState): GameState {
           luckRewardPointBonus +
           (protocolSucceeded ? protocolRewardPointBonus : 0) +
           (shouldClaimDirective ? (directive.reward.rewardPoints ?? 0) : 0),
-        lingyun: (node.reward.lingyun ?? 0) + (shouldClaimDirective ? (directive.reward.lingyun ?? 0) : 0),
+        lingyun:
+          (node.reward.lingyun ?? 0) +
+          (shouldClaimDirective ? (directive.reward.lingyun ?? 0) : 0) +
+          (speedrunBounty?.lingyun ?? 0),
         items: addItems(
           addItems(
             addItems(
-              addItems(createInventory(), node.reward.items),
-              shouldClaimDirective && directive ? directive.reward.items : {}
+              addItems(
+                addItems(createInventory(), node.reward.items),
+                shouldClaimDirective && directive ? directive.reward.items : {}
+              ),
+              protocolRewardItems
             ),
-            protocolRewardItems
+            simplifiedMaterialReward
+              ? { [simplifiedMaterialReward.itemId]: simplifiedMaterialReward.amount }
+              : {}
           ),
-          simplifiedMaterialReward
-            ? { [simplifiedMaterialReward.itemId]: simplifiedMaterialReward.amount }
-            : {}
+          speedrunBounty ? { cycle_imprint: speedrunBounty.cycleImprints } : {}
         )
       }
     : shouldClaimDirective && directive
@@ -10941,6 +10992,9 @@ export function resolveExit(state: GameState): GameState {
     ? ` 侵蚀结算「${pressureStatus?.label ?? pressureSettlement.tier}」：累计清理 ${pressureSettlement.state.clearedNodeCount} 个节点，整局奖励点加成 +${pressureSettlement.rewardPointBonus}。`
     : '';
   const luckLog = luckRewardPointBonus > 0 ? ` 气运 +${luckRewardPercent}%：整局奖励点 +${luckRewardPointBonus}。` : '';
+  const speedrunLog = speedrunBounty
+    ? ` 速通悬赏：清理 ${speedrun?.clearedNodeCount ?? 0}/${speedrunBounty.roomLimit} 间，追加灵蕴 x${speedrunBounty.lingyun}、${ITEMS.cycle_imprint.name} x${speedrunBounty.cycleImprints}。`
+    : '';
   const routeContractDefinition = routeContractSettlement?.state
     ? getRouteContractById(routeContractSettlement.state.contractId, routeContractSettlement.state.dungeonId)
     : undefined;
@@ -11018,8 +11072,8 @@ export function resolveExit(state: GameState): GameState {
     equipmentMemoryResult.state,
     economy
       ? isRepeatClear
-        ? `${node.title}亮起，已通关副本复刷结算：${RUN_ECONOMY_OUTCOME_LABELS[economy.outcome]}，倍率 ${economy.rewardMultiplier}x。${protocolLog}${pressureLog}${luckLog}${routeContractLog}${materialLog}${bankedEquipmentCount ? ` 本轮领取的 ${bankedEquipmentCount} 件装备已永久保留。` : ''}`
-        : `${node.title}亮起，首次通关结算：${RUN_ECONOMY_OUTCOME_LABELS[economy.outcome]}，倍率 ${economy.rewardMultiplier}x。${protocolLog}${pressureLog}${luckLog}${routeContractLog}${materialLog}${bankedEquipmentCount ? ` 本轮领取的 ${bankedEquipmentCount} 件装备已永久保留。` : ''}`
+        ? `${node.title}亮起，已通关副本复刷结算：${RUN_ECONOMY_OUTCOME_LABELS[economy.outcome]}，倍率 ${economy.rewardMultiplier}x。${protocolLog}${pressureLog}${luckLog}${speedrunLog}${routeContractLog}${materialLog}${bankedEquipmentCount ? ` 本轮领取的 ${bankedEquipmentCount} 件装备已永久保留。` : ''}`
+        : `${node.title}亮起，首次通关结算：${RUN_ECONOMY_OUTCOME_LABELS[economy.outcome]}，倍率 ${economy.rewardMultiplier}x。${protocolLog}${pressureLog}${luckLog}${speedrunLog}${routeContractLog}${materialLog}${bankedEquipmentCount ? ` 本轮领取的 ${bankedEquipmentCount} 件装备已永久保留。` : ''}`
       : isRepeatClear
         ? `${node.title}亮起，已通关副本重复探索完成。${routeContractLog}`
         : `${node.title}亮起，你首次通关本轮副本探索。${routeContractLog}`

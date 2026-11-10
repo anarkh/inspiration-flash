@@ -6,6 +6,7 @@ export const starfallMineDungeon: DungeonDefinition = {
   tier: 3,
   genre: 'science_fiction',
   recommendedPower: 430,
+  speedrunRoomLimit: 6,
   theme: '陨星砸穿旧矿井，矿壳怪物在错乱重力里巡逻。',
   recommended: '推荐破甲剑或灵力 4。',
   rewardPreview: '星铁、功法残页、奖励点 260-700',

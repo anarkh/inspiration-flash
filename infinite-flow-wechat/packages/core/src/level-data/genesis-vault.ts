@@ -6,6 +6,7 @@ export const genesisVaultDungeon: DungeonDefinition = {
   tier: 14,
   genre: 'science_fiction',
   recommendedPower: 3000,
+  speedrunRoomLimit: 7,
   theme: '原型库保存众生尚未分化的生命蓝本，探索者必须用本轮血清完成三次基因拼接，才能面对掌管全部原型的典藏官。',
   recommended: '推荐战力 860、满级终盘装备、稳定界门补给，以及足以应对适应性甲壳和原型觉醒的续航能力。',
   rewardPreview: '原型血清、终局材料、奖励点 1320-3200',
