@@ -14,8 +14,8 @@
 | 玩法与数值 | 0.1.31 | 玩法评审 10 项改动（`docs/05`）与数值改造 5 个 PR（`docs/06`）已合入；`npm run balance:sim` 的典型玩家机器人与每章跳章存档都能一次通关 19 章 | 只有机器人数据和开发者短时试玩，没有完整真人通关记录；困难 / 炼狱协议未校准；选路取舍、音效、逐章引导未做（见 `docs/05`） |
 | runtime | 包级完成 | canonical JSON/SHA-256、seed lineage、串行 session、ledger/state revision、tmp/formal/backup、256 receipt retention、suspend/resume 和故障注入自检 | generic/fake storage 不能证明微信真机 durable boundary |
 | Web v1 codec | 包级完成 | 严格 UTF-8/BOM、原始 text/bytes 保留、兼容 sanitizer、legacy seed 报告、checksum fixture；新增存档字段（阶位、铭刻、淬炼、灵蕴兑换计数等）均有读回测试 | 仅 preview/decode；尚无 rejected payload/reason/index 三件套 durable commit |
-| application/client | 19 章完成 | 54 种可序列化命令；phase guard；显式入场 seed；物理输入去重；生命周期注册失败与销毁均回滚清理；包级测试 40 个文件 | schema-v2 invariant/import 仍不完整 |
-| presentation | 19 章完成 | 四 phase 单一 ViewModel；大厅 8 个面板、角色六页签、11 种手机弹层、五态地图、23 项帮助、章节法则 / 指令 / 路线契约 / 压力 / 追兵、战斗意图与伤害预览；动作全部由 reducer 预检 | 无 |
+| application/client | 19 章完成 | 54 种可序列化命令；phase guard；显式入场 seed；物理输入去重；生命周期注册失败与销毁均回滚清理；六个包共 40 个测试文件全部通过 | schema-v2 invariant/import 仍不完整 |
+| presentation | 19 章完成 | 四 phase 单一 ViewModel；大厅 8 个面板、角色六页签、11 种手机弹层、五态地图、23 项帮助、章节法则 / 指令 / 路线契约 / 压力 / 追兵、战斗意图与伤害预览；动作全部由 reducer 预检 | 未冻结为 registry evidence |
 | Cocos scene/UI | Web 预览完成 | 庭院行走、19 章房间、独立战斗舞台与特效；headless 门禁：启动与生命周期 153 场景、行走 50 项、弹层 3652 个 ViewModel；每个 UI 改动在真实引擎（web-mobile，无头 Chrome）查看 320×568 与 390×844 | 0.1.19 起的版本没有在微信开发者工具或真机运行的记录；`cocos:web-mobile:smoke` 脚本已落后于现有界面，未修 |
 | 微信平台适配 | 包级完成 | 双槽整键空间 journal、安全 seed 预填充、六个必需 lifecycle 能力、AssetPort/loader；137 项断言 / 4 个 suite | 默认 flush 明确 `durability-unattested`；真实 CDN/弱网/缓存/低内存与强杀/配额/延迟真机签核缺失 |
 | 资源 | Creator 快照完成 | 324 key = 324 PNG；396 个 Creator metadata/UUID 一一对应；revision `sha256:66666c18678a4db1ca2b93db19265f911dfb44e4370b777d6d21348eebed747f`；`resources-remote-wechat-v1` 把微信资源固定为 remote，`config` 留在本地 | 源 PNG 共 344,175,419 bytes（怪物全身图 143 MB、房间底图 71 MB），未降采样或压缩纹理；无真实 CDN 上传、白名单或设备缓存 / 弱网验证 |
