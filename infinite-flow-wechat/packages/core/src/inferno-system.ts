@@ -280,7 +280,13 @@ type InfernoTopologyPlan = Readonly<{
   componentIndexByNodeId: ReadonlyMap<string, number>;
   protectedOrdinaryConnections: readonly (readonly [string, string])[];
   protectedConnectionKeys: ReadonlySet<string>;
+  /** The boss's law gates: rooms whose gate into the boss follows the chapter law. */
   bossSourceNodeIds: readonly string[];
+  /**
+   * The boss's side approaches: rooms next to the boss on the standard map with no gate into it. They open the
+   * boss whatever the law says, as the side routes of the standard map do.
+   */
+  bossSideSourceNodeIds: readonly string[];
 }>;
 
 function createInfernoTopologyPlan(
@@ -357,6 +363,10 @@ function createInfernoTopologyPlan(
     components.push(component.sort());
   }
 
+  const bossSideSourceNodeIds = Array.from(canonicalConnections.get(bossNodeId) ?? [])
+    .filter((nodeId) => ordinaryNodeIdSet.has(nodeId) && !bossSourceNodeIds.has(nodeId))
+    .sort();
+
   return {
     exitNodeId: exitNode.id,
     ordinaryNodeIds,
@@ -364,8 +374,14 @@ function createInfernoTopologyPlan(
     componentIndexByNodeId,
     protectedOrdinaryConnections,
     protectedConnectionKeys,
-    bossSourceNodeIds: Array.from(bossSourceNodeIds).sort()
+    bossSourceNodeIds: Array.from(bossSourceNodeIds).sort(),
+    bossSideSourceNodeIds
   };
+}
+
+/** Rooms that reach an inferno boss without passing a law gate (the standard map's side routes). */
+export function getInfernoBossSideSourceNodeIds(dungeon: DungeonDefinition, bossNodeId: string): readonly string[] {
+  return createInfernoTopologyPlan(dungeon, bossNodeId).bossSideSourceNodeIds;
 }
 
 function orderComponentNodeIds(
@@ -524,7 +540,7 @@ export function createInfernoMapSnapshot(input: InfernoMapInput): InfernoMapSnap
   for (const [fromNodeId, toNodeId] of topology.protectedOrdinaryConnections) {
     addConnection(connections, fromNodeId, toNodeId);
   }
-  for (const sourceNodeId of topology.bossSourceNodeIds) {
+  for (const sourceNodeId of [...topology.bossSourceNodeIds, ...topology.bossSideSourceNodeIds]) {
     addConnection(connections, sourceNodeId, bossNodeId);
   }
   addConnection(connections, bossNodeId, topology.exitNodeId);
@@ -669,14 +685,13 @@ export function validateInfernoMapTopology(
     }
   }
 
-  const expectedBossNeighbors = new Set([
-    ...topology.bossSourceNodeIds,
-    topology.exitNodeId
-  ]);
+  // Every law gate and the exit touch the boss; side approaches may too (maps drawn before 0.1.35 have none).
+  const requiredBossNeighbors = [...topology.bossSourceNodeIds, topology.exitNodeId];
+  const allowedBossNeighbors = new Set([...requiredBossNeighbors, ...topology.bossSideSourceNodeIds]);
   const actualBossNeighbors = connectionIdsByNodeId.get(bossNodeId) ?? new Set<string>();
   if (
-    actualBossNeighbors.size !== expectedBossNeighbors.size ||
-    Array.from(actualBossNeighbors).some((nodeId) => !expectedBossNeighbors.has(nodeId))
+    requiredBossNeighbors.some((nodeId) => !actualBossNeighbors.has(nodeId)) ||
+    Array.from(actualBossNeighbors).some((nodeId) => !allowedBossNeighbors.has(nodeId))
   ) {
     errors.push('invalid_boss_boundary');
   }

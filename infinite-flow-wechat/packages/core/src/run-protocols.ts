@@ -501,7 +501,7 @@ const DEEP_PROTOCOLS: Readonly<Record<DungeonId, DeepRunProtocolDefinition>> = {
     mutationName: '雾骨复鸣',
     materialReward: { itemId: 'demon_bone', amount: 2 },
     modifiers: {
-      enemyStatMultiplierPercent: 287,
+      enemyStatMultiplierPercent: 228,
       trapDamageMultiplierPercent: 132,
       trapDcMultiplierPercent: 132,
       unmetAnchorBossMultiplierPercent: 148,
@@ -518,7 +518,7 @@ const DEEP_PROTOCOLS: Readonly<Record<DungeonId, DeepRunProtocolDefinition>> = {
     mutationName: '镜潮叠影',
     materialReward: { itemId: 'mirror_shell', amount: 2 },
     modifiers: {
-      enemyStatMultiplierPercent: 213,
+      enemyStatMultiplierPercent: 209,
       trapDamageMultiplierPercent: 136,
       trapDcMultiplierPercent: 136,
       unmetAnchorBossMultiplierPercent: 153,
@@ -552,7 +552,7 @@ const DEEP_PROTOCOLS: Readonly<Record<DungeonId, DeepRunProtocolDefinition>> = {
     mutationName: '终诊回返',
     materialReward: { itemId: 'medicine_ash', amount: 2 },
     modifiers: {
-      enemyStatMultiplierPercent: 166,
+      enemyStatMultiplierPercent: 146,
       trapDamageMultiplierPercent: 144,
       trapDcMultiplierPercent: 144,
       unmetAnchorBossMultiplierPercent: 163,
@@ -586,7 +586,7 @@ const DEEP_PROTOCOLS: Readonly<Record<DungeonId, DeepRunProtocolDefinition>> = {
     mutationName: '失页互证',
     materialReward: { itemId: 'hidden_stone', amount: 2 },
     modifiers: {
-      enemyStatMultiplierPercent: 200,
+      enemyStatMultiplierPercent: 162,
       trapDamageMultiplierPercent: 152,
       trapDcMultiplierPercent: 152,
       unmetAnchorBossMultiplierPercent: 173,
@@ -603,7 +603,7 @@ const DEEP_PROTOCOLS: Readonly<Record<DungeonId, DeepRunProtocolDefinition>> = {
     mutationName: '虚界重响',
     materialReward: { itemId: 'rift_dust', amount: 2 },
     modifiers: {
-      enemyStatMultiplierPercent: 139,
+      enemyStatMultiplierPercent: 162,
       trapDamageMultiplierPercent: 156,
       trapDcMultiplierPercent: 156,
       unmetAnchorBossMultiplierPercent: 178,
