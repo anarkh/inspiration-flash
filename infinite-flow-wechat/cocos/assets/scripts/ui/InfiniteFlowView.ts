@@ -2337,7 +2337,10 @@ export function formatInfiniteFlowResultSettlement(
         lines: [
           `段位 ${pressure.tierLabel} · 奖励加成 +${pressure.rewardPointBonus} 点`,
           ...(pressure.speedrunBounty
-            ? [`速通悬赏：清理 ${pressure.speedrunBounty.clearedNodeCount}/${pressure.speedrunBounty.roomLimit} 间 · 灵蕴 +${pressure.speedrunBounty.lingyun} · 轮回刻印 +${pressure.speedrunBounty.cycleImprints}`]
+            ? [
+                `速通悬赏：清理 ${pressure.speedrunBounty.clearedNodeCount}/${pressure.speedrunBounty.roomLimit} 间`,
+                `奖励点 +${pressure.speedrunBounty.rewardPoints} · 灵蕴 +${pressure.speedrunBounty.lingyun} · 轮回刻印 +${pressure.speedrunBounty.cycleImprints}`,
+              ]
             : []),
         ],
       });

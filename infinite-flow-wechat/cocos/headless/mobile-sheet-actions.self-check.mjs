@@ -1809,7 +1809,7 @@ function touch(node) {
   show(replay);
   assert.deepEqual(named('WalkTaskTracker')?.children.map(child => child.name), ['WalkTaskLine:speedrun'],
     'a run with every task claimed tracks only its speedrun line');
-  assert.equal(trackerText('speedrun'), '已清 0/5 间 · 灵蕴 +1', 'the speedrun line shows the rooms cleared, the limit and the lingyun at stake');
+  assert.equal(trackerText('speedrun'), '已清 0/5 间 · 奖励 +50%', 'the speedrun line shows the rooms cleared, the limit and the reward point bonus at stake');
 
   // Arriving in the hub with finished tasks opens the claim sheet; the envoy wears a gold question mark.
   const hub = { ...api.createInitialState(), completedDungeonIds: ['demon_tower_1'], enteredDungeonIds: ['demon_tower_1'] };

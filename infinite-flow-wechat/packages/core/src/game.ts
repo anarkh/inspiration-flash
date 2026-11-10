@@ -959,8 +959,15 @@ export type EquipmentRollSettlement = {
 
 export type SpeedrunBounty = {
   readonly roomLimit: number;
+  /** Share of the whole run's reward points (the bag plus the exit share) added on top, like the pressure bonus. */
+  readonly rewardPointPercent: number;
   readonly lingyun: number;
   readonly cycleImprints: number;
+};
+
+/** A paid bounty as the settlement records it; saves from 0.1.32-0.1.33 read back with no reward points. */
+export type SpeedrunBountySettlement = SpeedrunBounty & {
+  readonly rewardPoints: number;
 };
 
 export type RunPressureSettlement = {
@@ -968,7 +975,7 @@ export type RunPressureSettlement = {
   readonly tier: RunPressureTier;
   readonly rewardPointBonus: number;
   /** Present when the clear stayed within the chapter's 速通线. */
-  readonly speedrunBounty?: SpeedrunBounty;
+  readonly speedrunBounty?: SpeedrunBountySettlement;
 };
 
 export type RunRelicSettlement = {
@@ -4149,9 +4156,11 @@ export function getCurrentRunPressure(state: GameState): CurrentRunPressure {
 }
 
 /**
- * 速通悬赏: clearing a chapter within its 速通线 adds half of the exit's lingyun (rounded up) and one cycle imprint,
- * which a full clear cannot earn. Inferno runs redraw the map, so they carry no line.
+ * 速通悬赏: clearing a chapter within its 速通线 adds half of the whole run's reward points, half of the exit's
+ * lingyun (rounded up) and one cycle imprint, which a full clear cannot earn. Inferno runs redraw the map, so they
+ * carry no line.
  */
+export const SPEEDRUN_BOUNTY_REWARD_POINT_PERCENT = 50;
 export const SPEEDRUN_BOUNTY_CYCLE_IMPRINTS = 1;
 
 export function getSpeedrunBounty(dungeonId: DungeonId): SpeedrunBounty {
@@ -4159,6 +4168,7 @@ export function getSpeedrunBounty(dungeonId: DungeonId): SpeedrunBounty {
   const exitLingyun = dungeon.nodes.find((node) => node.type === 'exit')?.reward?.lingyun ?? 0;
   return {
     roomLimit: dungeon.speedrunRoomLimit,
+    rewardPointPercent: SPEEDRUN_BOUNTY_REWARD_POINT_PERCENT,
     lingyun: Math.max(1, Math.ceil(exitLingyun / 2)),
     cycleImprints: SPEEDRUN_BOUNTY_CYCLE_IMPRINTS
   };
@@ -10791,8 +10801,14 @@ export function resolveExit(state: GameState): GameState {
   const luckRewardPercent = economy ? getLuckRewardPercent(state) : 0;
   const luckRewardPointBonus = Math.floor((bonusBaseRewardPoints * luckRewardPercent) / 100);
   const speedrun = economy ? getCurrentSpeedrun(state) : undefined;
-  const speedrunBounty: SpeedrunBounty | undefined = speedrun?.onPace
-    ? { roomLimit: speedrun.roomLimit, lingyun: speedrun.lingyun, cycleImprints: speedrun.cycleImprints }
+  const speedrunBounty: SpeedrunBountySettlement | undefined = speedrun?.onPace
+    ? {
+        roomLimit: speedrun.roomLimit,
+        rewardPointPercent: speedrun.rewardPointPercent,
+        rewardPoints: Math.floor((bonusBaseRewardPoints * speedrun.rewardPointPercent) / 100),
+        lingyun: speedrun.lingyun,
+        cycleImprints: speedrun.cycleImprints
+      }
     : undefined;
   const pressureSettlement: RunPressureSettlement | undefined =
     economy && pressureStatus
@@ -10904,6 +10920,7 @@ export function resolveExit(state: GameState): GameState {
           economy.rewardPoints +
           pressureRewardPointBonus +
           luckRewardPointBonus +
+          (speedrunBounty?.rewardPoints ?? 0) +
           (protocolSucceeded ? protocolRewardPointBonus : 0) +
           (shouldClaimDirective ? (directive.reward.rewardPoints ?? 0) : 0),
         lingyun:
@@ -10993,7 +11010,7 @@ export function resolveExit(state: GameState): GameState {
     : '';
   const luckLog = luckRewardPointBonus > 0 ? ` 气运 +${luckRewardPercent}%：整局奖励点 +${luckRewardPointBonus}。` : '';
   const speedrunLog = speedrunBounty
-    ? ` 速通悬赏：清理 ${speedrun?.clearedNodeCount ?? 0}/${speedrunBounty.roomLimit} 间，追加灵蕴 x${speedrunBounty.lingyun}、${ITEMS.cycle_imprint.name} x${speedrunBounty.cycleImprints}。`
+    ? ` 速通悬赏：清理 ${speedrun?.clearedNodeCount ?? 0}/${speedrunBounty.roomLimit} 间，整局奖励点 +${speedrunBounty.rewardPointPercent}%（+${speedrunBounty.rewardPoints}），追加灵蕴 x${speedrunBounty.lingyun}、${ITEMS.cycle_imprint.name} x${speedrunBounty.cycleImprints}。`
     : '';
   const routeContractDefinition = routeContractSettlement?.state
     ? getRouteContractById(routeContractSettlement.state.contractId, routeContractSettlement.state.dungeonId)

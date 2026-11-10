@@ -894,7 +894,10 @@ function isSavedRunPressureSettlement(value: unknown): value is RunPressureSettl
       !isRecord(bounty) ||
       !isNonNegativeInteger(bounty.roomLimit) ||
       !isNonNegativeInteger(bounty.lingyun) ||
-      !isNonNegativeInteger(bounty.cycleImprints)
+      !isNonNegativeInteger(bounty.cycleImprints) ||
+      // 0.1.32-0.1.33 bounties paid no reward points and carry neither field.
+      (bounty.rewardPointPercent !== undefined && !isNonNegativeInteger(bounty.rewardPointPercent)) ||
+      (bounty.rewardPoints !== undefined && !isNonNegativeInteger(bounty.rewardPoints))
     ) {
       return false;
     }
@@ -1151,8 +1154,15 @@ function sanitizeSavedRunPressureFields(value: Record<string, unknown>): Record<
 
   if (isSavedRunPressureSettlement(value.lastPressureSettlement)) {
     const settlementState = normalizeRunPressureState(value.lastPressureSettlement.state);
+    const bounty = value.lastPressureSettlement.speedrunBounty;
     sanitized.lastPressureSettlement = settlementState
-      ? { ...value.lastPressureSettlement, state: settlementState }
+      ? {
+          ...value.lastPressureSettlement,
+          state: settlementState,
+          ...(bounty
+            ? { speedrunBounty: { ...bounty, rewardPointPercent: bounty.rewardPointPercent ?? 0, rewardPoints: bounty.rewardPoints ?? 0 } }
+            : {})
+        }
       : undefined;
   } else {
     delete sanitized.lastPressureSettlement;
