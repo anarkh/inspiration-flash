@@ -2,6 +2,8 @@ import {
   createInitialState, DUNGEON_ORDER, EQUIPMENT, getDerivedStats, getEquipmentSystemStatus, getLuckRewardPercent, GROWTH_TIER_UNLOCK_CHAPTERS,
   LUCK_REWARD_PERCENT_CAP, type GameState
 } from '@infinite-flow/core';
+import { getInfernoTierModifiers } from '@infinite-flow/core/inferno-system';
+import { getRunProtocolDefinition } from '@infinite-flow/core/run-protocols';
 import { reduceGameCommand, type GameCommand } from '../src/index.js';
 
 function assert(condition: unknown, message: string): asserts condition {
@@ -55,3 +57,13 @@ assert(affix > 0 && getDerivedStats(hood).trapCheck - getDerivedStats(base).trap
 assert(getLuckRewardPercent(base) === 1 && getLuckRewardPercent(hood) === 6, 'a new save has 1%, the level-5 hood brings it to 6%');
 assert(getLuckRewardPercent({ ...base, player: { ...base.player, base: { ...base.player.base, luck: 99 } } }) === LUCK_REWARD_PERCENT_CAP,
   'the luck bonus is capped');
+
+// Hard and inferno enemy multipliers are calibrated per chapter (balance:calibrate-protocols): hard is always
+// above standard, inferno above hard, and every inferno tier past the first adds 15% to all enemy stats.
+for (const dungeonId of DUNGEON_ORDER) {
+  const hard = getRunProtocolDefinition(dungeonId, 'imprint')!.modifiers.enemyStatMultiplierPercent;
+  const inferno = getRunProtocolDefinition(dungeonId, 'deep')!.modifiers.enemyStatMultiplierPercent;
+  assert(hard > 100 && inferno > hard, `${dungeonId}: standard < hard (${hard}) < inferno (${inferno})`);
+}
+assert([1, 2, 5].map((tier) => getInfernoTierModifiers(tier).enemyStatMultiplierPercent).join(',') === '100,115,160',
+  'inferno tiers 1, 2 and 5 scale enemies by 100%, 115% and 160%');

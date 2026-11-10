@@ -116,7 +116,7 @@ const IMPRINT_PROTOCOLS: Readonly<Record<DungeonId, ImprintRunProtocolDefinition
     requiredNodeId: 'risky_font_trap',
     objectiveText: '先绕至塔底咒水井并镇住咒水，再挑战雾塔监斩官。',
     modifiers: {
-      enemyStatMultiplierPercent: 112,
+      enemyStatMultiplierPercent: 210,
       trapDamageMultiplierPercent: 118,
       trapDcMultiplierPercent: 108,
       unmetAnchorBossMultiplierPercent: 124,
@@ -136,7 +136,7 @@ const IMPRINT_PROTOCOLS: Readonly<Record<DungeonId, ImprintRunProtocolDefinition
     requiredNodeId: 'echo_coin_vendor',
     objectiveText: '先绕到检修层启动回声贩卖机，再返回末班站台讨伐蛛后。',
     modifiers: {
-      enemyStatMultiplierPercent: 114,
+      enemyStatMultiplierPercent: 174,
       trapDamageMultiplierPercent: 121,
       trapDcMultiplierPercent: 110,
       unmetAnchorBossMultiplierPercent: 127,
@@ -156,7 +156,7 @@ const IMPRINT_PROTOCOLS: Readonly<Record<DungeonId, ImprintRunProtocolDefinition
     requiredNodeId: 'north_star_vein',
     objectiveText: '先绕往北壁星铁脉完成垂准，再下井挑战裂门蜕王。',
     modifiers: {
-      enemyStatMultiplierPercent: 117,
+      enemyStatMultiplierPercent: 136,
       trapDamageMultiplierPercent: 123,
       trapDcMultiplierPercent: 113,
       unmetAnchorBossMultiplierPercent: 130,
@@ -176,7 +176,7 @@ const IMPRINT_PROTOCOLS: Readonly<Record<DungeonId, ImprintRunProtocolDefinition
     requiredNodeId: 'surgical_theater_reward',
     objectiveText: '先绕至手术室取回遗包并注销病历，再迎战终诊主治。',
     modifiers: {
-      enemyStatMultiplierPercent: 119,
+      enemyStatMultiplierPercent: 122,
       trapDamageMultiplierPercent: 126,
       trapDcMultiplierPercent: 115,
       unmetAnchorBossMultiplierPercent: 134,
@@ -196,7 +196,7 @@ const IMPRINT_PROTOCOLS: Readonly<Record<DungeonId, ImprintRunProtocolDefinition
     requiredNodeId: 'champion_branch_reward',
     objectiveText: '先绕入烟沟后的支路夺回奖杯，再回到炉心接受终审。',
     modifiers: {
-      enemyStatMultiplierPercent: 122,
+      enemyStatMultiplierPercent: 146,
       trapDamageMultiplierPercent: 129,
       trapDcMultiplierPercent: 118,
       unmetAnchorBossMultiplierPercent: 137,
@@ -216,7 +216,7 @@ const IMPRINT_PROTOCOLS: Readonly<Record<DungeonId, ImprintRunProtocolDefinition
     requiredNodeId: 'cracked_core_index_reward',
     objectiveText: '先绕至裂核索引架补全目录，再前往封底梦牢击败典守。',
     modifiers: {
-      enemyStatMultiplierPercent: 124,
+      enemyStatMultiplierPercent: 134,
       trapDamageMultiplierPercent: 132,
       trapDcMultiplierPercent: 120,
       unmetAnchorBossMultiplierPercent: 141,
@@ -236,7 +236,7 @@ const IMPRINT_PROTOCOLS: Readonly<Record<DungeonId, ImprintRunProtocolDefinition
     requiredNodeId: 'echo_branch_cache',
     objectiveText: '先绕至回声门尽头封存旧回声，再返回核心挑战主神残响。',
     modifiers: {
-      enemyStatMultiplierPercent: 127,
+      enemyStatMultiplierPercent: 113,
       trapDamageMultiplierPercent: 135,
       trapDcMultiplierPercent: 123,
       unmetAnchorBossMultiplierPercent: 145,
@@ -256,7 +256,7 @@ const IMPRINT_PROTOCOLS: Readonly<Record<DungeonId, ImprintRunProtocolDefinition
     requiredNodeId: 'entry_chronometer',
     objectiveText: '先校准入口计时器并固定当前时标，再前往零时王座挑战零时摄政。',
     modifiers: {
-      enemyStatMultiplierPercent: 129,
+      enemyStatMultiplierPercent: 168,
       trapDamageMultiplierPercent: 138,
       trapDcMultiplierPercent: 125,
       unmetAnchorBossMultiplierPercent: 149,
@@ -276,7 +276,7 @@ const IMPRINT_PROTOCOLS: Readonly<Record<DungeonId, ImprintRunProtocolDefinition
     requiredNodeId: 'entry_docket',
     objectiveText: '先在入口案票处完成身份核验，再前往清算庭挑战因果主审。',
     modifiers: {
-      enemyStatMultiplierPercent: 132,
+      enemyStatMultiplierPercent: 142,
       trapDamageMultiplierPercent: 141,
       trapDcMultiplierPercent: 128,
       unmetAnchorBossMultiplierPercent: 153,
@@ -296,7 +296,7 @@ const IMPRINT_PROTOCOLS: Readonly<Record<DungeonId, ImprintRunProtocolDefinition
     requiredNodeId: 'ark_manifest',
     objectiveText: '先在方舟清单锚点核验熵舱清单，再前往末舵台挑战末舵手。',
     modifiers: {
-      enemyStatMultiplierPercent: 135,
+      enemyStatMultiplierPercent: 157,
       trapDamageMultiplierPercent: 144,
       trapDcMultiplierPercent: 131,
       unmetAnchorBossMultiplierPercent: 157,
@@ -316,7 +316,7 @@ const IMPRINT_PROTOCOLS: Readonly<Record<DungeonId, ImprintRunProtocolDefinition
     requiredNodeId: 'real_anchor',
     objectiveText: '先在现实相位激活现实锚，再前往镜海王座挑战无名镜王。',
     modifiers: {
-      enemyStatMultiplierPercent: 138,
+      enemyStatMultiplierPercent: 140,
       trapDamageMultiplierPercent: 147,
       trapDcMultiplierPercent: 134,
       unmetAnchorBossMultiplierPercent: 161,
@@ -336,7 +336,7 @@ const IMPRINT_PROTOCOLS: Readonly<Record<DungeonId, ImprintRunProtocolDefinition
     requiredNodeId: 'final_proof_nexus',
     objectiveText: '先在终校事件枢纽固定最终校样，再前往终稿席挑战删界官。',
     modifiers: {
-      enemyStatMultiplierPercent: 141,
+      enemyStatMultiplierPercent: 138,
       trapDamageMultiplierPercent: 150,
       trapDcMultiplierPercent: 137,
       unmetAnchorBossMultiplierPercent: 165,
@@ -356,7 +356,7 @@ const IMPRINT_PROTOCOLS: Readonly<Record<DungeonId, ImprintRunProtocolDefinition
     requiredNodeId: 'provenance_event_stage',
     objectiveText: '先在来源争议台核验完整执槌链，再前往终拍台挑战遗产执槌人。',
     modifiers: {
-      enemyStatMultiplierPercent: 144,
+      enemyStatMultiplierPercent: 148,
       trapDamageMultiplierPercent: 153,
       trapDcMultiplierPercent: 140,
       unmetAnchorBossMultiplierPercent: 169,
@@ -376,7 +376,7 @@ const IMPRINT_PROTOCOLS: Readonly<Record<DungeonId, ImprintRunProtocolDefinition
     requiredNodeId: 'mosaic_gene_vault',
     objectiveText: '先在嵌合基因库完成原型校准，再前往归档厅挑战原型典藏官。',
     modifiers: {
-      enemyStatMultiplierPercent: 147,
+      enemyStatMultiplierPercent: 124,
       trapDamageMultiplierPercent: 156,
       trapDcMultiplierPercent: 143,
       unmetAnchorBossMultiplierPercent: 173,
@@ -396,7 +396,7 @@ const IMPRINT_PROTOCOLS: Readonly<Record<DungeonId, ImprintRunProtocolDefinition
     requiredNodeId: 'broadcast_memory_stage',
     objectiveText: '先在播音记忆台保存最后一段人声，再前往主播播间挑战末频道播音主。',
     modifiers: {
-      enemyStatMultiplierPercent: 150,
+      enemyStatMultiplierPercent: 120,
       trapDamageMultiplierPercent: 159,
       trapDcMultiplierPercent: 146,
       unmetAnchorBossMultiplierPercent: 177,
@@ -416,7 +416,7 @@ const IMPRINT_PROTOCOLS: Readonly<Record<DungeonId, ImprintRunProtocolDefinition
     requiredNodeId: 'survivor_memory_stage',
     objectiveText: '先在幸存者点名台保存最后一次回应，再前往总控室挑战失联总控。',
     modifiers: {
-      enemyStatMultiplierPercent: 153,
+      enemyStatMultiplierPercent: 134,
       trapDamageMultiplierPercent: 162,
       trapDcMultiplierPercent: 149,
       unmetAnchorBossMultiplierPercent: 181,
@@ -436,7 +436,7 @@ const IMPRINT_PROTOCOLS: Readonly<Record<DungeonId, ImprintRunProtocolDefinition
     requiredNodeId: 'cross_exam_stage',
     objectiveText: '先在交叉诘问台保存封存证言的最后回答，再前往终审席挑战伪证主审。',
     modifiers: {
-      enemyStatMultiplierPercent: 156,
+      enemyStatMultiplierPercent: 121,
       trapDamageMultiplierPercent: 165,
       trapDcMultiplierPercent: 152,
       unmetAnchorBossMultiplierPercent: 185,
@@ -456,7 +456,7 @@ const IMPRINT_PROTOCOLS: Readonly<Record<DungeonId, ImprintRunProtocolDefinition
     requiredNodeId: 'script_projection_stage',
     objectiveText: '先在剧本投映台保存三段战斗的真实动作，再前往终剪台挑战终剪导演。',
     modifiers: {
-      enemyStatMultiplierPercent: 159,
+      enemyStatMultiplierPercent: 113,
       trapDamageMultiplierPercent: 168,
       trapDcMultiplierPercent: 155,
       unmetAnchorBossMultiplierPercent: 189,
@@ -476,7 +476,7 @@ const IMPRINT_PROTOCOLS: Readonly<Record<DungeonId, ImprintRunProtocolDefinition
     requiredNodeId: 'inverse_observation_stage',
     objectiveText: '先在逆向观测台保存视线外轨迹，再前往全视核心挑战全视监察官。',
     modifiers: {
-      enemyStatMultiplierPercent: 162,
+      enemyStatMultiplierPercent: 144,
       trapDamageMultiplierPercent: 171,
       trapDcMultiplierPercent: 158,
       unmetAnchorBossMultiplierPercent: 193,
@@ -501,7 +501,7 @@ const DEEP_PROTOCOLS: Readonly<Record<DungeonId, DeepRunProtocolDefinition>> = {
     mutationName: '雾骨复鸣',
     materialReward: { itemId: 'demon_bone', amount: 2 },
     modifiers: {
-      enemyStatMultiplierPercent: 126,
+      enemyStatMultiplierPercent: 287,
       trapDamageMultiplierPercent: 132,
       trapDcMultiplierPercent: 132,
       unmetAnchorBossMultiplierPercent: 148,
@@ -518,7 +518,7 @@ const DEEP_PROTOCOLS: Readonly<Record<DungeonId, DeepRunProtocolDefinition>> = {
     mutationName: '镜潮叠影',
     materialReward: { itemId: 'mirror_shell', amount: 2 },
     modifiers: {
-      enemyStatMultiplierPercent: 130,
+      enemyStatMultiplierPercent: 213,
       trapDamageMultiplierPercent: 136,
       trapDcMultiplierPercent: 136,
       unmetAnchorBossMultiplierPercent: 153,
@@ -535,7 +535,7 @@ const DEEP_PROTOCOLS: Readonly<Record<DungeonId, DeepRunProtocolDefinition>> = {
     mutationName: '星脉共振',
     materialReward: { itemId: 'star_iron', amount: 2 },
     modifiers: {
-      enemyStatMultiplierPercent: 134,
+      enemyStatMultiplierPercent: 179,
       trapDamageMultiplierPercent: 140,
       trapDcMultiplierPercent: 140,
       unmetAnchorBossMultiplierPercent: 158,
@@ -552,7 +552,7 @@ const DEEP_PROTOCOLS: Readonly<Record<DungeonId, DeepRunProtocolDefinition>> = {
     mutationName: '终诊回返',
     materialReward: { itemId: 'medicine_ash', amount: 2 },
     modifiers: {
-      enemyStatMultiplierPercent: 138,
+      enemyStatMultiplierPercent: 166,
       trapDamageMultiplierPercent: 144,
       trapDcMultiplierPercent: 144,
       unmetAnchorBossMultiplierPercent: 163,
@@ -569,7 +569,7 @@ const DEEP_PROTOCOLS: Readonly<Record<DungeonId, DeepRunProtocolDefinition>> = {
     mutationName: '炉心复判',
     materialReward: { itemId: 'cracked_core', amount: 2 },
     modifiers: {
-      enemyStatMultiplierPercent: 142,
+      enemyStatMultiplierPercent: 179,
       trapDamageMultiplierPercent: 148,
       trapDcMultiplierPercent: 148,
       unmetAnchorBossMultiplierPercent: 168,
@@ -586,7 +586,7 @@ const DEEP_PROTOCOLS: Readonly<Record<DungeonId, DeepRunProtocolDefinition>> = {
     mutationName: '失页互证',
     materialReward: { itemId: 'hidden_stone', amount: 2 },
     modifiers: {
-      enemyStatMultiplierPercent: 146,
+      enemyStatMultiplierPercent: 200,
       trapDamageMultiplierPercent: 152,
       trapDcMultiplierPercent: 152,
       unmetAnchorBossMultiplierPercent: 173,
@@ -603,7 +603,7 @@ const DEEP_PROTOCOLS: Readonly<Record<DungeonId, DeepRunProtocolDefinition>> = {
     mutationName: '虚界重响',
     materialReward: { itemId: 'rift_dust', amount: 2 },
     modifiers: {
-      enemyStatMultiplierPercent: 150,
+      enemyStatMultiplierPercent: 139,
       trapDamageMultiplierPercent: 156,
       trapDcMultiplierPercent: 156,
       unmetAnchorBossMultiplierPercent: 178,
@@ -620,7 +620,7 @@ const DEEP_PROTOCOLS: Readonly<Record<DungeonId, DeepRunProtocolDefinition>> = {
     mutationName: '纪元叠校',
     materialReward: { itemId: 'chronal_glass', amount: 2 },
     modifiers: {
-      enemyStatMultiplierPercent: 154,
+      enemyStatMultiplierPercent: 206,
       trapDamageMultiplierPercent: 160,
       trapDcMultiplierPercent: 160,
       unmetAnchorBossMultiplierPercent: 183,
@@ -637,7 +637,7 @@ const DEEP_PROTOCOLS: Readonly<Record<DungeonId, DeepRunProtocolDefinition>> = {
     mutationName: '因果倒证',
     materialReward: { itemId: 'causal_seal', amount: 2 },
     modifiers: {
-      enemyStatMultiplierPercent: 158,
+      enemyStatMultiplierPercent: 177,
       trapDamageMultiplierPercent: 164,
       trapDcMultiplierPercent: 164,
       unmetAnchorBossMultiplierPercent: 188,
@@ -654,7 +654,7 @@ const DEEP_PROTOCOLS: Readonly<Record<DungeonId, DeepRunProtocolDefinition>> = {
     mutationName: '熵潮失稳',
     materialReward: { itemId: 'entropy_crystal', amount: 2 },
     modifiers: {
-      enemyStatMultiplierPercent: 162,
+      enemyStatMultiplierPercent: 174,
       trapDamageMultiplierPercent: 168,
       trapDcMultiplierPercent: 168,
       unmetAnchorBossMultiplierPercent: 193,
@@ -671,7 +671,7 @@ const DEEP_PROTOCOLS: Readonly<Record<DungeonId, DeepRunProtocolDefinition>> = {
     mutationName: '双相无名',
     materialReward: { itemId: 'phase_glass', amount: 2 },
     modifiers: {
-      enemyStatMultiplierPercent: 166,
+      enemyStatMultiplierPercent: 153,
       trapDamageMultiplierPercent: 172,
       trapDcMultiplierPercent: 172,
       unmetAnchorBossMultiplierPercent: 198,
@@ -688,7 +688,7 @@ const DEEP_PROTOCOLS: Readonly<Record<DungeonId, DeepRunProtocolDefinition>> = {
     mutationName: '三证反删',
     materialReward: { itemId: 'redaction_ink', amount: 2 },
     modifiers: {
-      enemyStatMultiplierPercent: 170,
+      enemyStatMultiplierPercent: 155,
       trapDamageMultiplierPercent: 176,
       trapDcMultiplierPercent: 176,
       unmetAnchorBossMultiplierPercent: 203,
@@ -705,7 +705,7 @@ const DEEP_PROTOCOLS: Readonly<Record<DungeonId, DeepRunProtocolDefinition>> = {
     mutationName: '四席追价',
     materialReward: { itemId: 'legacy_scrip', amount: 2 },
     modifiers: {
-      enemyStatMultiplierPercent: 174,
+      enemyStatMultiplierPercent: 163,
       trapDamageMultiplierPercent: 180,
       trapDcMultiplierPercent: 180,
       unmetAnchorBossMultiplierPercent: 208,
@@ -722,7 +722,7 @@ const DEEP_PROTOCOLS: Readonly<Record<DungeonId, DeepRunProtocolDefinition>> = {
     mutationName: '始祖并序',
     materialReward: { itemId: 'genesis_serum', amount: 2 },
     modifiers: {
-      enemyStatMultiplierPercent: 178,
+      enemyStatMultiplierPercent: 147,
       trapDamageMultiplierPercent: 184,
       trapDcMultiplierPercent: 184,
       unmetAnchorBossMultiplierPercent: 213,
@@ -739,7 +739,7 @@ const DEEP_PROTOCOLS: Readonly<Record<DungeonId, DeepRunProtocolDefinition>> = {
     mutationName: '全城死频',
     materialReward: { itemId: 'silence_core', amount: 2 },
     modifiers: {
-      enemyStatMultiplierPercent: 182,
+      enemyStatMultiplierPercent: 139,
       trapDamageMultiplierPercent: 188,
       trapDcMultiplierPercent: 188,
       unmetAnchorBossMultiplierPercent: 218,
@@ -756,7 +756,7 @@ const DEEP_PROTOCOLS: Readonly<Record<DungeonId, DeepRunProtocolDefinition>> = {
     mutationName: '全员失联',
     materialReward: { itemId: 'rescue_badge', amount: 2 },
     modifiers: {
-      enemyStatMultiplierPercent: 186,
+      enemyStatMultiplierPercent: 169,
       trapDamageMultiplierPercent: 192,
       trapDcMultiplierPercent: 192,
       unmetAnchorBossMultiplierPercent: 223,
@@ -773,7 +773,7 @@ const DEEP_PROTOCOLS: Readonly<Record<DungeonId, DeepRunProtocolDefinition>> = {
     mutationName: '三证倒判',
     materialReward: { itemId: 'truth_fragment', amount: 2 },
     modifiers: {
-      enemyStatMultiplierPercent: 190,
+      enemyStatMultiplierPercent: 133,
       trapDamageMultiplierPercent: 196,
       trapDcMultiplierPercent: 196,
       unmetAnchorBossMultiplierPercent: 228,
@@ -790,7 +790,7 @@ const DEEP_PROTOCOLS: Readonly<Record<DungeonId, DeepRunProtocolDefinition>> = {
     mutationName: '三段倒剪',
     materialReward: { itemId: 'combat_reel', amount: 2 },
     modifiers: {
-      enemyStatMultiplierPercent: 194,
+      enemyStatMultiplierPercent: 145,
       trapDamageMultiplierPercent: 200,
       trapDcMultiplierPercent: 200,
       unmetAnchorBossMultiplierPercent: 233,
@@ -807,7 +807,7 @@ const DEEP_PROTOCOLS: Readonly<Record<DungeonId, DeepRunProtocolDefinition>> = {
     mutationName: '全景锁定',
     materialReward: { itemId: 'observation_shard', amount: 2 },
     modifiers: {
-      enemyStatMultiplierPercent: 198,
+      enemyStatMultiplierPercent: 164,
       trapDamageMultiplierPercent: 204,
       trapDcMultiplierPercent: 204,
       unmetAnchorBossMultiplierPercent: 238,
