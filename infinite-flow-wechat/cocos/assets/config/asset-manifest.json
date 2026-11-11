@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "manifestRevision": "sha256:66666c18678a4db1ca2b93db19265f911dfb44e4370b777d6d21348eebed747f",
+  "manifestRevision": "sha256:5e16397dc92b94f7d4f36855c4fe5e5bd2733a9096e0b137b626db1e910255d7",
   "sourceManifest": {
     "path": "infinite-flow/src/game-assets.ts",
     "version": 1,
@@ -8,7 +8,7 @@
   },
   "resourceRoot": "cocos/assets/resources",
   "assetCount": 324,
-  "derivedAssetCount": 6,
+  "derivedAssetCount": 142,
   "kindCounts": {
     "character": 8,
     "npc": 15,
@@ -25,7 +25,8 @@
       "svg": 1
     },
     "target": {
-      "png": 324
+      "jpg": 32,
+      "png": 292
     }
   },
   "assets": [
@@ -34,26 +35,33 @@
       "kind": "character",
       "entityId": "reincarnator",
       "resourcePath": "character/reincarnator-v2",
-      "resourceFile": "character/reincarnator-v2.png",
+      "resourceFile": "character/reincarnator-v2.jpg",
       "sourceFile": "infinite-flow-wechat/prototype/style-refresh/assets/hero-portrait-proposed.png",
       "sourceFormat": "png",
-      "targetFormat": "png",
+      "targetFormat": "jpg",
       "cocosImageImport": "supported",
       "alt": "黑发束髻、青灰衣与旧金肩甲的轮回者肖像",
       "role": "portrait",
-      "width": 1254,
-      "height": 1254,
+      "width": 512,
+      "height": 512,
       "fit": "cover",
       "source": "project-original-generated",
       "sourceRevision": 2,
       "sourceSha256": "3350c54b38817f003ffbe4acb914c502f9d2c0fef82384b4c68b766b24c456af",
-      "targetSha256": "3350c54b38817f003ffbe4acb914c502f9d2c0fef82384b4c68b766b24c456af",
+      "targetSha256": "ce7c742f13b7fce718f641cb8f33bfcd8de3262be9e24fdaf57dd805a790777d",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "targetDimensions": {
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 -Z 512 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
           "width": 1254,
           "height": 1254
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 512
         }
       }
     },
@@ -3487,19 +3495,25 @@
       "cocosImageImport": "supported",
       "alt": "黑曜外壳包裹暗红胚心的复燃胚核",
       "role": "icon",
-      "width": 1122,
-      "height": 1402,
+      "width": 307,
+      "height": 384,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 2,
       "sourceSha256": "f048795bad3b3c6a1fed13ccf1cce52620c71f491c88f49662fabdf918656f01",
-      "targetSha256": "f048795bad3b3c6a1fed13ccf1cce52620c71f491c88f49662fabdf918656f01",
+      "targetSha256": "bf74a0819919d8e02024c1f4291958fad2e38370b173514a5350209ad43061e7",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 384 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1122,
           "height": 1402
+        },
+        "targetDimensions": {
+          "width": 307,
+          "height": 384
         }
       }
     },
@@ -3695,19 +3709,25 @@
       "cocosImageImport": "supported",
       "alt": "分光镜片映出警示灯的分诊目镜",
       "role": "icon",
-      "width": 1254,
-      "height": 1254,
+      "width": 384,
+      "height": 384,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 2,
       "sourceSha256": "5d662827b0cca639cc1e40ed63dc9dc3d1eb1521c8cdbf611fb2511a8e606ea9",
-      "targetSha256": "5d662827b0cca639cc1e40ed63dc9dc3d1eb1521c8cdbf611fb2511a8e606ea9",
+      "targetSha256": "08283478350343373172b3b39fff4b3bdf6ce7d5934f077f75d9695decbf7f48",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 384 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1254,
           "height": 1254
+        },
+        "targetDimensions": {
+          "width": 384,
+          "height": 384
         }
       }
     },
@@ -3813,19 +3833,25 @@
       "cocosImageImport": "supported",
       "alt": "双镜片投射取证扫描线的溯证目镜",
       "role": "icon",
-      "width": 1254,
-      "height": 1254,
+      "width": 384,
+      "height": 384,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 2,
       "sourceSha256": "164d5a3293f2be13845aaed76efd8e51388ebb85a4fe20756d4a28d5e326b8da",
-      "targetSha256": "164d5a3293f2be13845aaed76efd8e51388ebb85a4fe20756d4a28d5e326b8da",
+      "targetSha256": "fe1105d14609cd4896d32499d2ace1871d0fd7d9c45648eb2a0387369b829943",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 384 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1254,
           "height": 1254
+        },
+        "targetDimensions": {
+          "width": 384,
+          "height": 384
         }
       }
     },
@@ -5064,10 +5090,10 @@
       "kind": "dungeon",
       "entityId": "mirror_cycle_city",
       "resourcePath": "dungeon/mirror-cycle-city-v2",
-      "resourceFile": "dungeon/mirror-cycle-city-v2.png",
+      "resourceFile": "dungeon/mirror-cycle-city-v2.jpg",
       "sourceFile": "infinite-flow-wechat/prototype/style-refresh/assets/mirror-banner-proposed.png",
       "sourceFormat": "png",
-      "targetFormat": "png",
+      "targetFormat": "jpg",
       "cocosImageImport": "supported",
       "alt": "轮回城现实与镜像双相街区",
       "role": "banner",
@@ -5077,10 +5103,17 @@
       "source": "project-original-generated",
       "sourceRevision": 2,
       "sourceSha256": "6da074afcd4e0bb6eb8436caf285964d143d84b9bb9ab085e244faf21dfd7d42",
-      "targetSha256": "6da074afcd4e0bb6eb8436caf285964d143d84b9bb9ab085e244faf21dfd7d42",
+      "targetSha256": "404526321e4706a5e117e3e55d8e3d984c8fc10c53c43345bb5c3a0ebe614c08",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
+          "width": 2172,
+          "height": 724
+        },
         "targetDimensions": {
           "width": 2172,
           "height": 724
@@ -5664,10 +5697,10 @@
       "kind": "scene",
       "entityId": "dungeon_world_demon_tower_1",
       "resourcePath": "dungeon-world/demon_tower_1-v1",
-      "resourceFile": "dungeon-world/demon_tower_1-v1.png",
+      "resourceFile": "dungeon-world/demon_tower_1-v1.jpg",
       "sourceFile": "infinite-flow-wechat/art-source/dungeon-world/demon_tower_1-v1.png",
       "sourceFormat": "png",
-      "targetFormat": "png",
+      "targetFormat": "jpg",
       "cocosImageImport": "supported",
       "alt": "妖塔一层的方形俯视探索背景",
       "role": "scene",
@@ -5677,11 +5710,17 @@
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "955674f151e05823f676b768e3585da4f64ede7fff15cea2486952cc4a84b88f",
-      "targetSha256": "955674f151e05823f676b768e3585da4f64ede7fff15cea2486952cc4a84b88f",
+      "targetSha256": "9e7b1f1af07ae3dd87e7c192ec89520be7371eb02085629a3568a3a2f5b127a8",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "version": "macOS 26.5.1 (25F80)",
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
+          "width": 1254,
+          "height": 1254
+        },
         "targetDimensions": {
           "width": 1254,
           "height": 1254
@@ -5693,10 +5732,10 @@
       "kind": "scene",
       "entityId": "dungeon_world_metro_abyss",
       "resourcePath": "dungeon-world/metro_abyss-v1",
-      "resourceFile": "dungeon-world/metro_abyss-v1.png",
+      "resourceFile": "dungeon-world/metro_abyss-v1.jpg",
       "sourceFile": "infinite-flow-wechat/art-source/dungeon-world/metro_abyss-v1.png",
       "sourceFormat": "png",
-      "targetFormat": "png",
+      "targetFormat": "jpg",
       "cocosImageImport": "supported",
       "alt": "镜潮地铁的方形俯视探索背景",
       "role": "scene",
@@ -5706,11 +5745,17 @@
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "3dac4b8f1116de1fc4c2ea86ae1324c3bef0f7e5340d6f6c5e37dc20dbdc9955",
-      "targetSha256": "3dac4b8f1116de1fc4c2ea86ae1324c3bef0f7e5340d6f6c5e37dc20dbdc9955",
+      "targetSha256": "0c4668153226845c528d987a3525711d881496c9606f516cf0e2031904c96953",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "version": "macOS 26.5.1 (25F80)",
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
+          "width": 1254,
+          "height": 1254
+        },
         "targetDimensions": {
           "width": 1254,
           "height": 1254
@@ -5722,10 +5767,10 @@
       "kind": "scene",
       "entityId": "dungeon_world_starfall_mine",
       "resourcePath": "dungeon-world/starfall_mine-v1",
-      "resourceFile": "dungeon-world/starfall_mine-v1.png",
+      "resourceFile": "dungeon-world/starfall_mine-v1.jpg",
       "sourceFile": "infinite-flow-wechat/art-source/dungeon-world/starfall_mine-v1.png",
       "sourceFormat": "png",
-      "targetFormat": "png",
+      "targetFormat": "jpg",
       "cocosImageImport": "supported",
       "alt": "星坠矿井的方形俯视探索背景",
       "role": "scene",
@@ -5735,11 +5780,17 @@
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "4112c489f19d8fd7513626abf1ecae5bc7e5bb4bbf08bf9e41bc0a0b3aeaca39",
-      "targetSha256": "4112c489f19d8fd7513626abf1ecae5bc7e5bb4bbf08bf9e41bc0a0b3aeaca39",
+      "targetSha256": "a436ede2d07159a14d5ad3df2f7aa2dba97f0b453e3d84cf363acf8529a41013",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "version": "macOS 26.5.1 (25F80)",
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
+          "width": 1254,
+          "height": 1254
+        },
         "targetDimensions": {
           "width": 1254,
           "height": 1254
@@ -5751,10 +5802,10 @@
       "kind": "scene",
       "entityId": "dungeon_world_rust_hospital",
       "resourcePath": "dungeon-world/rust_hospital-v1",
-      "resourceFile": "dungeon-world/rust_hospital-v1.png",
+      "resourceFile": "dungeon-world/rust_hospital-v1.jpg",
       "sourceFile": "infinite-flow-wechat/art-source/dungeon-world/rust_hospital-v1.png",
       "sourceFormat": "png",
-      "targetFormat": "png",
+      "targetFormat": "jpg",
       "cocosImageImport": "supported",
       "alt": "锈疫病院的方形俯视探索背景",
       "role": "scene",
@@ -5764,11 +5815,17 @@
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "42f6c7dccba2a510278489d1e2a1858fbf456a27269d1909eb7ee2dc66007d39",
-      "targetSha256": "42f6c7dccba2a510278489d1e2a1858fbf456a27269d1909eb7ee2dc66007d39",
+      "targetSha256": "9a26bd56eb3af5fee6814d3f63e9cc30fe6a32968a815944f96365bbfdf31354",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "version": "macOS 26.5.1 (25F80)",
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
+          "width": 1254,
+          "height": 1254
+        },
         "targetDimensions": {
           "width": 1254,
           "height": 1254
@@ -5780,10 +5837,10 @@
       "kind": "scene",
       "entityId": "dungeon_world_ash_arena",
       "resourcePath": "dungeon-world/ash_arena-v1",
-      "resourceFile": "dungeon-world/ash_arena-v1.png",
+      "resourceFile": "dungeon-world/ash_arena-v1.jpg",
       "sourceFile": "infinite-flow-wechat/art-source/dungeon-world/ash_arena-v1.png",
       "sourceFormat": "png",
-      "targetFormat": "png",
+      "targetFormat": "jpg",
       "cocosImageImport": "supported",
       "alt": "灰烬竞技场的方形俯视探索背景",
       "role": "scene",
@@ -5793,11 +5850,17 @@
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "7456d653d34f2f040ef7dd638c4d4abc804614190419b59346fdb2a1df2e56a2",
-      "targetSha256": "7456d653d34f2f040ef7dd638c4d4abc804614190419b59346fdb2a1df2e56a2",
+      "targetSha256": "f244f5ccbec803145f89b4dd29fb091ce53dc97953af74bf7d16af46f89f2b39",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "version": "macOS 26.5.1 (25F80)",
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
+          "width": 1254,
+          "height": 1254
+        },
         "targetDimensions": {
           "width": 1254,
           "height": 1254
@@ -5809,10 +5872,10 @@
       "kind": "scene",
       "entityId": "dungeon_world_dream_archive",
       "resourcePath": "dungeon-world/dream_archive-v1",
-      "resourceFile": "dungeon-world/dream_archive-v1.png",
+      "resourceFile": "dungeon-world/dream_archive-v1.jpg",
       "sourceFile": "infinite-flow-wechat/art-source/dungeon-world/dream_archive-v1.png",
       "sourceFormat": "png",
-      "targetFormat": "png",
+      "targetFormat": "jpg",
       "cocosImageImport": "supported",
       "alt": "梦档案馆的方形俯视探索背景",
       "role": "scene",
@@ -5822,11 +5885,17 @@
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "b7ec527eeb1322c38c95cd2fc7d36b6084731e11a27fbc3482bb8a1b783deff9",
-      "targetSha256": "b7ec527eeb1322c38c95cd2fc7d36b6084731e11a27fbc3482bb8a1b783deff9",
+      "targetSha256": "68edba8908964c71510bb077be054198a05da03e8d49d8006c239e6c30560a4d",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "version": "macOS 26.5.1 (25F80)",
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
+          "width": 1254,
+          "height": 1254
+        },
         "targetDimensions": {
           "width": 1254,
           "height": 1254
@@ -5838,10 +5907,10 @@
       "kind": "scene",
       "entityId": "dungeon_world_void_citadel",
       "resourcePath": "dungeon-world/void_citadel-v1",
-      "resourceFile": "dungeon-world/void_citadel-v1.png",
+      "resourceFile": "dungeon-world/void_citadel-v1.jpg",
       "sourceFile": "infinite-flow-wechat/art-source/dungeon-world/void_citadel-v1.png",
       "sourceFormat": "png",
-      "targetFormat": "png",
+      "targetFormat": "jpg",
       "cocosImageImport": "supported",
       "alt": "虚界城的方形俯视探索背景",
       "role": "scene",
@@ -5851,11 +5920,17 @@
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "ad2f99e7dd243db53b7edde8cb4dd74ad60daae7c83853fa6b7af736ec592608",
-      "targetSha256": "ad2f99e7dd243db53b7edde8cb4dd74ad60daae7c83853fa6b7af736ec592608",
+      "targetSha256": "470db83f1e945ae1faf184057ae11887385ac49460e46f7aa5612ee8a0001d32",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "version": "macOS 26.5.1 (25F80)",
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
+          "width": 1254,
+          "height": 1254
+        },
         "targetDimensions": {
           "width": 1254,
           "height": 1254
@@ -5867,10 +5942,10 @@
       "kind": "scene",
       "entityId": "dungeon_world_temporal_observatory",
       "resourcePath": "dungeon-world/temporal_observatory-v1",
-      "resourceFile": "dungeon-world/temporal_observatory-v1.png",
+      "resourceFile": "dungeon-world/temporal_observatory-v1.jpg",
       "sourceFile": "infinite-flow-wechat/art-source/dungeon-world/temporal_observatory-v1.png",
       "sourceFormat": "png",
-      "targetFormat": "png",
+      "targetFormat": "jpg",
       "cocosImageImport": "supported",
       "alt": "时序观测庭的方形俯视探索背景",
       "role": "scene",
@@ -5880,11 +5955,17 @@
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "099499f7bf0abf105de1b428354f48238ee669120082b4c9a8238f9a5dde6bfd",
-      "targetSha256": "099499f7bf0abf105de1b428354f48238ee669120082b4c9a8238f9a5dde6bfd",
+      "targetSha256": "d70428fe1437766e67cffff2febd02406e89fbaa58522c55d697d243b25057fe",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "version": "macOS 26.5.1 (25F80)",
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
+          "width": 1254,
+          "height": 1254
+        },
         "targetDimensions": {
           "width": 1254,
           "height": 1254
@@ -5896,10 +5977,10 @@
       "kind": "scene",
       "entityId": "dungeon_world_causal_clearinghouse",
       "resourcePath": "dungeon-world/causal_clearinghouse-v1",
-      "resourceFile": "dungeon-world/causal_clearinghouse-v1.png",
+      "resourceFile": "dungeon-world/causal_clearinghouse-v1.jpg",
       "sourceFile": "infinite-flow-wechat/art-source/dungeon-world/causal_clearinghouse-v1.png",
       "sourceFormat": "png",
-      "targetFormat": "png",
+      "targetFormat": "jpg",
       "cocosImageImport": "supported",
       "alt": "因果清算所的方形俯视探索背景",
       "role": "scene",
@@ -5909,11 +5990,17 @@
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "fb8f209e6be8d37c90d368c1828eb21af896a17aad7746b8f1da10f19fbf5728",
-      "targetSha256": "fb8f209e6be8d37c90d368c1828eb21af896a17aad7746b8f1da10f19fbf5728",
+      "targetSha256": "390574b491deab2ee42d63326aeb8d4de41c3df05c8ec04af6d4335e4b7ae440",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "version": "macOS 26.5.1 (25F80)",
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
+          "width": 1254,
+          "height": 1254
+        },
         "targetDimensions": {
           "width": 1254,
           "height": 1254
@@ -5925,10 +6012,10 @@
       "kind": "scene",
       "entityId": "dungeon_world_entropy_ark",
       "resourcePath": "dungeon-world/entropy_ark-v1",
-      "resourceFile": "dungeon-world/entropy_ark-v1.png",
+      "resourceFile": "dungeon-world/entropy_ark-v1.jpg",
       "sourceFile": "infinite-flow-wechat/art-source/dungeon-world/entropy_ark-v1.png",
       "sourceFormat": "png",
-      "targetFormat": "png",
+      "targetFormat": "jpg",
       "cocosImageImport": "supported",
       "alt": "熵海方舟的方形俯视探索背景",
       "role": "scene",
@@ -5938,11 +6025,17 @@
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "8e97f12ffc1d620254692df885e2db0d5d2e926b78ec4f5d6f5b2b6be58cc948",
-      "targetSha256": "8e97f12ffc1d620254692df885e2db0d5d2e926b78ec4f5d6f5b2b6be58cc948",
+      "targetSha256": "cb94bc8aa3f525b149fbb7d1d955bab56b0c8beb8f1575c70c36b35305f825b9",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "version": "macOS 26.5.1 (25F80)",
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
+          "width": 1254,
+          "height": 1254
+        },
         "targetDimensions": {
           "width": 1254,
           "height": 1254
@@ -5954,10 +6047,10 @@
       "kind": "scene",
       "entityId": "dungeon_world_mirror_cycle_city",
       "resourcePath": "dungeon-world/mirror_cycle_city-v1",
-      "resourceFile": "dungeon-world/mirror_cycle_city-v1.png",
+      "resourceFile": "dungeon-world/mirror_cycle_city-v1.jpg",
       "sourceFile": "infinite-flow-wechat/art-source/dungeon-world/mirror_cycle_city-v1.png",
       "sourceFormat": "png",
-      "targetFormat": "png",
+      "targetFormat": "jpg",
       "cocosImageImport": "supported",
       "alt": "镜海轮回城的方形俯视探索背景",
       "role": "scene",
@@ -5967,11 +6060,17 @@
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "7d2c6e4b864bdc90828c1625e1077e9517dedb1713420f96d10613439cd79dab",
-      "targetSha256": "7d2c6e4b864bdc90828c1625e1077e9517dedb1713420f96d10613439cd79dab",
+      "targetSha256": "1d64872eeb6dc575b71ac42b63cd9a96b02b9b08e6e4570e73848ed8ce095031",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "version": "macOS 26.5.1 (25F80)",
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
+          "width": 1254,
+          "height": 1254
+        },
         "targetDimensions": {
           "width": 1254,
           "height": 1254
@@ -5983,10 +6082,10 @@
       "kind": "scene",
       "entityId": "dungeon_world_redaction_scriptorium",
       "resourcePath": "dungeon-world/redaction_scriptorium-v1",
-      "resourceFile": "dungeon-world/redaction_scriptorium-v1.png",
+      "resourceFile": "dungeon-world/redaction_scriptorium-v1.jpg",
       "sourceFile": "infinite-flow-wechat/art-source/dungeon-world/redaction_scriptorium-v1.png",
       "sourceFormat": "png",
-      "targetFormat": "png",
+      "targetFormat": "jpg",
       "cocosImageImport": "supported",
       "alt": "删界终稿院的方形俯视探索背景",
       "role": "scene",
@@ -5996,11 +6095,17 @@
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "bfc32f54936772e50a40226e9f5104b78969df38e13caefdc667e3ca3e0a099c",
-      "targetSha256": "bfc32f54936772e50a40226e9f5104b78969df38e13caefdc667e3ca3e0a099c",
+      "targetSha256": "92cc9276660784074d6c8bf187e7996d6d55c5160df5e929a0ea5e63f4042a62",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "version": "macOS 26.5.1 (25F80)",
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
+          "width": 1254,
+          "height": 1254
+        },
         "targetDimensions": {
           "width": 1254,
           "height": 1254
@@ -6012,10 +6117,10 @@
       "kind": "scene",
       "entityId": "dungeon_world_legacy_auction_court",
       "resourcePath": "dungeon-world/legacy_auction_court-v1",
-      "resourceFile": "dungeon-world/legacy_auction_court-v1.png",
+      "resourceFile": "dungeon-world/legacy_auction_court-v1.jpg",
       "sourceFile": "infinite-flow-wechat/art-source/dungeon-world/legacy_auction_court-v1.png",
       "sourceFormat": "png",
-      "targetFormat": "png",
+      "targetFormat": "jpg",
       "cocosImageImport": "supported",
       "alt": "亡队遗产拍卖庭的方形俯视探索背景",
       "role": "scene",
@@ -6025,11 +6130,17 @@
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "096f8eda3627d923f6d512fd8c8ba4939c6fcd1dbef94f73424f8e95440a99ce",
-      "targetSha256": "096f8eda3627d923f6d512fd8c8ba4939c6fcd1dbef94f73424f8e95440a99ce",
+      "targetSha256": "a8708ed5a4959b641d1194d9de4e2e78f25c2e711f2a12c98f68d3b09d97c848",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "version": "macOS 26.5.1 (25F80)",
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
+          "width": 1254,
+          "height": 1254
+        },
         "targetDimensions": {
           "width": 1254,
           "height": 1254
@@ -6041,10 +6152,10 @@
       "kind": "scene",
       "entityId": "dungeon_world_genesis_vault",
       "resourcePath": "dungeon-world/genesis_vault-v1",
-      "resourceFile": "dungeon-world/genesis_vault-v1.png",
+      "resourceFile": "dungeon-world/genesis_vault-v1.jpg",
       "sourceFile": "infinite-flow-wechat/art-source/dungeon-world/genesis_vault-v1.png",
       "sourceFormat": "png",
-      "targetFormat": "png",
+      "targetFormat": "jpg",
       "cocosImageImport": "supported",
       "alt": "众生原型库的方形俯视探索背景",
       "role": "scene",
@@ -6054,11 +6165,17 @@
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "eccc934375cbba378af0fb11dc526210058f8382c75345a88895d5b06f9f11d8",
-      "targetSha256": "eccc934375cbba378af0fb11dc526210058f8382c75345a88895d5b06f9f11d8",
+      "targetSha256": "ab5a955962a567da4bcd0041f3c390ab1b33467430dc556302bdc0f603ca96d9",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "version": "macOS 26.5.1 (25F80)",
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
+          "width": 1254,
+          "height": 1254
+        },
         "targetDimensions": {
           "width": 1254,
           "height": 1254
@@ -6070,10 +6187,10 @@
       "kind": "scene",
       "entityId": "dungeon_world_silent_broadcast_tower",
       "resourcePath": "dungeon-world/silent_broadcast_tower-v1",
-      "resourceFile": "dungeon-world/silent_broadcast_tower-v1.png",
+      "resourceFile": "dungeon-world/silent_broadcast_tower-v1.jpg",
       "sourceFile": "infinite-flow-wechat/art-source/dungeon-world/silent_broadcast_tower-v1.png",
       "sourceFormat": "png",
-      "targetFormat": "png",
+      "targetFormat": "jpg",
       "cocosImageImport": "supported",
       "alt": "寂声广播塔的方形俯视探索背景",
       "role": "scene",
@@ -6083,11 +6200,17 @@
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "b0e85c70611998bb9d04f546f2d4ce5a5cb7042b5c3006f9ed6e627766bd46f9",
-      "targetSha256": "b0e85c70611998bb9d04f546f2d4ce5a5cb7042b5c3006f9ed6e627766bd46f9",
+      "targetSha256": "3c46dd8be0abbbcf01c2dbd8d81d329643f05aac837c24c7f4ccbd17c39d7195",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "version": "macOS 26.5.1 (25F80)",
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
+          "width": 1254,
+          "height": 1254
+        },
         "targetDimensions": {
           "width": 1254,
           "height": 1254
@@ -6099,10 +6222,10 @@
       "kind": "scene",
       "entityId": "dungeon_world_lost_shelter",
       "resourcePath": "dungeon-world/lost_shelter-v1",
-      "resourceFile": "dungeon-world/lost_shelter-v1.png",
+      "resourceFile": "dungeon-world/lost_shelter-v1.jpg",
       "sourceFile": "infinite-flow-wechat/art-source/dungeon-world/lost_shelter-v1.png",
       "sourceFormat": "png",
-      "targetFormat": "png",
+      "targetFormat": "jpg",
       "cocosImageImport": "supported",
       "alt": "失联避难所的方形俯视探索背景",
       "role": "scene",
@@ -6112,11 +6235,17 @@
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "4803d14622f9ab18cde88154964f84f23b703721a4b83eed345f79946834add8",
-      "targetSha256": "4803d14622f9ab18cde88154964f84f23b703721a4b83eed345f79946834add8",
+      "targetSha256": "6af46fc216683c8f13b60cdbad88f4f084a339cfd306e038db9388c8244343d4",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "version": "macOS 26.5.1 (25F80)",
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
+          "width": 1254,
+          "height": 1254
+        },
         "targetDimensions": {
           "width": 1254,
           "height": 1254
@@ -6128,10 +6257,10 @@
       "kind": "scene",
       "entityId": "dungeon_world_false_testimony_court",
       "resourcePath": "dungeon-world/false_testimony_court-v1",
-      "resourceFile": "dungeon-world/false_testimony_court-v1.png",
+      "resourceFile": "dungeon-world/false_testimony_court-v1.jpg",
       "sourceFile": "infinite-flow-wechat/art-source/dungeon-world/false_testimony_court-v1.png",
       "sourceFormat": "png",
-      "targetFormat": "png",
+      "targetFormat": "jpg",
       "cocosImageImport": "supported",
       "alt": "伪证裁定庭的方形俯视探索背景",
       "role": "scene",
@@ -6141,11 +6270,17 @@
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "66235262bf905bfa6a734ad104e72b471cda05cc5efb5cd7e9e3d1c10c4d4b91",
-      "targetSha256": "66235262bf905bfa6a734ad104e72b471cda05cc5efb5cd7e9e3d1c10c4d4b91",
+      "targetSha256": "5d7cd47a34ee91078473da82d8c3a8850e13b1b6ed59d5a91afab135da731226",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "version": "macOS 26.5.1 (25F80)",
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
+          "width": 1254,
+          "height": 1254
+        },
         "targetDimensions": {
           "width": 1254,
           "height": 1254
@@ -6157,10 +6292,10 @@
       "kind": "scene",
       "entityId": "dungeon_world_combat_replay_stage",
       "resourcePath": "dungeon-world/combat_replay_stage-v1",
-      "resourceFile": "dungeon-world/combat_replay_stage-v1.png",
+      "resourceFile": "dungeon-world/combat_replay_stage-v1.jpg",
       "sourceFile": "infinite-flow-wechat/art-source/dungeon-world/combat_replay_stage-v1.png",
       "sourceFormat": "png",
-      "targetFormat": "png",
+      "targetFormat": "jpg",
       "cocosImageImport": "supported",
       "alt": "战痕复演场的方形俯视探索背景",
       "role": "scene",
@@ -6170,11 +6305,17 @@
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "84fb0bfa0be0d23712dcd44a177603f8d6f45e4fed0fdcae01352f135b57f0d6",
-      "targetSha256": "84fb0bfa0be0d23712dcd44a177603f8d6f45e4fed0fdcae01352f135b57f0d6",
+      "targetSha256": "458044a8be350a32ef630e78710ac3ebc4cfd72f182b745b14f1275a3f9c44ea",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "version": "macOS 26.5.1 (25F80)",
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
+          "width": 1254,
+          "height": 1254
+        },
         "targetDimensions": {
           "width": 1254,
           "height": 1254
@@ -6186,10 +6327,10 @@
       "kind": "scene",
       "entityId": "dungeon_world_panopticon_city",
       "resourcePath": "dungeon-world/panopticon_city-v1",
-      "resourceFile": "dungeon-world/panopticon_city-v1.png",
+      "resourceFile": "dungeon-world/panopticon_city-v1.jpg",
       "sourceFile": "infinite-flow-wechat/art-source/dungeon-world/panopticon_city-v1.png",
       "sourceFormat": "png",
-      "targetFormat": "png",
+      "targetFormat": "jpg",
       "cocosImageImport": "supported",
       "alt": "天幕监察城的方形俯视探索背景",
       "role": "scene",
@@ -6199,11 +6340,17 @@
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "59b033f7a65b70acd079a304f635aed3daf0cc31654382eb78eed3416f5d60b8",
-      "targetSha256": "59b033f7a65b70acd079a304f635aed3daf0cc31654382eb78eed3416f5d60b8",
+      "targetSha256": "06374afd36fcafb2a4e6be0c1c3fbb2a5bc77fe98d7d215cb406070340aa77fd",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "version": "macOS 26.5.1 (25F80)",
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
+          "width": 1254,
+          "height": 1254
+        },
         "targetDimensions": {
           "width": 1254,
           "height": 1254
@@ -6222,19 +6369,25 @@
       "cocosImageImport": "supported",
       "alt": "吐纳诀",
       "role": "icon",
-      "width": 1254,
-      "height": 1254,
+      "width": 384,
+      "height": 384,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 2,
       "sourceSha256": "fee646891c9b7872ae1ec5bf3a13e4b4773eb43b6454023e06fcee602356b6ef",
-      "targetSha256": "fee646891c9b7872ae1ec5bf3a13e4b4773eb43b6454023e06fcee602356b6ef",
+      "targetSha256": "cce65222bcc1882000282a983a95e50756734312beeea2b9044469fc59f40376",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 384 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1254,
           "height": 1254
+        },
+        "targetDimensions": {
+          "width": 384,
+          "height": 384
         }
       }
     },
@@ -6250,19 +6403,25 @@
       "cocosImageImport": "supported",
       "alt": "铁衣诀",
       "role": "icon",
-      "width": 1254,
-      "height": 1254,
+      "width": 384,
+      "height": 384,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 2,
       "sourceSha256": "9637c4b4d1258819769ecbc7d4e538693282e4bea78a9f8df7555221de8f65ab",
-      "targetSha256": "9637c4b4d1258819769ecbc7d4e538693282e4bea78a9f8df7555221de8f65ab",
+      "targetSha256": "8e735f34981b20d5a839a5779e670e568d880e3889111e74cca746b4a61a5c1b",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 384 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1254,
           "height": 1254
+        },
+        "targetDimensions": {
+          "width": 384,
+          "height": 384
         }
       }
     },
@@ -6278,19 +6437,25 @@
       "cocosImageImport": "supported",
       "alt": "云隙步",
       "role": "icon",
-      "width": 1254,
-      "height": 1254,
+      "width": 384,
+      "height": 384,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 2,
       "sourceSha256": "b6bce8615c31b315f893d95c45b399b5dd3968565a5a930a6b9b97b70181a30e",
-      "targetSha256": "b6bce8615c31b315f893d95c45b399b5dd3968565a5a930a6b9b97b70181a30e",
+      "targetSha256": "a992c99eec9c4fc7d35db1f64341be17404ef10f275addcd60bc89afb33d32ab",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 384 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1254,
           "height": 1254
+        },
+        "targetDimensions": {
+          "width": 384,
+          "height": 384
         }
       }
     },
@@ -6306,19 +6471,25 @@
       "cocosImageImport": "supported",
       "alt": "观门法",
       "role": "icon",
-      "width": 1254,
-      "height": 1254,
+      "width": 384,
+      "height": 384,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 2,
       "sourceSha256": "e697e7079cac7f5baa47d158126585dee45835d6a4690eab81be2cfc5c668581",
-      "targetSha256": "e697e7079cac7f5baa47d158126585dee45835d6a4690eab81be2cfc5c668581",
+      "targetSha256": "03acdb0357eeb861812ac59daefad6856eebd3f29e821a4be3b9b73946e1087e",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 384 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1254,
           "height": 1254
+        },
+        "targetDimensions": {
+          "width": 384,
+          "height": 384
         }
       }
     },
@@ -6334,19 +6505,25 @@
       "cocosImageImport": "supported",
       "alt": "星核炼息",
       "role": "icon",
-      "width": 1254,
-      "height": 1254,
+      "width": 384,
+      "height": 384,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 2,
       "sourceSha256": "20749ad83ad69787f4517d2c2fedcc103ebe5389432ec56519fe446d25501f78",
-      "targetSha256": "20749ad83ad69787f4517d2c2fedcc103ebe5389432ec56519fe446d25501f78",
+      "targetSha256": "8aeb2ec19846bddf8656891aa6a006d38ac1d9c7d305119eccddc92986e12b3d",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 384 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1254,
           "height": 1254
+        },
+        "targetDimensions": {
+          "width": 384,
+          "height": 384
         }
       }
     },
@@ -6362,19 +6539,25 @@
       "cocosImageImport": "supported",
       "alt": "御灵印",
       "role": "icon",
-      "width": 1254,
-      "height": 1254,
+      "width": 384,
+      "height": 384,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 2,
       "sourceSha256": "d38e051e0f5602acc0238f1ea488c833ed61bbe94dcb35d98e63fbfef1ef9a25",
-      "targetSha256": "d38e051e0f5602acc0238f1ea488c833ed61bbe94dcb35d98e63fbfef1ef9a25",
+      "targetSha256": "f5426daefed8bd78f497e89ee6974bd3ddfad7649bd5efff85f7cf35813bbbd8",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 384 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1254,
           "height": 1254
+        },
+        "targetDimensions": {
+          "width": 384,
+          "height": 384
         }
       }
     },
@@ -6390,19 +6573,25 @@
       "cocosImageImport": "supported",
       "alt": "虚心诀",
       "role": "icon",
-      "width": 1254,
-      "height": 1254,
+      "width": 384,
+      "height": 384,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 2,
       "sourceSha256": "bdfbea5b45d0eefb465100bc1be99f42875361fd5093828712b197356df3a5d1",
-      "targetSha256": "bdfbea5b45d0eefb465100bc1be99f42875361fd5093828712b197356df3a5d1",
+      "targetSha256": "915b7599577bda9ec3f09f6eb035d693a723e8d1f39da8688dc1419a5823f472",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 384 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1254,
           "height": 1254
+        },
+        "targetDimensions": {
+          "width": 384,
+          "height": 384
         }
       }
     },
@@ -6418,19 +6607,25 @@
       "cocosImageImport": "supported",
       "alt": "巨灵骨髓",
       "role": "icon",
-      "width": 1254,
-      "height": 1254,
+      "width": 384,
+      "height": 384,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 2,
       "sourceSha256": "8858a2b1df6c9b2248acc7a18ea58f1e3031c53cf96bb9b3fd0746834d88e2c1",
-      "targetSha256": "8858a2b1df6c9b2248acc7a18ea58f1e3031c53cf96bb9b3fd0746834d88e2c1",
+      "targetSha256": "eb9ca8cd82b5a87b47d3d24c9dec29f31593d3187b2de5d364a5f03a11f82eb8",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 384 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1254,
           "height": 1254
+        },
+        "targetDimensions": {
+          "width": 384,
+          "height": 384
         }
       }
     },
@@ -6446,19 +6641,25 @@
       "cocosImageImport": "supported",
       "alt": "虚界共生体",
       "role": "icon",
-      "width": 1254,
-      "height": 1254,
+      "width": 384,
+      "height": 384,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 2,
       "sourceSha256": "72888c3a04bfaad75230b216e0b067bdc67f7b944b963e64e1622239bb5958ef",
-      "targetSha256": "72888c3a04bfaad75230b216e0b067bdc67f7b944b963e64e1622239bb5958ef",
+      "targetSha256": "cbd65fd774c5f420a477652c1ad8c5afaeed7618296e0d6a2f0a0ec107679050",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 384 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1254,
           "height": 1254
+        },
+        "targetDimensions": {
+          "width": 384,
+          "height": 384
         }
       }
     },
@@ -6474,19 +6675,25 @@
       "cocosImageImport": "supported",
       "alt": "界壁甲质",
       "role": "icon",
-      "width": 1254,
-      "height": 1254,
+      "width": 384,
+      "height": 384,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 2,
       "sourceSha256": "9a571e47a73e3dee8a1724860cf36e0c42b0483035c82b54298c69bee6e1917b",
-      "targetSha256": "9a571e47a73e3dee8a1724860cf36e0c42b0483035c82b54298c69bee6e1917b",
+      "targetSha256": "9f1245a6504d681968352170959225343823274c0d2e2e3d74649a5712ce515f",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 384 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1254,
           "height": 1254
+        },
+        "targetDimensions": {
+          "width": 384,
+          "height": 384
         }
       }
     },
@@ -6502,19 +6709,25 @@
       "cocosImageImport": "supported",
       "alt": "涅槃余烬",
       "role": "icon",
-      "width": 1254,
-      "height": 1254,
+      "width": 384,
+      "height": 384,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 2,
       "sourceSha256": "e176580c531b22261c6af7137253b4806e77bee2a9eb3dfe636c2599cdebb599",
-      "targetSha256": "e176580c531b22261c6af7137253b4806e77bee2a9eb3dfe636c2599cdebb599",
+      "targetSha256": "9865f8384bde377b99dd034e5da50886c35585615b780f1ab58dc729ded34a03",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 384 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1254,
           "height": 1254
+        },
+        "targetDimensions": {
+          "width": 384,
+          "height": 384
         }
       }
     },
@@ -6655,26 +6868,33 @@
       "kind": "npc",
       "entityId": "companion_guide",
       "resourcePath": "npc/companion-guide-v2",
-      "resourceFile": "npc/companion-guide-v2.png",
+      "resourceFile": "npc/companion-guide-v2.jpg",
       "sourceFile": "infinite-flow-wechat/prototype/style-refresh/assets/guide-portrait-proposed.png",
       "sourceFormat": "png",
-      "targetFormat": "png",
+      "targetFormat": "jpg",
       "cocosImageImport": "supported",
       "alt": "灰白长辫、旧褐披袍的年长同行引路人肖像",
       "role": "portrait",
-      "width": 1254,
-      "height": 1254,
+      "width": 512,
+      "height": 512,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 2,
       "sourceSha256": "82989830693f0666bcfe18cc4d8fccdcb86bdc9beaaa97a34ee54eb05fe09c25",
-      "targetSha256": "82989830693f0666bcfe18cc4d8fccdcb86bdc9beaaa97a34ee54eb05fe09c25",
+      "targetSha256": "b2f3da703e2cfe3600609b31ebcea55a4ff40cc4a4ad29c7cdf98a945792ae16",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "targetDimensions": {
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 -Z 512 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
           "width": 1254,
           "height": 1254
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 512
         }
       }
     },
@@ -6690,20 +6910,25 @@
       "cocosImageImport": "supported",
       "alt": "管理模块武器的装备商人的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 682,
+      "height": 1024,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "600c1db0b1242d1d14b75f3dad405c9db8b3c98fdc5a011da61b48e030b19a6a",
-      "targetSha256": "600c1db0b1242d1d14b75f3dad405c9db8b3c98fdc5a011da61b48e030b19a6a",
+      "targetSha256": "545e629ad0f7120d50985789b4555d88f0311acccb4e7005e294ec95a93767d7",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "version": "macOS 26.5.1 (25F80)",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 1024 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 682,
+          "height": 1024
         }
       }
     },
@@ -6719,20 +6944,25 @@
       "cocosImageImport": "supported",
       "alt": "携带药箱与符包的补给商人的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 682,
+      "height": 1024,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "3fe50e3533cab3ec7fc9ae811d01629c93bd62c9d213796f3f40e18a043c0680",
-      "targetSha256": "3fe50e3533cab3ec7fc9ae811d01629c93bd62c9d213796f3f40e18a043c0680",
+      "targetSha256": "5bbb74fef090b85e304065d59484048dfef2fa2ad39ea0db234f8bce38c2698b",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "version": "macOS 26.5.1 (25F80)",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 1024 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 682,
+          "height": 1024
         }
       }
     },
@@ -6748,20 +6978,25 @@
       "cocosImageImport": "supported",
       "alt": "照料契约灵宠的宠物商人的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 682,
+      "height": 1024,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "25c3ac6ece564578fa244114413e664c8c571981e2be3d21afa257b33a5e90b1",
-      "targetSha256": "25c3ac6ece564578fa244114413e664c8c571981e2be3d21afa257b33a5e90b1",
+      "targetSha256": "345939c0c24d48672081d1ca061ff55955aa96064340a6e5d738228a3732906f",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "version": "macOS 26.5.1 (25F80)",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 1024 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 682,
+          "height": 1024
         }
       }
     },
@@ -6777,20 +7012,25 @@
       "cocosImageImport": "supported",
       "alt": "手持功法玉简的功法大师的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 682,
+      "height": 1024,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "4056498566b9fa1a2206531801c4be0a96fe86334e583c064bd1b29d27f134d4",
-      "targetSha256": "4056498566b9fa1a2206531801c4be0a96fe86334e583c064bd1b29d27f134d4",
+      "targetSha256": "428983881eb24405876b47832fa9efa80f453d532f2cedd2ed850e43b1eb37c6",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "version": "macOS 26.5.1 (25F80)",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 1024 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 682,
+          "height": 1024
         }
       }
     },
@@ -6806,20 +7046,25 @@
       "cocosImageImport": "supported",
       "alt": "血脉祭司的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 682,
+      "height": 1024,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "a1a33bb684a5b9ef5073d997b48af2890f698b3007213bddb4024590e1a78a79",
-      "targetSha256": "a1a33bb684a5b9ef5073d997b48af2890f698b3007213bddb4024590e1a78a79",
+      "targetSha256": "97b24207664735529e0cf0a057a8a074349c70194fc4cf99c00be51e0245fcc8",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "version": "macOS 26.5.1 (25F80)",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 1024 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 682,
+          "height": 1024
         }
       }
     },
@@ -6835,20 +7080,25 @@
       "cocosImageImport": "supported",
       "alt": "同行引路人的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 682,
+      "height": 1024,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "ac300ce9281c14a454e861427a4b5683b3239bea75301f5e63e67ba894a4b976",
-      "targetSha256": "ac300ce9281c14a454e861427a4b5683b3239bea75301f5e63e67ba894a4b976",
+      "targetSha256": "b9641dc6e5e04719a811a4d4221301234c250e5d7f1a10230dafbd2332391e0e",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "version": "macOS 26.5.1 (25F80)",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 1024 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 682,
+          "height": 1024
         }
       }
     },
@@ -6864,20 +7114,25 @@
       "cocosImageImport": "supported",
       "alt": "由旧金扫描线构成的主神投影的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 682,
+      "height": 1024,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "66b0690c093cc055b81d9f5a69b6b1f3df87fafaa4c7f9b601e532fd8270e107",
-      "targetSha256": "66b0690c093cc055b81d9f5a69b6b1f3df87fafaa4c7f9b601e532fd8270e107",
+      "targetSha256": "ec7bc52073e1e098050a0da0c2ccca44908e04ed9b3b7a6d16879ec2d6ed4e16",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "version": "macOS 26.5.1 (25F80)",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 1024 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 682,
+          "height": 1024
         }
       }
     },
@@ -6893,20 +7148,25 @@
       "cocosImageImport": "supported",
       "alt": "从灰雾中显形的雾中妖鬼的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "367aa3b9c405e650082109596b74e83a710c1555e87814018d6f1b6a75d1fce2",
-      "targetSha256": "367aa3b9c405e650082109596b74e83a710c1555e87814018d6f1b6a75d1fce2",
+      "targetSha256": "f0fbc2bd8590dcf99843de1b68bf898eb6a7aa55f95699adb1e3f20338657bf4",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -6922,20 +7182,25 @@
       "cocosImageImport": "supported",
       "alt": "披挂骨甲与重刃的剔骨塔卒的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "b3fe1465174f62417f04cc7d8f664a927e257639f70fa2d96159bd731f0819da",
-      "targetSha256": "b3fe1465174f62417f04cc7d8f664a927e257639f70fa2d96159bd731f0819da",
+      "targetSha256": "3912c7c1dbcf324e18666f7911bbd5d0fd85c5e54fb90de5b1a4b55c2f07a0c3",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -6951,20 +7216,25 @@
       "cocosImageImport": "supported",
       "alt": "提灯涉水而来的潮影船夫的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "7bc59ac3685183d88408593c7b6556045923fe1f9ff250c007388b50b9dd3821",
-      "targetSha256": "7bc59ac3685183d88408593c7b6556045923fe1f9ff250c007388b50b9dd3821",
+      "targetSha256": "25d56bd54a746edb297e4e336b4524aedf8b9d65176ae218dce17ca5d2400ec2",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -6980,20 +7250,25 @@
       "cocosImageImport": "supported",
       "alt": "以镜面长足织出银丝的镜丝织蛛的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "6105abb9cab2f0550f46e3e1c1279fce92b3f0c44c4089bce25687bf21635b73",
-      "targetSha256": "6105abb9cab2f0550f46e3e1c1279fce92b3f0c44c4089bce25687bf21635b73",
+      "targetSha256": "a8bdc432cae9e4892dc2f37a15f5e89ebb4167d644deaac7c8f3890544fe5a6a",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -7009,20 +7284,25 @@
       "cocosImageImport": "supported",
       "alt": "断轨与电弧环绕的断轨怨影的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "21c5331d529e97b5b80e9d9d2ddd766e5eb309a7fbab979a4a6cad9b782df346",
-      "targetSha256": "21c5331d529e97b5b80e9d9d2ddd766e5eb309a7fbab979a4a6cad9b782df346",
+      "targetSha256": "c420a1c1f917b84ebd31e7aba910756b66b1a50a3cda310b9e51ed972cebe6a7",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -7038,20 +7318,25 @@
       "cocosImageImport": "supported",
       "alt": "披覆星矿晶壳的矿壳守卫的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "05af5c5e9d5e5ad077bf6c0e388d10557815b91552c3882126161808eaf859d1",
-      "targetSha256": "05af5c5e9d5e5ad077bf6c0e388d10557815b91552c3882126161808eaf859d1",
+      "targetSha256": "2d40a13a76cf008539418c22d5ed6142bce09e3ef0f96322adc4b652b8a4bdf9",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -7067,20 +7352,25 @@
       "cocosImageImport": "supported",
       "alt": "由炭火与恶意凝成的跳火小鬼的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "b4c0e13944f1b97163bbdd6a7cf6845a74b479cfa777b0c1e868bf1fac1c364d",
-      "targetSha256": "b4c0e13944f1b97163bbdd6a7cf6845a74b479cfa777b0c1e868bf1fac1c364d",
+      "targetSha256": "6a6588fb6fbc77175a000251d409ed968ab155909f5584bf0b11a15f30b85763",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -7096,20 +7386,25 @@
       "cocosImageImport": "supported",
       "alt": "甲壳沿界隙裂开的裂门蜕兽的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "3d621e28829bb99a1deff29d66b6ace27b68b14ff27c3162a683949038c81907",
-      "targetSha256": "3d621e28829bb99a1deff29d66b6ace27b68b14ff27c3162a683949038c81907",
+      "targetSha256": "504f4070a23e506bce8a72387faa41e306b7dc53a7c7bf7285edbfacefc5fc8b",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -7125,20 +7420,25 @@
       "cocosImageImport": "supported",
       "alt": "携带锈蚀医疗工具的锈疫护工的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "3be4cec5bb12f4a3f1e1f247206a81e88e65553b2d84ca212f771552a258f8c0",
-      "targetSha256": "3be4cec5bb12f4a3f1e1f247206a81e88e65553b2d84ca212f771552a258f8c0",
+      "targetSha256": "a361bb57384134c4ac0cbdd3c34bc81960619f077af291381042c9ad56c56fd3",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -7154,20 +7454,25 @@
       "cocosImageImport": "supported",
       "alt": "操纵脉冲器械的脉冲医师的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "0b687fb84d42dd06a56d8ff18b4ae16c181cbbfedf3742df1fe4c19fe9947114",
-      "targetSha256": "0b687fb84d42dd06a56d8ff18b4ae16c181cbbfedf3742df1fe4c19fe9947114",
+      "targetSha256": "e4080d3e24a70e1134153a86bff2b5584e634d60df4fa42aca72c54445ff226e",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -7183,20 +7488,25 @@
       "cocosImageImport": "supported",
       "alt": "甲片间燃着余烬的灰烬斗士的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "98f9d941d03fe81e67e0e486393bb1b6725a8f3eaf45666207086b6586e2c4ce",
-      "targetSha256": "98f9d941d03fe81e67e0e486393bb1b6725a8f3eaf45666207086b6586e2c4ce",
+      "targetSha256": "d548e1f29a6f5040349a4041d9f4ab520fa5d0c2c83ace602cb7778a41019f50",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -7212,20 +7522,25 @@
       "cocosImageImport": "supported",
       "alt": "执掌炽热裁决刃的炉心裁判的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "95c80d176bbf6fe68b1288f86002f6b88e60b54bc1f834714880f800926f202c",
-      "targetSha256": "95c80d176bbf6fe68b1288f86002f6b88e60b54bc1f834714880f800926f202c",
+      "targetSha256": "1dc3332b05b18cce50e647432a8b934e25fea19f6e24d7d045a198401e3ea71f",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -7241,20 +7556,25 @@
       "cocosImageImport": "supported",
       "alt": "空白书页环绕的无面纸面馆主的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "1a1797147d7eeda7e540124c35305f4bfb71cd0d184849770353d3e2d35d964d",
-      "targetSha256": "1a1797147d7eeda7e540124c35305f4bfb71cd0d184849770353d3e2d35d964d",
+      "targetSha256": "cccdaf8b6acccccce7fa7e8fcb1471a4566b70b11f1f43207022827a9f175313",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -7270,20 +7590,25 @@
       "cocosImageImport": "supported",
       "alt": "拖曳梦锁与封存笼的梦牢看守的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "30ceda9444d5f8d74a7bf58bd077da57c127748d118649652b4284797d1e37a5",
-      "targetSha256": "30ceda9444d5f8d74a7bf58bd077da57c127748d118649652b4284797d1e37a5",
+      "targetSha256": "7d55cf3895927e40c6964637875cb61325bd581d4ec38bbfcf3dc11230039abd",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -7299,20 +7624,25 @@
       "cocosImageImport": "supported",
       "alt": "甲片悬浮于界隙之间的虚界骑士的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "276d33eccc530a33580da5af858a49ef4277a337a67aa9fbaecdc9fe356c5439",
-      "targetSha256": "276d33eccc530a33580da5af858a49ef4277a337a67aa9fbaecdc9fe356c5439",
+      "targetSha256": "271af14233845016c5a8ab004f684a2014682718fa1f9f078f99d913acb72d7b",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -7328,20 +7658,25 @@
       "cocosImageImport": "supported",
       "alt": "由黑曜碎面与扫描环构成的主神残响的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "358586e9764810cabfe76c1ed3925e208a918e7e4949a71ff00fbae96904c8e7",
-      "targetSha256": "358586e9764810cabfe76c1ed3925e208a918e7e4949a71ff00fbae96904c8e7",
+      "targetSha256": "65199af640e58d645ff0bfde35d0e1d07911f81ba7bb1868c3da213a0121b1f7",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -7357,20 +7692,25 @@
       "cocosImageImport": "supported",
       "alt": "拖曳时序残影的发条侦察兵的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "71df096de0ea3403dff66280ae30222642970e0adce690a9426be83c76b3849e",
-      "targetSha256": "71df096de0ea3403dff66280ae30222642970e0adce690a9426be83c76b3849e",
+      "targetSha256": "1f4dcc626dd5f07b22848cd80d123cbf3f8c615051c27602465d8bc4310ae157",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -7386,20 +7726,25 @@
       "cocosImageImport": "supported",
       "alt": "背负纪元环与冲击残响的纪元哨卫的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "4604d86f40abafcfefcf2bcaa4790054cf8ea9a0e61e059b2bd3c6d87618f450",
-      "targetSha256": "4604d86f40abafcfefcf2bcaa4790054cf8ea9a0e61e059b2bd3c6d87618f450",
+      "targetSha256": "cb06bdad47a1dc4f4a0f97d5056f9a11adf2d0a57299717537cb78f76b899d39",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -7415,20 +7760,25 @@
       "cocosImageImport": "supported",
       "alt": "过去与未来重影交叠的零时摄政的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "51e199c78a354b104f2842e48b448e9a3cbef1379d61adc31a59d1f717312809",
-      "targetSha256": "51e199c78a354b104f2842e48b448e9a3cbef1379d61adc31a59d1f717312809",
+      "targetSha256": "f5ff64c7d40aa2346a9424843ecbf9195c0d800c1ce37984aa96d4e978340a88",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -7444,20 +7794,25 @@
       "cocosImageImport": "supported",
       "alt": "手持悬浮裁决武器的裁决执事的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "5a489936532fce957d06c8f8f0f19965587d8407b7cb5e04821e8a2a774fd0d7",
-      "targetSha256": "5a489936532fce957d06c8f8f0f19965587d8407b7cb5e04821e8a2a774fd0d7",
+      "targetSha256": "e140dea6050308af8c3da6d2bd0975a6f747ac5bd291f1dee7a6a8797aa4461c",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -7473,20 +7828,25 @@
       "cocosImageImport": "supported",
       "alt": "因果位置彼此倒置的悖论法警的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "df87b90ff7e132da62a5ac4f53b498083d448745909d979923e3ebaf74bbb540",
-      "targetSha256": "df87b90ff7e132da62a5ac4f53b498083d448745909d979923e3ebaf74bbb540",
+      "targetSha256": "a04818717f1dfc54bf0bc70f67bee596d389361cb4cb5b90e2b6e10f79c84426",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -7502,20 +7862,25 @@
       "cocosImageImport": "supported",
       "alt": "双侧衡臂汇入黑曜核心的零和审计官的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "707775f549bb04889cf9c29a9afe1e363507c95268fea52816d9f8c8f6369dbe",
-      "targetSha256": "707775f549bb04889cf9c29a9afe1e363507c95268fea52816d9f8c8f6369dbe",
+      "targetSha256": "fb43e5ea78aa66d383a53ff8974494d39d00d4849ddbe523f2b78de1b6e1adc9",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -7531,20 +7896,25 @@
       "cocosImageImport": "supported",
       "alt": "失序结晶缠身的熵舱水手的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "6059c5fa0d85800dd3ded7a981bc98b20b71df1f0250140e874e2c3277f5908a",
-      "targetSha256": "6059c5fa0d85800dd3ded7a981bc98b20b71df1f0250140e874e2c3277f5908a",
+      "targetSha256": "2cc7a1cefbfa288ff5964baa07c094e7e20bc12b7b8fe5f419bab50f3e737f60",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -7560,20 +7930,25 @@
       "cocosImageImport": "supported",
       "alt": "与破损星盘融合的耗散领航员的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "a7043e7acdda0dd766fdeb912d59925c2bbc09ffdec2388dc549f3fb2ecc8408",
-      "targetSha256": "a7043e7acdda0dd766fdeb912d59925c2bbc09ffdec2388dc549f3fb2ecc8408",
+      "targetSha256": "891d0aedb807b885e0c677d25cd91a8bac86a31a7bc7d01c21bb9f58a6d5ef14",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -7589,20 +7964,25 @@
       "cocosImageImport": "supported",
       "alt": "与崩解舵轮融为一体的终末舵手的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "b7a8780302bf9e69f33e98a345aba57ba5b74b0ef2c36f6be2d4463510400273",
-      "targetSha256": "b7a8780302bf9e69f33e98a345aba57ba5b74b0ef2c36f6be2d4463510400273",
+      "targetSha256": "d195e98dc0198c2d5b15f9c5e33222cf309181e536505911ffd9f4df177567da",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -7618,20 +7998,25 @@
       "cocosImageImport": "supported",
       "alt": "本体与镜像彼此错位的视差猎手的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "75d6f5a993be6e30a2245d284643a187c38b8f8b0b231248fa9e727bab97d114",
-      "targetSha256": "75d6f5a993be6e30a2245d284643a187c38b8f8b0b231248fa9e727bab97d114",
+      "targetSha256": "4720d77bb613aa8d21fac4ba4b4fe93f2034a0116d6887532c382d70ad3035ea",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -7647,20 +8032,25 @@
       "cocosImageImport": "supported",
       "alt": "多重镜像躯干交叠的镜群合唱者的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "a3b9922ffe18effcdd382c3ea06d36a2d774de2dba8e49c759b27e0a97fc6222",
-      "targetSha256": "a3b9922ffe18effcdd382c3ea06d36a2d774de2dba8e49c759b27e0a97fc6222",
+      "targetSha256": "ddefd9aab81ac646ba6d03a15040dfb032851680189c78411c7316ef6f91f719",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -7676,20 +8066,25 @@
       "cocosImageImport": "supported",
       "alt": "身披黑曜镜甲的无名镜王的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "b535a15bbd74b97c1afb82ab610695dc55943dd8f3cf85241c48689446c8538c",
-      "targetSha256": "b535a15bbd74b97c1afb82ab610695dc55943dd8f3cf85241c48689446c8538c",
+      "targetSha256": "4168dcef09b317a770a45a97721bf09088fd9417bd3ca86d2482a0b478116ed9",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -7705,20 +8100,25 @@
       "cocosImageImport": "supported",
       "alt": "空白书页环绕的删界抄写员的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "931bc0af0062f16c07289c13b3c9b8957671165a7e096efd0674bf20be2a7102",
-      "targetSha256": "931bc0af0062f16c07289c13b3c9b8957671165a7e096efd0674bf20be2a7102",
+      "targetSha256": "42817eb36c636a52a2c2382903c4bbe33fc05fac308d4b3ed5ea6cce4c878f13",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -7734,20 +8134,25 @@
       "cocosImageImport": "supported",
       "alt": "以覆写书页作盾的覆页裁定者的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "165a2f385de943a0177ee0f9fd9ae4a07e0ec5f9bf0b3f836a67a4ce6d5b3a25",
-      "targetSha256": "165a2f385de943a0177ee0f9fd9ae4a07e0ec5f9bf0b3f836a67a4ce6d5b3a25",
+      "targetSha256": "b4c4693b34c93beee7ca9bc3bd829e60ef90e4fdb898e6d5f1e4ef78c61318d3",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -7763,20 +8168,25 @@
       "cocosImageImport": "supported",
       "alt": "手持巨型删界笔的终稿删界官的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "d6262237f24862d61728cc0edc5fc4155039871a8fcdae0045881381655f33f5",
-      "targetSha256": "d6262237f24862d61728cc0edc5fc4155039871a8fcdae0045881381655f33f5",
+      "targetSha256": "8a7d7f18225d02c81d23dd085c7f969d27ded3a457fa79405b931b9c79a6c13d",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -7792,20 +8202,25 @@
       "cocosImageImport": "supported",
       "alt": "账本锁链缠腕的底价执役的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "ec60af0020ce626145dff3e0a5a501bded0c7daf9c470fb7842e2e72d41d6e58",
-      "targetSha256": "ec60af0020ce626145dff3e0a5a501bded0c7daf9c470fb7842e2e72d41d6e58",
+      "targetSha256": "bf05f15e405533bb4ebe394fd34c397e93527a345bf9f728944070d5de7a098d",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -7821,20 +8236,25 @@
       "cocosImageImport": "supported",
       "alt": "遗物与面孔不断变形的遗产拟形体的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "b5ca9bbd6eb12b68583b33060b0bffea0ba858da67caf26cf152737be513a7b6",
-      "targetSha256": "b5ca9bbd6eb12b68583b33060b0bffea0ba858da67caf26cf152737be513a7b6",
+      "targetSha256": "e3ebc2dd5f921147db3c9353b469e3fa15c774e4bbbf34f7e3edb34e7950d12e",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -7850,20 +8270,25 @@
       "cocosImageImport": "supported",
       "alt": "巨槌与手臂融合的遗产执槌人的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "9bce1b908d081d12ca9c787fa956ca520b30018a795580bf107680fc80f2a800",
-      "targetSha256": "9bce1b908d081d12ca9c787fa956ca520b30018a795580bf107680fc80f2a800",
+      "targetSha256": "99bc612b6c799e7bd8ca2f605a1fecb520086cf4ba2ac033dfb9635077e7af4b",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -7879,20 +8304,25 @@
       "cocosImageImport": "supported",
       "alt": "血清瓶嵌入肋骨的基因猎犬的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "061efbb8d6347196f045b7a53e780e7690b973f216ddb68b85a78b653518230c",
-      "targetSha256": "061efbb8d6347196f045b7a53e780e7690b973f216ddb68b85a78b653518230c",
+      "targetSha256": "e840f006c4f80cdccbb940afece4fceb2ec442ddc0cf11835325277befe5b48c",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -7908,20 +8338,25 @@
       "cocosImageImport": "supported",
       "alt": "活性甲壳与血清罐共生的变异守库体的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "91aca446f2e3b37f930acbca05ff166cf2d48b6bcab668e52064389b1b320666",
-      "targetSha256": "91aca446f2e3b37f930acbca05ff166cf2d48b6bcab668e52064389b1b320666",
+      "targetSha256": "b411a58a9fabdd84d43fa28ab6cef102909ed13a0072d271e866af11c5b358c8",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -7937,20 +8372,25 @@
       "cocosImageImport": "supported",
       "alt": "托起螺旋样本架的原型典藏官的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "f4b07d8a2b6b0805cee0c5d1110b9390eb47e027fdd3920ba0ba47f5c76c317f",
-      "targetSha256": "f4b07d8a2b6b0805cee0c5d1110b9390eb47e027fdd3920ba0ba47f5c76c317f",
+      "targetSha256": "dabd4639af7567f972ad4af5bb9834ce90e787da9c4348d9a093379ba8b96239",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -7966,20 +8406,25 @@
       "cocosImageImport": "supported",
       "alt": "波形触须贯穿胸口的频段寄生体的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "aade2832f8071dc3e76c119f5ec28b08bc08a8de93383c4d64a512840aee08ec",
-      "targetSha256": "aade2832f8071dc3e76c119f5ec28b08bc08a8de93383c4d64a512840aee08ec",
+      "targetSha256": "86d43c36eb3ee7875e3596d3865e21ee48a5d6215254f521febfc41bb3a253a6",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -7995,20 +8440,25 @@
       "cocosImageImport": "supported",
       "alt": "磁带环缠绕玻璃耳面的死频拟声体的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "0a85825e729f5ca2a0fce69674b2b5038c38731ca145beb07de8b5eea918f6c2",
-      "targetSha256": "0a85825e729f5ca2a0fce69674b2b5038c38731ca145beb07de8b5eea918f6c2",
+      "targetSha256": "f984f2e37644caa4cc2d321405b85ff695ff61847e3bea7affb35fda31fe1f35",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -8024,20 +8474,25 @@
       "cocosImageImport": "supported",
       "alt": "以锁频盾护身的广播守卫的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "c314843a99318ef6fc3b3e5f145f038b10374aaa92461eaf4b27ac80aafec32b",
-      "targetSha256": "c314843a99318ef6fc3b3e5f145f038b10374aaa92461eaf4b27ac80aafec32b",
+      "targetSha256": "b8e1c13be5b3a5958f9ff060edeebbd8a9aae4841860600b016c3271288b69b8",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -8053,20 +8508,25 @@
       "cocosImageImport": "supported",
       "alt": "与三座中继桅杆融合的末频道播音主的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "160ec6d9b9c26b5456a64494b20dfce481d88aaa708116f3eade247e3e5b526c",
-      "targetSha256": "160ec6d9b9c26b5456a64494b20dfce481d88aaa708116f3eade247e3e5b526c",
+      "targetSha256": "e26c2f1c578d20169f3674b0102289da26245cbe581a74c9a161bf258e031b51",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -8082,20 +8542,25 @@
       "cocosImageImport": "supported",
       "alt": "皮下浮现第二张脸的拟声幸存者的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "8e6ad4ab9fc8fe3af8c6432754f03948ef3081bf5dfd8bbbaab38e2779d17782",
-      "targetSha256": "8e6ad4ab9fc8fe3af8c6432754f03948ef3081bf5dfd8bbbaab38e2779d17782",
+      "targetSha256": "b6cffbe1b8057d9d958b46f514a67fcb853902882d83c44f266cfff772e67658",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -8111,20 +8576,25 @@
       "cocosImageImport": "supported",
       "alt": "三段充能灯亮起的失控哨戒炮的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "a72552210bf4296278840181b814f2a5d076b9fa4ec005e0051b5416ed0a81f2",
-      "targetSha256": "a72552210bf4296278840181b814f2a5d076b9fa4ec005e0051b5416ed0a81f2",
+      "targetSha256": "dc72539255450e5b834454bf719af6d1f838c5ebb407f96c3f742eb72fdca823",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -8140,20 +8610,25 @@
       "cocosImageImport": "supported",
       "alt": "路障与注射器构成双臂的避难所执行体的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "1046bffa3e90682aed702858996c4927d58533b22386e673f290235bf7f6b90f",
-      "targetSha256": "1046bffa3e90682aed702858996c4927d58533b22386e673f290235bf7f6b90f",
+      "targetSha256": "65daaaa3ab183802e6c8c21b5cd8d66159355313984b145e4cc1954106329b7e",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -8169,20 +8644,25 @@
       "cocosImageImport": "supported",
       "alt": "担架与撤离束带扭结成的撤离畸变体的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "a85738b093153d1f3487732d116df2f0d9d552120eac6ff707c80a7c53bc7e27",
-      "targetSha256": "a85738b093153d1f3487732d116df2f0d9d552120eac6ff707c80a7c53bc7e27",
+      "targetSha256": "6d821c4ef1476c744bd94ec9d2d8005603c8915fcaa0c75d53093f5bfbaec22c",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -8198,20 +8678,25 @@
       "cocosImageImport": "supported",
       "alt": "监控屏与警报号角组成的失联总控的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "ce0f34eeaae109f745a45e48d82521cd0ba1abd9af7311a5608352bd1c2776a5",
-      "targetSha256": "ce0f34eeaae109f745a45e48d82521cd0ba1abd9af7311a5608352bd1c2776a5",
+      "targetSha256": "fc98932bf4e779f6a82af38f919cccd7824539321d219e262421d8261a7bf5ff",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -8227,20 +8712,25 @@
       "cocosImageImport": "supported",
       "alt": "被锁在证词架上的敌意证人的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "ffee3a3fd8f8d7d88b566569584b4ace34d017185ffc98f55cdce0b55b484711",
-      "targetSha256": "ffee3a3fd8f8d7d88b566569584b4ace34d017185ffc98f55cdce0b55b484711",
+      "targetSha256": "1ecd2a0612f9eb1760d90d9f560b493635cbb287e872a814d9615e0327e5131e",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -8256,20 +8746,25 @@
       "cocosImageImport": "supported",
       "alt": "档案盒吞没空白证页的档案删录官的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "bdc16b6c31691fee293c9050e370a024712847ab580d89f81b7c50cedc846438",
-      "targetSha256": "bdc16b6c31691fee293c9050e370a024712847ab580d89f81b7c50cedc846438",
+      "targetSha256": "eed4ea24be2123eaaad8bd56cd427564dd05dd2546cebd78415d5fc7d20245ca",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -8285,20 +8780,25 @@
       "cocosImageImport": "supported",
       "alt": "由案卷与铁骨缝合的伪证猎犬的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "7dcc8259e7f8bb669f4857dbec5281334c0e67147ef45c9ee9cf18a82d3c8763",
-      "targetSha256": "7dcc8259e7f8bb669f4857dbec5281334c0e67147ef45c9ee9cf18a82d3c8763",
+      "targetSha256": "f0133026c09b66605591cd0950e1ec0c4e8517b70bae10801b157547aae3e16a",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -8314,20 +8814,25 @@
       "cocosImageImport": "supported",
       "alt": "胸嵌三盏裁定灯的伪证主审的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "303979858cd84ca32181f0c2951c6dff69d4a450e2efc7b365577838b84ea146",
-      "targetSha256": "303979858cd84ca32181f0c2951c6dff69d4a450e2efc7b365577838b84ea146",
+      "targetSha256": "0c1e5b28ab6019c71b4a1e14e7241f829bfeefe333798361143e7d2c6a134e08",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -8343,20 +8848,25 @@
       "cocosImageImport": "supported",
       "alt": "沿起拍光束扑出的场记潜猎者的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "875be82938e4450157038743e415d8ec44b5a577d98287aef6e1365a1cda6bef",
-      "targetSha256": "875be82938e4450157038743e415d8ec44b5a577d98287aef6e1365a1cda6bef",
+      "targetSha256": "880bc2fdc29c0efca0dbde754871f019baed015f11ff581b398b24987aae11cd",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -8372,20 +8882,25 @@
       "cocosImageImport": "supported",
       "alt": "双手形似剪刀的连续性剪辑师的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "35b0e7338e475334196602e280655781f12bb38f832bb05f02c36eac646e6f4b",
-      "targetSha256": "35b0e7338e475334196602e280655781f12bb38f832bb05f02c36eac646e6f4b",
+      "targetSha256": "54692163755b58e8e83bab2f95d8d8f06d3ac6e5edfd2537943707a28dbfe253",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -8401,20 +8916,25 @@
       "cocosImageImport": "supported",
       "alt": "双躯共用一条脊柱的重拍替身的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "c180bc6dfe295aec674107969a06d28f2f046781ba276368635f538f3ae14699",
-      "targetSha256": "c180bc6dfe295aec674107969a06d28f2f046781ba276368635f538f3ae14699",
+      "targetSha256": "503c78d700cd62a05ba482f1bdb3a552642d62897d0b7584dd77adf12bc43097",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -8430,20 +8950,25 @@
       "cocosImageImport": "supported",
       "alt": "冻结画框环绕头部的终剪导演的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "e7e0c07d6a42e5db7436842275c101a255997ea2835ee08b0ded37572b37dbd5",
-      "targetSha256": "e7e0c07d6a42e5db7436842275c101a255997ea2835ee08b0ded37572b37dbd5",
+      "targetSha256": "65be72f4d771549a373a6029258bfed636f6bfa7de555018841076f5d02e3224",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -8459,20 +8984,25 @@
       "cocosImageImport": "supported",
       "alt": "扇形视锥扫过黑甲的扫视哨兵的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "05cbb0cad7586a76ace689dd5b0a04513b2378b34a2cb4bbd53743536dfa17bb",
-      "targetSha256": "05cbb0cad7586a76ace689dd5b0a04513b2378b34a2cb4bbd53743536dfa17bb",
+      "targetSha256": "8bc21e468b920884df3b72d16e6d70ab098a0e79e907ea045693519f78a93afc",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -8488,20 +9018,25 @@
       "cocosImageImport": "supported",
       "alt": "双相护盾包围核心的相位猎杀无人机的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "bc311e99cec93e2567f2ce28ecc0a2059ea81fd41aa8285d2c26c26e1d5ee6c4",
-      "targetSha256": "bc311e99cec93e2567f2ce28ecc0a2059ea81fd41aa8285d2c26c26e1d5ee6c4",
+      "targetSha256": "ad99be775f44ab8effaa2be93046359e3f134d2aad8bb15df6b2cb78d35fb745",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -8517,20 +9052,25 @@
       "cocosImageImport": "supported",
       "alt": "以空白账本覆面的盲区审计官的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "1479a32fa5353fbd7a01bd8aef7a82463ba6d98681bd30189bcb68c4adfc178a",
-      "targetSha256": "1479a32fa5353fbd7a01bd8aef7a82463ba6d98681bd30189bcb68c4adfc178a",
+      "targetSha256": "5ef012d4d458d656f562ae9cdd8df214c71f9af1378fce610f43148539297ee8",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -8546,20 +9086,25 @@
       "cocosImageImport": "supported",
       "alt": "正反重影同时过曝的曝光替身的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "373cc2210bfb3644476f0576b726928d815eee07493e8522f45d80e0b1a8a805",
-      "targetSha256": "373cc2210bfb3644476f0576b726928d815eee07493e8522f45d80e0b1a8a805",
+      "targetSha256": "d6bd2f0f158c752c7f218f3e252fb88513b63936558356c30145f3210905fb77",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -8575,20 +9120,25 @@
       "cocosImageImport": "supported",
       "alt": "观测透镜环绕核心的万目监察者的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "1ac87a6766b1e343adf3082de3954c052e86ba0652cb465c4ba990ca31152274",
-      "targetSha256": "1ac87a6766b1e343adf3082de3954c052e86ba0652cb465c4ba990ca31152274",
+      "targetSha256": "33929c4693a7ac28c333955b8ce30dc805d9ee1302437fa8649447261ef3a1cd",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -8597,10 +9147,10 @@
       "kind": "scene",
       "entityId": "hub_courtyard_walk",
       "resourcePath": "hub-courtyard/walk-sanctuary-v1",
-      "resourceFile": "hub-courtyard/walk-sanctuary-v1.png",
+      "resourceFile": "hub-courtyard/walk-sanctuary-v1.jpg",
       "sourceFile": "infinite-flow-wechat/prototype/hub-draw/assets/walk-sanctuary-v1.png",
       "sourceFormat": "png",
-      "targetFormat": "png",
+      "targetFormat": "jpg",
       "cocosImageImport": "supported",
       "alt": "轮回庭院正立横向背景：旧金石墙、柱廊与连续浅纵深石板地面",
       "role": "scene",
@@ -8610,11 +9160,17 @@
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "22cf1dfe40d3fb5452e4863d251324bf2bc4361a338a7c7f83aeece655bcbb08",
-      "targetSha256": "22cf1dfe40d3fb5452e4863d251324bf2bc4361a338a7c7f83aeece655bcbb08",
+      "targetSha256": "eecc3ccf683a98f351918c1f5a55c53a229fd53de6cd6bbaca3549efbff486ac",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
+          "width": 2172,
+          "height": 724
+        },
         "targetDimensions": {
           "width": 2172,
           "height": 724
@@ -8633,20 +9189,25 @@
       "cocosImageImport": "supported",
       "alt": "带旧金莲云纹的透明石柱",
       "role": "scene",
-      "width": 870,
-      "height": 1808,
+      "width": 369,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "9c0509f4d3157d178605940cd96ff4c39088e03222cf76a472dfde53dc430875",
-      "targetSha256": "9c0509f4d3157d178605940cd96ff4c39088e03222cf76a472dfde53dc430875",
+      "targetSha256": "e742f7cb3b5d41cace02d7e31c20233d7da24d38b68e4b386c02dc1cce0d1608",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 870,
           "height": 1808
+        },
+        "targetDimensions": {
+          "width": 369,
+          "height": 768
         }
       }
     },
@@ -8662,20 +9223,25 @@
       "cocosImageImport": "supported",
       "alt": "带旧铜金包角的透明木箱",
       "role": "scene",
-      "width": 1457,
-      "height": 1080,
+      "width": 768,
+      "height": 569,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "b22bf93d22614788408ce9c829a395fa21daf7cda01056db98de2f9a51891223",
-      "targetSha256": "b22bf93d22614788408ce9c829a395fa21daf7cda01056db98de2f9a51891223",
+      "targetSha256": "2ae60229f44831b3d56cffc43fdce334d12fdc619b3509d51eff153f56e3d3a6",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1457,
           "height": 1080
+        },
+        "targetDimensions": {
+          "width": 768,
+          "height": 569
         }
       }
     },
@@ -8691,20 +9257,25 @@
       "cocosImageImport": "supported",
       "alt": "有青铜香炉与莲云纹的透明石祭坛",
       "role": "scene",
-      "width": 1500,
-      "height": 1049,
+      "width": 768,
+      "height": 537,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "9531faf0c42c8bfad183e382f3b30e57e4a8f8b049cf044fd71e5bddc14ad258",
-      "targetSha256": "9531faf0c42c8bfad183e382f3b30e57e4a8f8b049cf044fd71e5bddc14ad258",
+      "targetSha256": "d65bc9d9184bec5350cb82d68fe33a09cf89710ba3c7766fa84b0ec610a056a2",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1500,
           "height": 1049
+        },
+        "targetDimensions": {
+          "width": 768,
+          "height": 537
         }
       }
     },
@@ -8720,20 +9291,25 @@
       "cocosImageImport": "supported",
       "alt": "带微弱暖光的透明石灯",
       "role": "scene",
-      "width": 930,
-      "height": 1691,
+      "width": 422,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "1a4a2543634ce44bdd344802fd803751b29c68c57f5ffbf17963df334f4307d3",
-      "targetSha256": "1a4a2543634ce44bdd344802fd803751b29c68c57f5ffbf17963df334f4307d3",
+      "targetSha256": "73d04fcb8aea3b2df5595fbd9ce27155a4379ec6eb3e5064ff297c29adbedb0e",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 930,
           "height": 1691
+        },
+        "targetDimensions": {
+          "width": 422,
+          "height": 768
         }
       }
     },
@@ -8749,20 +9325,25 @@
       "cocosImageImport": "supported",
       "alt": "带旧金镶线与微弱暖光的风化石门，独立透明区域通道",
       "role": "scene",
-      "width": 1073,
-      "height": 1465,
+      "width": 375,
+      "height": 512,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "48aa094175451317d0a44d18dc6dabafd245f646dff1c578ec76bcab10dd6e69",
-      "targetSha256": "48aa094175451317d0a44d18dc6dabafd245f646dff1c578ec76bcab10dd6e69",
+      "targetSha256": "ccbf43482c99a8513e3bd336b8bebb9f6d01bafe8899525ed8be863e9aefd7e9",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 512 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1073,
           "height": 1465
+        },
+        "targetDimensions": {
+          "width": 375,
+          "height": 512
         }
       }
     },
@@ -8778,20 +9359,25 @@
       "cocosImageImport": "supported",
       "alt": "主神空间万象画门：旧金画轴展开山水异境，透明独立副本入口",
       "role": "scene",
-      "width": 1018,
-      "height": 1545,
+      "width": 674,
+      "height": 1024,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "e77658a165eab7c3fe527b309909bca1d0be7c4fddd4ab5d4c75905a33927d4e",
-      "targetSha256": "e77658a165eab7c3fe527b309909bca1d0be7c4fddd4ab5d4c75905a33927d4e",
+      "targetSha256": "5df93062325f5954cbd8c184d9fdc165e1d07c48b2887ae2f06440233acbf5fd",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "node:fs.copyFileSync",
-        "version": "v26.7.0",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 1024 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1018,
           "height": 1545
+        },
+        "targetDimensions": {
+          "width": 674,
+          "height": 1024
         }
       }
     },
@@ -8808,18 +9394,24 @@
       "sourceFormat": "png",
       "targetFormat": "png",
       "cocosImageImport": "supported",
-      "width": 1254,
-      "height": 1254,
+      "width": 512,
+      "height": 512,
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "d5abfec22278040a8a276832d7a2009d5e2044536ba9f31346317f6dc47695a5",
-      "targetSha256": "d5abfec22278040a8a276832d7a2009d5e2044536ba9f31346317f6dc47695a5",
+      "targetSha256": "95249213804daa98e56344ce3b52708db1a1b39a5a4af0d6c8fc03ea7130882a",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 512 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1254,
           "height": 1254
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 512
         }
       }
     },
@@ -8836,18 +9428,24 @@
       "sourceFormat": "png",
       "targetFormat": "png",
       "cocosImageImport": "supported",
-      "width": 1145,
-      "height": 1374,
+      "width": 426,
+      "height": 512,
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "81b674164ee006184f36559629092dee769dc78e8a30c1ed154e423cd0c645f9",
-      "targetSha256": "81b674164ee006184f36559629092dee769dc78e8a30c1ed154e423cd0c645f9",
+      "targetSha256": "3923236632ed0861e892f4e02b300a43048858ace05f530ce470b9e4fa9f85e4",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 512 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1145,
           "height": 1374
+        },
+        "targetDimensions": {
+          "width": 426,
+          "height": 512
         }
       }
     },
@@ -8864,18 +9462,24 @@
       "sourceFormat": "png",
       "targetFormat": "png",
       "cocosImageImport": "supported",
-      "width": 1254,
-      "height": 1254,
+      "width": 512,
+      "height": 512,
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "351c5b7cbe3752612e078154c1ddc479f34d8714a6b0727134964f980c0cc9ed",
-      "targetSha256": "351c5b7cbe3752612e078154c1ddc479f34d8714a6b0727134964f980c0cc9ed",
+      "targetSha256": "0a7738b70e3de9ee771c2d9cba352a2276260505a762a3d193e1a08249eeb534",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 512 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1254,
           "height": 1254
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 512
         }
       }
     },
@@ -8892,18 +9496,24 @@
       "sourceFormat": "png",
       "targetFormat": "png",
       "cocosImageImport": "supported",
-      "width": 1254,
-      "height": 1254,
+      "width": 512,
+      "height": 512,
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "e48901773ef4f794848b43adc7d19042617167157bdb620db9932e871def1931",
-      "targetSha256": "e48901773ef4f794848b43adc7d19042617167157bdb620db9932e871def1931",
+      "targetSha256": "bf8c47173ccc94812ee6fd5605821d55b260540ef4f89e31e57528e8412cc17d",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 512 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1254,
           "height": 1254
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 512
         }
       }
     },
@@ -8920,18 +9530,24 @@
       "sourceFormat": "png",
       "targetFormat": "png",
       "cocosImageImport": "supported",
-      "width": 1254,
-      "height": 1254,
+      "width": 512,
+      "height": 512,
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "7a41a55d8c139bf035cf6a7623e9314acf8d882ff4887cd6e78c31fbc35b2f90",
-      "targetSha256": "7a41a55d8c139bf035cf6a7623e9314acf8d882ff4887cd6e78c31fbc35b2f90",
+      "targetSha256": "d561d6ab75ab2c5c931ccdb7e0de741ed9beb52307f1f3d0c6ed3ae86a7a8500",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 512 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1254,
           "height": 1254
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 512
         }
       }
     },
@@ -8948,18 +9564,24 @@
       "sourceFormat": "png",
       "targetFormat": "png",
       "cocosImageImport": "supported",
-      "width": 1254,
-      "height": 1254,
+      "width": 512,
+      "height": 512,
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "5533b22ce3a44154262b3fe81e0fa81f17f0ec3f4c3385bc6df9c247b67e9359",
-      "targetSha256": "5533b22ce3a44154262b3fe81e0fa81f17f0ec3f4c3385bc6df9c247b67e9359",
+      "targetSha256": "e6e2796ff679b1fcc5247e1c75f68f9d3915c5eabaaf945acb036b4cbfd847ef",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 512 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1254,
           "height": 1254
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 512
         }
       }
     },
@@ -8976,18 +9598,24 @@
       "sourceFormat": "png",
       "targetFormat": "png",
       "cocosImageImport": "supported",
-      "width": 1254,
-      "height": 1254,
+      "width": 512,
+      "height": 512,
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "6552dc80311d080afa82871c116c90939d84af9cf676a85ea1c325c708ab30a1",
-      "targetSha256": "6552dc80311d080afa82871c116c90939d84af9cf676a85ea1c325c708ab30a1",
+      "targetSha256": "e138c1196994f2fde2596a52bda5c27a11373ba14e9d066fe20ad35a979937ad",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 512 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1254,
           "height": 1254
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 512
         }
       }
     },
@@ -9004,18 +9632,24 @@
       "sourceFormat": "png",
       "targetFormat": "png",
       "cocosImageImport": "supported",
-      "width": 1254,
-      "height": 1254,
+      "width": 512,
+      "height": 512,
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "16ec2a64c56a4a53879bcef9e43d260469a4dc369d7508744973e1a76918cd23",
-      "targetSha256": "16ec2a64c56a4a53879bcef9e43d260469a4dc369d7508744973e1a76918cd23",
+      "targetSha256": "b845a777eb6accd935c54f076fcd99ca86f23bd09adb5a8afb09d9bda376ebd3",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 512 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1254,
           "height": 1254
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 512
         }
       }
     },
@@ -9032,18 +9666,24 @@
       "sourceFormat": "png",
       "targetFormat": "png",
       "cocosImageImport": "supported",
-      "width": 1536,
-      "height": 1024,
+      "width": 512,
+      "height": 341,
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "d0dea6331d34acd63b0c7da6f74ae8fc5dd1223a02fec0cd947bb4de7fce8371",
-      "targetSha256": "d0dea6331d34acd63b0c7da6f74ae8fc5dd1223a02fec0cd947bb4de7fce8371",
+      "targetSha256": "8aae786546be88fe507c8c959074193d0fa7283f2414f14a22f123fbf96108e0",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 512 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1536,
           "height": 1024
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 341
         }
       }
     },
@@ -9052,26 +9692,33 @@
       "kind": "item",
       "entityId": "run_relic_mist_edge",
       "resourcePath": "run-relic/mist_edge-v1",
-      "resourceFile": "run-relic/mist_edge-v1.png",
+      "resourceFile": "run-relic/mist_edge-v1.jpg",
       "sourceFile": "infinite-flow-wechat/prototype/hud-buff-icons-v1/assets/mist_edge.png",
       "sourceFormat": "png",
-      "targetFormat": "png",
+      "targetFormat": "jpg",
       "cocosImageImport": "supported",
       "alt": "雾锋回响图标",
       "role": "icon",
-      "width": 1254,
-      "height": 1254,
+      "width": 384,
+      "height": 384,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "0aa124c76590ac6270582bda32f15e3c86d3252f0115a7f87c873d5d8a751041",
-      "targetSha256": "0aa124c76590ac6270582bda32f15e3c86d3252f0115a7f87c873d5d8a751041",
+      "targetSha256": "db8925acf8418969428a0637d2cf86bcf370f2ab55e2fa9f092cebc51000fb28",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "targetDimensions": {
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 -Z 384 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
           "width": 1254,
           "height": 1254
+        },
+        "targetDimensions": {
+          "width": 384,
+          "height": 384
         }
       }
     },
@@ -9080,26 +9727,33 @@
       "kind": "item",
       "entityId": "run_relic_focus_prism",
       "resourcePath": "run-relic/focus_prism-v1",
-      "resourceFile": "run-relic/focus_prism-v1.png",
+      "resourceFile": "run-relic/focus_prism-v1.jpg",
       "sourceFile": "infinite-flow-wechat/prototype/hud-buff-icons-v1/assets/focus_prism.png",
       "sourceFormat": "png",
-      "targetFormat": "png",
+      "targetFormat": "jpg",
       "cocosImageImport": "supported",
       "alt": "聚念棱镜回响图标",
       "role": "icon",
-      "width": 1254,
-      "height": 1254,
+      "width": 384,
+      "height": 384,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "09e69b57bfa267ccb6209b2bdd262c3dc7a4d7fd74f24eac3a6a102647fbfc2b",
-      "targetSha256": "09e69b57bfa267ccb6209b2bdd262c3dc7a4d7fd74f24eac3a6a102647fbfc2b",
+      "targetSha256": "36dccbbf2ebbdbb0146026459c44d75ff4a8119fe1723da4325814cc98af5853",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "targetDimensions": {
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 -Z 384 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
           "width": 1254,
           "height": 1254
+        },
+        "targetDimensions": {
+          "width": 384,
+          "height": 384
         }
       }
     },
@@ -9108,26 +9762,33 @@
       "kind": "item",
       "entityId": "run_relic_hunter_clock",
       "resourcePath": "run-relic/hunter_clock-v1",
-      "resourceFile": "run-relic/hunter_clock-v1.png",
+      "resourceFile": "run-relic/hunter_clock-v1.jpg",
       "sourceFile": "infinite-flow-wechat/prototype/hud-buff-icons-v1/assets/hunter_clock.png",
       "sourceFormat": "png",
-      "targetFormat": "png",
+      "targetFormat": "jpg",
       "cocosImageImport": "supported",
       "alt": "猎时钟回响图标",
       "role": "icon",
-      "width": 1254,
-      "height": 1254,
+      "width": 384,
+      "height": 384,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "2bfe18c3da4f8627de4613b38b8c482e99c96184ffd9dbb18cedb77128c5b0b9",
-      "targetSha256": "2bfe18c3da4f8627de4613b38b8c482e99c96184ffd9dbb18cedb77128c5b0b9",
+      "targetSha256": "d0f70d6bbccdddebedea32c6fb9b0f2a94fbe617f7142865db56afb7063c7b2b",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "targetDimensions": {
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 -Z 384 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
           "width": 1254,
           "height": 1254
+        },
+        "targetDimensions": {
+          "width": 384,
+          "height": 384
         }
       }
     },
@@ -9136,26 +9797,33 @@
       "kind": "item",
       "entityId": "run_relic_bone_shell",
       "resourcePath": "run-relic/bone_shell-v1",
-      "resourceFile": "run-relic/bone_shell-v1.png",
+      "resourceFile": "run-relic/bone_shell-v1.jpg",
       "sourceFile": "infinite-flow-wechat/prototype/hud-buff-icons-v1/assets/bone_shell.png",
       "sourceFormat": "png",
-      "targetFormat": "png",
+      "targetFormat": "jpg",
       "cocosImageImport": "supported",
       "alt": "骨壳回响图标",
       "role": "icon",
-      "width": 1254,
-      "height": 1254,
+      "width": 384,
+      "height": 384,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "cd364a363de8ee47e22d5920d6c479e6a955b302950049ee7285d69196f7935b",
-      "targetSha256": "cd364a363de8ee47e22d5920d6c479e6a955b302950049ee7285d69196f7935b",
+      "targetSha256": "e58d02aa0dff8b86ea65016fe18ae6d93ea5d4d78ceadb111174d2a7e0b30e9a",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "targetDimensions": {
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 -Z 384 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
           "width": 1254,
           "height": 1254
+        },
+        "targetDimensions": {
+          "width": 384,
+          "height": 384
         }
       }
     },
@@ -9164,26 +9832,33 @@
       "kind": "item",
       "entityId": "run_relic_mending_thread",
       "resourcePath": "run-relic/mending_thread-v1",
-      "resourceFile": "run-relic/mending_thread-v1.png",
+      "resourceFile": "run-relic/mending_thread-v1.jpg",
       "sourceFile": "infinite-flow-wechat/prototype/hud-buff-icons-v1/assets/mending_thread.png",
       "sourceFormat": "png",
-      "targetFormat": "png",
+      "targetFormat": "jpg",
       "cocosImageImport": "supported",
       "alt": "缝生线回响图标",
       "role": "icon",
-      "width": 1254,
-      "height": 1254,
+      "width": 384,
+      "height": 384,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "469f833c44b4f4914a3c75e08293361a7b86d1f1365e898103600fa7d7ec214c",
-      "targetSha256": "469f833c44b4f4914a3c75e08293361a7b86d1f1365e898103600fa7d7ec214c",
+      "targetSha256": "0fa958613092a7a74d41616959ed1b2f3a36e4e849dadb0bb9a9c18024f8a744",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "targetDimensions": {
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 -Z 384 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
           "width": 1254,
           "height": 1254
+        },
+        "targetDimensions": {
+          "width": 384,
+          "height": 384
         }
       }
     },
@@ -9192,26 +9867,33 @@
       "kind": "item",
       "entityId": "run_relic_iron_echo",
       "resourcePath": "run-relic/iron_echo-v1",
-      "resourceFile": "run-relic/iron_echo-v1.png",
+      "resourceFile": "run-relic/iron_echo-v1.jpg",
       "sourceFile": "infinite-flow-wechat/prototype/hud-buff-icons-v1/assets/iron_echo.png",
       "sourceFormat": "png",
-      "targetFormat": "png",
+      "targetFormat": "jpg",
       "cocosImageImport": "supported",
       "alt": "铁回响回响图标",
       "role": "icon",
-      "width": 1254,
-      "height": 1254,
+      "width": 384,
+      "height": 384,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "84ce2a7a4a4da7e4bdbdacee82b9f5b43554559795b48522f107e6296127ed8b",
-      "targetSha256": "84ce2a7a4a4da7e4bdbdacee82b9f5b43554559795b48522f107e6296127ed8b",
+      "targetSha256": "042c549a8ebcc0ce95e1190d5d2e80df518d9611d602b25bdfb0e3859affc731",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "targetDimensions": {
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 -Z 384 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
           "width": 1254,
           "height": 1254
+        },
+        "targetDimensions": {
+          "width": 384,
+          "height": 384
         }
       }
     },
@@ -9220,26 +9902,33 @@
       "kind": "item",
       "entityId": "run_relic_rift_step",
       "resourcePath": "run-relic/rift_step-v1",
-      "resourceFile": "run-relic/rift_step-v1.png",
+      "resourceFile": "run-relic/rift_step-v1.jpg",
       "sourceFile": "infinite-flow-wechat/prototype/hud-buff-icons-v1/assets/rift_step.png",
       "sourceFormat": "png",
-      "targetFormat": "png",
+      "targetFormat": "jpg",
       "cocosImageImport": "supported",
       "alt": "裂隙步回响图标",
       "role": "icon",
-      "width": 1254,
-      "height": 1254,
+      "width": 384,
+      "height": 384,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "0f144fbced4e372900822f58aff2da20e84ea06cf552c4b23c8ba6c5db919e51",
-      "targetSha256": "0f144fbced4e372900822f58aff2da20e84ea06cf552c4b23c8ba6c5db919e51",
+      "targetSha256": "1993a86d9d2303948bc46cab7a61ec3534c43326739e85b846c9aff0143102e7",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "targetDimensions": {
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 -Z 384 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
           "width": 1254,
           "height": 1254
+        },
+        "targetDimensions": {
+          "width": 384,
+          "height": 384
         }
       }
     },
@@ -9248,26 +9937,33 @@
       "kind": "item",
       "entityId": "run_relic_gate_anchor",
       "resourcePath": "run-relic/gate_anchor-v1",
-      "resourceFile": "run-relic/gate_anchor-v1.png",
+      "resourceFile": "run-relic/gate_anchor-v1.jpg",
       "sourceFile": "infinite-flow-wechat/prototype/hud-buff-icons-v1/assets/gate_anchor.png",
       "sourceFormat": "png",
-      "targetFormat": "png",
+      "targetFormat": "jpg",
       "cocosImageImport": "supported",
       "alt": "门锚回响图标",
       "role": "icon",
-      "width": 1254,
-      "height": 1254,
+      "width": 384,
+      "height": 384,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "87d73c4fe847116a7a36e9b4a3d8bf3ab41fcabf0588314bf223d92cfdfd88bb",
-      "targetSha256": "87d73c4fe847116a7a36e9b4a3d8bf3ab41fcabf0588314bf223d92cfdfd88bb",
+      "targetSha256": "30e8789e1263e9fae2c40053c73db5c63859f78ab476018cb964c9aa123d0991",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "targetDimensions": {
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 -Z 384 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
           "width": 1254,
           "height": 1254
+        },
+        "targetDimensions": {
+          "width": 384,
+          "height": 384
         }
       }
     },
@@ -9276,26 +9972,33 @@
       "kind": "item",
       "entityId": "run_relic_lucky_map",
       "resourcePath": "run-relic/lucky_map-v1",
-      "resourceFile": "run-relic/lucky_map-v1.png",
+      "resourceFile": "run-relic/lucky_map-v1.jpg",
       "sourceFile": "infinite-flow-wechat/prototype/hud-buff-icons-v1/assets/lucky_map.png",
       "sourceFormat": "png",
-      "targetFormat": "png",
+      "targetFormat": "jpg",
       "cocosImageImport": "supported",
       "alt": "幸运地图回响图标",
       "role": "icon",
-      "width": 1254,
-      "height": 1254,
+      "width": 384,
+      "height": 384,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "b69e988ef0913323aec11c70862904b0647585cdeb8ea77b5ef0dd05d2574e55",
-      "targetSha256": "b69e988ef0913323aec11c70862904b0647585cdeb8ea77b5ef0dd05d2574e55",
+      "targetSha256": "2d044382f42a715b8a97847aa555c933f1ccdc94ef0a63b878cdc0e19260790f",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "targetDimensions": {
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 -Z 384 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
           "width": 1254,
           "height": 1254
+        },
+        "targetDimensions": {
+          "width": 384,
+          "height": 384
         }
       }
     },
@@ -9311,20 +10014,25 @@
       "cocosImageImport": "supported",
       "alt": "秦彻持塔盾的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "006f6006f12f1fc9d1c086eef8b91aee93b222cdd6b24b29b3d35a025c3e5c2d",
-      "targetSha256": "006f6006f12f1fc9d1c086eef8b91aee93b222cdd6b24b29b3d35a025c3e5c2d",
+      "targetSha256": "6f06f1ce9653415422a8c4e4ddb8d65d7d7b8d6e0ea79b8f0279f1d9979d3a23",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "version": "macOS 26.5.1 (25F80)",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -9340,20 +10048,25 @@
       "cocosImageImport": "supported",
       "alt": "周映雪手持笔记的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "88a7c0d1a2eed61a866cb33860908e8bff2f8f8ef29e3bdba8a62ca83cf20431",
-      "targetSha256": "88a7c0d1a2eed61a866cb33860908e8bff2f8f8ef29e3bdba8a62ca83cf20431",
+      "targetSha256": "3a7d9376a7fc6da56d0200327395185ef03fde4fb10e0017f15cc10f3afb22d5",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "version": "macOS 26.5.1 (25F80)",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -9369,20 +10082,25 @@
       "cocosImageImport": "supported",
       "alt": "陆观澜背着药囊的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "31b3729bfbe104afb9c47b66a41e89da0152487fefc69d42ed01f147e017781b",
-      "targetSha256": "31b3729bfbe104afb9c47b66a41e89da0152487fefc69d42ed01f147e017781b",
+      "targetSha256": "04051ef467729b3882b04c17cef7f68219a5a2c24b3fd0e2f70d56f1f4714a35",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "version": "macOS 26.5.1 (25F80)",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -9398,20 +10116,25 @@
       "cocosImageImport": "supported",
       "alt": "折叠符光构成的契约小灵的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "03ed6ff4e8a3b0e3f40d42e3b01978e213ac728a57b13653491e3c5570b31d82",
-      "targetSha256": "03ed6ff4e8a3b0e3f40d42e3b01978e213ac728a57b13653491e3c5570b31d82",
+      "targetSha256": "487d51806344b971d2efc85553480c210ac16d0a7d1c65e5d469f237fb35a5da",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "version": "macOS 26.5.1 (25F80)",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -9427,20 +10150,25 @@
       "cocosImageImport": "supported",
       "alt": "裂纹余烬覆身的烬火犬的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "81e539dcec6dffb598de1fbebf4daf05704090159668cce8a2252bb1e9df01c0",
-      "targetSha256": "81e539dcec6dffb598de1fbebf4daf05704090159668cce8a2252bb1e9df01c0",
+      "targetSha256": "d22d826d70bc5f7683455371ebd372f37c0383a8a761a64ecd29f6a2cde18cb8",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "version": "macOS 26.5.1 (25F80)",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -9456,20 +10184,25 @@
       "cocosImageImport": "supported",
       "alt": "星纹铜壳的星棱机的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "2676741b75cce86c65259bd86ac3f113f5b10367c7c369bf74a09dee982a3947",
-      "targetSha256": "2676741b75cce86c65259bd86ac3f113f5b10367c7c369bf74a09dee982a3947",
+      "targetSha256": "dd54613688bb60a154f73ebd134a66f117b4d1624d744f6e0713203e2e21dce9",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "version": "macOS 26.5.1 (25F80)",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -9485,20 +10218,25 @@
       "cocosImageImport": "supported",
       "alt": "雾气缭绕的雾爪幼兽的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "f17879f60589b4209035c545e80ffbc8f2a87f3e01b0c63df9a5727f4a6e36a2",
-      "targetSha256": "f17879f60589b4209035c545e80ffbc8f2a87f3e01b0c63df9a5727f4a6e36a2",
+      "targetSha256": "ab4a12f6a396a74184ee134a0f2e22294e169e15cca49282c0eea379f10a13d0",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "version": "macOS 26.5.1 (25F80)",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -9514,20 +10252,25 @@
       "cocosImageImport": "supported",
       "alt": "碎镜羽翼的镜翼蛾的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "11addc57b1860a8badad3540ec6428b1de3d03923650e109ba466c074454cf41",
-      "targetSha256": "11addc57b1860a8badad3540ec6428b1de3d03923650e109ba466c074454cf41",
+      "targetSha256": "f8b81dab6b1aea9659bfcda5974020667ef9dd248d6cc9f8fc6e7ec5e5bd1c88",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "version": "macOS 26.5.1 (25F80)",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },
@@ -9543,20 +10286,25 @@
       "cocosImageImport": "supported",
       "alt": "脊背青光的虚空幼龙的全身形象",
       "role": "portrait",
-      "width": 1024,
-      "height": 1536,
+      "width": 512,
+      "height": 768,
       "fit": "contain",
       "source": "project-original-generated",
       "sourceRevision": 1,
       "sourceSha256": "c849a624a54fbc6c28cc4be2e27d3144b224230bb33b23e34f556df62e86c439",
-      "targetSha256": "c849a624a54fbc6c28cc4be2e27d3144b224230bb33b23e34f556df62e86c439",
+      "targetSha256": "caa794400d23937131895d64b845a66425d0720ffe2a3d682819ad4fdf97d9ad",
       "transformation": {
-        "operation": "byte-copy",
-        "tool": "cp",
-        "version": "macOS 26.5.1 (25F80)",
-        "targetDimensions": {
+        "operation": "resize-png",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -Z 768 <sourceFile> --out <resourceFile>",
+        "sourceDimensions": {
           "width": 1024,
           "height": 1536
+        },
+        "targetDimensions": {
+          "width": 512,
+          "height": 768
         }
       }
     },

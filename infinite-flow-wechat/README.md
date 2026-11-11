@@ -177,14 +177,18 @@ law/pursuit/fail-closed/JSON/deep-freeze/动作不变，headless 覆盖 320×568
 - `packages/save-codec/`：Web v1 原始存档的只读兼容解码器与 checksum fixture。
 - `packages/client/`：唯一 session 编排、入场 seed、物理输入去重和生命周期绑定。
 - `packages/presentation/`：四阶段只读 ViewModel、帮助语义和移动端设计令牌。
-- `cocos/`：Cocos 3.8.8 场景、行走及详情 UI、323 个资源（PNG 约 344 MB）和微信平台适配。
+- `cocos/`：Cocos 3.8.8 场景、行走及详情 UI、324 个资源（292 PNG + 32 JPEG，约 87 MB）和微信平台适配。
 - `acceptance/`：冻结的 123 项迁移验收登记（20 项显式废弃，有效 103 项）；登记有效不等于 case PASS。
 - `docs/`：迁移阶段、工具链、当前状态和风险。
 
 59 种怪物各有独立的透明全身世界图 `monster:<id>_world`，探索与战斗按同一怪物身份
-加载，旧头像继续保留。源图位于 `art-source/monster-world/`，原字节导入
+加载，旧头像继续保留。源图位于 `art-source/monster-world/`，按绘制尺寸缩到长边 768 后导入
 `cocos/assets/resources/monster-world/`；资源门禁核对身份覆盖、RGBA alpha、来源、尺寸、
 SHA-256 和独立 Creator UUID。
+
+替换素材的尺寸与格式由 `scripts/resource-slimming.mjs` 按实际绘制尺寸决定（不透明图存 JPEG），
+`npm run assets:slim` 从原图重新生成并改写 manifest、revision 与微信 bundle profile，
+冻结的 182 个 Web 原图不动。规则与结果见 [资源来源说明](cocos/ASSET-PROVENANCE.md)。
 
 主角行走使用新的成年比例透明图集，保持现有角色身份、四向动作与物理脚点。
 素材来源、逐帧取样与本地接入验证见 [主角素材说明](art-source/hero-redesign/README.md)。
@@ -350,7 +354,7 @@ npm run wechat:devtools-smoke:self-check # 正例 + 负例自检（38 项）
 ```
 
 派生副本使用官方公开小游戏游客 AppID（DevTools 显示为 touristappid），
-`assets.server` 指向 `http://127.0.0.1:8947/`，远程 bundle（约 331 MB）仍由本地
+`assets.server` 指向 `http://127.0.0.1:8947/`，远程 bundle（约 87 MB）仍由本地
 fail-closed 静态服务提供，不进主包。副本根目录带 `NON_RELEASE_SMOKE.md` 与
 `devtools-smoke.derived.json` 标记。导入时目录选 `wechatgame-devtools-smoke`
 （不是 `wechatgame`），详见 [docs/04-devtools-smoke.md](docs/04-devtools-smoke.md)。
