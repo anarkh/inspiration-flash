@@ -48,9 +48,14 @@ assert(heavyPressure.rewardPointBonus === Math.floor(((exitShare + 1000) * 15) /
 // 气运 (a new save has 1) adds 1% of the same base: floor(base x 1 / 100).
 const lightLuck = Math.floor(exitShare / 100);
 const heavyLuck = Math.floor((exitShare + 1000) / 100);
+// The fixture's pressure counter never moved, so the run is within the chapter's speedrun line: +50% of the same base.
+const lightSpeedrun = Math.floor((exitShare * 50) / 100);
+const heavySpeedrun = Math.floor(((exitShare + 1000) * 50) / 100);
+assert(lightClear.run!.lastPressureSettlement!.speedrunBounty?.rewardPoints === lightSpeedrun
+  && heavyClear.run!.lastPressureSettlement!.speedrunBounty?.rewardPoints === heavySpeedrun, 'the speedrun bonus scales the same base');
 // Bag points are credited on pickup (a failure claws back the lost share), so the clear only adds the bonuses.
 assert(heavyClear.rewardPoints - lightClear.rewardPoints
-  === heavyPressure.rewardPointBonus - lightPressure.rewardPointBonus + heavyLuck - lightLuck,
+  === heavyPressure.rewardPointBonus - lightPressure.rewardPointBonus + heavyLuck - lightLuck + heavySpeedrun - lightSpeedrun,
   'the larger bag only changes the clear payout through its bonuses');
 assert(heavyClear.log.some(line => line.includes(`气运 +1%：整局奖励点 +${heavyLuck}`)), 'the settlement log names the luck bonus');
 assert(heavyClear.log.some(line => line.includes(`整局奖励点加成 +${heavyPressure.rewardPointBonus}`)),

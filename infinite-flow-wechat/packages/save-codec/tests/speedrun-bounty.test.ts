@@ -24,14 +24,26 @@ function decode(state: GameState) {
 
 describe('speedrun bounty in a saved settlement', () => {
   it('reads a paid bounty back', () => {
+    const paid = { roomLimit: 5, rewardPointPercent: 50, rewardPoints: 640, lingyun: 1, cycleImprints: 1 };
+    const result = decode(settled(5, paid));
+    expect(result.status).toBe('decoded');
+    if (result.status !== 'decoded') throw new Error(result.reason.message);
+    expect(result.state.run?.lastPressureSettlement?.speedrunBounty).toEqual(paid);
+  });
+
+  it('reads a 0.1.32 bounty, which paid no reward points, back with zero', () => {
     const result = decode(settled(5, { roomLimit: 5, lingyun: 1, cycleImprints: 1 }));
     expect(result.status).toBe('decoded');
     if (result.status !== 'decoded') throw new Error(result.reason.message);
-    expect(result.state.run?.lastPressureSettlement?.speedrunBounty).toEqual({ roomLimit: 5, lingyun: 1, cycleImprints: 1 });
+    expect(result.state.run?.lastPressureSettlement?.speedrunBounty).toEqual({ roomLimit: 5, rewardPointPercent: 0, rewardPoints: 0, lingyun: 1, cycleImprints: 1 });
   });
 
   it('drops a settlement whose bounty is malformed or was paid past its own line', () => {
-    for (const broken of [settled(5, { roomLimit: 5, lingyun: -1, cycleImprints: 1 }), settled(6, { roomLimit: 5, lingyun: 1, cycleImprints: 1 })]) {
+    for (const broken of [
+      settled(5, { roomLimit: 5, lingyun: -1, cycleImprints: 1 }),
+      settled(5, { roomLimit: 5, rewardPointPercent: 50, rewardPoints: 1.5, lingyun: 1, cycleImprints: 1 }),
+      settled(6, { roomLimit: 5, lingyun: 1, cycleImprints: 1 })
+    ]) {
       const result = decode(broken);
       expect(result.status).toBe('decoded');
       if (result.status !== 'decoded') throw new Error(result.reason.message);

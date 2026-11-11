@@ -2188,7 +2188,7 @@ function buildTaskTracker(state: GameState, routeContract: ChapterRouteContractV
           : []),
     ...(speedrun
       ? [speedrun.onPace
-        ? { id: 'speedrun' as const, kicker: '速通', text: `已清 ${speedrun.clearedNodeCount}/${speedrun.roomLimit} 间 · 灵蕴 +${speedrun.lingyun}`, tone: 'active' as const }
+        ? { id: 'speedrun' as const, kicker: '速通', text: `已清 ${speedrun.clearedNodeCount}/${speedrun.roomLimit} 间 · 奖励 +${speedrun.rewardPointPercent}%`, tone: 'active' as const }
         : { id: 'speedrun' as const, kicker: '速通', text: `已超 ${speedrun.roomLimit} 间 · 无悬赏`, tone: 'failed' as const }]
       : []),
     ...(claimable > 0 ? [{ id: 'claims' as const, kicker: '待领', text: `${claimable} 项 · 回主神空间领取`, tone: 'done' as const }] : [])
@@ -3117,7 +3117,15 @@ function buildChapterPressure(state: GameState): ChapterPressureViewModel {
     clearedNodeCount: status.state.clearedNodeCount,
     breachForced: status.breachForced,
     ...(speedrun
-      ? { speedrun: { roomLimit: speedrun.roomLimit, lingyun: speedrun.lingyun, cycleImprints: speedrun.cycleImprints, onPace: speedrun.onPace } }
+      ? {
+          speedrun: {
+            roomLimit: speedrun.roomLimit,
+            rewardPointPercent: speedrun.rewardPointPercent,
+            lingyun: speedrun.lingyun,
+            cycleImprints: speedrun.cycleImprints,
+            onPace: speedrun.onPace
+          }
+        }
       : {})
   };
 }
@@ -4314,17 +4322,19 @@ function buildResultPressureSettlement(
       return invalidSettlement('pressure', '侵蚀压力结算记录不可用');
     }
     const bounty: unknown = pressure.speedrunBounty;
-    let speedrunBounty: { clearedNodeCount: number; roomLimit: number; lingyun: number; cycleImprints: number } | undefined;
+    let speedrunBounty: { clearedNodeCount: number; roomLimit: number; rewardPoints: number; lingyun: number; cycleImprints: number } | undefined;
     if (bounty !== undefined) {
       if (!isSettlementRecord(bounty)) return invalidSettlement('pressure', '侵蚀压力结算记录不可用');
       const { roomLimit, lingyun, cycleImprints } = bounty;
+      // Bounties from 0.1.32-0.1.33 paid no reward points.
+      const rewardPoints = bounty.rewardPoints ?? 0;
       if (
         !isNonNegativeInteger(roomLimit) || !isNonNegativeInteger(lingyun) || !isNonNegativeInteger(cycleImprints)
-        || pressureState.clearedNodeCount > roomLimit
+        || !isNonNegativeInteger(rewardPoints) || pressureState.clearedNodeCount > roomLimit
       ) {
         return invalidSettlement('pressure', '侵蚀压力结算记录不可用');
       }
-      speedrunBounty = { clearedNodeCount: pressureState.clearedNodeCount, roomLimit, lingyun, cycleImprints };
+      speedrunBounty = { clearedNodeCount: pressureState.clearedNodeCount, roomLimit, rewardPoints, lingyun, cycleImprints };
     }
     return Object.freeze({
       state: 'valid',

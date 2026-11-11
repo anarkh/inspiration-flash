@@ -132,8 +132,8 @@ const trackerOf = (state: GameState) => {
   assert(detail.kind === 'explore', 'the tracker belongs to exploration');
   return detail.taskTracker?.lines.map(({ kicker, text, tone }) => `${kicker}|${tone}|${text}`).join(' / ');
 };
-// Chapter 1's speedrun line is 5 rooms; its exit pays 1 lingyun, so the bounty is 1 lingyun (half, rounded up) and 1 imprint.
-assert(trackerOf(entered) === '主线|active|通关妖塔一层 / 指令|active|捕获雾爪幼兽 0/1 +2 / 速通|active|已清 0/5 间 · 灵蕴 +1 / 待领|done|1 项 · 回主神空间领取',
+// Chapter 1's speedrun line is 5 rooms; the bounty adds 50% of the run's reward points (plus lingyun and an imprint).
+assert(trackerOf(entered) === '主线|active|通关妖塔一层 / 指令|active|捕获雾爪幼兽 0/1 +2 / 速通|active|已清 0/5 间 · 奖励 +50% / 待领|done|1 项 · 回主神空间领取',
   'a fresh run tracks its mainline, its directive, the speedrun line and the scouting task waiting in the hub');
 const cleared = (count: number): GameState => ({ ...entered, run: { ...entered.run!, pressureState: { ...entered.run!.pressureState!, clearedNodeCount: count } } });
 assert(trackerOf(cleared(5))?.includes('速通|active|已清 5/5 间'), 'the line itself is still on pace');

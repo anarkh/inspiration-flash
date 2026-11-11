@@ -631,7 +631,7 @@ export type ChapterPressureViewModel = Readonly<{
   /** A burnt-out lantern dropped the run straight into breach. */
   breachForced?: boolean;
   /** 速通悬赏 of this run; absent on inferno maps. `onPace` turns false once the line is passed. */
-  speedrun?: Readonly<{ roomLimit: number; lingyun: number; cycleImprints: number; onPace: boolean }>;
+  speedrun?: Readonly<{ roomLimit: number; rewardPointPercent: number; lingyun: number; cycleImprints: number; onPace: boolean }>;
 }>;
 
 export type ChapterPursuitViewModel = Readonly<{
@@ -994,7 +994,7 @@ export type ResultPressureSettlementViewModel = Readonly<{
   tierLabel: string;
   rewardPointBonus: number;
   /** The speedrun bounty this clear earned, with the rooms it had cleared. */
-  speedrunBounty?: Readonly<{ clearedNodeCount: number; roomLimit: number; lingyun: number; cycleImprints: number }>;
+  speedrunBounty?: Readonly<{ clearedNodeCount: number; roomLimit: number; rewardPoints: number; lingyun: number; cycleImprints: number }>;
 }> | ResultSettlementInvalid;
 
 export type ResultPursuitSettlementViewModel = Readonly<{
