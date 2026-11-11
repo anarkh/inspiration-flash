@@ -255,6 +255,7 @@ import {
   applyInfernoMapSnapshot,
   areInfernoNodesConnected,
   createInfernoMapSnapshot,
+  getInfernoBossSideSourceNodeIds,
   getInfernoConnectionIds,
   getInfernoTierModifiers,
   getInfernoUnlockedTier as getUnlockedInfernoTier,
@@ -5096,6 +5097,10 @@ export function getCurrentRouteBlockReason(state: GameState, targetNodeId: strin
   ) {
     return undefined;
   }
+  // A side approach reaches the boss whatever the law says, as on the standard map.
+  if (getInfernoBossSideSourceNodeIds(DUNGEONS[state.run.dungeonId], targetNodeId).includes(state.run.currentNodeId)) {
+    return undefined;
+  }
   const bossAccess = getProceduralBossAccessStatus(
     state.run.dungeonId,
     targetNodeId,
@@ -5104,6 +5109,18 @@ export function getCurrentRouteBlockReason(state: GameState, targetNodeId: strin
   return bossAccess.allowed
     ? undefined
     : bossAccess.blockReason ?? '首领入口条件尚未满足。';
+}
+
+/**
+ * Re-checked when an inferno boss fight starts, standing on the boss. A map that connects a side approach to the boss
+ * is always open there: with every law gate shut, a side approach is the only legal way in.
+ */
+function getInfernoBossEntryBlockReason(state: GameState, bossNodeId: string): string | undefined {
+  const run = state.run;
+  if (!run) return undefined;
+  const sideApproachConnected = getInfernoBossSideSourceNodeIds(DUNGEONS[run.dungeonId], bossNodeId)
+    .some((nodeId) => areInfernoNodesConnected(run.infernoMap, nodeId, bossNodeId) === true);
+  return sideApproachConnected ? undefined : getCurrentRouteBlockReason(state, bossNodeId);
 }
 
 export function getCurrentLegalAdjacentTargetIds(state: GameState): string[] {
@@ -7414,7 +7431,7 @@ export function selectNode(state: GameState, nodeId: string): GameState {
     const monster = MONSTERS[node.monsterId];
     const bossDefinition = getBossDefinitionForNode(state.run.dungeonId, node.id);
     if (bossDefinition && state.run.protocol?.id === 'deep') {
-      const bossBlockReason = getCurrentRouteBlockReason(state, node.id);
+      const bossBlockReason = getInfernoBossEntryBlockReason(state, node.id);
       if (bossBlockReason) {
         return appendLog(state, `首领区域尚未开放：${bossBlockReason}`);
       }

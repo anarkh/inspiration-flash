@@ -18,6 +18,7 @@ import './combat-curve.test.js';
 import './power-curve.test.js';
 import './economy-curve.test.js';
 import './speedrun-bounty.test.js';
+import './inferno-side-route.test.js';
 import {
   createInitialState,
   getCombatEncounterProfile,

@@ -37,8 +37,8 @@ function play(state, chapter, protocolId, tier, seed) {
     seeds: { rulesVersion: 1, hiddenTaskSeed: seed, ...(protocolId === 'deep' ? { infernoMapSeed: seed + 7 } : {}) }
   });
   if (!entered) return { state, record: { chapter, protocolId, tier, entered: false, cleared: false, reason: state.log[0] } };
-  // A full clear can close the boss's law gate for good (inferno maps have no side route), so a run the bot
-  // cannot finish is played again heading for the boss.
+  // A full clear can close the boss's law gate for good (an inferno boss with no side room around its gate has
+  // no other way in), so a run the bot cannot finish is played again heading for the boss.
   let mode = 'full';
   let { state: after, stats } = playRun(entered, { mode });
   if (stats.stuck) {
