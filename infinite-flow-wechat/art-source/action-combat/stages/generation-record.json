@@ -1,0 +1,1374 @@
+{
+  "schemaVersion": 1,
+  "batch": "action-combat side-view stages, 18 chapters",
+  "createdAt": "2026-11-11",
+  "tool": "Codex CLI 0.167.1 built-in image_gen via tools/gen.sh (codex exec ... < /dev/null, killed after 600 s); one call per attempt; opaque output; Image 1 = the chapter's top-down room (cocos/assets/resources/dungeon-world/<id>-v1.jpg) as style/palette reference",
+  "prompts": "tools/make_stage_prompts.py (template = demon-tower attempt-3 composition + asymmetric landmarks + chapter vocabulary from art-source/dungeon-world/<id>-v1.prompt.txt; FIXES/LINE add per-attempt corrections); every attempt prompt is in prompts/<id>-a<N>.prompt.txt",
+  "sizeNote": "image_gen has no size parameter; every output is 1774x887 (2:1)",
+  "postProcessing": "None. Selected originals copied byte-for-byte; Pillow used read-only for measurements and previews.",
+  "measurement": "tools/stage_review.py: floor/wall line = strongest dark-to-light step of the full-width row-mean profile (45-78% of H, window 1.5% H), each horizontal fifth refined within +-4% H; every line checked by eye on an annotated thumbnail, overridden where the detector caught a floor stripe/curb (lineSource). wall/floor mean = luminance (0-255) above/below the line. Seam check = mirror-tiled strip (flipped|image|flipped) inspected for landmarks cut or twinned at the seams.",
+  "reference": {
+    "demon_tower_1": {
+      "tag": "demon_tower_1",
+      "path": "/Users/bytedance/git/inspiration-flash/infinite-flow-wechat/art-source/action-combat/stage-demon-tower-v1.png",
+      "size": [
+        1774,
+        887
+      ],
+      "lineY": 534,
+      "lineFrac": 0.602,
+      "lineSource": "auto",
+      "lineCandidates": [
+        [
+          534,
+          16.2
+        ],
+        [
+          576,
+          5.8
+        ],
+        [
+          502,
+          5.3
+        ]
+      ],
+      "fifths": [
+        539,
+        532,
+        532,
+        537,
+        532
+      ],
+      "fifthStrength": [
+        12.8,
+        20.2,
+        20.5,
+        12.8,
+        17.5
+      ],
+      "levelSpread": 7,
+      "wallMean": 39.6,
+      "floorMean": 77.3,
+      "floorThirds": [
+        76.1,
+        80.2,
+        75.5
+      ],
+      "floorBottom5pct": 71.0,
+      "edgeWallStd": [
+        9.1,
+        8.0
+      ],
+      "centerWallStd": 17.3
+    }
+  },
+  "chapters": {
+    "metro_abyss": {
+      "monsterForMockup": "rail_wraith",
+      "attempts": [
+        {
+          "attempt": 1,
+          "prompt": "prompts/metro_abyss-a1.prompt.txt",
+          "verdict": "rejected",
+          "why": "rejected - blank lightboxes reach ~89% of the width, so they repeat as a twin pair across the right mirror seam; floor darkens to 52 at the bottom",
+          "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1cad1-1137-7e43-9d36-f33a17f5ec84/exec-3f84670a-7cb3-4ee8-bf55-3f7190717662.png",
+          "sha256": "33d39455f95a491b41bde056d3c8587a156ccfe1f354982bcadc5d181b562eb2",
+          "measured": {
+            "lineY": 534,
+            "lineFrac": 0.602,
+            "lineSource": "auto",
+            "wallMean": 45.6,
+            "floorMean": 72.4
+          }
+        },
+        {
+          "attempt": 2,
+          "prompt": "prompts/metro_abyss-a2.prompt.txt",
+          "verdict": "selected",
+          "why": "selected - tunnel mouth with carriage left of center, lightboxes/turnstiles/ticket window 56-85%; plain pillars at the edges; even floor 77",
+          "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1caf8-12e4-7951-bd6a-36d26d7a67a0/exec-74047574-dc48-4497-8bf4-507550c6303d.png",
+          "sha256": "dcbd04efb7ee85d7034d366341d9508b8f11d2556dad04ffb1a00e7b5dfcdca3",
+          "measured": {
+            "lineY": 542,
+            "lineFrac": 0.611,
+            "lineSource": "auto",
+            "wallMean": 46.2,
+            "floorMean": 77.3
+          }
+        }
+      ],
+      "selectedAttempt": 2,
+      "selected": {
+        "file": "metro_abyss-v1.png",
+        "prompt": "metro_abyss-v1.prompt.txt",
+        "sha256": "dcbd04efb7ee85d7034d366341d9508b8f11d2556dad04ffb1a00e7b5dfcdca3",
+        "sourcePath": "/Users/bytedance/.codex/generated_images/01a1caf8-12e4-7951-bd6a-36d26d7a67a0/exec-74047574-dc48-4497-8bf4-507550c6303d.png",
+        "size": [
+          1774,
+          887
+        ],
+        "floorLineY": 542,
+        "floorLineFrac": 0.611,
+        "lineSource": "auto",
+        "fifthsY": [
+          542,
+          543,
+          507,
+          542,
+          542
+        ],
+        "levelSpreadPx": 36,
+        "wallMean": 46.2,
+        "floorMean": 77.3,
+        "floorThirds": [
+          76.6,
+          78.2,
+          77.0
+        ],
+        "floorBottom5pct": 66.0,
+        "edgeWallStd": [
+          21.9,
+          22.9
+        ],
+        "centerWallStd": 30.9,
+        "floorFraction": 0.389
+      }
+    },
+    "starfall_mine": {
+      "monsterForMockup": "spark_imp",
+      "attempts": [
+        {
+          "attempt": 1,
+          "prompt": "prompts/starfall_mine-a1.prompt.txt",
+          "verdict": "rejected",
+          "why": "rejected - the meteor breach extends to ~86% of the width, giving twin breaches across the right seam",
+          "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1cad4-23b6-7f70-a392-9e488f0eb3b2/exec-166274ca-d886-4f6e-943f-f98b91e143b7.png",
+          "sha256": "0a828d13688e3c040dbf56d6b1b210b30669ab9bffb5697ab6eb95dff2eba7c3",
+          "measured": {
+            "lineY": 522,
+            "lineFrac": 0.589,
+            "lineSource": "auto",
+            "wallMean": 44.7,
+            "floorMean": 70.5
+          }
+        },
+        {
+          "attempt": 2,
+          "prompt": "prompts/starfall_mine-a2.prompt.txt",
+          "verdict": "selected",
+          "why": "selected - breach at 49-79%, timber prop with lamps left; floor/rock line level (spread 1 px)",
+          "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1caf9-d8bc-7f23-b490-3ec284260949/exec-69ec2f84-8cf1-46c3-9cfc-d9d90e87758b.png",
+          "sha256": "6a2e0228b1bc400bbf292bd24b203be5db7de9f005c158e1a86b4166fc803d43",
+          "measured": {
+            "lineY": 531,
+            "lineFrac": 0.599,
+            "lineSource": "auto",
+            "wallMean": 46.0,
+            "floorMean": 73.9
+          }
+        }
+      ],
+      "selectedAttempt": 2,
+      "selected": {
+        "file": "starfall_mine-v1.png",
+        "prompt": "starfall_mine-v1.prompt.txt",
+        "sha256": "6a2e0228b1bc400bbf292bd24b203be5db7de9f005c158e1a86b4166fc803d43",
+        "sourcePath": "/Users/bytedance/.codex/generated_images/01a1caf9-d8bc-7f23-b490-3ec284260949/exec-69ec2f84-8cf1-46c3-9cfc-d9d90e87758b.png",
+        "size": [
+          1774,
+          887
+        ],
+        "floorLineY": 531,
+        "floorLineFrac": 0.599,
+        "lineSource": "auto",
+        "fifthsY": [
+          531,
+          530,
+          530,
+          531,
+          531
+        ],
+        "levelSpreadPx": 1,
+        "wallMean": 46.0,
+        "floorMean": 73.9,
+        "floorThirds": [
+          71.5,
+          77.9,
+          72.3
+        ],
+        "floorBottom5pct": 58.9,
+        "edgeWallStd": [
+          11.7,
+          12.3
+        ],
+        "centerWallStd": 39.8,
+        "floorFraction": 0.401
+      }
+    },
+    "rust_hospital": {
+      "monsterForMockup": "plague_orderly",
+      "attempts": [
+        {
+          "attempt": 1,
+          "prompt": "prompts/rust_hospital-a1.prompt.txt",
+          "verdict": "no output",
+          "why": "no output - killed by the 600 s watchdog (Codex stderr shows network request timeouts)",
+          "generatedSourcePath": null
+        },
+        {
+          "attempt": 2,
+          "prompt": "prompts/rust_hospital-a2.prompt.txt",
+          "verdict": "rejected",
+          "why": "rejected - the curtained gurney bay reaches ~88% of the width, a twin bay appears ~24% apart across the right seam",
+          "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1caf8-069c-7852-bcab-e3dbc16f7e0d/exec-791ba19f-67df-48c7-a455-644e6984a9a8.png",
+          "sha256": "11e298736b915cdded0880c49c6550d43894f8417be3c4ef27a2a2ca10e95eb8",
+          "measured": {
+            "lineY": 537,
+            "lineFrac": 0.605,
+            "lineSource": "auto",
+            "wallMean": 55.7,
+            "floorMean": 125.6
+          }
+        },
+        {
+          "attempt": 3,
+          "prompt": "prompts/rust_hospital-a3.prompt.txt",
+          "verdict": "selected",
+          "why": "selected - triage counter 18-53%, curtained gurney bay 53-81%, plain tiled wall in both outer zones; counter plaque is blank; bright pale-mint floor (118)",
+          "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1cb19-0488-7f82-8594-c098a9022bd0/exec-95ed7739-f8af-4427-9a22-9215a296138d.png",
+          "sha256": "3cffd88f574043292cb887fd9f9a22331dac1882869fdef40e0774531c5eca5b",
+          "measured": {
+            "lineY": 513,
+            "lineFrac": 0.578,
+            "lineSource": "auto",
+            "wallMean": 53.5,
+            "floorMean": 118.2
+          }
+        }
+      ],
+      "selectedAttempt": 3,
+      "selected": {
+        "file": "rust_hospital-v1.png",
+        "prompt": "rust_hospital-v1.prompt.txt",
+        "sha256": "3cffd88f574043292cb887fd9f9a22331dac1882869fdef40e0774531c5eca5b",
+        "sourcePath": "/Users/bytedance/.codex/generated_images/01a1cb19-0488-7f82-8594-c098a9022bd0/exec-95ed7739-f8af-4427-9a22-9215a296138d.png",
+        "size": [
+          1774,
+          887
+        ],
+        "floorLineY": 513,
+        "floorLineFrac": 0.578,
+        "lineSource": "auto",
+        "fifthsY": [
+          504,
+          520,
+          519,
+          505,
+          503
+        ],
+        "levelSpreadPx": 17,
+        "wallMean": 53.5,
+        "floorMean": 118.2,
+        "floorThirds": [
+          114.8,
+          127.4,
+          112.5
+        ],
+        "floorBottom5pct": 111.6,
+        "edgeWallStd": [
+          14.5,
+          14.8
+        ],
+        "centerWallStd": 28.5,
+        "floorFraction": 0.422
+      }
+    },
+    "ash_arena": {
+      "monsterForMockup": "ash_duelist",
+      "attempts": [
+        {
+          "attempt": 1,
+          "prompt": "prompts/ash_arena-a1.prompt.txt",
+          "verdict": "selected",
+          "why": "selected - judges' box with white steps left of center, tall brazier and broken seating right; plain stone barrier at the edges; level line (spread 1 px)",
+          "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1cae2-62fa-79c3-ae8e-f95369495a58/exec-c6acb271-2fcf-4991-a17d-ac0125ad08a4.png",
+          "sha256": "12cd171851c4ba226c353a49b3ff0dcec6cd47053612a1696e60dcf0555fba54",
+          "measured": {
+            "lineY": 514,
+            "lineFrac": 0.579,
+            "lineSource": "auto",
+            "wallMean": 39.0,
+            "floorMean": 85.9
+          }
+        }
+      ],
+      "selectedAttempt": 1,
+      "selected": {
+        "file": "ash_arena-v1.png",
+        "prompt": "ash_arena-v1.prompt.txt",
+        "sha256": "12cd171851c4ba226c353a49b3ff0dcec6cd47053612a1696e60dcf0555fba54",
+        "sourcePath": "/Users/bytedance/.codex/generated_images/01a1cae2-62fa-79c3-ae8e-f95369495a58/exec-c6acb271-2fcf-4991-a17d-ac0125ad08a4.png",
+        "size": [
+          1774,
+          887
+        ],
+        "floorLineY": 514,
+        "floorLineFrac": 0.579,
+        "lineSource": "auto",
+        "fifthsY": [
+          514,
+          515,
+          514,
+          514,
+          514
+        ],
+        "levelSpreadPx": 1,
+        "wallMean": 39.0,
+        "floorMean": 85.9,
+        "floorThirds": [
+          81.5,
+          92.3,
+          83.8
+        ],
+        "floorBottom5pct": 66.4,
+        "edgeWallStd": [
+          15.9,
+          16.9
+        ],
+        "centerWallStd": 23.7,
+        "floorFraction": 0.421
+      }
+    },
+    "dream_archive": {
+      "monsterForMockup": "paper_librarian",
+      "attempts": [
+        {
+          "attempt": 1,
+          "prompt": "prompts/dream_archive-a1.prompt.txt",
+          "verdict": "rejected",
+          "why": "rejected - a lavender ribbon and the card cabinets sit at 83-96% of the width, twinned at the right seam",
+          "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1cae4-3580-7983-b1af-5c24eda197f5/exec-53307c90-2c11-4c4c-ac41-d6ffb698f14f.png",
+          "sha256": "d520a732eac0e3fff504c22e321ffbea19d49ac6d1ce07e98882a8c6521b24f3",
+          "measured": {
+            "lineY": 528,
+            "lineFrac": 0.595,
+            "lineSource": "auto",
+            "wallMean": 44.2,
+            "floorMean": 91.7
+          }
+        },
+        {
+          "attempt": 2,
+          "prompt": "prompts/dream_archive-a2.prompt.txt",
+          "verdict": "selected",
+          "why": "selected - card cabinets/ribbon left of center, arched alcove with ladder right of center; plain shelves at both edges",
+          "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1cafb-b30b-77c3-a9eb-0cb95136bfdd/exec-56e9a62e-6c89-473e-9828-acf7d6b726d6.png",
+          "sha256": "0893cab4af85a3fc55b2add33821840cf149b0660ccaf1463c4383f85425a81f",
+          "measured": {
+            "lineY": 518,
+            "lineFrac": 0.584,
+            "lineSource": "auto",
+            "wallMean": 43.8,
+            "floorMean": 91.3
+          }
+        }
+      ],
+      "selectedAttempt": 2,
+      "selected": {
+        "file": "dream_archive-v1.png",
+        "prompt": "dream_archive-v1.prompt.txt",
+        "sha256": "0893cab4af85a3fc55b2add33821840cf149b0660ccaf1463c4383f85425a81f",
+        "sourcePath": "/Users/bytedance/.codex/generated_images/01a1cafb-b30b-77c3-a9eb-0cb95136bfdd/exec-56e9a62e-6c89-473e-9828-acf7d6b726d6.png",
+        "size": [
+          1774,
+          887
+        ],
+        "floorLineY": 518,
+        "floorLineFrac": 0.584,
+        "lineSource": "auto",
+        "fifthsY": [
+          518,
+          519,
+          520,
+          526,
+          518
+        ],
+        "levelSpreadPx": 8,
+        "wallMean": 43.8,
+        "floorMean": 91.3,
+        "floorThirds": [
+          89.3,
+          96.1,
+          88.6
+        ],
+        "floorBottom5pct": 90.4,
+        "edgeWallStd": [
+          15.6,
+          14.3
+        ],
+        "centerWallStd": 26.2,
+        "floorFraction": 0.416
+      }
+    },
+    "void_citadel": {
+      "monsterForMockup": "void_knight",
+      "attempts": [
+        {
+          "attempt": 1,
+          "prompt": "prompts/void_citadel-a1.prompt.txt",
+          "verdict": "selected",
+          "why": "selected - black gate with white radiance left of center, broken rampart stair and blank plaques right; plain obsidian at the edges; floor 65 reads in the mock-up",
+          "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1cad1-14c9-7a50-a660-33513ae85393/exec-00e3d9e1-9a5a-46bb-96a8-47bf290a3dae.png",
+          "sha256": "bd27c8dc8af00e0e7a8d67b7d827d3d626ac9f9ddb5006681cfc8bc1bf3f8aaf",
+          "measured": {
+            "lineY": 535,
+            "lineFrac": 0.603,
+            "lineSource": "auto",
+            "wallMean": 42.3,
+            "floorMean": 65.0
+          }
+        }
+      ],
+      "selectedAttempt": 1,
+      "selected": {
+        "file": "void_citadel-v1.png",
+        "prompt": "void_citadel-v1.prompt.txt",
+        "sha256": "bd27c8dc8af00e0e7a8d67b7d827d3d626ac9f9ddb5006681cfc8bc1bf3f8aaf",
+        "sourcePath": "/Users/bytedance/.codex/generated_images/01a1cad1-14c9-7a50-a660-33513ae85393/exec-00e3d9e1-9a5a-46bb-96a8-47bf290a3dae.png",
+        "size": [
+          1774,
+          887
+        ],
+        "floorLineY": 535,
+        "floorLineFrac": 0.603,
+        "lineSource": "auto",
+        "fifthsY": [
+          534,
+          535,
+          531,
+          532,
+          531
+        ],
+        "levelSpreadPx": 4,
+        "wallMean": 42.3,
+        "floorMean": 65.0,
+        "floorThirds": [
+          67.4,
+          68.0,
+          59.5
+        ],
+        "floorBottom5pct": 48.7,
+        "edgeWallStd": [
+          8.4,
+          8.9
+        ],
+        "centerWallStd": 51.3,
+        "floorFraction": 0.397
+      }
+    },
+    "temporal_observatory": {
+      "monsterForMockup": "epoch_sentinel",
+      "attempts": [
+        {
+          "attempt": 1,
+          "prompt": "prompts/temporal_observatory-a1.prompt.txt",
+          "verdict": "no output",
+          "why": "no output - killed by the 600 s watchdog (Codex network request timeouts)",
+          "generatedSourcePath": null
+        },
+        {
+          "attempt": 2,
+          "prompt": "prompts/temporal_observatory-a2.prompt.txt",
+          "verdict": "selected",
+          "why": "selected - telescope left, ivory meridian pillar and pendulums right, aged bronze vs blue-black metal; line set by eye to the wall base (528) because the detector caught a bronze floor strip (647)",
+          "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1caf8-0c9b-72d0-9f04-c53704276214/exec-df3c85ed-8882-4cd8-9ec2-4c2796dd6b7f.png",
+          "sha256": "0f2d296d55bda4c1327348bc7824fed7fd0fa96c2643244f93c53ece29672193",
+          "measured": {
+            "lineY": 528,
+            "lineFrac": 0.595,
+            "lineSource": "override (visual check)",
+            "wallMean": 49.2,
+            "floorMean": 100.9
+          }
+        }
+      ],
+      "selectedAttempt": 2,
+      "selected": {
+        "file": "temporal_observatory-v1.png",
+        "prompt": "temporal_observatory-v1.prompt.txt",
+        "sha256": "0f2d296d55bda4c1327348bc7824fed7fd0fa96c2643244f93c53ece29672193",
+        "sourcePath": "/Users/bytedance/.codex/generated_images/01a1caf8-0c9b-72d0-9f04-c53704276214/exec-df3c85ed-8882-4cd8-9ec2-4c2796dd6b7f.png",
+        "size": [
+          1774,
+          887
+        ],
+        "floorLineY": 528,
+        "floorLineFrac": 0.595,
+        "lineSource": "override (visual check)",
+        "fifthsY": [
+          526,
+          522,
+          528,
+          520,
+          528
+        ],
+        "levelSpreadPx": 8,
+        "wallMean": 49.2,
+        "floorMean": 100.9,
+        "floorThirds": [
+          95.0,
+          118.1,
+          89.7
+        ],
+        "floorBottom5pct": 80.2,
+        "edgeWallStd": [
+          16.5,
+          11.3
+        ],
+        "centerWallStd": 39.1,
+        "floorFraction": 0.405
+      }
+    },
+    "causal_clearinghouse": {
+      "monsterForMockup": "paradox_bailiff",
+      "attempts": [
+        {
+          "attempt": 1,
+          "prompt": "prompts/causal_clearinghouse-a1.prompt.txt",
+          "verdict": "rejected",
+          "why": "rejected - dark green marble floor (58 at the true wall base 550) gives low contrast for the dark-red monster",
+          "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1cade-b752-7710-93bc-32a1d105c3a2/exec-4e911ee5-5268-4d32-81c5-1fda88a52295.png",
+          "sha256": "68f43a1750eb38d29b1d8fca052b17080d08ef52014c30cab43dcbf42d64ea3c",
+          "measured": {
+            "lineY": 550,
+            "lineFrac": 0.62,
+            "lineSource": "override (visual check)",
+            "wallMean": 33.7,
+            "floorMean": 58.1
+          }
+        },
+        {
+          "attempt": 2,
+          "prompt": "prompts/causal_clearinghouse-a2.prompt.txt",
+          "verdict": "selected",
+          "why": "selected - stamp counter and shelves left, round judgment vault door right; lighter jade marble floor 79, perfectly even",
+          "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1cb02-b01c-7430-8e86-99866521f57b/exec-faf9a107-98dc-4e77-820e-cba91fedff34.png",
+          "sha256": "dc948c41f49b98c308bc4060147dbf562b2a44c102417a50190f476cb349c8ca",
+          "measured": {
+            "lineY": 546,
+            "lineFrac": 0.616,
+            "lineSource": "auto",
+            "wallMean": 33.0,
+            "floorMean": 79.1
+          }
+        }
+      ],
+      "selectedAttempt": 2,
+      "selected": {
+        "file": "causal_clearinghouse-v1.png",
+        "prompt": "causal_clearinghouse-v1.prompt.txt",
+        "sha256": "dc948c41f49b98c308bc4060147dbf562b2a44c102417a50190f476cb349c8ca",
+        "sourcePath": "/Users/bytedance/.codex/generated_images/01a1cb02-b01c-7430-8e86-99866521f57b/exec-faf9a107-98dc-4e77-820e-cba91fedff34.png",
+        "size": [
+          1774,
+          887
+        ],
+        "floorLineY": 546,
+        "floorLineFrac": 0.616,
+        "lineSource": "auto",
+        "fifthsY": [
+          540,
+          550,
+          546,
+          540,
+          543
+        ],
+        "levelSpreadPx": 10,
+        "wallMean": 33.0,
+        "floorMean": 79.1,
+        "floorThirds": [
+          79.3,
+          79.0,
+          79.0
+        ],
+        "floorBottom5pct": 71.8,
+        "edgeWallStd": [
+          13.1,
+          14.1
+        ],
+        "centerWallStd": 23.8,
+        "floorFraction": 0.384
+      }
+    },
+    "entropy_ark": {
+      "monsterForMockup": "dissipation_navigator",
+      "attempts": [
+        {
+          "attempt": 1,
+          "prompt": "prompts/entropy_ark-a1.prompt.txt",
+          "verdict": "rejected",
+          "why": "rejected - deck starts at 0.630 of the height (floor band too shallow)",
+          "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1cae4-0811-7263-85d2-ca88403babb3/exec-e5fb87a4-c9c4-4a3e-b938-e73024ae3621.png",
+          "sha256": "ca79cd92b7d4c18e085a3ceef725fe6b082a43bd909f175818389c73cd21c6a5",
+          "measured": {
+            "lineY": 559,
+            "lineFrac": 0.63,
+            "lineSource": "auto",
+            "wallMean": 39.8,
+            "floorMean": 74.6
+          }
+        },
+        {
+          "attempt": 2,
+          "prompt": "prompts/entropy_ark-a2.prompt.txt",
+          "verdict": "selected",
+          "why": "selected - winches left, tall helm tower right, entropy sea beyond the bulwark; line 0.608, level (1 px)",
+          "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1cafc-aa3f-7872-96c8-6a716f2279c6/exec-497313bf-9c17-461f-ad69-75dac10184cc.png",
+          "sha256": "7bfcef71eab199373ed6156a2e3ff0add7aedf3cbe12aeab6b2a59dac13a080f",
+          "measured": {
+            "lineY": 539,
+            "lineFrac": 0.608,
+            "lineSource": "auto",
+            "wallMean": 44.6,
+            "floorMean": 82.1
+          }
+        }
+      ],
+      "selectedAttempt": 2,
+      "selected": {
+        "file": "entropy_ark-v1.png",
+        "prompt": "entropy_ark-v1.prompt.txt",
+        "sha256": "7bfcef71eab199373ed6156a2e3ff0add7aedf3cbe12aeab6b2a59dac13a080f",
+        "sourcePath": "/Users/bytedance/.codex/generated_images/01a1cafc-aa3f-7872-96c8-6a716f2279c6/exec-497313bf-9c17-461f-ad69-75dac10184cc.png",
+        "size": [
+          1774,
+          887
+        ],
+        "floorLineY": 539,
+        "floorLineFrac": 0.608,
+        "lineSource": "auto",
+        "fifthsY": [
+          540,
+          540,
+          539,
+          539,
+          539
+        ],
+        "levelSpreadPx": 1,
+        "wallMean": 44.6,
+        "floorMean": 82.1,
+        "floorThirds": [
+          78.1,
+          89.1,
+          79.2
+        ],
+        "floorBottom5pct": 64.2,
+        "edgeWallStd": [
+          15.7,
+          17.0
+        ],
+        "centerWallStd": 22.5,
+        "floorFraction": 0.392
+      }
+    },
+    "mirror_cycle_city": {
+      "monsterForMockup": "parallax_hunter",
+      "attempts": [
+        {
+          "attempt": 1,
+          "prompt": "prompts/mirror_cycle_city-a1.prompt.txt",
+          "verdict": "rejected",
+          "why": "rejected - street edge at 0.639 and a bright pink reflection hotspot in the middle of the street",
+          "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1cae6-67fa-7b43-94f7-443417b46f0b/exec-367af013-1e3b-48ac-846a-e6dbd818ff10.png",
+          "sha256": "5646e541c569c4d76120ed26a4f2a93c90bcac40843acd051eccf43bc1034967",
+          "measured": {
+            "lineY": 567,
+            "lineFrac": 0.639,
+            "lineSource": "auto",
+            "wallMean": 55.0,
+            "floorMean": 109.6
+          }
+        },
+        {
+          "attempt": 2,
+          "prompt": "prompts/mirror_cycle_city-a2.prompt.txt",
+          "verdict": "rejected",
+          "why": "rejected - street edge at 0.655",
+          "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1cafe-daea-7700-b408-f822564115fe/exec-fbcef124-d86e-45c2-b22e-046c07dd52e9.png",
+          "sha256": "98c71077d6f961979c8569abad459ae615f806882106137dcbd511b948c845e8",
+          "measured": {
+            "lineY": 581,
+            "lineFrac": 0.655,
+            "lineSource": "auto",
+            "wallMean": 54.6,
+            "floorMean": 94.9
+          }
+        },
+        {
+          "attempt": 3,
+          "prompt": "prompts/mirror_cycle_city-a3.prompt.txt",
+          "verdict": "selected",
+          "why": "selected - tower block left, shopfront arcade right, inverted city hanging from the sky; line 0.578; floor bright (109) with a mild central reflection",
+          "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1cb12-c091-7452-9fa0-2e8db016f3ee/exec-49a1773d-a989-48e5-b983-79528d1b3dc5.png",
+          "sha256": "c1405870868b2de954f096e3c3963cca95288f755110a7c36d1d2b052e545fd4",
+          "measured": {
+            "lineY": 513,
+            "lineFrac": 0.578,
+            "lineSource": "auto",
+            "wallMean": 55.4,
+            "floorMean": 108.8
+          }
+        }
+      ],
+      "selectedAttempt": 3,
+      "selected": {
+        "file": "mirror_cycle_city-v1.png",
+        "prompt": "mirror_cycle_city-v1.prompt.txt",
+        "sha256": "c1405870868b2de954f096e3c3963cca95288f755110a7c36d1d2b052e545fd4",
+        "sourcePath": "/Users/bytedance/.codex/generated_images/01a1cb12-c091-7452-9fa0-2e8db016f3ee/exec-49a1773d-a989-48e5-b983-79528d1b3dc5.png",
+        "size": [
+          1774,
+          887
+        ],
+        "floorLineY": 513,
+        "floorLineFrac": 0.578,
+        "lineSource": "auto",
+        "fifthsY": [
+          513,
+          514,
+          513,
+          512,
+          510
+        ],
+        "levelSpreadPx": 4,
+        "wallMean": 55.4,
+        "floorMean": 108.8,
+        "floorThirds": [
+          102.1,
+          117.2,
+          107.1
+        ],
+        "floorBottom5pct": 88.9,
+        "edgeWallStd": [
+          19.1,
+          20.3
+        ],
+        "centerWallStd": 31.8,
+        "floorFraction": 0.422
+      }
+    },
+    "redaction_scriptorium": {
+      "monsterForMockup": "erasure_copyist",
+      "attempts": [
+        {
+          "attempt": 1,
+          "prompt": "prompts/redaction_scriptorium-a1.prompt.txt",
+          "verdict": "rejected",
+          "why": "rejected - dark floor (56) with a central hotspot and a busy repeating parchment pattern",
+          "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1cad1-1ab5-71e0-aa82-7e4b311bc8c6/exec-767363f7-c867-4629-aec7-efac9401a49f.png",
+          "sha256": "beb0c7a5f2b2fe9412b32e22ea4476445dacb3db47ac68486ae7d0390f7b9568",
+          "measured": {
+            "lineY": 511,
+            "lineFrac": 0.576,
+            "lineSource": "auto",
+            "wallMean": 21.7,
+            "floorMean": 55.9
+          }
+        },
+        {
+          "attempt": 2,
+          "prompt": "prompts/redaction_scriptorium-a2.prompt.txt",
+          "verdict": "selected",
+          "why": "selected - lighter even slate floor (69) with a few sheets; lock door left, proof benches under red beams right; line 0.559 is 0.036 above target",
+          "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1cb02-6cad-7511-8ff6-15696d1f4636/exec-0d03c9f0-06a1-4a4d-9ca2-de3c8e2c17d7.png",
+          "sha256": "73c51200392c453ce471ba2154bcb09961f3b6609c779a24f29d943231b435ed",
+          "measured": {
+            "lineY": 496,
+            "lineFrac": 0.559,
+            "lineSource": "auto",
+            "wallMean": 27.4,
+            "floorMean": 68.8
+          }
+        },
+        {
+          "attempt": 3,
+          "prompt": "prompts/redaction_scriptorium-a3.prompt.txt",
+          "verdict": "rejected",
+          "why": "rejected - line fixed (0.589) but the floor went dark again (60, bottom 40) with the parchment pattern back",
+          "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1cb14-33a4-7d53-acc3-d1fcfedf02d8/exec-89247bd9-1e05-4006-b403-ab72a40d7a3c.png",
+          "sha256": "0542df560166e42d206b7e6b9e35cbb539f32524b2fe88ecc8366d428f130e6a",
+          "measured": {
+            "lineY": 522,
+            "lineFrac": 0.589,
+            "lineSource": "auto",
+            "wallMean": 22.5,
+            "floorMean": 59.7
+          }
+        }
+      ],
+      "selectedAttempt": 2,
+      "selected": {
+        "file": "redaction_scriptorium-v1.png",
+        "prompt": "redaction_scriptorium-v1.prompt.txt",
+        "sha256": "73c51200392c453ce471ba2154bcb09961f3b6609c779a24f29d943231b435ed",
+        "sourcePath": "/Users/bytedance/.codex/generated_images/01a1cb02-6cad-7511-8ff6-15696d1f4636/exec-0d03c9f0-06a1-4a4d-9ca2-de3c8e2c17d7.png",
+        "size": [
+          1774,
+          887
+        ],
+        "floorLineY": 496,
+        "floorLineFrac": 0.559,
+        "lineSource": "auto",
+        "fifthsY": [
+          496,
+          496,
+          496,
+          496,
+          496
+        ],
+        "levelSpreadPx": 0,
+        "wallMean": 27.4,
+        "floorMean": 68.8,
+        "floorThirds": [
+          66.7,
+          73.3,
+          66.5
+        ],
+        "floorBottom5pct": 54.6,
+        "edgeWallStd": [
+          9.5,
+          10.0
+        ],
+        "centerWallStd": 27.8,
+        "floorFraction": 0.441
+      }
+    },
+    "legacy_auction_court": {
+      "monsterForMockup": "reserve_bailiff",
+      "attempts": [
+        {
+          "attempt": 1,
+          "prompt": "prompts/legacy_auction_court-a1.prompt.txt",
+          "verdict": "selected",
+          "why": "selected - gantry with sealed weapon cases left, armored vault door right; hazard stripes only, no readable text; floor 86",
+          "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1cad4-3943-72d0-978c-dab7b66944f2/exec-24dd9333-2eca-4b75-bb1a-a69b5d64d6b4.png",
+          "sha256": "e9a2b39821c19b88a29e5f86acc148d25296b29be280d920c2ffcf73700d22f2",
+          "measured": {
+            "lineY": 524,
+            "lineFrac": 0.591,
+            "lineSource": "auto",
+            "wallMean": 34.6,
+            "floorMean": 86.0
+          }
+        }
+      ],
+      "selectedAttempt": 1,
+      "selected": {
+        "file": "legacy_auction_court-v1.png",
+        "prompt": "legacy_auction_court-v1.prompt.txt",
+        "sha256": "e9a2b39821c19b88a29e5f86acc148d25296b29be280d920c2ffcf73700d22f2",
+        "sourcePath": "/Users/bytedance/.codex/generated_images/01a1cad4-3943-72d0-978c-dab7b66944f2/exec-24dd9333-2eca-4b75-bb1a-a69b5d64d6b4.png",
+        "size": [
+          1774,
+          887
+        ],
+        "floorLineY": 524,
+        "floorLineFrac": 0.591,
+        "lineSource": "auto",
+        "fifthsY": [
+          524,
+          523,
+          524,
+          522,
+          529
+        ],
+        "levelSpreadPx": 7,
+        "wallMean": 34.6,
+        "floorMean": 86.0,
+        "floorThirds": [
+          83.8,
+          90.3,
+          84.0
+        ],
+        "floorBottom5pct": 72.2,
+        "edgeWallStd": [
+          13.0,
+          13.1
+        ],
+        "centerWallStd": 26.6,
+        "floorFraction": 0.409
+      }
+    },
+    "genesis_vault": {
+      "monsterForMockup": "gene_stalker",
+      "attempts": [
+        {
+          "attempt": 1,
+          "prompt": "prompts/genesis_vault-a1.prompt.txt",
+          "verdict": "rejected",
+          "why": "rejected - near-white glossy floor (145) out of family with the dark game finish",
+          "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1cada-0608-78c0-accc-49586f8ab899/exec-388de9ef-864c-4ba9-a9c7-197918fa3613.png",
+          "sha256": "e68d5bd9c23e0210dd658b8c6f3e074c22f000050fea5823e7c4eb3532031862",
+          "measured": {
+            "lineY": 518,
+            "lineFrac": 0.584,
+            "lineSource": "auto",
+            "wallMean": 68.1,
+            "floorMean": 144.8
+          }
+        },
+        {
+          "attempt": 2,
+          "prompt": "prompts/genesis_vault-a2.prompt.txt",
+          "verdict": "selected",
+          "why": "selected - two green bio-tanks left, robot-arm bench right; floor 134 is still the brightest of the set (ivory ceramic)",
+          "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1cafd-cf78-7761-bfe7-c5078e82f94c/exec-798d5396-4cd6-4214-a9d1-17fabca7ab83.png",
+          "sha256": "97bf6b4b9cdcd06fa763704c4316162579a55b91a7e17e6e1b0f3f43c42f59a2",
+          "measured": {
+            "lineY": 539,
+            "lineFrac": 0.608,
+            "lineSource": "auto",
+            "wallMean": 62.2,
+            "floorMean": 134.0
+          }
+        }
+      ],
+      "selectedAttempt": 2,
+      "selected": {
+        "file": "genesis_vault-v1.png",
+        "prompt": "genesis_vault-v1.prompt.txt",
+        "sha256": "97bf6b4b9cdcd06fa763704c4316162579a55b91a7e17e6e1b0f3f43c42f59a2",
+        "sourcePath": "/Users/bytedance/.codex/generated_images/01a1cafd-cf78-7761-bfe7-c5078e82f94c/exec-798d5396-4cd6-4214-a9d1-17fabca7ab83.png",
+        "size": [
+          1774,
+          887
+        ],
+        "floorLineY": 539,
+        "floorLineFrac": 0.608,
+        "lineSource": "auto",
+        "fifthsY": [
+          539,
+          539,
+          539,
+          539,
+          539
+        ],
+        "levelSpreadPx": 0,
+        "wallMean": 62.2,
+        "floorMean": 134.0,
+        "floorThirds": [
+          132.0,
+          138.5,
+          131.6
+        ],
+        "floorBottom5pct": 113.5,
+        "edgeWallStd": [
+          16.7,
+          16.9
+        ],
+        "centerWallStd": 34.3,
+        "floorFraction": 0.392
+      }
+    },
+    "silent_broadcast_tower": {
+      "monsterForMockup": "frequency_leech",
+      "attempts": [
+        {
+          "attempt": 1,
+          "prompt": "prompts/silent_broadcast_tower-a1.prompt.txt",
+          "verdict": "rejected",
+          "why": "rejected - dark floor (60); the dark frequency leech melts into it in the mock-up",
+          "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1cadb-e32f-7c02-a104-3387099675a7/exec-7542a297-9697-4f3f-ade0-bebfbf4b849e.png",
+          "sha256": "7c68169671f441a61b644505a48a648986c9239b0c9aac332004993a89a45a10",
+          "measured": {
+            "lineY": 543,
+            "lineFrac": 0.612,
+            "lineSource": "auto",
+            "wallMean": 25.3,
+            "floorMean": 60.0
+          }
+        },
+        {
+          "attempt": 2,
+          "prompt": "prompts/silent_broadcast_tower-a2.prompt.txt",
+          "verdict": "selected",
+          "why": "selected - relay racks with reel recorders left, soundproof booth right, red emergency lamp; floor 74 even",
+          "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1cafa-94e6-7411-8272-6cbf8b69fc0b/exec-6853ef21-8f8b-40a6-aaef-f543680c3eea.png",
+          "sha256": "5ff005ee239c538967de75bf855403a99a9188bdaf7bc5f3edf00363f2a66e09",
+          "measured": {
+            "lineY": 538,
+            "lineFrac": 0.607,
+            "lineSource": "auto",
+            "wallMean": 29.1,
+            "floorMean": 74.1
+          }
+        }
+      ],
+      "selectedAttempt": 2,
+      "selected": {
+        "file": "silent_broadcast_tower-v1.png",
+        "prompt": "silent_broadcast_tower-v1.prompt.txt",
+        "sha256": "5ff005ee239c538967de75bf855403a99a9188bdaf7bc5f3edf00363f2a66e09",
+        "sourcePath": "/Users/bytedance/.codex/generated_images/01a1cafa-94e6-7411-8272-6cbf8b69fc0b/exec-6853ef21-8f8b-40a6-aaef-f543680c3eea.png",
+        "size": [
+          1774,
+          887
+        ],
+        "floorLineY": 538,
+        "floorLineFrac": 0.607,
+        "lineSource": "auto",
+        "fifthsY": [
+          536,
+          534,
+          536,
+          543,
+          534
+        ],
+        "levelSpreadPx": 9,
+        "wallMean": 29.1,
+        "floorMean": 74.1,
+        "floorThirds": [
+          72.4,
+          80.0,
+          70.0
+        ],
+        "floorBottom5pct": 67.6,
+        "edgeWallStd": [
+          9.4,
+          10.5
+        ],
+        "centerWallStd": 21.7,
+        "floorFraction": 0.393
+      }
+    },
+    "lost_shelter": {
+      "monsterForMockup": "rogue_sentry",
+      "attempts": [
+        {
+          "attempt": 1,
+          "prompt": "prompts/lost_shelter-a1.prompt.txt",
+          "verdict": "rejected",
+          "why": "rejected - folded stretchers inside the left outer zone (7-16% of the width), twinned across the left seam (line 0.598 by eye)",
+          "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1cad1-20af-7ff1-a2f1-c5633af2615a/exec-51678dc1-a5da-4865-a8a6-de83ab0191e3.png",
+          "sha256": "6fb0000ede1ae92f1e132f0689a828415813a1bd270abe06b5b31f1f792afd82",
+          "measured": {
+            "lineY": 530,
+            "lineFrac": 0.598,
+            "lineSource": "override (visual check)",
+            "wallMean": 35.6,
+            "floorMean": 86.9
+          }
+        },
+        {
+          "attempt": 2,
+          "prompt": "prompts/lost_shelter-a2.prompt.txt",
+          "verdict": "rejected",
+          "why": "rejected - wall base too high (0.552) and the stretchers still at the left edge",
+          "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1caf8-1a71-7b01-ae80-79d3af09a77a/exec-252f9d0a-c175-4144-b9ce-6b76a77f3c86.png",
+          "sha256": "2394fb5a709bb3006f1970f7ea937e080c9fd652e00ae3004b15dba3daddaa27",
+          "measured": {
+            "lineY": 490,
+            "lineFrac": 0.552,
+            "lineSource": "auto",
+            "wallMean": 41.8,
+            "floorMean": 90.6
+          }
+        },
+        {
+          "attempt": 3,
+          "prompt": "prompts/lost_shelter-a3.prompt.txt",
+          "verdict": "selected",
+          "why": "selected - blast door, arsenal lockers and rollcall window; line set by eye to the wall base (512; the detector caught the drainage curb at 556); stretchers at 13-21% are still near the left edge (best of three)",
+          "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1cb12-cbf6-7c40-8c28-7f8510a98f1d/exec-34dc8e2c-1289-443c-a8c7-a0ea722c4c40.png",
+          "sha256": "b01e7eed91f6ed1384a0ed9af911b237e4f05d74a615635df9c6a77b00b43a8d",
+          "measured": {
+            "lineY": 512,
+            "lineFrac": 0.577,
+            "lineSource": "override (visual check)",
+            "wallMean": 39.9,
+            "floorMean": 90.3
+          }
+        }
+      ],
+      "selectedAttempt": 3,
+      "selected": {
+        "file": "lost_shelter-v1.png",
+        "prompt": "lost_shelter-v1.prompt.txt",
+        "sha256": "b01e7eed91f6ed1384a0ed9af911b237e4f05d74a615635df9c6a77b00b43a8d",
+        "sourcePath": "/Users/bytedance/.codex/generated_images/01a1cb12-cbf6-7c40-8c28-7f8510a98f1d/exec-34dc8e2c-1289-443c-a8c7-a0ea722c4c40.png",
+        "size": [
+          1774,
+          887
+        ],
+        "floorLineY": 512,
+        "floorLineFrac": 0.577,
+        "lineSource": "override (visual check)",
+        "fifthsY": [
+          512,
+          513,
+          510,
+          513,
+          513
+        ],
+        "levelSpreadPx": 3,
+        "wallMean": 39.9,
+        "floorMean": 90.3,
+        "floorThirds": [
+          86.8,
+          95.3,
+          88.8
+        ],
+        "floorBottom5pct": 66.7,
+        "edgeWallStd": [
+          10.6,
+          12.5
+        ],
+        "centerWallStd": 25.4,
+        "floorFraction": 0.423
+      }
+    },
+    "false_testimony_court": {
+      "monsterForMockup": "hostile_witness",
+      "attempts": [
+        {
+          "attempt": 1,
+          "prompt": "prompts/false_testimony_court-a1.prompt.txt",
+          "verdict": "rejected",
+          "why": "rejected - wall base far too high (0.538)",
+          "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1cad3-9da1-7f33-abae-ca1a9420a4ff/exec-b7513dc6-b3eb-4ec6-8639-b1d473753310.png",
+          "sha256": "31354e5c1a51999d3e7dea3a716fa9871c15ae71e33fa82f4cff6ca419d877c8",
+          "measured": {
+            "lineY": 477,
+            "lineFrac": 0.538,
+            "lineSource": "auto",
+            "wallMean": 50.7,
+            "floorMean": 75.3
+          }
+        },
+        {
+          "attempt": 2,
+          "prompt": "prompts/false_testimony_court-a2.prompt.txt",
+          "verdict": "rejected",
+          "why": "rejected - wall base still high (0.564)",
+          "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1cafd-6140-7e61-98e0-7eef7ecdc8b6/exec-58e878b9-80ee-4abe-8a04-0f2ca4216665.png",
+          "sha256": "f98d2ba4e9bc3bd3d55f221e54b25b0308b6e7144bcc923430d65f3830011b59",
+          "measured": {
+            "lineY": 500,
+            "lineFrac": 0.564,
+            "lineSource": "auto",
+            "wallMean": 51.7,
+            "floorMean": 75.9
+          }
+        },
+        {
+          "attempt": 3,
+          "prompt": "prompts/false_testimony_court-a3.prompt.txt",
+          "verdict": "selected",
+          "why": "selected - evidence labs and the interrogation bench behind glass; seams land on plain wall panels; line 0.573",
+          "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1cb12-ba65-7170-bde1-3862a0c5558c/exec-658efabf-dcbc-415a-bf1b-3eed1ba99a3a.png",
+          "sha256": "1b0a45bd29d721c4bace56489fd13bae0e8b20bd8183db9e644f1580efa364fc",
+          "measured": {
+            "lineY": 508,
+            "lineFrac": 0.573,
+            "lineSource": "auto",
+            "wallMean": 52.2,
+            "floorMean": 80.3
+          }
+        }
+      ],
+      "selectedAttempt": 3,
+      "selected": {
+        "file": "false_testimony_court-v1.png",
+        "prompt": "false_testimony_court-v1.prompt.txt",
+        "sha256": "1b0a45bd29d721c4bace56489fd13bae0e8b20bd8183db9e644f1580efa364fc",
+        "sourcePath": "/Users/bytedance/.codex/generated_images/01a1cb12-ba65-7170-bde1-3862a0c5558c/exec-658efabf-dcbc-415a-bf1b-3eed1ba99a3a.png",
+        "size": [
+          1774,
+          887
+        ],
+        "floorLineY": 508,
+        "floorLineFrac": 0.573,
+        "lineSource": "auto",
+        "fifthsY": [
+          508,
+          508,
+          502,
+          502,
+          507
+        ],
+        "levelSpreadPx": 6,
+        "wallMean": 52.2,
+        "floorMean": 80.3,
+        "floorThirds": [
+          76.0,
+          84.9,
+          79.9
+        ],
+        "floorBottom5pct": 65.9,
+        "edgeWallStd": [
+          34.8,
+          32.8
+        ],
+        "centerWallStd": 34.5,
+        "floorFraction": 0.427
+      }
+    },
+    "combat_replay_stage": {
+      "monsterForMockup": "cue_stalker",
+      "attempts": [
+        {
+          "attempt": 1,
+          "prompt": "prompts/combat_replay_stage-a1.prompt.txt",
+          "verdict": "rejected",
+          "why": "rejected - camera crane base at ~10% of the width gives twin cranes ~480 px apart across the left seam; line 0.568",
+          "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1cad6-6143-7800-8a91-73c5766899ba/exec-85d3a7b0-8f99-4a7b-841c-daff9a610a01.png",
+          "sha256": "56364abf4b526ef48db38884636f9bc9cad3f46761711614066909ae9589f08b",
+          "measured": {
+            "lineY": 504,
+            "lineFrac": 0.568,
+            "lineSource": "auto",
+            "wallMean": 45.4,
+            "floorMean": 77.7
+          }
+        },
+        {
+          "attempt": 2,
+          "prompt": "prompts/combat_replay_stage-a2.prompt.txt",
+          "verdict": "selected",
+          "why": "selected - hologram screens with the crane center-left, red curtain and editing desks right, plain left edge; line 0.594",
+          "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1cb14-6cab-7670-972a-5ef17c516d58/exec-aa3c4010-4a97-4236-9b35-58a2fad29135.png",
+          "sha256": "1d8aa7402f958a85ba4b485fef875972e1cc90addeac9894995d476929ab34f2",
+          "measured": {
+            "lineY": 527,
+            "lineFrac": 0.594,
+            "lineSource": "auto",
+            "wallMean": 42.6,
+            "floorMean": 79.7
+          }
+        }
+      ],
+      "selectedAttempt": 2,
+      "selected": {
+        "file": "combat_replay_stage-v1.png",
+        "prompt": "combat_replay_stage-v1.prompt.txt",
+        "sha256": "1d8aa7402f958a85ba4b485fef875972e1cc90addeac9894995d476929ab34f2",
+        "sourcePath": "/Users/bytedance/.codex/generated_images/01a1cb14-6cab-7670-972a-5ef17c516d58/exec-aa3c4010-4a97-4236-9b35-58a2fad29135.png",
+        "size": [
+          1774,
+          887
+        ],
+        "floorLineY": 527,
+        "floorLineFrac": 0.594,
+        "lineSource": "auto",
+        "fifthsY": [
+          527,
+          527,
+          534,
+          527,
+          526
+        ],
+        "levelSpreadPx": 8,
+        "wallMean": 42.6,
+        "floorMean": 79.7,
+        "floorThirds": [
+          79.1,
+          82.5,
+          77.5
+        ],
+        "floorBottom5pct": 57.6,
+        "edgeWallStd": [
+          18.3,
+          21.5
+        ],
+        "centerWallStd": 26.7,
+        "floorFraction": 0.406
+      }
+    },
+    "panopticon_city": {
+      "monsterForMockup": "phase_hunter_drone",
+      "attempts": [
+        {
+          "attempt": 1,
+          "prompt": "prompts/panopticon_city-a1.prompt.txt",
+          "verdict": "rejected",
+          "why": "rejected - searchlight beams cross the walkable floor; floor dark (67, bottom 47)",
+          "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1cadb-1aa2-7c02-8b0c-6f20de4975f0/exec-d2501615-7d74-4cb0-95e8-9580b12bd40f.png",
+          "sha256": "7ee68fb9abb97329ba559aa7335885e35f4531d299ba9b77ccbf96ab9174bada",
+          "measured": {
+            "lineY": 530,
+            "lineFrac": 0.598,
+            "lineSource": "auto",
+            "wallMean": 37.1,
+            "floorMean": 66.6
+          }
+        },
+        {
+          "attempt": 2,
+          "prompt": "prompts/panopticon_city-a2.prompt.txt",
+          "verdict": "rejected",
+          "why": "rejected - beams fixed but the facade base is too low (0.651)",
+          "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1caff-a222-72e0-92ec-8779de2ab6d8/exec-41d8889d-2aa5-47ab-9771-ccf4a07c62a6.png",
+          "sha256": "23384ee6ed5c41c781c141f5632ac32a1d1224086589fe918ef36353db68ede2",
+          "measured": {
+            "lineY": 577,
+            "lineFrac": 0.651,
+            "lineSource": "auto",
+            "wallMean": 32.0,
+            "floorMean": 68.7
+          }
+        },
+        {
+          "attempt": 3,
+          "prompt": "prompts/panopticon_city-a3.prompt.txt",
+          "verdict": "selected",
+          "why": "selected - relay boxes left, maintenance alley and camera mast right, beams on the facades only; even wet asphalt (71); line 0.610",
+          "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1cb14-7494-75e2-a148-7745226faa32/exec-b4858183-9dd9-4112-80ea-eac9828e93d2.png",
+          "sha256": "cddcbc418b14279c745db32817538513d1a3c9ac83f5d9e445ef939dac8bc915",
+          "measured": {
+            "lineY": 541,
+            "lineFrac": 0.61,
+            "lineSource": "auto",
+            "wallMean": 36.5,
+            "floorMean": 71.0
+          }
+        }
+      ],
+      "selectedAttempt": 3,
+      "selected": {
+        "file": "panopticon_city-v1.png",
+        "prompt": "panopticon_city-v1.prompt.txt",
+        "sha256": "cddcbc418b14279c745db32817538513d1a3c9ac83f5d9e445ef939dac8bc915",
+        "sourcePath": "/Users/bytedance/.codex/generated_images/01a1cb14-7494-75e2-a148-7745226faa32/exec-b4858183-9dd9-4112-80ea-eac9828e93d2.png",
+        "size": [
+          1774,
+          887
+        ],
+        "floorLineY": 541,
+        "floorLineFrac": 0.61,
+        "lineSource": "auto",
+        "fifthsY": [
+          541,
+          541,
+          530,
+          531,
+          541
+        ],
+        "levelSpreadPx": 11,
+        "wallMean": 36.5,
+        "floorMean": 71.0,
+        "floorThirds": [
+          71.1,
+          73.8,
+          68.0
+        ],
+        "floorBottom5pct": 53.1,
+        "edgeWallStd": [
+          11.5,
+          12.0
+        ],
+        "centerWallStd": 24.7,
+        "floorFraction": 0.39
+      }
+    }
+  }
+}

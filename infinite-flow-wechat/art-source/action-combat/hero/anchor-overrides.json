@@ -1,0 +1,35 @@
+{
+  "_note": "Per-frame anchor fixes made by eye after reviewing filmstrips/onion skins. Units: final frame-local px (unitHeight 320). dx/dy shift the automatic foot point; x replaces its x; tip = sword tip.",
+  "dodge_1": {
+    "dy": -25,
+    "why": "mid-dash glide was generated ~33 px above the ground line; lowered so the body skims ~8 px above the floor (the lowest point of the dash)"
+  },
+  "run_0": {
+    "dx": -4.3,
+    "why": "run_solve.py (lambda 1.0): evens the planted-foot travel to v=62.0 px/frame; residual slip [9.9, -2.7, -7.2] px per interval at unit 320"
+  },
+  "run_1": {
+    "dx": 2.7,
+    "why": "run_solve.py (lambda 1.0): evens the planted-foot travel to v=62.0 px/frame; residual slip [9.9, -2.7, -7.2] px per interval at unit 320"
+  },
+  "run_2": {
+    "dx": 5.4,
+    "why": "run_solve.py (lambda 1.0): evens the planted-foot travel to v=62.0 px/frame; residual slip [9.9, -2.7, -7.2] px per interval at unit 320"
+  },
+  "run_3": {
+    "dx": -3.8,
+    "why": "run_solve.py (lambda 1.0): evens the planted-foot travel to v=62.0 px/frame; residual slip [9.9, -2.7, -7.2] px per interval at unit 320"
+  },
+  "idle_0": {
+    "x": 155,
+    "pinned": "v1 integer anchor kept exactly (frame-local half-up rounding introduced with the v2 run repack would move it 1 px)"
+  },
+  "idle_1": {
+    "x": 153,
+    "pinned": "v1 integer anchor kept exactly (frame-local half-up rounding introduced with the v2 run repack would move it 1 px)"
+  },
+  "spell_1": {
+    "x": 186,
+    "pinned": "v1 integer anchor kept exactly (frame-local half-up rounding introduced with the v2 run repack would move it 1 px)"
+  }
+}

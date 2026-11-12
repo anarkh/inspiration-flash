@@ -1,0 +1,482 @@
+{
+  "schemaVersion": 1,
+  "asset": "hero-action (轮回者 action-combat redesign)",
+  "createdAt": "2026-11-11",
+  "tool": "Codex CLI 0.167.1 built-in image_gen (imagegen skill, built-in mode), one call per image",
+  "command": "tools/gen.sh <run> <prompt-file> true <reference...>  (codex exec --skip-git-repo-check -s read-only --json ... < /dev/null, killed after 600 s; logs in /tmp/if-action/hero/gen/)",
+  "sizeNote": "image_gen has no size parameter; it returned 1199x1312 for the master and 2172x724 (3:1) for every sheet.",
+  "promptVerbatimNote": "Codex reported calling image_gen once per run with the prompt verbatim; the --json event stream does not expose the image_gen call body.",
+  "attempts": [
+    {
+      "run": "master-a1",
+      "prompt": "prompts/hero-master-v1.prompt.txt",
+      "referencedImages": [
+        "cocos/assets/resources/character/reincarnator-v2.jpg (face/hair identity)",
+        "cocos/assets/resources/character/reincarnator-walk-v2.png (costume)",
+        "cocos/assets/resources/monster-world/fog-lesser-demon-world-v1.png (rendering finish)"
+      ],
+      "transparentBackground": true,
+      "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1c99e-9d05-76d2-93da-40961922f620/exec-5bedd358-ed74-4a8e-ae9a-7d5e3b5fd98a.png",
+      "savedAs": "hero-master-v1.png",
+      "size": [
+        1199,
+        1312
+      ],
+      "sha256": "d3163a0702e1663e02a8820c030106adb15a9150238c88231482d464809cfe46",
+      "verdict": "kept",
+      "why": "Same face, bangs, high ponytail with teal ribbon, teal scarf and bronze left pauldron as the HUD portrait; low wide combat stance facing right, drawn jian with bright steel; scarf tails, ponytail and split robe hem trail back; ivory under-robe and cool rim light lift the values. Checked next to fog-lesser-demon, spark-imp and tower-butcher on the stage at 128 px: the sword and silhouette read clearly."
+    },
+    {
+      "run": "idle-spell-a1",
+      "prompt": "prompts/idle-spell-v1.prompt.txt",
+      "referencedImages": [
+        "art-source/action-combat/hero/hero-master-v1.png"
+      ],
+      "transparentBackground": true,
+      "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1c9a4-1b50-7ab1-93fa-3214a964bcb3/exec-821c466a-2eec-46b4-8dc0-b607f01b1ad1.png",
+      "savedAs": "originals/idle-spell-a1.png",
+      "size": [
+        2172,
+        724
+      ],
+      "sha256": "f34c0905c69115e3d0d55afa21dbed4a92954640202f9399c52bc3dcb3e30b8a",
+      "poses": [
+        "idle_0",
+        "idle_1",
+        "spell_0",
+        "spell_1"
+      ],
+      "verdict": "kept",
+      "why": "Kept. Reference pose kept as idle_0; idle_1 is a subtle settle (~2.5% lower, sword tip dipped); spell_0 two-finger seal at the chest with blade lowered, spell_1 seal hand thrust forward in a lunge. Identity and scale consistent.",
+      "slice": {
+        "refHeightPx": 521,
+        "scale": 0.6142,
+        "groundY": 637,
+        "mergedFragments": 0
+      }
+    },
+    {
+      "run": "item-dodge-a1",
+      "prompt": "prompts/item-dodge-v1.prompt.txt",
+      "referencedImages": [
+        "art-source/action-combat/hero/hero-master-v1.png"
+      ],
+      "transparentBackground": true,
+      "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1c9a5-d91d-7243-a4a0-6162997a65a8/exec-937f99eb-fe9d-4c2a-993b-9e6b77a4ab68.png",
+      "savedAs": "originals/item-dodge-a1.png",
+      "size": [
+        2172,
+        724
+      ],
+      "sha256": "5f48e2b15f9c73b674328d40c825c3ecd16d324a37174e634012fe1c60c2d1c2",
+      "poses": [
+        "_ref",
+        "item_0",
+        "item_1",
+        "dodge_0",
+        "dodge_1"
+      ],
+      "verdict": "kept",
+      "why": "Kept. item_0 pill to mouth, item_1 head tilted back (upright stance, so these frames are taller than the combat idle - intended). dodge_0 long low dash; dodge_1 near-horizontal glide was drawn ~33 px above the ground line (anchor lowered by override). The dodge blade points forward rather than tucked back - acceptable.",
+      "slice": {
+        "refHeightPx": 470,
+        "scale": 0.6809,
+        "groundY": 641,
+        "mergedFragments": 3
+      }
+    },
+    {
+      "run": "run-a-a1",
+      "prompt": "prompts/run-a-v1.prompt.txt",
+      "referencedImages": [
+        "art-source/action-combat/hero/hero-master-v1.png"
+      ],
+      "transparentBackground": true,
+      "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1c9a4-27a9-78d1-9b59-4bf00e24db0b/exec-b0b03a08-41eb-4084-9d4f-a0cf1b2e9903.png",
+      "savedAs": "originals/run-a-a1.png",
+      "size": [
+        2172,
+        724
+      ],
+      "sha256": "29e29ac39ff831e573089d2cfe571bd33185c15c3c29b21d5ee787a5912c59cc",
+      "poses": [
+        "_ref",
+        "run_0",
+        "run_1",
+        "run_2"
+      ],
+      "verdict": "kept",
+      "why": "Kept. contact -> down -> passing with forward lean, sword carried low/back, scarf streaming.",
+      "slice": {
+        "refHeightPx": 495,
+        "scale": 0.6465,
+        "groundY": 642,
+        "mergedFragments": 0
+      }
+    },
+    {
+      "run": "run-b-a1",
+      "prompt": "prompts/run-b-v1.prompt.txt",
+      "referencedImages": [
+        "art-source/action-combat/hero/hero-master-v1.png"
+      ],
+      "transparentBackground": true,
+      "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1c9a5-7284-7422-bb3a-a3b4f02bc4f6/exec-2405dff3-e7fd-4366-a5b6-192502c2865d.png",
+      "savedAs": "originals/run-b-a1.png",
+      "size": [
+        2172,
+        724
+      ],
+      "sha256": "ac4c275e07779d2213ef1f463ed5d4ca70c6f0af26f4637eb6dbb30a0a8a0885",
+      "poses": [
+        "_ref",
+        "run_3",
+        "run_4",
+        "run_5"
+      ],
+      "verdict": "kept",
+      "why": "Kept with a caveat: meant as the opposite-leg half of the cycle, but the model drew nearly the same leg phases as run-a. Because both legs look alike at game size the 6-frame loop still reads as a run (checked in onion skin and at 128 px); a true leg swap would need a regeneration.",
+      "slice": {
+        "refHeightPx": 500,
+        "scale": 0.64,
+        "groundY": 649,
+        "mergedFragments": 0
+      }
+    },
+    {
+      "run": "attack1-a1",
+      "prompt": "prompts/attack1-v1.prompt.txt",
+      "referencedImages": [
+        "art-source/action-combat/hero/hero-master-v1.png"
+      ],
+      "transparentBackground": true,
+      "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1c9a4-20f0-7cd3-b558-0f67e3dcf0cd/exec-b8c22f21-f688-408a-81ee-72daba9ef721.png",
+      "savedAs": "originals/attack1-a1.png",
+      "size": [
+        2172,
+        724
+      ],
+      "sha256": "d2cfb6be9f2f051703c8f7793d357280b8d8b684827a4e68ba9845ba336af716",
+      "poses": [
+        "_ref",
+        "attack1_0",
+        "attack1_1",
+        "attack1_2"
+      ],
+      "verdict": "kept",
+      "why": "Kept. Clear draw-back at the hip -> full horizontal extension -> blade swept back-left. Anticipation and follow-through share a back-pointing blade, so their silhouettes are similar; the strike in between separates them.",
+      "slice": {
+        "refHeightPx": 437,
+        "scale": 0.7323,
+        "groundY": 634,
+        "mergedFragments": 0
+      }
+    },
+    {
+      "run": "attack2-a1",
+      "prompt": "prompts/attack2-v1.prompt.txt",
+      "referencedImages": [
+        "art-source/action-combat/hero/hero-master-v1.png"
+      ],
+      "transparentBackground": true,
+      "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1c9a5-86dd-7f31-9ba6-7d90491b8ad0/exec-25bb03e5-2a39-4d55-9f60-d0aa9a20444f.png",
+      "savedAs": "originals/attack2-a1.png",
+      "size": [
+        2172,
+        724
+      ],
+      "sha256": "952885c3a6f882b47e248bae9fec91b1e8ab6fe1b29dd22f795a5c3bc21a906e",
+      "poses": [
+        "_ref",
+        "attack2_0",
+        "attack2_1",
+        "attack2_2"
+      ],
+      "verdict": "kept",
+      "why": "Kept. Low blade -> rising 45-degree backhand with twisted torso -> blade high overhead. Faint red/white fringe seen in the raw preview is in alpha<32 pixels and disappears after alpha cleanup (checked on gray and floor colour).",
+      "slice": {
+        "refHeightPx": 469,
+        "scale": 0.6823,
+        "groundY": 668,
+        "mergedFragments": 1
+      }
+    },
+    {
+      "run": "attack3-a1",
+      "prompt": "prompts/attack3-v1.prompt.txt",
+      "referencedImages": [
+        "art-source/action-combat/hero/hero-master-v1.png"
+      ],
+      "transparentBackground": true,
+      "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1c9a7-08ed-7de2-8c53-fcbc3971f16e/exec-a608853f-b598-4c13-8249-70b876f5d574.png",
+      "savedAs": "originals/attack3-a1.png",
+      "size": [
+        2172,
+        724
+      ],
+      "sha256": "a98accfd92e726f7be2b28b6518920cd9dc211da62167af4843a32ea43b450af",
+      "poses": [
+        "_ref",
+        "attack3_0",
+        "attack3_1",
+        "attack3_2",
+        "attack3_3"
+      ],
+      "verdict": "kept",
+      "why": "Kept. Overhead two-hand wind-up -> airborne apex (feet ~108 px above ground at unit 320) -> deep-crouch chop with blade low in front -> recover to guard.",
+      "slice": {
+        "refHeightPx": 443,
+        "scale": 0.7223,
+        "groundY": 672,
+        "mergedFragments": 1
+      }
+    },
+    {
+      "run": "skill-a1",
+      "prompt": "prompts/skill-v1.prompt.txt",
+      "referencedImages": [
+        "art-source/action-combat/hero/hero-master-v1.png"
+      ],
+      "transparentBackground": true,
+      "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1c9a6-b867-74c2-8597-a7b440b87fff/exec-fd474d96-24f8-43c1-8836-5b9789ee8458.png",
+      "savedAs": "originals/skill-a1.png",
+      "size": [
+        2172,
+        724
+      ],
+      "sha256": "1eaf1d2ba87c1ac21c8ed0122b4d053e6a3bda209bfaae0ceca067a080e2fa7e",
+      "poses": [
+        "_ref",
+        "skill_0",
+        "skill_1",
+        "skill_2",
+        "skill_3"
+      ],
+      "verdict": "kept",
+      "why": "Kept. charge (deep crouch, two-hand blade back) -> dash (longer, lower lunge; silhouette close to charge) -> sweep (full extension, the hero pose) -> finish (blade out to the side/back, chin up).",
+      "slice": {
+        "refHeightPx": 373,
+        "scale": 0.8579,
+        "groundY": 614,
+        "mergedFragments": 0
+      }
+    },
+    {
+      "run": "hurt-down-a1",
+      "prompt": "prompts/hurt-down-v1.prompt.txt",
+      "referencedImages": [
+        "art-source/action-combat/hero/hero-master-v1.png"
+      ],
+      "transparentBackground": true,
+      "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1c9a7-983d-7821-aa31-b3d42ff5a2a6/exec-cda0cd38-1721-4bd9-8203-2b44510eb136.png",
+      "savedAs": "originals/hurt-down-a1.png",
+      "size": [
+        2172,
+        724
+      ],
+      "sha256": "6abd9d97ed6b5b140e7e4e0dc1078c764e45bdf24714ad477369b21cd00eee98",
+      "poses": [
+        "_ref",
+        "hurt_0",
+        "down_0",
+        "getup_0"
+      ],
+      "verdict": "kept",
+      "why": "Kept. hurt_0 recoil with head snapped back and front foot lifted; down_0 lying on his back, head left, sword beside him; getup_0 on one knee with the sword point planted.",
+      "slice": {
+        "refHeightPx": 454,
+        "scale": 0.7048,
+        "groundY": 629,
+        "mergedFragments": 0
+      }
+    }
+  ],
+  "rejected": [],
+  "processing": [
+    "Environment: Pillow 11.3.0 in a scratch venv (/tmp/if-action/hero/.venv; python3 -m venv + pip install Pillow), not a repo dependency.",
+    "tools/slice_pack.py: alpha cleanup (alpha<=8 -> 0 removes generator noise; alpha>=248 -> 255, the generator writes 250-254 inside bodies).",
+    "Split each sheet by 8-connected components on alpha>24 at half resolution; the N largest are poses, smaller fragments merge into the nearest pose by bbox gap; poses ordered left to right; mask dilated 1 px to keep soft edges.",
+    "Scale: the sheet's first pose (master combat idle) opaque height -> 320 px (unitHeight); every pose in the sheet uses that factor (0.61-0.86, always a downscale). Resampling LANCZOS in premultiplied alpha (RGBa) to avoid fringes.",
+    "Ground line per sheet = bottom of the reference pose; foot y = that line in frame-local px (airborne frames keep their height above it).",
+    "Foot x: clips idle/spell/item use the centre between the outer feet on the ground line (thin sword/scarf removed by a 11 px opening); all other clips use the pelvis (centre of mass of the 21 px-eroded body in the belt-to-crotch band), because feet-midpoint made the run body jump +/-100 px between frames. Manual fixes in anchor-overrides.json.",
+    "Sword tips (attack1_1, attack2_1, attack3_2, skill_2): extreme opaque pixel in the blade direction, checked by eye in the filmstrips.",
+    "Shelf-packed (2 px padding, smallest-area width <= 2048) into hero-action.png; hero-action.json in the agreed shape.",
+    "Review previews in /tmp/if-action/hero/preview/ (filmstrip-*, onion-*, contact-sheet, game-scale-on-stage); not in the repo.",
+    "v2 run: tools/run_eval.py (candidate metrics, 128 px strip, onion, GIFs), tools/run_solve.py (run anchor dx + runCycle); slice_pack.py gained 'skip' poses, frame aliases, per-sheet 'row-max' ground, two-row ordering and frame-local half-up rounding of foot/tip."
+  ],
+  "anchorOverrides": {
+    "_note": "Per-frame anchor fixes made by eye after reviewing filmstrips/onion skins. Units: final frame-local px (unitHeight 320). dx/dy shift the automatic foot point; x replaces its x; tip = sword tip.",
+    "dodge_1": {
+      "dy": -25,
+      "why": "mid-dash glide was generated ~33 px above the ground line; lowered so the body skims ~8 px above the floor (the lowest point of the dash)"
+    },
+    "run_0": {
+      "dx": -4.3,
+      "why": "run_solve.py (lambda 1.0): evens the planted-foot travel to v=62.0 px/frame; residual slip [9.9, -2.7, -7.2] px per interval at unit 320"
+    },
+    "run_1": {
+      "dx": 2.7,
+      "why": "run_solve.py (lambda 1.0): evens the planted-foot travel to v=62.0 px/frame; residual slip [9.9, -2.7, -7.2] px per interval at unit 320"
+    },
+    "run_2": {
+      "dx": 5.4,
+      "why": "run_solve.py (lambda 1.0): evens the planted-foot travel to v=62.0 px/frame; residual slip [9.9, -2.7, -7.2] px per interval at unit 320"
+    },
+    "run_3": {
+      "dx": -3.8,
+      "why": "run_solve.py (lambda 1.0): evens the planted-foot travel to v=62.0 px/frame; residual slip [9.9, -2.7, -7.2] px per interval at unit 320"
+    },
+    "idle_0": {
+      "x": 155,
+      "pinned": "v1 integer anchor kept exactly (frame-local half-up rounding introduced with the v2 run repack would move it 1 px)"
+    },
+    "idle_1": {
+      "x": 153,
+      "pinned": "v1 integer anchor kept exactly (frame-local half-up rounding introduced with the v2 run repack would move it 1 px)"
+    },
+    "spell_1": {
+      "x": 186,
+      "pinned": "v1 integer anchor kept exactly (frame-local half-up rounding introduced with the v2 run repack would move it 1 px)"
+    }
+  },
+  "outputs": {
+    "prototype/action-combat-v1/assets/hero-action/hero-action.png": {
+      "sha256": "400fddcf26515c7109cb1b27f2056a27fe4ebe00514cc03ebf167ac5b1a8e61a",
+      "size": [
+        1973,
+        1650
+      ],
+      "bytes": 3661384
+    },
+    "prototype/action-combat-v1/assets/hero-action/hero-action.json": {
+      "sha256": "19170aa526c12690a3f2416adcf426f2ebf62a730086de8d990d6815b2495c53"
+    }
+  },
+  "frameReport": "tools/slice-report.json",
+  "runV2": {
+    "date": "2026-11-11",
+    "reason": "User feedback: v1 run 'not smooth, looks weird' (3-pose loop at ~7 fps, upper body redrawn per frame, long stride).",
+    "replaces": {
+      "frames": "run_0..run_5 from originals/run-a-a1.png and originals/run-b-a1.png (kept in originals/, sheets listed under _replaced in sheets.json)"
+    },
+    "tool": "Codex CLI built-in image_gen via tools/gen.sh (stdin /dev/null, 600 s kill); prompts from tools/make_run_prompts.py; master as reference (half B also got half A).",
+    "attempts": [
+      {
+        "run": "run8-row-a1",
+        "prompt": "prompts/run8-row-v1.prompt.txt",
+        "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1c9e4-ab18-7272-9e79-f6ad2f3cd061/exec-a2965247-32d6-43cb-a574-9d69adfc15ca.png",
+        "savedAs": "originals/run8-row-a1.png",
+        "size": [
+          2172,
+          724
+        ],
+        "sha256": "55b2a65c85def53731714e1a9b9a11ff20422dfdd56c5ba72a146c88deb87c27",
+        "verdict": "selected (frames 4-7 only)",
+        "why": "C1a: 9 figures, steadiest upper body (head x range 10.4 px over 8 frames, 5.4 px within frames 4-7 at unit 320), compact stride (~0.55 of standing height at contact), two clean head bobs. No readable near/far leg swap between its halves, so one half is used as a 4-phase step; frames 4-7 chosen because their planted-foot travel per frame (45/62/78 px) is far more even than frames 0-3 (74/37/97). Sword is carried low with the blade pointing down-forward rather than back - consistent in every frame."
+      },
+      {
+        "run": "run8-row-a2",
+        "prompt": "prompts/run8-row-v1.prompt.txt",
+        "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1c9e4-b000-7d43-882d-41fc498b785a/exec-7b9b8c4d-acfa-4414-9964-77483b982948.png",
+        "savedAs": "originals/run8-row-a2.png",
+        "size": [
+          2172,
+          724
+        ],
+        "sha256": "db6f32f77961428601ea121288adfbed22d936d390fed90c0b6b72c9bbb73dfb",
+        "verdict": "rejected",
+        "why": "C1b: same layout; no leg swap either, head x range 19.8 px, stride ~0.68 of standing height (longer than the 0.55-0.65 target), up frames fully airborne."
+      },
+      {
+        "run": "run8-half-a-a1",
+        "prompt": "prompts/run8-half-a-v1.prompt.txt",
+        "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1c9e4-bf32-7a90-a701-58c298979cfb/exec-7ef4ed19-a2fe-47e3-a415-ffda09ab605e.png",
+        "savedAs": "originals/run8-half-a-a1.png",
+        "size": [
+          2172,
+          724
+        ],
+        "sha256": "6698ab2a38dfc088e86ee9f8894f9c4c45ac6e8439b4a9d5292267bf614e6d31",
+        "verdict": "rejected",
+        "why": "C2 half A: good 4 phases but stride ~0.79 of standing height (long sprint), head x range 24 px across both halves."
+      },
+      {
+        "run": "run8-half-b-a1",
+        "prompt": "prompts/run8-half-b-v1.prompt.txt",
+        "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1c9e6-2d05-7151-a944-cab380045683/exec-7b7f39cb-b57b-4691-942a-9db7aea05cbd.png",
+        "savedAs": "originals/run8-half-b-a1.png",
+        "size": [
+          2172,
+          724
+        ],
+        "sha256": "35f0a6d211ef44c10b743f7c852eed0dcf66bf8646db7f3fb6d220ccac0ecbb3",
+        "verdict": "rejected",
+        "why": "C2 half B (half A passed as second reference): nearly a copy of half A - legs not swapped; same long stride."
+      },
+      {
+        "run": "run8-tworow-a1",
+        "prompt": "prompts/run8-tworow-v1.prompt.txt",
+        "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1c9e4-b687-70d2-a9d3-68451bdbe57d/exec-c9160ff5-8446-44f8-a974-e7ee968b3725.png",
+        "savedAs": "originals/run8-tworow-a1.png",
+        "size": [
+          1536,
+          1024
+        ],
+        "sha256": "35e4a658bfc6573f148b98d1c58faf10ac675c6a7b6d96887422d872259b366a",
+        "verdict": "rejected",
+        "why": "C3 two-row layout: came back with an opaque smoky background instead of transparency."
+      }
+    ],
+    "result": {
+      "clip": "run_0..run_7 = contact, down, passing, up, repeated (run_4..7 alias run_0..3 and share their atlas rects). Fallback chosen because no candidate drew a readable near/far leg swap; the 4 phases are distinct and their spacing was evened by anchor shifts.",
+      "anchors": "pelvis x (as before) plus per-frame dx from tools/run_solve.py (lambda 1): least squares over planted-foot slip (heel for contact->down->passing, toe for passing->up) and cyclic head-x steps; ground = lowest run foot on the sheet.",
+      "dx": {
+        "run_0": -4.3,
+        "run_1": 2.7,
+        "run_2": 5.4,
+        "run_3": -3.8
+      },
+      "runCycle": 496,
+      "runCycleMeaning": "atlas px (unit 320) the root must travel per 8-frame loop so the planted foot does not slide = 8 x 62.0 px/frame (per-step planted-foot backward travel contact->push-off = 185.5 px over 3 of the step's 4 frame intervals; both steps together 371 px over 6 intervals)",
+      "metricsUnit320": {
+        "headXRel": [
+          58.4,
+          48.6,
+          50.9,
+          58.3,
+          58.4,
+          48.6,
+          50.9,
+          58.3
+        ],
+        "headXRange": 9.8,
+        "headYRel": [
+          -260.6,
+          -246.1,
+          -266.7,
+          -276.6,
+          -260.6,
+          -246.1,
+          -266.7,
+          -276.6
+        ],
+        "headYRange": 30.5,
+        "footSlipPerInterval": [
+          -10.0,
+          3.0,
+          8.0,
+          -10.0,
+          3.0,
+          8.0
+        ]
+      },
+      "metricsGame128": {
+        "headXRange": 3.9,
+        "headYBob": 12.2,
+        "maxFootSlip": 4.0
+      },
+      "nonRunFrames": "all 25 non-run frames verified pixel-identical to v1 (art, frame-local foot and tip); 3 anchors (idle_0, idle_1, spell_1) pinned with x overrides because rounding moved to frame-local half-up.",
+      "previews": "/tmp/if-action/hero/preview/run-v2.gif (12 fps, 80 ms), run-v2-6fps.gif (160 ms), run-v2-12fps.apng.png, run-v2-strip128.png, run-v2-onion.png, run-v2-metrics.json, filmstrip-run.png, onion-run.png, contact-sheet.png"
+    }
+  }
+}

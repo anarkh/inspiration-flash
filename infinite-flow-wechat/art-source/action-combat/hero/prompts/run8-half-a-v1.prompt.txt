@@ -1,0 +1,17 @@
+Use case: stylized-concept
+Asset type: 8-frame run cycle sprite sheet for a side-scrolling beat-'em-up game; transparent RGBA PNG; very wide landscape canvas (about 3:1).
+Input image: Image 1 = the master character design. Every figure must be exactly this character: same face, long black hair in a high ponytail with a teal ribbon, dark teal scarf with two long tails, charcoal-slate layered robe over an ivory under-robe, ornate bronze shoulder guard on his left shoulder, brown leather chest strap, belt with pouches and bracers, dark trousers, tall brown boots, and the same straight jian sword (bright polished steel blade, bronze guard, teal tassel) - same costume, colors, proportions and painterly rendering.
+Layout (strict): ONE horizontal row of exactly 5 full-body figures of this same character in 5 equal-width columns, all FACING RIGHT, all at exactly the same scale. Figure 1 is the scale reference; figures 2-5 are frames 1-4 of an 8-frame run cycle in temporal order. Wide transparent gaps between neighbours - nothing touches or overlaps. The standing height of figure 1 is about 45% of the canvas height. All feet rest on one common invisible ground line at about 85% of the canvas height (UP frames slightly above it). Nothing cropped.
+Figure 1 - Scale reference: exactly the master combat-idle stance of Image 1 (low wide stance, sword extended forward and slightly down), at the same scale as the run frames.
+Run cycle rules - a compact, quick, athletic combat run (not a long-jump sprint), drawn like a classic looping side-view run cycle sprite sheet:
+- The UPPER BODY IS NEARLY IDENTICAL IN EVERY RUN FRAME: the same forward lean of about 15-20 degrees, the same head angle looking straight ahead, the sword carried low and back in the trailing RIGHT hand at the same angle in every frame (blade pointing back and down behind him), the free LEFT fist pumping only slightly in front of the chest; scarf tails and ponytail stream straight back with only a gentle wave from frame to frame; the same robe and scarf shapes. Only the legs and a small vertical bob change between frames.
+- Vertical bob: the body is lowest on the two DOWN frames and highest on the two UP frames - a difference of only a few percent of body height.
+- Stride: at contact the two feet are about 0.6 of his standing height apart.
+- Legs must be distinguishable: the NEAR leg (closer to the viewer) is drawn in front of the robe panel and slightly lighter; the FAR leg is behind, darker and partly hidden by the robe.
+Run frames:
+Figure 2 - frame 1, contact A: NEAR leg forward with the heel striking the ground, knee almost straight; FAR leg extended back with its toes pushing off.
+Figure 3 - frame 2, down A: weight on the NEAR leg, knee bent, body at its lowest; FAR foot lifting up behind.
+Figure 4 - frame 3, passing A: NEAR leg vertical under the body; FAR leg swinging through under the body, knee forward, its foot passing the support ankle.
+Figure 5 - frame 4, up A: pushing off from the NEAR foot's toes, body at its highest, FAR knee driving forward and up.
+Style/medium: hand-painted dark-fantasy game character art matching Image 1 exactly; adult proportions.
+Background: real transparency everywhere outside the figures. No ground, floor, cast shadows, motion lines, speed lines, dust, afterimages, glow, extra characters, text, numbers, labels, frames or borders.
