@@ -37,6 +37,7 @@ import {
   reforgeMaterial,
   createChapterTrialState,
   recruitCompanion,
+  resolveActionCombat,
   resolveAuctionLot,
   resolveCausalLedger,
   resolveCurrentBroadcastRelay,
@@ -71,6 +72,7 @@ import {
   useEquipmentSoulSkill,
   useMethodTechnique,
   usePortal,
+  type ActionCombatResolution,
   type CombatPresentationFrame,
   type CombatPresentationObserver,
   type DungeonId,
@@ -141,6 +143,15 @@ export type GameDomainEvent =
       type: 'combat.presentation-resolved';
       action: string;
       frames: readonly CombatPresentationFrame[];
+    }>
+  /** A real-time fight settled from its input log (combat/resolve-action); never comes with presentation frames. */
+  | Readonly<{
+      type: 'combat.action-resolved';
+      nodeId: string;
+      result: ActionCombatResolution['result'];
+      outcome: ActionCombatResolution['outcome'];
+      bossAwakened: boolean;
+      capturedPetId?: string;
     }>
   | Readonly<{ type: 'boss.awakened'; nodeId: string }>
   | Readonly<{ type: 'combat.finished'; nodeId: string; result: 'victory' | 'escaped' | 'failed' }>
@@ -333,7 +344,8 @@ function preflightCommand(state: GameState, command: GameCommand): GameCommandRe
 function applyDomainCommand(
   state: GameState,
   command: GameCommand,
-  combatObserver?: CombatPresentationObserver
+  combatObserver?: CombatPresentationObserver,
+  actionObserver?: (resolution: ActionCombatResolution) => void
 ): GameState {
   switch (command.type) {
     case 'game/new':
@@ -480,6 +492,8 @@ function applyDomainCommand(
       );
     case 'combat/capture':
       return capturePet(state, command.petId);
+    case 'combat/resolve-action':
+      return resolveActionCombat(state, command.log, command.capture, actionObserver);
     case 'combat/use-method-technique':
       return useMethodTechnique(state, command.methodId);
     case 'combat/use-companion-assist':
@@ -505,7 +519,8 @@ function deriveEvents(
   before: GameState,
   after: GameState,
   command: GameCommand,
-  combatFrames: readonly CombatPresentationFrame[]
+  combatFrames: readonly CombatPresentationFrame[],
+  actionResolution?: ActionCombatResolution
 ): GameDomainEvent[] {
   const events: GameDomainEvent[] = [{
     type: 'command.applied',
@@ -570,8 +585,22 @@ function deriveEvents(
     }));
   }
 
+  if (actionResolution) {
+    events.push(Object.freeze({
+      type: 'combat.action-resolved',
+      nodeId: actionResolution.nodeId,
+      result: actionResolution.result,
+      outcome: actionResolution.outcome,
+      bossAwakened: actionResolution.bossAwakened,
+      ...(actionResolution.capturedPetId === undefined ? {} : { capturedPetId: actionResolution.capturedPetId })
+    }));
+  }
+
   if (before.combat?.bossPhase === 'sealed' && after.combat?.bossPhase === 'awakened') {
     events.push({ type: 'boss.awakened', nodeId: after.combat.nodeId });
+  } else if (actionResolution?.bossAwakened) {
+    // The action fight awakens and settles the boss in one command, so the awakened combat never shows in `after`.
+    events.push({ type: 'boss.awakened', nodeId: actionResolution.nodeId });
   }
 
   if (before.combat && (!after.combat || combatReplaced)) {
@@ -643,9 +672,15 @@ export function reduceGameCommand(
 
   let nextState: GameState;
   const combatFrames: CombatPresentationFrame[] = [];
+  let actionResolution: ActionCombatResolution | undefined;
   try {
     // A pursuer that caught the player during the command fights them once it settles.
-    nextState = beginPursuerAmbush(state, applyDomainCommand(state, command, frame => combatFrames.push(frame)));
+    nextState = beginPursuerAmbush(state, applyDomainCommand(
+      state,
+      command,
+      frame => combatFrames.push(frame),
+      resolution => { actionResolution = resolution; }
+    ));
   } catch (cause) {
     const message = cause instanceof Error ? cause.message : 'The domain transition threw an unknown error.';
     return reject(readonlyState, command.type, 'domain-rejected', message);
@@ -686,7 +721,7 @@ export function reduceGameCommand(
   return {
     status: 'committed',
     state: nextState,
-    events: deriveEvents(state, nextState, command, combatFrames),
+    events: deriveEvents(state, nextState, command, combatFrames, actionResolution),
     outcome
   };
 }

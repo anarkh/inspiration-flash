@@ -1,0 +1,715 @@
+{
+  "sheets": {
+    "idle-spell": {
+      "file": "originals/idle-spell-a1.png",
+      "size": [
+        2172,
+        724
+      ],
+      "refHeightPx": 521,
+      "scale": 0.6142,
+      "groundY": 637,
+      "mergedFragments": 0,
+      "rowGround": null
+    },
+    "item-dodge": {
+      "file": "originals/item-dodge-a1.png",
+      "size": [
+        2172,
+        724
+      ],
+      "refHeightPx": 470,
+      "scale": 0.6809,
+      "groundY": 641,
+      "mergedFragments": 3,
+      "rowGround": null
+    },
+    "run8": {
+      "file": "originals/run8-row-a1.png",
+      "size": [
+        2172,
+        724
+      ],
+      "refHeightPx": 329,
+      "scale": 0.9726,
+      "groundY": 603,
+      "mergedFragments": 0,
+      "rowGround": {
+        "0": 602
+      }
+    },
+    "attack1": {
+      "file": "originals/attack1-a1.png",
+      "size": [
+        2172,
+        724
+      ],
+      "refHeightPx": 437,
+      "scale": 0.7323,
+      "groundY": 634,
+      "mergedFragments": 0,
+      "rowGround": null
+    },
+    "attack2": {
+      "file": "originals/attack2-a1.png",
+      "size": [
+        2172,
+        724
+      ],
+      "refHeightPx": 469,
+      "scale": 0.6823,
+      "groundY": 668,
+      "mergedFragments": 1,
+      "rowGround": null
+    },
+    "attack3": {
+      "file": "originals/attack3-a1.png",
+      "size": [
+        2172,
+        724
+      ],
+      "refHeightPx": 443,
+      "scale": 0.7223,
+      "groundY": 672,
+      "mergedFragments": 1,
+      "rowGround": null
+    },
+    "skill": {
+      "file": "originals/skill-a1.png",
+      "size": [
+        2172,
+        724
+      ],
+      "refHeightPx": 373,
+      "scale": 0.8579,
+      "groundY": 614,
+      "mergedFragments": 0,
+      "rowGround": null
+    },
+    "hurt-down": {
+      "file": "originals/hurt-down-a1.png",
+      "size": [
+        2172,
+        724
+      ],
+      "refHeightPx": 454,
+      "scale": 0.7048,
+      "groundY": 629,
+      "mergedFragments": 0,
+      "rowGround": null
+    }
+  },
+  "frames": {
+    "idle_0": {
+      "sheet": "idle-spell",
+      "method": "override-x",
+      "autoFoot": [
+        155.5,
+        320.6
+      ],
+      "feetX": 155.5,
+      "pelvisX": 153.4,
+      "foot": [
+        155,
+        320.6
+      ],
+      "size": [
+        306,
+        321
+      ],
+      "bottomAboveGroundPx": 0.0,
+      "tip": null
+    },
+    "idle_1": {
+      "sheet": "idle-spell",
+      "method": "override-x",
+      "autoFoot": [
+        153.5,
+        312.0
+      ],
+      "feetX": 153.5,
+      "pelvisX": 151.8,
+      "foot": [
+        153,
+        312.0
+      ],
+      "size": [
+        302,
+        313
+      ],
+      "bottomAboveGroundPx": -0.6,
+      "tip": null
+    },
+    "spell_0": {
+      "sheet": "idle-spell",
+      "method": "feet",
+      "autoFoot": [
+        168.0,
+        322.5
+      ],
+      "feetX": 168.0,
+      "pelvisX": 163.3,
+      "foot": [
+        168.0,
+        322.5
+      ],
+      "size": [
+        306,
+        324
+      ],
+      "bottomAboveGroundPx": -0.6,
+      "tip": null
+    },
+    "spell_1": {
+      "sheet": "idle-spell",
+      "method": "override-x",
+      "autoFoot": [
+        186.5,
+        309.6
+      ],
+      "feetX": 186.5,
+      "pelvisX": 186.9,
+      "foot": [
+        186,
+        309.6
+      ],
+      "size": [
+        349,
+        310
+      ],
+      "bottomAboveGroundPx": 0.0,
+      "tip": null
+    },
+    "item_0": {
+      "sheet": "item-dodge",
+      "method": "feet",
+      "autoFoot": [
+        127.0,
+        360.9
+      ],
+      "feetX": 127.0,
+      "pelvisX": 121.0,
+      "foot": [
+        127.0,
+        360.9
+      ],
+      "size": [
+        190,
+        362
+      ],
+      "bottomAboveGroundPx": 0.0,
+      "tip": null
+    },
+    "item_1": {
+      "sheet": "item-dodge",
+      "method": "feet",
+      "autoFoot": [
+        121.0,
+        356.8
+      ],
+      "feetX": 121.0,
+      "pelvisX": 120.7,
+      "foot": [
+        121.0,
+        356.8
+      ],
+      "size": [
+        186,
+        357
+      ],
+      "bottomAboveGroundPx": 0.0,
+      "tip": null
+    },
+    "dodge_0": {
+      "sheet": "item-dodge",
+      "method": "pelvis",
+      "autoFoot": [
+        176.0,
+        265.5
+      ],
+      "feetX": 151.0,
+      "pelvisX": 176.0,
+      "foot": [
+        176.0,
+        265.5
+      ],
+      "size": [
+        384,
+        265
+      ],
+      "bottomAboveGroundPx": 1.4,
+      "tip": null
+    },
+    "dodge_1": {
+      "sheet": "item-dodge",
+      "method": "pelvis",
+      "autoFoot": [
+        170.8,
+        232.2
+      ],
+      "feetX": null,
+      "pelvisX": 170.8,
+      "foot": [
+        170.8,
+        207.2
+      ],
+      "size": [
+        384,
+        199
+      ],
+      "bottomAboveGroundPx": 33.4,
+      "tip": null
+    },
+    "run_0": {
+      "sheet": "run8",
+      "method": "pelvis+dx",
+      "autoFoot": [
+        120.1,
+        319.0
+      ],
+      "feetX": 117.0,
+      "pelvisX": 120.1,
+      "foot": [
+        115.8,
+        319.0
+      ],
+      "size": [
+        235,
+        319
+      ],
+      "bottomAboveGroundPx": 1.0,
+      "tip": null
+    },
+    "run_1": {
+      "sheet": "run8",
+      "method": "pelvis+dx",
+      "autoFoot": [
+        112.2,
+        304.4
+      ],
+      "feetX": 155.0,
+      "pelvisX": 112.2,
+      "foot": [
+        114.9,
+        304.4
+      ],
+      "size": [
+        196,
+        305
+      ],
+      "bottomAboveGroundPx": 0.0,
+      "tip": null
+    },
+    "run_2": {
+      "sheet": "run8",
+      "method": "pelvis+dx",
+      "autoFoot": [
+        100.2,
+        324.9
+      ],
+      "feetX": 78.5,
+      "pelvisX": 100.2,
+      "foot": [
+        105.6,
+        324.9
+      ],
+      "size": [
+        190,
+        326
+      ],
+      "bottomAboveGroundPx": 0.0,
+      "tip": null
+    },
+    "run_3": {
+      "sheet": "run8",
+      "method": "pelvis+dx",
+      "autoFoot": [
+        107.6,
+        334.6
+      ],
+      "feetX": 25.5,
+      "pelvisX": 107.6,
+      "foot": [
+        103.8,
+        334.6
+      ],
+      "size": [
+        197,
+        332
+      ],
+      "bottomAboveGroundPx": 3.9,
+      "tip": null
+    },
+    "attack1_0": {
+      "sheet": "attack1",
+      "method": "pelvis",
+      "autoFoot": [
+        184.0,
+        320.0
+      ],
+      "feetX": 213.5,
+      "pelvisX": 184.0,
+      "foot": [
+        184.0,
+        320.0
+      ],
+      "size": [
+        352,
+        318
+      ],
+      "bottomAboveGroundPx": 2.2,
+      "tip": null
+    },
+    "attack1_1": {
+      "sheet": "attack1",
+      "method": "pelvis",
+      "autoFoot": [
+        174.4,
+        299.5
+      ],
+      "feetX": 176.5,
+      "pelvisX": 174.4,
+      "foot": [
+        174.4,
+        299.5
+      ],
+      "size": [
+        489,
+        299
+      ],
+      "bottomAboveGroundPx": 1.5,
+      "tip": [
+        486,
+        93
+      ]
+    },
+    "attack1_2": {
+      "sheet": "attack1",
+      "method": "pelvis",
+      "autoFoot": [
+        214.5,
+        304.6
+      ],
+      "feetX": 188.5,
+      "pelvisX": 214.5,
+      "foot": [
+        214.5,
+        304.6
+      ],
+      "size": [
+        346,
+        304
+      ],
+      "bottomAboveGroundPx": 1.5,
+      "tip": null
+    },
+    "attack2_0": {
+      "sheet": "attack2",
+      "method": "pelvis",
+      "autoFoot": [
+        162.0,
+        298.2
+      ],
+      "feetX": 147.5,
+      "pelvisX": 162.0,
+      "foot": [
+        162.0,
+        298.2
+      ],
+      "size": [
+        297,
+        300
+      ],
+      "bottomAboveGroundPx": 0.0,
+      "tip": null
+    },
+    "attack2_1": {
+      "sheet": "attack2",
+      "method": "pelvis",
+      "autoFoot": [
+        203.2,
+        354.8
+      ],
+      "feetX": 183.5,
+      "pelvisX": 203.2,
+      "foot": [
+        203.2,
+        354.8
+      ],
+      "size": [
+        369,
+        356
+      ],
+      "bottomAboveGroundPx": 0.0,
+      "tip": [
+        367,
+        1
+      ]
+    },
+    "attack2_2": {
+      "sheet": "attack2",
+      "method": "pelvis",
+      "autoFoot": [
+        175.5,
+        438.7
+      ],
+      "feetX": 148.0,
+      "pelvisX": 175.5,
+      "foot": [
+        175.5,
+        438.7
+      ],
+      "size": [
+        276,
+        440
+      ],
+      "bottomAboveGroundPx": 0.0,
+      "tip": null
+    },
+    "attack3_0": {
+      "sheet": "attack3",
+      "method": "pelvis",
+      "autoFoot": [
+        231.7,
+        344.6
+      ],
+      "feetX": 222.0,
+      "pelvisX": 231.7,
+      "foot": [
+        231.7,
+        344.6
+      ],
+      "size": [
+        358,
+        346
+      ],
+      "bottomAboveGroundPx": 0.0,
+      "tip": null
+    },
+    "attack3_1": {
+      "sheet": "attack3",
+      "method": "pelvis",
+      "autoFoot": [
+        212.9,
+        462.3
+      ],
+      "feetX": null,
+      "pelvisX": 212.9,
+      "foot": [
+        212.9,
+        462.3
+      ],
+      "size": [
+        310,
+        355
+      ],
+      "bottomAboveGroundPx": 107.6,
+      "tip": null
+    },
+    "attack3_2": {
+      "sheet": "attack3",
+      "method": "pelvis",
+      "autoFoot": [
+        136.6,
+        257.9
+      ],
+      "feetX": 136.0,
+      "pelvisX": 136.6,
+      "foot": [
+        136.6,
+        257.9
+      ],
+      "size": [
+        323,
+        260
+      ],
+      "bottomAboveGroundPx": -0.7,
+      "tip": [
+        320,
+        258
+      ]
+    },
+    "attack3_3": {
+      "sheet": "attack3",
+      "method": "pelvis",
+      "autoFoot": [
+        134.7,
+        302.7
+      ],
+      "feetX": 138.5,
+      "pelvisX": 134.7,
+      "foot": [
+        134.7,
+        302.7
+      ],
+      "size": [
+        289,
+        302
+      ],
+      "bottomAboveGroundPx": 1.4,
+      "tip": null
+    },
+    "skill_0": {
+      "sheet": "skill",
+      "method": "pelvis",
+      "autoFoot": [
+        199.3,
+        262.5
+      ],
+      "feetX": 164.5,
+      "pelvisX": 199.3,
+      "foot": [
+        199.3,
+        262.5
+      ],
+      "size": [
+        295,
+        262
+      ],
+      "bottomAboveGroundPx": 1.7,
+      "tip": null
+    },
+    "skill_1": {
+      "sheet": "skill",
+      "method": "pelvis",
+      "autoFoot": [
+        204.0,
+        248.8
+      ],
+      "feetX": 160.0,
+      "pelvisX": 204.0,
+      "foot": [
+        204.0,
+        248.8
+      ],
+      "size": [
+        341,
+        247
+      ],
+      "bottomAboveGroundPx": 2.6,
+      "tip": null
+    },
+    "skill_2": {
+      "sheet": "skill",
+      "method": "pelvis",
+      "autoFoot": [
+        210.8,
+        290.8
+      ],
+      "feetX": 187.5,
+      "pelvisX": 210.8,
+      "foot": [
+        210.8,
+        290.8
+      ],
+      "size": [
+        490,
+        289
+      ],
+      "bottomAboveGroundPx": 2.6,
+      "tip": [
+        487,
+        87
+      ]
+    },
+    "skill_3": {
+      "sheet": "skill",
+      "method": "pelvis",
+      "autoFoot": [
+        288.1,
+        302.8
+      ],
+      "feetX": 260.5,
+      "pelvisX": 288.1,
+      "foot": [
+        288.1,
+        302.8
+      ],
+      "size": [
+        415,
+        301
+      ],
+      "bottomAboveGroundPx": 2.6,
+      "tip": null
+    },
+    "hurt_0": {
+      "sheet": "hurt-down",
+      "method": "pelvis",
+      "autoFoot": [
+        239.2,
+        310.8
+      ],
+      "feetX": 162.0,
+      "pelvisX": 239.2,
+      "foot": [
+        239.2,
+        310.8
+      ],
+      "size": [
+        364,
+        310
+      ],
+      "bottomAboveGroundPx": 0.7,
+      "tip": null
+    },
+    "down_0": {
+      "sheet": "hurt-down",
+      "method": "pelvis",
+      "autoFoot": [
+        251.0,
+        98.7
+      ],
+      "feetX": 236.0,
+      "pelvisX": 251.0,
+      "foot": [
+        251.0,
+        98.7
+      ],
+      "size": [
+        461,
+        111
+      ],
+      "bottomAboveGroundPx": -11.3,
+      "tip": null
+    },
+    "getup_0": {
+      "sheet": "hurt-down",
+      "method": "pelvis",
+      "autoFoot": [
+        140.2,
+        270.0
+      ],
+      "feetX": 114.5,
+      "pelvisX": 140.2,
+      "foot": [
+        140.2,
+        270.0
+      ],
+      "size": [
+        230,
+        273
+      ],
+      "bottomAboveGroundPx": -2.1,
+      "tip": null
+    },
+    "run_4": {
+      "aliasOf": "run_0"
+    },
+    "run_5": {
+      "aliasOf": "run_1"
+    },
+    "run_6": {
+      "aliasOf": "run_2"
+    },
+    "run_7": {
+      "aliasOf": "run_3"
+    }
+  },
+  "atlas": {
+    "size": [
+      1973,
+      1650
+    ],
+    "bytes": 3661384
+  }
+}

@@ -63,6 +63,9 @@ import {
 import { getSheetFigures, registerSheetFigures, releaseSheetFigures } from './ui/sheet-figures';
 import { startInfiniteFlowSheetGallery, sheetGalleryRequested, type InfiniteFlowSheetGalleryHandle } from './ui/InfiniteFlowSheetGallery';
 import { startInfiniteFlowSheetLayoutGallery, sheetLayoutGalleryRequested, type InfiniteFlowSheetLayoutGalleryHandle } from './ui/InfiniteFlowSheetLayoutGallery';
+import { configureInfiniteFlowBattleRenderer, turnBasedBattleRequested } from './ui/battle-renderer';
+
+export { configureInfiniteFlowBattleRenderer } from './ui/battle-renderer';
 import { DEBUG, HTML5 } from 'cc/env';
 
 const { ccclass } = _decorator;
@@ -71,8 +74,8 @@ const CONFIG_BUNDLE_NAME = 'config';
 const RESOURCES_BUNDLE_NAME = 'resources';
 const ASSET_MANIFEST_PATH = 'asset-manifest';
 const ASSET_MANIFEST_UUID = '3d0842ec-43f7-4b5f-961f-39edb535ccd7';
-const EXPECTED_MANIFEST_REVISION = 'sha256:5e16397dc92b94f7d4f36855c4fe5e5bd2733a9096e0b137b626db1e910255d7';
-const EXPECTED_MANIFEST_ASSET_COUNT = 324;
+const EXPECTED_MANIFEST_REVISION = 'sha256:2d9e58899e46ae3bb9b410bf3f92e7d002fe99a66e6f7c4724d68fb393007394';
+const EXPECTED_MANIFEST_ASSET_COUNT = 344;
 const GAME_ASSET_KINDS = new Set([
   'character',
   'npc',
@@ -916,6 +919,8 @@ export class InfiniteFlowApp extends Component {
       this.bootstrapSheetGallery();
       return;
     }
+    // Debug web-only: ?battle=turn-based keeps the turn-based battle screen (its smoke and comparison runs).
+    if (HTML5 && DEBUG && turnBasedBattleRequested()) configureInfiniteFlowBattleRenderer('turn-based');
     this.bootRuntime();
   }
 

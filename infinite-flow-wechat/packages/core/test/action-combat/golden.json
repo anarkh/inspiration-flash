@@ -1,0 +1,25 @@
+{
+  "format": 1,
+  "source": "prototype/action-combat-v1 (src/sim + tests/bots.mjs)",
+  "generator": "packages/core/scripts/generate-action-combat-golden.mjs",
+  "tuningHash": "511fab1cb018ca179d01146498f4cf0d1bca49f75c07119bff85172c2424783f",
+  "runs": [
+    {"bot":"idle","seed":1,"assist":1,"phase":"lost","ticks":1080,"time":18.00000000000026,"heroHp":0,"events":57,"worldHash":"6e1decb7a6b6620d11993cdf6bbbee61f8d3e02e58de185d1353ff763b4997ee","eventsHash":"c861756ea2526a502c7ab64c1ed3b990b1f7ed3836246d262147e7ce910bd2a3"},
+    {"bot":"idle","seed":2,"assist":1,"phase":"lost","ticks":1080,"time":18.00000000000026,"heroHp":0,"events":55,"worldHash":"382ad237ac45737daec8294a4d7793772e849445d2c899174f5df0e942f27a91","eventsHash":"f0551c75b12c4d034c1612153ddf2ba03fe3b48ad92b885e650fa06162764f16"},
+    {"bot":"idle","seed":3,"assist":1,"phase":"lost","ticks":1142,"time":19.033333333333534,"heroHp":0,"events":60,"worldHash":"5720577ee256ffc3a5d0c134b17694749652a3c5000f819615532bd658668020","eventsHash":"fa4e1e2b1f2d1b19a67f9f9599be33723c5238a91ec1374945e63016137ec71d"},
+    {"bot":"idle","seed":4,"assist":1,"phase":"lost","ticks":1084,"time":18.066666666666922,"heroHp":0,"events":60,"worldHash":"b3dab3900b0652a413136bf27d178036d02130111ce7261fc24a71645a9dd25f","eventsHash":"31d10a02f78d2f51202995b5934eb99f2d3bf933c5ea7833888d05d591224bf2"},
+    {"bot":"idle","seed":5,"assist":1,"phase":"lost","ticks":1022,"time":17.033333333333648,"heroHp":0,"events":54,"worldHash":"04b98e3ed42369123ca563719eb41f9a17744c405a46564ade0ffb93ba0aceb1","eventsHash":"ce0b225297be24cc589257c44ad5e2eff5e0177f61950a33eb854bddc41898df"},
+    {"bot":"naive","seed":1,"assist":1,"phase":"lost","ticks":3193,"time":53.21666666666493,"heroHp":0,"events":278,"worldHash":"19d7ba07431c7fad05b2a8353d134c1d147ed36c31d9e802454584a080a5c0ba","eventsHash":"c480a69b5e69f69bca80ff54a96ed21f6d0000f0f61ffd9c5e2e74669b9d824c"},
+    {"bot":"naive","seed":2,"assist":1,"phase":"lost","ticks":3098,"time":51.633333333331684,"heroHp":0,"events":294,"worldHash":"3c6c97b252c185107864ecc0bfbf088b00afd380ac669e9fa9721f0615d9ad3c","eventsHash":"3f5adbf18309c408642ee4c4a6ab1a353aefdc239168cd4fbb5d1a6e1720febb"},
+    {"bot":"naive","seed":3,"assist":1,"phase":"lost","ticks":3101,"time":51.68333333333168,"heroHp":0,"events":285,"worldHash":"7e4bf2ea82266d91a38b51877a77b5f5e4dbf71cd932f2ab05170fe3e70f0bcc","eventsHash":"4f8eb2d4234a29c51dfc46e83e4f283b09cdb52957dcc07b168999efa94c86eb"},
+    {"bot":"naive","seed":4,"assist":1,"phase":"lost","ticks":2955,"time":49.24999999999849,"heroHp":0,"events":258,"worldHash":"72acecd66c62a17ca515935ae13f669ee9b6f8f3e01357667d11c0acc3791c1b","eventsHash":"0644dbdf1ad973fef5a37da0318a1dd0a54d8ec273ab3398e342a4c3e5c6de69"},
+    {"bot":"naive","seed":5,"assist":1,"phase":"lost","ticks":2878,"time":47.966666666665226,"heroHp":0,"events":272,"worldHash":"3b09ff3421261b873b4fd70c655c16181871698f4d78ee536f53ea3f8dcec2c5","eventsHash":"b15cc8104531634c5e94718618616177aca4b9f73bbd0fb457a68f365b74fcd6"},
+    {"bot":"competent","seed":1,"assist":1,"phase":"won","ticks":4283,"time":71.38333333333057,"heroHp":122,"events":446,"worldHash":"26f0ff19a4ad4951e05ba3d3a95609d3c1496aecdc82de818241816b20613e52","eventsHash":"1b0018efb2942c00a8af4c668c43835ae77baca461fdc0e8010399702160573c"},
+    {"bot":"competent","seed":2,"assist":1,"phase":"won","ticks":3811,"time":63.51666666666434,"heroHp":191,"events":351,"worldHash":"b8e70d4b91030c3bca0cd9223d86a05140ff48eac2c29cd7fdb3596e7a17a84c","eventsHash":"64c490efda69552e9ff590d6d6b151763426624b4ade649a47b7fdc73155c3ce"},
+    {"bot":"competent","seed":3,"assist":1,"phase":"won","ticks":4451,"time":74.18333333333041,"heroHp":190,"events":411,"worldHash":"554b594d0799d2489c2d5c1a306ce730e9ae3f560d75a598788b935cd756c4ee","eventsHash":"774a2f1e224a17c0486a9eccaee8cb59cbe3b85a7e8e4ea49ae4c4b9d680cf33"},
+    {"bot":"competent","seed":4,"assist":1,"phase":"won","ticks":4353,"time":72.54999999999717,"heroHp":174,"events":393,"worldHash":"a9c002043cf8b571d37a4500e0b8fad3b46e99ce7fbf00f0867372c7f096b568","eventsHash":"da95ee6fdb44109af21a89f591e21e523849b8cba63591fe5161e7b8ea91e421"},
+    {"bot":"competent","seed":5,"assist":1,"phase":"won","ticks":4261,"time":71.01666666666392,"heroHp":176,"events":412,"worldHash":"71c1609686f541e4a44faa7d090ae139485fc69cf8eefd4d6bd0fb69d4078649","eventsHash":"e663f7dee92c4d91cd6e047a8a9e73eea9d7c4a1955499dbc7239a4cbff8107c"},
+    {"bot":"naive","seed":1,"assist":2,"phase":"lost","ticks":3022,"time":50.36666666666509,"heroHp":0,"events":279,"worldHash":"c545d5bdb56c4c2284514e46170f0f55455250f66680fe507ca92669220b907d","eventsHash":"da9f90ebc51167ffc58eb47291b1e3dab0a14e0b546b2bcd3776f19f7341801f"},
+    {"bot":"competent","seed":1,"assist":2,"phase":"won","ticks":4201,"time":70.01666666666398,"heroHp":207,"events":415,"worldHash":"232549888d19c38fca25a6f3140a462ed6d56a2e6df08823489d1533b6df28f0","eventsHash":"c5866a2003ced812cae7ae4252358fcb90e92c0f6ab054f4b9249f8267c78b76"}
+  ]
+}

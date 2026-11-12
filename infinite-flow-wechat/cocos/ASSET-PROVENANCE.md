@@ -112,8 +112,8 @@ other resources. `character:reincarnator` remains the original portrait key.
 
 Source generation and frame measurements are recorded in
 [`art-source/hero-redesign/`](../art-source/hero-redesign/README.md). The current
-manifest contains 324 resources (292 PNG, 32 JPEG), totaling 86,691,137 bytes; its revision is
-`sha256:5e16397dc92b94f7d4f36855c4fe5e5bd2733a9096e0b137b626db1e910255d7`.
+manifest contains 344 resources (293 PNG, 51 JPEG), totaling 102,095,307 bytes; its revision is
+`sha256:2d9e58899e46ae3bb9b410bf3f92e7d002fe99a66e6f7c4724d68fb393007394`.
 
 ## Cocos battle controls
 
@@ -136,6 +136,60 @@ battle floor and was replaced on 2026-10-30.
   The view cuts the strip into eight frames (six controls, a lit and a dark focus dot) with the rects in
   `assets/scripts/ui/battle-controls-atlas.ts`, measured on the source and scaled by one half; combat requests the
   strip through the scene loading gate.
+
+## Cocos side-scrolling battle art
+
+The side-scrolling action battle that replaces the turn-based duel has a hero action atlas and one side-view stage
+per chapter, drawn for `prototype/action-combat-v1/`. They are registered as Cocos-only resources (no
+`webSourcePath`, outside the frozen Web snapshot and the core asset registry) and are not yet declared by any scene,
+so no current view downloads them.
+
+- Hero action atlas: stable key `character:reincarnator_action`; Cocos target
+  `assets/resources/character/reincarnator-action-v1.png`. Authoritative source
+  `infinite-flow-wechat/art-source/action-combat/hero/hero-action-v1.png` (1973 × 1650, 8-bit RGBA,
+  3,661,384 bytes, SHA-256 `400fddcf26515c7109cb1b27f2056a27fe4ebe00514cc03ebf167ac5b1a8e61a`), sliced, scaled to a
+  320 px standing height and packed from built-in `image_gen` sheets (2026-11-11); generation, originals, prompts,
+  tools and anchor fixes are in `art-source/action-combat/hero/` (`generation-record.json`). The packer wrote it to
+  `prototype/action-combat-v1/assets/hero-action/hero-action.png`; it and its frame JSON (`hero-action-v1.json`, SHA-256
+  `19170aa526c12690a3f2416adcf426f2ebf62a730086de8d990d6815b2495c53`) were copied byte for byte into `art-source/` so a
+  later prototype regeneration cannot change the registered source. Transfer: byte-identical `cp`
+  (macOS 26.5.1 (25F80)); it has no slimming rule because the 320 px pose is drawn at about 384–423 device px.
+  The frame table (rects, feet, strike tips, clips, `unitHeight` 320, `runCycle` 496), the prototype's hand-measured
+  sword-arc tips and run head heights are in `assets/scripts/ui/hero-action-atlas.ts`.
+- Stages: stable key `scene:action_stage_<dungeonId>`, `kind`/`role` `scene`, `entityId` `action_stage_<dungeonId>`;
+  Cocos target `assets/resources/action-stage/<dungeonId>-v1.jpg`. Authoritative sources
+  `infinite-flow-wechat/art-source/action-combat/stages/<dungeonId>-v1.png` (record `stages/generation-record.json`)
+  and, for `demon_tower_1`, `art-source/action-combat/stage-demon-tower-v1.png` (record `generation-record.json`
+  beside it): built-in `image_gen`, 2026-11-11, each 1774 × 887 8-bit RGB, 51,122,740 bytes together, no pixel
+  post-processing. They are drawn at or above source size, so the `scripts/resource-slimming.mjs` rule keeps the size
+  and stores JPEG: `encode-jpeg` with `sips -s format jpeg -s formatOptions 88` (sips-316) through `npm run assets:slim`,
+  11,742,786 bytes together; the manifest pins both hashes. The measured floor fractions per chapter are in
+  `ACTION_STAGES` of `assets/scripts/ui/hero-action-atlas.ts`.
+- Image metadata uses the existing Creator 3.8.8 texture redirect contract with unique UUIDs (`hasAlpha: true` for
+  the atlas, `false` for the stages); the new `action-stage` directory inherits the existing resources bundle.
+  `npm run assets:verify` pins each source SHA-256, the 19-ID coverage, dimensions, paths and the JPEG rule.
+
+| Dungeon ID | Chapter | JPEG bytes | Source SHA-256 |
+| --- | --- | ---: | --- |
+| `demon_tower_1` | 妖塔一层 | 568,560 | `c0891e9e143c019cb53d42f18ad186a5ae020bf608c2b3616a43ae57bfaeb605` |
+| `metro_abyss` | 镜潮地铁 | 645,603 | `dcbd04efb7ee85d7034d366341d9508b8f11d2556dad04ffb1a00e7b5dfcdca3` |
+| `starfall_mine` | 星坠矿井 | 708,368 | `6a2e0228b1bc400bbf292bd24b203be5db7de9f005c158e1a86b4166fc803d43` |
+| `rust_hospital` | 锈疫病院 | 614,543 | `3cffd88f574043292cb887fd9f9a22331dac1882869fdef40e0774531c5eca5b` |
+| `ash_arena` | 灰烬竞技场 | 636,413 | `12cd171851c4ba226c353a49b3ff0dcec6cd47053612a1696e60dcf0555fba54` |
+| `dream_archive` | 梦档案馆 | 600,436 | `0893cab4af85a3fc55b2add33821840cf149b0660ccaf1463c4383f85425a81f` |
+| `void_citadel` | 虚界城 | 609,672 | `bd27c8dc8af00e0e7a8d67b7d827d3d626ac9f9ddb5006681cfc8bc1bf3f8aaf` |
+| `temporal_observatory` | 时序观测庭 | 766,586 | `0f2d296d55bda4c1327348bc7824fed7fd0fa96c2643244f93c53ece29672193` |
+| `causal_clearinghouse` | 因果清算所 | 676,979 | `dc948c41f49b98c308bc4060147dbf562b2a44c102417a50190f476cb349c8ca` |
+| `entropy_ark` | 熵海方舟 | 636,964 | `7bfcef71eab199373ed6156a2e3ff0add7aedf3cbe12aeab6b2a59dac13a080f` |
+| `mirror_cycle_city` | 镜海轮回城 | 725,260 | `c1405870868b2de954f096e3c3963cca95288f755110a7c36d1d2b052e545fd4` |
+| `redaction_scriptorium` | 删界终稿院 | 557,542 | `73c51200392c453ce471ba2154bcb09961f3b6609c779a24f29d943231b435ed` |
+| `legacy_auction_court` | 亡队遗产拍卖庭 | 626,654 | `e9a2b39821c19b88a29e5f86acc148d25296b29be280d920c2ffcf73700d22f2` |
+| `genesis_vault` | 众生原型库 | 561,385 | `97bf6b4b9cdcd06fa763704c4316162579a55b91a7e17e6e1b0f3f43c42f59a2` |
+| `silent_broadcast_tower` | 寂声广播塔 | 560,278 | `5ff005ee239c538967de75bf855403a99a9188bdaf7bc5f3edf00363f2a66e09` |
+| `lost_shelter` | 失联避难所 | 583,349 | `b01e7eed91f6ed1384a0ed9af911b237e4f05d74a615635df9c6a77b00b43a8d` |
+| `false_testimony_court` | 伪证裁定庭 | 508,422 | `1b0a45bd29d721c4bace56489fd13bae0e8b20bd8183db9e644f1580efa364fc` |
+| `combat_replay_stage` | 战痕复演场 | 491,901 | `1d8aa7402f958a85ba4b485fef875972e1cc90addeac9894995d476929ab34f2` |
+| `panopticon_city` | 天幕监察城 | 663,871 | `cddcbc418b14279c745db32817538513d1a3c9ac83f5d9e445ef939dac8bc915` |
 
 ## Cocos party figures
 

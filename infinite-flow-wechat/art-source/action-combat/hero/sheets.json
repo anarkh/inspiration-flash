@@ -1,0 +1,116 @@
+{
+  "_note": "Pose names in left-to-right order for each generated sheet. '_ref' = per-sheet scale reference (master combat-idle), dropped after scale normalisation; the idle sheet keeps it as idle_0.",
+  "sheets": {
+    "idle-spell": {
+      "file": "originals/idle-spell-a1.png",
+      "poses": [
+        "idle_0",
+        "idle_1",
+        "spell_0",
+        "spell_1"
+      ]
+    },
+    "item-dodge": {
+      "file": "originals/item-dodge-a1.png",
+      "poses": [
+        "_ref",
+        "item_0",
+        "item_1",
+        "dodge_0",
+        "dodge_1"
+      ]
+    },
+    "run8": {
+      "file": "originals/run8-row-a1.png",
+      "ground": "row-max",
+      "poses": [
+        "_ref",
+        "skip",
+        "skip",
+        "skip",
+        "skip",
+        "run_0",
+        "run_1",
+        "run_2",
+        "run_3"
+      ],
+      "_note": "v2 run (2026-11-11): C1a single-row 8-frame sheet; its frames 4-7 (contact, down, passing, up) are used as one 4-phase step. The model did not draw a readable near/far leg swap in any candidate, so the step repeats (run_4-7 alias run_0-3)."
+    },
+    "attack1": {
+      "file": "originals/attack1-a1.png",
+      "poses": [
+        "_ref",
+        "attack1_0",
+        "attack1_1",
+        "attack1_2"
+      ]
+    },
+    "attack2": {
+      "file": "originals/attack2-a1.png",
+      "poses": [
+        "_ref",
+        "attack2_0",
+        "attack2_1",
+        "attack2_2"
+      ]
+    },
+    "attack3": {
+      "file": "originals/attack3-a1.png",
+      "poses": [
+        "_ref",
+        "attack3_0",
+        "attack3_1",
+        "attack3_2",
+        "attack3_3"
+      ]
+    },
+    "skill": {
+      "file": "originals/skill-a1.png",
+      "poses": [
+        "_ref",
+        "skill_0",
+        "skill_1",
+        "skill_2",
+        "skill_3"
+      ]
+    },
+    "hurt-down": {
+      "file": "originals/hurt-down-a1.png",
+      "poses": [
+        "_ref",
+        "hurt_0",
+        "down_0",
+        "getup_0"
+      ]
+    }
+  },
+  "aliases": {
+    "run_4": "run_0",
+    "run_5": "run_1",
+    "run_6": "run_2",
+    "run_7": "run_3"
+  },
+  "_replaced": {
+    "run-a": {
+      "file": "originals/run-a-a1.png",
+      "poses": [
+        "_ref",
+        "run_0",
+        "run_1",
+        "run_2"
+      ]
+    },
+    "run-b": {
+      "file": "originals/run-b-a1.png",
+      "poses": [
+        "_ref",
+        "run_3",
+        "run_4",
+        "run_5"
+      ]
+    },
+    "why": "v1 6-frame run replaced by run8 (user: run not smooth)"
+  },
+  "runCycle": 496,
+  "_runCycleNote": "atlas px (unit 320) the root travels per 8-frame run loop so the planted foot does not slide: 8 x 61.98 px/frame (planted-foot backward travel contact->push-off per step = 185.4 px over 3 of the 4 frame intervals, solved with run_solve.py)"
+}

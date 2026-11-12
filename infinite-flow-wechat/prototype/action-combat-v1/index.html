@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>横版清关 · 动作战斗原型 v1</title>
+  <!-- The static server sends no cache headers: every local URL carries ?v=N; run `node tools/bump-version.mjs` after edits. -->
+  <link rel="stylesheet" href="style.css?v=6">
+</head>
+<body>
+  <header class="demo-bar" id="demo-bar" aria-label="原型演示设置">
+    <label>操作
+      <select id="opt-controls">
+        <option value="onehand">单手：浮动摇杆 + 自动攻击</option>
+        <option value="dual">双手：摇杆 + 按键</option>
+      </select>
+    </label>
+    <label>视口
+      <select id="opt-viewport">
+        <option value="auto">适应窗口</option>
+        <option value="390x844">390×844</option>
+        <option value="320x568">320×568</option>
+      </select>
+    </label>
+    <label><input type="checkbox" id="opt-slowmo"> 慢放 1/4</label>
+    <label><input type="checkbox" id="opt-debug"> 判定框</label>
+    <button type="button" id="opt-restart">重开</button>
+    <span class="demo-keys">键盘：WASD / 方向键 · J 攻击（战意满长按 = 战技）· K 闪避 · L 战技 · U 法术 · I 道具</span>
+  </header>
+
+  <main class="stage-wrap">
+    <div class="frame" id="frame">
+      <!-- Logical layer: 390 px wide, height from the frame's aspect, scaled uniformly to the frame. -->
+      <div class="root" id="root">
+        <canvas id="view" aria-label="战斗画面"></canvas>
+        <div class="controls" id="controls"></div>
+        <div class="loading" id="loading">加载素材中…</div>
+      </div>
+    </div>
+  </main>
+  <!-- Reads env(safe-area-inset-*) for main.js (padding = the four insets). -->
+  <div class="safe-probe" id="safe-probe" aria-hidden="true"></div>
+
+  <script type="module" src="src/main.js?v=6"></script>
+</body>
+</html>

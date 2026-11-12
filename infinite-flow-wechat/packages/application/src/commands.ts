@@ -1,4 +1,6 @@
+import { ACTION_ENCOUNTER_TUNING, assertActionInputLog } from '@infinite-flow/core';
 import type {
+  ActionInputLog,
   BloodlineId,
   CausalLedgerChoice,
   CombatAction,
@@ -39,6 +41,13 @@ export type PersistedRunSeeds = Readonly<{
 }>;
 
 type NoPayloadCommand<Type extends string> = Readonly<{ type: Type }>;
+
+/** A real-time fight's input log (see ActionInputLog in the core sim), read-only as every command payload is. */
+export type ActionInputLogPayload = Readonly<{
+  version: ActionInputLog['version'];
+  ticks: number;
+  changes: readonly number[];
+}>;
 
 /** Player-timed combat input; the core only honours it on a parryable heavy blow. */
 export type CombatActionTiming = NonNullable<CombatActionOptions['timing']>;
@@ -165,6 +174,11 @@ export type GameCommand =
   | Readonly<{ type: 'law/select-panopticon-route'; route: PanopticonRoute }>
   | Readonly<{ type: 'combat/act'; action: CombatAction; timing?: CombatActionTiming }>
   | Readonly<{ type: 'combat/capture'; petId: PetId }>
+  /**
+   * A whole real-time fight, sent once when it ends: the input log the core replays to settle it. `capture` ends a
+   * fight still on with the capture of the room's monster once it is under the capture line.
+   */
+  | Readonly<{ type: 'combat/resolve-action'; log: ActionInputLogPayload; capture?: PetId }>
   | Readonly<{ type: 'combat/use-method-technique'; methodId?: MethodId }>
   | NoPayloadCommand<'combat/use-companion-assist'>
   | NoPayloadCommand<'combat/use-bloodline-surge'>
@@ -246,6 +260,7 @@ const COMMAND_TYPES: ReadonlySet<string> = new Set<GameCommandType>([
   'law/select-panopticon-route',
   'combat/act',
   'combat/capture',
+  'combat/resolve-action',
   'combat/use-method-technique',
   'combat/use-companion-assist',
   'combat/use-bloodline-surge',
@@ -318,6 +333,20 @@ function isPositiveUint32(value: unknown): value is number {
 
 function hasStringFields(command: Record<string, unknown>, ...fields: readonly string[]): boolean {
   return fields.every((field) => isString(command[field]));
+}
+
+/**
+ * Why a combat/resolve-action payload is malformed, or undefined: a well-formed version-1 input log within the replay
+ * bound (exactly version / ticks / changes, canonical change points, codes in range) and an optional capture pet id.
+ */
+function getResolveActionPayloadIssue(command: Record<string, unknown>): string | undefined {
+  if (!isOptionalString(command.capture)) return 'capture must be a pet id';
+  try {
+    assertActionInputLog(command.log, ACTION_ENCOUNTER_TUNING.maxTicks);
+  } catch (error) {
+    return error instanceof Error ? error.message : String(error);
+  }
+  return undefined;
 }
 
 function isCommandPayloadValid(command: Record<string, unknown>, type: GameCommandType): boolean {
@@ -419,6 +448,8 @@ function isCommandPayloadValid(command: Record<string, unknown>, type: GameComma
     case 'combat/act':
       return COMBAT_ACTIONS.has(command.action as CombatAction)
         && (command.timing === undefined || command.timing === 'perfect');
+    case 'combat/resolve-action':
+      return getResolveActionPayloadIssue(command) === undefined;
     case 'combat/use-method-technique':
       return isOptionalString(command.methodId);
     case 'result/archive-relic':
@@ -452,11 +483,12 @@ export function validateGameCommand(input: unknown): GameCommandValidation {
   }
 
   if (!isCommandPayloadValid(input, type as GameCommandType)) {
+    const detail = type === 'combat/resolve-action' ? getResolveActionPayloadIssue(input) : undefined;
     return {
       ok: false,
       reason: {
         code: 'invalid-payload',
-        message: `Invalid payload for ${type}.`,
+        message: detail === undefined ? `Invalid payload for ${type}.` : `Invalid payload for ${type}: ${detail}.`,
         commandType: type
       }
     };
@@ -531,6 +563,7 @@ const EXPLORE_COMMANDS: ReadonlySet<GameCommandType> = new Set([
 const COMBAT_COMMANDS: ReadonlySet<GameCommandType> = new Set([
   'combat/act',
   'combat/capture',
+  'combat/resolve-action',
   'combat/use-method-technique',
   'combat/use-companion-assist',
   'combat/use-bloodline-surge'

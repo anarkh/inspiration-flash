@@ -1,7 +1,10 @@
 import type { ExploreDetailViewModel, GameViewModel, HubCatalogPanel, HubPanel } from '@infinite-flow/presentation';
+import { getGameAsset } from '@infinite-flow/core';
 import type { RunRelicId } from '@infinite-flow/core/run-relics';
 import { DUNGEON_WORLD_THEMES, getDungeonWorldBackgroundKey } from './dungeon-world-theme';
 import { BATTLE_CONTROLS_KEY } from './battle-controls-atlas';
+import { getInfiniteFlowActionBattle, getInfiniteFlowBattleRenderer } from './battle-renderer';
+import { ACTION_STAGES, HERO_ACTION_KEY } from './hero-action-atlas';
 
 export const INFINITE_FLOW_DUNGEON_TRANSITION_GATE_VISUAL_KEY = 'scene:dungeon_transition_gate';
 export const INFINITE_FLOW_HUB_DUNGEON_PORTAL_VISUAL_KEY = 'scene:hub_dungeon_portal';
@@ -86,9 +89,22 @@ export function getInfiniteFlowSceneVisualKeys(model: GameViewModel): Readonly<{
   transitionGate?: string;
   /** The battle's ink control strip, cut into its controls by the view. */
   battleControls?: string;
+  /**
+   * The side-scrolling battle: the chapter's side-view stage and the hero's action atlas (its foes are `actionFoe_*`),
+   * also held while exploring that chapter under the action renderer.
+   */
+  actionStage?: string;
+  heroAction?: string;
+  /** A fight that offers a capture holds the pet's icon: a capture makes it the active pet shown in the room's HUD. */
+  capturePet?: string;
   hubPortal?: string;
-} & Partial<Record<HubCatalogPanel | keyof typeof INFINITE_FLOW_DUNGEON_PROP_VISUAL_KEYS | `runRelic_${RunRelicId}` | `runParty_${RunPartyKind}` | `runPartyFigure_${RunPartyKind}`, string>>> {
+} & Partial<Record<HubCatalogPanel | keyof typeof INFINITE_FLOW_DUNGEON_PROP_VISUAL_KEYS | `runRelic_${RunRelicId}` | `runParty_${RunPartyKind}` | `runPartyFigure_${RunPartyKind}`, string>>
+  & { readonly [foe: `actionFoe_${string}`]: string }> {
   const detail = model.sections[1]?.detail;
+  const actionBattle = getInfiniteFlowActionBattle(model);
+  const capturePet = actionBattle?.capture === undefined ? undefined : getGameAsset('pet', actionBattle.capture.petId)?.key;
+  const actionDungeonId = actionBattle?.dungeonId
+    ?? (detail?.kind === 'explore' && getInfiniteFlowBattleRenderer() === 'action' ? detail.map.dungeonId : undefined);
   const runRelicVisuals: Partial<Record<`runRelic_${RunRelicId}` | `runParty_${RunPartyKind}` | `runPartyFigure_${RunPartyKind}`, string>> = {};
   if (detail?.kind === 'explore' || detail?.kind === 'combat') {
     for (const relic of model.sections[1].loadout?.runRelics ?? []) {
@@ -96,8 +112,8 @@ export function getInfiniteFlowSceneVisualKeys(model: GameViewModel): Readonly<{
     }
     for (const member of model.sections[1].loadout?.runParty ?? []) {
       if (member.visualAssetKey !== undefined) runRelicVisuals[`runParty_${member.kind}`] = member.visualAssetKey;
-      // Full-body figures only stand on the duel stage.
-      if (detail.kind === 'combat' && member.figureAssetKey !== undefined) runRelicVisuals[`runPartyFigure_${member.kind}`] = member.figureAssetKey;
+      // Full-body figures only stand on the turn-based duel stage.
+      if (detail.kind === 'combat' && actionBattle === undefined && member.figureAssetKey !== undefined) runRelicVisuals[`runPartyFigure_${member.kind}`] = member.figureAssetKey;
     }
   }
   let background = model.visualAssetKey as string | undefined;
@@ -108,6 +124,12 @@ export function getInfiniteFlowSceneVisualKeys(model: GameViewModel): Readonly<{
       ? undefined
       : getDungeonWorldBackgroundKey(detail.chapterContext.dungeonId);
     opponent = getInfiniteFlowMonsterWorldVisualKey(detail.enemy.id);
+    // The side-scrolling fight holds the room's art (see the props below) so the room returns without a reload.
+    const pursuit = detail.chapterContext?.pursuit;
+    if (actionBattle !== undefined && detail.chapterContext !== undefined
+      && pursuit?.present === true && (pursuit.status === 'dormant' || pursuit.status === 'stalking')) {
+      lurker = getInfiniteFlowPursuerVisualKey(detail.chapterContext.dungeonId);
+    }
   } else if (detail?.kind === 'explore') {
     background = getDungeonWorldBackgroundKey(detail.map.dungeonId);
     if (detail.currentNode.nodeType === 'monster' && !detail.currentNode.cleared
@@ -135,8 +157,19 @@ export function getInfiniteFlowSceneVisualKeys(model: GameViewModel): Readonly<{
     ...(detail?.kind === 'explore' || detail?.kind === 'combat'
       ? { transitionGate: INFINITE_FLOW_DUNGEON_TRANSITION_GATE_VISUAL_KEY } : {}),
     // Resource ownership follows scene entry/exit via App's Object.values() lease.
-    ...(detail?.kind === 'explore' ? INFINITE_FLOW_DUNGEON_PROP_VISUAL_KEYS : {}),
+    ...(detail?.kind === 'explore' || actionBattle !== undefined ? INFINITE_FLOW_DUNGEON_PROP_VISUAL_KEYS : {}),
     ...(detail?.kind === 'combat' ? { propDebris: INFINITE_FLOW_DUNGEON_PROP_VISUAL_KEYS.propDebris, battleControls: BATTLE_CONTROLS_KEY } : {}),
+    // The side-scrolling battle's stage, hero action frames and ink controls stay leased for the whole chapter, so a
+    // fight opens on art that is already up and the room it leaves keeps all of its own art (props, gate, backdrop).
+    ...(actionDungeonId === undefined ? {} : {
+      actionStage: ACTION_STAGES[actionDungeonId].key,
+      heroAction: HERO_ACTION_KEY,
+      battleControls: BATTLE_CONTROLS_KEY,
+    }),
+    // Every roster member's world figure (the roster's visualAssetKey is its portrait).
+    ...(actionBattle === undefined ? {} : Object.fromEntries(actionBattle.roster.map(member =>
+      [`actionFoe_${member.archetype}`, getInfiniteFlowMonsterWorldVisualKey(member.monsterId)]))),
+    ...(capturePet === undefined ? {} : { capturePet }),
     // App loads and releases Object.values() of this object. Request every world
     // actor on entry, before any NPC panel has been selected.
     ...(detail?.kind === 'hub' ? HUB_NPC_WORLD_VISUAL_KEYS : {}),

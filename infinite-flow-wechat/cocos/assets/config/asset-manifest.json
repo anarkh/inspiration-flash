@@ -1,32 +1,32 @@
 {
   "schemaVersion": 2,
-  "manifestRevision": "sha256:5e16397dc92b94f7d4f36855c4fe5e5bd2733a9096e0b137b626db1e910255d7",
+  "manifestRevision": "sha256:2d9e58899e46ae3bb9b410bf3f92e7d002fe99a66e6f7c4724d68fb393007394",
   "sourceManifest": {
     "path": "infinite-flow/src/game-assets.ts",
     "version": 1,
     "commit": "2645f0232542684d27de1abc321bb26913320420"
   },
   "resourceRoot": "cocos/assets/resources",
-  "assetCount": 324,
-  "derivedAssetCount": 142,
+  "assetCount": 344,
+  "derivedAssetCount": 161,
   "kindCounts": {
-    "character": 8,
+    "character": 9,
     "npc": 15,
     "monster": 118,
     "equipment": 65,
     "pet": 12,
     "item": 50,
     "dungeon": 19,
-    "scene": 37
+    "scene": 56
   },
   "formatCounts": {
     "source": {
-      "png": 323,
+      "png": 343,
       "svg": 1
     },
     "target": {
-      "jpg": 32,
-      "png": 292
+      "jpg": 51,
+      "png": 293
     }
   },
   "assets": [
@@ -10338,6 +10338,700 @@
         "targetDimensions": {
           "width": 1086,
           "height": 362
+        }
+      }
+    },
+    {
+      "key": "character:reincarnator_action",
+      "kind": "character",
+      "entityId": "reincarnator_action",
+      "resourcePath": "character/reincarnator-action-v1",
+      "resourceFile": "character/reincarnator-action-v1.png",
+      "sourceFile": "infinite-flow-wechat/art-source/action-combat/hero/hero-action-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "png",
+      "cocosImageImport": "supported",
+      "alt": "轮回者横版动作图集：待机、奔跑、三段连斩、闪避、受击、倒地、起身、战技、法术与道具，统一 320 px 站高，全部朝右",
+      "role": "sprite-sheet",
+      "width": 1973,
+      "height": 1650,
+      "fit": "contain",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "400fddcf26515c7109cb1b27f2056a27fe4ebe00514cc03ebf167ac5b1a8e61a",
+      "targetSha256": "400fddcf26515c7109cb1b27f2056a27fe4ebe00514cc03ebf167ac5b1a8e61a",
+      "transformation": {
+        "operation": "byte-copy",
+        "tool": "cp",
+        "version": "macOS 26.5.1 (25F80)",
+        "targetDimensions": {
+          "width": 1973,
+          "height": 1650
+        }
+      }
+    },
+    {
+      "key": "scene:action_stage_demon_tower_1",
+      "kind": "scene",
+      "entityId": "action_stage_demon_tower_1",
+      "resourcePath": "action-stage/demon_tower_1-v1",
+      "resourceFile": "action-stage/demon_tower_1-v1.jpg",
+      "sourceFile": "infinite-flow-wechat/art-source/action-combat/stage-demon-tower-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "jpg",
+      "cocosImageImport": "supported",
+      "alt": "妖塔一层的侧视横版动作战斗背景",
+      "role": "scene",
+      "width": 1774,
+      "height": 887,
+      "fit": "cover",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "c0891e9e143c019cb53d42f18ad186a5ae020bf608c2b3616a43ae57bfaeb605",
+      "targetSha256": "f0c34fe66326b5f313ef1fe7574456d2effede4989b84e567f97745963877d9d",
+      "transformation": {
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
+          "width": 1774,
+          "height": 887
+        },
+        "targetDimensions": {
+          "width": 1774,
+          "height": 887
+        }
+      }
+    },
+    {
+      "key": "scene:action_stage_metro_abyss",
+      "kind": "scene",
+      "entityId": "action_stage_metro_abyss",
+      "resourcePath": "action-stage/metro_abyss-v1",
+      "resourceFile": "action-stage/metro_abyss-v1.jpg",
+      "sourceFile": "infinite-flow-wechat/art-source/action-combat/stages/metro_abyss-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "jpg",
+      "cocosImageImport": "supported",
+      "alt": "镜潮地铁的侧视横版动作战斗背景",
+      "role": "scene",
+      "width": 1774,
+      "height": 887,
+      "fit": "cover",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "dcbd04efb7ee85d7034d366341d9508b8f11d2556dad04ffb1a00e7b5dfcdca3",
+      "targetSha256": "df763c04a9db15b8f90de524e1ce44fd8e96f71b35fbc3aabc17744b5012d5c9",
+      "transformation": {
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
+          "width": 1774,
+          "height": 887
+        },
+        "targetDimensions": {
+          "width": 1774,
+          "height": 887
+        }
+      }
+    },
+    {
+      "key": "scene:action_stage_starfall_mine",
+      "kind": "scene",
+      "entityId": "action_stage_starfall_mine",
+      "resourcePath": "action-stage/starfall_mine-v1",
+      "resourceFile": "action-stage/starfall_mine-v1.jpg",
+      "sourceFile": "infinite-flow-wechat/art-source/action-combat/stages/starfall_mine-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "jpg",
+      "cocosImageImport": "supported",
+      "alt": "星坠矿井的侧视横版动作战斗背景",
+      "role": "scene",
+      "width": 1774,
+      "height": 887,
+      "fit": "cover",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "6a2e0228b1bc400bbf292bd24b203be5db7de9f005c158e1a86b4166fc803d43",
+      "targetSha256": "7ff77cd0563814e6a039fe055bf8e19107fa3bbeaa00ae19202353b409c0142b",
+      "transformation": {
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
+          "width": 1774,
+          "height": 887
+        },
+        "targetDimensions": {
+          "width": 1774,
+          "height": 887
+        }
+      }
+    },
+    {
+      "key": "scene:action_stage_rust_hospital",
+      "kind": "scene",
+      "entityId": "action_stage_rust_hospital",
+      "resourcePath": "action-stage/rust_hospital-v1",
+      "resourceFile": "action-stage/rust_hospital-v1.jpg",
+      "sourceFile": "infinite-flow-wechat/art-source/action-combat/stages/rust_hospital-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "jpg",
+      "cocosImageImport": "supported",
+      "alt": "锈疫病院的侧视横版动作战斗背景",
+      "role": "scene",
+      "width": 1774,
+      "height": 887,
+      "fit": "cover",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "3cffd88f574043292cb887fd9f9a22331dac1882869fdef40e0774531c5eca5b",
+      "targetSha256": "5411ed64ab0600b6aa93e347e7f1fd96c8a039f25cb81f182cbbb432ae0d0f0b",
+      "transformation": {
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
+          "width": 1774,
+          "height": 887
+        },
+        "targetDimensions": {
+          "width": 1774,
+          "height": 887
+        }
+      }
+    },
+    {
+      "key": "scene:action_stage_ash_arena",
+      "kind": "scene",
+      "entityId": "action_stage_ash_arena",
+      "resourcePath": "action-stage/ash_arena-v1",
+      "resourceFile": "action-stage/ash_arena-v1.jpg",
+      "sourceFile": "infinite-flow-wechat/art-source/action-combat/stages/ash_arena-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "jpg",
+      "cocosImageImport": "supported",
+      "alt": "灰烬竞技场的侧视横版动作战斗背景",
+      "role": "scene",
+      "width": 1774,
+      "height": 887,
+      "fit": "cover",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "12cd171851c4ba226c353a49b3ff0dcec6cd47053612a1696e60dcf0555fba54",
+      "targetSha256": "db1dcb3ea5b0d0966841e1a52aece23d257217e40756802d9d5f98fbde02f437",
+      "transformation": {
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
+          "width": 1774,
+          "height": 887
+        },
+        "targetDimensions": {
+          "width": 1774,
+          "height": 887
+        }
+      }
+    },
+    {
+      "key": "scene:action_stage_dream_archive",
+      "kind": "scene",
+      "entityId": "action_stage_dream_archive",
+      "resourcePath": "action-stage/dream_archive-v1",
+      "resourceFile": "action-stage/dream_archive-v1.jpg",
+      "sourceFile": "infinite-flow-wechat/art-source/action-combat/stages/dream_archive-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "jpg",
+      "cocosImageImport": "supported",
+      "alt": "梦档案馆的侧视横版动作战斗背景",
+      "role": "scene",
+      "width": 1774,
+      "height": 887,
+      "fit": "cover",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "0893cab4af85a3fc55b2add33821840cf149b0660ccaf1463c4383f85425a81f",
+      "targetSha256": "76ce1f4cb61b0d3acbf1dd30a307b7cc4e07916208303462d492112309c13c5e",
+      "transformation": {
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
+          "width": 1774,
+          "height": 887
+        },
+        "targetDimensions": {
+          "width": 1774,
+          "height": 887
+        }
+      }
+    },
+    {
+      "key": "scene:action_stage_void_citadel",
+      "kind": "scene",
+      "entityId": "action_stage_void_citadel",
+      "resourcePath": "action-stage/void_citadel-v1",
+      "resourceFile": "action-stage/void_citadel-v1.jpg",
+      "sourceFile": "infinite-flow-wechat/art-source/action-combat/stages/void_citadel-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "jpg",
+      "cocosImageImport": "supported",
+      "alt": "虚界城的侧视横版动作战斗背景",
+      "role": "scene",
+      "width": 1774,
+      "height": 887,
+      "fit": "cover",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "bd27c8dc8af00e0e7a8d67b7d827d3d626ac9f9ddb5006681cfc8bc1bf3f8aaf",
+      "targetSha256": "59d4738139bb6dc2923d15e75d1e577e281b89f56544d6a8c612142eecad2392",
+      "transformation": {
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
+          "width": 1774,
+          "height": 887
+        },
+        "targetDimensions": {
+          "width": 1774,
+          "height": 887
+        }
+      }
+    },
+    {
+      "key": "scene:action_stage_temporal_observatory",
+      "kind": "scene",
+      "entityId": "action_stage_temporal_observatory",
+      "resourcePath": "action-stage/temporal_observatory-v1",
+      "resourceFile": "action-stage/temporal_observatory-v1.jpg",
+      "sourceFile": "infinite-flow-wechat/art-source/action-combat/stages/temporal_observatory-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "jpg",
+      "cocosImageImport": "supported",
+      "alt": "时序观测庭的侧视横版动作战斗背景",
+      "role": "scene",
+      "width": 1774,
+      "height": 887,
+      "fit": "cover",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "0f2d296d55bda4c1327348bc7824fed7fd0fa96c2643244f93c53ece29672193",
+      "targetSha256": "23a721ed9c1759574b2ac314d22a5009eab85feb2f64935f7fc0a4bc3a37307b",
+      "transformation": {
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
+          "width": 1774,
+          "height": 887
+        },
+        "targetDimensions": {
+          "width": 1774,
+          "height": 887
+        }
+      }
+    },
+    {
+      "key": "scene:action_stage_causal_clearinghouse",
+      "kind": "scene",
+      "entityId": "action_stage_causal_clearinghouse",
+      "resourcePath": "action-stage/causal_clearinghouse-v1",
+      "resourceFile": "action-stage/causal_clearinghouse-v1.jpg",
+      "sourceFile": "infinite-flow-wechat/art-source/action-combat/stages/causal_clearinghouse-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "jpg",
+      "cocosImageImport": "supported",
+      "alt": "因果清算所的侧视横版动作战斗背景",
+      "role": "scene",
+      "width": 1774,
+      "height": 887,
+      "fit": "cover",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "dc948c41f49b98c308bc4060147dbf562b2a44c102417a50190f476cb349c8ca",
+      "targetSha256": "98c80bda02e6540c3e2ff2a53889f15a165cb9a1b19562d4096b523589278b71",
+      "transformation": {
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
+          "width": 1774,
+          "height": 887
+        },
+        "targetDimensions": {
+          "width": 1774,
+          "height": 887
+        }
+      }
+    },
+    {
+      "key": "scene:action_stage_entropy_ark",
+      "kind": "scene",
+      "entityId": "action_stage_entropy_ark",
+      "resourcePath": "action-stage/entropy_ark-v1",
+      "resourceFile": "action-stage/entropy_ark-v1.jpg",
+      "sourceFile": "infinite-flow-wechat/art-source/action-combat/stages/entropy_ark-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "jpg",
+      "cocosImageImport": "supported",
+      "alt": "熵海方舟的侧视横版动作战斗背景",
+      "role": "scene",
+      "width": 1774,
+      "height": 887,
+      "fit": "cover",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "7bfcef71eab199373ed6156a2e3ff0add7aedf3cbe12aeab6b2a59dac13a080f",
+      "targetSha256": "960c6dd119f1afe5cd177c261e176faf3160cf1328c3180dbdbb015b7b0a4ddd",
+      "transformation": {
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
+          "width": 1774,
+          "height": 887
+        },
+        "targetDimensions": {
+          "width": 1774,
+          "height": 887
+        }
+      }
+    },
+    {
+      "key": "scene:action_stage_mirror_cycle_city",
+      "kind": "scene",
+      "entityId": "action_stage_mirror_cycle_city",
+      "resourcePath": "action-stage/mirror_cycle_city-v1",
+      "resourceFile": "action-stage/mirror_cycle_city-v1.jpg",
+      "sourceFile": "infinite-flow-wechat/art-source/action-combat/stages/mirror_cycle_city-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "jpg",
+      "cocosImageImport": "supported",
+      "alt": "镜海轮回城的侧视横版动作战斗背景",
+      "role": "scene",
+      "width": 1774,
+      "height": 887,
+      "fit": "cover",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "c1405870868b2de954f096e3c3963cca95288f755110a7c36d1d2b052e545fd4",
+      "targetSha256": "5383597f81f6fa32e5807bc14f8efd75e064f78e7d75d40cb3257a9230b51fa1",
+      "transformation": {
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
+          "width": 1774,
+          "height": 887
+        },
+        "targetDimensions": {
+          "width": 1774,
+          "height": 887
+        }
+      }
+    },
+    {
+      "key": "scene:action_stage_redaction_scriptorium",
+      "kind": "scene",
+      "entityId": "action_stage_redaction_scriptorium",
+      "resourcePath": "action-stage/redaction_scriptorium-v1",
+      "resourceFile": "action-stage/redaction_scriptorium-v1.jpg",
+      "sourceFile": "infinite-flow-wechat/art-source/action-combat/stages/redaction_scriptorium-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "jpg",
+      "cocosImageImport": "supported",
+      "alt": "删界终稿院的侧视横版动作战斗背景",
+      "role": "scene",
+      "width": 1774,
+      "height": 887,
+      "fit": "cover",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "73c51200392c453ce471ba2154bcb09961f3b6609c779a24f29d943231b435ed",
+      "targetSha256": "2ad7ae4e90e81bfff1e656004cec0b121d8e2a160c308dcc56602e6055bd735f",
+      "transformation": {
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
+          "width": 1774,
+          "height": 887
+        },
+        "targetDimensions": {
+          "width": 1774,
+          "height": 887
+        }
+      }
+    },
+    {
+      "key": "scene:action_stage_legacy_auction_court",
+      "kind": "scene",
+      "entityId": "action_stage_legacy_auction_court",
+      "resourcePath": "action-stage/legacy_auction_court-v1",
+      "resourceFile": "action-stage/legacy_auction_court-v1.jpg",
+      "sourceFile": "infinite-flow-wechat/art-source/action-combat/stages/legacy_auction_court-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "jpg",
+      "cocosImageImport": "supported",
+      "alt": "亡队遗产拍卖庭的侧视横版动作战斗背景",
+      "role": "scene",
+      "width": 1774,
+      "height": 887,
+      "fit": "cover",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "e9a2b39821c19b88a29e5f86acc148d25296b29be280d920c2ffcf73700d22f2",
+      "targetSha256": "3441eefe5d2b970c92896c82f176a4fa383021c6f8d5c982bcb2f0d1c1abd5e6",
+      "transformation": {
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
+          "width": 1774,
+          "height": 887
+        },
+        "targetDimensions": {
+          "width": 1774,
+          "height": 887
+        }
+      }
+    },
+    {
+      "key": "scene:action_stage_genesis_vault",
+      "kind": "scene",
+      "entityId": "action_stage_genesis_vault",
+      "resourcePath": "action-stage/genesis_vault-v1",
+      "resourceFile": "action-stage/genesis_vault-v1.jpg",
+      "sourceFile": "infinite-flow-wechat/art-source/action-combat/stages/genesis_vault-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "jpg",
+      "cocosImageImport": "supported",
+      "alt": "众生原型库的侧视横版动作战斗背景",
+      "role": "scene",
+      "width": 1774,
+      "height": 887,
+      "fit": "cover",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "97bf6b4b9cdcd06fa763704c4316162579a55b91a7e17e6e1b0f3f43c42f59a2",
+      "targetSha256": "22adc20471dcb535e78af6b5ce07e6ccc7bd5565a58f724a05e5e668042bab9c",
+      "transformation": {
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
+          "width": 1774,
+          "height": 887
+        },
+        "targetDimensions": {
+          "width": 1774,
+          "height": 887
+        }
+      }
+    },
+    {
+      "key": "scene:action_stage_silent_broadcast_tower",
+      "kind": "scene",
+      "entityId": "action_stage_silent_broadcast_tower",
+      "resourcePath": "action-stage/silent_broadcast_tower-v1",
+      "resourceFile": "action-stage/silent_broadcast_tower-v1.jpg",
+      "sourceFile": "infinite-flow-wechat/art-source/action-combat/stages/silent_broadcast_tower-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "jpg",
+      "cocosImageImport": "supported",
+      "alt": "寂声广播塔的侧视横版动作战斗背景",
+      "role": "scene",
+      "width": 1774,
+      "height": 887,
+      "fit": "cover",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "5ff005ee239c538967de75bf855403a99a9188bdaf7bc5f3edf00363f2a66e09",
+      "targetSha256": "79a5f70073c80bf1ebaa81e1f0775541fc706d89d2d5dec3638b707bfc9940c0",
+      "transformation": {
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
+          "width": 1774,
+          "height": 887
+        },
+        "targetDimensions": {
+          "width": 1774,
+          "height": 887
+        }
+      }
+    },
+    {
+      "key": "scene:action_stage_lost_shelter",
+      "kind": "scene",
+      "entityId": "action_stage_lost_shelter",
+      "resourcePath": "action-stage/lost_shelter-v1",
+      "resourceFile": "action-stage/lost_shelter-v1.jpg",
+      "sourceFile": "infinite-flow-wechat/art-source/action-combat/stages/lost_shelter-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "jpg",
+      "cocosImageImport": "supported",
+      "alt": "失联避难所的侧视横版动作战斗背景",
+      "role": "scene",
+      "width": 1774,
+      "height": 887,
+      "fit": "cover",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "b01e7eed91f6ed1384a0ed9af911b237e4f05d74a615635df9c6a77b00b43a8d",
+      "targetSha256": "934d24c40c55fd3f685a28614de1e1661483e0572f37d4abb000613d1aa7e025",
+      "transformation": {
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
+          "width": 1774,
+          "height": 887
+        },
+        "targetDimensions": {
+          "width": 1774,
+          "height": 887
+        }
+      }
+    },
+    {
+      "key": "scene:action_stage_false_testimony_court",
+      "kind": "scene",
+      "entityId": "action_stage_false_testimony_court",
+      "resourcePath": "action-stage/false_testimony_court-v1",
+      "resourceFile": "action-stage/false_testimony_court-v1.jpg",
+      "sourceFile": "infinite-flow-wechat/art-source/action-combat/stages/false_testimony_court-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "jpg",
+      "cocosImageImport": "supported",
+      "alt": "伪证裁定庭的侧视横版动作战斗背景",
+      "role": "scene",
+      "width": 1774,
+      "height": 887,
+      "fit": "cover",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "1b0a45bd29d721c4bace56489fd13bae0e8b20bd8183db9e644f1580efa364fc",
+      "targetSha256": "66d4f362659fcebf6a8efdc5431924e80e7d83a6d98d08c669e24680db138cd6",
+      "transformation": {
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
+          "width": 1774,
+          "height": 887
+        },
+        "targetDimensions": {
+          "width": 1774,
+          "height": 887
+        }
+      }
+    },
+    {
+      "key": "scene:action_stage_combat_replay_stage",
+      "kind": "scene",
+      "entityId": "action_stage_combat_replay_stage",
+      "resourcePath": "action-stage/combat_replay_stage-v1",
+      "resourceFile": "action-stage/combat_replay_stage-v1.jpg",
+      "sourceFile": "infinite-flow-wechat/art-source/action-combat/stages/combat_replay_stage-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "jpg",
+      "cocosImageImport": "supported",
+      "alt": "战痕复演场的侧视横版动作战斗背景",
+      "role": "scene",
+      "width": 1774,
+      "height": 887,
+      "fit": "cover",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "1d8aa7402f958a85ba4b485fef875972e1cc90addeac9894995d476929ab34f2",
+      "targetSha256": "fa2b8887bbd77d446cd9949e568f2f4c5defdb92e5e443c5d08a6a484b552f72",
+      "transformation": {
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
+          "width": 1774,
+          "height": 887
+        },
+        "targetDimensions": {
+          "width": 1774,
+          "height": 887
+        }
+      }
+    },
+    {
+      "key": "scene:action_stage_panopticon_city",
+      "kind": "scene",
+      "entityId": "action_stage_panopticon_city",
+      "resourcePath": "action-stage/panopticon_city-v1",
+      "resourceFile": "action-stage/panopticon_city-v1.jpg",
+      "sourceFile": "infinite-flow-wechat/art-source/action-combat/stages/panopticon_city-v1.png",
+      "sourceFormat": "png",
+      "targetFormat": "jpg",
+      "cocosImageImport": "supported",
+      "alt": "天幕监察城的侧视横版动作战斗背景",
+      "role": "scene",
+      "width": 1774,
+      "height": 887,
+      "fit": "cover",
+      "source": "project-original-generated",
+      "sourceRevision": 1,
+      "sourceSha256": "cddcbc418b14279c745db32817538513d1a3c9ac83f5d9e445ef939dac8bc915",
+      "targetSha256": "1f16254420511b7bf59fad70853b669e453d3c2f7a09d532ecd9b50fba2217b6",
+      "transformation": {
+        "operation": "encode-jpeg",
+        "tool": "sips",
+        "version": "sips-316",
+        "command": "sips -s format jpeg -s formatOptions 88 <sourceFile> --out <resourceFile>",
+        "quality": 88,
+        "sourceDimensions": {
+          "width": 1774,
+          "height": 887
+        },
+        "targetDimensions": {
+          "width": 1774,
+          "height": 887
         }
       }
     }

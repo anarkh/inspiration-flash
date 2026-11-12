@@ -1,0 +1,167 @@
+{
+  "schemaVersion": 1,
+  "asset": "stage-demon-tower",
+  "location": "妖塔一层 (demon_tower_1)",
+  "purpose": "Side-scrolling beat-'em-up stage background for prototype/action-combat-v1; tiled horizontally by mirroring (image, flipped, image ...).",
+  "createdAt": "2026-11-11",
+  "tool": "Codex CLI built-in image_gen (imagegen skill, built-in mode)",
+  "codexCliVersion": "codex-cli 0.167.1",
+  "command": "codex exec --skip-git-repo-check -C /tmp/if-action/stage -s read-only -c model_reasoning_effort='\"medium\"' --json -o attempt-N.last.txt \"<wrapper>\"",
+  "wrapperTemplate": "Use your built-in image generation tool (image_gen) exactly once to generate ONE new image. Do not use the CLI fallback or any API script, do not write or modify any files, and do not run shell commands except read-only commands to locate the generated file.\nTool settings: opaque output (no transparent background); landscape orientation at the largest landscape size the tool offers (for example 1536x1024).\nPass these local files to the image tool as referenced images (reference images, not edit targets):\n- /Users/bytedance/git/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/dungeon-world/demon_tower_1-v1.jpg\nUse the prompt between the markers verbatim as the image prompt:\n<<<PROMPT\n{attempt prompt}\nPROMPT>>>\nAfter generating, reply with: (1) the absolute path of the generated PNG under ~/.codex/generated_images, (2) the exact tool arguments you passed as JSON (omit nothing except the prompt text), (3) the pixel dimensions.",
+  "toolArgumentsReportedByCodex": {
+    "referenced_image_paths": [
+      "/Users/bytedance/git/inspiration-flash/infinite-flow-wechat/cocos/assets/resources/dungeon-world/demon_tower_1-v1.jpg"
+    ],
+    "transparent_background": false
+  },
+  "sizeNote": "The built-in image_gen tool exposes no size parameter; for a landscape prompt it returned 1774x887 (2:1) on every attempt. That is the largest landscape output obtained (wider than 1536x1024).",
+  "promptVerbatimNote": "Codex reported calling image_gen once per attempt with the prompt verbatim; the --json event stream does not expose the image_gen call body, so this relies on Codex's report.",
+  "styleReference": {
+    "path": "cocos/assets/resources/dungeon-world/demon_tower_1-v1.jpg",
+    "role": "style/material/palette reference only (not camera/layout)",
+    "sha256": "9e7b1f1af07ae3dd87e7c192ec89520be7371eb02085629a3568a3a2f5b127a8",
+    "promptVocabularyFrom": "art-source/dungeon-world/demon_tower_1-v1.prompt.txt"
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "prompt": "Use case: stylized-concept\nAsset type: production 2D hand-painted stage background for a side-scrolling beat-'em-up (belt-scroller) game, landscape, opaque, full bleed, no UI. It will be tiled horizontally by mirroring (image, flipped image, image ...).\nInput images: Image 1 is a style / material / palette reference ONLY - the same location painted from straight above. Match its painterly finish, worn rock flagstones, weathered carved stone balustrades, old yellow paper talismans, thin jade-gray demon fog and dim shrine-ember lighting. Do NOT copy its camera angle or its layout.\nScene: 妖塔一层 (Demon Tower, first floor) - the ground floor interior of a decayed, ruined heavy-stone Chinese cultivation tower; demon fog seals ancient stone steps.\nCamera: side-on view with a slightly elevated camera looking a little downward (about 15-20 degrees), exactly like classic arcade beat-'em-up stages. The back wall runs parallel to the picture plane. NOT top-down, NOT isometric, NOT a deep one-point-perspective corridor, no central vanishing point.\nComposition (strict):\n- Lower 40% of the image (from about 60% of the height down to the bottom edge): one continuous, flat, EMPTY walkable stone floor band spanning the full width. Worn uneven rock flagstones seen at a shallow angle, hairline cracks, a few torn yellow talisman scraps lying flat on the stone, faint thin jade-gray ground fog. Nothing stands on the floor: no pillars, stairs, rubble piles, statues, braziers, railings or props. Even, readable mid-dark lighting across the whole floor so dark-clothed characters stay visible on it; the floor is slightly lighter than the wall.\n- The floor's far edge, where the floor meets the base of the back wall, is a straight, level, horizontal line at about 60% of the image height across the entire width - not tilted, not curved.\n- Upper 60%: the back wall of the tower interior, parallel to the camera: heavy dark stone masonry, broken stone stair flights climbing along the wall face, dark arched wall niches, weathered carved stone balustrades along a raised ledge, old yellow paper talismans pasted on the masonry, thin jade-gray demon fog drifting down the wall, two or three small dim shrine ember lights in niches. The wall is darker and lower in contrast than the floor so it reads clearly as background.\n- Tiling: distribute wall features as an even rhythm across the width; keep every strong landmark (stair flight, big niche, shrine light) out of the outer 10% on each side; the outer left and right edges show plain continuous masonry above and plain floor below; floor band height and horizon identical at both edges.\nStyle/medium: rich hand-painted dark-fantasy game environment art, painterly and textured, desaturated, finely detailed, same finish as the reference; not vector, not flat, not a photo.\nLighting/mood: ominous but not black; cool dim ambient light; ember accents small and warm.\nColor palette: cool charcoal and jade-gray stone, desaturated, small warm amber ember accents, muted ochre talisman paper.\nAvoid: characters, people, monsters, creatures, UI, HUD, text, captions, logos, watermarks, frames, borders, heavy black vignette corners, objects standing on the floor, foreground pillars or objects overlapping the floor, tilted horizon, fisheye, deep corridor perspective, top-down view, bright daylight, saturated colors.\n",
+      "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1c89a-7b83-7970-9334-6db3656fe7c2/exec-5362ecc3-ba7a-4ddf-9f3f-dd9c9e0f7c3a.png",
+      "size": [
+        1774,
+        887
+      ],
+      "sha256": "5cfe140a8c85efd66ef2c3c1e76d564dc2263a7427eed66638f38f7988fcfcea",
+      "floorWallLineY": 550,
+      "verdict": "rejected",
+      "reason": "Correct side-on camera, flat empty floor, level horizon at y~550 (0.62). Rejected: right shrine niche with a seated figure statue reaches ~91% of width (inside the outer 10%), producing an obvious twin-niche pair at the mirror seam; talismans carry large pseudo-legible glyphs that would read reversed when mirrored; floor has a central hotspot (mean L 75 center vs 65-67 sides) that bands when tiled."
+    },
+    {
+      "attempt": 2,
+      "prompt": "Use case: stylized-concept\nAsset type: production 2D hand-painted stage background for a side-scrolling beat-'em-up (belt-scroller) game, landscape, opaque, full bleed, no UI. It will be tiled horizontally by mirroring (image, flipped image, image ...).\nInput images: Image 1 is a style / material / palette reference ONLY - the same location painted from straight above. Match its painterly finish, worn rock flagstones, weathered carved stone balustrades, old yellow paper talismans, thin jade-gray demon fog and dim shrine-ember lighting. Do NOT copy its camera angle or its layout.\nScene: 妖塔一层 (Demon Tower, first floor) - the ground floor interior of a decayed, ruined heavy-stone Chinese cultivation tower; demon fog seals ancient stone steps.\nCamera: side-on view with a slightly elevated camera looking a little downward (about 15-20 degrees), exactly like classic arcade beat-'em-up stages. The back wall runs parallel to the picture plane. NOT top-down, NOT isometric, NOT a deep one-point-perspective corridor, no central vanishing point.\nComposition (strict):\n- Lower 40% of the image (from about 60% of the height down to the bottom edge): one continuous, flat, EMPTY walkable stone floor band spanning the full width. Worn uneven rock flagstones seen at a shallow angle, hairline cracks, a few torn yellow talisman scraps lying flat on the stone, faint thin jade-gray ground fog. Nothing stands on the floor: no pillars, stairs, rubble piles, statues, braziers, railings or props. Even, readable mid-tone lighting across the whole floor so dark-clothed characters stay visible on it: the floor is clearly lighter than the wall, and the left, center and right parts of the floor are equally bright - no central spotlight, no darkened edges.\n- The floor's far edge, where the floor meets the base of the back wall, is a straight, level, horizontal line at about 60% of the image height across the entire width - not tilted, not curved.\n- Upper 60%: the back wall of the tower interior, parallel to the camera: heavy dark stone masonry, broken stone stair flights climbing along the wall face, dark arched wall niches, weathered carved stone balustrades along a raised ledge, small old yellow paper talismans pasted on the masonry (each talisman shows only faint, abstract, illegible red brush strokes - no legible characters, because the image will be mirrored), thin jade-gray demon fog drifting down the wall, two or three small dim shrine ember bowls in niches. Niches hold empty altars, ember bowls or weathered demon-mask reliefs - no human or Buddha figure statues. The wall is darker and lower in contrast than the floor so it reads clearly as background.\n- Tiling: distribute wall features as an even rhythm across the width; keep every landmark (stair flight, niche, shrine light, talisman, relief) inside the central 76% of the width. The outer 12% on each side contains ONLY plain continuous stone masonry wall above and plain floor below - no niches, stairs, posts, talismans or lights there. Floor band height and horizon identical at both edges.\nStyle/medium: rich hand-painted dark-fantasy game environment art, painterly and textured, desaturated, finely detailed, same finish as the reference; not vector, not flat, not a photo.\nLighting/mood: ominous but not black; cool dim ambient light; ember accents small and warm.\nColor palette: cool charcoal and jade-gray stone, desaturated, small warm amber ember accents, muted ochre talisman paper.\nAvoid: characters, people, monsters, creatures, figure statues, legible calligraphy, UI, HUD, text, captions, logos, watermarks, frames, borders, heavy black vignette corners, objects standing on the floor, foreground pillars or objects overlapping the floor, tilted horizon, fisheye, deep corridor perspective, top-down view, bright daylight, saturated colors.\n",
+      "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1c89d-f3bf-7a91-83ed-100bc7ba2c56/exec-c8f41e80-2a81-4783-b28a-6900a4580f5d.png",
+      "size": [
+        1774,
+        887
+      ],
+      "sha256": "a9351d0d4c8e322ab611fde62eb35bd7877102d26f856afd79b93363aa41f0c7",
+      "floorWallLineY": 572,
+      "verdict": "rejected (runner-up)",
+      "reason": "Edges are plain masonry and the asymmetric wall gives the most tiling variety (mirror period 2x width). Rejected because the floor band is only ~35% of height (line y~572, 0.645), the floor still has a central hotspot (L 80 center vs 71 sides), and it darkens to L~55 at the bottom edge."
+    },
+    {
+      "attempt": 3,
+      "prompt": "Use case: stylized-concept\nAsset type: production 2D hand-painted stage background for a side-scrolling beat-'em-up (belt-scroller) game, landscape, opaque, full bleed, no UI. It will be tiled horizontally by mirroring (image, flipped image, image ...).\nInput images: Image 1 is a style / material / palette reference ONLY - the same location painted from straight above. Match its painterly finish, worn rock flagstones, weathered carved stone balustrades, old yellow paper talismans, thin jade-gray demon fog and dim shrine-ember lighting. Do NOT copy its camera angle or its layout.\nScene: 妖塔一层 (Demon Tower, first floor) - the ground floor interior of a decayed, ruined heavy-stone Chinese cultivation tower; demon fog seals ancient stone steps.\nCamera: side-on view with a slightly elevated camera looking a little downward (about 15-20 degrees), exactly like classic arcade beat-'em-up stages. The back wall runs parallel to the picture plane. NOT top-down, NOT isometric, NOT a deep one-point-perspective corridor, no central vanishing point.\nComposition (strict):\n- Lower 42% of the image (from 58% of the height down to the bottom edge - make the floor band deep, it must occupy at least 40% of the image height): one continuous, flat, EMPTY walkable stone floor band spanning the full width. Worn uneven rock flagstones seen at a shallow angle, hairline cracks, a few torn yellow talisman scraps lying flat on the stone, faint thin jade-gray ground fog. Nothing stands on the floor: no pillars, stairs, rubble piles, statues, braziers, railings or props. Even, readable mid-tone lighting across the whole floor so dark-clothed characters stay visible on it: the floor is clearly lighter than the wall, and the left, center and right parts of the floor are equally bright - no central spotlight, no darkened edges, no darkening toward the bottom edge; the floor keeps the same mid-tone from its far edge down to the bottom of the image.\n- The floor's far edge, where the floor meets the base of the back wall, is a straight, level, horizontal line at 58% of the image height across the entire width - not tilted, not curved.\n- Upper 58%: the back wall of the tower interior, parallel to the camera: heavy dark stone masonry, broken stone stair flights climbing along the wall face, dark arched wall niches, weathered carved stone balustrades along a raised ledge, small old yellow paper talismans pasted on the masonry (each talisman shows only faint, abstract, illegible red brush strokes - no legible characters, because the image will be mirrored), thin jade-gray demon fog drifting down the wall, two or three small dim shrine ember bowls in niches. Niches hold empty altars, ember bowls or weathered demon-mask reliefs - no human or Buddha figure statues. The wall is darker and lower in contrast than the floor so it reads clearly as background.\n- Tiling: distribute wall features as an even rhythm across the width; keep every landmark (stair flight, niche, shrine light, talisman, relief) inside the central 76% of the width. The outer 12% on each side contains ONLY plain continuous stone masonry wall above and plain floor below - no niches, stairs, posts, talismans or lights there. Floor band height and horizon identical at both edges.\nStyle/medium: rich hand-painted dark-fantasy game environment art, painterly and textured, desaturated, finely detailed, same finish as the reference; not vector, not flat, not a photo.\nLighting/mood: ominous but not black; cool dim ambient light; ember accents small and warm.\nColor palette: cool charcoal and jade-gray stone, desaturated, small warm amber ember accents, muted ochre talisman paper.\nAvoid: characters, people, monsters, creatures, figure statues, legible calligraphy, UI, HUD, text, captions, logos, watermarks, frames, borders, heavy black vignette corners, objects standing on the floor, foreground pillars or objects overlapping the floor, tilted horizon, fisheye, deep corridor perspective, top-down view, bright daylight, saturated colors.\n",
+      "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1c8a0-3988-7312-9d06-08fc501180a4/exec-0455bdbd-5a22-415e-a452-9b0121791815.png",
+      "size": [
+        1774,
+        887
+      ],
+      "sha256": "c0891e9e143c019cb53d42f18ad186a5ae020bf608c2b3616a43ae57bfaeb605",
+      "floorWallLineY": 528,
+      "verdict": "selected",
+      "reason": "Best match to the brief: side-on slightly elevated camera; floor band starts at y~528 (0.595), ~40% of height, flat and empty; level horizon (dark wall-base seam at y 527-529 in all five horizontal fifths); evenest floor (L 76/80/75 left/center/right, only 67-68 at the bottom edge); wall clearly darker (mean L 40 vs floor 77); outer ~12% on each side is plain masonry, so no landmark is cut at the edges. Trade-off: the wall is nearly bilaterally symmetric (twin stairs, twin demon-mask niches, central altar), so mirror tiling repeats almost identically every 1774 px."
+    },
+    {
+      "attempt": 4,
+      "prompt": "Use case: stylized-concept\nAsset type: production 2D hand-painted stage background for a side-scrolling beat-'em-up (belt-scroller) game, landscape, opaque, full bleed, no UI. It will be tiled horizontally by mirroring (image, flipped image, image ...).\nInput images: Image 1 is a style / material / palette reference ONLY - the same location painted from straight above. Match its painterly finish, worn rock flagstones, weathered carved stone balustrades, old yellow paper talismans, thin jade-gray demon fog and dim shrine-ember lighting. Do NOT copy its camera angle or its layout.\nScene: 妖塔一层 (Demon Tower, first floor) - the ground floor interior of a decayed, ruined heavy-stone Chinese cultivation tower; demon fog seals ancient stone steps.\nCamera: side-on view with a slightly elevated camera looking a little downward (about 15-20 degrees), exactly like classic arcade beat-'em-up stages. The back wall runs parallel to the picture plane. NOT top-down, NOT isometric, NOT a deep one-point-perspective corridor, no central vanishing point.\nComposition (strict):\n- Lower 42% of the image (from 58% of the height down to the bottom edge - make the floor band deep, it must occupy at least 40% of the image height): one continuous, flat, EMPTY walkable stone floor band spanning the full width. Worn uneven rock flagstones seen at a shallow angle, hairline cracks, a few torn yellow talisman scraps lying flat on the stone, faint thin jade-gray ground fog. Nothing stands on the floor: no pillars, stairs, rubble piles, statues, braziers, railings or props. Even, readable mid-tone lighting across the whole floor so dark-clothed characters stay visible on it: the floor is clearly lighter than the wall, and the left, center and right parts of the floor are equally bright - no central spotlight, no darkened edges, no darkening toward the bottom edge; the floor keeps the same mid-tone from its far edge down to the bottom of the image.\n- The floor's far edge, where the floor meets the base of the back wall, is a straight, level, horizontal line at 58% of the image height across the entire width - not tilted, not curved.\n- Upper 58%: the back wall of the tower interior, parallel to the camera: heavy dark stone masonry, broken stone stair flights climbing along the wall face, dark arched wall niches, weathered carved stone balustrades along a raised ledge, small old yellow paper talismans pasted on the masonry (each talisman shows only faint, abstract, illegible red brush strokes - no legible characters, because the image will be mirrored), thin jade-gray demon fog drifting down the wall, two or three small dim shrine ember bowls in niches. Niches hold empty altars, ember bowls or weathered demon-mask reliefs - no human or Buddha figure statues. The wall is darker and lower in contrast than the floor so it reads clearly as background.\n- Tiling: the wall layout inside the central band is deliberately ASYMMETRIC (not mirror-symmetric about the vertical center line - e.g. one long broken stair flight rising from the left-center toward a raised balustraded ledge on the right, niches of different sizes at different heights), so that mirrored tiling produces variety; spread the features across the width; keep every landmark (stair flight, niche, shrine light, talisman, relief) inside the central 76% of the width. The outer 12% on each side contains ONLY plain continuous stone masonry wall above and plain floor below - no niches, stairs, posts, talismans or lights there. Floor band height and horizon identical at both edges.\nStyle/medium: rich hand-painted dark-fantasy game environment art, painterly and textured, desaturated, finely detailed, same finish as the reference; not vector, not flat, not a photo.\nLighting/mood: ominous but not black; cool dim ambient light; ember accents small and warm.\nColor palette: cool charcoal and jade-gray stone, desaturated, small warm amber ember accents, muted ochre talisman paper.\nAvoid: characters, people, monsters, creatures, figure statues, legible calligraphy, UI, HUD, text, captions, logos, watermarks, frames, borders, heavy black vignette corners, objects standing on the floor, foreground pillars or objects overlapping the floor, tilted horizon, fisheye, deep corridor perspective, top-down view, bright daylight, saturated colors.\n",
+      "generatedSourcePath": null,
+      "size": null,
+      "sha256": null,
+      "verdict": "no output (hung, killed)",
+      "reason": "Tried attempt 3 with an explicitly asymmetric wall for more tiling variety. Launched from a backgrounded shell without stdin redirected; codex exec printed 'Reading additional input from stdin...' and blocked for over an hour. The coordinator killed it (pid 12059) and said not to retry. Fix for future runs: append '< /dev/null' to the codex exec command."
+    }
+  ],
+  "selected": {
+    "attempt": 3,
+    "generatedSourcePath": "/Users/bytedance/.codex/generated_images/01a1c8a0-3988-7312-9d06-08fc501180a4/exec-0455bdbd-5a22-415e-a452-9b0121791815.png",
+    "sourceFile": "art-source/action-combat/stage-demon-tower-v1.png",
+    "promptFile": "art-source/action-combat/stage-demon-tower-v1.prompt.txt",
+    "size": [
+      1774,
+      887
+    ],
+    "format": "PNG RGB, no alpha",
+    "sha256": "c0891e9e143c019cb53d42f18ad186a5ae020bf608c2b3616a43ae57bfaeb605"
+  },
+  "outputs": [
+    {
+      "path": "prototype/action-combat-v1/assets/stage-demon-tower.png",
+      "sha256": "c0891e9e143c019cb53d42f18ad186a5ae020bf608c2b3616a43ae57bfaeb605",
+      "transformation": "none (byte-for-byte copy of generated file)"
+    },
+    {
+      "path": "prototype/action-combat-v1/assets/stage-demon-tower.jpg",
+      "sha256": "f0c34fe66326b5f313ef1fe7574456d2effede4989b84e567f97745963877d9d",
+      "size": [
+        1774,
+        887
+      ],
+      "transformation": "sips -s format jpeg -s formatOptions 88 <source> --out stage-demon-tower.jpg (no resize/crop)"
+    },
+    {
+      "path": "art-source/action-combat/stage-demon-tower-v1.png",
+      "sha256": "c0891e9e143c019cb53d42f18ad186a5ae020bf608c2b3616a43ae57bfaeb605",
+      "transformation": "none (byte-for-byte copy of generated file)"
+    }
+  ],
+  "postProcessing": "None on the PNG (byte-for-byte copies). JPEG derived with sips at quality 88, same 1774x887. Measurements were read-only (sips->BMP + pure Python luminance).",
+  "measurements": {
+    "imageSize": [
+      1774,
+      887
+    ],
+    "floorWallLine": {
+      "y": 528,
+      "fractionOfHeight": 0.595,
+      "method": "per-row mean luminance; dark wall-base seam at y 527-529 in each horizontal fifth, floor brightens from y 531"
+    },
+    "floorBand": {
+      "y0": 528,
+      "y1": 887,
+      "fractionOfHeight": 0.405
+    },
+    "comfortableFootRange": {
+      "y0": 545,
+      "y1": 870,
+      "fraction": [
+        0.614,
+        0.981
+      ],
+      "note": "starts ~17 px under the wall-base seam so feet don't sit on the stair plinths and wall base; floor stays readable down to the bottom edge (L 67-68 in the last rows)"
+    },
+    "luminanceMeans0to255": {
+      "wall": 39.6,
+      "floor": 77.2,
+      "floorLeftCenterRight": [
+        76.0,
+        80.1,
+        75.4
+      ],
+      "bottom2pct": 68.3,
+      "wallOuter3pctLeftRight": [
+        35.0,
+        35.1
+      ]
+    },
+    "plainEdgeZones": {
+      "leftX": [
+        0,
+        210
+      ],
+      "rightX": [
+        1560,
+        1774
+      ],
+      "note": "stair bases end at x~250 (left) and x~1560 (right)"
+    }
+  },
+  "mirrorTiling": {
+    "previewPath": "/tmp/if-action/stage/a3-mirror-tile.png (not in repo; image|flipped|image|flipped at half resolution)",
+    "verdict": "acceptable: seams fall in plain masonry, floor and horizon continue across seams with no visible step. Repetition is noticeable over long scrolls because the composition is nearly symmetric."
+  },
+  "knownLimitations": [
+    "Wall talismans still carry small abstract red pseudo-glyph strokes (not legible; they mirror without reading as reversed text).",
+    "Near-bilateral symmetry gives low variety in mirror tiling; attempt 2 (asymmetric, shallower floor) is the alternative if variety matters more than floor depth."
+  ]
+}

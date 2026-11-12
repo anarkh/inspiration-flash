@@ -1,6 +1,6 @@
 # 状态与风险
 
-核对日期：2026-11-10，游戏版本 0.1.36。本文描述当前工程证据，不是发布验收报告。
+核对日期：2026-11-12，游戏版本 0.1.37。本文描述当前工程证据，不是发布验收报告。
 
 一句话：玩法和数值持续迭代，自动化检查全部通过；微信侧只完成了本地 NON_RELEASE 构建，
 主包已压到上限以内，但真实 AppID 构建、CDN、真机和正式验收都还没有开始。发布状态保持 `BLOCKED`。
@@ -16,10 +16,10 @@
 | Web v1 codec | 包级完成 | 严格 UTF-8/BOM、原始 text/bytes 保留、兼容 sanitizer、legacy seed 报告、checksum fixture；新增存档字段（阶位、铭刻、淬炼、灵蕴兑换计数等）均有读回测试 | 仅 preview/decode；尚无 rejected payload/reason/index 三件套 durable commit |
 | application/client | 19 章完成 | 54 种可序列化命令；phase guard；显式入场 seed；物理输入去重；生命周期注册失败与销毁均回滚清理；六个包共 40 个测试文件全部通过 | schema-v2 invariant/import 仍不完整 |
 | presentation | 19 章完成 | 四 phase 单一 ViewModel；大厅 8 个面板、角色六页签、11 种手机弹层、五态地图、23 项帮助、章节法则 / 指令 / 路线契约 / 压力 / 追兵、战斗意图与伤害预览；动作全部由 reducer 预检 | 未冻结为 registry evidence |
-| Cocos scene/UI | Web 预览完成 | 庭院行走、19 章房间、独立战斗舞台与特效；headless 门禁：启动与生命周期 153 场景、行走 50 项、弹层 3652 个 ViewModel；每个 UI 改动在真实引擎（web-mobile，无头 Chrome）查看 320×568 与 390×844 | 0.1.19 起的版本没有在微信开发者工具或真机运行的记录；`cocos:web-mobile:smoke` 脚本已落后于现有界面，未修 |
+| Cocos scene/UI | Web 预览完成 | 庭院行走、19 章房间；战斗默认改为横版动作战斗（单手摇杆、自动三连斩、闪避 / 见切、战技 / 法术 / 道具、捕获与脱离，整场输入记录一次提交、reducer 重放结算），回合制界面保留在显式开关之后；headless 门禁：启动与生命周期 154 场景、行走 50 项、弹层 3656 个 ViewModel、横版战斗 18 项；每个 UI 改动在真实引擎（web-mobile，无头 Chrome）查看 320×568 与 390×844 | 0.1.19 起的版本没有在微信开发者工具或真机运行的记录；横版战斗未经真人或真机试玩、帧耗时只在无头 Chrome（软件 GL）测过；`cocos:web-mobile:smoke` 脚本已落后于现有界面，现以 `?battle=turn-based` 仍走回合制流程，未修 |
 | 微信平台适配 | 包级完成 | 双槽整键空间 journal、安全 seed 预填充、六个必需 lifecycle 能力、AssetPort/loader；137 项断言 / 4 个 suite | 默认 flush 明确 `durability-unattested`；真实 CDN/弱网/缓存/低内存与强杀/配额/延迟真机签核缺失 |
-| 资源 | Creator 快照完成 | 324 key = 292 PNG + 32 JPEG；396 个 Creator metadata/UUID 一一对应；revision `sha256:5e16397dc92b94f7d4f36855c4fe5e5bd2733a9096e0b137b626db1e910255d7`；`resources-remote-wechat-v1` 把微信资源固定为 remote，`config` 留在本地 | 0.1.36 起替换素材按实际绘制尺寸降采样、不透明图转 JPEG（`scripts/resource-slimming.mjs`），资源共 86,691,137 bytes（原 344 MB，冻结的 182 个 Web 原图未动）；未用压缩纹理；无真实 CDN 上传、白名单或设备缓存 / 弱网验证 |
-| 微信构建 | 本地 NON_RELEASE | 2026-11-10 Creator 3.8.8 命令行构建（`platform=wechatgame;debug=false`，游客 AppID）：主包 3,550,178 bytes（3.39 MiB），低于 4 MiB 上限；远程 resources 约 87 MB（0.1.36 降采样后，原约 331 MB）；已由该构建重新派生 DevTools 试玩副本 | 派生副本尚未在微信开发者工具里打开；最近一次带凭证模板的严格构建（`build:wechat:template`）是 2026-08-12，早于现有资源与界面；无真实 AppID/CDN 的 production 构建 |
+| 资源 | Creator 快照完成 | 344 key = 293 PNG + 51 JPEG；418 个 Creator metadata/UUID 一一对应；revision `sha256:2d9e58899e46ae3bb9b410bf3f92e7d002fe99a66e6f7c4724d68fb393007394`；`resources-remote-wechat-v1` 把微信资源固定为 remote，`config` 留在本地 | 0.1.36 起替换素材按实际绘制尺寸降采样、不透明图转 JPEG（`scripts/resource-slimming.mjs`），资源共 102,095,307 bytes（原 344 MB，冻结的 182 个 Web 原图未动；其中横版战斗的主角动作图集与 19 张侧视战场 15,404,170 bytes，由横版战斗场景声明与租用）；未用压缩纹理；无真实 CDN 上传、白名单或设备缓存 / 弱网验证 |
+| 微信构建 | 本地 NON_RELEASE | 2026-11-12 Creator 3.8.8 命令行构建（`platform=wechatgame;debug=false`，游客 AppID，含横版战斗与 core 动作模拟）：主包 3,706,972 bytes（3.54 MiB），比 2026-11-10 的 3,550,178 bytes 多 156,794 bytes，距 4 MiB 上限 487,332 bytes；远程 resources 约 99 MB（含横版战斗图集与 19 张侧视战场；0.1.36 降采样前约 331 MB）；DevTools 试玩副本仍派生自 2026-11-10 构建 | 试玩副本未按本构建重新派生，也尚未在微信开发者工具里打开；最近一次带凭证模板的严格构建（`build:wechat:template`）是 2026-08-12，早于现有资源与界面；无真实 AppID/CDN 的 production 构建 |
 | 工具链 | 已固定 | Node 26.7.0、npm 11.19.0、TypeScript 5.9.3 精确门禁；六包 ES2020 语法 / 内建门禁；Creator 3.8.8 executable 取证与 36 项合同 gate；展开运算符降级门禁 | production 配置与 clean-candidate 构建；完整 `.app` bundle 取证 |
 | 验收 | registry 与部分 runner | 123 = 114 leaf（20 个废弃，有效 94）+ 6 release-evidence + 2 attestation + 1 derived；48 个可执行 fixture；有效 leaf 中普通 runner 28 PASS / 66 BLOCKED；runner 合同 1290 项断言 / 21 个 suite | 普通执行不构成 evidence；正式 acceptance leaf PASS 仍为 0/94，下游 6 + 2 + 1 均未放行；无独立 CI/WORM、正式 smoke 或真机 evidence |
 
@@ -55,13 +55,16 @@
 | R2 | P0 | implicit random/seed 重启漂移 | core 删除 fallback；client host-on-confirm 生成并持久化 seed | `AC-SEED-001..009` 正式 fixture |
 | R3 | P0 | 缓存读回被误报为 durable ack | journal `requires-flush`；无 attestation 默认阻断 | 真机强杀 / 配额 / 延迟证据与具名边界 |
 | R4 | P0 | 原始坏档在拒绝前被改写或丢失 | codec 保留原 text/bytes；当前不执行导入提交 | `AC-SAVE-001..012` 与 rejected 三件套 |
-| R5 | P0 | 图片进入主包、revision 混用，或首次下载过大 | 324 项 checksum manifest、AssetPort 强制 revision、remote-only Creator preset；主包 4 MiB 门禁；替换素材按绘制尺寸降采样（资源 87 MB） | production 输出、CDN hash 与弱网 / 缓存真机证据 |
+| R5 | P0 | 图片进入主包、revision 混用，或首次下载过大 | 344 项 checksum manifest、AssetPort 强制 revision、remote-only Creator preset；主包 4 MiB 门禁；替换素材按绘制尺寸降采样（资源 102 MB） | production 输出、CDN hash 与弱网 / 缓存真机证据 |
 | R6 | P0 | 微信构建或降级与 Web 预览行为不一致（曾出现展开运算符被降级成错误代码） | `spread:verify` 门禁；NON_RELEASE 构建与 DevTools 试玩副本 | 每个候选在 DevTools 和真机重跑首章 |
 | R7 | P0 | 小屏遮挡、触控过小或只靠颜色表达 | host safe-area 换算；104 design-px 触控门禁；对比度断言；320×568 与 390×844 真实引擎截图 | 至少两台真机截图 / 触控 trace |
 | R8 | P0 | “registry 有效”或“机器人通关”被误报为验收通过 | verifier 只输出 `MANIFEST_VALID`；状态表固定 0/94 正式 leaf PASS | 94 leaf → 6 release → 2 attestation → 1 derived 证据链 |
 | R9 | P1 | 数值只由机器人校准，真人体验可能不同 | `balance:sim` / `report --check` / `trial` / `protocols`；怪物数值只经 `balance:fit` 与 `balance:calibrate` 生成，困难与炼狱倍率只经 `balance:calibrate-protocols` 生成 | 真人完整通关记录 |
 | R10 | P1 | Node/TS/Creator/DevTools/基础库漂移 | Node/npm/TS 精确 lock + doctor；Creator executable 取证 | production 构建与 DevTools / 基础库候选矩阵 |
-| R11 | P1 | 主包余量只有约 0.6 MiB，新增代码或引擎模块会再次超限 | `scene:verify` 固定引擎模块清单与天空盒；production 门禁复核 | 引擎分离或代码分包后的 production 构建 |
+| R11 | P1 | 主包余量只有约 0.46 MiB（横版战斗后），新增代码或引擎模块会再次超限 | `scene:verify` 固定引擎模块清单与天空盒；production 门禁复核 | 引擎分离或代码分包后的 production 构建 |
+| R12 | P1 | 横版战斗在真机上掉帧或发热（每帧重绘约 10 块 Graphics、粒子上限 140、模拟固定 60 Hz） | 特效与数字上限、无补帧的固定步长、弹层 / 隐藏时暂停；无头 Chrome 软件 GL 下测了首领战帧耗时 | 至少两台真机（含低端安卓）首领战帧耗时与发热记录 |
+| R14 | P2 | 为了房间 ↔ 战斗不闪 loading，横版模式在探索期多持有动作图集、侧视战场与控件条（约 20 MiB RGBA8），战斗期多持有八件房间物件（约 7.8 MiB），横版战斗纹理峰值约 36 → 44 MiB；低内存机型可能更早触发内存告警 | 内存告警沿用既有释放与重载；离开副本全部释放；headless 断言租约持有与释放 | 真机内存曲线；必要时改为仅在未清理的怪物房间预热 |
+| R13 | P1 | 横版战斗未映射回合制的部分机制（怪物专属效果与意图、重击格挡、同伴 / 灵宠出手、血统、多数装备词条、雷火符等战斗道具、功法技与器魂、装备记忆、逐击法则钩子；见 `packages/core/README.md`），玩家可见规则与帮助文案不一致 | 规则偏离在 core README 登记；横版界面隐藏功法、器魂、自动战斗与回合制指令 | 决定逐项映射或从帮助 / 商店说明中移除的产品结论 |
 
 ## 4. 下一道门禁
 

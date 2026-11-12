@@ -8,6 +8,10 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./action-combat": {
+      "types": "./dist/action-combat/index.d.ts",
+      "default": "./dist/action-combat/index.js"
+    },
     "./boss-system": {
       "types": "./dist/boss-system.d.ts",
       "default": "./dist/boss-system.js"
@@ -103,7 +107,10 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json && node scripts/rewrite-esm-imports.mjs",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "npm run build && node scripts/verify-dist.mjs"
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.test.json --noEmit",
+    "test": "npm run build && node scripts/verify-dist.mjs && vite-node test/action-combat/run.ts"
+  },
+  "devDependencies": {
+    "vite-node": "^2.1.1"
   }
 }

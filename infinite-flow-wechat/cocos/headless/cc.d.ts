@@ -145,7 +145,7 @@ declare module 'cc' {
     constructor(x?: number, y?: number, width?: number, height?: number);
   }
   export class EventKeyboard { keyCode: number; }
-  export const KeyCode: Readonly<{ ESCAPE: number; KEY_W: number; KEY_A: number; KEY_S: number; KEY_D: number; KEY_E: number; SPACE: number; ARROW_UP: number; ARROW_DOWN: number; ARROW_LEFT: number; ARROW_RIGHT: number }>;
+  export const KeyCode: Readonly<{ ESCAPE: number; KEY_W: number; KEY_A: number; KEY_S: number; KEY_D: number; KEY_E: number; KEY_I: number; KEY_J: number; KEY_K: number; KEY_L: number; KEY_U: number; SPACE: number; ARROW_UP: number; ARROW_DOWN: number; ARROW_LEFT: number; ARROW_RIGHT: number }>;
   export const Input: { EventType: { KEY_DOWN: string; KEY_UP: string } };
   export const input: { on(event: string, handler: (event: EventKeyboard) => void, target?: unknown): void; off(event: string, handler: (event: EventKeyboard) => void, target?: unknown): void };
   export const Game: { EVENT_HIDE: string };

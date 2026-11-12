@@ -1,5 +1,6 @@
 import {
   reduceGameCommand,
+  type ActionInputLogPayload,
   type GameCommand,
   type ReadonlyGameState
 } from '@infinite-flow/application';
@@ -84,6 +85,8 @@ import {
   normalizeRunPursuitState,
   getTacticalLoadoutStatus,
   getWeaponSkillStatus,
+  buildActionEncounter,
+  type ActionEncounter,
   isCurrentDungeonFeatureAvailable,
   isParryableCombatIntent,
   isTacticalItemAvailable,
@@ -97,6 +100,7 @@ import {
   type GameAssetDefinition,
   type GameAssetKind,
   type ItemId,
+  type PetId,
   type NodeDepartureBlock
 } from '@infinite-flow/core';
 import { COMBAT_ART_FOCUS_COST } from '@infinite-flow/core/combat-focus';
@@ -157,6 +161,7 @@ import {
   type ChapterPressureViewModel,
   type ChapterPursuitViewModel,
   type ChapterRouteContractViewModel,
+  type CombatActionViewModel,
   type CombatChapterContextViewModel,
   type CombatDetailViewModel,
   type DeepReadonly,
@@ -3670,6 +3675,78 @@ function buildEquipmentMemoryCombatProjection(
   };
 }
 
+function buildCombatActionProjection(
+  state: GameState,
+  encounter: ActionEncounter,
+  escape: ViewActionModel
+): CombatActionViewModel {
+  const { spell, skill, pill } = encounter.hero;
+  const capture = encounter.capture;
+  return {
+    dungeonId: encounter.dungeonId,
+    rank: encounter.rank,
+    config: encounter.config,
+    roster: encounter.roster.map((member) => {
+      const visualAssetKey = verifiedVisualAssetKey('monster', member.monsterId);
+      return { ...member, ...(visualAssetKey === undefined ? {} : { visualAssetKey }) };
+    }),
+    primaryArchetype: encounter.primaryArchetype,
+    maxTicks: encounter.maxTicks,
+    spell: {
+      name: encounter.config.hero?.spell.name ?? '术法',
+      available: !spell.sealed,
+      damage: spell.damage,
+      focusCost: COMBAT_ART_FOCUS_COST,
+      ...(spell.sealed ? { disabledReason: '当前场域封存了功法与术法。' } : {})
+    },
+    skill: {
+      name: skill.name,
+      weaponName: getWeaponSkillStatus(state).weaponName,
+      damageKind: skill.damageKind,
+      damage: skill.damage,
+      heal: skill.heal
+    },
+    pill: {
+      itemId: 'healing_pill',
+      name: ITEMS.healing_pill.name,
+      count: pill.count,
+      heal: pill.heal,
+      available: pill.count > 0,
+      ...(pill.count > 0 ? {} : { disabledReason: '止血丹库存不足或被场域封存。' })
+    },
+    escape,
+    ...(capture
+      ? {
+          capture: {
+            petId: capture.petId,
+            petName: PETS[capture.petId].name,
+            itemId: capture.itemId,
+            itemName: ITEMS[capture.itemId].name,
+            thresholdHp: capture.thresholdHp,
+            maxHp: capture.maxHp,
+            label: `捕获${PETS[capture.petId].name}`
+          }
+        }
+      : {}),
+    commit: { commandType: 'combat/resolve-action', maxTicks: encounter.maxTicks }
+  };
+}
+
+/**
+ * The commit of a finished real-time fight: its whole input log, plus `capturePetId` when the fight is still on and
+ * the room's capture is ready. The core replays the log; the view never settles anything itself.
+ */
+export function buildActionCombatResolveEvent(log: ActionInputLogPayload, capturePetId?: PetId): PresentationEvent {
+  return {
+    kind: 'command',
+    command: {
+      type: 'combat/resolve-action',
+      log,
+      ...(capturePetId === undefined ? {} : { capture: capturePetId })
+    }
+  };
+}
+
 function buildCombatProjection(state: GameState, localUiState: PresentationLocalUiState): PhaseProjection {
   const profile = getCombatEncounterProfile(state);
   const combat = state.combat;
@@ -3789,6 +3866,9 @@ function buildCombatProjection(state: GameState, localUiState: PresentationLocal
   const maxHp = profile.monster.maxHp;
   const equipmentMemory = buildEquipmentMemoryCombatProjection(state);
   const chapterContext = buildCombatChapterContext(state);
+  const encounter = buildActionEncounter(state);
+  const escapeAction = actions.find((action) => action.actionId === 'combat.action:escape');
+  const actionCombat = encounter && escapeAction ? buildCombatActionProjection(state, encounter, escapeAction) : undefined;
   const detail: CombatDetailViewModel = {
     kind: 'combat',
     player: { hp: state.player.hp, maxHp: state.player.maxHp, hpPercent: clampPercent(state.player.hp, state.player.maxHp) },
@@ -3824,7 +3904,8 @@ function buildCombatProjection(state: GameState, localUiState: PresentationLocal
     advancedExpanded: Boolean(localUiState.advancedCombatExpanded),
     ...(combat.pursuer ? { pursuer: true } : {}),
     ...(chapterContext ? { chapterContext } : {}),
-    ...(equipmentMemory ? { equipmentMemory } : {})
+    ...(equipmentMemory ? { equipmentMemory } : {}),
+    ...(actionCombat ? { actionCombat } : {})
   };
   const stats = getDerivedStats(state);
   const metrics: StatusMetric[] = [

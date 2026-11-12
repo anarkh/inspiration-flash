@@ -11,6 +11,15 @@ import {
 import type { CombatDamageKind, CombatEffectAction, CombatEffectState } from './combat-effects';
 import { COMBAT_ART_FOCUS_COST, COMBAT_FOCUS_MAX, normalizeCombatFocus, resolveCombatFocus } from './combat-focus';
 import { ART_DEFENSE_SHARE, calculateArtHit, calculateEnemyHit, calculatePhysicalHit, mitigateDamage } from './combat-math';
+import { assertActionInputLog, replayActionCombat } from './action-combat/index';
+import type { ActionCombatOutcome, ActionFirstAction, ActionInputLog } from './action-combat/index';
+import {
+  canCaptureInActionWorld,
+  composeActionEncounter,
+  getActionPrimaryMonsterHp,
+  hashActionEncounterSeed
+} from './action-encounter';
+import type { ActionCaptureOffer, ActionEncounter, ActionEncounterFoe, ActionEncounterRank } from './action-encounter';
 import type { CombatFocus } from './combat-focus';
 import { getCombatIntent, HEAVY_BLOW_TURN_INTERVAL, isParryableCombatIntent } from './combat-intents';
 import type { CombatEncounterRank, CombatIntent } from './combat-intents';
@@ -448,6 +457,15 @@ import type {
 
 export { getPetSupport, PETS } from './pet-system';
 export type { PetSupport } from './pet-system';
+export * from './action-encounter';
+export { ACTION_INPUT_LOG_VERSION, assertActionInputLog } from './action-combat/index';
+export type {
+  ActionCombatOutcome,
+  ActionFirstAction,
+  ActionInputLog,
+  ActionWorld,
+  ActionWorldConfig
+} from './action-combat/index';
 export { ROUTE_CONTRACT_CATALOG, getRouteContractById, listRouteContracts };
 export * from './equipment-memory-hunts';
 export * from './run-pursuit';
@@ -9593,6 +9611,268 @@ export function capturePet(state: GameState, petId: PetId): GameState {
     recovery.state,
     `${captureEffect.statusLines.join('')}${ITEMS[captureItem].name}收束灵光，${pet.name}被捕获并进入出战位，${captureRewardText}进入战利品袋。${explorationRewardLine ? ` ${explorationRewardLine}` : ''}${statusLines ? ` ${statusLines}` : ''}${getVictoryRecoveryText(recovery.recovered)}`
   );
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// Real-time action combat. The fight itself runs in the standalone sim (./action-combat) on the encounter built here
+// from the committed CombatState; the client sends the whole fight's input log once, and resolveActionCombat
+// replays it and settles it through the same end-of-fight paths the turn-based actions use. Turn-based combat stays
+// as it is (escape still goes through performCombatAction). See packages/core/README.md.
+
+function getActionEncounterRank(state: GameState): ActionEncounterRank {
+  if (state.combat?.pursuer) return 'pursuer';
+  const rank = getCombatEncounterRank(state);
+  return rank === 'boss' ? 'boss' : rank === 'elite' ? 'elite' : 'normal';
+}
+
+/** The chapter's normal monster: the first monster room's monster that is neither its elite nor its boss. */
+function getChapterPackMonsterId(dungeonId: DungeonId): MonsterId {
+  const bossMonsterId = getBossDefinition(dungeonId).monsterId;
+  const node = DUNGEONS[dungeonId].nodes.find((candidate) =>
+    candidate.type === 'monster' &&
+    candidate.monsterId !== undefined &&
+    candidate.monsterId !== DUNGEON_ELITE_MONSTERS[dungeonId] &&
+    candidate.monsterId !== bossMonsterId
+  );
+  if (!node?.monsterId) throw new Error(`${dungeonId} has no normal monster room for an action pack.`);
+  return node.monsterId;
+}
+
+/** The capture this fight offers whatever the monster's HP (the HP check is the replayed world's), or undefined. */
+function getActionCaptureOffer(state: GameState, monster: MonsterDefinition): ActionCaptureOffer | undefined {
+  if (!state.combat || state.combat.pursuer || !isCurrentDungeonFeatureAvailable(state, 'consumable')) return undefined;
+  for (const pet of Object.values(PETS)) {
+    if (pet.source !== 'capture' || pet.captureFrom !== monster.id || state.ownedPets.includes(pet.id)) continue;
+    const itemId = pet.captureItem ?? 'capture_net';
+    const itemAvailable = isTacticalItemId(itemId)
+      ? getTacticalItemAvailability(state, itemId).available
+      : isDungeonConsumableAvailable(state, itemId) && state.inventory[itemId] > 0;
+    if (!itemAvailable) continue;
+    const { weakThreshold } = getCaptureCombatEffect({
+      context: getCombatMechanicsContext(state),
+      monsterMaxHp: monster.maxHp,
+      baseFailureDamage: Math.max(4, Math.floor(monster.attack * 0.5)),
+      itemId
+    });
+    return { petId: pet.id, itemId, thresholdHp: weakThreshold, maxHp: monster.maxHp };
+  }
+  return undefined;
+}
+
+/**
+ * The real-time fight for the committed combat: roster, numbers and the createWorld config, derived only from the
+ * state (the seed hashes run facts), so the client, the view model and the reducer build the same fight. Undefined
+ * outside combat.
+ */
+export function buildActionEncounter(state: GameState): ActionEncounter | undefined {
+  const combat = state.combat;
+  const run = state.run;
+  if (state.phase !== 'combat' || !combat || !run) return undefined;
+  const profile = getCombatEncounterProfile(state);
+  if (!profile) return undefined;
+  const monster = profile.monster;
+  const stats = getDerivedStats(state);
+  const outgoing = getCurrentDungeonLaw(state)?.modifiers.outgoingDamage;
+  const forcePercent = outgoing?.forcePercent ?? 0;
+  const artPercent = outgoing?.artPercent ?? 0;
+  const attackHitOn = (target: MonsterDefinition): number =>
+    scaleByPercent(calculatePhysicalDamage(stats.attack, target.defense), forcePercent, 0);
+  const artHitOn = (target: MonsterDefinition): number =>
+    scaleByPercent(calculateArtDamage(stats.artPower, target.defense), artPercent, 0);
+  const foeOf = (target: MonsterDefinition): ActionEncounterFoe => ({
+    monsterId: target.id,
+    name: target.name,
+    maxHp: target.maxHp,
+    hit: calculateEnemyHit(target, stats),
+    attackHit: attackHitOn(target),
+    artHit: artHitOn(target)
+  });
+  const rank = getActionEncounterRank(state);
+  // A sealed boss enrages into its awakened phase: the enraged sim boss deals and takes that phase's damage.
+  const awakened = profile.boss?.phase === 'sealed'
+    ? getCombatEncounterProfile({ ...state, combat: { ...combat, bossPhase: 'awakened' } })?.monster
+    : undefined;
+  const primary: ActionEncounterFoe = awakened
+    ? { ...foeOf(monster), awakened: { hit: calculateEnemyHit(awakened, stats), attackHit: attackHitOn(awakened), artHit: artHitOn(awakened) } }
+    : foeOf(monster);
+  const pack = rank === 'elite' || rank === 'boss'
+    ? foeOf(getProtocolMonster(state, MONSTERS[getChapterPackMonsterId(run.dungeonId)]))
+    : undefined;
+  const weaponSkill = getWeaponSkillStatus(state);
+  const skill = resolveWeaponSkill({
+    weaponId: weaponSkill.weaponId,
+    weaponLevel: state.equipmentLevels[weaponSkill.weaponId] ?? 1,
+    playerStats: stats,
+    targetStats: { defense: monster.defense, speed: monster.speed },
+    bossPhase: combat.bossPhase,
+    resonance: weaponSkill.resonance
+  });
+  const capture = getActionCaptureOffer(state, monster);
+  return composeActionEncounter({
+    seed: hashActionEncounterSeed([
+      run.hiddenTaskSeed ?? 0,
+      run.infernoMap?.seed ?? 0,
+      run.dungeonId,
+      combat.nodeId,
+      combat.monsterId,
+      combat.pursuer ? 1 : 0,
+      run.clearedNodeIds.length,
+      state.player.hp,
+      combat.turn
+    ]),
+    dungeonId: run.dungeonId,
+    nodeId: combat.nodeId,
+    rank,
+    hero: {
+      maxHp: stats.maxHp,
+      hp: Math.max(0, Math.min(state.player.hp, stats.maxHp)),
+      focus: normalizeCombatFocus(combat.weaponFocus),
+      spell: { damage: primary.artHit, sealed: !isCurrentDungeonFeatureAvailable(state, 'method') },
+      skill: {
+        name: weaponSkill.definition?.name ?? weaponSkill.weaponName,
+        damage: scaleByPercent(skill.damage, skill.damageKind === 'art' ? artPercent : forcePercent, 0),
+        damageKind: skill.damageKind,
+        heal: getAdjustedDungeonHealing(state, skill.healing)
+      },
+      pill: {
+        count: isTacticalItemAvailable(state, 'healing_pill') ? state.inventory.healing_pill : 0,
+        heal: getAdjustedDungeonHealing(state, getHealingPillBaseHealing(state))
+      }
+    },
+    primary,
+    primaryHpShare: Math.min(1, Math.max(0, combat.monsterHp / monster.maxHp)),
+    ...(pack ? { pack } : {}),
+    ...(capture ? { capture } : {})
+  });
+}
+
+export type ActionCombatResult = 'victory' | 'captured' | 'failed';
+
+/** What a committed action fight came to (reported to the observer of resolveActionCombat). */
+export type ActionCombatResolution = Readonly<{
+  nodeId: string;
+  rank: ActionEncounterRank;
+  result: ActionCombatResult;
+  /** The replay summary from the sim. */
+  outcome: ActionCombatOutcome;
+  /** The sealed boss enraged during the fight, so its awakening was recorded. */
+  bossAwakened: boolean;
+  capturedPetId?: PetId;
+}>;
+
+export type ActionCombatResolutionObserver = (resolution: ActionCombatResolution) => void;
+
+function getActionInputLogIssue(log: unknown, maxTicks: number): string | undefined {
+  try {
+    assertActionInputLog(log, maxTicks);
+    return undefined;
+  } catch (error) {
+    return error instanceof Error ? error.message : String(error);
+  }
+}
+
+/**
+ * The fight's first direct action as the turn-based opening (attack -> attack, spell -> art, skill -> by its damage
+ * kind, dodge -> guard): the law's opening-style signal, and on 战痕复演 take rooms the take recording with the
+ * value that opening shows in the turn-based fight (its hit on the room's monster, or a guard's reduction).
+ */
+function signalActionCombatOpening(
+  state: GameState,
+  firstAction: ActionFirstAction | null,
+  encounter: ActionEncounter,
+  monster: MonsterDefinition
+): GameState {
+  if (firstAction === null || !state.combat) return state;
+  const skillKind = encounter.hero.skill.damageKind;
+  const action: CombatAction = firstAction === 'attack' ? 'attack' : firstAction === 'spell' ? 'art' : firstAction === 'skill' ? 'weapon_skill' : 'guard';
+  const damageKind: CombatDamageKind = firstAction === 'spell' ? 'art' : firstAction === 'skill' ? skillKind : 'physical';
+  const signaled = signalCurrentCombatOpening(state, action, damageKind);
+  const direct: CombatReplayDirectAction = action === 'weapon_skill' ? (skillKind === 'art' ? 'art' : 'attack') : action;
+  const combat = signaled.combat ?? state.combat;
+  const observed = direct === 'guard'
+    ? getPureGuardReduction(signaled, monster, { ...combat, guarding: true })
+    : Math.min(combat.monsterHp, direct === 'art' ? encounter.hero.spell.damage : encounter.primary.attackHit);
+  return recordCombatReplayDirectAction(signaled, direct, observed);
+}
+
+/**
+ * The sim applied every hit and heal with the domain's clamps (HP stays within 0..max), so the run takes its final
+ * HP and, as applyPlayerDamage would have hit by hit, the HP actually lost: start + healed - final (the gross damage
+ * of a won fight).
+ */
+function settleActionCombatVitals(state: GameState, encounter: ActionEncounter, outcome: ActionCombatOutcome): GameState {
+  const startHp = encounter.config.heroStart?.hp ?? state.player.hp;
+  const lost = Math.max(0, startHp + outcome.healed - outcome.heroHp);
+  return {
+    ...state,
+    player: { ...state.player, hp: outcome.heroHp },
+    run: state.run ? { ...state.run, damageTaken: state.run.damageTaken + lost } : state.run
+  };
+}
+
+/**
+ * Settles a real-time fight from its input log: replays it on buildActionEncounter(state), then applies what it
+ * left through the turn-based end-of-fight paths — the opening signal, spent pills (consumed and recorded), HP and
+ * damage taken, the boss awakening when the sealed boss enraged, then victory (rewards, drops, offers, room cleared,
+ * the 20% recovery, pursuer handling), defeat settlement, or — for a log that ends mid-fight with `capturePetId` —
+ * the normal capture once the replayed primary monster is under the capture line. Anything else (a malformed or
+ * oversized log, an unfinished fight without a capture, a capture that is not allowed) changes nothing but the log,
+ * which the reducer rejects.
+ */
+export function resolveActionCombat(
+  state: GameState,
+  log: unknown,
+  capturePetId?: PetId,
+  observer?: ActionCombatResolutionObserver
+): GameState {
+  if (state.phase !== 'combat' || !state.combat || !state.run) return appendLog(state, '当前没有战斗。');
+  const encounter = buildActionEncounter(state);
+  const profile = getCombatEncounterProfile(state);
+  if (!encounter || !profile) return appendLog(state, '当前战斗无法结算。');
+  const logIssue = getActionInputLogIssue(log, encounter.maxTicks);
+  if (logIssue) return appendLog(state, `战斗记录无效：${logIssue}`);
+  const { world, outcome } = replayActionCombat(encounter.config, log as ActionInputLog, { maxTicks: encounter.maxTicks });
+  const monster = profile.monster;
+  if (capturePetId === undefined) {
+    if (outcome.phase === 'fight') return appendLog(state, '战斗尚未分出胜负，无法结算。');
+  } else {
+    if (outcome.phase !== 'fight') return appendLog(state, '战斗已经结束，无法再捕获。');
+    if (encounter.capture?.petId !== capturePetId) return appendLog(state, '当前目标无法用这只灵宠的捕获道具收服。');
+    if (!canCaptureInActionWorld(encounter, world)) return appendLog(state, `${monster.name}还没有虚弱，捕获失败。`);
+  }
+
+  const bossAwakened = encounter.rank === 'boss' && state.combat.bossPhase === 'sealed' && outcome.enrageCount > 0;
+  const remainingHp = outcome.phase === 'won' ? 0 : getActionPrimaryMonsterHp(encounter, world, monster.maxHp);
+  let next = signalActionCombatOpening(state, outcome.firstAction, encounter, monster);
+  for (let pill = 0; pill < outcome.pillsUsed; pill += 1) next = recordUsedItem(consumeItem(next, 'healing_pill'), 'healing_pill');
+  next = settleActionCombatVitals(next, encounter, outcome);
+  // An enraged sim boss is at or below half its HP; rounding into turn-based HP must not lift it back over the line.
+  const monsterHp = bossAwakened ? Math.min(remainingHp, Math.floor(monster.maxHp / 2)) : remainingHp;
+  next = { ...next, combat: { ...(next.combat ?? state.combat), monsterHp } };
+  if (bossAwakened) next = advanceBossPhase(next);
+
+  let settled: GameState;
+  let result: ActionCombatResult;
+  if (outcome.phase === 'won') {
+    settled = finishCombatVictory(next, monster);
+    result = 'victory';
+  } else if (outcome.phase === 'lost') {
+    settled = resolveRunFailure(next, `${monster.name}把你逼到濒死，主神强制回收。`);
+    result = 'failed';
+  } else {
+    settled = capturePet(next, capturePetId as PetId);
+    if (settled.phase === 'combat') return appendLog(state, settled.log[0] ?? '捕获失败。');
+    result = 'captured';
+  }
+  observer?.(Object.freeze({
+    nodeId: state.combat.nodeId,
+    rank: encounter.rank,
+    result,
+    outcome,
+    bossAwakened,
+    ...(result === 'captured' ? { capturedPetId: capturePetId } : {})
+  }));
+  return settled;
 }
 
 export type MethodTechniqueUnavailableReason =
