@@ -11,13 +11,20 @@
   只读参考，不同步改写它；游戏原型放在 `prototype/`，生产表现放在 `cocos/`。
 - 领域变更沿 `packages/client`、`packages/runtime` 的 session、
   `packages/application` / `packages/core` 执行。Cocos 消费 presentation 的只读
-  ViewModel 并提交既有事件，不在 UI 重算购买、奖励、战斗或节点合法性。
+  ViewModel 并提交既有事件，不在 UI 重算购买、奖励或节点合法性。带实时遭遇
+  （`actionCombat`）的战斗在 Cocos 内运行共享的确定性模拟
+  （`@infinite-flow/core/action-combat`，配置只取自 ViewModel），胜负、HP、掉落与捕获
+  一律由 reducer 重放整场输入记录后按既有路径结算。
 - presentation 保持平台无关；微信和 Cocos 能力通过平台端口注入。生产模块不引入
   DOM、Node.js API、隐式随机或系统时间来代替既有 runtime 能力。
 - 新输入保留 session 串行处理、物理输入去重和持久化后发布语义；写入阻断或待确认时，
   不提前修改可见领域状态，也不绕过 blocked 状态继续提交领域命令。
-- 战斗动画消费 `combat.presentation-resolved` 的真实结算帧，不自算伤害、反击或
-  重复派发回合动作；最终战后回血不能覆盖命中与反击过程的 HP 读数。
+- 横版动作战斗以固定 60 Hz 推进模拟并记录每帧输入，整场只经物理输入路径提交一次
+  `combat/resolve-action`（失败显示原因并可重提同一记录，不静默丢弃或循环）；画面与表头
+  HP 只投影模拟状态，提交成功前不改领域状态，重载从 ViewModel 重开。仍可通过
+  `configureInfiniteFlowBattleRenderer('turn-based')` 打开的回合制战斗界面消费
+  `combat.presentation-resolved` 的真实结算帧，不自算伤害、反击或重复派发回合动作；
+  最终战后回血不能覆盖命中与反击过程的 HP 读数。
 
 ## 场景、动作与布局
 
@@ -74,7 +81,7 @@
 | 改动范围 | 相关检查 |
 | --- | --- |
 | 领域、命令、存档、presentation | 对应 workspace 的 `test` / `typecheck`；`npm run test:packages`、`npm run typecheck:packages` |
-| 场景、投影、行走、战斗反馈 | `npm run cocos:walk:test`、`npm run cocos:race:test` |
+| 场景、投影、行走、战斗反馈 | `npm run cocos:walk:test`、`npm run cocos:race:test`；横版动作战斗加 `npm run cocos:action:test` |
 | 弹框、列表、按钮及现场选择 | `npm run cocos:sheet:test`、`npm run cocos:race:test`；主题改动加 `npm run cocos:gallery:test`，布局改动加 `npm run cocos:layout-gallery:test` |
 | 图片、manifest、Creator metadata | `npm run assets:verify`、`npm run wechat:bundle:self-check`、`npm run scene:verify` |
 | 平台端口、存储、seed、生命周期 | `npm run platform:verify` |

@@ -38,6 +38,11 @@ import { DARK_UI, paintDarkFrame } from './dark-ui';
 import { COMPACT_SHEET_THEME } from './sheet-theme';
 import { HERO_WALK_ATLAS, HERO_WALK_FRAMES, assertHeroWalkAtlasSize } from './hero-walk-atlas';
 import { BATTLE_CONTROLS_ATLAS, BATTLE_CONTROLS_KEY, BATTLE_CONTROL_FRAMES, assertBattleControlsAtlasSize } from './battle-controls-atlas';
+import { HERO_ACTION_KEY, assertHeroActionAtlasSize } from './hero-action-atlas';
+import { HERO_ACTION_CANVAS, HERO_ACTION_FRAME_IDS, heroActionFrameGeometry } from './action-battle-art';
+import { ACTION_COMMIT_ACTION_ID, ActionBattleController } from './action-battle-controller';
+import { getInfiniteFlowActionBattle, getInfiniteFlowActionBattleKey } from './battle-renderer';
+import { buildActionCombatResolveEvent } from '@infinite-flow/presentation';
 import type {
   ChapterDecisionViewModel,
   ChapterDirectiveViewModel,
@@ -2935,6 +2940,17 @@ function combatEffectKind(event: PresentationEvent): CombatEffectKind | undefine
 }
 
 /**
+ * Sheets opened during a side-scrolling fight list no turn-based commands: the fight is committed as one input log, so
+ * only escape (through its confirmation) and abandoning the run stay reachable from the menu.
+ */
+function actionBattleSheetModel(model: GameViewModel): GameViewModel {
+  const [objective, status, actions, risks, help, logs] = model.sections;
+  const kept = actions.actions.filter(action => (action.placement !== 'combat' && action.placement !== 'advanced')
+    || action.actionId === 'combat.action:escape' || action.actionId === 'combat.retreat-run');
+  return { ...model, sections: [objective, status, { ...actions, actions: kept }, risks, help, logs] };
+}
+
+/**
  * Purely visual Cocos adapter. It consumes detached presentation view models and
  * never receives the writable domain state.
  */
@@ -3023,6 +3039,8 @@ export class InfiniteFlowView {
   /** The round whose banner already played, so re-renders within a round do not replay it. */
   private announcedRound: number | undefined;
   private deferredCombatRender: DeferredCombatRender | undefined;
+  /** The side-scrolling fight on screen: kept across renders, replaced when the encounter changes, dropped outside it. */
+  private actionBattle: ActionBattleController | undefined;
 
   constructor(
     private readonly canvas: Node,
@@ -3067,6 +3085,7 @@ export class InfiniteFlowView {
     this.lastModel = model;
     this.lastChrome = chrome;
     this.lastSafeInsets = safeInsets;
+    this.syncActionBattle(model, chrome);
     const nextScreenKey = model === undefined ? chrome.modeKind : `${model.phase}:${model.screenTitle}`;
     if (nextScreenKey !== this.screenKey) {
       this.mobileSheet = undefined;
@@ -3257,7 +3276,7 @@ export class InfiniteFlowView {
     if (this.mobileSheet !== undefined && !this.detailsOpen) {
       const isCurrent = (): boolean => this.root === root && !this.destroyed;
       const enabled = chrome.busyActionId === undefined && chrome.modeKind !== 'blocked';
-      renderInfiniteFlowInfoSheet(root, model, this.mobileSheet, {
+      renderInfiniteFlowInfoSheet(root, this.actionBattle === undefined ? model : actionBattleSheetModel(model), this.mobileSheet, {
         safeInsets,
         surfaceHeight: this.surfaceHeight,
         viewportWidth: this.measureHudViewportWidth(),
@@ -3344,6 +3363,7 @@ export class InfiniteFlowView {
     this.root = undefined;
     this.lastModel = undefined;
     this.lastChrome = undefined;
+    this.actionBattle = undefined;
     if (failures.length > 0) {
       throw new Error(`InfiniteFlowView cleanup failed (${failures.length})`);
     }
@@ -3385,8 +3405,10 @@ export class InfiniteFlowView {
   setSceneVisualAsset(image: ImageAsset, status: InfiniteFlowVisualAssetStatus): void {
     const isWalker = status.key === 'character:reincarnator_walk';
     const isBattleControls = status.key === BATTLE_CONTROLS_KEY;
+    const isHeroAction = status.key === HERO_ACTION_KEY;
     if (isWalker) assertHeroWalkAtlasSize(image.width, image.height);
     if (isBattleControls) assertBattleControlsAtlasSize(image.width, image.height);
+    if (isHeroAction) assertHeroActionAtlasSize(image.width, image.height);
     this.clearSceneVisualAsset(status.key);
     const frame = SpriteFrame.createWithImage(image);
     const texture = frame.texture;
@@ -3398,12 +3420,13 @@ export class InfiniteFlowView {
     try {
       if (isWalker) frames = this.makeWalkerFrames(frame);
       if (isBattleControls) frames = this.makeBattleControlFrames(frame);
+      if (isHeroAction) frames = this.makeHeroActionFrames(frame);
       this.sceneVisuals.set(status.key, {
         frame,
         texture,
         width: image.width,
         height: image.height,
-        ...(isWalker || isBattleControls ? { frames } : {}),
+        ...(isWalker || isBattleControls || isHeroAction ? { frames } : {}),
       });
     } catch (error) {
       this.rethrowSceneVisualCreationError(error, [...frames, frame, texture]);
@@ -3445,6 +3468,26 @@ export class InfiniteFlowView {
         frame.rect = new Rect(x, y, width, height);
         frame.originalSize = new Size(width, height);
         frame.offset = new Vec2(0, 0);
+        frame.packable = false;
+      }
+    } catch (error) {
+      this.rethrowSceneVisualCreationError(error, frames);
+    }
+    return frames;
+  }
+
+  /** The hero's action poses on one shared foot-centred canvas, in HERO_ACTION_FRAME_IDS order; they share the atlas texture. */
+  private makeHeroActionFrames(atlas: SpriteFrame): readonly SpriteFrame[] {
+    const frames: SpriteFrame[] = [];
+    try {
+      for (const id of HERO_ACTION_FRAME_IDS) {
+        const { rect: [x, y, width, height], offset } = heroActionFrameGeometry(id);
+        const frame = new SpriteFrame();
+        frames.push(frame);
+        frame.texture = atlas.texture;
+        frame.rect = new Rect(x, y, width, height);
+        frame.originalSize = new Size(HERO_ACTION_CANVAS.width, HERO_ACTION_CANVAS.height);
+        frame.offset = new Vec2(offset[0], offset[1]);
         frame.packable = false;
       }
     } catch (error) {
@@ -3525,7 +3568,8 @@ export class InfiniteFlowView {
       this.renderAgain();
       return;
     }
-    const kind = detail?.kind === 'combat' ? combatEffectKind(event) : undefined;
+    // The side-scrolling fight has no turn timeline: escape and retreat dispatch as they are.
+    const kind = detail?.kind === 'combat' && this.actionBattle === undefined ? combatEffectKind(event) : undefined;
     if (kind === undefined || detail?.kind !== 'combat' || this.lastChrome === undefined || this.walkScene === undefined) {
       this.delegate.activate(physicalId, action.actionId, event);
       return;
@@ -3661,8 +3705,61 @@ export class InfiniteFlowView {
       this.autoBattleWait = 0;
       return;
     }
+    if (this.actionBattle !== undefined) {
+      // The fight steps only here, so every pause above (sheets, help, busy, block, hidden game) freezes it.
+      this.walkScene?.tick(deltaTime, { x: 0, y: 0 });
+      this.dispatchActionCommit();
+      return;
+    }
     if (this.autoBattle && this.lastModel?.phase === 'combat') this.tickAutoBattle(deltaTime);
     this.walkScene?.tick(deltaTime, this.walkInput?.axis() ?? { x: 0, y: 0 });
+  }
+
+  /** Keep the controller of the fight on screen: the same encounter keeps its state, anything else drops it. */
+  private syncActionBattle(model: GameViewModel | undefined, chrome: InfiniteFlowRuntimeChrome): void {
+    const action = getInfiniteFlowActionBattle(model);
+    const key = action === undefined ? undefined : getInfiniteFlowActionBattleKey(action);
+    if (this.actionBattle !== undefined && this.actionBattle.key !== key) this.actionBattle = undefined;
+    if (action === undefined) return;
+    if (this.actionBattle === undefined) this.actionBattle = new ActionBattleController(action);
+    else this.actionBattle.updateModel(action);
+    this.actionBattle.observeChrome(chrome.busyActionId, chrome.modeKind === 'blocked',
+      formatInfiniteFlowPlayerChrome(chrome, model?.phase).activityMessage ?? '结算未被接受');
+  }
+
+  /** Dispatch the finished (or captured) fight's log once, as one physical input with the existing dedupe semantics. */
+  private dispatchActionCommit(physicalId?: string): void {
+    const battle = this.actionBattle;
+    if (battle === undefined || this.destroyed) return;
+    const request = battle.takeCommitRequest();
+    if (request === undefined) return;
+    let id = physicalId;
+    if (id === undefined) {
+      this.physicalSequence += 1;
+      id = `cocos-action-commit:${this.physicalSequence}`;
+    }
+    this.delegate.activate(id, ACTION_COMMIT_ACTION_ID, buildActionCombatResolveEvent(request.log, request.capture));
+    if (this.actionBattle === battle && battle.confirmDispatched()) this.renderAgain();
+  }
+
+  private captureActionBattle(physicalId: string): void {
+    if (this.actionBattle?.beginCapture() === true) this.dispatchActionCommit(physicalId);
+  }
+
+  private retryActionBattle(physicalId: string): void {
+    if (this.actionBattle?.retry() === true) this.dispatchActionCommit(physicalId);
+  }
+
+  private resumeActionBattle(): void {
+    if (this.actionBattle?.resume() === true) this.renderAgain();
+  }
+
+  /** A timed-out fight starts over from the same view model; nothing was committed, as after a reload. */
+  private restartActionBattle(): void {
+    const battle = this.actionBattle;
+    if (battle === undefined || battle.status !== 'timeout') return;
+    this.actionBattle = new ActionBattleController(battle.vm);
+    this.renderAgain();
   }
 
   private stopWalking(): void {
@@ -3759,7 +3856,7 @@ export class InfiniteFlowView {
       this.safeX(), this.safeCenterY(), width, height);
     panel.addComponent(BlockInputEvents);
     addText(panel, 'SceneAssetTitle', failed ? '场景加载失败'
-      : model.phase === 'hub' ? '正在进入主神空间…' : '正在进入副本…',
+      : model.phase === 'hub' ? '正在进入主神空间…' : model.phase === 'combat' ? '正在进入战斗…' : '正在进入副本…',
       0, localY(height, 12 * unit, 48 * unit), innerWidth, 48 * unit, {
         fontSize: 16 * unit, lineHeight: 22 * unit, color: COMPACT_SHEET_THEME.palette.text,
         shrink: false,
@@ -3930,6 +4027,17 @@ export class InfiniteFlowView {
           onToggled(this.autoBattle);
         });
       } } } : {}),
+      ...(detail.kind === 'combat' && this.actionBattle !== undefined ? { actionBattle: {
+        controller: this.actionBattle,
+        interactive: enabled && this.mobileSheet === undefined && !this.chapterCodexOpen && model.sections[4].active === undefined,
+        bindPhysical: (node, activate) => this.bindPhysical(node, enabled && this.mobileSheet === undefined, (physicalId) => {
+          if (isCurrent()) activate(physicalId);
+        }),
+        capture: (physicalId) => this.captureActionBattle(physicalId),
+        retry: (physicalId) => this.retryActionBattle(physicalId),
+        resume: () => this.resumeActionBattle(),
+        restart: () => this.restartActionBattle(),
+      } } : {}),
       spec,
       position: this.walkPosition ?? spec.spawn,
       viewportWidth: this.measureHudViewportWidth(),

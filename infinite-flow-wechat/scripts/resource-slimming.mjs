@@ -1,11 +1,13 @@
 // Texture sizes for the Cocos replacement art, set by the size it is drawn at. The frozen 182 Web originals, the
-// hero walk atlas and the battle control strip (both cut by pixel frame tables) have no rule and keep their bytes.
+// hero walk and action atlases and the battle control strip (all cut by pixel frame tables) have no rule and keep
+// their bytes; the action atlas cannot shrink because its 320 px standing pose is drawn at about 384-423 device px.
 //
 // Drawn sizes were measured in the real web-mobile build at 430x932 design points (the widest supported phone);
 // at a device pixel ratio of 3 the largest draws need: monster figures 474 px, NPC figures 681 px, companion and
 // pet figures 336 px, courtyard props 541 px, the hub portal 812 px, dungeon props 342 px, the dungeon gate
-// 270 px, icons 198 px, portraits 240 px. Room backdrops (2796 px) and the courtyard panorama are drawn larger
-// than their sources, so they keep their size. Opaque art is stored as JPEG; art with transparency stays PNG.
+// 270 px, icons 198 px, portraits 240 px. Room backdrops (2796 px), the courtyard panorama and the 1774x887
+// side-view action stages are drawn at or above their source size, so they keep it. Opaque art is stored as JPEG;
+// art with transparency stays PNG.
 export const SLIMMING_TOOL = Object.freeze({ tool: 'sips', version: 'sips-316' });
 export const JPEG_QUALITY = 88;
 
@@ -24,7 +26,8 @@ const NPC_FIGURE_KEY = /^npc:.+_world$/;
  * Returns undefined for assets that ship their source bytes or keep an earlier transformation.
  */
 export function slimmingPlan(key) {
-  if (key.startsWith('scene:dungeon_world_') || key === 'scene:hub_courtyard_walk' || key === 'dungeon:mirror_cycle_city') return { format: 'jpg' };
+  if (key.startsWith('scene:dungeon_world_') || key.startsWith('scene:action_stage_')
+    || key === 'scene:hub_courtyard_walk' || key === 'dungeon:mirror_cycle_city') return { format: 'jpg' };
   if (key.startsWith('item:run_relic_')) return { format: 'jpg', longSide: 384 };
   if (key === 'character:reincarnator' || key === 'npc:companion_guide') return { format: 'jpg', longSide: 512 };
   if (FIGURE_KEY.test(key) || COURTYARD_PROP_KEYS.has(key)) return { format: 'png', longSide: 768 };

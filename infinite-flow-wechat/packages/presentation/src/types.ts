@@ -1,5 +1,8 @@
 import type { GameCommand } from '@infinite-flow/application';
 import type {
+  ActionEncounterKit,
+  ActionEncounterRank,
+  ActionWorldConfig,
   BloodlineId,
   CombatAction,
   CompanionId,
@@ -10,6 +13,7 @@ import type {
   GameAssetDefinition,
   ItemId,
   MethodId,
+  MonsterId,
   NodeType,
   PetId,
   Phase
@@ -816,6 +820,54 @@ export type CombatChapterContextViewModel = Readonly<{
   pursuit: CombatChapterPursuitContextViewModel;
 }>;
 
+/** One enemy of the real-time fight; `archetype` is its key in the config's archetypes (ActionEnemy.archetype). */
+export type CombatActionRosterEntryViewModel = Readonly<{
+  archetype: string;
+  monsterId: MonsterId;
+  name: string;
+  kit: ActionEncounterKit;
+  /** The room's own monster (boss, elite, pursuer or the normal room's monster): capture and boss awakening read it. */
+  primary: boolean;
+  /** Sim HP at full health. */
+  maxHp: number;
+  /** Seconds after the fight starts before it appears. */
+  delay: number;
+  visualAssetKey?: GameAssetDefinition['key'];
+}>;
+
+/**
+ * The real-time fight of the current combat, read-only: run `config` in the core sim (createWorld / stepWorld, one
+ * fixed tick per step, recording every input), then submit buildActionCombatResolveEvent(log) once the world's
+ * phase is no longer 'fight' — or, while it is, with `capture.petId` once canCaptureInActionWorld says so. Escape
+ * stays the turn-based `escape` action. A reload restarts the fight from this same config.
+ */
+export type CombatActionViewModel = Readonly<{
+  dungeonId: DungeonId;
+  rank: ActionEncounterRank;
+  /** Exactly what createWorld takes (seed, stage, hero, archetypes, rules, assist, heroStart). */
+  config: ActionWorldConfig;
+  roster: readonly CombatActionRosterEntryViewModel[];
+  primaryArchetype: string;
+  /** The longest log the commit accepts. */
+  maxTicks: number;
+  spell: Readonly<{ name: string; available: boolean; damage: number; focusCost: number; disabledReason?: string }>;
+  skill: Readonly<{ name: string; weaponName: string; damageKind: 'physical' | 'art'; damage: number; heal: number }>;
+  pill: Readonly<{ itemId: 'healing_pill'; name: string; count: number; heal: number; available: boolean; disabledReason?: string }>;
+  /** The turn-based escape (combat/act escape); a failed escape restarts the fight from the new state. */
+  escape: ViewActionModel;
+  /** The room's capture: shown while canCaptureInActionWorld(encounter, world) holds in the live world. */
+  capture?: Readonly<{
+    petId: PetId;
+    petName: string;
+    itemId: ItemId;
+    itemName: string;
+    thresholdHp: number;
+    maxHp: number;
+    label: string;
+  }>;
+  commit: Readonly<{ commandType: 'combat/resolve-action'; maxTicks: number }>;
+}>;
+
 export type CombatDetailViewModel = Readonly<{
   kind: 'combat';
   player: Readonly<{ hp: number; maxHp: number; hpPercent: number }>;
@@ -854,6 +906,8 @@ export type CombatDetailViewModel = Readonly<{
   /** Read-only chapter law/pursuit context for the active run; absent when no run snapshot exists. */
   chapterContext?: CombatChapterContextViewModel;
   equipmentMemory?: EquipmentMemoryCombatViewModel;
+  /** The real-time fight the scene plays; absent when the combat record is incomplete. */
+  actionCombat?: CombatActionViewModel;
 }>;
 
 export type EquipmentCommissionSettlementViewModel = Readonly<{

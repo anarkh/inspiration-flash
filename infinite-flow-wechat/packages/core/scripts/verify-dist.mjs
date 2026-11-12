@@ -1,5 +1,5 @@
 import { strict as assert } from 'node:assert';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
@@ -39,7 +39,32 @@ assert.equal(initialDerived.maxHp, 102);
 assert.equal(initialDerived.attack, 19);
 assert.equal(initialDerived.maxHp, initialState.player.maxHp);
 
+// Structural gate: the action-combat sim is standalone. Its modules import only each other (never game.js or any
+// other domain module), so the subpath can neither pull in the domain nor form a SystemJS cycle with it. Only
+// createWorld's module and the public index (plus the stage data, for deepFreeze) import the default tuning, and only
+// they import the default stage, so stepping a world cannot fall back to module defaults.
+const actionCombatFiles = readdirSync(distFile('action-combat')).filter((name) => name.endsWith('.js')).sort();
+const actionCombatImports = new Map(actionCombatFiles.map((name) => {
+  const source = readFileSync(distFile(`action-combat/${name}`), 'utf8');
+  const specifiers = Array.from(source.matchAll(/^\s*(?:import|export)\b[^;]*?\bfrom\s*'([^']+)'/gm), (match) => match[1]);
+  return [name, specifiers];
+}));
+for (const [name, specifiers] of actionCombatImports) {
+  for (const specifier of specifiers) {
+    assert.ok(/^\.\/[a-z-]+\.js$/.test(specifier), `action-combat/${name} imports ${specifier}: the sim must stay standalone`);
+  }
+}
+const importersOf = (target) => [...actionCombatImports].filter(([, specifiers]) => specifiers.includes(target)).map(([name]) => name);
+assert.deepEqual(importersOf('./tuning.js'), ['index.js', 'stage.js', 'world.js'], 'only createWorld (world.js) may read the default tuning');
+assert.deepEqual(importersOf('./stage.js'), ['index.js', 'world.js'], 'only createWorld (world.js) may read the default stage');
+const actionCombat = await import('@infinite-flow/core/action-combat');
+const actionWorld = actionCombat.createWorld({ seed: 1 });
+actionCombat.stepWorld(actionWorld, actionCombat.NEUTRAL_INPUT);
+assert.equal(actionWorld.tick, 1);
+assert.equal(actionWorld.waveIndex, 0);
+
 const explicitSubpaths = [
+  'action-combat',
   'boss-system',
   'combat-focus',
   'dungeon-laws',
@@ -226,4 +251,4 @@ assert.equal(
 );
 assert.equal(isTacticalItemUsableInRun(snapshot, {}, 'demon_bone'), false, 'non-tactical id is false');
 
-console.log('Core dist ESM, explicit subpath exports, deterministic seed injection, equipment catalog diagnostic, Set-dedup target safety, and supply/carry loadout split verified.');
+console.log('Core dist ESM, explicit subpath exports, standalone action-combat sim, deterministic seed injection, equipment catalog diagnostic, Set-dedup target safety, and supply/carry loadout split verified.');

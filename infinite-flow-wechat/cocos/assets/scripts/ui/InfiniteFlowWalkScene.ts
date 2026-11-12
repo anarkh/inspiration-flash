@@ -13,6 +13,9 @@ import { getWalkHudLayout, getWalkHudStrips } from './hud-layout';
 import type { HudPopoverKind } from './hud-layout';
 import type { CombatEffectKind, CombatEffectResult, CombatEffectStartOptions, CombatTimingGrade } from './InfiniteFlowCombatEffects';
 import { renderInfiniteFlowBattleScene } from './battle-scene';
+import type { BattleSceneHooks } from './battle-scene';
+import { renderInfiniteFlowActionBattleScene } from './action-battle-scene';
+import type { ActionBattleController } from './action-battle-controller';
 
 export type { CombatEffectKind, CombatEffectResult, CombatEffectStartOptions, CombatTimingGrade } from './InfiniteFlowCombatEffects';
 
@@ -52,6 +55,16 @@ export type WalkSceneOptions = Readonly<{
   banner?: Readonly<{ title: string; line: string; age: number; seconds?: number }>;
   /** Open while the room's own event sheet is shown; walking stays suspended until it closes. */
   roomEventSheet?: Readonly<{ close: () => void }>;
+  /** A fight with a real-time encounter on the side-scrolling screen: the View-owned controller and its dispatch hooks. */
+  actionBattle?: Readonly<{
+    controller: ActionBattleController;
+    interactive: boolean;
+    bindPhysical: (node: Node, activate: (physicalId: string) => void) => void;
+    capture: (physicalId: string) => void;
+    retry: (physicalId: string) => void;
+    resume: () => void;
+    restart: () => void;
+  }>;
 }>;
 
 export type WalkSceneHandle = Readonly<{
@@ -1271,7 +1284,7 @@ function roomEventSheet(scene: Node, model: GameViewModel, event: RoomEventViewM
 /** The battle stage keeps the room art behind it, the shared header and its notices; the rest is its own. */
 function renderBattle(root: Node, model: GameViewModel, options: ReadyWalkSceneOptions): WalkSceneHandle {
   const px = 750 / (options.viewportWidth ?? 320);
-  return renderInfiniteFlowBattleScene(root, model, options, {
+  const hooks: BattleSceneHooks = {
     drawBackdrop: scene => fullscreenDungeonFloor(scene, model, options),
     drawHeader: (scene, top) => {
       header(scene, model, options, top);
@@ -1304,7 +1317,20 @@ function renderBattle(root: Node, model: GameViewModel, options: ReadyWalkSceneO
         paintPlayerHealth(health, hp, maxHp, size.width, size.height);
       }
     },
-  });
+  };
+  const action = options.actionBattle;
+  if (action === undefined) return renderInfiniteFlowBattleScene(root, model, options, hooks);
+  return renderInfiniteFlowActionBattleScene(root, model, {
+    safeInsets: options.safeInsets,
+    surfaceHeight: options.surfaceHeight,
+    ...(options.viewportWidth === undefined ? {} : { viewportWidth: options.viewportWidth }),
+    chrome: options.chrome,
+    visual: options.visual,
+    trackSprite: options.trackSprite,
+    bindLocal: options.bindLocal,
+    bindAction: options.bindAction,
+    ...action,
+  }, hooks);
 }
 
 /** Creates one persistent world. tick moves actors/camera and never recreates the root. */

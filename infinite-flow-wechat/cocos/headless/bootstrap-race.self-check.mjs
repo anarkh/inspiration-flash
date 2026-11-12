@@ -13,7 +13,7 @@ const HERO_WALK_LAYOUT = JSON.parse(await readFile(new URL('../../art-source/her
 
 const TEST_CONTROL_KEY = '__INFINITE_FLOW_BOOTSTRAP_RACE_CONTROL__';
 const MANIFEST_UUID = '3d0842ec-43f7-4b5f-961f-39edb535ccd7';
-const MANIFEST_REVISION = 'sha256:5e16397dc92b94f7d4f36855c4fe5e5bd2733a9096e0b137b626db1e910255d7';
+const MANIFEST_REVISION = 'sha256:2d9e58899e46ae3bb9b410bf3f92e7d002fe99a66e6f7c4724d68fb393007394';
 const RUN_RELIC_FIXTURES = Object.keys(RUN_RELIC_DEFINITIONS).map(id => ({
   key: `item:run_relic_${id}`, kind: 'item', entityId: `run_relic_${id}`, resourcePath: `run-relic/${id}-v1`,
 }));
@@ -65,7 +65,7 @@ function validManifest() {
       resourcePath: `dungeon-world/${dungeonId}-v1`,
     })),
   ];
-  for (let index = assets.length; index < 324; index += 1) {
+  for (let index = assets.length; index < 344; index += 1) {
     assets.push({
       key: `item:fixture_${index}`,
       kind: 'item',
@@ -76,7 +76,7 @@ function validManifest() {
   return {
     schemaVersion: 2,
     manifestRevision: MANIFEST_REVISION,
-    assetCount: 324,
+    assetCount: 344,
     assets,
   };
 }
@@ -444,6 +444,9 @@ const virtualModules = new Map([
   `],
   ['@infinite-flow/presentation', `
     export const INFINITE_FLOW_GAME_VERSION = '0.0.0-test';
+    export function buildActionCombatResolveEvent(log, capture) {
+      return { kind: 'command', command: { type: 'combat/resolve-action', log, ...(capture === undefined ? {} : { capture }) } };
+    }
     export function buildHubOwnedLoadoutViewModel(state) {
       return (state.phase ?? 'hub') === 'hub' ? state.ownedLoadout ?? { rows: [] } : undefined;
     }
@@ -678,7 +681,10 @@ const {
   InfiniteFlowApp,
   configureInfiniteFlowAssetRetryScheduler,
   configureInfiniteFlowWxDurabilityBoundary,
+  configureInfiniteFlowBattleRenderer: configureAppBattleRenderer,
 } = await import(bundleUrl);
+// These cases cover the turn-based battle screen; the side-scrolling one has action-battle.self-check.mjs.
+configureAppBattleRenderer('turn-based');
 
 // Exercise the real pure View formatter as part of the headless contract so
 // ordered route targets and reward points cannot disappear behind next-cycle actions.
@@ -838,6 +844,7 @@ const viewBundle = await build({
   stdin: {
     contents: `
       export * from './InfiniteFlowView';
+      export { configureInfiniteFlowBattleRenderer } from './battle-renderer';
       export { getInfiniteFlowSceneVisualKeys } from './scene-visuals';
       export { buildWalkWorld } from './walk-world';
       export { getDungeonHtmlRoomLayout, fitDungeonHtmlTargets } from './InfiniteFlowWalkScene';
@@ -870,6 +877,7 @@ const viewBundle = await build({
 const viewBundleUrl = `data:text/javascript;base64,${Buffer.from(viewBundle.outputFiles[0].contents).toString('base64')}`;
 const {
   InfiniteFlowView: SceneInfiniteFlowView,
+  configureInfiniteFlowBattleRenderer: configureViewBattleRenderer,
   getInfiniteFlowSceneVisualKeys,
   buildWalkWorld,
   getDungeonHtmlRoomLayout,
@@ -923,6 +931,7 @@ const {
   matchInfiniteFlowMapMoveAction,
   INFINITE_FLOW_SAFE_CONTENT_MINIMUM,
 } = await import(viewBundleUrl);
+configureViewBattleRenderer('turn-based');
 
 function darkRgb(color) {
   return [color.r, color.g, color.b];
@@ -10016,6 +10025,85 @@ delete globalThis.wx;
   }
 }
 
+// Under the action renderer the chapter keeps the side-scrolling battle art (stage, hero action frames, ink controls)
+// and the fight keeps the room's art (backdrop, gate, every prop): room -> fight -> room never reopens the loading gate
+// or re-requests scene art; the defeated monster's figure is released; the hub releases every dungeon and battle lease.
+{
+  configureAppBattleRenderer('action');
+  try {
+    const manifest = validManifest();
+    for (const entry of [
+      { key: 'scene:action_stage_demon_tower_1', kind: 'scene', entityId: 'action_stage_demon_tower_1', resourcePath: 'action-stage/demon_tower_1-v1' },
+      { key: 'character:reincarnator_action', kind: 'character', entityId: 'reincarnator_action', resourcePath: 'character/reincarnator-action-v1' },
+    ]) manifest.assets.splice(manifest.assets.findLastIndex(({ key }) => key.startsWith('item:fixture_')), 1, entry);
+    const session = assetSession({ manifest });
+    const client = fakeClient('action-room-fight-room');
+    const room = { nodeId: 'upper_fog_patrol', nodeType: 'monster', monsterId: 'fog_lesser_demon' };
+    const explore = (currentNode) => ({
+      phase: 'explore', visualAssetKey: 'dungeon:demon_tower_1',
+      detail: { kind: 'explore', map: { dungeonId: 'demon_tower_1' }, currentNode },
+    });
+    client.state = explore(room);
+    controller.assetSessions.push(session);
+    controller.clientFactories.push(() => Promise.resolve(client));
+    const app = new InfiniteFlowApp();
+    app.start();
+    const view = controller.views.at(-1);
+    const ready = () => view.lastRender?.model?.phase === 'explore' && view.lastRender.chrome.sceneAssets === 'ready';
+    for (let turn = 0; turn < 400 && !ready(); turn += 1) await Promise.resolve();
+    assert.ok(ready(), 'the room opens once its art (with the chapter battle art) is loaded');
+    const requests = () => [...session.imageRequests, ...session.sceneImageRequests];
+    const leaseOf = (path) => {
+      const matches = requests().filter((entry) => entry.path === path);
+      assert.equal(matches.length, 1, `${path} is requested exactly once`);
+      return matches[0].image.refCount;
+    };
+    const battleArt = ['action-stage/demon_tower_1-v1', 'character/reincarnator-action-v1', 'scene/battle-controls-ink-v1'];
+    const roomArt = ['dungeon-world/demon_tower_1-v1', 'dungeon-world/ruined-stone-gate-v1', ...DUNGEON_PROP_FIXTURES.map(({ resourcePath }) => resourcePath)];
+    for (const path of [...battleArt, ...roomArt]) assert.equal(leaseOf(path), 1, `${path} is leased while exploring the chapter`);
+    const newRequests = (since) => [...session.imageRequests.slice(since.images), ...session.sceneImageRequests.slice(since.scene)].map(({ path }) => path);
+    const mark = () => ({ images: session.imageRequests.length, scene: session.sceneImageRequests.length });
+
+    const intoFight = mark();
+    client.state = {
+      phase: 'combat', visualAssetKey: 'monster:fog_lesser_demon',
+      detail: {
+        kind: 'combat', enemy: { id: 'fog_lesser_demon' },
+        chapterContext: { dungeonId: 'demon_tower_1', pursuit: { legacyDisabled: true, present: false } },
+        actionCombat: { dungeonId: 'demon_tower_1', roster: [{ archetype: 'melee', monsterId: 'fog_lesser_demon', primary: true }] },
+      },
+    };
+    app.refreshViewModel();
+    assert.equal(view.lastRender.chrome.sceneAssets, 'ready', 'the fight opens without the loading gate');
+    assert.deepEqual(newRequests(intoFight).filter((path) => path !== 'monster/fog-lesser-demon-v1'), [],
+      'only the legacy primary portrait is requested; every scene key of the fight is already leased');
+    await drainMicrotasks();
+    for (const path of [...battleArt, ...roomArt, 'monster-world/fog-lesser-demon-world-v1']) assert.equal(leaseOf(path), 1, `${path} is held through the fight`);
+
+    const backToRoom = mark();
+    client.state = explore({ ...room, cleared: true });
+    app.refreshViewModel();
+    assert.equal(view.lastRender.chrome.sceneAssets, 'ready', 'the room returns without the loading gate');
+    assert.deepEqual(newRequests(backToRoom).filter((path) => path !== 'dungeon/demon-tower-1-v1'), [],
+      'returning to the room requests no scene art');
+    await drainMicrotasks();
+    for (const path of [...battleArt, ...roomArt]) assert.equal(leaseOf(path), 1, `${path} keeps its single lease in the room`);
+    assert.equal(leaseOf('monster-world/fog-lesser-demon-world-v1'), 0, 'the defeated monster figure is released');
+
+    client.state = { phase: 'hub', visualAssetKey: 'scene:main_god_space', detail: { kind: 'hub', activePanel: 'equipment' } };
+    app.refreshViewModel();
+    await drainMicrotasks(40);
+    for (const path of [...battleArt, ...roomArt]) assert.equal(leaseOf(path), 0, `${path} is released on the way back to the hub`);
+    for (const key of ['scene:action_stage_demon_tower_1', 'character:reincarnator_action', 'scene:battle_controls_ink']) {
+      assert.equal(view.sceneVisuals.has(key), false, `${key}: the hub keeps no battle slot`);
+    }
+    app.onDestroy();
+    for (const request of requests()) assert.equal(request.image.refCount, 0, `destroy releases ${request.path}`);
+  } finally {
+    configureAppBattleRenderer('turn-based');
+  }
+}
+
 // Natural settlement promotes an already acquired primary into its scene
 // background even when the primary key is unchanged from exploration.
 {
@@ -10573,7 +10661,7 @@ delete globalThis.wx;
     assertSceneAssetGate(view, root(), 'loading');
     assert.equal(findNode(root(), 'WalkAvatarPlaceholder'), undefined);
     assert.equal(labelComponent(findNode(root(), 'SceneAssetTitle')).string,
-      model.phase === 'hub' ? '正在进入主神空间…' : '正在进入副本…');
+      model.phase === 'hub' ? '正在进入主神空间…' : model.phase === 'combat' ? '正在进入战斗…' : '正在进入副本…');
     globalThis.__walkingTestInput.emit('key-down', { keyCode: 65 });
     view.tick(1 / 60);
     assert.equal(view.walkScene, undefined, 'loading cannot start hidden keyboard movement');
@@ -12997,7 +13085,7 @@ console.log(JSON.stringify({
   // keep the enemy track/digits below the north caption before and after live HP
   // updates. Ten independent HTML golden
   // feet and two multi-neighbor fixtures cover slot accuracy and retained actions.
-  scenarios: 153,
+  scenarios: 154,
   dungeonPropSprites: DUNGEON_PROP_FIXTURES.length,
   hubDungeonPortalSprites: 1,
   hubNpcWorldSprites: NPC_WORLD_FIXTURES.length,

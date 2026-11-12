@@ -12,6 +12,7 @@ import './map-topology.test.js';
 import './route-forecast.test.js';
 import './run-introduction.test.js';
 import './action-legality.test.js';
+import './action-combat.test.js';
 import { reduceGameCommand } from '@infinite-flow/application';
 import {
   DUNGEON_FEATURE_HELP_IDS,

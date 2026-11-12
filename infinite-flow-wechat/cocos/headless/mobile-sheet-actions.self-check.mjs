@@ -89,6 +89,7 @@ const bundle = await build({
       export { HERO_WALK_ATLAS } from './cocos/assets/scripts/ui/hero-walk-atlas.ts';
       export { BATTLE_CONTROLS_ATLAS, BATTLE_CONTROLS_KEY, BATTLE_CONTROL_FRAMES } from './cocos/assets/scripts/ui/battle-controls-atlas.ts';
       export { InfiniteFlowView, formatInfiniteFlowHubActionLockedReason, formatInfiniteFlowHubPlayerCopy } from './cocos/assets/scripts/ui/InfiniteFlowView.ts';
+      export { configureInfiniteFlowBattleRenderer } from './cocos/assets/scripts/ui/battle-renderer.ts';
       export { DARK_UI } from './cocos/assets/scripts/ui/dark-ui.ts';
       export { COMPACT_SHEET_THEME } from './cocos/assets/scripts/ui/sheet-theme.ts';
       export { Node, UITransform, Label, Graphics, BlockInputEvents, Mask, ScrollView, Sprite, Vec2, view } from 'cc';
@@ -126,6 +127,8 @@ const bundle = await build({
   }],
 });
 const api = await import(`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString('base64')}`);
+// This suite covers the turn-based battle screen; the side-scrolling one has cocos/headless/action-battle.self-check.mjs.
+api.configureInfiniteFlowBattleRenderer('turn-based');
 const models = globalThis[captureKey];
 const stateByModel = globalThis[captureStateKey];
 delete globalThis[captureStateKey];

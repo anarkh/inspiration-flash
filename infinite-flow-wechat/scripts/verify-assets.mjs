@@ -24,9 +24,9 @@ const manifestPath = resolve(
 const assetRoot = resolve(projectRoot, "cocos/assets");
 const resourceRoot = resolve(projectRoot, "cocos/assets/resources");
 const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
-const EXPECTED_ASSET_COUNT = 324;
+const EXPECTED_ASSET_COUNT = 344;
 // Opaque art ships as JPEG, art with transparency as PNG (scripts/resource-slimming.mjs).
-const EXPECTED_FORMAT_COUNTS = { jpg: 32, png: 292 };
+const EXPECTED_FORMAT_COUNTS = { jpg: 51, png: 293 };
 const IMAGE_EXTENSIONS = Object.keys(EXPECTED_FORMAT_COUNTS).map((format) => `.${format}`);
 const HERO_WALK_KEY = "character:reincarnator_walk";
 const HERO_WALK_SHA256 = "897deadd34e18c9e3c8e7d52461a8fddac5272503696e263cee2e7baec6bb918";
@@ -38,6 +38,33 @@ const HUB_DUNGEON_PORTAL_SHA256 = "e77658a165eab7c3fe527b309909bca1d0be7c4fddd4a
 const BATTLE_CONTROLS_KEY = "scene:battle_controls_ink";
 const BATTLE_CONTROLS_SOURCE_SHA256 = "74914479f4bd2979f1cd5f02064e26abffa7e5bc254e0d8b4772706da0ffe553";
 const BATTLE_CONTROLS_TARGET_SHA256 = "98a6783f409940999139a4f3a3745cda3710c18049d82d855d10b0d48aec19b3";
+// The side-scrolling battle: the hero action atlas (byte copy, cut by cocos/assets/scripts/ui/hero-action-atlas.ts)
+// and one 1774x887 side-view stage per chapter (JPEG at source size). Cocos-only, outside the frozen Web snapshot.
+const HERO_ACTION_KEY = "character:reincarnator_action";
+const HERO_ACTION_SHA256 = "400fddcf26515c7109cb1b27f2056a27fe4ebe00514cc03ebf167ac5b1a8e61a";
+const ACTION_STAGE_KEY_PREFIX = "scene:action_stage_";
+// Sources live in art-source/action-combat/stages/<id>-v1.png; the first stage, made before the batch, is beside it.
+const ACTION_STAGE_SPECS = [
+  { id: "demon_tower_1", source: "stage-demon-tower-v1.png", sha256: "c0891e9e143c019cb53d42f18ad186a5ae020bf608c2b3616a43ae57bfaeb605" },
+  { id: "metro_abyss", sha256: "dcbd04efb7ee85d7034d366341d9508b8f11d2556dad04ffb1a00e7b5dfcdca3" },
+  { id: "starfall_mine", sha256: "6a2e0228b1bc400bbf292bd24b203be5db7de9f005c158e1a86b4166fc803d43" },
+  { id: "rust_hospital", sha256: "3cffd88f574043292cb887fd9f9a22331dac1882869fdef40e0774531c5eca5b" },
+  { id: "ash_arena", sha256: "12cd171851c4ba226c353a49b3ff0dcec6cd47053612a1696e60dcf0555fba54" },
+  { id: "dream_archive", sha256: "0893cab4af85a3fc55b2add33821840cf149b0660ccaf1463c4383f85425a81f" },
+  { id: "void_citadel", sha256: "bd27c8dc8af00e0e7a8d67b7d827d3d626ac9f9ddb5006681cfc8bc1bf3f8aaf" },
+  { id: "temporal_observatory", sha256: "0f2d296d55bda4c1327348bc7824fed7fd0fa96c2643244f93c53ece29672193" },
+  { id: "causal_clearinghouse", sha256: "dc948c41f49b98c308bc4060147dbf562b2a44c102417a50190f476cb349c8ca" },
+  { id: "entropy_ark", sha256: "7bfcef71eab199373ed6156a2e3ff0add7aedf3cbe12aeab6b2a59dac13a080f" },
+  { id: "mirror_cycle_city", sha256: "c1405870868b2de954f096e3c3963cca95288f755110a7c36d1d2b052e545fd4" },
+  { id: "redaction_scriptorium", sha256: "73c51200392c453ce471ba2154bcb09961f3b6609c779a24f29d943231b435ed" },
+  { id: "legacy_auction_court", sha256: "e9a2b39821c19b88a29e5f86acc148d25296b29be280d920c2ffcf73700d22f2" },
+  { id: "genesis_vault", sha256: "97bf6b4b9cdcd06fa763704c4316162579a55b91a7e17e6e1b0f3f43c42f59a2" },
+  { id: "silent_broadcast_tower", sha256: "5ff005ee239c538967de75bf855403a99a9188bdaf7bc5f3edf00363f2a66e09" },
+  { id: "lost_shelter", sha256: "b01e7eed91f6ed1384a0ed9af911b237e4f05d74a615635df9c6a77b00b43a8d" },
+  { id: "false_testimony_court", sha256: "1b0a45bd29d721c4bace56489fd13bae0e8b20bd8183db9e644f1580efa364fc" },
+  { id: "combat_replay_stage", sha256: "1d8aa7402f958a85ba4b485fef875972e1cc90addeac9894995d476929ab34f2" },
+  { id: "panopticon_city", sha256: "cddcbc418b14279c745db32817538513d1a3c9ac83f5d9e445ef939dac8bc915" },
+];
 const COURTYARD_ASSET_SPECS = [
   { key: "scene:hub_courtyard_walk", file: "walk-sanctuary-v1.png", sourceFile: "walk-sanctuary-v1.png", width: 2172, height: 724, fit: "cover", hasAlpha: false },
   { key: "scene:courtyard_pillar", file: "pillar-v1.png", sourceFile: "courtyard-props/pillar-v1.png", width: 870, height: 1808, fit: "contain", hasAlpha: true },
@@ -488,7 +515,8 @@ const originalAssets = assets.filter((asset) => !asset.key.startsWith("scene:dun
   && !NPC_GRID_ASSET_KEYS.has(asset.key) && !NPC_WORLD_ASSET_KEYS.has(asset.key)
   && !monsterWorldKeys.has(asset.key) && !PARTY_WORLD_ASSET_KEYS.has(asset.key) && !COURTYARD_ASSET_KEYS.has(asset.key)
   && asset.key !== DUNGEON_TRANSITION_GATE_KEY && asset.key !== HUB_DUNGEON_PORTAL_KEY && asset.key !== BATTLE_CONTROLS_KEY
-  && !asset.key.startsWith("scene:dungeon_prop_") && !RUN_RELIC_ICON_KEYS.has(asset.key));
+  && !asset.key.startsWith("scene:dungeon_prop_") && !RUN_RELIC_ICON_KEYS.has(asset.key)
+  && asset.key !== HERO_ACTION_KEY && !asset.key.startsWith(ACTION_STAGE_KEY_PREFIX));
 const frozenOriginalAssets = originalAssets.filter((asset) => (
   !STYLE_REFRESH_ASSET_KEYS.has(asset.key) && asset.key !== HERO_WALK_KEY
 ));
@@ -689,6 +717,65 @@ for (const asset of battleControls) {
   }
 }
 
+const heroActionAtlases = assets.filter((asset) => asset.key === HERO_ACTION_KEY);
+if (heroActionAtlases.length !== 1) {
+  failures.push("side-scrolling battle must include exactly one approved hero action atlas");
+}
+for (const asset of heroActionAtlases) {
+  if (asset.kind !== "character" || asset.entityId !== "reincarnator_action"
+    || asset.role !== "sprite-sheet" || asset.fit !== "contain"
+    || asset.source !== "project-original-generated" || asset.sourceRevision !== 1
+    || Object.prototype.hasOwnProperty.call(asset, "webSourcePath")
+    || asset.sourceFile !== "infinite-flow-wechat/art-source/action-combat/hero/hero-action-v1.png"
+    || asset.resourceFile !== "character/reincarnator-action-v1.png"
+    || asset.resourcePath !== "character/reincarnator-action-v1"
+    || asset.sourceFormat !== "png" || asset.targetFormat !== "png"
+    || asset.cocosImageImport !== "supported"
+    || asset.sourceSha256 !== HERO_ACTION_SHA256 || asset.targetSha256 !== HERO_ACTION_SHA256
+    || asset.transformation?.operation !== "byte-copy" || slimmingPlan(asset.key)) {
+    failures.push(`hero action atlas provenance or approved image identity mismatch: ${asset.key}`);
+  }
+  const dimensions = asset.transformation?.targetDimensions;
+  if (asset.width !== 1973 || asset.height !== 1650
+    || dimensions?.width !== asset.width || dimensions?.height !== asset.height) {
+    failures.push(`hero action atlas must retain its approved 1973x1650 PNG dimensions: ${asset.key}`);
+  }
+  const meta = readCreatorMeta(resolve(resourceRoot, `${asset.resourceFile}.meta`), asset.key);
+  if (meta?.userData?.type !== "texture" || meta?.userData?.hasAlpha !== true) {
+    failures.push(`hero action atlas image metadata must keep its transparent texture import: ${asset.key}`);
+  }
+}
+
+const actionStages = assets.filter((asset) => asset.key.startsWith(ACTION_STAGE_KEY_PREFIX));
+const actionStageKeys = ACTION_STAGE_SPECS.map(({ id }) => `${ACTION_STAGE_KEY_PREFIX}${id}`);
+if (!sameStringSet(actionStages.map((asset) => asset.key), actionStageKeys)
+  || !sameStringSet(actionStageKeys, dungeonIds.map((id) => `${ACTION_STAGE_KEY_PREFIX}${id}`))) {
+  failures.push("side-view action stages must cover exactly the 19 original dungeon IDs");
+}
+for (const asset of actionStages) {
+  const spec = ACTION_STAGE_SPECS.find(({ id }) => asset.key === `${ACTION_STAGE_KEY_PREFIX}${id}`);
+  if (!spec) continue;
+  if (asset.kind !== "scene" || asset.entityId !== `action_stage_${spec.id}`
+    || asset.role !== "scene" || asset.fit !== "cover"
+    || asset.source !== "project-original-generated" || asset.sourceRevision !== 1
+    || Object.prototype.hasOwnProperty.call(asset, "webSourcePath")
+    || asset.sourceFile !== `infinite-flow-wechat/art-source/action-combat/${spec.source ?? `stages/${spec.id}-v1.png`}`
+    || asset.resourcePath !== `action-stage/${spec.id}-v1`
+    || asset.sourceFormat !== "png" || asset.targetFormat !== "jpg"
+    || asset.cocosImageImport !== "supported"
+    || asset.sourceSha256 !== spec.sha256
+    || !slimmingPlan(asset.key)) {
+    failures.push(`action stage provenance or approved image identity mismatch: ${asset.key}`);
+  }
+  if (!sameDimensions(asset.transformation?.sourceDimensions, { width: 1774, height: 887 })) {
+    failures.push(`action stage must derive from its approved 1774x887 PNG source: ${asset.key}`);
+  }
+  const meta = readCreatorMeta(resolve(resourceRoot, `${asset.resourceFile}.meta`), asset.key);
+  if (meta?.userData?.hasAlpha !== false) {
+    failures.push(`action stage image metadata must preserve its RGB format: ${asset.key}`);
+  }
+}
+
 const styleRefreshAssets = assets.filter((asset) => STYLE_REFRESH_ASSET_KEYS.has(asset.key));
 if (!sameStringSet(styleRefreshAssets.map((asset) => asset.key), STYLE_REFRESH_ASSET_KEYS)) {
   failures.push("style refresh must include all 26 approved artworks");
@@ -850,7 +937,7 @@ for (const asset of assets) {
       failures.push(`target dimensions mismatch: ${asset.key}`);
     }
     if (monsterWorldKeys.has(asset.key) || PARTY_WORLD_ASSET_KEYS.has(asset.key) || COURTYARD_PROP_KEYS.has(asset.key)
-      || STYLE_REFRESH_ALPHA_KEYS.has(asset.key) || asset.key === HERO_WALK_KEY
+      || STYLE_REFRESH_ALPHA_KEYS.has(asset.key) || asset.key === HERO_WALK_KEY || asset.key === HERO_ACTION_KEY
       || asset.key === DUNGEON_TRANSITION_GATE_KEY || asset.key === HUB_DUNGEON_PORTAL_KEY || asset.key === BATTLE_CONTROLS_KEY) {
       const alpha = pngRgbaAlpha(targetBytes);
       if (alpha.transparentPixels === 0 || alpha.visiblePixels === 0) {
@@ -879,7 +966,7 @@ for (const asset of assets) {
     ) {
       failures.push(`byte-copy is not byte-identical: ${asset.key}`);
     }
-    if (slimmingPlan(asset.key) || asset.key === HERO_WALK_KEY) {
+    if (slimmingPlan(asset.key) || asset.key === HERO_WALK_KEY || asset.key === HERO_ACTION_KEY) {
       const dimensions = pngDimensions(sourceBytes);
       const recorded = asset.transformation?.sourceDimensions ?? { width: asset.width, height: asset.height };
       if (!sameDimensions(dimensions, recorded)) {
@@ -978,6 +1065,8 @@ if (failures.length > 0) {
     dungeonTransitionGates: dungeonTransitionGates.length,
     hubDungeonPortals: hubDungeonPortals.length,
     battleControls: battleControls.length,
+    heroActionAtlases: heroActionAtlases.length,
+    actionStages: actionStages.length,
     styleRefreshAssets: styleRefreshAssets.length,
     runRelicIcons: runRelicIcons.length,
     resourceBytes,

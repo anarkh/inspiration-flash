@@ -2028,9 +2028,12 @@ async function runDungeonRendererGallery(cdp, outputDir) {
     export { reduceGameCommand } from '@infinite-flow/application';
     export { buildGameViewModel } from '@infinite-flow/presentation';
     export { getInfiniteFlowSceneVisualKeys } from './cocos/assets/scripts/ui/scene-visuals.ts';
+    export { configureInfiniteFlowBattleRenderer } from './cocos/assets/scripts/ui/battle-renderer.ts';
   `, resolveDir: projectDir, loader: 'ts' }, bundle: true, write: false, format: 'esm', platform: 'node' });
-  const { createInitialState, DUNGEON_ORDER, reduceGameCommand, buildGameViewModel, getInfiniteFlowSceneVisualKeys } = await import(
+  const { createInitialState, DUNGEON_ORDER, reduceGameCommand, buildGameViewModel, getInfiniteFlowSceneVisualKeys, configureInfiniteFlowBattleRenderer } = await import(
     `data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString('base64')}`);
+  // The page runs ?battle=turn-based: declare the same scene keys it does.
+  configureInfiniteFlowBattleRenderer('turn-based');
   const initial = createInitialState();
   const fixtureHub = { ...initial, rewardPoints: 50000, lingyun: 500, completedDungeonIds: [...DUNGEON_ORDER],
     inventory: Object.fromEntries(Object.keys(initial.inventory).map((key) => [key, 50])) };
@@ -2148,6 +2151,7 @@ async function runStyleRefreshGallery(cdp, outputDir) {
       export { buildGameViewModel } from '@infinite-flow/presentation';
       export { signalFirstNodeClear } from '@infinite-flow/core/dungeon-laws';
       export { getInfiniteFlowSceneVisualKeys } from './cocos/assets/scripts/ui/scene-visuals.ts';
+      export { configureInfiniteFlowBattleRenderer } from './cocos/assets/scripts/ui/battle-renderer.ts';
       export { buildWalkWorld } from './cocos/assets/scripts/ui/walk-world.ts';
     `, resolveDir: projectDir, loader: 'ts' },
     bundle: true, write: false, format: 'esm', platform: 'node',
@@ -2166,6 +2170,8 @@ async function runStyleRefreshGallery(cdp, outputDir) {
     } }],
   });
   const api = await import(`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString('base64')}`);
+  // The page runs ?battle=turn-based: declare the same scene keys it does.
+  api.configureInfiniteFlowBattleRenderer('turn-based');
   const models = globalThis[captureKey];
   delete globalThis[captureKey];
   const initial = api.createInitialState();
@@ -3246,7 +3252,8 @@ async function main() {
       screenOrientation: { type: 'portraitPrimary', angle: 0 },
     });
     await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 });
-    await cdp.send('Page.navigate', { url: staticServer.url });
+    // The flow asserts the turn-based battle screen; the side-scrolling one is verified separately.
+    await cdp.send('Page.navigate', { url: `${staticServer.url}?battle=turn-based` });
     const flowResult = await runCanvasFlow(cdp, outputDir);
     const styleRefreshGallery = dungeonOnly || !focusedFlow
       ? await runStyleRefreshGallery(cdp, outputDir)
