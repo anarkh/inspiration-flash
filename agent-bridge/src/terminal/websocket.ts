@@ -1,8 +1,8 @@
 import { createHash } from "node:crypto";
-import { readFile } from "node:fs/promises";
 import type http from "node:http";
 import type { Duplex } from "node:stream";
-import { ensureTerminalLogTail, subscribeTerminalLog } from "./logs.ts";
+import { StringDecoder } from "node:string_decoder";
+import { streamTerminalLogSnapshot, tailTerminalLog } from "./logs.ts";
 import { resizeTerminal, sendTerminalInput } from "./tmux.ts";
 
 const WS_GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
@@ -28,13 +28,50 @@ export async function handleTerminalWebSocket(
     ""
   ].join("\r\n"));
 
-  writeFrame(socket, await readFile(target.logPath, "utf8").catch(() => ""));
-  ensureTerminalLogTail(target.terminalId, target.logPath, true);
-  const unsubscribe = subscribeTerminalLog(target.terminalId, (event) => {
-    if (event.data) {
-      writeFrame(socket, event.data);
+  const releases: Array<() => void> = [];
+  let cleanedUp = false;
+  const cleanup = () => {
+    if (cleanedUp) {
+      return;
+    }
+    cleanedUp = true;
+    for (const release of releases.splice(0)) {
+      release();
+    }
+  };
+  const addRelease = (release: () => void) => {
+    if (cleanedUp) {
+      release();
+    } else {
+      releases.push(release);
+    }
+  };
+  socket.on("close", cleanup);
+  socket.on("error", cleanup);
+
+  const decoder = new StringDecoder("utf8");
+  const snapshotOffset = await streamTerminalLogSnapshot(target.logPath, async (chunk) => {
+    if (cleanedUp || socket.destroyed || !socket.writable) {
+      return false;
+    }
+    const text = decoder.write(chunk);
+    if (text && !writeFrame(socket, text)) {
+      await waitForSocketDrain(socket);
     }
   });
+  if (cleanedUp || socket.destroyed || !socket.writable) {
+    return;
+  }
+  if (!target.tail) {
+    const snapshotRemainder = decoder.end();
+    if (snapshotRemainder) writeFrame(socket, snapshotRemainder);
+  } else {
+    addRelease(tailTerminalLog(target.logPath, snapshotOffset, async (data) => {
+      if (!writeFrame(socket, data)) {
+        await waitForSocketDrain(socket);
+      }
+    }, decoder));
+  }
   const parser = createFrameParser(async (message) => {
     const resize = parseResizeMessage(message);
     if (resize) {
@@ -43,12 +80,10 @@ export async function handleTerminalWebSocket(
     }
     await sendTerminalInput(target.terminalId, message).catch(() => false);
   }, () => {
-    unsubscribe();
+    cleanup();
     socket.end();
   });
   socket.on("data", (chunk) => parser(Buffer.from(chunk)));
-  socket.on("close", unsubscribe);
-  socket.on("error", unsubscribe);
   if (head.length > 0) {
     parser(head);
   }
@@ -57,15 +92,33 @@ export async function handleTerminalWebSocket(
 export interface TerminalSocketTarget {
   terminalId: string;
   logPath: string;
+  tail: boolean;
 }
 
-function writeFrame(socket: Duplex, text: string): void {
+function writeFrame(socket: Duplex, text: string): boolean {
   if (!socket.writable || text.length === 0) {
-    return;
+    return true;
   }
   const payload = Buffer.from(text, "utf8");
   const header = frameHeader(payload.length);
-  socket.write(Buffer.concat([header, payload]));
+  return socket.write(Buffer.concat([header, payload]));
+}
+
+function waitForSocketDrain(socket: Duplex): Promise<void> {
+  if (socket.destroyed || !socket.writable) {
+    return Promise.resolve();
+  }
+  return new Promise((resolve) => {
+    const done = () => {
+      socket.off("drain", done);
+      socket.off("close", done);
+      socket.off("error", done);
+      resolve();
+    };
+    socket.once("drain", done);
+    socket.once("close", done);
+    socket.once("error", done);
+  });
 }
 
 function frameHeader(length: number): Buffer {

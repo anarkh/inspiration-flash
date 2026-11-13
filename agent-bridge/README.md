@@ -99,8 +99,8 @@ test/
 - `remove` deletes one route or all Agent Bridge config, then clears the matching producer hooks in the selected scope.
 - `hooks clear` removes only Agent Bridge managed hook commands for the selected producer and scope.
 - Hook commands print a short progress hint to stderr so the producer session is not silent while the consumer agent is running.
-- Stop hooks wait up to five minutes for consumer agents; timed-out consumers continue in the service process and late results are shown by `agent-bridge status`.
-- Consumer CLIs run in real tmux-backed terminal sessions when `tmux` is available. Worker-mode agents reuse one CLI session per producer, workspace, producer session, and consumer agent, so repeated hooks continue the same terminal conversation. The dashboard can attach to the session, stream terminal output, resize the pane, and send keyboard input back to the CLI. Set `AGENT_BRIDGE_TERMINAL_BACKEND=capture` to force the legacy pipe capture fallback.
+- Stop hooks wait up to ten minutes for consumer agents; timed-out consumers continue in the service process and late results are shown by `agent-bridge status`.
+- Consumer CLIs run in real tmux-backed terminal sessions when `tmux` is available. Interactive worker agents such as Aiden reuse one CLI process per producer, workspace, producer session, and consumer. Command-mode workers such as Claude Code start a fresh print-mode command for each request but append every run to the same worker history. The dashboard streams the complete history in bounded chunks and follows new output incrementally. Set `AGENT_BRIDGE_TERMINAL_BACKEND=capture` to force pipe capture; capture runs are mirrored into the same worker history.
 - Passing bridge results let the producer finish.
 - Failing bridge results are sent back so the producer can continue with the consumer agent feedback.
 - `uncertain` bridge results default to continuing, because ambiguous agent output should be inspected.
@@ -110,6 +110,7 @@ test/
 - Agent config: `~/.config/agent-bridge/config.json`
 - Runtime state: `~/.local/state/agent-bridge/`
 - Agent CLI terminal logs, worker context files, and tmux command state: `~/.local/state/agent-bridge/terminals/`
+- Worker logs retain complete run history and are not automatically truncated.
 - Project Codex hooks: `.codex/hooks.json` and `.codex/config.toml`
 - Project Claude Code hooks: `.claude/settings.local.json`
 - Project Aiden hooks: `.aiden/settings.json`
@@ -129,6 +130,18 @@ aiden --print --no-streaming --permission-mode readOnly --model-reasoning-effort
 ```
 
 Interactive worker runs write the full bridge context directly into the Aiden terminal as `<user_message>`, `<sender>`, `<session_id>`, and `<agent_bridge_reminder>` blocks, then paste the whole block into the ready TUI and submit it after a short delay. Non-interactive fallback runs still write the review context to a temporary file and point Aiden at that file to avoid command-line length limits.
+
+Aiden review requests reuse the interactive worker. Direct chat requests use `--print` so plain-text answers have a deterministic completion boundary; their terminal output is still appended to the same worker history.
+
+## Claude Code Notes
+
+Claude Code runs in non-interactive print mode and writes each request and response into a stable worker history:
+
+```bash
+claude -p --output-format json --permission-mode plan --max-turns 3
+```
+
+Each command is a new Claude Code process; worker persistence applies to terminal history, not Claude conversation state. Set `AGENT_BRIDGE_CLAUDE_MAX_TURNS` to a positive integer when a review needs more tool-use turns.
 
 ## Development
 

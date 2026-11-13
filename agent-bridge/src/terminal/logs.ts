@@ -1,6 +1,7 @@
 import { EventEmitter } from "node:events";
-import { appendFile, mkdir, readFile, writeFile } from "node:fs/promises";
+import { appendFile, mkdir, open, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
+import { StringDecoder } from "node:string_decoder";
 import { TERMINAL_LOG_DIR } from "../core/constants.ts";
 import type { Agent } from "../core/types.ts";
 import type { AgentCommandRunner, SpawnCapture, SpawnProcessInfo } from "../agents/shared/process.ts";
@@ -32,7 +33,18 @@ export interface TerminalLogEvent {
 }
 
 const streams = new Map<string, EventEmitter>();
-const tails = new Map<string, NodeJS.Timeout>();
+const logWriteQueues = new Map<string, Promise<void>>();
+const TAIL_POLL_MS = 200;
+const LOG_READ_CHUNK_BYTES = 256 * 1024;
+
+interface TerminalTail {
+  path: string;
+  offset: number;
+  reading: boolean;
+  active: boolean;
+  decoder: StringDecoder;
+  timer: NodeJS.Timeout;
+}
 
 export function createTerminalSession(
   runId: string,
@@ -51,7 +63,7 @@ export function createTerminalSession(
   const workerContextDir = options.workerId
     ? terminalWorkerContextDir(options.workerId)
     : undefined;
-  let queue = Promise.resolve();
+  let queue = initializeTerminalPaths(logPath, workerLogPath, workerContextDir);
   const session: TerminalSession = {
     terminalId,
     logPath,
@@ -74,32 +86,30 @@ export function createTerminalSession(
           `\x1b[90m$ ${commandLine}\x1b[0m`,
           ""
         ].join("\r\n");
-        queue = writeTerminalLog(logPath, header);
-        publishTerminalEvent(terminalId, { type: "start", data: header, pid: info.pid });
+        queue = queue.then(async () => {
+          await writeTerminalLog(logPath, header);
+          if (workerLogPath) {
+            await appendTerminalLog(workerLogPath, `${header}\r\n`);
+          }
+          publishTerminalEvent(terminalId, { type: "start", pid: info.pid });
+        });
         onStart?.(info, session);
       },
       onStdout(chunk) {
-        queue = queue.then(() => appendTerminalLog(logPath, chunk));
-        publishTerminalEvent(terminalId, { type: "stdout", data: chunk.toString("utf8") });
+        queue = queue.then(() => appendCapturedChunk(logPath, workerLogPath, chunk));
       },
       onStderr(chunk) {
-        queue = queue.then(() => appendTerminalLog(logPath, chunk));
-        publishTerminalEvent(terminalId, { type: "stderr", data: chunk.toString("utf8") });
+        queue = queue.then(() => appendCapturedChunk(logPath, workerLogPath, chunk));
       },
       onClose(code) {
         const footer = `\r\n\x1b[90m# process exited with code ${code ?? "unknown"}\x1b[0m\r\n`;
-        queue = queue.then(() => appendTerminalLog(logPath, Buffer.from(footer)));
-        publishTerminalEvent(terminalId, { type: "close", data: footer, code });
+        queue = queue.then(async () => {
+          await appendCapturedChunk(logPath, workerLogPath, Buffer.from(footer));
+          publishTerminalEvent(terminalId, { type: "close", code });
+        });
       }
     }
   };
-  void mkdir(dirname(logPath), { recursive: true });
-  if (workerLogPath) {
-    void mkdir(dirname(workerLogPath), { recursive: true });
-  }
-  if (workerContextDir) {
-    void mkdir(workerContextDir, { recursive: true });
-  }
   return session;
 }
 
@@ -110,34 +120,72 @@ export async function readTerminalLog(runId: string, kind: string): Promise<stri
 export function subscribeTerminalLog(terminalId: string, listener: (event: TerminalLogEvent) => void): () => void {
   const stream = streamFor(terminalId);
   stream.on("event", listener);
-  return () => stream.off("event", listener);
+  return () => {
+    stream.off("event", listener);
+    cleanupTerminalStream(terminalId);
+  };
 }
 
-export function ensureTerminalLogTail(terminalId: string, logPath: string, fromEnd = true): void {
-  if (tails.has(terminalId)) {
-    return;
-  }
-  let offset = 0;
-  void readFile(logPath).then((buffer) => {
-    offset = fromEnd ? buffer.length : 0;
-  }).catch(() => undefined);
-  const timer = setInterval(async () => {
-    const buffer = await readFile(logPath).catch(() => null);
-    if (!buffer) {
-      return;
-    }
-    if (buffer.length < offset) {
-      offset = 0;
-    }
-    if (buffer.length === offset) {
-      return;
-    }
-    const chunk = buffer.subarray(offset);
-    offset = buffer.length;
-    publishTerminalEvent(terminalId, { type: "stdout", data: chunk.toString("utf8") });
-  }, 200);
+export function tailTerminalLog(
+  logPath: string,
+  initialOffset: number,
+  onData: (data: string) => void | Promise<void>,
+  decoder = new StringDecoder("utf8")
+): () => void {
+  const tail: TerminalTail = {
+    path: logPath,
+    offset: Math.max(0, initialOffset),
+    reading: false,
+    active: true,
+    decoder,
+    timer: setInterval(() => {
+      scheduleTerminalTailPoll(tail, onData);
+    }, TAIL_POLL_MS)
+  };
+  const timer = tail.timer;
   timer.unref?.();
-  tails.set(terminalId, timer);
+  scheduleTerminalTailPoll(tail, onData);
+  return () => {
+    if (!tail.active) {
+      return;
+    }
+    tail.active = false;
+    clearInterval(tail.timer);
+  };
+}
+
+export async function streamTerminalLogSnapshot(
+  path: string,
+  onChunk: (chunk: Buffer) => boolean | void | Promise<boolean | void>
+): Promise<number> {
+  const handle = await open(path, "r").catch((error: NodeJS.ErrnoException) => {
+    if (error.code === "ENOENT") {
+      return null;
+    }
+    throw error;
+  });
+  if (!handle) {
+    return 0;
+  }
+  try {
+    const snapshotSize = (await handle.stat()).size;
+    let offset = 0;
+    while (offset < snapshotSize) {
+      const length = Math.min(LOG_READ_CHUNK_BYTES, snapshotSize - offset);
+      const buffer = Buffer.allocUnsafe(length);
+      const { bytesRead } = await handle.read(buffer, 0, length, offset);
+      if (bytesRead === 0) {
+        break;
+      }
+      offset += bytesRead;
+      if (await onChunk(buffer.subarray(0, bytesRead)) === false) {
+        break;
+      }
+    }
+    return offset;
+  } finally {
+    await handle.close();
+  }
 }
 
 export function terminalKey(runId: string, kind: string): string {
@@ -171,16 +219,101 @@ function streamFor(terminalId: string): EventEmitter {
 }
 
 export function publishTerminalEvent(terminalId: string, event: TerminalLogEvent): void {
-  streamFor(terminalId).emit("event", event);
+  streams.get(terminalId)?.emit("event", event);
 }
 
 export async function writeTerminalLog(path: string, text: string): Promise<void> {
-  await mkdir(dirname(path), { recursive: true });
-  await writeFile(path, text, "utf8");
+  await enqueueLogWrite(path, async () => {
+    await mkdir(dirname(path), { recursive: true });
+    await writeFile(path, text, "utf8");
+  });
 }
 
 export async function appendTerminalLog(path: string, chunk: Buffer | string): Promise<void> {
-  await appendFile(path, chunk);
+  await enqueueLogWrite(path, async () => {
+    await mkdir(dirname(path), { recursive: true });
+    await appendFile(path, chunk);
+  });
+}
+
+async function initializeTerminalPaths(logPath: string, workerLogPath?: string, workerContextDir?: string): Promise<void> {
+  await mkdir(dirname(logPath), { recursive: true });
+  if (workerLogPath) {
+    await appendTerminalLog(workerLogPath, "");
+  }
+  if (workerContextDir) {
+    await mkdir(workerContextDir, { recursive: true });
+  }
+}
+
+async function appendCapturedChunk(logPath: string, workerLogPath: string | undefined, chunk: Buffer): Promise<void> {
+  await appendTerminalLog(logPath, chunk);
+  if (workerLogPath) {
+    await appendTerminalLog(workerLogPath, chunk);
+  }
+}
+
+function enqueueLogWrite(path: string, write: () => Promise<void>): Promise<void> {
+  const previous = logWriteQueues.get(path) ?? Promise.resolve();
+  const current = previous.catch(() => undefined).then(write);
+  const queued = current.then(() => undefined, () => undefined).finally(() => {
+    if (logWriteQueues.get(path) === queued) {
+      logWriteQueues.delete(path);
+    }
+  });
+  logWriteQueues.set(path, queued);
+  return current;
+}
+
+async function pollTerminalTail(tail: TerminalTail, onData: (data: string) => void | Promise<void>): Promise<void> {
+  if (tail.reading || !tail.active) {
+    return;
+  }
+  tail.reading = true;
+  let handle: Awaited<ReturnType<typeof open>> | null = null;
+  try {
+    handle = await open(tail.path, "r").catch((error: NodeJS.ErrnoException) => {
+      if (error.code === "ENOENT") {
+        return null;
+      }
+      throw error;
+    });
+    if (!handle) {
+      return;
+    }
+    const size = (await handle.stat()).size;
+    if (size < tail.offset) {
+      tail.offset = 0;
+      tail.decoder = new StringDecoder("utf8");
+    }
+    while (tail.offset < size && tail.active) {
+      const length = Math.min(LOG_READ_CHUNK_BYTES, size - tail.offset);
+      const buffer = Buffer.allocUnsafe(length);
+      const { bytesRead } = await handle.read(buffer, 0, length, tail.offset);
+      if (bytesRead === 0) {
+        break;
+      }
+      tail.offset += bytesRead;
+      const data = tail.decoder.write(buffer.subarray(0, bytesRead));
+      if (data) {
+        await onData(data);
+      }
+    }
+  } finally {
+    await handle?.close();
+    tail.reading = false;
+  }
+}
+
+function scheduleTerminalTailPoll(tail: TerminalTail, onData: (data: string) => void | Promise<void>): void {
+  void pollTerminalTail(tail, onData).catch(() => undefined);
+}
+
+function cleanupTerminalStream(terminalId: string): void {
+  const stream = streams.get(terminalId);
+  if (stream && stream.listenerCount("event") === 0) {
+    streams.delete(terminalId);
+  }
 }
 
 function safeSegment(value: string): string {

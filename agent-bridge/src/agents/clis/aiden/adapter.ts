@@ -41,7 +41,9 @@ async function runAidenAgent(agent: Agent, cwd: string, prompt: string, context?
   const promptPath = join(contextDir, `review-context-${Date.now()}-${randomUUID()}.md`);
   try {
     await mkdir(contextDir, { recursive: true });
-    if (context?.runner?.runTty) {
+    // Plain chat output has no structured completion marker for the persistent TUI.
+    // Print mode gives chat requests a deterministic completion boundary.
+    if (context?.runner?.runTty && context.outputMode !== "chat") {
       return await runTtyCliCommand(agent, cwd, buildAidenArgs({
         sessionId: context.producerSessionId ?? "",
         resume: false,
@@ -62,6 +64,9 @@ async function runAidenAgent(agent: Agent, cwd: string, prompt: string, context?
     }
 
     await writeFile(promptPath, prompt, "utf8");
+    const commandContext = context?.outputMode === "chat"
+      ? { ...context, runner: undefined }
+      : context;
     return await runCliCommand(agent, cwd, [
       "--print",
       "--no-streaming",
@@ -76,7 +81,7 @@ async function runAidenAgent(agent: Agent, cwd: string, prompt: string, context?
       "--max-turns",
       "2",
       buildAidenTerminalInput(`${contextFileInstruction(context)}\n${promptPath}`, context)
-    ], "", context, {
+    ], "", commandContext, {
       timeout: AGENT_TIMEOUT_MS,
       env: bridgeBypassEnv()
     });

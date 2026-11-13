@@ -69,7 +69,8 @@ export async function runCliCommand(
       cwd,
       timeout: options.timeout ?? AGENT_TIMEOUT_MS,
       env: options.env ?? bridgeBypassEnv(),
-      capture: context?.capture
+      capture: context?.capture,
+      allowKnownErrorText: context?.outputMode === "chat"
     });
     const output = options.selectOutput ? await options.selectOutput(result) : result.stdout;
     return parseCliOutput(agent, output, context?.outputMode);
@@ -93,7 +94,8 @@ export async function runTtyCliCommand(
       ...options,
       cwd,
       env: options.env ?? bridgeBypassEnv(),
-      capture: context.capture
+      capture: context.capture,
+      allowKnownErrorText: context.outputMode === "chat"
     });
     return parseCliOutput(agent, result.stdout, context.outputMode);
   } catch (error) {
